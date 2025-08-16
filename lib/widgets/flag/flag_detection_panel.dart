@@ -763,7 +763,7 @@ class _FlagDetectionPanelState extends State<FlagDetectionPanel>
       case FlagType.severeDepression:
         return Icons.sentiment_very_dissatisfied;
       case FlagType.anxietyCrisis:
-        return Icons.anxiety;
+        return Icons.psychology;
       case FlagType.eatingDisorder:
         return Icons.restaurant;
       case FlagType.personalityDisorder:

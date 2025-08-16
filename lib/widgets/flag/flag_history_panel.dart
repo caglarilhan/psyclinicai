@@ -543,27 +543,28 @@ class _FlagHistoryPanelState extends State<FlagHistoryPanel>
               ),
             ),
             const SizedBox(width: 12),
-            DropdownButton<String>(
-              value: _selectedFilter,
-              onChanged: (value) {
-                setState(() {
-                  _selectedFilter = value!;
-                });
-                _filterFlags();
-              },
-              items: [
-                DropdownMenuItem(value: 'all', child: Text('Tümü')),
-                DropdownMenuItem(value: 'active', child: Text('Aktif')),
-                DropdownMenuItem(value: 'resolved', child: Text('Çözülen')),
-                DropdownMenuItem(value: 'escalated', child: Text('Escalate')),
-                DropdownMenuItem(value: 'high_risk', child: Text('Yüksek Risk')),
-              ],
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[400]!),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey[100],
+              ),
+              child: DropdownButton<String>(
+                value: _selectedFilter,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedFilter = value!;
+                  });
+                  _filterFlags();
+                },
+                items: [
+                  DropdownMenuItem(value: 'all', child: Text('Tümü')),
+                  DropdownMenuItem(value: 'active', child: Text('Aktif')),
+                  DropdownMenuItem(value: 'resolved', child: Text('Çözülen')),
+                  DropdownMenuItem(value: 'escalated', child: Text('Escalate')),
+                  DropdownMenuItem(value: 'high_risk', child: Text('Yüksek Risk')),
+                ],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
             ),
           ],
@@ -764,7 +765,7 @@ class _FlagHistoryPanelState extends State<FlagHistoryPanel>
       case FlagType.severeDepression:
         return Icons.sentiment_very_dissatisfied;
       case FlagType.anxietyCrisis:
-        return Icons.anxiety;
+        return Icons.psychology;
       case FlagType.eatingDisorder:
         return Icons.restaurant;
       case FlagType.personalityDisorder:

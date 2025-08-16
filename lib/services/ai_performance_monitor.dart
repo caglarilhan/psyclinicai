@@ -286,6 +286,43 @@ class AIPerformanceMonitor {
       'alerts': getPerformanceAlerts().map((a) => a.toJson()).toList(),
     };
   }
+
+  // Eksik metodlar - Flag AI Service için
+  void completeOperation(String operationName, {String? context, Map<String, dynamic>? resultMetadata}) {
+    endOperation(operationName, context: context, resultMetadata: resultMetadata);
+  }
+
+  int getTotalOperations(String operationName, {String? context}) {
+    final key = _getMetricKey(operationName, context);
+    return _metrics[key]?.length ?? 0;
+  }
+
+  double getSuccessRate(String operationName, {String? context}) {
+    final key = _getMetricKey(operationName, context);
+    final metrics = _metrics[key];
+    
+    if (metrics == null || metrics.isEmpty) return 0.0;
+    
+    final completedMetrics = metrics.where((m) => m.isCompleted).length;
+    return completedMetrics / metrics.length;
+  }
+
+  Duration getAverageResponseTime(String operationName, {String? context}) {
+    final key = _getMetricKey(operationName, context);
+    final metrics = _metrics[key];
+    
+    if (metrics == null || metrics.isEmpty) return Duration.zero;
+    
+    final completedMetrics = metrics.where((m) => m.isCompleted && m.duration != null).toList();
+    if (completedMetrics.isEmpty) return Duration.zero;
+    
+    final totalDuration = completedMetrics.fold<Duration>(
+      Duration.zero,
+      (sum, metric) => sum + (metric.duration ?? Duration.zero),
+    );
+    
+    return Duration(milliseconds: totalDuration.inMilliseconds ~/ completedMetrics.length);
+  }
 }
 
 class PerformanceMetric {

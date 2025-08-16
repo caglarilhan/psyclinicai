@@ -246,8 +246,6 @@ class FlagAIService {
     _culturalSensitivity['TR'] = [
       CulturalSensitivity(
         id: 'tr_turkish_culture',
-        name: 'Turkish Cultural Sensitivity',
-        description: 'Cultural considerations for Turkish clients',
         culture: 'Turkish',
         region: 'Turkey',
         culturalNorms: {
@@ -285,11 +283,11 @@ class FlagAIService {
           'Herbal remedies',
           'Spiritual healing methods',
         ],
-        stigmaFactors: [
-          'Mental health stigma',
-          'Family reputation concerns',
-          'Social judgment fears',
-        ],
+        stigmaFactors: {
+          'mental_health': 'Mental health stigma',
+          'family_reputation': 'Family reputation concerns',
+          'social_judgment': 'Social judgment fears',
+        },
         lastUpdated: DateTime.now(),
       ),
     ];
@@ -297,8 +295,6 @@ class FlagAIService {
     _culturalSensitivity['US'] = [
       CulturalSensitivity(
         id: 'us_american_culture',
-        name: 'American Cultural Sensitivity',
-        description: 'Cultural considerations for American clients',
         culture: 'American',
         region: 'United States',
         culturalNorms: {
@@ -336,11 +332,11 @@ class FlagAIService {
           'Alternative medicine',
           'Holistic approaches',
         ],
-        stigmaFactors: [
-          'Mental health awareness',
-          'Access to care',
-          'Insurance coverage',
-        ],
+        stigmaFactors: {
+          'mental_health_awareness': 'Mental health awareness',
+          'access_to_care': 'Access to care',
+          'insurance_coverage': 'Insurance coverage',
+        },
         lastUpdated: DateTime.now(),
       ),
     ];
@@ -357,8 +353,6 @@ class FlagAIService {
     _privacySecurity['US'] = [
       PrivacySecurity(
         id: 'us_hipaa',
-        name: 'HIPAA Compliance',
-        description: 'Health Insurance Portability and Accountability Act',
         standard: 'HIPAA',
         country: 'US',
         requirements: {
@@ -401,8 +395,6 @@ class FlagAIService {
     _privacySecurity['TR'] = [
       PrivacySecurity(
         id: 'tr_kvkk',
-        name: 'KVKK Uyumluluğu',
-        description: 'Kişisel Verilerin Korunması Kanunu',
         standard: 'KVKK',
         country: 'TR',
         requirements: {
@@ -566,7 +558,6 @@ class FlagAIService {
         _performanceMonitor.completeOperation(
           'flag_detection',
           context: 'flag_ai_service',
-          success: true,
         );
 
         return flagDetection;
@@ -575,7 +566,6 @@ class FlagAIService {
       _performanceMonitor.completeOperation(
         'flag_detection',
         context: 'flag_ai_service',
-        success: false,
       );
 
       return null;
@@ -590,8 +580,6 @@ class FlagAIService {
       _performanceMonitor.completeOperation(
         'flag_detection',
         context: 'flag_ai_service',
-        success: false,
-        error: e,
       );
 
       return null;
@@ -963,9 +951,9 @@ JSON formatında yanıt ver.
   // Performans İstatistikleri Al
   Map<String, dynamic> getPerformanceStatistics() {
     return {
-      'total_operations': _performanceMonitor.getTotalOperations(),
-      'success_rate': _performanceMonitor.getSuccessRate(),
-      'average_response_time': _performanceMonitor.getAverageResponseTime(),
+      'total_operations': _performanceMonitor.getTotalOperations('flag_detection'),
+      'success_rate': _performanceMonitor.getSuccessRate('flag_detection'),
+      'average_response_time': _performanceMonitor.getAverageResponseTime('flag_detection'),
       'model_performance': _modelPerformance.map((key, value) => MapEntry(key, {
         'accuracy': value.accuracy,
         'f1_score': value.f1Score,

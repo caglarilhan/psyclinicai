@@ -424,7 +424,7 @@ class _AIModelPerformanceWidgetState extends State<AIModelPerformanceWidget>
                 child: _buildMetricCard(
                   'Ortalama Doğruluk',
                   '${(avgAccuracy * 100).toStringAsFixed(1)}%',
-                  Icons.accuracy,
+                  Icons.check_circle,
                   Colors.green,
                 ),
               ),
@@ -433,7 +433,7 @@ class _AIModelPerformanceWidgetState extends State<AIModelPerformanceWidget>
                 child: _buildMetricCard(
                   'Ortalama F1 Skoru',
                   '${(avgF1Score * 100).toStringAsFixed(1)}%',
-                  Icons.score,
+                  Icons.analytics,
                   Colors.blue,
                 ),
               ),
@@ -499,27 +499,28 @@ class _AIModelPerformanceWidgetState extends State<AIModelPerformanceWidget>
           ),
         ),
         const SizedBox(height: 12),
-        DropdownButton<String>(
-          value: _selectedModel,
-          isExpanded: true,
-          onChanged: (value) {
-            setState(() {
-              _selectedModel = value!;
-            });
-          },
-          items: [
-            DropdownMenuItem(value: 'all', child: Text('Tüm Modeller')),
-            DropdownMenuItem(value: 'suicide', child: Text('İntihar Riski')),
-            DropdownMenuItem(value: 'violence', child: Text('Şiddet Riski')),
-            DropdownMenuItem(value: 'depression', child: Text('Depresyon Riski')),
-            DropdownMenuItem(value: 'anxiety', child: Text('Anksiyete Riski')),
-          ],
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            filled: true,
-            fillColor: Colors.grey[100],
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[400]!),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey[100],
+          ),
+          child: DropdownButton<String>(
+            value: _selectedModel,
+            isExpanded: true,
+            onChanged: (value) {
+              setState(() {
+                _selectedModel = value!;
+              });
+            },
+            items: [
+              DropdownMenuItem(value: 'all', child: Text('Tüm Modeller')),
+              DropdownMenuItem(value: 'suicide', child: Text('İntihar Riski')),
+              DropdownMenuItem(value: 'violence', child: Text('Şiddet Riski')),
+              DropdownMenuItem(value: 'depression', child: Text('Depresyon Riski')),
+              DropdownMenuItem(value: 'anxiety', child: Text('Anksiyete Riski')),
+            ],
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
         ),
       ],

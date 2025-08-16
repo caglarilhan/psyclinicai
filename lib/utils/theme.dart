@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Ana renkler
   static const Color primary = Color(0xFF2563EB);
+  static const Color primaryColor = Color(0xFF4CAF50); // Yeşil - Flag AI için
   static const Color secondary = Color(0xFF7C3AED);
   static const Color accent = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);

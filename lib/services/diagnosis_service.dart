@@ -437,18 +437,18 @@ class DiagnosisService {
     ];
 
     return mockSuggestions.take(maxSuggestions).map((s) => AIDiagnosisSuggestion(
-      suggestedDiagnosis: s['diagnosis'],
-      diagnosisCode: s['code'],
-      classificationSystem: s['system'],
-      confidence: s['confidence'].toDouble(),
-      supportingSymptoms: List<String>.from(s['supporting_symptoms']),
+      suggestedDiagnosis: s['diagnosis'] as String,
+      diagnosisCode: s['code'] as String,
+      classificationSystem: s['system'] as String,
+      confidence: (s['confidence'] as num).toDouble(),
+      supportingSymptoms: List<String>.from(s['supporting_symptoms'] as List),
       supportingCriteria: [],
       conflictingSymptoms: [],
       conflictingCriteria: [],
-      differentialDiagnoses: List<String>.from(s['differential']),
-      recommendedAssessments: List<String>.from(s['assessments']),
+      differentialDiagnoses: List<String>.from(s['differential'] as List),
+      recommendedAssessments: List<String>.from(s['assessments'] as List),
       recommendedTests: [],
-      reasoning: s['reasoning'],
+      reasoning: s['reasoning'] as String,
       metadata: {},
       generatedAt: DateTime.now(),
     )).toList();

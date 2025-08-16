@@ -227,7 +227,7 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
             _buildInfoSection('Şiddet', widget.icd11Diagnosis!.severity, Icons.trending_up),
             _buildInfoSection('Kronisite', widget.icd11Diagnosis!.chronicity, Icons.schedule),
             if (widget.icd11Diagnosis!.symptoms.isNotEmpty)
-              _buildListSection('Belirtiler', widget.icd11Diagnosis!.symptoms, Icons.symptoms),
+              _buildListSection('Belirtiler', widget.icd11Diagnosis!.symptoms, Icons.medical_services),
             if (widget.icd11Diagnosis!.riskFactors.isNotEmpty)
               _buildListSection('Risk Faktörleri', widget.icd11Diagnosis!.riskFactors, Icons.warning),
             if (widget.icd11Diagnosis!.complications.isNotEmpty)
@@ -236,12 +236,12 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
             _buildInfoSection('Kod', widget.dsm5Diagnosis!.code, Icons.tag),
             _buildInfoSection('Başlık', widget.dsm5Diagnosis!.title, Icons.title),
             _buildInfoSection('Açıklama', widget.dsm5Diagnosis!.description, Icons.description),
-            _buildInfoSection('Kategori', widget.dsm5Diagnosis!.category, Icons.category),
-            _buildInfoSection('Alt Kategori', widget.dsm5Diagnosis!.subcategory, Icons.subdirectory_arrow_right),
+                          _buildInfoSection('Kategori', widget.dsm5Diagnosis!.title, Icons.category),
+              _buildInfoSection('Alt Kategori', widget.dsm5Diagnosis!.code, Icons.subdirectory_arrow_right),
             _buildInfoSection('Şiddet', widget.dsm5Diagnosis!.severity, Icons.trending_up),
             _buildInfoSection('Kronisite', widget.dsm5Diagnosis!.chronicity, Icons.schedule),
             if (widget.dsm5Diagnosis!.symptoms.isNotEmpty)
-              _buildListSection('Belirtiler', widget.dsm5Diagnosis!.symptoms, Icons.symptoms),
+              _buildListSection('Belirtiler', widget.dsm5Diagnosis!.symptoms, Icons.medical_services),
             if (widget.dsm5Diagnosis!.riskFactors.isNotEmpty)
               _buildListSection('Risk Faktörleri', widget.dsm5Diagnosis!.riskFactors, Icons.warning),
             if (widget.dsm5Diagnosis!.comorbidities.isNotEmpty)

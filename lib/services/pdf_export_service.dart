@@ -637,7 +637,7 @@ class PDFExportService {
                 style: pw.TextStyle(
                   color: _textColor,
                   fontSize: 12,
-                  fontWeight: pw.FontWeight.w500,
+                  fontWeight: pw.FontWeight.normal,
                 ),
               ),
               pw.Text(
@@ -694,7 +694,7 @@ class PDFExportService {
                   style: pw.TextStyle(
                     color: _textColor,
                     fontSize: 11,
-                    fontWeight: pw.FontWeight.w500,
+                    fontWeight: pw.FontWeight.normal,
                   ),
                 ),
               ],

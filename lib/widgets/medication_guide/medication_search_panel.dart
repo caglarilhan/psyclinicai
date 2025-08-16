@@ -627,8 +627,6 @@ class _MedicationSearchPanelState extends State<MedicationSearchPanel> {
         return Colors.green.shade300;
       case MedicationCategory.other:
         return Colors.grey;
-      default:
-        return Colors.grey;
     }
   }
 
@@ -703,8 +701,6 @@ class _MedicationSearchPanelState extends State<MedicationSearchPanel> {
       case MedicationCategory.antifungal:
         return 'Antifungal';
       case MedicationCategory.other:
-        return 'Diğer';
-      default:
         return 'Diğer';
     }
   }

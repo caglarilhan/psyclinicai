@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/flag_ai_models.dart';
-import '../../services/flag_ai_service.dart';
-import '../../utils/theme.dart';
+import 'package:psyclinicai/models/flag_ai_models.dart';
+import 'package:psyclinicai/services/flag_ai_service.dart';
+import 'package:psyclinicai/services/ai_logger.dart';
 
 // Acil Durum Protokolü Widget'ı
 class EmergencyProtocolWidget extends StatefulWidget {
@@ -31,7 +31,6 @@ class _EmergencyProtocolWidgetState extends State<EmergencyProtocolWidget>
 
   bool _isLoading = false;
   bool _isInitialized = false;
-  EmergencyProtocol? _selectedProtocol;
   CrisisInterventionPlan? _interventionPlan;
   String? _error;
 

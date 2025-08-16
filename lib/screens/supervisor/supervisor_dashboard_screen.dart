@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../models/supervisor_model.dart';
+import '../../models/supervision_models.dart';
 import '../../widgets/supervisor/performance_overview_widget.dart';
 import '../../widgets/supervisor/supervision_sessions_widget.dart';
 import '../../widgets/supervisor/therapist_performance_widget.dart';
@@ -20,7 +20,7 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
   
   List<SupervisionSession> _supervisionSessions = [];
   List<TherapistPerformance> _therapistPerformances = [];
-  List<QualityMetrics> _qualityMetrics = [];
+  List<QualityMetric> _qualityMetrics = [];
   bool _isLoading = false;
 
   @override
@@ -46,8 +46,10 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     _supervisionSessions = [
       SupervisionSession(
         id: '1',
+        title: 'Depresyon Vakası Süpervizyonu',
         supervisorId: 'supervisor1',
         therapistId: 'therapist1',
+        therapistName: 'Dr. Ayşe Demir',
         clientId: 'client1',
         type: SupervisionType.individual,
         status: SupervisionStatus.completed,
@@ -69,8 +71,10 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
       ),
       SupervisionSession(
         id: '2',
+        title: 'PTSD Vakası Kriz Yönetimi',
         supervisorId: 'supervisor1',
         therapistId: 'therapist2',
+        therapistName: 'Dr. Mehmet Kaya',
         clientId: 'client3',
         type: SupervisionType.caseReview,
         status: SupervisionStatus.inProgress,
@@ -89,8 +93,10 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
       ),
       SupervisionSession(
         id: '3',
+        title: 'Yeni Terapist Beceri Değerlendirmesi',
         supervisorId: 'supervisor1',
         therapistId: 'therapist3',
+        therapistName: 'Dr. Fatma Özkan',
         clientId: 'client5',
         type: SupervisionType.skillAssessment,
         status: SupervisionStatus.pending,
@@ -112,113 +118,80 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     // Demo therapist performances
     _therapistPerformances = [
       TherapistPerformance(
+        id: '1',
         therapistId: 'therapist1',
         therapistName: 'Dr. Ayşe Demir',
-        totalSessions: 45,
-        completedSessions: 42,
-        cancelledSessions: 3,
-        averageSessionDuration: 55.0,
-        overallRating: PerformanceRating.excellent,
-        strengths: ['CBT teknikleri', 'Vaka formülasyonu', 'İlişki kurma'],
-        areasForImprovement: ['Vaka notları', 'Zaman yönetimi'],
-        metrics: {
-          'clientSatisfaction': 4.8,
-          'sessionCompletionRate': 93.3,
-          'averageProgressScore': 4.2,
-        },
+        specialization: 'CBT ve Depresyon',
+        successRate: 0.93,
+        caseCount: 45,
+        averageRating: 4.8,
+        improvementRate: 0.15,
+        notes: 'CBT tekniklerinde mükemmel, vaka notlarında gelişim alanı',
         lastUpdated: DateTime.now().subtract(const Duration(hours: 2)),
       ),
       TherapistPerformance(
+        id: '2',
         therapistId: 'therapist2',
         therapistName: 'Dr. Mehmet Kaya',
-        totalSessions: 38,
-        completedSessions: 35,
-        cancelledSessions: 3,
-        averageSessionDuration: 60.0,
-        overallRating: PerformanceRating.good,
-        strengths: ['Kriz müdahalesi', 'Aile terapisi', 'Grup terapisi'],
-        areasForImprovement: ['Vaka takibi', 'Dokümantasyon'],
-        metrics: {
-          'clientSatisfaction': 4.5,
-          'sessionCompletionRate': 92.1,
-          'averageProgressScore': 3.9,
-        },
+        specialization: 'Kriz Müdahalesi ve Aile Terapisi',
+        successRate: 0.92,
+        caseCount: 38,
+        averageRating: 4.5,
+        improvementRate: 0.12,
+        notes: 'Kriz müdahalesinde güçlü, dokümantasyonda gelişim alanı',
         lastUpdated: DateTime.now().subtract(const Duration(hours: 4)),
       ),
       TherapistPerformance(
+        id: '3',
         therapistId: 'therapist3',
         therapistName: 'Dr. Fatma Özkan',
-        totalSessions: 12,
-        completedSessions: 10,
-        cancelledSessions: 2,
-        averageSessionDuration: 50.0,
-        overallRating: PerformanceRating.satisfactory,
-        strengths: ['Empati', 'Aktif dinleme', 'Motivasyon'],
-        areasForImprovement: ['Teknik uygulama', 'Vaka yönetimi', 'Dokümantasyon'],
-        metrics: {
-          'clientSatisfaction': 4.2,
-          'sessionCompletionRate': 83.3,
-          'averageProgressScore': 3.5,
-        },
+        specialization: 'Genel Terapi',
+        successRate: 0.83,
+        caseCount: 12,
+        averageRating: 4.2,
+        improvementRate: 0.08,
+        notes: 'Yeni terapist, temel becerilerde gelişim gösteriyor',
         lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
       ),
     ];
 
     // Demo quality metrics
     _qualityMetrics = [
-      QualityMetrics(
+      QualityMetric(
         id: '1',
         metricName: 'Seans Tamamlama Oranı',
         description: 'Planlanan seansların tamamlanma yüzdesi',
-        currentValue: 92.5,
-        targetValue: 90.0,
-        unit: '%',
-        measurementDate: DateTime.now(),
-        breakdown: {
-          'therapist1': 93.3,
-          'therapist2': 92.1,
-          'therapist3': 83.3,
-        },
-        recommendations: [
-          'Yeni terapistler için mentorluk programı başlatılsın',
-          'Seans iptal nedenleri analiz edilsin',
-        ],
+        category: 'Kalite',
+        score: 0.925,
+        trend: '↑ Artış',
+        targetValue: 0.90,
+        weight: 0.30,
+        notes: 'Hedef değerin üzerinde performans gösteriliyor',
+        lastUpdated: DateTime.now(),
       ),
-      QualityMetrics(
+      QualityMetric(
         id: '2',
         metricName: 'Müşteri Memnuniyeti',
         description: 'Ortalama müşteri memnuniyet skoru',
-        currentValue: 4.5,
-        targetValue: 4.5,
-        unit: '/5.0',
-        measurementDate: DateTime.now(),
-        breakdown: {
-          'therapist1': 4.8,
-          'therapist2': 4.5,
-          'therapist3': 4.2,
-        },
-        recommendations: [
-          'Memnuniyet skoru düşük terapistler için ek eğitim',
-          'Müşteri geri bildirim sistemi iyileştirilsin',
-        ],
+        category: 'Hasta Memnuniyeti',
+        score: 0.90,
+        trend: '↑ Artış',
+        targetValue: 0.85,
+        weight: 0.25,
+        notes: 'Memnuniyet skoru hedef değerin üzerinde',
+        lastUpdated: DateTime.now(),
       ),
-      QualityMetrics(
+      QualityMetric(
         id: '3',
         metricName: 'Vaka İlerleme Skoru',
         description: 'Ortalama vaka ilerleme skoru',
-        currentValue: 3.9,
-        targetValue: 4.0,
-        unit: '/5.0',
-        measurementDate: DateTime.now(),
-        breakdown: {
-          'therapist1': 4.2,
-          'therapist2': 3.9,
-          'therapist3': 3.5,
-        },
-        recommendations: [
-          'İlerleme ölçüm sistemi standardize edilsin',
-          'Hedef belirleme süreci iyileştirilsin',
-        ],
+        category: 'Tedavi Başarısı',
+        score: 0.78,
+        trend: '→ Stabil',
+        targetValue: 0.80,
+        weight: 0.20,
+        notes: 'Hedef değere yakın, iyileştirme alanı var',
+        lastUpdated: DateTime.now(),
       ),
     ];
 

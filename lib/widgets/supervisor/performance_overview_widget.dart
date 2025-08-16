@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../models/supervisor_model.dart';
+import '../../models/supervision_models.dart';
 
 class PerformanceOverviewWidget extends StatelessWidget {
   final List<SupervisionSession> supervisionSessions;
   final List<TherapistPerformance> therapistPerformances;
-  final List<QualityMetrics> qualityMetrics;
+  final List<QualityMetric> qualityMetrics;
 
   const PerformanceOverviewWidget({
     super.key,
@@ -56,23 +56,20 @@ class PerformanceOverviewWidget extends StatelessWidget {
     
     final now = DateTime.now();
     final totalSessions = supervisionSessions.length;
-    final completedSessions = supervisionSessions.where((s) => s.isCompleted).length;
+    final completedSessions = supervisionSessions.where((s) => s.status == SupervisionStatus.completed).length;
     final pendingSessions = supervisionSessions.where((s) => s.status == SupervisionStatus.pending).length;
-    final overdueSessions = supervisionSessions.where((s) => s.isOverdue).length;
+    final overdueSessions = supervisionSessions.where((s) => s.scheduledDate.isBefore(now) && s.status != SupervisionStatus.completed).length;
     
     final totalTherapists = therapistPerformances.length;
-    final excellentTherapists = therapistPerformances.where((t) => t.overallRating == PerformanceRating.excellent).length;
-    final needsImprovementTherapists = therapistPerformances.where((t) => 
-      t.overallRating == PerformanceRating.needsImprovement || 
-      t.overallRating == PerformanceRating.unsatisfactory
-    ).length;
+    final excellentTherapists = therapistPerformances.where((t) => t.successRate >= 0.9).length;
+    final needsImprovementTherapists = therapistPerformances.where((t) => t.successRate < 0.7).length;
     
     final avgCompletionRate = therapistPerformances.isNotEmpty 
-        ? therapistPerformances.map((t) => t.completionRate).reduce((a, b) => a + b) / therapistPerformances.length
+        ? therapistPerformances.map((t) => t.successRate).reduce((a, b) => a + b) / therapistPerformances.length
         : 0.0;
     
     final avgClientSatisfaction = therapistPerformances.isNotEmpty
-        ? therapistPerformances.map((t) => t.metrics['clientSatisfaction'] ?? 0.0).reduce((a, b) => a + b) / therapistPerformances.length
+        ? therapistPerformances.map((t) => t.averageRating).reduce((a, b) => a + b) / therapistPerformances.length
         : 0.0;
     
     return {
@@ -605,6 +602,8 @@ class PerformanceOverviewWidget extends StatelessWidget {
         return Colors.red;
       case SupervisionStatus.requiresFollowUp:
         return Colors.purple;
+      case SupervisionStatus.scheduled:
+        return Colors.indigo;
     }
   }
 
@@ -620,6 +619,8 @@ class PerformanceOverviewWidget extends StatelessWidget {
         return Icons.cancel;
       case SupervisionStatus.requiresFollowUp:
         return Icons.warning;
+      case SupervisionStatus.scheduled:
+        return Icons.calendar_today;
     }
   }
 
@@ -635,6 +636,8 @@ class PerformanceOverviewWidget extends StatelessWidget {
         return 'İptal';
       case SupervisionStatus.requiresFollowUp:
         return 'Takip Gerekli';
+      case SupervisionStatus.scheduled:
+        return 'Planlandı';
     }
   }
 
@@ -648,6 +651,8 @@ class PerformanceOverviewWidget extends StatelessWidget {
         return 'Vaka İncelemesi';
       case SupervisionType.skillAssessment:
         return 'Beceri Değerlendirmesi';
+      case SupervisionType.supervision:
+        return 'Genel Süpervizyon';
       case SupervisionType.crisisManagement:
         return 'Kriz Yönetimi';
       case SupervisionType.documentationReview:

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../models/flag_ai_models.dart';
-import '../../services/flag_ai_service.dart';
-import '../../utils/theme.dart';
+import 'package:psyclinicai/models/flag_ai_models.dart';
+import 'package:psyclinicai/services/flag_ai_service.dart';
+import 'package:psyclinicai/services/ai_logger.dart';
 
 // AI Model Performans Dashboard Widget'ı
 class AIModelPerformanceWidget extends StatefulWidget {

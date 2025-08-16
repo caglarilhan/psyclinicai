@@ -637,7 +637,7 @@ class AIDiagnosisService {
   // AI servis çağrısı
   Future<Map<String, dynamic>?> _callAIForDiagnosis(Map<String, dynamic> data) async {
     try {
-      final apiKey = EnvConfig.openaiApiKey;
+      const apiKey = EnvConfig.openaiApiKey;
       
       if (apiKey == 'YOUR_OPENAI_API_KEY') {
         // Mock AI response for development
@@ -645,13 +645,13 @@ class AIDiagnosisService {
       }
 
       final response = await http.post(
-        Uri.parse('${AIConfig.openaiBaseUrl}/chat/completions'),
+        Uri.parse('${EnvConfig.openaiBaseUrl}/chat/completions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode({
-          'model': EnvConfig.openaiModel,
+          'model': AIConfig.openaiModel,
           'messages': [
             {
               'role': 'system',
@@ -676,10 +676,10 @@ JSON formatında yanıt ver.
               'content': jsonEncode(data),
             },
           ],
-          'max_tokens': EnvConfig.openaiMaxTokens,
+          'max_tokens': AIConfig.openaiMaxTokens,
           'temperature': 0.3,
         }),
-      ).timeout(Duration(seconds: EnvConfig.timeoutSeconds));
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -887,8 +887,6 @@ JSON formatında yanıt ver.
   ) {
     // Bu implementasyon AI yanıtını parse edip AIDiagnosisResult objesine dönüştürür
     // Şimdilik mock data kullanıyoruz
-    
-    final mockResult = _getMockAIDiagnosisResponse();
     
     return AIDiagnosisResult(
       id: 'diagnosis_${DateTime.now().millisecondsSinceEpoch}',

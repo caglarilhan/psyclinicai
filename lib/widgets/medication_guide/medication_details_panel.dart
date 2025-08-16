@@ -311,7 +311,7 @@ class _MedicationDetailsPanelState extends State<MedicationDetailsPanel>
                 color: Colors.red[50],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.red[200]!,
+                  color: Colors.red[200] ?? Colors.red[300]!,
                   width: 1,
                 ),
               ),

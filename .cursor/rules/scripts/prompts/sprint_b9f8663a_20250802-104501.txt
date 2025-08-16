@@ -1,0 +1,1 @@
+Implement a mood entry UI in Flutter that allows users to input their current mood and notes, which will be stored in Firestore.

@@ -1,0 +1,68 @@
+# Used model: mistral:latest
+
+ ### Flutter Widget
+
+```dart
+import 'package:flutter/material.dart';
+
+class SessionScreen extends StatefulWidget {
+  @override
+  _SessionScreenState createState() => _SessionScreenState();
+}
+
+class _SessionScreenState extends State<SessionScreen> {
+  // UI elements and logic for the session screen
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Session Screen')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Widgets for patient selection, date input, and session notes
+              TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter session notes';
+                  }
+                  return null;
+                },
+              ),
+              // Add a submit button and handle form submission to Firestore
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Firestore Schema
+
+```json
+{
+  "sessions": {
+    "patient_id": {
+      "date": "YYYY-MM-DD",
+      "notes": "string",
+      "appointment_id": "generated_id"
+    }
+  },
+  "appointments": {
+    "appointment_id": {
+      // Information about the appointment, including start and end times, no-show prediction, etc.
+    }
+  }
+}
+```
+
+### Prompt 📋
+Create a session screen in Flutter with patient selection, date input, session notes entry, and submission to Firestore. Implement a Firestore schema for sessions and appointments to store this data. Consider using Light/Dark theme and design system constants where applicable. Additionally, develop an AI module that converts session notes into a summary and exports the summary as a PDF file.

@@ -1,0 +1,15 @@
+# Used model: deepseek-coder:latest
+
+Sure, here are descriptions and examples of what your tasks might involve. Please note that these instructions assume you have basic knowledge in Dart (Flutter's programming language), Firestore database operations with its SDK libraries/packages like `cloud_firestore` for Flutter or 'streamish'. Also assuming a design system exists where all colors, fonts and other elements will be defined.
+ 
+### Task: Generate the UI in Dart code ###  
+Firstly, you would need to create widgets (UI parts) using packages like `flutter_svg` for SVGs or use an existing widget library from Flutter's official package store if exists such as 'package:flutter/material.dart'. This will be your session and appointment calendar screen in Dart code, where you can place widgets according to the described UI elements like a `TextField` for inputs (name or date of an appoinment), buttons(save & cancel) etc., which may also include other smaller parts such as dropdowns/date pickers.
+```dart   
+class SessionScreen extends StatefulWidget {  //define your screen class according to the described UI and make sure it's a statefull widget    
+   @override
+   _SessionScreenState createState() => new _SessionScreenState();         //initialize with an empty or default initial configuration of this Screen    }      
+}     ```         `TextField(controller: nameController, ...) `  etc. to define the input fields for names and dates as well...  `onTap` methods can be used here like when you tap a button on your screen (like "save" or 'cancel').   You may also want some listeners in there so that whenever an action is performed it does something about those actions such `StreamSubscription.closed() => setState(() { ... });  //update the UI if state has changed`
+   ^This line can be placed after each button's onTap method to update your screen/UI according to user inputs, or other changes in app logic like this...     **_SessionScreen**   _stateful; means it’ll work within a `StateMachine(initial: initialValue)`.
+    * The above code is just an example and may not be the exact implementation but serves as reference on how you can design your UI with Dart/Flutter*.  You should customize this according to what needs in real scenario like adding buttons, dropdowns etc., setting styles for all elements (colors & fonts), using icons instead of SVG files if possible.
+     * Please make sure every button has a `onPressed` function that will be called when user taps on it and handle the respective tasks according to your app requirement.*  Make use Flutter's state management system for handling states in this case, you can do something like **setState((){})** or using methods provided by StreamBuilder.
+    * You should also consider setting up listeners that call back any changes made on Firestore data (like appointment scheduling), and updating the UI accordingly as these are triggered.*  This way your app will always have an updated state of session & appointments*. If you're not familiar with how to handle this, please ask more.

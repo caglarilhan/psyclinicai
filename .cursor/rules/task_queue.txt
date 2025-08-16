@@ -1,0 +1,5 @@
+Flutter'da randevu kartı widget'ı: doktor adı, saat, durum rozeti
+Flutter'da ayarlar ekranına dark/light toggle
+Firestore'dan son 10 yorumu listeleyen compact widget
+Flutter'da responsive navigation drawer
+Flutter'da progress bar ile loading ekranı

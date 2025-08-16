@@ -1,0 +1,26 @@
+# Used model: llama3:latest
+
+### Flutter Widget ###
+```dart
+import 'package:flutter/material.dart';
+
+class BasitWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Basit'),
+      ),
+      body: Center(
+        child: Text('Flutter bileşeni oluşturuldu.'),
+      ),
+    );
+  }
+}
+```
+
+### Firestore Schema ###
+{"id": {"type": "string"}, "name": {"type": "string"}}
+
+### Prompt 📋 ###
+Create a Flutter component (widget) for Basit and define the corresponding Firestore schema with id and name fields.

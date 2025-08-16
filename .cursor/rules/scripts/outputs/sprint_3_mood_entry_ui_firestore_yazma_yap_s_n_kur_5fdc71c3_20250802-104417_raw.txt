@@ -1,0 +1,59 @@
+# Used model: mistral:latest
+
+ ### Flutter Widget
+
+```dart
+import 'package:flutter/material.dart';
+
+class MoodEntryWidget extends StatefulWidget {
+  @override
+  _MoodEntryWidgetState createState() => _MoodEntryWidgetState();
+}
+
+class _MoodEntryWidgetState extends State<MoodEntryWidget> {
+  String mood = '';
+  String note = '';
+
+  void _saveToFirestore() async {
+    // Implement Firestore logic here.
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: <Widget>[
+      TextField(
+        decoration: InputDecoration(hintText: 'Enter mood'),
+        onChanged: (value) => setState(() => mood = value),
+      ),
+      TextField(
+        minLines: 3,
+        maxLines: null,
+        decoration: InputDecoration(hintText: 'Write note (optional)'),
+        onChanged: (value) => setState(() => note = value),
+      ),
+      ElevatedButton(
+          child: Text('Save Mood & Note'),
+          onPressed: () => _saveToFirestore())
+    ]);
+  }
+}
+```
+
+### Firestore Schema
+
+```json
+{
+  "moods": {
+    "userId": {
+      "mood_date": {
+        "mood": "",
+        "note": ""
+      }
+    }
+  }
+}
+``
+
+### Prompt 📋
+
+Implement a MoodEntryWidget with Flutter that takes user input for mood and optional note, saves them to Firestore using the provided Firestore structure.

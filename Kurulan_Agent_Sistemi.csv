@@ -1,0 +1,7 @@
+Dosya,Açıklama
+/mnt/data/psyagent/requirements.txt,Python bağımlılıkları
+/mnt/data/psyagent/start_agent.sh,Agent başlatma betiği
+/mnt/data/psyagent/startup.sh,Startup otomasyon betiği
+/mnt/data/psyagent/agent.py,Ana AI agent Python betiği
+/mnt/data/psyagent/models/goose_config.json,Goose yapılandırma dosyası
+/mnt/data/psyagent/models/qwen_config.json,Qwen3 yapılandırma dosyası

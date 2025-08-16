@@ -1,0 +1,38 @@
+# goose.yaml - PsyClinicAI / BizzPolar tam otomatik ajan sistemi için geliştirilmiş config
+# Sprint satırından Flutter widget, Firestore schema ve internal prompt üreten pipeline.
+# Model seçimi ve retry/fallback logic bridge script içinde halledilir; burada sadece o script çağrılır.
+
+providers:
+  - name: ollama
+    type: http
+    endpoint: http://localhost:11434/api/generate  # Varsayılan Ollama HTTP API; model ismi payload içinde geçilecek (örn. llama3:latest, mistral:latest, deepseek-coder:latest).
+
+tasks:
+  - name: sprint_processor
+    description: >
+      Sprint satırını alır, uygun modeli seçer (UI/widget işleri için deepseek-coder:latest, Firestore/schema için mistral:latest, diğer durumlar için llama3:latest),
+      ve aşağıdaki üç bölümü üretir: Flutter widget, Firestore JSON schema ve dahili prompt. Bridge script içinde retry, fallback ve JSON doğrulama yapılır.
+    input_vars:
+      - sprint_line
+    run:
+      command: >
+        python scripts/goose_sprint_bridge.py --sprint-line "{{sprint_line}}"
+
+# Notlar / Geliştirme İpuçları:
+# 1. Eğer Goose sürümün prompt şablonlamayı destekliyorsa, aşağıdaki iskeleti doğrudan script'e geçirmek yerine
+#    burada bir `prompt_template` olarak tanımlayıp script'i sadece parse eden/çıktıyı işleyen yalın bir köprü yapabilirsin.
+# 2. bridge script (scripts/goose_sprint_bridge.py) içinde şu mantık olmalı:
+#    * sprint_line içeriğine göre model seçimi (keyword bazlı: flutter/widget/ui -> deepseek-coder:latest, firestore/schema -> mistral:latest, else llama3:latest)
+#    * Prompt oluşturma: üç bölüm (### Flutter Widget ###, ### Firestore Schema ###, ### Prompt 📋 ###) ayrılmış şekilde.
+#    * Ollama API çağrısı: model alanı ile isteği gönder, eğer "model not found" hatası alırsan fallback olarak model parametresini kaldır veya başka model dene.
+#    * Çıktıyı stdout'a yaz ve aynı zamanda bir raw log dosyasına düş (örneğin outputs/{safe_name}_raw.txt).
+# 3. Dosya adlarında kullanılan sprint_line çok uzun oluyorsa `make_safe_filename` benzeri fonksiyonla kırpılmış, illegal karakterlerden arındırılmış hali kullan.
+# 4. İleride inline fallback istersen (script bozulduğunda), ikinci bir task ekleyebilirsin:
+#    - name: sprint_processor_direct
+#      description: Fallback olarak script kullanmadan doğrudan bu prompt şablonunu provider'a gönderir.
+#      input_vars:
+#        - sprint_line
+#      run:
+#        prompt_template: |
+#          You are an AI development assistant. Given the sprint line: "{{sprint_line}}", do the following:
+#          1. ... (aynı üç bölüm talimatı burada yer alır) 

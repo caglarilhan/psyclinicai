@@ -1,0 +1,5 @@
+You may use a prompt like this to generate the structured summary with fields: affect, theme, icdSuggestion.
+
+```
+The patient's session focused on (theme). The patient exhibited feelings of (affect). Based on my understanding, the patient's condition might be related to ICD-10 code (icdSuggestion).
+```

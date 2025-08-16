@@ -1,0 +1,29 @@
+{
+  "sessions": {
+    "sessionId": {
+      "patientName": "string",
+      "date": "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "time": "HH:mm",
+      "notes": "string",
+      "noShowProbability": 0.0,
+      "aiSummary": {
+        "affect": "string",
+        "theme": "string",
+        "icdSuggestion": "string"
+      },
+      "pdfUrl": "string",
+      "createdAt": "timestamp"
+    }
+  },
+  "appointments": {
+    "appointmentId": {
+      "sessionId": "string",
+      "patientId": "string",
+      "startDateTime": "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "endDateTime": "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "noShowPrediction": 0.0,
+      "status": "scheduled|completed|cancelled",
+      "createdAt": "timestamp"
+    }
+  }
+}

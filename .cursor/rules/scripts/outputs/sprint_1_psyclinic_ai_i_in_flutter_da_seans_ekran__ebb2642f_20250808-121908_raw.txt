@@ -1,0 +1,120 @@
+# Used model: mistral:latest
+
+ ### Flutter Widget ###
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_design_system/themes.dart'; // Assuming you have a design system package
+
+class SessionScreen extends StatefulWidget {
+  @override
+  _SessionScreenState createState() => _SessionScreenState();
+}
+
+class _SessionScreenState extends State<SessionScreen> {
+  // Widgets for patient selection, date picker, session note input, and calendar view are omitted for brevity.
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Session Screen')),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Widgets for patient selection, date picker, and session note input go here
+            ElevatedButton(
+              onPressed: () {
+                // Function to save the session data and generate AI summary goes here
+              },
+              child: Text('Save Session'),
+            ),
+            CalendarView(), // Assuming you have a calendar view widget
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CalendarView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // Calendar view implementation goes here using appropriate package like flutter_calendar_view or intl_date_time_picker
+    );
+  }
+}
+```
+
+### Firestore Schema ###
+
+```json
+{
+  "sessions": {
+    "name": "Sessions",
+    "fields": [
+      {"name": "patientId", "type": "string"},
+      {"name": "date", "type": "timestamp"},
+      {"name": "notes", "type": "string"},
+      // Add fields for affect, theme, and icdSuggestion if necessary
+    ]
+  },
+  "appointments": {
+    "name": "Appointments",
+    "fields": [
+      {"name": "sessionId", "type": "string"},
+      {"name": "slot", "type": "integer"},
+      {"name": "status", "type": "string"} // To store no-show tahmini (placeholder)
+    ]
+  }
+}
+```
+
+### AI Summary Prompt ###
+
+You may use a prompt like this to generate the structured summary with fields: affect, theme, icdSuggestion.
+
+```
+The patient's session focused on (theme). The patient exhibited feelings of (affect). Based on my understanding, the patient's condition might be related to ICD-10 code (icdSuggestion).
+```
+
+### PDF Export Instructions ###
+
+To export the summary as a PDF in Flutter, you can use packages like `pdf_flutter` or `flutter_generate_pdf`. Here's an example using `pdf_flutter`:
+
+1. Add `pdf_flutter: ^2.0.3` to your `pubspec.yaml` dependencies.
+2. Import the package and create a PDF controller:
+
+```dart
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdf_flutter/pdf_flutter.dart';
+
+final PdfDocument document = Document();
+final _controller = PdfController(document: document);
+```
+
+3. Add the summary to a PDF widget and save the generated PDF:
+
+```dart
+document.addPage(
+  pw.MultiPage(
+    build: (context) => [
+      // Your summary text as a formatted widget
+      ...
+    ],
+    footer: (context) => pw.Container(
+      decoration: pw.BoxDecoration(color: PdfColors.grey200),
+      padding: const pw.EdgeInsets.all(12),
+      alignment: pw.Alignment.center,
+      child: new Text('Page ${context.pageNumber} of {pagesCount}', style: pw.TextStyle(fontSize: 8)),
+    ),
+  ),
+);
+
+final outputFile = File('output.pdf');
+await document.saveScatterified(outputFile);
+```

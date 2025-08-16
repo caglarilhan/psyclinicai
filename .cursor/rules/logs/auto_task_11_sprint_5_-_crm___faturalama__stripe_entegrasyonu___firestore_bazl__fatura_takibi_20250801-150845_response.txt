@@ -1,0 +1,1 @@
+❌ Model hatası (tüm denemeler başarısız): HTTPConnectionPool(host='localhost', port=11435): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x101ca0d10>: Failed to establish a new connection: [Errno 61] Connection refused'))

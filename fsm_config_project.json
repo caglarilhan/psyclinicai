@@ -1,0 +1,12 @@
+{
+  "project_root": "/Users/caglarilhan/psyclinicai",
+  "output_dir": "lib/widgets/generated",
+  "file_prefix": "fsm_gen_",
+  "plan_model": "mistral",
+  "code_model": "deepseek-coder",
+  "fix_model": "openai/gpt-oss-20b",
+  "max_retries": 3,
+  "auto_commit": false,
+  "notify": false,
+  "test_commands": [["flutter","analyze"]]
+}

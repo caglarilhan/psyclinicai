@@ -1,0 +1,30 @@
+# Used model: deepseek-coder:latest
+
+Sure, let me walk you through each step in your request. For this task I will be using a basic Flutter project structure and Firestore SDKs provided by Google's `firebase_flutter` plugin to interact with our database (i.e., sessions & appointments). 
+For simplicity of the code, let me also assume you already have some knowledge in Dart/Flutter or willingness for a Flutter tutorial session if not so far familiar ones are good startings point: [Google's Introduction To Firebase](https://firebase.google.com/) and your basic understanding is built on top of it, such as how to setup the project structure etc.
+ 
+### Step-1/2 ###   
+Now let’s create a Session Screen widget using Flutter by following these steps:  
+For simplicity's sake I will assume you have already set up your `pubspec.yaml` file and installed necessary packages like firebase_core, cloud_firestore in Dart-land (DART), we need to add the dependencies for Firestore into our pubspec files within a line of code:
+```dart 
+dependencies:  
+    flutter:  
+      sdk: flutter  
+    
+    firebase_core: ^0.7.1+4 # assuming you have latest version in your channel, please replace with the appropriate Firestore SDK versions if necessary .      
+```            
+After installing all dependencies we start creating a new Dart file for our Session Screen using any text editor (like VS Code) and add these lines: 
+In this case `main.dart` is set as your starting point, you can rename it to suit the project's needs if needed or create another one based on necessity like 'session_screen'. We will now start with a simple session screen where users select dates for appointments and then view them:
+```DART 
+import 'package:flutter/material.dart';  
+     // This import is necessary as well, just add it to use widgets in your UI..   
+      class SessionScreen extends StatefulWidget {  
+        @override      
+          _SessionScreenState createState() =>_SessionScreenState();  }          
+```        
+Now we need a list of dates for appointments. For this example, let's assume you have the `startDate` and `endDate(dart:core) formatting like '2019-3-7'. We will use datetime_picker package to pick date from user interface –
+```DART  
+import 'package:flutter/material.dart';    // importing necessary packages .    
+// And the other ones you'll need are already in your dependencies or could be installed separately if needed ...      }       });          },                   };             setState(() { startDate = newStart; enddate=newEnddates ;});  }}         ]);}   return ( // and here is how to display data on screen .
+```           This code will call when the date has been selected. You need a method in your `SessionScreen` widget that can accept user selection of dates, for example:   
+The following function displays an alert box with title 'Date Selected' using chosen start and end Date from picker –   where pickedDates is list containing all these data (startdate & End DATE):    ```dart      void showAlert(BuildContext context) { AlertDialog.builder() .....    }

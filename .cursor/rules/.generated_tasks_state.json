@@ -1,0 +1,19 @@
+{
+  "Sprint 1 - Seans ekran\u0131: Flutter UI tasar\u0131m\u0131 (dark/light, dan\u0131\u015fan se\u00e7imi) ve bile\u015fen implementasyonu": "auto_task_sprint_1_-_seans_ekran\u0131__flutter_ui_tasa_b93d6c66_20250801-104510.md",
+  "Sprint 1 - Randevu takvimi bile\u015feni: tarih-saat picker + Firestore kayd\u0131 + no-show uyar\u0131s\u0131": "auto_task_sprint_1_-_randevu_takvimi_bile\u015feni__tar_363b7da6_20250801-104510.md",
+  "Sprint 1 - Seans sonras\u0131 PDF \u00e7\u0131kt\u0131s\u0131: Flutter'da not al, PDF olu\u015ftur, indirme linki": "auto_task_sprint_1_-_seans_sonras\u0131_pdf_\u00e7\u0131kt\u0131s\u0131__fl_d168bdc5_20250801-104510.md",
+  "Sprint 2 - Tan\u0131 arama bile\u015feni: ICD/DSM kodlar\u0131na g\u00f6re arama ve e\u015fleme UI + backend": "auto_task_sprint_2_-_tan\u0131_arama_bile\u015feni__icd_dsm__43a6870a_20250801-104510.md",
+  "Sprint 2 - Re\u00e7ete \u00f6neri mod\u00fcl\u00fc: ICD koduna g\u00f6re ila\u00e7 \u00f6nerisi + etkile\u015fim uyar\u0131s\u0131 (AI destekli prompt)": "auto_task_sprint_2_-_re\u00e7ete_\u00f6neri_mod\u00fcl\u00fc__icd_kodu_9a95340c_20250801-104510.md",
+  "Sprint 2 - Kriz tespiti ve flag sistemi: Firestore \u015femas\u0131 + otomatik i\u015faretleme kurallar\u0131": "auto_task_sprint_2_-_kriz_tespiti_ve_flag_sistemi__4a5024f4_20250801-104510.md",
+  "Sprint 3 - E\u011fitim paneli: UI/UX + AI i\u00e7erik \u00f6neri sistemi (\u00f6\u011frenme i\u00e7erikleri \u00f6ner)": "auto_task_sprint_3_-_e\u011fitim_paneli__ui_ux___ai_i\u00e7e_d1b4e4d2_20250801-104510.md",
+  "Sprint 4 - Terapi sim\u00fclasyonu: GPT tabanl\u0131 \u201cAI dan\u0131\u015fan gibi cevap ver\u201d mod\u00fcl\u00fc + 3 \u00f6rnek seans": "auto_task_sprint_4_-_terapi_sim\u00fclasyonu__gpt_taban_5088aa16_20250801-104510.md",
+  "Sprint 4 - Seans analizi: Duygusal i\u00e7erik \u00e7\u0131kar\u0131m\u0131 i\u00e7in AI promptu ve sonu\u00e7 g\u00f6sterimi": "auto_task_sprint_4_-_seans_analizi__duygusal_i\u00e7eri_0cc33f66_20250801-104510.md",
+  "Sprint 5 - S\u00fcperviz\u00f6r paneli: Dashboard tasar\u0131m\u0131 + seans s\u00fcresi & de\u011ferlendirme analizleri": "auto_task_sprint_5_-_s\u00fcperviz\u00f6r_paneli__dashboard__70b2dfec_20250801-104510.md",
+  "Sprint 5 - CRM & faturalama: Stripe entegrasyonu + Firestore bazl\u0131 fatura takibi": "auto_task_sprint_5_-_crm___faturalama__stripe_ente_b5f1ed55_20250801-104510.md",
+  "Sprint 5 - White-label yap\u0131: regionConfig.ts ile \u00fclke bazl\u0131 davran\u0131\u015f kontrol\u00fc": "auto_task_sprint_5_-_white-label_yap\u0131__regionconfi_c324c8ee_20250801-104510.md",
+  "Sprint 6 - Dan\u0131\u015fan paneli: Seans ge\u00e7mi\u015fi g\u00f6sterimi + mood grafi\u011fi + AI \u00f6nerileri": "auto_task_sprint_6_-_dan\u0131\u015fan_paneli__seans_ge\u00e7mi\u015fi_eb5e8c10_20250801-104510.md",
+  "Sprint 7 - Hasta ge\u00e7mi\u015fi ekran\u0131: Flutter UI + ge\u00e7mi\u015f mood grafikleri": "auto_task_sprint_7_-_hasta_ge\u00e7mi\u015fi_ekran\u0131__flutter_11bb1b02_20250801-104510.md",
+  "Sprint 8 - Dan\u0131\u015fan ge\u00e7mi\u015fi bile\u015feni: Flutter UI + mood grafi\u011fi + Firestore schema entegrasyonu": "auto_task_sprint_8_-_dan\u0131\u015fan_ge\u00e7mi\u015fi_bile\u015feni__flu_61135630_20250801-104510.md",
+  "Sprint Test - Basit Flutter bile\u015feni: bir Button g\u00f6steren StatelessWidget": "auto_task_sprint_test_-_basit_flutter_bile\u015feni__bi_1d8ee815_20250801-104510.md",
+  "Sprint 1 - Seans ekran\u0131 tasar\u0131m\u0131 ve Flutter implementasyonu: dark/light destekli dan\u0131\u015fan se\u00e7imi, mood g\u00f6stergesi, seans ge\u00e7mi\u015fi; \u00e7\u0131kt\u0131 olarak Flutter Widget, Firestore schema ve seans \u00f6zeti i\u00e7in AI promptu \u00fcretilecek (DSM-5 uyumlu).": "auto_task_sprint_1_-_seans_ekran\u0131_tasar\u0131m\u0131_ve_flut_031712af_20250801-114700.md"
+}

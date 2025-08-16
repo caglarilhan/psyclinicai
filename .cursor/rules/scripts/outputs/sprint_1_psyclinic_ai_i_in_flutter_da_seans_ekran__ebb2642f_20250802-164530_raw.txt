@@ -1,0 +1,58 @@
+# Used model: mistral:latest
+
+ ### Flutter Widget
+```dart
+import 'package:flutter/material.dart';
+
+class SessionScreen extends StatefulWidget {
+  @override
+  _SessionScreenState createState() => _SessionScreenState();
+}
+
+class _SessionScreenState extends State<SessionScreen> {
+  TextEditingController _noteController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Session Screen')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Patient selection dropdown
+            // Date and time picker for session
+            // Note input field with controller
+            Expanded(child: TextField(_noteController)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Firestore Schema
+```json
+{
+  "sessions": {
+    "sessionId": {
+      "patientId": "patientId",
+      "dateTime": "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "note": "note",
+      "summary": "generated summary"
+    }
+  },
+  "appointments": {
+    "appointmentId": {
+      "sessionId": "sessionId",
+      "patientId": "patientId",
+      "dateTime": "YYYY-MM-DDTHH:mm:ss.SSSZ",
+      "noShowPrediction": 0.5 // no show prediction probability between 0 and 1
+    }
+  }
+}
+```
+
+### Prompt 📋
+Implement a `SessionScreen` widget in Flutter for the PsyClinic AI application that includes UI components for patient selection, date and time picker, note input field, and supports saving session notes to Firestore. Additionally, create a function for generating a summary of session notes using an AI model, store it as a property on the session document, and make the session summary available as a PDF file for download.

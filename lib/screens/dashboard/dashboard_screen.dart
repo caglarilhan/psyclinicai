@@ -13,6 +13,7 @@ import '../../widgets/medication_reminder/medication_reminder_widget.dart';
 import '../../widgets/emergency_contact/emergency_contact_widget.dart';
 import '../../widgets/progress_dashboard/progress_dashboard_widget.dart';
 import '../../widgets/offline_mode/offline_mode_widget.dart';
+import '../client_management/client_management_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -310,6 +311,17 @@ class DashboardHome extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // Vaka Yönetimi
+            _buildModuleCard(
+              context,
+              'Vaka Yönetimi',
+              'Danışan profilleri, seans geçmişi ve AI destekli vaka analizi',
+              Icons.people,
+              Colors.teal.shade600,
+              () => _showClientManagement(context),
+            ),
+            const SizedBox(height: 16),
+
             _buildModuleCard(
               context,
               'PDF Çıktısı',
@@ -592,6 +604,15 @@ class DashboardHome extends StatelessWidget {
           ),
         ),
         child: const OfflineModeWidget(),
+      ),
+    );
+  }
+
+  void _showClientManagement(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ClientManagementScreen(),
       ),
     );
   }

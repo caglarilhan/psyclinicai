@@ -1,0 +1,62 @@
+Sprint 1 - Seans ekranı: Flutter UI tasarımı (dark/light, danışan seçimi) ve bileşen implementasyonu
+Sprint 1 - Randevu takvimi bileşeni: tarih-saat picker + Firestore kaydı + no-show uyarısı
+Sprint 1 - Seans sonrası PDF çıktısı: Flutter'da not al, PDF oluştur, indirme linki
+Sprint 2 - Tanı arama bileşeni: ICD/DSM kodlarına göre arama ve eşleme UI + backend
+Sprint 2 - Reçete öneri modülü: ICD koduna göre ilaç önerisi + etkileşim uyarısı (AI destekli prompt)
+Sprint 2 - Kriz tespiti ve flag sistemi: Firestore şeması + otomatik işaretleme kuralları
+Sprint 3 - Eğitim paneli: UI/UX + AI içerik öneri sistemi (öğrenme içerikleri öner)
+Sprint 4 - Terapi simülasyonu: GPT tabanlı "AI danışan gibi cevap ver" modülü + 3 örnek seans
+Sprint 4 - Seans analizi: Duygusal içerik çıkarımı için AI promptu ve sonuç gösterimi
+Sprint 5 - Süpervizör paneli: Dashboard tasarımı + seans süresi & değerlendirme analizleri
+Sprint 5 - CRM & faturalama: Stripe entegrasyonu + Firestore bazlı fatura takibi
+Sprint 5 - White-label yapı: regionConfig.ts ile ülke bazlı davranış kontrolü
+Sprint 6 - Danışan paneli: Seans geçmişi gösterimi + mood grafiği + AI önerileri
+Sprint 7 - Hasta geçmişi ekranı: Flutter UI + geçmiş mood grafikleri
+Sprint 8 - Danışan geçmişi bileşeni: Flutter UI + mood grafiği + Firestore schema entegrasyonu
+Sprint Test - Basit Flutter bileşeni: bir Button gösteren StatelessWidget
+Sprint 1 - Seans ekranı tasarımı ve Flutter implementasyonu: dark/light destekli danışan seçimi, mood göstergesi, seans geçmişi; çıktı olarak Flutter Widget, Firestore schema ve seans özeti için AI promptu üretilecek (DSM-5 uyumlu).
+
+# === YENİ SPRINT PLANI ===
+
+# Sprint 1 - Temel Altyapı
+Sprint 1: Flutter projesi oluştur ve temel ThemeData ile light/dark tema yapılandırmasını yap.
+Sprint 1: Tab bar navigasyon iskeletini oluştur: Feed, Mood, AI Chat, Bildirim, Profil.
+Sprint 1: Placeholder ekranlar ile "Under Construction" detaylarını koy ve başlangıçta temel state management setup'u ekle.
+
+# Sprint 2 - Authentication & Onboarding
+Sprint 2: Firebase Authentication ile e-posta tabanlı kayıt/giriş akışını kur ve rumuz seçimini ekle.
+Sprint 2: Onboarding slaytlarını kodla ve "atla" fonksiyonunu ekle.
+Sprint 2: Kullanıcı ilgi alanı tercihi ekranı oluştur.
+
+# Sprint 3 - Mood Tracking
+Sprint 3: Mood entry UI + Firestore yazma yapısını kur; mood + not kaydedilsin.
+Sprint 3: Geçmiş mood girişlerini listeleyen ekran oluştur.
+Sprint 3: Mood trend grafiğini çizen chart component'ini ekle.
+
+# Sprint 4 - Community Feed
+Sprint 4: Post paylaşma ekranı ve Firestore posts koleksiyonu yazma.
+Sprint 4: Feed ekranında realtime post listener kur.
+Sprint 4: Yorum sistemi implementasyonu (comment ekleme ve listeleme).
+Sprint 4: Gönderi/yorum için rapor et butonu ve report kaydı.
+Sprint 4: Basit küfür filtresiyle flagged post'ları işaretle.
+
+# Sprint 5 - AI Chat & Analytics
+Sprint 5: AI sohbet botu UI ve backend (Cloud Function) entegrasyonu kur.
+Sprint 5: Yeni moodEntry geldiğinde AI analizi yapan function yaz.
+Sprint 5: Rozet ve puan sistemini tetikleyen logic yaz; kullanıcı profilinde göster.
+Sprint 5: Çoklu dil altyapısı için sabit metinleri lokalize edecek l10n dosyalarını oluştur.
+
+# Sprint 6 - Crisis Mode & Security
+Sprint 6: Kriz modu UI akışı ve nefes egzersizi ekranı oluştur.
+Sprint 6: Kriz durumunu moderatöre alert olarak yazan Cloud Function yaz.
+Sprint 6: Firestore security rules yaz (kendi mood'larını sadece kendi okuyabilecek, raporlar moderator görebilsin).
+
+# Sprint 7 - Testing & Admin
+Sprint 7: Unit test altyapısı kur ve kritik fonksiyonlar için test yaz.
+Sprint 7: Admin paneli oluştur (moderatör uyarıları, kriz durumları listesi).
+Sprint 7: Beta kullanıcı testi için feedback sistemi kur.
+
+# Sprint 8 - Launch Preparation
+Sprint 8: Erişilebilirlik kontrolleri ve iyileştirmeleri yap.
+Sprint 8: App store metadata ve yayın hazırlığı.
+Sprint 8: Monitoring ve crash reporting entegrasyonu.

@@ -1,0 +1,720 @@
+## PsyClinic AI - Uluslararası Klinik Yönetim Sistemi PRD (Product Requirements Document)
+
+---
+
+### 1. Vizyon & Misyon
+
+**Vizyon:** Terapistlerin mesleki yükünü yapay zekâ ile hafifleten, seans odaklı ve etik temelli bir klinik sistem olmak.
+
+**Misyon:** Psikolog ve psikiyatristlere seans notu, tanı önerisi, reçete desteği, vaka yönetimi ve süpervizyon gibi alanlarda yapay zekâ destekli modüller sunarak, onların terapötik kapasitesini artırmak.
+
+---
+
+### 2. Hedef Kitle & Kullanıcı Rolleri
+
+* **Kullanıcı Profilleri:**
+
+  * Psikolog
+  * Psikiyatrist
+  * Klinik yöneticisi
+  * Süpervizör
+  * Admin
+
+---
+
+### 3. Hedef Ülkeler
+
+* ABD
+* Almanya
+* Birleşik Krallık (İngiltere/İrlanda)
+* Fransa / Hollanda
+* Kanada
+* Türkiye
+
+> Hindistan dışarıda tutulmuştur.
+
+---
+
+### 4. Pazar Analizi (Bölgesel Gereksinimler)
+
+#### 🇺🇸 ABD (Amerika)
+
+* **Beklenti:** DSM-5-TR & HIPAA uyumu, özel terapi modelleri (CBT, DBT, ACT)
+* **Öne çıkanlar:** AI ile seans özeti büyük ilgi görür, Süpervizyon sistemi + flag + audit trail talep edilir
+* **Uyarı:** “AI tanı koymaz” uyarısı şart. FDA onayı gerektirmemesi için “destekleyici sistem” olarak konumlanmalı
+
+#### 🇪🇺 Avrupa (Almanya, Hollanda, Fransa vb.)
+
+* **Beklenti:** ICD-11 kullanımı, GDPR uyumu, kültür duyarlı içerik
+* **Öne çıkanlar:** Duygu analizi, seans içi analiz çok değerli, Şifreli veri saklama, “veri silme hakkı” kritik
+* **Uyarı:** Psikolojik danışman vs klinik psikolog ayrımı net. Rol yönetimi dikkatli olmalı
+
+#### 🇬🇧 Birleşik Krallık (İngiltere, İrlanda)
+
+* **Beklenti:** NHS uyumlu sistemler, ICD + NICE protokolleri
+* **Öne çıkanlar:** AI destekli terapi planları (ör. “depresyon için CBT haftalık yapı”)
+* **Uyarı:** AI çıktılarının şeffaf olması önemli – “Explainable AI” vurgusu yapılmalı
+
+#### 🇨🇦 Kanada
+
+* **Beklenti:** Bilingual (İngilizce + Fransızca), DSM + ICD birlikte kullanılır
+* **Öne çıkanlar:** AI öneri sistemine ilgi yüksek, Klinik dashboard talep edilir
+* **Uyarı:** Veri Kanada içinde kalmalı → Firebase’in Kanada bölgesel hosting seçeneği kullanılabilir
+
+#### 🇹🇷 Türkiye
+
+* **Beklenti:** KVKK, offline kullanım, düşük bütçeli planlar
+* **Öne çıkanlar:** PDF çıktılar, seans özeti ve reçete modülü çok değerli, Danışan görmeden terapist odaklı yapı şart
+* **Uyarı:** Tanı yetkisi olan meslek grupları net ayrılmalı
+
+---
+
+### 5. Ürün Özellikleri (MVP Modüller)
+
+| Modül                 | Açıklama                                             |
+| --------------------- | ---------------------------------------------------- |
+| Seans Notu + AI Özet  | Duygu, tema ve tanı önerisi üretimi + PDF            |
+| Randevu Takvimi       | AI destekli hatırlatıcılar, no-show tahmini          |
+| Tanı Arama            | ICD/DSM kodları üzerinden hızlı arama                |
+| Reçete & İlaç Sistemi | AI destekli ilaç önerisi + etkileşim kontrolü        |
+| Flag Sistemi          | Kriz/suicid/ajitasyon tespiti                        |
+| Eğitim Kitaplığı      | AI önerili video, PDF, vaka eğitimi                  |
+| Terapi Simülasyonu    | AI ile seans provası (GPT destekli)                  |
+| Vaka Yöneticisi       | Her danışan için tanı & gelişim takibi               |
+| Süpervizör Paneli     | Terapist performansı, seans süresi, AI değerlendirme |
+| Finans Modülü         | Gelir-gider, uyarılar, faturalama                    |
+| Kurum Mesajlaşma      | AI özetli Slack benzeri iletişim                     |
+
+---
+
+### 6. Teknik Mimari
+
+* **Frontend:** Flutter (Web + Mobil)
+* **Backend:** Firebase (Auth, Firestore, Functions)
+* **AI:** OpenRouter / Claude / LLaMA3
+* **Veritabanı:** Firestore JSON veri modeli
+* **UI/UX:** Lokal varyantlı, responsive, light/dark destekli
+* **regionConfig.ts:** Ülkeye özel davranışlar için yapı
+
+---
+
+### 7. AI Modül Tanımı (Örnek: Seans Özeti)
+
+* **Girdi:** Terapi notu (serbest yazı)
+* **Prompt:** "Bu yazıyı DSM uyumlu klinik formatta özetle."
+* **Çıktı:**
+
+```json
+{
+  "affect": "üzgün",
+  "theme": "değersizlik",
+  "icdSuggestion": "6B00.0"
+}
+```
+
+---
+
+### 8. Firestore JSON Şeması (Örnek)
+
+```json
+/sessions/{sessionId}:
+{
+  "clientId": "abc123",
+  "therapistId": "xyz456",
+  "createdAt": "2025-07-15",
+  "notes": "Bugünkü görüşmede...",
+  "aiSummary": {
+    "affect": "üzgün",
+    "theme": "değersizlik",
+    "icdSuggestion": "6B00.0"
+  }
+}
+```
+
+---
+
+### 9. Güvenlik ve Yasal Uyumluluk
+
+| Bölge       | Gereksinim                                  |
+| ----------- | ------------------------------------------- |
+| 🇺🇸 HIPAA  | AES-256, audit log, access control          |
+| 🇪🇺 GDPR   | Export, data silme, DPO zorunluluğu         |
+| 🇹🇷 KVKK   | Açık rıza, rol bazlı erişim, anonimleştirme |
+| 🇨🇦 PIPEDA | Kanada içi hosting, veri erişim protokolü   |
+
+---
+
+### 10. Fiyatlandırma Planı
+
+| Plan       | Özellikler                     | Fiyat     |
+| ---------- | ------------------------------ | --------- |
+| Starter    | 3 danışan, AI özeti yok        | \$0       |
+| Pro        | Sınırsız danışan, AI özet, PDF | \$12/ay   |
+| Enterprise | Tüm modüller + çoklu şube      | \$49/ay + |
+
+---
+
+### 11. Üretim Yol Haritası
+
+* **Sprint 1:** Seans ekranı + randevu + PDF
+* **Sprint 2:** Tanı sistemi + reçete öneri + flag AI
+* **Sprint 3:** Eğitim paneli + AI öneri + içerik
+* **Sprint 4:** Simülasyon + seans analizi
+* **Sprint 5:** CRM + süpervizyon + white-label mimari
+
+---
+
+### 12. Sorun Tanımı (Problem Statement)
+
+> "PsyClinic AI, psikoterapistlerin zamansal ve idari yükünü azaltarak, daha etkili, analiz edilebilir ve etik bir terapi süreci yönetmelerini sağlar."
+
+---
+
+### 13. Sonuç
+
+✅ Yapay zekâ modülleri tanımlandı
+✅ Global pazar uyumu planlandı
+✅ Güvenlik ve yasallık temel alındı
+✅ Sprint planı hazır
+
+> Hazırsan: “Sprint 1’i başlat” diyerek inşa sürecine geçebiliriz.
+---
+description:
+globs:
+alwaysApply: false
+---
+PsyClinic AI - Uluslararası Klinik Yönetim Sistemi PRD (Product Requirements Document)
+
+1. Vizyon & Misyon
+
+Vizyon: Terapistlerin mesleki yükünü yapay zekâ ile hafifleten, seans odaklı ve etik temelli bir klinik sistem olmak.
+
+Misyon: Psikolog ve psikiyatristlere seans notu, tanı önerisi, reçete desteği, vaka yönetimi ve süpervizyon gibi alanlarda yapay zekâ destekli modüller sunarak, onların terapötik kapasitesini artırmak.
+
+2. Hedef Kitle & Kullanıcı Rolleri
+
+Kullanıcı Profilleri:
+
+Psikolog
+
+Psikiyatrist
+
+Klinik yöneticisi
+
+Süpervizör
+
+Admin
+
+3. Hedef Ülkeler
+
+ABD
+
+Almanya
+
+Birleşik Krallık (İngiltere/İrlanda)
+
+Fransa / Hollanda
+
+Kanada
+
+Türkiye
+
+Hindistan dışarıda tutulmuştur.
+
+4. Pazar Analizi (Bölgesel Gereksinimler)
+
+🇺🇸 ABD
+
+DSM-5-TR, HIPAA uyumu
+
+FDA onayı gerektirmemesi için "destek sistemi" vurgusu
+
+Explainable AI zorunluluğu
+
+🇩🇪 🇫🇷 🇳🇱 Avrupa
+
+ICD-11, GDPR, kültürel uyum
+
+"Veri silme hakkı" ve export
+
+🇬🇧 Birleşik Krallık
+
+ICD + NICE protokolleri
+
+NHS uyumu
+
+🇨🇦 Kanada
+
+Bilingual: İngilizce & Fransızca
+
+Veriler Kanada içinde barınmalı (PIPEDA)
+
+🇹🇷 Türkiye
+
+KVKK uyumu
+
+Offline destek
+
+Uygun fiyatlı planlar
+
+5. Ürün Özellikleri (MVP Modüller)
+
+Modül
+
+Açıklama
+
+Seans Notu + AI Özet
+
+Duygu, tema ve tanı önerisi üretimi + PDF
+
+Randevu Takvimi
+
+AI destekli hatırlatıcılar, no-show tahmini
+
+Tanı Arama
+
+ICD/DSM kodları üzerinden hızlı arama
+
+Reçete & İlaç Sistemi
+
+AI destekli ilaç önerisi + etkileşim kontrolü
+
+Flag Sistemi
+
+Kriz/suicid/ajitasyon tespiti
+
+Eğitim Kitaplığı
+
+AI önerili video, PDF, vaka eğitimi
+
+Terapi Simülasyonu
+
+AI ile seans provası (GPT destekli)
+
+Vaka Yöneticisi
+
+Her danışan için tanı & gelişim takibi
+
+Süpervizör Paneli
+
+Terapist performansı, seans süresi, AI değerlendirme
+
+Finans Modülü
+
+Gelir-gider, uyarılar, faturalama
+
+Kurum Mesajlaşma
+
+AI özetli Slack benzeri iletişim
+
+6. Teknik Mimari
+
+Frontend: Flutter (Web + Mobil)
+
+Backend: Firebase (Auth, Firestore, Functions)
+
+AI: OpenRouter / Claude / LLaMA3
+
+Veritabanı: Firestore JSON veri modeli
+
+UI/UX: Lokal varyantlı, responsive, light/dark destekli
+
+regionConfig.ts: Ülkeye özel davranışlar için yapı
+
+7. AI Modül Tanımı (Örnek: Seans Özeti)
+
+Girdi: Terapi notu (serbest yazı)
+
+Prompt: "Bu yazıyı DSM uyumlu klinik formatta özetle."
+
+Çıktı:
+
+{
+  "affect": "üzgün",
+  "theme": "değersizlik",
+  "icdSuggestion": "6B00.0"
+}
+
+8. Firestore JSON Şeması (Örnek)
+
+/sessions/{sessionId}:
+{
+  "clientId": "abc123",
+  "therapistId": "xyz456",
+  "createdAt": "2025-07-15",
+  "notes": "Bugünkü görüşmede...",
+  "aiSummary": {
+    "affect": "üzgün",
+    "theme": "değersizlik",
+    "icdSuggestion": "6B00.0"
+  }
+}
+
+9. Güvenlik ve Yasal Uyumluluk
+
+Bölge
+
+Gereksinim
+
+🇺🇸 HIPAA
+
+AES-256, audit log, access control
+
+🇪🇺 GDPR
+
+Export, data silme, DPO zorunluluğu
+
+🇹🇷 KVKK
+
+Açık rıza, rol bazlı erişim, anonimleştirme
+
+🇨🇦 PIPEDA
+
+Kanada içi hosting, veri erişim protokolü
+
+10. Fiyatlandırma Planı
+
+Plan
+
+Özellikler
+
+Fiyat
+
+Starter
+
+3 danışan, AI özeti yok
+
+$0
+
+Pro
+
+Sınırsız danışan, AI özet, PDF
+
+$12/ay
+
+Enterprise
+
+Tüm modüller + çoklu şube
+
+$49/ay +
+
+11. Üretim Yol Haritası
+
+Sprint 1: Seans ekranı + randevu + PDF
+
+Sprint 2: Tanı sistemi + reçete öneri + flag AI
+
+Sprint 3: Eğitim paneli + AI öneri + içerik
+
+Sprint 4: Simülasyon + seans analizi
+
+Sprint 5: CRM + süpervizyon + white-label mimari
+
+12. Sorun Tanımı (Problem Statement)
+
+"PsyClinic AI, psikoterapistlerin zamansal ve idari yükünü azaltarak, daha etkili, analiz edilebilir ve etik bir terapi süreci yönetmelerini sağlar."
+
+13. Masaüstü Kullanım & Klavye Kısayolları
+
+Masaüstü Optimizasyonu:
+
+Geniş ekranlarda çoklu panel (örn. danışan listesi, not, AI çıktı) desteği
+
+Fare + klavye ile kolay form doldurma
+
+UI öğeleri responsive şekilde masaüstüne özel yerleşir
+
+Klavye Kısayolları:
+
+Kısayol
+
+İşlevi
+
+Ctrl + N
+
+Yeni seans notu başlat
+
+Ctrl + S
+
+Seans notunu kaydet
+
+Ctrl + P
+
+PDF çıktısı al
+
+Ctrl + Shift + A
+
+AI özetini yeniden çalıştır
+
+Alt + 1/2/3
+
+Panel geçişleri (Notlar / AI / Danışan)
+
+Bu özellikler bilgisayar kullanımı için yüksek hız ve profesyonellik kazandırır.
+
+14. Sonuç
+
+✅ Yapay zekâ modülleri tanımlandı✅ Global pazar uyumu planlandı✅ Güvenlik ve yasallık temel alındı✅ Sprint planı hazır✅ Masaüstü kullanım desteklendi
+
+Hazırsan: “Sprint 1’i başlat” diyerek inşa sürecine geçebiliriz.
+
+## PsyClinic AI - Uluslararası Klinik Yönetim Sistemi PRD (Product Requirements Document)
+
+---
+
+### 1. Vizyon & Misyon
+
+**Vizyon:** Terapistlerin mesleki yükünü yapay zekâ ile hafifleten, seans odaklı ve etik temelli bir klinik docker pssistem olmak.
+
+**Misyon:** Psikolog ve psikiyatristlere seans notu, tanı önerisi, reçete desteği, vaka yönetimi ve süpervizyon gibi alanlarda yapay zekâ destekli modüller sunarak, onların terapötik kapasitesini artırmak.
+
+---
+
+### 2. Hedef Kitle & Kullanıcı Rolleri
+
+* **Kullanıcı Profilleri:**
+
+  * Psikolog
+  * Psikiyatrist
+  * Klinik yöneticisi
+  * Süpervizör
+  * Admin
+
+---
+
+### 3. Hedef Ülkeler
+
+* ABD
+* Almanya
+* Birleşik Krallık (İngiltere/İrlanda)
+* Fransa / Hollanda
+* Kanada
+* Türkiye
+
+> Hindistan dışarıda tutulmuştur.
+
+---
+
+### 4. Pazar Analizi (Bölgesel Gereksinimler)
+
+#### 🇺🇸 ABD (Amerika)
+
+* **Beklenti:** DSM-5-TR & HIPAA uyumu, özel terapi modelleri (CBT, DBT, ACT)
+* **Öne çıkanlar:** AI ile seans özeti büyük ilgi görür, Süpervizyon sistemi + flag + audit trail talep edilir
+* **Uyarı:** “AI tanı koymaz” uyarısı şart. FDA onayı gerektirmemesi için “destekleyici sistem” olarak konumlanmalı
+
+#### 🇪🇺 Avrupa (Almanya, Hollanda, Fransa vb.)
+
+* **Beklenti:** ICD-11 kullanımı, GDPR uyumu, kültür duyarlı içerik
+* **Öne çıkanlar:** Duygu analizi, seans içi analiz çok değerli, Şifreli veri saklama, “veri silme hakkı” kritik
+* **Uyarı:** Psikolojik danışman vs klinik psikolog ayrımı net. Rol yönetimi dikkatli olmalı
+
+#### 🇬🇧 Birleşik Krallık (İngiltere, İrlanda)
+
+* **Beklenti:** NHS uyumlu sistemler, ICD + NICE protokolleri
+* **Öne çıkanlar:** AI destekli terapi planları (ör. “depresyon için CBT haftalık yapı”)
+* **Uyarı:** AI çıktılarının şeffaf olması önemli – “Explainable AI” vurgusu yapılmalı
+
+#### 🇨🇦 Kanada
+
+* **Beklenti:** Bilingual (İngilizce + Fransızca), DSM + ICD birlikte kullanılır
+* **Öne çıkanlar:** AI öneri sistemine ilgi yüksek, Klinik dashboard talep edilir
+* **Uyarı:** Veri Kanada içinde kalmalı → Firebase’in Kanada bölgesel hosting seçeneği kullanılabilir
+
+#### 🇹🇷 Türkiye
+
+* **Beklenti:** KVKK, offline kullanım, düşük bütçeli planlar
+* **Öne çıkanlar:** PDF çıktılar, seans özeti ve reçete modülü çok değerli, Danışan görmeden terapist odaklı yapı şart
+* **Uyarı:** Tanı yetkisi olan meslek grupları net ayrılmalı
+
+---
+
+### 5. Ürün Özellikleri (MVP Modüller)
+
+| Modül                 | Açıklama                                             |
+| --------------------- | ---------------------------------------------------- |
+| Seans Notu + AI Özet  | Duygu, tema ve tanı önerisi üretimi + PDF            |
+| Randevu Takvimi       | AI destekli hatırlatıcılar, no-show tahmini          |
+| Tanı Arama            | ICD/DSM kodları üzerinden hızlı arama                |
+| Reçete & İlaç Sistemi | AI destekli ilaç önerisi + etkileşim kontrolü        |
+| Flag Sistemi          | Kriz/suicid/ajitasyon tespiti                        |
+| Eğitim Kitaplığı      | AI önerili video, PDF, vaka eğitimi                  |
+| Terapi Simülasyonu    | AI ile seans provası (GPT destekli)                  |
+| Vaka Yöneticisi       | Her danışan için tanı & gelişim takibi               |
+| Süpervizör Paneli     | Terapist performansı, seans süresi, AI değerlendirme |
+| Finans Modülü         | Gelir-gider, uyarılar, faturalama                    |
+| Kurum Mesajlaşma      | AI özetli Slack benzeri iletişim                     |
+
+---
+
+### 6. Teknik Mimari
+
+* **Frontend:** Flutter (Web + Mobil)
+* **Backend:** Firebase (Auth, Firestore, Functions)
+* **AI:** OpenRouter / Claude / LLaMA3
+* **Veritabanı:** Firestore JSON veri modeli
+* **UI/UX:** Lokal varyantlı, responsive, light/dark destekli
+* **regionConfig.ts:** Ülkeye özel davranışlar için yapı
+
+#### regionConfig.ts Yapısı (Örnek)
+
+```ts
+export const regionConfig = {
+  US: {
+    diagnosisStandard: 'DSM-5',
+    legalCompliance: ['HIPAA'],
+    language: 'en',
+    aiPromptSuffix: 'DSM formatında öner.',
+    hosting: 'us-central1'
+  },
+  EU: {
+    diagnosisStandard: 'ICD-11',
+    legalCompliance: ['GDPR'],
+    language: 'en',
+    aiPromptSuffix: 'ICD-11 kodu ile özetle.',
+    hosting: 'europe-west1'
+  },
+  TR: {
+    diagnosisStandard: 'ICD-10',
+    legalCompliance: ['KVKK'],
+    language: 'tr',
+    aiPromptSuffix: 'Türkçe ICD kodu ile özetle.',
+    hosting: 'europe-west2'
+  },
+  CA: {
+    diagnosisStandard: 'ICD + DSM',
+    legalCompliance: ['PIPEDA'],
+    language: 'en-fr',
+    aiPromptSuffix: 'ICD kodu ve Fransızca açıklama dahil.',
+    hosting: 'northamerica-northeast1'
+  }
+};
+```
+
+---
+
+### 7. AI Modül Tanımları
+
+#### a. Seans Özeti
+
+* **Prompt:** "Bu terapi notunu DSM uyumlu şekilde 3 başlıkta özetle: Duygu, Tema, ICD önerisi."
+* **Girdi:** "Danışan bugün kendini boşlukta hissettiğini belirtti..."
+* **Çıktı:** `{ affect: 'boşluk', theme: 'anlamsızlık', icdSuggestion: '6B00.0' }`
+
+#### b. Reçete Asistanı
+
+* **Prompt:** "Bu tanıya uygun 2 öneri ilaç + etkileşim riski verir misin?"
+* **Girdi:** `tanı: '6B00.0', önceki ilaç: sertralin`
+* **Çıktı:** `{ suggested: ['escitalopram', 'bupropion'], interactions: ['serotonin sendromu riski'] }`
+
+#### c. Eğitim Önerici
+
+* **Prompt:** "Terapistin uzmanlığına göre 3 video öner."
+* **Girdi:** `uzmanlık: 'bipolar bozukluk', deneyim: 2 yıl`
+* **Çıktı:** `[ 'Bipolar Seans Planlaması', 'Mood Takibi Eğitimi', 'Lityum Takibi Protokolleri' ]`
+
+#### d. Terapi Simülasyonu
+
+* **Prompt:** "Bir danışan gibi davran. Terapi hedefi: anksiyete."
+* **Girdi:** `Terapist mesajı: 'Neler hissediyorsunuz?'`
+* **Çıktı:** `Danışan cevabı: 'Sürekli tetikteyim, her şey kötü olacak gibi.'`
+
+---
+
+### 8. Firestore JSON Şeması (Örnek)
+
+```json
+/sessions/{sessionId}:
+{
+  "clientId": "abc123",
+  "therapistId": "xyz456",
+  "createdAt": "2025-07-15",
+  "notes": "Bugünkü görüşmede...",
+  "aiSummary": {
+    "affect": "üzgün",
+    "theme": "değersizlik",
+    "icdSuggestion": "6B00.0"
+  }
+}
+```
+
+---
+
+### 9. Güvenlik ve Yasal Uyumluluk
+
+| Bölge       | Gereksinim                                  |
+| ----------- | ------------------------------------------- |
+| 🇺🇸 HIPAA  | AES-256, audit log, access control          |
+| 🇪🇺 GDPR   | Export, veri silme, DPO zorunluluğu         |
+| 🇹🇷 KVKK   | Açık rıza, rol bazlı erişim, anonimleştirme |
+| 🇨🇦 PIPEDA | Kanada içi hosting, veri erişim protokolü   |
+
+---
+
+### 10. Fiyatlandırma Planı
+
+| Plan       | Özellikler                     | Fiyat     |
+| ---------- | ------------------------------ | --------- |
+| Starter    | 3 danışan, AI özeti yok        | \$0       |
+| Pro        | Sınırsız danışan, AI özet, PDF | \$12/ay   |
+| Enterprise | Tüm modüller + çoklu şube      | \$49/ay + |
+
+---
+
+### 11. Üretim Yol Haritası
+
+* **Sprint 1:** Seans ekranı + randevu + PDF
+* **Sprint 2:** Tanı sistemi + reçete öneri + flag AI
+* **Sprint 3:** Eğitim paneli + AI öneri + içerik
+* **Sprint 4:** Simülasyon + seans analizi
+* **Sprint 5:** CRM + süpervizyon + white-label mimari
+
+---
+
+### 12. Masaüstü Kullanım & Klavye Kısayolları
+
+#### Masaüstü Optimizasyonu
+
+* Geniş ekranlarda çoklu panel (örn. danışan listesi, not, AI çıktı)
+* Klavye + fare ile hızlı kullanım
+* Responsive yerleşim (formlar, kartlar, PDF)
+
+#### Klavye Kısayolları
+
+| Kısayol          | İşlevi                             |
+| ---------------- | ---------------------------------- |
+| Ctrl + N         | Yeni seans başlat                  |
+| Ctrl + S         | Notu kaydet                        |
+| Ctrl + P         | PDF çıktısı                        |
+| Ctrl + Shift + A | AI özetini yeniden çalıştır        |
+| Alt + 1/2/3      | Panel geçişleri (Not, AI, Danışan) |
+
+---
+
+### 13. Gizlilik Politikası (Şablon Başlıkları)
+
+* Toplanan Veriler: (IP, kullanıcı adı, seans notu)
+* Kullanım Amacı: Terapi süreci desteği
+* Depolama: Firebase, Google Cloud bölgesel
+* Erişim: Yalnızca yetkili terapistler ve admin
+* Silme Politikası: Kullanıcı talebinde 30 gün içinde tam silme
+* Üçüncü Parti: Zoom, Stripe, Google Calendar API’leriyle sınırlı paylaşım
+
+---
+
+### 14. Sonuç
+
+✅ Yapay zekâ modülleri tanımlandı
+✅ Global pazar uyumu planlandı
+✅ Güvenlik ve yasallık temel alındı
+✅ Masaüstü ve mobil optimizasyon sağlandı
+✅ AI modül sistematiği açıklandı
+✅ regionConfig.ts yapısı eklendi
+✅ Gizlilik politikası şablonu tanımlandı
+
+> Hazırsan: “Sprint 1’i başlat” diyerek inşa sürecine geçebiliriz.
+---
+description:
+globs:
+alwaysApply: false
+---

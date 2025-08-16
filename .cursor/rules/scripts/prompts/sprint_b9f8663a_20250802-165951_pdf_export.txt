@@ -1,0 +1,49 @@
+To export session summaries to PDF in Flutter, use the `pdf` package:
+
+```dart
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+
+Future<String> generateSessionPDF({
+  required String patientName,
+  required String sessionDate,
+  required String notes,
+  required Map<String, String> aiSummary,
+}) async {
+  final pdf = pw.Document();
+  
+  pdf.addPage(pw.Page(
+    pageFormat: PdfPageFormat.a4,
+    build: (pw.Context context) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Header(
+            level: 0,
+            child: pw.Text('PsyClinic AI - Seans Özeti'),
+          ),
+          pw.SizedBox(height: 20),
+          pw.Text('Danışan: $patientName'),
+          pw.Text('Tarih: $sessionDate'),
+          pw.SizedBox(height: 20),
+          pw.Text('AI Özet:', style: pw.TextStyle(bold: true)),
+          pw.Text('Duygu Durumu: ${aiSummary['affect']}'),
+          pw.Text('Tema: ${aiSummary['theme']}'),
+          pw.Text('ICD Önerisi: ${aiSummary['icdSuggestion']}'),
+          pw.SizedBox(height: 20),
+          pw.Text('Seans Notları:', style: pw.TextStyle(bold: true)),
+          pw.Text(notes),
+        ],
+      );
+    },
+  ));
+
+  final output = await getTemporaryDirectory();
+  final file = File('${output.path}/session_summary_${DateTime.now().millisecondsSinceEpoch}.pdf');
+  await file.writeAsBytes(await pdf.save());
+  
+  return file.path;
+}
+```

@@ -1,0 +1,22 @@
+[2025-07-29 12:14:02.261975] Görev işlendi: Sprint 1 - Seans ekranı tasarımı ve Flutter implementasyonu -> task_1_20250729-121402.md
+[2025-07-29 12:14:26.988440] Görev işlendi: Sprint 1 - Randevu takvimi bileşeni ve Firestore bağlantısı -> task_2_20250729-121426.md
+[2025-07-29 12:15:12.128083] Görev işlendi: Sprint 1 - Seans sonrası PDF çıktısı üretimi (Flutter + Firestore) -> task_3_20250729-121512.md
+[2025-07-29 12:15:44.058523] Görev işlendi: Sprint 2 - ICD/DSM kodlarına göre tanı arama bileşeni -> task_4_20250729-121544.md
+[2025-07-29 12:16:08.304259] Görev işlendi: Sprint 2 - AI destekli reçete öneri modülü (OpenRouter promptları ile) -> task_5_20250729-121608.md
+[2025-07-29 12:16:42.946455] Görev işlendi: Sprint 2 - Kriz tespiti ve flag sistemi için Firestore schema -> task_6_20250729-121642.md
+[2025-07-29 12:17:19.486063] Görev işlendi: Sprint 3 - Eğitim paneli UI/UX tasarımı ve AI içerik öneri sistemi -> task_7_20250729-121719.md
+[2025-07-29 12:17:48.610706] Görev işlendi: Sprint 4 - Terapi simülasyonu GPT tabanlı modül örneği -> task_8_20250729-121748.md
+[2025-07-29 12:18:05.028674] Görev işlendi: Sprint 4 - Seans analizi için duygusal içerik çıkarımı (AI prompt) -> task_9_20250729-121805.md
+[2025-07-29 12:18:34.636360] Görev işlendi: Sprint 5 - Süpervizör paneli dashboard tasarımı -> task_10_20250729-121834.md
+[2025-07-29 12:19:04.864694] Görev işlendi: Sprint 5 - CRM sistemi + faturalama ekranı + ödeme entegrasyonu -> task_11_20250729-121904.md
+[2025-07-29 12:19:13.355432] Görev işlendi: Sprint 5 - White-label yapı için regionConfig.ts sistemi -> task_12_20250729-121913.md
+[2025-07-29 12:19:58.804261] Görev işlendi: Flutter ile seans ekranı UI tasarımı (dark/light destekli, danışan seçimi) -> task_13_20250729-121958.md
+[2025-07-29 12:20:31.650517] Görev işlendi: Randevu modülü: tarih-saat picker, Firestore'da saklama, no-show uyarısı -> task_14_20250729-122031.md
+[2025-07-29 12:21:03.292647] Görev işlendi: PDF çıktısı modülü: Flutter'da notu al, PDF'e çevir, indirme linki ver -> task_15_20250729-122103.md
+[2025-07-29 12:21:31.875424] Görev işlendi: AI: DSM-5 uyumlu terapi özetleme promptu (duygu, tema, tanı) -> task_16_20250729-122131.md
+[2025-07-29 12:22:12.651037] Görev işlendi: Reçete öneri modülü: ICD koduna göre ilaç + etkileşim uyarısı -> task_17_20250729-122212.md
+[2025-07-29 12:22:40.943090] Görev işlendi: regionConfig.ts ile ülkeye göre davranış kontrolü -> task_18_20250729-122240.md
+[2025-07-29 12:23:15.700164] Görev işlendi: Supervizör paneli: AI değerlendirme + seans süresi analizi -> task_19_20250729-122315.md
+[2025-07-29 12:23:33.152223] Görev işlendi: Simülasyon: "AI danışan gibi cevap ver" modülü, 3 örnek seans hazırla -> task_20_20250729-122333.md
+[2025-07-29 12:24:02.863983] Görev işlendi: Slack benzeri kurum içi mesajlaşma + AI özetleme sistemi -> task_21_20250729-122402.md
+[2025-07-29 12:24:32.008570] Görev işlendi: Stripe ödeme sistemi + finans modülü (Firestore ile fatura takibi) -> task_22_20250729-122432.md

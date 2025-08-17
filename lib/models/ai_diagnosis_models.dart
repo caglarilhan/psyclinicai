@@ -2,379 +2,421 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'ai_diagnosis_models.g.dart';
 
-// AI Teşhis Sonucu
+// ===== SEMPTOM MODELLERİ =====
+
 @JsonSerializable()
-class AIDiagnosisResult {
+class Symptom {
   final String id;
-  final String clientId;
-  final DateTime timestamp;
-  final DiagnosisConfidence confidence;
-  final List<DiagnosisCode> primaryDiagnoses;
-  final List<DiagnosisCode> differentialDiagnoses;
-  final List<RiskFactor> riskFactors;
-  final List<ProtectiveFactor> protectiveFactors;
-  final TreatmentRecommendation treatmentRecommendation;
-  final CulturalContext culturalContext;
-  final Map<String, dynamic> metadata;
-
-  AIDiagnosisResult({
-    required this.id,
-    required this.clientId,
-    required this.timestamp,
-    required this.confidence,
-    required this.primaryDiagnoses,
-    required this.differentialDiagnoses,
-    required this.riskFactors,
-    required this.protectiveFactors,
-    required this.treatmentRecommendation,
-    required this.culturalContext,
-    required this.metadata,
-  });
-
-  factory AIDiagnosisResult.fromJson(Map<String, dynamic> json) =>
-      _$AIDiagnosisResultFromJson(json);
-
-  Map<String, dynamic> toJson() => _$AIDiagnosisResultToJson(this);
-}
-
-// Teşhis Güven Seviyesi
-enum DiagnosisConfidence {
-  @JsonValue('very_low')
-  veryLow,
-  @JsonValue('low')
-  low,
-  @JsonValue('moderate')
-  moderate,
-  @JsonValue('high')
-  high,
-  @JsonValue('very_high')
-  veryHigh,
-}
-
-// Teşhis Kodu (ICD-11, DSM-5-TR)
-@JsonSerializable()
-class DiagnosisCode {
-  final String code;
   final String name;
-  final String classification; // ICD-11, DSM-5-TR, etc.
-  final String category;
   final String description;
-  final List<String> symptoms;
-  final List<String> criteria;
-  final double confidence;
+  final String category;
+  final double severity; // 0-10 scale
+  final DateTime onsetDate;
+  final Duration duration;
+  final String? notes;
+  final Map<String, dynamic>? metadata;
 
-  DiagnosisCode({
-    required this.code,
+  const Symptom({
+    required this.id,
     required this.name,
-    required this.classification,
-    required this.category,
     required this.description,
-    required this.symptoms,
-    required this.criteria,
-    required this.confidence,
+    required this.category,
+    required this.severity,
+    required this.onsetDate,
+    required this.duration,
+    this.notes,
+    this.metadata,
   });
 
-  factory DiagnosisCode.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisCodeFromJson(json);
-
-  Map<String, dynamic> toJson() => _$DiagnosisCodeToJson(this);
+  factory Symptom.fromJson(Map<String, dynamic> json) => _$SymptomFromJson(json);
+  Map<String, dynamic> toJson() => _$SymptomToJson(this);
 }
 
-// Risk Faktörü
+@JsonSerializable()
+class SymptomAnalysis {
+  final String id;
+  final List<Symptom> symptoms;
+  final double overallSeverity;
+  final List<String> primaryCategories;
+  final List<Pattern> patterns;
+  final List<String> recommendations;
+  final DateTime analysisDate;
+
+  const SymptomAnalysis({
+    required this.id,
+    required this.symptoms,
+    required this.overallSeverity,
+    required this.primaryCategories,
+    required this.patterns,
+    required this.recommendations,
+    required this.analysisDate,
+  });
+
+  factory SymptomAnalysis.fromJson(Map<String, dynamic> json) => _$SymptomAnalysisFromJson(json);
+  Map<String, dynamic> toJson() => _$SymptomAnalysisToJson(this);
+}
+
+@JsonSerializable()
+class Pattern {
+  final String id;
+  final PatternType type;
+  final String description;
+  final double confidence;
+  final List<Symptom> symptoms;
+
+  const Pattern({
+    required this.id,
+    required this.type,
+    required this.description,
+    required this.confidence,
+    required this.symptoms,
+  });
+
+  factory Pattern.fromJson(Map<String, dynamic> json) => _$PatternFromJson(json);
+  Map<String, dynamic> toJson() => _$PatternToJson(this);
+}
+
+enum PatternType {
+  mood,
+  sleep,
+  anxiety,
+  cognitive,
+  behavioral,
+  physical,
+  social
+}
+
+// ===== RİSK DEĞERLENDİRME MODELLERİ =====
+
+@JsonSerializable()
+class RiskAssessment {
+  final String id;
+  final RiskLevel riskLevel;
+  final List<RiskFactor> riskFactors;
+  final Urgency urgency;
+  final List<String> recommendations;
+  final DateTime assessmentDate;
+
+  const RiskAssessment({
+    required this.id,
+    required this.riskLevel,
+    required this.riskFactors,
+    required this.urgency,
+    required this.recommendations,
+    required this.assessmentDate,
+  });
+
+  factory RiskAssessment.fromJson(Map<String, dynamic> json) => _$RiskAssessmentFromJson(json);
+  Map<String, dynamic> toJson() => _$RiskAssessmentToJson(this);
+}
+
 @JsonSerializable()
 class RiskFactor {
   final String id;
-  final String name;
-  final RiskLevel level;
+  final RiskType type;
+  final RiskSeverity severity;
   final String description;
-  final String category; // biological, psychological, social
-  final double impactScore;
-  final List<String> interventions;
+  final double probability;
+  final String mitigation;
 
-  RiskFactor({
+  const RiskFactor({
     required this.id,
-    required this.name,
-    required this.level,
+    required this.type,
+    required this.severity,
     required this.description,
-    required this.category,
-    required this.impactScore,
-    required this.interventions,
+    required this.probability,
+    required this.mitigation,
   });
 
-  factory RiskFactor.fromJson(Map<String, dynamic> json) =>
-      _$RiskFactorFromJson(json);
-
+  factory RiskFactor.fromJson(Map<String, dynamic> json) => _$RiskFactorFromJson(json);
   Map<String, dynamic> toJson() => _$RiskFactorToJson(this);
 }
 
-// Koruyucu Faktör
-@JsonSerializable()
-class ProtectiveFactor {
-  final String id;
-  final String name;
-  final String description;
-  final String category;
-  final double strengthScore;
-  final List<String> enhancementStrategies;
-
-  ProtectiveFactor({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.category,
-    required this.strengthScore,
-    required this.enhancementStrategies,
-  });
-
-  factory ProtectiveFactor.fromJson(Map<String, dynamic> json) =>
-      _$ProtectiveFactorFromJson(json);
-
-  Map<String, dynamic> toJson() => _$ProtectiveFactorToJson(this);
-}
-
-// Tedavi Önerisi
-@JsonSerializable()
-class TreatmentRecommendation {
-  final String id;
-  final List<TreatmentModality> modalities;
-  final List<MedicationRecommendation> medications;
-  final List<TherapyRecommendation> therapies;
-  final List<LifestyleRecommendation> lifestyleChanges;
-  final List<FollowUpPlan> followUpPlans;
-  final String rationale;
-  final double expectedEfficacy;
-
-  TreatmentRecommendation({
-    required this.id,
-    required this.modalities,
-    required this.medications,
-    required this.therapies,
-    required this.lifestyleChanges,
-    required this.followUpPlans,
-    required this.rationale,
-    required this.expectedEfficacy,
-  });
-
-  factory TreatmentRecommendation.fromJson(Map<String, dynamic> json) =>
-      _$TreatmentRecommendationFromJson(json);
-
-  Map<String, dynamic> toJson() => _$TreatmentRecommendationToJson(this);
-}
-
-// Tedavi Modalitesi
-@JsonSerializable()
-class TreatmentModality {
-  final String id;
-  final String name;
-  final String description;
-  final TreatmentType type;
-  final String intensity; // low, moderate, high
-  final int durationWeeks;
-  final double successRate;
-  final List<String> contraindications;
-
-  TreatmentModality({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.type,
-    required this.intensity,
-    required this.durationWeeks,
-    required this.successRate,
-    required this.contraindications,
-  });
-
-  factory TreatmentModality.fromJson(Map<String, dynamic> json) =>
-      _$TreatmentModalityFromJson(json);
-
-  Map<String, dynamic> toJson() => _$TreatmentModalityToJson(this);
-}
-
-// Tedavi Türü
-enum TreatmentType {
-  @JsonValue('psychotherapy')
-  psychotherapy,
-  @JsonValue('pharmacotherapy')
-  pharmacotherapy,
-  @JsonValue('neuromodulation')
-  neuromodulation,
-  @JsonValue('lifestyle')
-  lifestyle,
-  @JsonValue('alternative')
-  alternative,
-  @JsonValue('combination')
-  combination,
-}
-
-// İlaç Önerisi
-@JsonSerializable()
-class MedicationRecommendation {
-  final String id;
-  final String medicationName;
-  final String genericName;
-  final String classification;
-  final String mechanism;
-  final String dosage;
-  final String frequency;
-  final int durationDays;
-  final List<String> sideEffects;
-  final List<String> interactions;
-  final List<String> contraindications;
-  final double efficacyScore;
-  final String countryCode; // US, TR, DE, etc.
-
-  MedicationRecommendation({
-    required this.id,
-    required this.medicationName,
-    required this.genericName,
-    required this.classification,
-    required this.mechanism,
-    required this.dosage,
-    required this.frequency,
-    required this.durationDays,
-    required this.sideEffects,
-    required this.interactions,
-    required this.contraindications,
-    required this.efficacyScore,
-    required this.countryCode,
-  });
-
-  factory MedicationRecommendation.fromJson(Map<String, dynamic> json) =>
-      _$MedicationRecommendationFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MedicationRecommendationToJson(this);
-}
-
-// Terapi Önerisi
-@JsonSerializable()
-class TherapyRecommendation {
-  final String id;
-  final String therapyName;
-  final String approach; // CBT, DBT, Psychodynamic, etc.
-  final String description;
-  final int sessionCount;
-  final int sessionDurationMinutes;
-  final String frequency;
-  final double evidenceLevel;
-  final List<String> techniques;
-  final List<String> goals;
-
-  TherapyRecommendation({
-    required this.id,
-    required this.therapyName,
-    required this.approach,
-    required this.description,
-    required this.sessionCount,
-    required this.sessionDurationMinutes,
-    required this.frequency,
-    required this.evidenceLevel,
-    required this.techniques,
-    required this.goals,
-  });
-
-  factory TherapyRecommendation.fromJson(Map<String, dynamic> json) =>
-      _$TherapyRecommendationFromJson(json);
-
-  Map<String, dynamic> toJson() => _$TherapyRecommendationToJson(this);
-}
-
-// Yaşam Tarzı Değişikliği
-@JsonSerializable()
-class LifestyleRecommendation {
-  final String id;
-  final String category; // exercise, nutrition, sleep, stress
-  final String recommendation;
-  final String rationale;
-  final int frequencyPerWeek;
-  final int durationMinutes;
-  final double impactScore;
-  final List<String> resources;
-
-  LifestyleRecommendation({
-    required this.id,
-    required this.category,
-    required this.recommendation,
-    required this.rationale,
-    required this.frequencyPerWeek,
-    required this.durationMinutes,
-    required this.impactScore,
-    required this.resources,
-  });
-
-  factory LifestyleRecommendation.fromJson(Map<String, dynamic> json) =>
-      _$LifestyleRecommendationFromJson(json);
-
-  Map<String, dynamic> toJson() => _$LifestyleRecommendationToJson(this);
-}
-
-// Takip Planı
-@JsonSerializable()
-class FollowUpPlan {
-  final String id;
-  final String type; // assessment, medication, therapy
-  final int frequencyDays;
-  final String description;
-  final List<String> metrics;
-  final List<String> actions;
-
-  FollowUpPlan({
-    required this.id,
-    required this.type,
-    required this.frequencyDays,
-    required this.description,
-    required this.metrics,
-    required this.actions,
-  });
-
-  factory FollowUpPlan.fromJson(Map<String, dynamic> json) =>
-      _$FollowUpPlanFromJson(json);
-
-  Map<String, dynamic> toJson() => _$FollowUpPlanToJson(this);
-}
-
-// Kültürel Bağlam
-@JsonSerializable()
-class CulturalContext {
-  final String countryCode;
-  final String culture;
-  final Map<String, dynamic> culturalNorms;
-  final List<String> taboos;
-  final Map<String, String> communicationStyles;
-  final List<String> traditionalHealing;
-  final Map<String, dynamic> stigmaFactors;
-  final List<String> familyStructures;
-  final Map<String, dynamic> religiousConsiderations;
-
-  CulturalContext({
-    required this.countryCode,
-    required this.culture,
-    required this.culturalNorms,
-    required this.taboos,
-    required this.communicationStyles,
-    required this.traditionalHealing,
-    required this.stigmaFactors,
-    required this.familyStructures,
-    required this.religiousConsiderations,
-  });
-
-  factory CulturalContext.fromJson(Map<String, dynamic> json) =>
-      _$CulturalContextFromJson(json);
-
-  Map<String, dynamic> toJson() => _$CulturalContextToJson(this);
-}
-
-// Risk Seviyesi
 enum RiskLevel {
-  @JsonValue('none')
-  none,
-  @JsonValue('low')
   low,
-  @JsonValue('moderate')
-  moderate,
-  @JsonValue('high')
+  medium,
   high,
-  @JsonValue('critical')
-  critical,
-  @JsonValue('emergency')
-  emergency,
+  critical
+}
+
+enum RiskType {
+  suicidal,
+  psychosis,
+  violence,
+  medication,
+  historical,
+  environmental,
+  social
+}
+
+enum RiskSeverity {
+  low,
+  medium,
+  high,
+  critical
+}
+
+enum Urgency {
+  routine,
+  urgent,
+  immediate
+}
+
+// ===== TANI ÖNERİLERİ MODELLERİ =====
+
+@JsonSerializable()
+class DiagnosisSuggestion {
+  final String id;
+  final String diagnosis;
+  final double confidence;
+  final List<String> evidence;
+  final List<String> differentialDiagnoses;
+  final String icd10Code;
+  final DiagnosisSeverity severity;
+  final TreatmentPriority treatmentPriority;
+  final String? notes;
+
+  const DiagnosisSuggestion({
+    required this.id,
+    required this.diagnosis,
+    required this.confidence,
+    required this.evidence,
+    required this.differentialDiagnoses,
+    required this.icd10Code,
+    required this.severity,
+    required this.treatmentPriority,
+    this.notes,
+  });
+
+  factory DiagnosisSuggestion.fromJson(Map<String, dynamic> json) => _$DiagnosisSuggestionFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisSuggestionToJson(this);
+}
+
+enum DiagnosisSeverity {
+  mild,
+  moderate,
+  severe,
+  verySevere
+}
+
+enum TreatmentPriority {
+  low,
+  medium,
+  high,
+  critical
+}
+
+// ===== TEDAVİ PLANI MODELLERİ =====
+
+@JsonSerializable()
+class TreatmentPlan {
+  final String id;
+  final List<DiagnosisSuggestion> diagnoses;
+  final List<TreatmentIntervention> interventions;
+  final List<TreatmentGoal> goals;
+  final Duration timeline;
+  final List<RiskFactor> riskFactors;
+  final MonitoringSchedule monitoringSchedule;
+  final DateTime planDate;
+
+  const TreatmentPlan({
+    required this.id,
+    required this.diagnoses,
+    required this.interventions,
+    required this.goals,
+    required this.timeline,
+    required this.riskFactors,
+    required this.monitoringSchedule,
+    required this.planDate,
+  });
+
+  factory TreatmentPlan.fromJson(Map<String, dynamic> json) => _$TreatmentPlanFromJson(json);
+  Map<String, dynamic> toJson() => _$TreatmentPlanToJson(this);
+}
+
+@JsonSerializable()
+class TreatmentIntervention {
+  final String id;
+  final InterventionType type;
+  final String name;
+  final String description;
+  final String frequency;
+  final String duration;
+  final InterventionPriority priority;
+
+  const TreatmentIntervention({
+    required this.id,
+    required this.type,
+    required this.name,
+    required this.description,
+    required this.frequency,
+    required this.duration,
+    required this.priority,
+  });
+
+  factory TreatmentIntervention.fromJson(Map<String, dynamic> json) => _$TreatmentInterventionFromJson(json);
+  Map<String, dynamic> toJson() => _$TreatmentInterventionToJson(this);
+}
+
+enum InterventionType {
+  psychotherapy,
+  medication,
+  lifestyle,
+  social,
+  educational,
+  emergency
+}
+
+enum InterventionPriority {
+  low,
+  medium,
+  high,
+  critical
+}
+
+@JsonSerializable()
+class TreatmentGoal {
+  final String id;
+  final String description;
+  final String target;
+  final String timeline;
+  final GoalPriority priority;
+
+  const TreatmentGoal({
+    required this.id,
+    required this.description,
+    required this.target,
+    required this.timeline,
+    required this.priority,
+  });
+
+  factory TreatmentGoal.fromJson(Map<String, dynamic> json) => _$TreatmentGoalFromJson(json);
+  Map<String, dynamic> toJson() => _$TreatmentGoalToJson(this);
+}
+
+enum GoalPriority {
+  low,
+  medium,
+  high,
+  critical
+}
+
+// ===== İZLEME MODELLERİ =====
+
+@JsonSerializable()
+class MonitoringSchedule {
+  final String id;
+  final List<MonitoringEvent> events;
+  final DateTime createdDate;
+
+  const MonitoringSchedule({
+    required this.id,
+    required this.events,
+    required this.createdDate,
+  });
+
+  factory MonitoringSchedule.fromJson(Map<String, dynamic> json) => _$MonitoringScheduleFromJson(json);
+  Map<String, dynamic> toJson() => _$MonitoringScheduleToJson(this);
+}
+
+@JsonSerializable()
+class MonitoringEvent {
+  final String id;
+  final MonitoringType type;
+  final String name;
+  final String frequency;
+  final DateTime nextDue;
+
+  const MonitoringEvent({
+    required this.id,
+    required this.type,
+    required this.name,
+    required this.frequency,
+    required this.nextDue,
+  });
+
+  factory MonitoringEvent.fromJson(Map<String, dynamic> json) => _$MonitoringEventFromJson(json);
+  Map<String, dynamic> toJson() => _$MonitoringEventToJson(this);
+}
+
+enum MonitoringType {
+  assessment,
+  safety,
+  medication,
+  therapy,
+  followUp
+}
+
+// ===== ANA TANI SONUCU =====
+
+@JsonSerializable()
+class DiagnosisResult {
+  final String id;
+  final String clientId;
+  final String therapistId;
+  final DateTime analysisDate;
+  final List<Symptom> symptoms;
+  final SymptomAnalysis symptomAnalysis;
+  final RiskAssessment riskAssessment;
+  final List<DiagnosisSuggestion> diagnosisSuggestions;
+  final TreatmentPlan treatmentPlan;
+  final double confidence;
+  final String aiModel;
+  final int processingTime;
+
+  const DiagnosisResult({
+    required this.id,
+    required this.clientId,
+    required this.therapistId,
+    required this.analysisDate,
+    required this.symptoms,
+    required this.symptomAnalysis,
+    required this.riskAssessment,
+    required this.diagnosisSuggestions,
+    required this.treatmentPlan,
+    required this.confidence,
+    required this.aiModel,
+    required this.processingTime,
+  });
+
+  factory DiagnosisResult.fromJson(Map<String, dynamic> json) => _$DiagnosisResultFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisResultToJson(this);
+}
+
+// ===== İLERLEME VE UYARI MODELLERİ =====
+
+@JsonSerializable()
+class DiagnosisProgress {
+  final double progress; // 0.0 - 1.0
+  final String message;
+
+  const DiagnosisProgress(this.progress, this.message);
+
+  factory DiagnosisProgress.fromJson(Map<String, dynamic> json) => _$DiagnosisProgressFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisProgressToJson(this);
+}
+
+@JsonSerializable()
+class RiskAlert {
+  final String id;
+  final RiskAssessment assessment;
+  final DateTime timestamp;
+  final AlertPriority priority;
+
+  const RiskAlert({
+    required this.id,
+    required this.assessment,
+    required this.timestamp,
+    required this.priority,
+  });
+
+  factory RiskAlert.fromJson(Map<String, dynamic> json) => _$RiskAlertFromJson(json);
+  Map<String, dynamic> toJson() => _$RiskAlertToJson(this);
+}
+
+enum AlertPriority {
+  low,
+  medium,
+  high,
+  critical
 }

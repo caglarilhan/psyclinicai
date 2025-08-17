@@ -14,6 +14,7 @@ import 'screens/therapy_simulation/therapy_simulation_screen.dart';
 import 'screens/medication_guide/medication_guide_screen.dart';
 import 'screens/ai_case_management/ai_case_management_screen.dart';
 import 'screens/ai_appointment/ai_appointment_screen.dart';
+import 'screens/ai_diagnosis/ai_diagnosis_screen.dart';
 import 'screens/finance/finance_dashboard_screen.dart';
 import 'screens/supervisor/supervisor_dashboard_screen.dart';
 import 'screens/client_management/client_management_screen.dart';
@@ -92,8 +93,12 @@ class PsyClinicAIApp extends StatelessWidget {
               '/education': (context) => const EducationScreen(),
               '/therapy-simulation': (context) => const TherapySimulationScreen(),
               '/medication-guide': (context) => const MedicationGuideScreen(),
-              '/ai-case-management': (context) => const AICaseManagementScreen(),
-              '/ai-appointment': (context) => const AIAppointmentScreen(),
+                                   '/ai-case-management': (context) => const AICaseManagementScreen(),
+                     '/ai-appointment': (context) => const AIAppointmentScreen(),
+                     '/ai-diagnosis': (context) => const AIDiagnosisScreen(
+                       clientId: 'demo_client_001',
+                       therapistId: 'demo_therapist_001',
+                     ),
               '/finance': (context) => const FinanceDashboardScreen(),
               '/supervisor': (context) => const SupervisorDashboardScreen(),
               '/client-management': (context) => const ClientManagementScreen(),

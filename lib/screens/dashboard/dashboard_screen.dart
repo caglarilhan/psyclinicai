@@ -343,6 +343,16 @@ class DashboardHome extends StatelessWidget {
 
             _buildModuleCard(
               context,
+              'AI Tanı Sistemi',
+              'AI destekli semptom analizi ve tanı önerileri',
+              Icons.medical_services,
+              Colors.teal.shade600,
+              () => Navigator.pushNamed(context, '/ai-diagnosis'),
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
               'AI Randevu Sistemi',
               'AI destekli randevu optimizasyonu ve no-show tahmini',
               Icons.schedule,

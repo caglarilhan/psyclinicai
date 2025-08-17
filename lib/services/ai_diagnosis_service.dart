@@ -1,1143 +1,632 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../models/ai_diagnosis_models.dart';
-import '../utils/env_config.dart';
-import '../utils/ai_config.dart';
-import 'ai_logger.dart';
-import 'ai_performance_monitor.dart';
+import '../utils/ai_logger.dart';
 
-// AI-Powered Diagnosis Service
-// Dünya çapında en gelişmiş teşhis sistemi
-class AIDiagnosisService {
+class AIDiagnosisService extends ChangeNotifier {
   static final AIDiagnosisService _instance = AIDiagnosisService._internal();
   factory AIDiagnosisService() => _instance;
   AIDiagnosisService._internal();
 
   final AILogger _logger = AILogger();
-  final AIPerformanceMonitor _performanceMonitor = AIPerformanceMonitor();
+  
+  // AI Diagnosis state
+  bool _isAnalyzing = false;
+  double _analysisProgress = 0.0;
+  List<DiagnosisSuggestion> _recentSuggestions = [];
+  List<RiskAssessment> _riskAssessments = [];
+  List<TreatmentPlan> _treatmentPlans = [];
 
-  // Global teşhis veritabanları
-  final Map<String, List<DiagnosisCode>> _diagnosisDatabases = {};
-  final Map<String, List<MedicationRecommendation>> _medicationDatabases = {};
-  final Map<String, List<TherapyRecommendation>> _therapyDatabases = {};
+  // Stream controllers
+  final StreamController<DiagnosisProgress> _progressController = StreamController<DiagnosisProgress>.broadcast();
+  final StreamController<DiagnosisResult> _resultController = StreamController<DiagnosisResult>.broadcast();
+  final StreamController<RiskAlert> _riskAlertController = StreamController<RiskAlert>.broadcast();
 
-  // Kültürel bağlam veritabanları
-  final Map<String, CulturalContext> _culturalContexts = {};
+  // Streams
+  Stream<DiagnosisProgress> get progressStream => _progressController.stream;
+  Stream<DiagnosisResult> get resultStream => _resultController.stream;
+  Stream<RiskAlert> get riskAlertStream => _riskAlertController.stream;
 
-  // Servis başlatma
+  // Getters
+  bool get isAnalyzing => _isAnalyzing;
+  double get analysisProgress => _analysisProgress;
+  List<DiagnosisSuggestion> get recentSuggestions => _recentSuggestions;
+  List<RiskAssessment> get riskAssessments => _riskAssessments;
+  List<TreatmentPlan> get treatmentPlans => _treatmentPlans;
+
   Future<void> initialize() async {
-    _logger.info(
-      'AI Diagnosis Service initializing',
-      context: 'ai_diagnosis_service',
-    );
-
-    await Future.wait([
-      _loadDiagnosisDatabases(),
-      _loadMedicationDatabases(),
-      _loadTherapyDatabases(),
-      _loadCulturalContexts(),
-    ]);
-
-    _logger.info(
-      'AI Diagnosis Service initialized successfully',
-      context: 'ai_diagnosis_service',
-      data: {
-        'diagnosis_databases': _diagnosisDatabases.keys.toList(),
-        'medication_databases': _medicationDatabases.keys.toList(),
-        'therapy_databases': _therapyDatabases.keys.toList(),
-        'cultural_contexts': _culturalContexts.keys.toList(),
-      },
-    );
+    _logger.info('AIDiagnosisService initializing...', context: 'AIDiagnosisService');
+    
+    try {
+      // Load saved analysis data
+      await _loadSavedData();
+      
+      // Initialize AI models
+      await _initializeAIModels();
+      
+      _logger.info('AIDiagnosisService initialized successfully', context: 'AIDiagnosisService');
+    } catch (e) {
+      _logger.error('AIDiagnosisService initialization failed', context: 'AIDiagnosisService', error: e);
+      rethrow;
+    }
   }
 
-  // Teşhis veritabanlarını yükle (ICD-11, DSM-5-TR, ICD-10-CM, ICD-10-TR)
-  Future<void> _loadDiagnosisDatabases() async {
-    // ICD-11 - Dünya Sağlık Örgütü
-    _diagnosisDatabases['ICD-11'] = [
-      DiagnosisCode(
-        code: '6A70',
-        name: 'Depressive Disorder',
-        classification: 'ICD-11',
-        category: 'Mood Disorders',
-        description: 'Characterized by depressed mood or loss of interest',
-        symptoms: [
-          'Depressed mood',
-          'Loss of interest or pleasure',
-          'Fatigue or loss of energy',
-          'Feelings of worthlessness',
-          'Suicidal thoughts',
-        ],
-        criteria: [
-          'At least 2 weeks of symptoms',
-          'Significant distress or impairment',
-          'Not due to substance use or medical condition',
-        ],
-        confidence: 0.95,
-      ),
-      DiagnosisCode(
-        code: '6A71',
-        name: 'Anxiety Disorder',
-        classification: 'ICD-11',
-        category: 'Anxiety and Fear-Related Disorders',
-        description: 'Characterized by excessive fear and anxiety',
-        symptoms: [
-          'Excessive anxiety and worry',
-          'Difficulty controlling worry',
-          'Restlessness or feeling keyed up',
-          'Easily fatigued',
-          'Difficulty concentrating',
-        ],
-        criteria: [
-          'At least 6 months of symptoms',
-          'Significant distress or impairment',
-          'Not due to substance use or medical condition',
-        ],
-        confidence: 0.92,
-      ),
-      DiagnosisCode(
-        code: '6A72',
-        name: 'Bipolar Disorder',
-        classification: 'ICD-11',
-        category: 'Mood Disorders',
-        description: 'Characterized by episodes of mania and depression',
-        symptoms: [
-          'Elevated or irritable mood',
-          'Decreased need for sleep',
-          'Grandiosity',
-          'Flight of ideas',
-          'Depressive episodes',
-        ],
-        criteria: [
-          'At least one manic episode',
-          'History of depressive episodes',
-          'Not due to substance use or medical condition',
-        ],
-        confidence: 0.89,
-      ),
-    ];
-
-    // DSM-5-TR - American Psychiatric Association
-    _diagnosisDatabases['DSM-5-TR'] = [
-      DiagnosisCode(
-        code: 'F32.1',
-        name: 'Major Depressive Disorder, Moderate',
-        classification: 'DSM-5-TR',
-        category: 'Depressive Disorders',
-        description: 'Moderate severity major depressive episode',
-        symptoms: [
-          'Depressed mood most of the day',
-          'Markedly diminished interest or pleasure',
-          'Significant weight loss or gain',
-          'Insomnia or hypersomnia',
-          'Psychomotor agitation or retardation',
-        ],
-        criteria: [
-          '5 or more symptoms for 2 weeks',
-          'Moderate functional impairment',
-          'Not due to substance use or medical condition',
-        ],
-        confidence: 0.94,
-      ),
-      DiagnosisCode(
-        code: 'F41.1',
-        name: 'Generalized Anxiety Disorder',
-        classification: 'DSM-5-TR',
-        category: 'Anxiety Disorders',
-        description: 'Excessive anxiety and worry about multiple events',
-        symptoms: [
-          'Excessive anxiety and worry',
-          'Difficulty controlling worry',
-          'Restlessness or feeling on edge',
-          'Easily fatigued',
-          'Difficulty concentrating',
-        ],
-        criteria: [
-          'At least 6 months of symptoms',
-          'Significant distress or impairment',
-          'Not due to substance use or medical condition',
-        ],
-        confidence: 0.91,
-      ),
-    ];
-
-    // ICD-10-CM - US Clinical Modification
-    _diagnosisDatabases['ICD-10-CM'] = [
-      DiagnosisCode(
-        code: 'F32.1',
-        name: 'Major depressive disorder, moderate',
-        classification: 'ICD-10-CM',
-        category: 'Depressive disorders',
-        description: 'Moderate major depressive episode',
-        symptoms: [
-          'Depressed mood',
-          'Loss of interest',
-          'Weight changes',
-          'Sleep disturbances',
-          'Fatigue',
-        ],
-        criteria: [
-          '5 or more symptoms for 2 weeks',
-          'Moderate impairment',
-          'Not due to substance use',
-        ],
-        confidence: 0.93,
-      ),
-    ];
-
-    // ICD-10-TR - Türkiye
-    _diagnosisDatabases['ICD-10-TR'] = [
-      DiagnosisCode(
-        code: 'F32.1',
-        name: 'Majör depresif bozukluk, orta',
-        classification: 'ICD-10-TR',
-        category: 'Depresif bozukluklar',
-        description: 'Orta şiddette majör depresif epizot',
-        symptoms: [
-          'Depresif duygu durumu',
-          'İlgi kaybı',
-          'Kilo değişiklikleri',
-          'Uyku bozuklukları',
-          'Yorgunluk',
-        ],
-        criteria: [
-          '2 hafta boyunca 5 veya daha fazla belirti',
-          'Orta düzeyde işlevsellik kaybı',
-          'Madde kullanımına bağlı değil',
-        ],
-        confidence: 0.92,
-      ),
-    ];
-
-    _logger.info(
-      'Diagnosis databases loaded',
-      context: 'ai_diagnosis_service',
-      data: {'databases': _diagnosisDatabases.keys.toList()},
-    );
+  Future<void> _loadSavedData() async {
+    // TODO: Load from local storage/database
+    _recentSuggestions = [];
+    _riskAssessments = [];
+    _treatmentPlans = [];
   }
 
-  // İlaç veritabanlarını yükle (WHO, FDA, EMA, Türkiye)
-  Future<void> _loadMedicationDatabases() async {
-    // WHO Drug Dictionary
-    _medicationDatabases['WHO'] = [
-      MedicationRecommendation(
-        id: 'who_001',
-        medicationName: 'Fluoxetine',
-        genericName: 'Fluoxetine hydrochloride',
-        classification: 'Selective Serotonin Reuptake Inhibitor (SSRI)',
-        mechanism: 'Inhibits serotonin reuptake, increasing synaptic serotonin',
-        dosage: '20-80 mg daily',
-        frequency: 'Once daily',
-        durationDays: 28,
-        sideEffects: [
-          'Nausea',
-          'Insomnia',
-          'Sexual dysfunction',
-          'Weight changes',
-        ],
-        interactions: [
-          'MAO inhibitors',
-          'NSAIDs',
-          'Warfarin',
-        ],
-        contraindications: [
-          'MAO inhibitor use within 14 days',
-          'Severe liver disease',
-        ],
-        efficacyScore: 0.85,
-        countryCode: 'Global',
-      ),
-      MedicationRecommendation(
-        id: 'who_002',
-        medicationName: 'Sertraline',
-        genericName: 'Sertraline hydrochloride',
-        classification: 'Selective Serotonin Reuptake Inhibitor (SSRI)',
-        mechanism: 'Inhibits serotonin reuptake',
-        dosage: '50-200 mg daily',
-        frequency: 'Once daily',
-        durationDays: 28,
-        sideEffects: [
-          'Diarrhea',
-          'Sexual dysfunction',
-          'Insomnia',
-          'Headache',
-        ],
-        interactions: [
-          'MAO inhibitors',
-          'Pimozide',
-          'Warfarin',
-        ],
-        contraindications: [
-          'MAO inhibitor use within 14 days',
-          'Severe liver disease',
-        ],
-        efficacyScore: 0.87,
-        countryCode: 'Global',
-      ),
-    ];
-
-    // FDA Orange Book (US)
-    _medicationDatabases['FDA'] = [
-      MedicationRecommendation(
-        id: 'fda_001',
-        medicationName: 'Prozac',
-        genericName: 'Fluoxetine hydrochloride',
-        classification: 'SSRI',
-        mechanism: 'Serotonin reuptake inhibition',
-        dosage: '20-80 mg daily',
-        frequency: 'Once daily',
-        durationDays: 28,
-        sideEffects: [
-          'Nausea',
-          'Insomnia',
-          'Sexual dysfunction',
-        ],
-        interactions: [
-          'MAO inhibitors',
-          'NSAIDs',
-        ],
-        contraindications: [
-          'MAO inhibitor use',
-          'Severe liver disease',
-        ],
-        efficacyScore: 0.85,
-        countryCode: 'US',
-      ),
-    ];
-
-    // EMA Database (European Union)
-    _medicationDatabases['EMA'] = [
-      MedicationRecommendation(
-        id: 'ema_001',
-        medicationName: 'Fluoxetine',
-        genericName: 'Fluoxetine hydrochloride',
-        classification: 'SSRI',
-        mechanism: 'Serotonin reuptake inhibition',
-        dosage: '20-80 mg daily',
-        frequency: 'Once daily',
-        durationDays: 28,
-        sideEffects: [
-          'Nausea',
-          'Insomnia',
-          'Sexual dysfunction',
-        ],
-        interactions: [
-          'MAO inhibitors',
-          'NSAIDs',
-        ],
-        contraindications: [
-          'MAO inhibitor use',
-          'Severe liver disease',
-        ],
-        efficacyScore: 0.85,
-        countryCode: 'EU',
-      ),
-    ];
-
-    // Türkiye İlaç ve Tıbbi Cihaz Kurumu
-    _medicationDatabases['TR'] = [
-      MedicationRecommendation(
-        id: 'tr_001',
-        medicationName: 'Prozac',
-        genericName: 'Fluoxetine hidroklorür',
-        classification: 'Seçici Serotonin Geri Alım İnhibitörü (SSRI)',
-        mechanism: 'Serotonin geri alımını inhibe eder',
-        dosage: '20-80 mg günlük',
-        frequency: 'Günde bir kez',
-        durationDays: 28,
-        sideEffects: [
-          'Bulantı',
-          'Uykusuzluk',
-          'Cinsel işlev bozukluğu',
-          'Kilo değişiklikleri',
-        ],
-        interactions: [
-          'MAO inhibitörleri',
-          'NSAID\'ler',
-          'Varfarin',
-        ],
-        contraindications: [
-          '14 gün içinde MAO inhibitörü kullanımı',
-          'Şiddetli karaciğer hastalığı',
-        ],
-        efficacyScore: 0.85,
-        countryCode: 'TR',
-      ),
-    ];
-
-    _logger.info(
-      'Medication databases loaded',
-      context: 'ai_diagnosis_service',
-      data: {'databases': _medicationDatabases.keys.toList()},
-    );
+  Future<void> _initializeAIModels() async {
+    // TODO: Initialize AI models (Claude, LLaMA3, etc.)
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
-  // Terapi veritabanlarını yükle
-  Future<void> _loadTherapyDatabases() async {
-    _therapyDatabases['Global'] = [
-      TherapyRecommendation(
-        id: 'therapy_001',
-        therapyName: 'Cognitive Behavioral Therapy (CBT)',
-        approach: 'CBT',
-        description: 'Evidence-based therapy focusing on thoughts, feelings, and behaviors',
-        sessionCount: 12,
-        sessionDurationMinutes: 50,
-        frequency: 'Weekly',
-        evidenceLevel: 0.95,
-        techniques: [
-          'Cognitive restructuring',
-          'Behavioral activation',
-          'Exposure therapy',
-          'Problem-solving skills',
-        ],
-        goals: [
-          'Identify negative thought patterns',
-          'Develop coping strategies',
-          'Improve problem-solving skills',
-          'Reduce symptoms',
-        ],
-      ),
-      TherapyRecommendation(
-        id: 'therapy_002',
-        therapyName: 'Dialectical Behavior Therapy (DBT)',
-        approach: 'DBT',
-        description: 'Comprehensive therapy for emotional regulation and interpersonal skills',
-        sessionCount: 24,
-        sessionDurationMinutes: 60,
-        frequency: 'Weekly',
-        evidenceLevel: 0.92,
-        techniques: [
-          'Mindfulness',
-          'Distress tolerance',
-          'Emotion regulation',
-          'Interpersonal effectiveness',
-        ],
-        goals: [
-          'Improve emotional regulation',
-          'Develop distress tolerance',
-          'Enhance interpersonal skills',
-          'Reduce self-harm behaviors',
-        ],
-      ),
-      TherapyRecommendation(
-        id: 'therapy_003',
-        therapyName: 'Psychodynamic Therapy',
-        approach: 'Psychodynamic',
-        description: 'Long-term therapy exploring unconscious processes and early experiences',
-        sessionCount: 50,
-        sessionDurationMinutes: 50,
-        frequency: 'Weekly',
-        evidenceLevel: 0.88,
-        techniques: [
-          'Free association',
-          'Dream analysis',
-          'Transference analysis',
-          'Interpretation',
-        ],
-        goals: [
-          'Understand unconscious conflicts',
-          'Explore early life experiences',
-          'Improve self-awareness',
-          'Resolve emotional conflicts',
-        ],
-      ),
-    ];
-
-    _logger.info(
-      'Therapy databases loaded',
-      context: 'ai_diagnosis_service',
-      data: {'databases': _therapyDatabases.keys.toList()},
-    );
-  }
-
-  // Kültürel bağlamları yükle
-  Future<void> _loadCulturalContexts() async {
-    _culturalContexts['TR'] = CulturalContext(
-      countryCode: 'TR',
-      culture: 'Turkish',
-      culturalNorms: {
-        'family_importance': 'High value on family relationships',
-        'respect_for_elders': 'Strong respect for older generations',
-        'collectivism': 'Collectivist society values',
-        'hospitality': 'High value on hospitality and social connections',
-      },
-      taboos: [
-        'Direct confrontation',
-        'Public emotional expression',
-        'Questioning family decisions',
-        'Discussing mental health openly',
-      ],
-      communicationStyles: {
-        'formal': 'Respectful and formal communication',
-        'indirect': 'Indirect communication preferred',
-        'contextual': 'Context-dependent communication',
-        'hierarchical': 'Respect for authority and hierarchy',
-      },
-      traditionalHealing: [
-        'Traditional medicine practices',
-        'Herbal remedies',
-        'Spiritual healing methods',
-        'Family-based interventions',
-      ],
-      stigmaFactors: {
-        'mental_health': 'Mental health stigma',
-        'family_reputation': 'Family reputation concerns',
-        'social_judgment': 'Social judgment fears',
-        'professional_help': 'Reluctance to seek professional help',
-      },
-      familyStructures: [
-        'Extended family networks',
-        'Multi-generational households',
-        'Strong family bonds',
-        'Family decision-making',
-      ],
-      religiousConsiderations: {
-        'islam': 'Islamic cultural practices',
-        'religious_holidays': 'Respect for religious observances',
-        'spiritual_beliefs': 'Integration of spiritual beliefs',
-        'community_support': 'Religious community support',
-      },
-    );
-
-    _culturalContexts['US'] = CulturalContext(
-      countryCode: 'US',
-      culture: 'American',
-      culturalNorms: {
-        'individualism': 'Individual achievement and autonomy',
-        'direct_communication': 'Direct and explicit communication',
-        'time_efficiency': 'Value on time and efficiency',
-        'self_expression': 'Encouragement of self-expression',
-      },
-      taboos: [
-        'Age-related discrimination',
-        'Religious discrimination',
-        'Racial discrimination',
-        'Discussing personal finances',
-      ],
-      communicationStyles: {
-        'direct': 'Direct and straightforward',
-        'assertive': 'Assertive communication',
-        'professional': 'Professional boundaries',
-        'casual': 'Casual and informal',
-      },
-      traditionalHealing: [
-        'Western medicine focus',
-        'Alternative medicine',
-        'Holistic approaches',
-        'Evidence-based treatments',
-      ],
-      stigmaFactors: {
-        'mental_health_awareness': 'Mental health awareness',
-        'access_to_care': 'Access to care',
-        'insurance_coverage': 'Insurance coverage',
-        'social_support': 'Social support networks',
-      },
-      familyStructures: [
-        'Nuclear family focus',
-        'Individual autonomy',
-        'Diverse family structures',
-        'Professional support',
-      ],
-      religiousConsiderations: {
-        'diversity': 'Religious diversity',
-        'separation': 'Separation of church and state',
-        'tolerance': 'Religious tolerance',
-        'individual_choice': 'Individual religious choice',
-      },
-    );
-
-    _logger.info(
-      'Cultural contexts loaded',
-      context: 'ai_diagnosis_service',
-      data: {'cultures': _culturalContexts.keys.toList()},
-    );
-  }
-
-  // AI-Powered Diagnosis
-  Future<AIDiagnosisResult?> performAIDiagnosis({
+  // AI Diagnosis Analysis
+  Future<DiagnosisResult> analyzeSymptoms({
     required String clientId,
-    required Map<String, dynamic> clientData,
-    required Map<String, dynamic> symptoms,
-    required Map<String, dynamic> history,
-    required String countryCode,
-    required String languageCode,
+    required List<Symptom> symptoms,
+    required Map<String, dynamic> clientHistory,
+    required String therapistId,
   }) async {
-    _performanceMonitor.startOperation('ai_diagnosis', context: 'ai_diagnosis_service');
+    _logger.info('Starting AI diagnosis analysis', context: 'AIDiagnosisService', data: {
+      'clientId': clientId,
+      'symptomsCount': symptoms.length,
+      'therapistId': therapistId,
+    });
+
+    _setAnalyzing(true);
+    _resetProgress();
 
     try {
-      _logger.info(
-        'Starting AI diagnosis',
-        context: 'ai_diagnosis_service',
-        data: {
-          'clientId': clientId,
-          'countryCode': countryCode,
-          'languageCode': languageCode,
-        },
+      // Step 1: Symptom Analysis
+      await _updateProgress(0.2, 'Semptomlar analiz ediliyor...');
+      final symptomAnalysis = await _analyzeSymptoms(symptoms);
+      
+      // Step 2: Risk Assessment
+      await _updateProgress(0.4, 'Risk değerlendirmesi yapılıyor...');
+      final riskAssessment = await _assessRisk(symptoms, clientHistory);
+      
+      // Step 3: Diagnosis Suggestions
+      await _updateProgress(0.6, 'Tanı önerileri oluşturuluyor...');
+      final diagnosisSuggestions = await _generateDiagnosisSuggestions(symptomAnalysis, riskAssessment);
+      
+      // Step 4: Treatment Planning
+      await _updateProgress(0.8, 'Tedavi planı hazırlanıyor...');
+      final treatmentPlan = await _createTreatmentPlan(diagnosisSuggestions, clientHistory);
+      
+      // Step 5: Final Analysis
+      await _updateProgress(1.0, 'Analiz tamamlandı');
+      
+      final result = DiagnosisResult(
+        id: _generateId(),
+        clientId: clientId,
+        therapistId: therapistId,
+        analysisDate: DateTime.now(),
+        symptoms: symptoms,
+        symptomAnalysis: symptomAnalysis,
+        riskAssessment: riskAssessment,
+        diagnosisSuggestions: diagnosisSuggestions,
+        treatmentPlan: treatmentPlan,
+        confidence: _calculateConfidence(diagnosisSuggestions),
+        aiModel: 'Claude-3.5-Sonnet',
+        processingTime: DateTime.now().difference(DateTime.now()).inMilliseconds,
       );
 
-      // Kültürel bağlamı al
-      final culturalContext = _culturalContexts[countryCode];
-      if (culturalContext == null) {
-        throw Exception('Cultural context not found for country: $countryCode');
-      }
-
-      // AI servis çağrısı
-      final aiResponse = await _callAIForDiagnosis({
-        'clientData': clientData,
-        'symptoms': symptoms,
-        'history': history,
-        'culturalContext': culturalContext.toJson(),
-        'countryCode': countryCode,
-        'languageCode': languageCode,
+      // Save results
+      _saveDiagnosisResult(result);
+      
+      // Send to stream
+      _resultController.add(result);
+      
+      _logger.info('AI diagnosis analysis completed successfully', context: 'AIDiagnosisService', data: {
+        'resultId': result.id,
+        'confidence': result.confidence,
+        'suggestionsCount': result.diagnosisSuggestions.length,
       });
 
-      if (aiResponse == null) {
-        throw Exception('AI service failed to respond');
-      }
-
-      // AI yanıtını parse et
-      final diagnosisResult = _parseAIDiagnosisResponse(
-        aiResponse,
-        clientId,
-        culturalContext,
-      );
-
-      _performanceMonitor.completeOperation(
-        'ai_diagnosis',
-        context: 'ai_diagnosis_service',
-      );
-
-      _logger.info(
-        'AI diagnosis completed successfully',
-        context: 'ai_diagnosis_service',
-        data: {
-          'clientId': clientId,
-          'confidence': diagnosisResult.confidence.name,
-          'primaryDiagnoses': diagnosisResult.primaryDiagnoses.length,
-        },
-      );
-
-      return diagnosisResult;
+      return result;
     } catch (e) {
-      _performanceMonitor.completeOperation(
-        'ai_diagnosis',
-        context: 'ai_diagnosis_service',
-      );
-
-      _logger.error(
-        'AI diagnosis failed',
-        context: 'ai_diagnosis_service',
-        data: {'clientId': clientId, 'error': e.toString()},
-        error: e,
-      );
-
-      return null;
+      _logger.error('AI diagnosis analysis failed', context: 'AIDiagnosisService', error: e);
+      rethrow;
+    } finally {
+      _setAnalyzing(false);
     }
   }
 
-  // AI servis çağrısı
-  Future<Map<String, dynamic>?> _callAIForDiagnosis(Map<String, dynamic> data) async {
-    try {
-      const apiKey = EnvConfig.openaiApiKey;
-      
-      if (apiKey == 'YOUR_OPENAI_API_KEY') {
-        // Mock AI response for development
-        return _getMockAIDiagnosisResponse();
-      }
-
-      final response = await http.post(
-        Uri.parse('${EnvConfig.openaiBaseUrl}/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        },
-        body: jsonEncode({
-          'model': AIConfig.openaiModel,
-          'messages': [
-            {
-              'role': 'system',
-              'content': '''
-Sen deneyimli bir klinik psikolog ve psikiyatrısın. 
-Lütfen sadece JSON formatında yanıt ver.
-
-Analiz ettiğin verilere göre:
-1. Teşhis güven seviyesini belirle (very_low, low, moderate, high, very_high)
-2. Birincil teşhisleri belirle (ICD-11, DSM-5-TR, ICD-10-CM, ICD-10-TR)
-3. Ayırıcı teşhisleri belirle
-4. Risk faktörlerini tespit et
-5. Koruyucu faktörleri belirle
-6. Tedavi önerilerini hazırla
-7. Kültürel bağlamı dikkate al
-
-JSON formatında yanıt ver.
-              ''',
-            },
-            {
-              'role': 'user',
-              'content': jsonEncode(data),
-            },
-          ],
-          'max_tokens': AIConfig.openaiMaxTokens,
-          'temperature': 0.3,
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final content = responseData['choices'][0]['message']['content'];
-        
-        try {
-          return jsonDecode(content);
-        } catch (e) {
-          _logger.warning(
-            'AI response parsing failed, using mock data',
-            context: 'ai_diagnosis_service',
-            data: {'error': e.toString()},
-          );
-          return _getMockAIDiagnosisResponse();
-        }
-      } else {
-        _logger.warning(
-          'AI service failed, using mock data',
-          context: 'ai_diagnosis_service',
-          data: {'statusCode': response.statusCode},
-        );
-        return _getMockAIDiagnosisResponse();
-      }
-    } catch (e) {
-      _logger.warning(
-        'AI service error, using mock data',
-        context: 'ai_diagnosis_service',
-        data: {'error': e.toString()},
-      );
-      return _getMockAIDiagnosisResponse();
-    }
-  }
-
-  // Mock AI diagnosis response
-  Map<String, dynamic> _getMockAIDiagnosisResponse() {
-    return {
-      'confidence': 'high',
-      'primaryDiagnoses': [
-        {
-          'code': '6A70',
-          'name': 'Depressive Disorder',
-          'classification': 'ICD-11',
-          'category': 'Mood Disorders',
-          'description': 'Characterized by depressed mood or loss of interest',
-          'symptoms': [
-            'Depressed mood',
-            'Loss of interest or pleasure',
-            'Fatigue or loss of energy',
-          ],
-          'criteria': [
-            'At least 2 weeks of symptoms',
-            'Significant distress or impairment',
-          ],
-          'confidence': 0.95,
-        }
-      ],
-      'differentialDiagnoses': [
-        {
-          'code': '6A71',
-          'name': 'Anxiety Disorder',
-          'classification': 'ICD-11',
-          'category': 'Anxiety and Fear-Related Disorders',
-          'description': 'Characterized by excessive fear and anxiety',
-          'symptoms': [
-            'Excessive anxiety and worry',
-            'Difficulty controlling worry',
-          ],
-          'criteria': [
-            'At least 6 months of symptoms',
-            'Significant distress or impairment',
-          ],
-          'confidence': 0.75,
-        }
-      ],
-      'riskFactors': [
-        {
-          'id': 'risk_001',
-          'name': 'Family History',
-          'level': 'moderate',
-          'description': 'Family history of depression',
-          'category': 'biological',
-          'impactScore': 0.7,
-          'interventions': [
-            'Genetic counseling',
-            'Early intervention',
-            'Family therapy',
-          ],
-        }
-      ],
-      'protectiveFactors': [
-        {
-          'id': 'protective_001',
-          'name': 'Social Support',
-          'description': 'Strong social support network',
-          'category': 'social',
-          'strengthScore': 0.8,
-          'enhancementStrategies': [
-            'Maintain social connections',
-            'Join support groups',
-            'Family involvement',
-          ],
-        }
-      ],
-      'treatmentRecommendation': {
-        'id': 'treatment_001',
-        'modalities': [
-          {
-            'id': 'modality_001',
-            'name': 'Cognitive Behavioral Therapy',
-            'description': 'Evidence-based psychotherapy',
-            'type': 'psychotherapy',
-            'intensity': 'moderate',
-            'durationWeeks': 12,
-            'successRate': 0.85,
-            'contraindications': [],
-          }
-        ],
-        'medications': [
-          {
-            'id': 'med_001',
-            'medicationName': 'Fluoxetine',
-            'genericName': 'Fluoxetine hydrochloride',
-            'classification': 'SSRI',
-            'mechanism': 'Serotonin reuptake inhibition',
-            'dosage': '20 mg daily',
-            'frequency': 'Once daily',
-            'durationDays': 28,
-            'sideEffects': [
-              'Nausea',
-              'Insomnia',
-            ],
-            'interactions': [
-              'MAO inhibitors',
-            ],
-            'contraindications': [
-              'MAO inhibitor use',
-            ],
-            'efficacyScore': 0.85,
-            'countryCode': 'Global',
-          }
-        ],
-        'therapies': [
-          {
-            'id': 'therapy_001',
-            'therapyName': 'CBT',
-            'approach': 'CBT',
-            'description': 'Cognitive Behavioral Therapy',
-            'sessionCount': 12,
-            'sessionDurationMinutes': 50,
-            'frequency': 'Weekly',
-            'evidenceLevel': 0.95,
-            'techniques': [
-              'Cognitive restructuring',
-              'Behavioral activation',
-            ],
-            'goals': [
-              'Identify negative thoughts',
-              'Develop coping strategies',
-            ],
-          }
-        ],
-        'lifestyleChanges': [
-          {
-            'id': 'lifestyle_001',
-            'category': 'exercise',
-            'recommendation': 'Regular aerobic exercise',
-            'rationale': 'Improves mood and reduces symptoms',
-            'frequencyPerWeek': 3,
-            'durationMinutes': 30,
-            'impactScore': 0.7,
-            'resources': [
-              'Gym membership',
-              'Walking groups',
-            ],
-          }
-        ],
-        'followUpPlans': [
-          {
-            'id': 'followup_001',
-            'type': 'assessment',
-            'frequencyDays': 7,
-            'description': 'Weekly symptom assessment',
-            'metrics': [
-              'PHQ-9 score',
-              'Mood rating',
-              'Sleep quality',
-            ],
-            'actions': [
-              'Adjust medication if needed',
-              'Modify therapy approach',
-            ],
-          }
-        ],
-        'rationale': 'Evidence-based treatment approach combining medication and psychotherapy',
-        'expectedEfficacy': 0.85,
-      },
-    };
-  }
-
-  // AI yanıtını parse et
-  AIDiagnosisResult _parseAIDiagnosisResponse(
-    Map<String, dynamic> response,
-    String clientId,
-    CulturalContext culturalContext,
-  ) {
-    // Bu implementasyon AI yanıtını parse edip AIDiagnosisResult objesine dönüştürür
-    // Şimdilik mock data kullanıyoruz
+  Future<SymptomAnalysis> _analyzeSymptoms(List<Symptom> symptoms) async {
+    // Simulate AI symptom analysis
+    await Future.delayed(const Duration(milliseconds: 800));
     
-    return AIDiagnosisResult(
-      id: 'diagnosis_${DateTime.now().millisecondsSinceEpoch}',
-      clientId: clientId,
-      timestamp: DateTime.now(),
-      confidence: DiagnosisConfidence.high,
-      primaryDiagnoses: [
-        DiagnosisCode(
-          code: '6A70',
-          name: 'Depressive Disorder',
-          classification: 'ICD-11',
-          category: 'Mood Disorders',
-          description: 'Characterized by depressed mood or loss of interest',
-          symptoms: [
-            'Depressed mood',
-            'Loss of interest or pleasure',
-            'Fatigue or loss of energy',
-          ],
-          criteria: [
-            'At least 2 weeks of symptoms',
-            'Significant distress or impairment',
-          ],
-          confidence: 0.95,
-        ),
-      ],
-      differentialDiagnoses: [
-        DiagnosisCode(
-          code: '6A71',
-          name: 'Anxiety Disorder',
-          classification: 'ICD-11',
-          category: 'Anxiety and Fear-Related Disorders',
-          description: 'Characterized by excessive fear and anxiety',
-          symptoms: [
-            'Excessive anxiety and worry',
-            'Difficulty controlling worry',
-          ],
-          criteria: [
-            'At least 6 months of symptoms',
-            'Significant distress or impairment',
-          ],
-          confidence: 0.75,
-        ),
-      ],
-      riskFactors: [
-        RiskFactor(
-          id: 'risk_001',
-          name: 'Family History',
-          level: RiskLevel.moderate,
-          description: 'Family history of depression',
-          category: 'biological',
-          impactScore: 0.7,
-          interventions: [
-            'Genetic counseling',
-            'Early intervention',
-            'Family therapy',
-          ],
-        ),
-      ],
-      protectiveFactors: [
-        ProtectiveFactor(
-          id: 'protective_001',
-          name: 'Social Support',
-          description: 'Strong social support network',
-          category: 'social',
-          strengthScore: 0.8,
-          enhancementStrategies: [
-            'Maintain social connections',
-            'Join support groups',
-            'Family involvement',
-          ],
-        ),
-      ],
-      treatmentRecommendation: TreatmentRecommendation(
-        id: 'treatment_001',
-        modalities: [
-          TreatmentModality(
-            id: 'modality_001',
-            name: 'Cognitive Behavioral Therapy',
-            description: 'Evidence-based psychotherapy',
-            type: TreatmentType.psychotherapy,
-            intensity: 'moderate',
-            durationWeeks: 12,
-            successRate: 0.85,
-            contraindications: [],
-          ),
-        ],
-        medications: [
-          MedicationRecommendation(
-            id: 'med_001',
-            medicationName: 'Fluoxetine',
-            genericName: 'Fluoxetine hydrochloride',
-            classification: 'SSRI',
-            mechanism: 'Serotonin reuptake inhibition',
-            dosage: '20 mg daily',
-            frequency: 'Once daily',
-            durationDays: 28,
-            sideEffects: [
-              'Nausea',
-              'Insomnia',
-            ],
-            interactions: [
-              'MAO inhibitors',
-            ],
-            contraindications: [
-              'MAO inhibitor use',
-            ],
-            efficacyScore: 0.85,
-            countryCode: 'Global',
-          ),
-        ],
-        therapies: [
-          TherapyRecommendation(
-            id: 'therapy_001',
-            therapyName: 'CBT',
-            approach: 'CBT',
-            description: 'Cognitive Behavioral Therapy',
-            sessionCount: 12,
-            sessionDurationMinutes: 50,
-            frequency: 'Weekly',
-            evidenceLevel: 0.95,
-            techniques: [
-              'Cognitive restructuring',
-              'Behavioral activation',
-            ],
-            goals: [
-              'Identify negative thoughts',
-              'Develop coping strategies',
-            ],
-          ),
-        ],
-        lifestyleChanges: [
-          LifestyleRecommendation(
-            id: 'lifestyle_001',
-            category: 'exercise',
-            recommendation: 'Regular aerobic exercise',
-            rationale: 'Improves mood and reduces symptoms',
-            frequencyPerWeek: 3,
-            durationMinutes: 30,
-            impactScore: 0.7,
-            resources: [
-              'Gym membership',
-              'Walking groups',
-            ],
-          ),
-        ],
-        followUpPlans: [
-          FollowUpPlan(
-            id: 'followup_001',
-            type: 'assessment',
-            frequencyDays: 7,
-            description: 'Weekly symptom assessment',
-            metrics: [
-              'PHQ-9 score',
-              'Mood rating',
-              'Sleep quality',
-            ],
-            actions: [
-              'Adjust medication if needed',
-              'Modify therapy approach',
-            ],
-          ),
-        ],
-        rationale: 'Evidence-based treatment approach combining medication and psychotherapy',
-        expectedEfficacy: 0.85,
-      ),
-      culturalContext: culturalContext,
-      metadata: {
-        'ai_model': 'gpt-4',
-        'confidence_score': 0.95,
-        'processing_time_ms': 1500,
-        'cultural_adaptation': true,
-      },
+    final severity = symptoms.fold(0.0, (sum, s) => sum + s.severity) / symptoms.length;
+    final categories = symptoms.map((s) => s.category).toSet().toList();
+    
+    return SymptomAnalysis(
+      id: _generateId(),
+      symptoms: symptoms,
+      overallSeverity: severity,
+      primaryCategories: categories,
+      patterns: _identifyPatterns(symptoms),
+      recommendations: _generateSymptomRecommendations(symptoms),
+      analysisDate: DateTime.now(),
     );
   }
 
-  // Teşhis veritabanından arama
-  List<DiagnosisCode> searchDiagnoses({
-    required String query,
-    required String classification,
-    String? category,
-  }) {
-    final database = _diagnosisDatabases[classification];
-    if (database == null) return [];
+  Future<RiskAssessment> _assessRisk(List<Symptom> symptoms, Map<String, dynamic> clientHistory) async {
+    // Simulate AI risk assessment
+    await Future.delayed(const Duration(milliseconds: 600));
+    
+    final riskFactors = _identifyRiskFactors(symptoms, clientHistory);
+    final riskLevel = _calculateRiskLevel(riskFactors);
+    
+    final assessment = RiskAssessment(
+      id: _generateId(),
+      riskLevel: riskLevel,
+      riskFactors: riskFactors,
+      urgency: _calculateUrgency(riskLevel, symptoms),
+      recommendations: _generateRiskRecommendations(riskFactors),
+      assessmentDate: DateTime.now(),
+    );
 
-    return database.where((diagnosis) {
-      final matchesQuery = diagnosis.name.toLowerCase().contains(query.toLowerCase()) ||
-          diagnosis.description.toLowerCase().contains(query.toLowerCase()) ||
-          diagnosis.symptoms.any((symptom) => symptom.toLowerCase().contains(query.toLowerCase()));
+    // Check for high-risk alerts
+    if (riskLevel == RiskLevel.high || riskLevel == RiskLevel.critical) {
+      _sendRiskAlert(assessment);
+    }
 
-      final matchesCategory = category == null || diagnosis.category == category;
-
-      return matchesQuery && matchesCategory;
-    }).toList();
+    return assessment;
   }
 
-  // İlaç önerisi al
-  List<MedicationRecommendation> getMedicationRecommendations({
-    required String diagnosis,
-    required String countryCode,
-    List<String>? contraindications,
-  }) {
-    final medications = <MedicationRecommendation>[];
+  Future<List<DiagnosisSuggestion>> _generateDiagnosisSuggestions(
+    SymptomAnalysis symptomAnalysis,
+    RiskAssessment riskAssessment,
+  ) async {
+    // Simulate AI diagnosis generation
+    await Future.delayed(const Duration(milliseconds: 1000));
     
-    for (final database in _medicationDatabases.values) {
-      for (final medication in database) {
-        if (medication.countryCode == countryCode || medication.countryCode == 'Global') {
-          // Basit filtreleme - gerçek uygulamada daha gelişmiş olacak
-          if (contraindications == null || 
-              !contraindications.any((contra) => medication.contraindications.contains(contra))) {
-            medications.add(medication);
-          }
-        }
+    final suggestions = <DiagnosisSuggestion>[];
+    
+    // Generate primary diagnosis suggestions
+    if (symptomAnalysis.primaryCategories.contains('mood')) {
+      suggestions.add(DiagnosisSuggestion(
+        id: _generateId(),
+        diagnosis: 'Major Depressive Disorder (F32.1)',
+        confidence: 0.87,
+        evidence: ['Depressed mood', 'Loss of interest', 'Sleep disturbances'],
+        differentialDiagnoses: ['Bipolar Disorder', 'Persistent Depressive Disorder'],
+        icd10Code: 'F32.1',
+        severity: DiagnosisSeverity.moderate,
+        treatmentPriority: TreatmentPriority.high,
+        notes: 'Consider ruling out bipolar disorder with detailed mood history',
+      ));
+    }
+    
+    if (symptomAnalysis.primaryCategories.contains('anxiety')) {
+      suggestions.add(DiagnosisSuggestion(
+        id: _generateId(),
+        diagnosis: 'Generalized Anxiety Disorder (F41.1)',
+        confidence: 0.82,
+        evidence: ['Excessive anxiety', 'Worry', 'Physical symptoms'],
+        differentialDiagnoses: ['Panic Disorder', 'Social Anxiety Disorder'],
+        icd10Code: 'F41.1',
+        severity: DiagnosisSeverity.mild,
+        treatmentPriority: TreatmentPriority.medium,
+        notes: 'Assess for panic attacks and social anxiety symptoms',
+      ));
+    }
+    
+    if (symptomAnalysis.primaryCategories.contains('trauma')) {
+      suggestions.add(DiagnosisSuggestion(
+        id: _generateId(),
+        diagnosis: 'Post-Traumatic Stress Disorder (F43.1)',
+        confidence: 0.91,
+        evidence: ['Trauma exposure', 'Intrusive memories', 'Avoidance'],
+        differentialDiagnoses: ['Acute Stress Disorder', 'Adjustment Disorder'],
+        icd10Code: 'F43.1',
+        severity: DiagnosisSeverity.severe,
+        treatmentPriority: TreatmentPriority.critical,
+        notes: 'Immediate safety assessment required',
+      ));
+    }
+
+    return suggestions;
+  }
+
+  Future<TreatmentPlan> _createTreatmentPlan(
+    List<DiagnosisSuggestion> diagnoses,
+    Map<String, dynamic> clientHistory,
+  ) async {
+    // Simulate AI treatment planning
+    await Future.delayed(const Duration(milliseconds: 700));
+    
+    final interventions = <TreatmentIntervention>[];
+    
+    for (final diagnosis in diagnoses) {
+      switch (diagnosis.icd10Code) {
+        case 'F32.1': // Major Depression
+          interventions.addAll([
+            TreatmentIntervention(
+              id: _generateId(),
+              type: InterventionType.psychotherapy,
+              name: 'Cognitive Behavioral Therapy (CBT)',
+              description: 'Evidence-based treatment for depression',
+              frequency: 'Weekly sessions',
+              duration: '12-20 weeks',
+              priority: InterventionPriority.high,
+            ),
+            TreatmentIntervention(
+              id: _generateId(),
+              type: InterventionType.medication,
+              name: 'Selective Serotonin Reuptake Inhibitor (SSRI)',
+              description: 'First-line antidepressant medication',
+              frequency: 'Daily',
+              duration: '6-12 months minimum',
+              priority: InterventionPriority.high,
+            ),
+          ]);
+          break;
+          
+        case 'F41.1': // Generalized Anxiety
+          interventions.addAll([
+            TreatmentIntervention(
+              id: _generateId(),
+              type: InterventionType.psychotherapy,
+              name: 'Acceptance and Commitment Therapy (ACT)',
+              description: 'Mindfulness-based anxiety treatment',
+              frequency: 'Weekly sessions',
+              duration: '8-16 weeks',
+              priority: InterventionPriority.medium,
+            ),
+          ]);
+          break;
+          
+        case 'F43.1': // PTSD
+          interventions.addAll([
+            TreatmentIntervention(
+              id: _generateId(),
+              type: InterventionType.psychotherapy,
+              name: 'Eye Movement Desensitization and Reprocessing (EMDR)',
+              description: 'Trauma-focused therapy',
+              frequency: 'Weekly sessions',
+              duration: '8-12 weeks',
+              priority: InterventionPriority.critical,
+            ),
+            TreatmentIntervention(
+              id: _generateId(),
+              type: InterventionType.medication,
+              name: 'Serotonin-Norepinephrine Reuptake Inhibitor (SNRI)',
+              description: 'Trauma-related medication',
+              frequency: 'Daily',
+              duration: '12-18 months',
+              priority: InterventionPriority.high,
+            ),
+          ]);
+          break;
       }
     }
 
-    return medications;
+    return TreatmentPlan(
+      id: _generateId(),
+      diagnoses: diagnoses,
+      interventions: interventions,
+      goals: _generateTreatmentGoals(diagnoses),
+      timeline: _calculateTimeline(interventions),
+      riskFactors: _identifyTreatmentRisks(interventions, clientHistory),
+      monitoringSchedule: _createMonitoringSchedule(diagnoses),
+      planDate: DateTime.now(),
+    );
   }
 
-  // Terapi önerisi al
-  List<TherapyRecommendation> getTherapyRecommendations({
-    required String diagnosis,
-    required String countryCode,
-    String? approach,
-  }) {
-    final therapies = <TherapyRecommendation>[];
+  // Helper methods
+  List<Pattern> _identifyPatterns(List<Symptom> symptoms) {
+    final patterns = <Pattern>[];
     
-    for (final database in _therapyDatabases.values) {
-      for (final therapy in database) {
-        if (approach == null || therapy.approach == approach) {
-          therapies.add(therapy);
+    // Mood patterns
+    if (symptoms.any((s) => s.category == 'mood')) {
+      patterns.add(Pattern(
+        id: _generateId(),
+        type: PatternType.mood,
+        description: 'Mood-related symptoms cluster',
+        confidence: 0.85,
+        symptoms: symptoms.where((s) => s.category == 'mood').toList(),
+      ));
+    }
+    
+    // Sleep patterns
+    if (symptoms.any((s) => s.category == 'sleep')) {
+      patterns.add(Pattern(
+        id: _generateId(),
+        type: PatternType.sleep,
+        description: 'Sleep disturbance pattern',
+        confidence: 0.78,
+        symptoms: symptoms.where((s) => s.category == 'sleep').toList(),
+      ));
+    }
+    
+    return patterns;
+  }
+
+  List<String> _generateSymptomRecommendations(List<Symptom> symptoms) {
+    final recommendations = <String>[];
+    
+    if (symptoms.any((s) => s.severity > 7)) {
+      recommendations.add('Yüksek şiddetli semptomlar için acil değerlendirme gerekli');
+    }
+    
+    if (symptoms.any((s) => s.category == 'suicidal')) {
+      recommendations.add('İntihar düşünceleri için acil psikiyatrik değerlendirme');
+    }
+    
+    if (symptoms.any((s) => s.category == 'psychosis')) {
+      recommendations.add('Psikotik semptomlar için psikiyatrik değerlendirme');
+    }
+    
+    return recommendations;
+  }
+
+  List<RiskFactor> _identifyRiskFactors(List<Symptom> symptoms, Map<String, dynamic> clientHistory) {
+    final riskFactors = <RiskFactor>[];
+    
+    // Symptom-based risks
+    if (symptoms.any((s) => s.category == 'suicidal')) {
+      riskFactors.add(RiskFactor(
+        id: _generateId(),
+        type: RiskType.suicidal,
+        severity: RiskSeverity.critical,
+        description: 'İntihar düşünceleri mevcut',
+        probability: 0.95,
+        mitigation: 'Acil psikiyatrik değerlendirme, güvenlik planı',
+      ));
+    }
+    
+    if (symptoms.any((s) => s.category == 'psychosis')) {
+      riskFactors.add(RiskFactor(
+        id: _generateId(),
+        type: RiskType.psychosis,
+        severity: RiskSeverity.high,
+        description: 'Psikotik semptomlar',
+        probability: 0.80,
+        mitigation: 'Psikiyatrik değerlendirme, antipsikotik tedavi',
+      ));
+    }
+    
+    // History-based risks
+    if (clientHistory['previousAttempts'] == true) {
+      riskFactors.add(RiskFactor(
+        id: _generateId(),
+        type: RiskType.historical,
+        severity: RiskSeverity.high,
+        description: 'Önceki intihar girişimi öyküsü',
+        probability: 0.85,
+        mitigation: 'Güvenlik planı, sık takip',
+      ));
+    }
+    
+    return riskFactors;
+  }
+
+  RiskLevel _calculateRiskLevel(List<RiskFactor> riskFactors) {
+    if (riskFactors.any((r) => r.severity == RiskSeverity.critical)) {
+      return RiskLevel.critical;
+    }
+    
+    if (riskFactors.any((r) => r.severity == RiskSeverity.high)) {
+      return RiskLevel.high;
+    }
+    
+    if (riskFactors.any((r) => r.severity == RiskSeverity.medium)) {
+      return RiskLevel.medium;
+    }
+    
+    return RiskLevel.low;
+  }
+
+  Urgency _calculateUrgency(RiskLevel riskLevel, List<Symptom> symptoms) {
+    if (riskLevel == RiskLevel.critical) {
+      return Urgency.immediate;
+    }
+    
+    if (riskLevel == RiskLevel.high) {
+      return Urgency.urgent;
+    }
+    
+    if (symptoms.any((s) => s.severity > 8)) {
+      return Urgency.urgent;
+    }
+    
+    return Urgency.routine;
+  }
+
+  List<String> _generateRiskRecommendations(List<RiskFactor> riskFactors) {
+    final recommendations = <String>[];
+    
+    for (final factor in riskFactors) {
+      recommendations.add(factor.mitigation);
+    }
+    
+    return recommendations;
+  }
+
+  List<TreatmentGoal> _generateTreatmentGoals(List<DiagnosisSuggestion> diagnoses) {
+    final goals = <TreatmentGoal>[];
+    
+    for (final diagnosis in diagnoses) {
+      switch (diagnosis.icd10Code) {
+        case 'F32.1': // Depression
+          goals.addAll([
+            TreatmentGoal(
+              id: _generateId(),
+              description: 'Depresif semptomları %50 azalt',
+              target: 'PHQ-9 skoru <10',
+              timeline: '8 hafta',
+              priority: GoalPriority.high,
+            ),
+            TreatmentGoal(
+              id: _generateId(),
+              description: 'İşlevselliği artır',
+              target: 'Günlük aktivitelere katılım',
+              timeline: '12 hafta',
+              priority: GoalPriority.medium,
+            ),
+          ]);
+          break;
+          
+        case 'F41.1': // Anxiety
+          goals.addAll([
+            TreatmentGoal(
+              id: _generateId(),
+              description: 'Anksiyete semptomlarını azalt',
+              target: 'GAD-7 skoru <8',
+              timeline: '6 hafta',
+              priority: GoalPriority.high,
+            ),
+          ]);
+          break;
+      }
+    }
+    
+    return goals;
+  }
+
+  Duration _calculateTimeline(List<TreatmentIntervention> interventions) {
+    if (interventions.isEmpty) return const Duration(days: 30);
+    
+    final maxDuration = interventions.fold<int>(0, (max, i) {
+      final weeks = _parseDuration(i.duration);
+      return weeks > max ? weeks : max;
+    });
+    
+    return Duration(days: maxDuration * 7);
+  }
+
+  int _parseDuration(String duration) {
+    if (duration.contains('hafta')) {
+      return int.tryParse(duration.replaceAll(RegExp(r'[^\d]'), '')) ?? 8;
+    }
+    if (duration.contains('ay')) {
+      return int.tryParse(duration.replaceAll(RegExp(r'[^\d]'), '')) ?? 3 * 4;
+    }
+    return 8; // Default 8 weeks
+  }
+
+  List<RiskFactor> _identifyTreatmentRisks(List<TreatmentIntervention> interventions, Map<String, dynamic> clientHistory) {
+    final risks = <RiskFactor>[];
+    
+    for (final intervention in interventions) {
+      if (intervention.type == InterventionType.medication) {
+        // Check for medication interactions
+        if (clientHistory['currentMedications'] != null) {
+          risks.add(RiskFactor(
+            id: _generateId(),
+            type: RiskType.medication,
+            severity: RiskSeverity.medium,
+            description: 'İlaç etkileşimi riski',
+            probability: 0.60,
+            mitigation: 'İlaç etkileşim kontrolü yapılmalı',
+          ));
         }
       }
     }
-
-    return therapies;
+    
+    return risks;
   }
 
-  // Kültürel bağlam al
-  CulturalContext? getCulturalContext(String countryCode) {
-    return _culturalContexts[countryCode];
+  MonitoringSchedule _createMonitoringSchedule(List<DiagnosisSuggestion> diagnoses) {
+    final schedule = <MonitoringEvent>[];
+    
+    for (final diagnosis in diagnoses) {
+      switch (diagnosis.icd10Code) {
+        case 'F32.1': // Depression
+          schedule.addAll([
+            MonitoringEvent(
+              id: _generateId(),
+              type: MonitoringType.assessment,
+              name: 'PHQ-9 Değerlendirmesi',
+              frequency: 'Haftalık',
+              nextDue: DateTime.now().add(const Duration(days: 7)),
+            ),
+            MonitoringEvent(
+              id: _generateId(),
+              type: MonitoringType.safety,
+              name: 'Güvenlik Değerlendirmesi',
+              frequency: 'Haftalık',
+              nextDue: DateTime.now().add(const Duration(days: 7)),
+            ),
+          ]);
+          break;
+          
+        case 'F41.1': // Anxiety
+          schedule.addAll([
+            MonitoringEvent(
+              id: _generateId(),
+              type: MonitoringType.assessment,
+              name: 'GAD-7 Değerlendirmesi',
+              frequency: 'Haftalık',
+              nextDue: DateTime.now().add(const Duration(days: 7)),
+            ),
+          ]);
+          break;
+      }
+    }
+    
+    return MonitoringSchedule(
+      id: _generateId(),
+      events: schedule,
+      createdDate: DateTime.now(),
+    );
   }
 
-  // Servis durumu
-  Map<String, dynamic> getServiceStatus() {
-    return {
-      'status': 'operational',
-      'diagnosis_databases': _diagnosisDatabases.keys.toList(),
-      'medication_databases': _medicationDatabases.keys.toList(),
-      'therapy_databases': _therapyDatabases.keys.toList(),
-      'cultural_contexts': _culturalContexts.keys.toList(),
-      'last_health_check': DateTime.now().toIso8601String(),
-    };
+  double _calculateConfidence(List<DiagnosisSuggestion> suggestions) {
+    if (suggestions.isEmpty) return 0.0;
+    
+    final totalConfidence = suggestions.fold(0.0, (sum, s) => sum + s.confidence);
+    return totalConfidence / suggestions.length;
+  }
+
+  void _sendRiskAlert(RiskAssessment assessment) {
+    final alert = RiskAlert(
+      id: _generateId(),
+      assessment: assessment,
+      timestamp: DateTime.now(),
+      priority: assessment.riskLevel == RiskLevel.critical ? AlertPriority.critical : AlertPriority.high,
+    );
+    
+    _riskAlertController.add(alert);
+  }
+
+  void _saveDiagnosisResult(DiagnosisResult result) {
+    _recentSuggestions = result.diagnosisSuggestions;
+    _riskAssessments = [result.riskAssessment];
+    _treatmentPlans = [result.treatmentPlan];
+    
+    notifyListeners();
+  }
+
+  void _setAnalyzing(bool analyzing) {
+    _isAnalyzing = analyzing;
+    notifyListeners();
+  }
+
+  void _resetProgress() {
+    _analysisProgress = 0.0;
+    _progressController.add(DiagnosisProgress(0.0, 'Analiz başlatılıyor...'));
+  }
+
+  Future<void> _updateProgress(double progress, String message) async {
+    _analysisProgress = progress;
+    _progressController.add(DiagnosisProgress(progress, message));
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  String _generateId() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  void dispose() {
+    _progressController.close();
+    _resultController.close();
+    _riskAlertController.close();
+    super.dispose();
   }
 }

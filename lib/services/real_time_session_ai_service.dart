@@ -171,9 +171,30 @@ class RealTimeSessionAIService extends ChangeNotifier {
       // Generate task ID
       final taskId = 'session_analysis_${sessionId}_${DateTime.now().millisecondsSinceEpoch}';
       
+      // Determine analysis type based on available data
+      String promptType = 'real_time_session_analysis';
+      
+      // Check if we have multimodal data for advanced analysis
+      if (_hasMultimodalData(session)) {
+        promptType = 'multimodal_session_analysis';
+        analysisData['voiceAnalysis'] = _extractVoiceData(session);
+        analysisData['facialAnalysis'] = _extractFacialData(session);
+        analysisData['biometricData'] = _extractBiometricData(session);
+      }
+      
+      // Check for crisis indicators
+      if (_detectCrisisIndicators(session)) {
+        promptType = 'crisis_intervention_ai';
+        analysisData['crisisType'] = _determineCrisisType(session);
+        analysisData['crisisLevel'] = _assessCrisisLevel(session);
+        analysisData['clientStatus'] = _assessClientStatus(session);
+        analysisData['currentRisks'] = _identifyCurrentRisks(session);
+        analysisData['previousInterventions'] = _getPreviousInterventions(session);
+      }
+      
       // Process with AI
       final response = await _aiService.processRequest(
-        promptType: 'real_time_session_analysis',
+        promptType: promptType,
         parameters: analysisData,
         taskId: taskId,
         useCache: false, // Real-time analysis should not use cache
@@ -195,10 +216,16 @@ class RealTimeSessionAIService extends ChangeNotifier {
       // Check for intervention suggestions
       _checkForInterventions(analysis);
       
+      // Check for crisis escalation
+      if (promptType == 'crisis_intervention_ai') {
+        _handleCrisisEscalation(analysis, session);
+      }
+      
       _logger.debug('Session data analyzed', context: 'RealTimeSessionAIService', data: {
         'sessionId': sessionId,
         'analysisId': analysis.id,
         'timestamp': analysis.timestamp.toIso8601String(),
+        'analysisType': promptType,
       });
       
     } catch (e) {

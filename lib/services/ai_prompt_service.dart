@@ -261,6 +261,118 @@ Lütfen şu bilgileri içeren JSON formatında yanıt ver:
   ]
 }
 ''',
+
+    'multimodal_session_analysis': '''
+Sen gelişmiş bir AI klinik psikologsun ve çoklu modalite (ses, yüz ifadesi, biyometrik) verilerini analiz ederek kapsamlı seans analizi yapıyorsun.
+
+MULTİMODAL VERİLER:
+- Ses Analizi: {voiceAnalysis}
+- Yüz İfadesi: {facialAnalysis}
+- Biyometrik Veriler: {biometricData}
+- Seans İçeriği: {sessionContent}
+- Danışan Geçmişi: {clientHistory}
+
+Lütfen şu bilgileri içeren JSON formatında yanıt ver:
+{
+  "integratedAnalysis": {
+    "overallEmotionalState": {
+      "primaryEmotion": "ana_duygu",
+      "secondaryEmotions": ["ikincil_duygular"],
+      "emotionalConflict": true/false,
+      "conflictDescription": "çelişki_açıklaması"
+    },
+    "stressAssessment": {
+      "overallStress": 0.75,
+      "stressSources": ["stres_kaynakları"],
+      "stressManifestations": ["stres_tezahürleri"],
+      "copingEffectiveness": 0.6
+    },
+    "riskEvaluation": {
+      "immediateRisks": ["acil_riskler"],
+      "longTermRisks": ["uzun_vadeli_riskler"],
+      "riskFactors": ["risk_faktörleri"],
+      "protectiveFactors": ["koruyucu_faktörler"]
+    },
+    "therapeuticInsights": {
+      "clientReadiness": 0.8,
+      "resistanceLevel": 0.3,
+      "therapeuticAlliance": 0.85,
+      "interventionOpportunities": ["müdahale_fırsatları"]
+    },
+    "recommendations": {
+      "immediateActions": ["acil_eylemler"],
+      "sessionAdjustments": ["seans_ayarlamaları"],
+      "techniqueModifications": ["teknik_değişiklikleri"],
+      "followUpConsiderations": ["takip_konuları"]
+    }
+  },
+  "crossModalValidation": {
+    "voiceFacialAlignment": 0.9,
+    "biometricEmotionalCorrelation": 0.85,
+    "dataConsistency": 0.95,
+    "confidenceScore": 0.88
+  },
+  "predictiveInsights": {
+    "sessionOutcome": "pozitif/negatif/nötr",
+    "clientProgress": 0.7,
+    "therapeuticEffectiveness": 0.8,
+    "nextSessionFocus": ["sonraki_seans_odak_noktaları"]
+  }
+}
+''',
+
+    'crisis_intervention_ai': '''
+Sen kriz müdahalesi konusunda uzmanlaşmış bir AI klinik psikologsun. Aşağıdaki kriz verilerini analiz ederek acil müdahale planı oluştur:
+
+KRİZ VERİLERİ:
+- Kriz Tipi: {crisisType}
+- Kriz Seviyesi: {crisisLevel}
+- Danışan Durumu: {clientStatus}
+- Mevcut Riskler: {currentRisks}
+- Biyometrik Veriler: {biometricData}
+- Önceki Müdahaleler: {previousInterventions}
+
+Lütfen şu bilgileri içeren JSON formatında yanıt ver:
+{
+  "crisisAssessment": {
+    "immediateRisk": "Yüksek/Orta/Düşük",
+    "riskFactors": ["risk_faktörleri"],
+    "protectiveFactors": ["koruyucu_faktörler"],
+    "escalationPotential": 0.8
+  },
+  "interventionPlan": {
+    "immediateActions": [
+      {
+        "action": "eylem_açıklaması",
+        "priority": "Kritik/Yüksek/Orta",
+        "timeline": "anında/5_dakika/15_dakika",
+        "responsibleParty": "sorumlu_kişi"
+      }
+    ],
+    "safetyMeasures": ["güvenlik_önlemleri"],
+    "deEscalationTechniques": ["sakinleştirme_teknikleri"],
+    "emergencyProtocols": ["acil_protokoller"]
+  },
+  "resourceAllocation": {
+    "requiredPersonnel": ["gerekli_personel"],
+    "medicalSupport": "gerekli/gerekli_değil",
+    "specializedServices": ["uzman_servisler"],
+    "equipment": ["gerekli_ekipman"]
+  },
+  "communicationStrategy": {
+    "clientCommunication": "iletişim_yaklaşımı",
+    "familyNotification": "aile_bilgilendirme",
+    "teamCoordination": "ekip_koordinasyonu",
+    "documentation": "belgeleme_gereksinimleri"
+  },
+  "followUpPlan": {
+    "immediateFollowUp": "takip_planı",
+    "longTermMonitoring": "uzun_vadeli_izleme",
+    "preventionStrategies": ["önleme_stratejileri"],
+    "recoverySupport": "iyileşme_desteği"
+  }
+}
+''',
   };
 
   // Prompt Optimization Strategies

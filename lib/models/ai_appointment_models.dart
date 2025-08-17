@@ -475,25 +475,59 @@ class AIMeetingSummary {
   Map<String, dynamic> toJson() => _$AIMeetingSummaryToJson(this);
 }
 
+// ===== NO-SHOW TAHMİNİ =====
+
+@JsonSerializable()
+class NoShowPrediction {
+  final String id;
+  final String appointmentId;
+  final String clientName;
+  final DateTime appointmentTime;
+  final bool predictedNoShow;
+  final bool actualNoShow;
+  final double confidence;
+  final DateTime predictionDate;
+  final Map<String, dynamic> features;
+
+  const NoShowPrediction({
+    required this.id,
+    required this.appointmentId,
+    required this.clientName,
+    required this.appointmentTime,
+    required this.predictedNoShow,
+    required this.actualNoShow,
+    required this.confidence,
+    required this.predictionDate,
+    required this.features,
+  });
+
+  factory NoShowPrediction.fromJson(Map<String, dynamic> json) => _$NoShowPredictionFromJson(json);
+  Map<String, dynamic> toJson() => _$NoShowPredictionToJson(this);
+}
+
 // ===== RANDEVU OPTİMİZASYONU =====
 
 @JsonSerializable()
 class AppointmentOptimization {
   final String id;
-  final String therapistId;
-  final DateTime date;
-  final List<OptimizationSuggestion> suggestions;
-  final Map<String, dynamic> constraints;
-  final double efficiencyScore;
+  final String title;
+  final OptimizationType type;
+  final double estimatedBenefit;
+  final ImplementationDifficulty implementationDifficulty;
+  final double aiConfidence;
+  final String description;
+  final List<String> steps;
   final DateTime createdAt;
 
   const AppointmentOptimization({
     required this.id,
-    required this.therapistId,
-    required this.date,
-    required this.suggestions,
-    required this.constraints,
-    required this.efficiencyScore,
+    required this.title,
+    required this.type,
+    required this.estimatedBenefit,
+    required this.implementationDifficulty,
+    required this.aiConfidence,
+    required this.description,
+    required this.steps,
     required this.createdAt,
   });
 
@@ -501,33 +535,274 @@ class AppointmentOptimization {
   Map<String, dynamic> toJson() => _$AppointmentOptimizationToJson(this);
 }
 
-@JsonSerializable()
-class OptimizationSuggestion {
-  final String id;
-  final OptimizationType type;
-  final String description;
-  final double impact;
-  final List<String> actions;
-  final Map<String, dynamic> data;
-
-  const OptimizationSuggestion({
-    required this.id,
-    required this.type,
-    required this.description,
-    required this.impact,
-    required this.actions,
-    required this.data,
-  });
-
-  factory OptimizationSuggestion.fromJson(Map<String, dynamic> json) => _$OptimizationSuggestionFromJson(json);
-  Map<String, dynamic> toJson() => _$OptimizationSuggestionToJson(this);
-}
-
 enum OptimizationType {
   timeSlot,
   duration,
-  sequence,
-  resource,
-  capacity,
-  routing
+  therapist,
+  location
+}
+
+enum ImplementationDifficulty {
+  easy,
+  medium,
+  hard
+}
+
+// ===== DANIŞAN TERCİHLERİ =====
+
+@JsonSerializable()
+class ClientPreference {
+  final String id;
+  final String clientId;
+  final String clientName;
+  final String preferredTime;
+  final String preferredTherapist;
+  final double preferenceStrength;
+  final List<String> preferredDays;
+  final String preferredLocation;
+  final DateTime lastUpdated;
+
+  const ClientPreference({
+    required this.id,
+    required this.clientId,
+    required this.clientName,
+    required this.preferredTime,
+    required this.preferredTherapist,
+    required this.preferenceStrength,
+    required this.preferredDays,
+    required this.preferredLocation,
+    required this.lastUpdated,
+  });
+
+  factory ClientPreference.fromJson(Map<String, dynamic> json) => _$ClientPreferenceFromJson(json);
+  Map<String, dynamic> toJson() => _$ClientPreferenceToJson(this);
+}
+
+// ===== AI SERVİS METODLARI =====
+
+extension AIAppointmentServiceExtension on AIAppointmentService {
+  Future<List<NoShowPrediction>> getNoShowPredictions() async {
+    // Simüle edilmiş no-show tahminleri
+    await Future.delayed(const Duration(milliseconds: 600));
+    return [
+      NoShowPrediction(
+        id: '1',
+        appointmentId: 'apt_001',
+        clientName: 'Ahmet Yılmaz',
+        appointmentTime: DateTime.now().add(const Duration(days: 1)),
+        predictedNoShow: true,
+        actualNoShow: true,
+        confidence: 0.89,
+        predictionDate: DateTime.now().subtract(const Duration(hours: 2)),
+        features: {
+          'previousNoShows': 2,
+          'lastMinuteCancellations': 1,
+          'clientEngagement': 0.3,
+        },
+      ),
+      NoShowPrediction(
+        id: '2',
+        appointmentId: 'apt_002',
+        clientName: 'Ayşe Demir',
+        appointmentTime: DateTime.now().add(const Duration(days: 2)),
+        predictedNoShow: false,
+        actualNoShow: false,
+        confidence: 0.92,
+        predictionDate: DateTime.now().subtract(const Duration(hours: 4)),
+        features: {
+          'previousNoShows': 0,
+          'lastMinuteCancellations': 0,
+          'clientEngagement': 0.9,
+        },
+      ),
+      NoShowPrediction(
+        id: '3',
+        appointmentId: 'apt_003',
+        clientName: 'Mehmet Kaya',
+        appointmentTime: DateTime.now().add(const Duration(days: 1)),
+        predictedNoShow: true,
+        actualNoShow: false,
+        confidence: 0.76,
+        predictionDate: DateTime.now().subtract(const Duration(hours: 3)),
+        features: {
+          'previousNoShows': 1,
+          'lastMinuteCancellations': 0,
+          'clientEngagement': 0.6,
+        },
+      ),
+      NoShowPrediction(
+        id: '4',
+        appointmentId: 'apt_004',
+        clientName: 'Fatma Özkan',
+        appointmentTime: DateTime.now().add(const Duration(days: 3)),
+        predictedNoShow: false,
+        actualNoShow: false,
+        confidence: 0.94,
+        predictionDate: DateTime.now().subtract(const Duration(hours: 5)),
+        features: {
+          'previousNoShows': 0,
+          'lastMinuteCancellations': 0,
+          'clientEngagement': 0.95,
+        },
+      ),
+      NoShowPrediction(
+        id: '5',
+        appointmentId: 'apt_005',
+        clientName: 'Ali Veli',
+        appointmentTime: DateTime.now().add(const Duration(days: 1)),
+        predictedNoShow: false,
+        actualNoShow: true,
+        confidence: 0.68,
+        predictionDate: DateTime.now().subtract(const Duration(hours: 1)),
+        features: {
+          'previousNoShows': 0,
+          'lastMinuteCancellations': 1,
+          'clientEngagement': 0.7,
+        },
+      ),
+    ];
+  }
+
+  Future<List<AppointmentOptimization>> getAppointmentOptimizations() async {
+    // Simüle edilmiş optimizasyon önerileri
+    await Future.delayed(const Duration(milliseconds: 700));
+    return [
+      AppointmentOptimization(
+        id: '1',
+        title: 'Sabah Randevularını Artır',
+        type: OptimizationType.timeSlot,
+        estimatedBenefit: 0.25,
+        implementationDifficulty: ImplementationDifficulty.easy,
+        aiConfidence: 0.87,
+        description: 'Sabah saatlerinde no-show oranı %15 daha düşük',
+        steps: [
+          'Sabah 9-11 arası boş slotları tespit et',
+          'Yüksek no-show riskli danışanları sabah saatlerine yönlendir',
+          'Sabah randevuları için %10 indirim uygula',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+      AppointmentOptimization(
+        id: '2',
+        title: 'Randevu Sürelerini Optimize Et',
+        type: OptimizationType.duration,
+        estimatedBenefit: 0.18,
+        implementationDifficulty: ImplementationDifficulty.medium,
+        aiConfidence: 0.79,
+        description: 'Danışan ihtiyaçlarına göre esnek süreler',
+        steps: [
+          'Danışan geçmişini analiz et',
+          'Optimal randevu süresini hesapla',
+          'Terapist onayı al ve uygula',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      ),
+      AppointmentOptimization(
+        id: '3',
+        title: 'Terapist Eşleştirmesini İyileştir',
+        type: OptimizationType.therapist,
+        estimatedBenefit: 0.32,
+        implementationDifficulty: ImplementationDifficulty.hard,
+        aiConfidence: 0.91,
+        description: 'Danışan-terapist uyumunu maksimize et',
+        steps: [
+          'Danışan tercihlerini analiz et',
+          'Terapist uzmanlık alanlarını değerlendir',
+          'Uyum skorunu hesapla ve eşleştir',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      ),
+      AppointmentOptimization(
+        id: '4',
+        title: 'Lokasyon Bazlı Optimizasyon',
+        type: OptimizationType.location,
+        estimatedBenefit: 0.12,
+        implementationDifficulty: ImplementationDifficulty.easy,
+        aiConfidence: 0.73,
+        description: 'Danışan konumuna göre en yakın merkezi öner',
+        steps: [
+          'Danışan konumunu tespit et',
+          'En yakın merkezleri listele',
+          'Ulaşım kolaylığını değerlendir',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+      ),
+    ];
+  }
+
+  Future<List<ClientPreference>> getClientPreferences() async {
+    // Simüle edilmiş danışan tercihleri
+    await Future.delayed(const Duration(milliseconds: 500));
+    return [
+      ClientPreference(
+        id: '1',
+        clientId: 'client_001',
+        clientName: 'Ahmet Yılmaz',
+        preferredTime: '14:00',
+        preferredTherapist: 'Dr. Ayşe Demir',
+        preferenceStrength: 0.85,
+        preferredDays: ['Pazartesi', 'Çarşamba', 'Cuma'],
+        preferredLocation: 'Merkez Şube',
+        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      ClientPreference(
+        id: '2',
+        clientId: 'client_002',
+        clientName: 'Ayşe Demir',
+        preferredTime: '10:00',
+        preferredTherapist: 'Dr. Mehmet Kaya',
+        preferenceStrength: 0.92,
+        preferredDays: ['Salı', 'Perşembe'],
+        preferredLocation: 'Kadıköy Şube',
+        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      ClientPreference(
+        id: '3',
+        clientId: 'client_003',
+        clientName: 'Mehmet Kaya',
+        preferredTime: '16:00',
+        preferredTherapist: 'Dr. Fatma Özkan',
+        preferenceStrength: 0.78,
+        preferredDays: ['Pazartesi', 'Cuma'],
+        preferredLocation: 'Beşiktaş Şube',
+        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+      ClientPreference(
+        id: '4',
+        clientId: 'client_004',
+        clientName: 'Fatma Özkan',
+        preferredTime: '11:00',
+        preferredTherapist: 'Dr. Ali Veli',
+        preferenceStrength: 0.65,
+        preferredDays: ['Çarşamba', 'Cumartesi'],
+        preferredLocation: 'Merkez Şube',
+        lastUpdated: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+    ];
+  }
+
+  Future<List<AppointmentOptimization>> autoOptimizeAppointments() async {
+    // Otomatik optimizasyon simülasyonu
+    await Future.delayed(const Duration(milliseconds: 1000));
+    
+    final optimizations = await getAppointmentOptimizations();
+    
+    // AI algoritması ile optimizasyonları güncelle
+    for (var optimization in optimizations) {
+      // Tahmini faydayı artır
+      optimization = AppointmentOptimization(
+        id: optimization.id,
+        title: optimization.title,
+        type: optimization.type,
+        estimatedBenefit: optimization.estimatedBenefit * 1.1, // %10 artış
+        implementationDifficulty: optimization.implementationDifficulty,
+        aiConfidence: optimization.aiConfidence,
+        description: optimization.description,
+        steps: optimization.steps,
+        createdAt: DateTime.now(),
+      );
+    }
+    
+    return optimizations;
+  }
 }

@@ -7,13 +7,17 @@ import '../profile/profile_screen.dart';
 import '../diagnosis/diagnosis_screen.dart';
 import '../prescription/prescription_screen.dart';
 import '../flag/flag_screen.dart';
+import '../client_management/client_management_screen.dart';
+import '../ai_case_management/ai_case_management_screen.dart';
+import '../ai_appointment/ai_appointment_screen.dart';
+import '../finance/finance_dashboard_screen.dart';
+import '../supervisor/supervisor_dashboard_screen.dart';
 import '../../widgets/ai_chatbot/ai_chatbot_widget.dart';
 import '../../widgets/symptom_tracker/symptom_tracker_widget.dart';
 import '../../widgets/medication_reminder/medication_reminder_widget.dart';
 import '../../widgets/emergency_contact/emergency_contact_widget.dart';
 import '../../widgets/progress_dashboard/progress_dashboard_widget.dart';
 import '../../widgets/offline_mode/offline_mode_widget.dart';
-import '../client_management/client_management_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -30,9 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const SessionScreen(),
     const DiagnosisScreen(),
     const PrescriptionScreen(),
-    const FlagScreen(),
-    const AppointmentScreen(),
-    const ProfileScreen(),
+    const ClientManagementScreen(),
   ];
 
   @override
@@ -62,16 +64,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Reçeteler',
           ),
           NavigationDestination(
-            icon: Icon(Icons.warning),
-            label: 'Flaglar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today),
-            label: 'Randevular',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person),
-            label: 'Profil',
+            icon: Icon(Icons.people),
+            label: 'Danışanlar',
           ),
         ],
       ),
@@ -155,9 +149,9 @@ class DashboardHome extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Sprint 1 Modülleri
+            // Temel Modüller
             Text(
-              'Sprint 1 Modülleri',
+              'Temel Modüller',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
@@ -319,6 +313,64 @@ class DashboardHome extends StatelessWidget {
               Icons.people,
               Colors.teal.shade600,
               () => _showClientManagement(context),
+            ),
+            const SizedBox(height: 16),
+
+            const SizedBox(height: 24),
+
+            // AI Destekli Modüller
+            Text(
+              'AI Destekli Modüller',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
+              'AI Vaka Yöneticisi',
+              'AI destekli vaka analizi, risk değerlendirmesi ve öneriler',
+              Icons.psychology,
+              Colors.deepOrange.shade600,
+              () => Navigator.pushNamed(context, '/ai-case-management'),
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
+              'AI Randevu Sistemi',
+              'AI destekli randevu optimizasyonu ve no-show tahmini',
+              Icons.schedule,
+              Colors.blue.shade600,
+              () => Navigator.pushNamed(context, '/ai-appointment'),
+            ),
+            const SizedBox(height: 16),
+
+            const SizedBox(height: 24),
+
+            // Yönetim Modülleri
+            Text(
+              'Yönetim Modülleri',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
+              'Finans Dashboard',
+              'Gelir takibi, maliyet analizi ve AI destekli finansal öngörüler',
+              Icons.account_balance_wallet,
+              Colors.green.shade700,
+              () => Navigator.pushNamed(context, '/finance'),
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
+              'Süpervizör Dashboard',
+              'Terapist performans takibi, kalite metrikleri ve AI destekli süpervizyon',
+              Icons.supervisor_account,
+              Colors.purple.shade700,
+              () => Navigator.pushNamed(context, '/supervisor'),
             ),
             const SizedBox(height: 16),
 

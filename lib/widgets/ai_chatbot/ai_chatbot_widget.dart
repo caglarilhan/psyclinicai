@@ -4,12 +4,7 @@ import 'dart:math' as math;
 import '../../services/ai_service.dart';
 
 class AIChatbotWidget extends StatefulWidget {
-  final String? selectedMedication;
-
-  const AIChatbotWidget({
-    super.key,
-    this.selectedMedication,
-  });
+  const AIChatbotWidget({super.key});
 
   @override
   State<AIChatbotWidget> createState() => _AIChatbotWidgetState();
@@ -18,232 +13,119 @@ class AIChatbotWidget extends StatefulWidget {
 class _AIChatbotWidgetState extends State<AIChatbotWidget>
     with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
-  final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
-  final AIService _aiService = AIService();
-  
+  final List<ChatMessage> _messages = [];
   bool _isTyping = false;
-  late AnimationController _pulseController;
-  late AnimationController _bounceController;
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _bounceAnimation;
+  bool _isEmergencyMode = false;
+  bool _is24HourMode = true;
+  
+  // AI Chatbot için yeni özellikler
+  late AnimationController _emergencyAnimationController;
+  late AnimationController _typingAnimationController;
+  
+  // Acil durum tespiti
+  bool _hasEmergencyKeywords = false;
+  List<String> _emergencyKeywords = [
+    'intihar', 'ölüm', 'kendimi öldürmek', 'artık yaşamak istemiyorum',
+    'acil', 'kriz', 'panik', 'kontrolümü kaybettim', 'yardım',
+    'bıçak', 'ilaç', 'zehir', 'asılma', 'kendine zarar'
+  ];
 
   @override
   void initState() {
     super.initState();
-    _initializeAnimations();
-    _addWelcomeMessage();
-  }
-
-  void _initializeAnimations() {
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
+    _emergencyAnimationController = AnimationController(
+      duration: const Duration(seconds: 1),
       vsync: this,
     );
-    _bounceController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _typingAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-
-    _bounceAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _bounceController,
-      curve: Curves.elasticOut,
-    ));
-
-    _pulseController.repeat(reverse: true);
-  }
-
-  void _addWelcomeMessage() {
-    _messages.add(ChatMessage(
-      text: widget.selectedMedication != null
-          ? 'Merhaba! ${widget.selectedMedication} hakkında size nasıl yardımcı olabilirim?'
-          : 'Merhaba! Size nasıl yardımcı olabilirim? İlaç bilgileri, yan etkiler, etkileşimler hakkında sorularınızı yanıtlayabilirim.',
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
+    
+    _initializeChatbot();
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _bounceController.dispose();
+    _emergencyAnimationController.dispose();
+    _typingAnimationController.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
-
-    final userMessage = ChatMessage(
-      text: _messageController.text.trim(),
-      isUser: true,
-      timestamp: DateTime.now(),
-    );
-
-    setState(() {
-      _messages.add(userMessage);
-      _isTyping = true;
-    });
-
-    _messageController.clear();
-    _scrollToBottom();
-
-    try {
-      // API anahtarı kontrolü
-      final hasValidKey = await _aiService.hasValidApiKey();
-      if (!hasValidKey) {
-        _showApiKeyDialog();
-        return;
-      }
-
-      // AI yanıtı oluştur
-      final aiResponse = await _generateAIResponse(userMessage.text);
-      
-      final aiMessage = ChatMessage(
-        text: aiResponse,
+  void _initializeChatbot() {
+    // Hoş geldin mesajı
+    _addMessage(
+      ChatMessage(
+        text: 'Merhaba! Ben PsyClinic AI Asistan. Size nasıl yardımcı olabilirim?\n\n'
+              '🆘 Acil durumlar için "ACİL" yazabilirsiniz\n'
+              '💊 İlaç bilgileri için "İLAÇ" yazabilirsiniz\n'
+              '📅 Randevu bilgileri için "RANDEVU" yazabilirsiniz\n'
+              '❓ Genel sorular için istediğinizi yazabilirsiniz',
         isUser: false,
         timestamp: DateTime.now(),
-      );
-
-      setState(() {
-        _messages.add(aiMessage);
-        _isTyping = false;
-      });
-
-      _scrollToBottom();
-      _bounceController.forward().then((_) => _bounceController.reset());
-    } catch (e) {
-      // Hata durumunda fallback yanıt
-      final fallbackResponse = _getFallbackResponse(userMessage.text);
-      
-      final aiMessage = ChatMessage(
-        text: fallbackResponse,
-        isUser: false,
-        timestamp: DateTime.now(),
-      );
-
-      setState(() {
-        _messages.add(aiMessage);
-        _isTyping = false;
-      });
-
-      _scrollToBottom();
-    }
-  }
-
-  Future<String> _generateAIResponse(String userMessage) async {
-    // Basit prompt engineering
-    final prompt = '''
-Sen deneyimli bir klinik psikolog ve psikiyatristsin. Aşağıdaki soruya profesyonel, anlaşılır ve yardımcı bir yanıt ver:
-
-Soru: $userMessage
-
-Lütfen Türkçe olarak yanıt ver ve mümkünse pratik öneriler sun.
-''';
-
-    try {
-      // OpenAI API çağrısı için basit bir HTTP request
-      final apiKey = await _aiService.hasValidApiKey();
-      if (!apiKey) {
-        return _getFallbackResponse(userMessage);
-      }
-
-      // Basit bir AI yanıtı simülasyonu (gerçek API entegrasyonu için daha gelişmiş bir yaklaşım gerekli)
-      return _getFallbackResponse(userMessage);
-    } catch (e) {
-      // Hata durumunda fallback
-      return _getFallbackResponse(userMessage);
-    }
-  }
-
-  String _getFallbackResponse(String message) {
-    final lowerMessage = message.toLowerCase();
-
-    if (lowerMessage.contains('yan etki') ||
-        lowerMessage.contains('side effect')) {
-      return 'İlaçların yan etkileri kişiden kişiye değişebilir. En yaygın yan etkiler mide bulantısı, baş dönmesi ve uyku hali olabilir. Ciddi yan etkiler yaşarsanız mutlaka doktorunuza başvurun.';
-    } else if (lowerMessage.contains('etkileşim') ||
-        lowerMessage.contains('interaction')) {
-      return 'İlaç etkileşimleri önemlidir. Alkol, diğer ilaçlar ve bitkisel takviyelerle etkileşim olabilir. Doktorunuza tüm kullandığınız ilaçları bildirdiğinizden emin olun.';
-    } else if (lowerMessage.contains('doz') ||
-        lowerMessage.contains('dosage')) {
-      return 'İlaç dozları doktorunuz tarafından belirlenir ve kişisel ihtiyaçlarınıza göre ayarlanır. Dozu kendiniz değiştirmeyin ve doktorunuzun önerilerine uyun.';
-    } else if (lowerMessage.contains('gebelik') ||
-        lowerMessage.contains('pregnancy')) {
-      return 'Gebelik sırasında ilaç kullanımı özel dikkat gerektirir. Mutlaka doktorunuza danışın ve gebelik planınız varsa önceden bildirin.';
-    } else {
-      return 'Bu konuda size yardımcı olmak isterim. Daha spesifik bir soru sorabilir misiniz? İlaç bilgileri, yan etkiler, etkileşimler veya kullanım talimatları hakkında detaylı bilgi verebilirim.';
-    }
-  }
-
-  void _showApiKeyDialog() {
-    final apiKeyController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('OpenAI API Anahtarı Gerekli'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'AI özelliklerini kullanmak için OpenAI API anahtarınızı girmeniz gerekiyor.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: apiKeyController,
-              decoration: const InputDecoration(
-                labelText: 'OpenAI API Anahtarı',
-                labelStyle: TextStyle(color: Colors.blue),
-                hintText: 'sk-...',
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue, width: 2),
-                ),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'API anahtarınız güvenli bir şekilde cihazınızda saklanacaktır.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (apiKeyController.text.trim().isNotEmpty) {
-                await _aiService.saveApiKey(apiKeyController.text.trim());
-                Navigator.pop(context);
-                
-                // API anahtarı kaydedildikten sonra mesajı tekrar gönder
-                _sendMessage();
-              }
-            },
-            child: const Text('Kaydet'),
-          ),
-        ],
+        messageType: MessageType.welcome,
       ),
     );
+  }
+
+  void _addMessage(ChatMessage message) {
+    setState(() {
+      _messages.add(message);
+    });
+    
+    // Acil durum tespiti
+    if (message.isUser) {
+      _checkEmergencyKeywords(message.text);
+    }
+    
+    _scrollToBottom();
+  }
+
+  void _checkEmergencyKeywords(String text) {
+    final lowerText = text.toLowerCase();
+    _hasEmergencyKeywords = _emergencyKeywords.any(
+      (keyword) => lowerText.contains(keyword.toLowerCase()),
+    );
+    
+    if (_hasEmergencyKeywords) {
+      _activateEmergencyMode();
+    }
+  }
+
+  void _activateEmergencyMode() {
+    setState(() {
+      _isEmergencyMode = true;
+    });
+    
+    _emergencyAnimationController.repeat();
+    
+    // Acil durum mesajı
+    _addMessage(
+      ChatMessage(
+        text: '🚨 ACİL DURUM TESPİT EDİLDİ!\n\n'
+              'Lütfen hemen aşağıdaki numaralardan birini arayın:\n'
+              '📞 Acil Psikiyatri: 112\n'
+              '📞 İntihar Önleme: 184\n'
+              '📞 Psikolojik Destek: 0850 XXX XX XX\n\n'
+              'Size yardımcı olmak için buradayım. Lütfen güvende olduğunuzdan emin olun.',
+        isUser: false,
+        timestamp: DateTime.now(),
+        messageType: MessageType.emergency,
+      ),
+    );
+    
+    // 30 saniye sonra acil durum modunu kapat
+    Future.delayed(const Duration(seconds: 30), () {
+      if (mounted) {
+        setState(() {
+          _isEmergencyMode = false;
+        });
+        _emergencyAnimationController.stop();
+      }
+    });
   }
 
   void _scrollToBottom() {
@@ -256,6 +138,142 @@ Lütfen Türkçe olarak yanıt ver ve mümkünse pratik öneriler sun.
         );
       }
     });
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    // Kullanıcı mesajını ekle
+    _addMessage(
+      ChatMessage(
+        text: text,
+        isUser: true,
+        timestamp: DateTime.now(),
+        messageType: MessageType.normal,
+      ),
+    );
+
+    _messageController.clear();
+    setState(() {
+      _isTyping = true;
+    });
+
+    // AI yanıtını simüle et
+    await Future.delayed(const Duration(seconds: 1));
+    
+    final aiResponse = await _generateAIResponse(text);
+    
+    setState(() {
+      _isTyping = false;
+    });
+
+    _addMessage(
+      ChatMessage(
+        text: aiResponse,
+        isUser: false,
+        timestamp: DateTime.now(),
+        messageType: _getMessageType(aiResponse),
+      ),
+    );
+  }
+
+  MessageType _getMessageType(String response) {
+    if (response.contains('🚨') || response.contains('ACİL')) {
+      return MessageType.emergency;
+    } else if (response.contains('💊') || response.contains('İLAÇ')) {
+      return MessageType.medication;
+    } else if (response.contains('📅') || response.contains('RANDEVU')) {
+      return MessageType.appointment;
+    } else if (response.contains('✅') || response.contains('YARDIM')) {
+      return MessageType.help;
+    }
+    return MessageType.normal;
+  }
+
+  Future<String> _generateAIResponse(String userMessage) async {
+    final lowerMessage = userMessage.toLowerCase();
+    
+    // Acil durum tespiti
+    if (_emergencyKeywords.any((keyword) => lowerMessage.contains(keyword))) {
+      return '🚨 ACİL DURUM TESPİT EDİLDİ!\n\n'
+             'Lütfen hemen aşağıdaki numaralardan birini arayın:\n'
+             '📞 Acil Psikiyatri: 112\n'
+             '📞 İntihar Önleme: 184\n'
+             '📞 Psikolojik Destek: 0850 XXX XX XX\n\n'
+             'Size yardımcı olmak için buradayım. Lütfen güvende olduğunuzdan emin olun.';
+    }
+    
+    // İlaç bilgileri
+    if (lowerMessage.contains('ilaç') || lowerMessage.contains('medikasyon')) {
+      return '💊 İLAÇ BİLGİLERİ\n\n'
+             'Hangi ilaç hakkında bilgi almak istiyorsunuz?\n\n'
+             '• Yan etkiler\n'
+             '• Dozaj bilgileri\n'
+             '• Etkileşimler\n'
+             '• Kullanım talimatları\n\n'
+             'Lütfen ilaç adını yazın.';
+    }
+    
+    // Randevu bilgileri
+    if (lowerMessage.contains('randevu') || lowerMessage.contains('appointment')) {
+      return '📅 RANDEVU BİLGİLERİ\n\n'
+             'Size nasıl yardımcı olabilirim?\n\n'
+             '• Yeni randevu alma\n'
+             '• Mevcut randevu değiştirme\n'
+             '• Randevu iptal etme\n'
+             '• Randevu hatırlatıcıları\n\n'
+             'Lütfen ne yapmak istediğinizi belirtin.';
+    }
+    
+    // Genel yardım
+    if (lowerMessage.contains('yardım') || lowerMessage.contains('help')) {
+      return '✅ YARDIM MENÜSÜ\n\n'
+             'Size nasıl yardımcı olabilirim?\n\n'
+             '🚨 Acil durumlar\n'
+             '💊 İlaç bilgileri\n'
+             '📅 Randevu işlemleri\n'
+             '🧠 Psikolojik destek\n'
+             '📚 Eğitim materyalleri\n'
+             '🔒 Gizlilik ve güvenlik\n\n'
+             'Hangi konuda yardım istiyorsunuz?';
+    }
+    
+    // AI destekli yanıt
+    return _generateContextualResponse(userMessage);
+  }
+
+  String _generateContextualResponse(String userMessage) {
+    // Basit AI yanıt sistemi
+    if (userMessage.contains('merhaba') || userMessage.contains('selam')) {
+      return 'Merhaba! Size nasıl yardımcı olabilirim? Bugün kendinizi nasıl hissediyorsunuz?';
+    }
+    
+    if (userMessage.contains('kötü') || userMessage.contains('üzgün') || userMessage.contains('depresif')) {
+      return 'Üzgün olduğunuzu duyuyorum. Bu duygular normal ve geçici olabilir. '
+             'Size yardımcı olmak için buradayım. '
+             'Eğer bu duygular yoğunsa, bir uzmanla görüşmenizi öneririm.';
+    }
+    
+    if (userMessage.contains('anksiyete') || userMessage.contains('kaygı') || userMessage.contains('panik')) {
+      return 'Anksiyete yaşadığınızı anlıyorum. Bu durumda nefes egzersizleri yardımcı olabilir: '
+             '4 saniye nefes alın, 4 saniye tutun, 6 saniye verin. '
+             'Eğer çok yoğunsa, acil durum numaralarını arayabilirsiniz.';
+    }
+    
+    if (userMessage.contains('uyku') || userMessage.contains('uyuyamıyorum')) {
+      return 'Uyku problemi yaşadığınızı duyuyorum. Bu yaygın bir sorundur. '
+             'Uyku hijyeni için öneriler:\n'
+             '• Düzenli uyku saatleri\n'
+             '• Yatak odasını serin ve karanlık tutun\n'
+             '• Yatmadan önce ekran kullanımını azaltın\n'
+             '• Rahatlatıcı aktiviteler yapın';
+    }
+    
+    // Varsayılan yanıt
+    return 'Mesajınızı aldım. Size daha iyi yardımcı olabilmem için '
+           'lütfen sorununuzu biraz daha detaylandırabilir misiniz? '
+           'Ayrıca acil durumlar için "ACİL" yazabilirsiniz.';
   }
 
   @override
@@ -654,10 +672,21 @@ class ChatMessage {
   final String text;
   final bool isUser;
   final DateTime timestamp;
+  final MessageType messageType;
 
   ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
+    this.messageType = MessageType.normal,
   });
+}
+
+enum MessageType {
+  normal,
+  emergency,
+  medication,
+  appointment,
+  help,
+  welcome,
 }

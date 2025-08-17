@@ -35,6 +35,10 @@ dependencies:
   # Biometric Authentication için
   local_auth: ^2.1.8
   local_auth_android: ^1.0.38
+  # Encryption için
+  encrypt: ^5.0.3
+  # Charts için
+  fl_chart: ^0.66.2
 
 dev_dependencies:
   flutter_test:

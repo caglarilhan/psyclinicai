@@ -45,6 +45,9 @@ class AIDiagnosisService extends ChangeNotifier {
       // Initialize AI models
       await _initializeAIModels();
       
+      // Initialize AI orchestration service
+      await AIOrchestrationService().initialize();
+      
       _logger.info('AIDiagnosisService initialized successfully', context: 'AIDiagnosisService');
     } catch (e) {
       _logger.error('AIDiagnosisService initialization failed', context: 'AIDiagnosisService', error: e);

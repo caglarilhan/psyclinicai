@@ -353,6 +353,16 @@ class DashboardHome extends StatelessWidget {
 
             _buildModuleCard(
               context,
+              'Güvenlik & Uyumluluk',
+              'Veri şifreleme, denetim kayıtları ve erişim kontrolü',
+              Icons.security,
+              Colors.red.shade600,
+              () => Navigator.pushNamed(context, '/security'),
+            ),
+            const SizedBox(height: 16),
+
+            _buildModuleCard(
+              context,
               'AI Randevu Sistemi',
               'AI destekli randevu optimizasyonu ve no-show tahmini',
               Icons.schedule,

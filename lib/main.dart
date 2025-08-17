@@ -15,6 +15,7 @@ import 'screens/medication_guide/medication_guide_screen.dart';
 import 'screens/ai_case_management/ai_case_management_screen.dart';
 import 'screens/ai_appointment/ai_appointment_screen.dart';
 import 'screens/ai_diagnosis/ai_diagnosis_screen.dart';
+import 'screens/security/security_screen.dart';
 import 'screens/finance/finance_dashboard_screen.dart';
 import 'screens/supervisor/supervisor_dashboard_screen.dart';
 import 'screens/client_management/client_management_screen.dart';
@@ -23,6 +24,9 @@ import 'services/theme_service.dart';
 import 'services/offline_sync_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/biometric_auth_service.dart';
+import 'services/ai_orchestration_service.dart';
+import 'services/ai_cache_service.dart';
+import 'services/ai_prompt_service.dart';
 import 'utils/theme.dart';
 
 void main() async {
@@ -55,6 +59,10 @@ Future<void> _initializeServices() async {
     
     // Theme service
     await ThemeService().initialize();
+    
+    // AI services
+    await AIOrchestrationService().initialize();
+    await AICacheService().initialize();
     
     print('All services initialized successfully');
   } catch (e) {
@@ -99,6 +107,7 @@ class PsyClinicAIApp extends StatelessWidget {
                        clientId: 'demo_client_001',
                        therapistId: 'demo_therapist_001',
                      ),
+                     '/security': (context) => const SecurityScreen(),
               '/finance': (context) => const FinanceDashboardScreen(),
               '/supervisor': (context) => const SupervisorDashboardScreen(),
               '/client-management': (context) => const ClientManagementScreen(),

@@ -27,6 +27,7 @@ import 'services/biometric_auth_service.dart';
 import 'services/ai_orchestration_service.dart';
 import 'services/ai_cache_service.dart';
 import 'services/ai_prompt_service.dart';
+import 'services/real_time_session_ai_service.dart'; // ADDED
 import 'utils/theme.dart';
 
 void main() async {
@@ -63,6 +64,9 @@ Future<void> _initializeServices() async {
     // AI services
     await AIOrchestrationService().initialize();
     await AICacheService().initialize();
+    
+    // Session AI service
+    await RealTimeSessionAIService().initialize();
     
     print('All services initialized successfully');
   } catch (e) {

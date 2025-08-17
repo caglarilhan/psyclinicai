@@ -180,6 +180,87 @@ Lütfen şu bilgileri içeren JSON formatında yanıt ver:
   ]
 }
 ''',
+
+    'real_time_session_analysis': '''
+Sen deneyimli bir klinik psikologsun ve şu anda aktif bir terapi seansını gerçek zamanlı olarak analiz ediyorsun. Aşağıdaki seans verilerini analiz ederek anında öneriler sun:
+
+SEANS BİLGİLERİ:
+- Seans Süresi: {sessionDuration} dakika
+- Mevcut Faz: {currentPhase}
+- Seans Hedefleri: {sessionGoals}
+- Danışan Geçmişi: {clientHistory}
+
+GERÇEK ZAMANLI VERİLER:
+- Duygusal Göstergeler: {emotionalIndicators}
+- Risk Faktörleri: {riskFactors}
+- İlerleme Göstergeleri: {progressIndicators}
+- Son Seans Verileri: {recentSessionData}
+
+Lütfen şu bilgileri içeren JSON formatında yanıt ver:
+{
+  "emotionalStates": [
+    {
+      "emotion": "duygu_tipi",
+      "intensity": 0.85,
+      "confidence": 0.9,
+      "trigger": "tetikleyici",
+      "physicalSigns": ["fiziksel_belirtiler"],
+      "behavioralSigns": ["davranışsal_belirtiler"],
+      "context": "bağlam"
+    }
+  ],
+  "riskIndicators": [
+    {
+      "type": "risk_tipi",
+      "severity": "Düşük/Orta/Yüksek/Kritik",
+      "description": "risk_açıklaması",
+      "evidence": ["kanıtlar"],
+      "confidence": 0.8,
+      "recommendedAction": "önerilen_eylem",
+      "requiresImmediateAttention": true
+    }
+  ],
+  "interventionSuggestions": [
+    {
+      "type": "müdahale_tipi",
+      "title": "Müdahale başlığı",
+      "description": "Müdahale açıklaması",
+      "rationale": "Gerekçe",
+      "techniques": ["teknikler"],
+      "timing": "Anında/Seans_İçinde/Seans_Sonrası",
+      "confidence": 0.85,
+      "expectedOutcome": "Beklenen sonuç"
+    }
+  ],
+  "insights": [
+    {
+      "type": "içgörü_tipi",
+      "title": "İçgörü başlığı",
+      "description": "İçgörü açıklaması",
+      "confidence": 0.8,
+      "clinicalRelevance": "Klinik önemi",
+      "isActionable": true
+    }
+  ],
+  "progress": {
+    "overallProgress": 0.65,
+    "nextSteps": "Sonraki adımlar",
+    "milestones": ["kilometre_taşları"],
+    "challenges": ["zorluklar"],
+    "breakthroughs": ["atılımlar"]
+  },
+  "alerts": [
+    {
+      "type": "uyarı_tipi",
+      "priority": "Düşük/Orta/Yüksek/Kritik",
+      "title": "Uyarı başlığı",
+      "description": "Uyarı açıklaması",
+      "recommendedActions": ["önerilen_eylemler"],
+      "requiresEscalation": false
+    }
+  ]
+}
+''',
   };
 
   // Prompt Optimization Strategies

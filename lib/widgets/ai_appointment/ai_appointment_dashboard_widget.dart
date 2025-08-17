@@ -750,7 +750,9 @@ class _AIAppointmentDashboardWidgetState extends State<AIAppointmentDashboardWid
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        border: Border.left(color: color, width: 4),
+        border: Border(
+          left: BorderSide(color: color, width: 4),
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

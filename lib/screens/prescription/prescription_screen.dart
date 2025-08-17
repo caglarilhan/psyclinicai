@@ -233,21 +233,47 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
   Widget _buildPrescriptionTab() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: const PrescriptionForm(),
+      child: PrescriptionForm(
+        onPrescriptionCreated: (prescription) {
+          // Handle prescription creation
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Reçete oluşturuldu: ${prescription.id}')),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildInteractionTab() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: const InteractionChecker(),
+      child: InteractionChecker(
+        medications: ['Sertraline', 'Alprazolam'], // Mock medications
+        onInteractionsFound: (interactions) {
+          // Handle interactions found
+          if (interactions.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${interactions.length} etkileşim bulundu')),
+            );
+          }
+        },
+      ),
     );
   }
 
   Widget _buildAIRecommendationTab() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: const AIRecommendationPanel(),
+      child: AIRecommendationPanel(
+        onGenerateRecommendation: (diagnosis, medications) {
+          // Handle AI recommendation generation
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('AI önerisi oluşturuluyor...')),
+          );
+        },
+        recommendation: 'AI önerisi burada görünecek',
+        isGenerating: false,
+      ),
     );
   }
 

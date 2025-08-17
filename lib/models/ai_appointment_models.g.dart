@@ -257,6 +257,7 @@ AppointmentInsight _$AppointmentInsightFromJson(Map<String, dynamic> json) =>
       recommendations: (json['recommendations'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
       isActioned: json['isActioned'] as bool,
     );
 
@@ -269,6 +270,7 @@ Map<String, dynamic> _$AppointmentInsightToJson(AppointmentInsight instance) =>
       'severity': _$InsightSeverityEnumMap[instance.severity]!,
       'data': instance.data,
       'recommendations': instance.recommendations,
+      'createdAt': instance.createdAt.toIso8601String(),
       'isActioned': instance.isActioned,
     };
 
@@ -499,17 +501,46 @@ Map<String, dynamic> _$AIMeetingSummaryToJson(AIMeetingSummary instance) =>
       'generatedBy': instance.generatedBy,
     };
 
+NoShowPrediction _$NoShowPredictionFromJson(Map<String, dynamic> json) =>
+    NoShowPrediction(
+      id: json['id'] as String,
+      appointmentId: json['appointmentId'] as String,
+      clientName: json['clientName'] as String,
+      appointmentTime: DateTime.parse(json['appointmentTime'] as String),
+      predictedNoShow: json['predictedNoShow'] as bool,
+      actualNoShow: json['actualNoShow'] as bool,
+      confidence: (json['confidence'] as num).toDouble(),
+      predictionDate: DateTime.parse(json['predictionDate'] as String),
+      features: json['features'] as Map<String, dynamic>,
+    );
+
+Map<String, dynamic> _$NoShowPredictionToJson(NoShowPrediction instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'appointmentId': instance.appointmentId,
+      'clientName': instance.clientName,
+      'appointmentTime': instance.appointmentTime.toIso8601String(),
+      'predictedNoShow': instance.predictedNoShow,
+      'actualNoShow': instance.actualNoShow,
+      'confidence': instance.confidence,
+      'predictionDate': instance.predictionDate.toIso8601String(),
+      'features': instance.features,
+    };
+
 AppointmentOptimization _$AppointmentOptimizationFromJson(
   Map<String, dynamic> json,
 ) => AppointmentOptimization(
   id: json['id'] as String,
-  therapistId: json['therapistId'] as String,
-  date: DateTime.parse(json['date'] as String),
-  suggestions: (json['suggestions'] as List<dynamic>)
-      .map((e) => OptimizationSuggestion.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  constraints: json['constraints'] as Map<String, dynamic>,
-  efficiencyScore: (json['efficiencyScore'] as num).toDouble(),
+  title: json['title'] as String,
+  type: $enumDecode(_$OptimizationTypeEnumMap, json['type']),
+  estimatedBenefit: (json['estimatedBenefit'] as num).toDouble(),
+  implementationDifficulty: $enumDecode(
+    _$ImplementationDifficultyEnumMap,
+    json['implementationDifficulty'],
+  ),
+  aiConfidence: (json['aiConfidence'] as num).toDouble(),
+  description: json['description'] as String,
+  steps: (json['steps'] as List<dynamic>).map((e) => e as String).toList(),
   createdAt: DateTime.parse(json['createdAt'] as String),
 );
 
@@ -517,41 +548,54 @@ Map<String, dynamic> _$AppointmentOptimizationToJson(
   AppointmentOptimization instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'therapistId': instance.therapistId,
-  'date': instance.date.toIso8601String(),
-  'suggestions': instance.suggestions,
-  'constraints': instance.constraints,
-  'efficiencyScore': instance.efficiencyScore,
-  'createdAt': instance.createdAt.toIso8601String(),
-};
-
-OptimizationSuggestion _$OptimizationSuggestionFromJson(
-  Map<String, dynamic> json,
-) => OptimizationSuggestion(
-  id: json['id'] as String,
-  type: $enumDecode(_$OptimizationTypeEnumMap, json['type']),
-  description: json['description'] as String,
-  impact: (json['impact'] as num).toDouble(),
-  actions: (json['actions'] as List<dynamic>).map((e) => e as String).toList(),
-  data: json['data'] as Map<String, dynamic>,
-);
-
-Map<String, dynamic> _$OptimizationSuggestionToJson(
-  OptimizationSuggestion instance,
-) => <String, dynamic>{
-  'id': instance.id,
+  'title': instance.title,
   'type': _$OptimizationTypeEnumMap[instance.type]!,
+  'estimatedBenefit': instance.estimatedBenefit,
+  'implementationDifficulty':
+      _$ImplementationDifficultyEnumMap[instance.implementationDifficulty]!,
+  'aiConfidence': instance.aiConfidence,
   'description': instance.description,
-  'impact': instance.impact,
-  'actions': instance.actions,
-  'data': instance.data,
+  'steps': instance.steps,
+  'createdAt': instance.createdAt.toIso8601String(),
 };
 
 const _$OptimizationTypeEnumMap = {
   OptimizationType.timeSlot: 'timeSlot',
   OptimizationType.duration: 'duration',
-  OptimizationType.sequence: 'sequence',
-  OptimizationType.resource: 'resource',
-  OptimizationType.capacity: 'capacity',
-  OptimizationType.routing: 'routing',
+  OptimizationType.therapist: 'therapist',
+  OptimizationType.location: 'location',
 };
+
+const _$ImplementationDifficultyEnumMap = {
+  ImplementationDifficulty.easy: 'easy',
+  ImplementationDifficulty.medium: 'medium',
+  ImplementationDifficulty.hard: 'hard',
+};
+
+ClientPreference _$ClientPreferenceFromJson(Map<String, dynamic> json) =>
+    ClientPreference(
+      id: json['id'] as String,
+      clientId: json['clientId'] as String,
+      clientName: json['clientName'] as String,
+      preferredTime: json['preferredTime'] as String,
+      preferredTherapist: json['preferredTherapist'] as String,
+      preferenceStrength: (json['preferenceStrength'] as num).toDouble(),
+      preferredDays: (json['preferredDays'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      preferredLocation: json['preferredLocation'] as String,
+      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+    );
+
+Map<String, dynamic> _$ClientPreferenceToJson(ClientPreference instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'clientId': instance.clientId,
+      'clientName': instance.clientName,
+      'preferredTime': instance.preferredTime,
+      'preferredTherapist': instance.preferredTherapist,
+      'preferenceStrength': instance.preferenceStrength,
+      'preferredDays': instance.preferredDays,
+      'preferredLocation': instance.preferredLocation,
+      'lastUpdated': instance.lastUpdated.toIso8601String(),
+    };

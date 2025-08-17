@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../services/ai_appointment_service.dart';
 
 part 'ai_appointment_models.g.dart';
 
@@ -254,6 +255,7 @@ class AppointmentInsight {
     required this.severity,
     required this.data,
     required this.recommendations,
+    required this.createdAt,
     required this.isActioned,
   });
 

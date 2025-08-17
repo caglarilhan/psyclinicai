@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/session/session_screen.dart';
@@ -17,6 +18,10 @@ import 'screens/finance/finance_dashboard_screen.dart';
 import 'screens/supervisor/supervisor_dashboard_screen.dart';
 import 'screens/client_management/client_management_screen.dart';
 import 'services/auth_service.dart';
+import 'services/theme_service.dart';
+import 'services/offline_sync_service.dart';
+import 'services/push_notification_service.dart';
+import 'services/biometric_auth_service.dart';
 import 'utils/theme.dart';
 
 void main() async {
@@ -30,7 +35,30 @@ void main() async {
     ),
   );
 
+  // Servisleri başlat
+  await _initializeServices();
+
   runApp(const PsyClinicAIApp());
+}
+
+Future<void> _initializeServices() async {
+  try {
+    // Offline sync service
+    await OfflineSyncService().initialize();
+    
+    // Push notification service
+    await PushNotificationService().initialize();
+    
+    // Biometric auth service
+    await BiometricAuthService().initialize();
+    
+    // Theme service
+    await ThemeService().initialize();
+    
+    print('All services initialized successfully');
+  } catch (e) {
+    print('Error initializing services: $e');
+  }
 }
 
 class PsyClinicAIApp extends StatelessWidget {
@@ -38,31 +66,41 @@ class PsyClinicAIApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PsyClinic AI',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const AuthWrapper(),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
-        '/session': (context) => const SessionScreen(),
-        '/diagnosis': (context) => const DiagnosisScreen(),
-        '/prescription': (context) => const PrescriptionScreen(),
-        '/flag': (context) => const FlagScreen(),
-        '/appointment': (context) => const AppointmentScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/education': (context) => const EducationScreen(),
-        '/therapy-simulation': (context) => const TherapySimulationScreen(),
-        '/medication-guide': (context) => const MedicationGuideScreen(),
-        '/ai-case-management': (context) => const AICaseManagementScreen(),
-        '/ai-appointment': (context) => const AIAppointmentScreen(),
-        '/finance': (context) => const FinanceDashboardScreen(),
-        '/supervisor': (context) => const SupervisorDashboardScreen(),
-        '/client-management': (context) => const ClientManagementScreen(),
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider(create: (_) => OfflineSyncService()),
+      ],
+      child: Consumer<ThemeService>(
+        builder: (context, themeService, child) {
+          return MaterialApp(
+            title: 'PsyClinic AI',
+            debugShowCheckedModeBanner: false,
+            theme: themeService.getLightTheme(),
+            darkTheme: themeService.getDarkTheme(),
+            themeMode: themeService.currentThemeMode,
+            home: const AuthWrapper(),
+            routes: {
+              '/login': (context) => const LoginScreen(),
+              '/dashboard': (context) => const DashboardScreen(),
+              '/session': (context) => const SessionScreen(),
+              '/diagnosis': (context) => const DiagnosisScreen(),
+              '/prescription': (context) => const PrescriptionScreen(),
+              '/flag': (context) => const FlagScreen(),
+              '/appointment': (context) => const AppointmentScreen(),
+              '/profile': (context) => const ProfileScreen(),
+              '/education': (context) => const EducationScreen(),
+              '/therapy-simulation': (context) => const TherapySimulationScreen(),
+              '/medication-guide': (context) => const MedicationGuideScreen(),
+              '/ai-case-management': (context) => const AICaseManagementScreen(),
+              '/ai-appointment': (context) => const AIAppointmentScreen(),
+              '/finance': (context) => const FinanceDashboardScreen(),
+              '/supervisor': (context) => const SupervisorDashboardScreen(),
+              '/client-management': (context) => const ClientManagementScreen(),
+            },
+          );
+        },
+      ),
     );
   }
 }

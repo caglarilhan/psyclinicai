@@ -526,6 +526,7 @@ class AIAppointmentService {
           'Yeni danışanlar için bu slotları öner',
           'Çalışan saatlerini genişlet',
         ],
+        createdAt: DateTime.now(),
         isActioned: false,
       ),
       AppointmentInsight(
@@ -540,6 +541,7 @@ class AIAppointmentService {
           'No-show riski yüksek danışanlar için özel protokoller',
           'Randevu onay sürecini güçlendir',
         ],
+        createdAt: DateTime.now(),
         isActioned: false,
       ),
     ];

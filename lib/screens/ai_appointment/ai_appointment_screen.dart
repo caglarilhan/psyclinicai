@@ -167,8 +167,8 @@ class _AIAppointmentScreenState extends State<AIAppointmentScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'No-Show Tahmini', icon: Icon(Icons.prediction)),
-            Tab(text: 'Randevu Optimizasyonu', icon: Icon(Icons.optimize)),
+            Tab(text: 'No-Show Tahmini', icon: Icon(Icons.analytics)),
+            Tab(text: 'Randevu Optimizasyonu', icon: Icon(Icons.tune)),
             Tab(text: 'Danışan Tercihleri', icon: Icon(Icons.people)),
             Tab(text: 'AI Analizi', icon: Icon(Icons.analytics)),
           ],
@@ -612,7 +612,7 @@ class _AIAppointmentScreenState extends State<AIAppointmentScreen>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.optimize),
+              leading: const Icon(Icons.tune),
               title: const Text('Randevuları Optimize Et'),
               onTap: () {
                 Navigator.of(context).pop();

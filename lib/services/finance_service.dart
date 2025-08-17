@@ -1,12 +1,11 @@
 import '../models/finance_models.dart';
-import '../utils/ai_logger.dart';
 
 class FinanceService {
   static final FinanceService _instance = FinanceService._internal();
   factory FinanceService() => _instance;
   FinanceService._internal();
 
-  final AILogger _logger = AILogger();
+  // Logger removed for now
   
   List<Income> _incomes = [];
   List<Expense> _expenses = [];
@@ -15,10 +14,10 @@ class FinanceService {
   List<FinancialAlert> _alerts = [];
 
   Future<void> initialize() async {
-    _logger.info('FinanceService initializing...', context: 'FinanceService');
+    print('FinanceService initializing...');
     await _loadMockData();
     await _generateAlerts();
-    _logger.info('FinanceService initialized successfully', context: 'FinanceService');
+    print('FinanceService initialized successfully');
   }
 
   Future<List<Income>> getIncomes({String? therapistId}) async {

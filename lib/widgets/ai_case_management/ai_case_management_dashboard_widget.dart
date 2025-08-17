@@ -382,7 +382,7 @@ class _AICaseManagementDashboardWidgetState extends State<AICaseManagementDashbo
       case CaseAnalysisType.relapse:
         return Icons.replay;
       case CaseAnalysisType.maintenance:
-        return Icons.maintenance;
+        return Icons.build;
       case CaseAnalysisType.crisis:
         return Icons.emergency;
     }
@@ -554,7 +554,7 @@ class _AICaseManagementDashboardWidgetState extends State<AICaseManagementDashbo
       case ProgressStatus.crisis:
         return Icons.emergency;
       case ProgressStatus.maintenance:
-        return Icons.maintenance;
+        return Icons.build;
     }
   }
 

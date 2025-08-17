@@ -319,25 +319,17 @@ class _AIChatbotWidgetState extends State<AIChatbotWidget>
             ),
             child: Row(
               children: [
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(
-                          Icons.psychology,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    );
-                  },
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(
+                    Icons.psychology,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
@@ -444,41 +436,33 @@ class _AIChatbotWidgetState extends State<AIChatbotWidget>
                   ),
                 ),
                 const SizedBox(width: 15),
-                AnimatedBuilder(
-                  animation: _bounceAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: 1.0 + (_bounceAnimation.value * 0.1),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.blue.shade500,
-                              Colors.purple.shade500,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.shade300.withOpacity(0.5),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: _sendMessage,
-                          icon: const Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.shade500,
+                        Colors.purple.shade500,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.shade300.withOpacity(0.5),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
-                    );
-                  },
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: _sendMessage,
+                    icon: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -631,24 +615,16 @@ class _AIChatbotWidgetState extends State<AIChatbotWidget>
   }
 
   Widget _buildDot(int index) {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          child: Transform.scale(
-            scale: _pulseController.value == 1.0 + (index * 0.1) ? 1.2 : 1.0,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade400,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        );
-      },
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: Colors.blue.shade400,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
     );
   }
 

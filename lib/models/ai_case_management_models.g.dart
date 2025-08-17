@@ -711,3 +711,38 @@ const _$CaseStatusEnumMap = {
   CaseStatus.transferred: 'transferred',
   CaseStatus.archived: 'archived',
 };
+
+CasePriority _$CasePriorityFromJson(Map<String, dynamic> json) => CasePriority(
+  id: json['id'] as String,
+  caseId: json['caseId'] as String,
+  caseTitle: json['caseTitle'] as String,
+  priority: $enumDecode(_$PriorityEnumMap, json['priority']),
+  riskLevel: $enumDecode(_$RiskLevelEnumMap, json['riskLevel']),
+  aiConfidence: (json['aiConfidence'] as num).toDouble(),
+  lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+  notes: json['notes'] as String?,
+);
+
+Map<String, dynamic> _$CasePriorityToJson(CasePriority instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'caseId': instance.caseId,
+      'caseTitle': instance.caseTitle,
+      'priority': _$PriorityEnumMap[instance.priority]!,
+      'riskLevel': _$RiskLevelEnumMap[instance.riskLevel]!,
+      'aiConfidence': instance.aiConfidence,
+      'lastUpdated': instance.lastUpdated.toIso8601String(),
+      'notes': instance.notes,
+    };
+
+const _$PriorityEnumMap = {
+  Priority.high: 'high',
+  Priority.medium: 'medium',
+  Priority.low: 'low',
+};
+
+const _$RiskLevelEnumMap = {
+  RiskLevel.high: 'high',
+  RiskLevel.medium: 'medium',
+  RiskLevel.low: 'low',
+};

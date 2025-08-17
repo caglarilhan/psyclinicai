@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
-import 'package:open_file/open_file.dart';
+// open_file removed
 import 'package:share_plus/share_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:image/image.dart' as img;
@@ -889,18 +889,19 @@ class PDFExportService {
     return file;
   }
 
-  // PDF'i aç
+  // PDF'i aç - open_file removed, using share instead
   Future<void> openPDF(File file) async {
     try {
-      await OpenFile.open(file.path);
+      // Instead of opening, share the file
+      await Share.shareXFiles([XFile(file.path)], text: 'PsyClinicAI Raporu');
       _logger.info(
-        'PDF opened successfully',
+        'PDF shared successfully',
         context: 'pdf_export',
         data: {'file_path': file.path},
       );
     } catch (e) {
       _logger.error(
-        'Failed to open PDF',
+        'Failed to share PDF',
         context: 'pdf_export',
         data: {'file_path': file.path, 'error': e.toString()},
         error: e,

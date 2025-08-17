@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../services/ai_case_management_service.dart';
 
 part 'ai_case_management_models.g.dart';
 

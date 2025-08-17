@@ -18,6 +18,8 @@ import '../../widgets/medication_reminder/medication_reminder_widget.dart';
 import '../../widgets/emergency_contact/emergency_contact_widget.dart';
 import '../../widgets/progress_dashboard/progress_dashboard_widget.dart';
 import '../../widgets/offline_mode/offline_mode_widget.dart';
+import '../../services/theme_service.dart';
+import '../../services/offline_sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -147,6 +149,10 @@ class DashboardHome extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+
+            // Offline Mode Widget
+            const OfflineModeWidget(),
             const SizedBox(height: 24),
 
             // Temel Modüller

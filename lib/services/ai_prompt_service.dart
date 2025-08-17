@@ -373,6 +373,171 @@ Lütfen şu bilgileri içeren JSON formatında yanıt ver:
   }
 }
 ''',
+
+    'turkey_psychiatry_ai': '''
+Sen Türkiye'de çalışan deneyimli bir psikiyatr uzmanısın. Türkiye sağlık sistemi, kültürel bağlam ve yerel düzenlemelere uygun olarak aşağıdaki verileri analiz ederek kapsamlı değerlendirme yap:
+
+TÜRKİYE ÖZEL VERİLERİ:
+- MHRS Entegrasyonu: {mhrsData}
+- SGK Bilgileri: {sgkData}
+- Türkiye Tanı Kodları: {icd10Data}
+- Kültürel Faktörler: {culturalFactors}
+- Yerel Düzenlemeler: {localRegulations}
+- Hasta Geçmişi: {patientHistory}
+
+Lütfen şu bilgileri içeren JSON formatında yanıt ver:
+{
+  "turkishContextAnalysis": {
+    "culturalConsiderations": {
+      "familyDynamics": "aile_dinamikleri_analizi",
+      "socialSupport": "sosyal_destek_sistemleri",
+      "stigmaFactors": "damgalama_faktörleri",
+      "culturalBarriers": "kültürel_engeller"
+    },
+    "healthSystemIntegration": {
+      "mhrsCompatibility": "MHRS_uyumluluğu",
+      "sgkCoverage": "SGK_kapsamı",
+      "reportingRequirements": "raporlama_gereksinimleri",
+      "complianceStatus": "uyumluluk_durumu"
+    },
+    "localRegulations": {
+      "prescriptionRules": "reçete_kuralları",
+      "reportingObligations": "raporlama_yükümlülükleri",
+      "documentationStandards": "belgeleme_standartları",
+      "legalRequirements": "yasal_gereksinimler"
+    }
+  },
+  "diagnosticAssessment": {
+    "icd10Diagnosis": {
+      "primaryDiagnosis": "ana_tanı",
+      "secondaryDiagnoses": ["ikincil_tanılar"],
+      "differentialDiagnoses": ["ayırıcı_tanılar"],
+      "severity": "hafif/orta/ağır"
+    },
+    "culturalFactors": {
+      "symptomExpression": "belirti_ifade_biçimi",
+      "helpSeekingBehavior": "yardım_arama_davranışı",
+      "treatmentPreference": "tedavi_tercihi",
+      "familyInvolvement": "aile_katılımı"
+    }
+  },
+  "treatmentPlanning": {
+    "medicationPlan": {
+      "recommendedMedications": ["önerilen_ilaçlar"],
+      "dosageAdjustments": "doz_ayarlamaları",
+      "interactionChecks": "etkileşim_kontrolleri",
+      "reimbursementStatus": "geri_ödeme_durumu"
+    },
+    "psychotherapyApproach": {
+      "recommendedApproach": "önerilen_yaklaşım",
+      "culturalAdaptations": "kültürel_uyarlamalar",
+      "familyTherapy": "aile_terapisi_gereksinimi",
+      "groupTherapy": "grup_terapisi_uygunluğu"
+    },
+    "followUpSchedule": {
+      "frequency": "takip_sıklığı",
+      "nextAppointment": "sonraki_randevu",
+      "monitoringParameters": ["izleme_parametreleri"],
+      "crisisPlan": "kriz_planı"
+    }
+  },
+  "documentationRequirements": {
+    "requiredReports": ["gerekli_raporlar"],
+    "mhrsIntegration": "MHRS_entegrasyonu",
+    "sgkDocumentation": "SGK_belgeleri",
+    "legalCompliance": "yasal_uyumluluk"
+  },
+  "resourceRecommendations": {
+    "localServices": ["yerel_hizmetler"],
+    "supportGroups": ["destek_grupları"],
+    "familyResources": ["aile_kaynakları"],
+    "emergencyContacts": ["acil_iletişim"]
+  }
+}
+''',
+
+    'turkish_cultural_ai': '''
+Sen Türkiye kültürü ve toplumsal yapısı konusunda uzmanlaşmış bir AI psikiyatrsın. Türkiye'deki psikiyatrik değerlendirme ve tedavi süreçlerinde kültürel faktörleri göz önünde bulundurarak analiz yap:
+
+KÜLTÜREL VERİLER:
+- Bölgesel Faktörler: {regionalFactors}
+- Aile Yapısı: {familyStructure}
+- Sosyal Normlar: {socialNorms}
+- Dini İnançlar: {religiousBeliefs}
+- Eğitim Seviyesi: {educationLevel}
+- Ekonomik Durum: {economicStatus}
+- Göç Geçmişi: {migrationHistory}
+
+Lütfen şu bilgileri içeren JSON formatında yanıt ver:
+{
+  "culturalContextAnalysis": {
+    "regionalInfluences": {
+      "geographicRegion": "coğrafi_bölge",
+      "urbanRural": "şehir/kırsal",
+      "localCustoms": "yerel_gelenekler",
+      "dialectFactors": "lehçe_faktörleri"
+    },
+    "familyDynamics": {
+      "familyType": "aile_tipi",
+      "generationalRoles": "kuşak_rolleri",
+      "decisionMaking": "karar_verme_süreci",
+      "conflictResolution": "çatışma_çözümü"
+    },
+    "socialFactors": {
+      "communitySupport": "topluluk_desteği",
+      "socialStigma": "sosyal_damga",
+      "peerInfluence": "akran_etkisi",
+      "socialMobility": "sosyal_mobilite"
+    },
+    "religiousBeliefs": {
+      "religiousAffiliation": "dini_bağlılık",
+      "spiritualPractices": "manevi_uygulamalar",
+      "religiousCoping": "dini_başa_çıkma",
+      "religiousBarriers": "dini_engeller"
+    }
+  },
+  "culturalAdaptations": {
+    "communicationStyle": {
+      "languagePreference": "dil_tercihi",
+      "nonverbalCues": "sözsüz_ipuçları",
+      "directnessLevel": "doğrudanlık_seviyesi",
+      "respectfulAddress": "saygılı_hitap"
+    },
+    "therapeuticApproach": {
+      "culturallySensitive": "kültürel_duyarlı",
+      "familyInclusive": "aile_dahil",
+      "communityOriented": "topluluk_odaklı",
+      "holisticPerspective": "bütünsel_bakış"
+    },
+    "interventionStrategies": {
+      "culturallyAppropriate": "kültürel_uygun",
+      "familyInvolvement": "aile_katılımı",
+      "communityResources": "topluluk_kaynakları",
+      "traditionalPractices": "geleneksel_uygulamalar"
+    }
+  },
+  "barriersAndFacilitators": {
+    "accessBarriers": {
+      "geographic": "coğrafi_engeller",
+      "economic": "ekonomik_engeller",
+      "cultural": "kültürel_engeller",
+      "linguistic": "dil_engelleri"
+    },
+    "facilitatingFactors": {
+      "familySupport": "aile_desteği",
+      "communityResources": "topluluk_kaynakları",
+      "culturalUnderstanding": "kültürel_anlayış",
+      "localServices": "yerel_hizmetler"
+    }
+  },
+  "recommendations": {
+    "culturalConsiderations": ["kültürel_göz_önünde_bulundurulacaklar"],
+    "adaptationStrategies": ["uyarlama_stratejileri"],
+    "resourceUtilization": ["kaynak_kullanımı"],
+    "followUpApproach": ["takip_yaklaşımı"]
+  }
+}
+''',
   };
 
   // Prompt Optimization Strategies

@@ -94,6 +94,17 @@ class ThemeService extends ChangeNotifier {
       _customErrorColor = _hexToColor(customErrorHex);
     }
     
+    // Custom colors flag
+    _hasCustomColors = prefs.getBool('has_custom_colors') ?? false;
+
+    // Custom renkler aktifse aktif palete uygula
+    if (_hasCustomColors) {
+      _primaryColor = _customPrimaryColor;
+      _secondaryColor = _customSecondaryColor;
+      _accentColor = _customAccentColor;
+      _errorColor = _customErrorColor;
+    }
+
     // Theme status'ları güncelle
     _updateThemeStatus();
     
@@ -218,6 +229,12 @@ class ThemeService extends ChangeNotifier {
       _hasCustomColors = true;
       await prefs.setBool('has_custom_colors', true);
       
+      // Aktif palete uygula
+      _primaryColor = _customPrimaryColor;
+      _secondaryColor = _customSecondaryColor;
+      _accentColor = _customAccentColor;
+      _errorColor = _customErrorColor;
+
       // Stream'e bildir
       _primaryColorController.add(_customPrimaryColor);
       
@@ -262,6 +279,16 @@ class ThemeService extends ChangeNotifier {
           primaryColor: const Color(0xFF424242), // Gri
           secondaryColor: const Color(0xFF757575), // Açık gri
           accentColor: const Color(0xFF1976D2), // Mavi
+          errorColor: const Color(0xFFD32F2F), // Kırmızı
+        );
+        break;
+      case 'purpleblue':
+      case 'purple_blue':
+      case 'purple-blue':
+        await setCustomColors(
+          primaryColor: const Color(0xFF6A1B9A), // Mor
+          secondaryColor: const Color(0xFF1976D2), // Mavi
+          accentColor: const Color(0xFFD32F2F), // Kırmızı vurgu
           errorColor: const Color(0xFFD32F2F), // Kırmızı
         );
         break;
@@ -461,8 +488,6 @@ class ThemeService extends ChangeNotifier {
         return _darkThemeKey;
       case ThemeMode.system:
         return _systemThemeKey;
-      case ThemeMode.system:
-        return _systemThemeKey;
     }
   }
 
@@ -543,8 +568,6 @@ class ThemeService extends ChangeNotifier {
         return getLightTheme();
       case ThemeMode.dark:
         return getDarkTheme();
-      case ThemeMode.system:
-        return isDark ? getDarkTheme() : getLightTheme();
       case ThemeMode.system:
         return isDark ? getDarkTheme() : getLightTheme();
     }

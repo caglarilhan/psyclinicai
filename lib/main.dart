@@ -60,6 +60,8 @@ Future<void> _initializeServices() async {
     
     // Theme service
     await ThemeService().initialize();
+    // Mor-Mavi ana tema + kırmızı vurgu preset'i uygula
+    await ThemeService().setPresetTheme('purple_blue');
     
     // AI services
     await AIOrchestrationService().initialize();

@@ -540,6 +540,99 @@ Lütfen şu bilgileri içeren JSON formatında yanıt ver:
 ''',
   };
 
+    'us_psychiatry_ai': '''
+You are an experienced US board-certified psychiatrist. Analyze the data considering US healthcare, HIPAA, CPT billing context, and cultural factors.
+
+US CONTEXT DATA:
+- EHR (FHIR) Data: {ehrData}
+- Payer/Formulary: {payerData}
+- PDMP Status: {pdmpStatus}
+- ICD-10-CM Codes: {icd10cm}
+- CPT/HCPCS Candidates: {cptCandidates}
+- Cultural/Language: {culturalFactors}
+
+Please respond in JSON with:
+{
+  "assessment": {
+    "primaryDiagnosis": "ICD-10-CM",
+    "secondaryDiagnoses": ["ICD-10-CM"],
+    "severity": "mild/moderate/severe",
+    "riskAssessment": {
+      "immediateRisk": "low/medium/high",
+      "suicideRisk": "low/medium/high",
+      "violenceRisk": "low/medium/high"
+    }
+  },
+  "treatmentPlan": {
+    "medications": [{
+      "rxNorm": "code",
+      "dosage": "text",
+      "rationale": "string",
+      "deaSchedule": "none/I/II/III/IV/V",
+      "pdmpCheckRequired": true
+    }],
+    "psychotherapy": ["CBT/DBT/ACT/Family"],
+    "followUp": "timeline"
+  },
+  "billing": {
+    "recommendedCPT": ["90834","90837","99214"],
+    "modifiers": ["-95","-GT"],
+    "placeOfService": "02/10/11",
+    "priorAuth": {
+      "required": false,
+      "notes": "string"
+    }
+  },
+  "documentation": {
+    "hipaa": "notes",
+    "consent": "required/obtained",
+    "safetyPlan": "summary"
+  }
+}
+''',
+
+    'eu_psychiatry_ai': '''
+You are an EU-based consultant psychiatrist. Analyze the case with GDPR, SNOMED/ICD-10 mapping and country-specific ePrescription context.
+
+EU CONTEXT DATA:
+- ePrescription: {ePrescription}
+- SNOMED/ICD-10 Mappings: {snomedIcd}
+- Country: {country}
+- Cultural Factors: {culturalFactors}
+- Consent/DPO: {consentInfo}
+
+Please respond in JSON with:
+{
+  "assessment": {
+    "primaryDiagnosis": {
+      "snomed": "code",
+      "icd10": "code"
+    },
+    "secondaryDiagnoses": [{"snomed": "code","icd10": "code"}],
+    "severity": "mild/moderate/severe"
+  },
+  "treatmentPlan": {
+    "medications": [{
+      "name": "string",
+      "dose": "string",
+      "countryFormulary": "covered/not_covered",
+      "ePrescription": "eligible/not_eligible"
+    }],
+    "psychotherapy": ["CBT/EMDR/Family/Group"],
+    "followUp": "timeline"
+  },
+  "gdpr": {
+    "legalBasis": "consent/contract/legitimate_interest",
+    "dataMinimization": true,
+    "retention": "policy_ref"
+  },
+  "documentation": {
+    "countryStandards": "notes",
+    "eIDAS": "signing_required/not_required"
+  }
+}
+''',
+
   // Prompt Optimization Strategies
   static const Map<String, Map<String, dynamic>> _optimizationStrategies = {
     'clarity': {

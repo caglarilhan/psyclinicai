@@ -30,6 +30,12 @@ import 'services/ai_prompt_service.dart';
 import 'services/real_time_session_ai_service.dart'; // ADDED
 import 'services/regional_config_service.dart';
 import 'utils/theme.dart';
+import 'services/consent_service.dart';
+import 'widgets/ai_analytics/ai_analytics_dashboard_widget.dart';
+import 'widgets/turkey_specific/turkey_psychiatry_dashboard_widget.dart';
+import 'widgets/us/us_billing_dashboard_widget.dart';
+import 'widgets/eu/eu_eprescription_dashboard_widget.dart';
+import 'screens/consent/consent_compliance_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,30 +56,26 @@ void main() async {
 
 Future<void> _initializeServices() async {
   try {
-    // Offline sync service
+    // Initialize core services
+    await ThemeService().initialize();
+    await ThemeService().setPresetTheme('purple_blue');
     await OfflineSyncService().initialize();
-    
-    // Push notification service
     await PushNotificationService().initialize();
-    
-    // Biometric auth service
     await BiometricAuthService().initialize();
     
-    // Theme service
-    await ThemeService().initialize();
-    // Mor-Mavi ana tema + kırmızı vurgu preset'i uygula
-    await ThemeService().setPresetTheme('purple_blue');
-    
-    // AI services
+    // Initialize AI services
+    await AIService().initialize();
+    await AIDiagnosisService().initialize();
+    await AICaseManagementService().initialize();
     await AIOrchestrationService().initialize();
-    await AICacheService().initialize();
-    
-    // Session AI service
     await RealTimeSessionAIService().initialize();
+    
+    // Initialize new services
+    await ConsentService().initialize();
     
     print('All services initialized successfully');
   } catch (e) {
-    print('Error initializing services: $e');
+    print('Service initialization failed: $e');
   }
 }
 
@@ -86,7 +88,8 @@ class PsyClinicAIApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => OfflineSyncService()),
-        ChangeNotifierProvider<RegionalConfigService>(create: (_) => RegionalConfigService.instance),
+        ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
+        ChangeNotifierProvider(create: (_) => ConsentService()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -96,7 +99,7 @@ class PsyClinicAIApp extends StatelessWidget {
             theme: themeService.getLightTheme(),
             darkTheme: themeService.getDarkTheme(),
             themeMode: themeService.currentThemeMode,
-            home: const AuthWrapper(),
+            home: const DashboardScreen(),
             routes: {
               '/login': (context) => const LoginScreen(),
               '/dashboard': (context) => const DashboardScreen(),
@@ -119,6 +122,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/finance': (context) => const FinanceDashboardScreen(),
               '/supervisor': (context) => const SupervisorDashboardScreen(),
               '/client-management': (context) => const ClientManagementScreen(),
+              '/consent-compliance': (context) => const ConsentComplianceScreen(),
             },
           );
         },

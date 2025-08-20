@@ -425,13 +425,13 @@ enum IntegrationState {
 }
 
 enum ComplianceType {
-  sağlıkBakanlığı,
+  saglikBakanligi,
   sgk,
-  tıbbiDeontoloji,
-  veriGüvenliği,
-  hastaHakları,
-  ilaçGüvenliği,
-  enfeksiyonKontrolü,
+  tibbiDeontoloji,
+  veriGuvenligi,
+  hastaHaklari,
+  ilacGuvenligi,
+  enfeksiyonKontrolu,
 }
 
 enum ComplianceStatus {
@@ -443,13 +443,13 @@ enum ComplianceStatus {
 }
 
 enum ReportType {
-  sağlıkBakanlığı,
+  saglikBakanligi,
   sgk,
   hastane,
   klinik,
   doktor,
   hasta,
-  ilaç,
+  ilac,
   enfeksiyon,
 }
 

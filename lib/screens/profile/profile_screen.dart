@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 import '../../utils/theme.dart';
+import 'package:provider/provider.dart';
+import '../../services/theme_service.dart';
+import '../../services/regional_config_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,6 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    final regionalService = Provider.of<RegionalConfigService>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil & Ayarlar'),
@@ -95,13 +100,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const Divider(height: 1),
 
-                  // Ülke seçimi
+                  // Bölge seçimi (TR/US/EU)
                   ListTile(
                     leading: const Icon(Icons.public),
-                    title: const Text('Hedef Ülke'),
-                    subtitle: Text(_selectedCountry),
+                    title: const Text('Bölge Seçimi'),
+                    subtitle: Text(regionalService.currentRegion.name),
                     trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () => _showCountrySelectionDialog(context),
+                    onTap: () => _showRegionSelectionDialog(context, regionalService),
                   ),
                   const Divider(height: 1),
 
@@ -116,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       value: _isDarkMode,
                       onChanged: (value) {
                         setState(() => _isDarkMode = value);
-                        // TODO: Theme service
+                        themeService.toggleDarkMode();
                       },
                     ),
                   ),
@@ -276,6 +281,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onChanged: (value) {
                 setState(() => _selectedCountry = value!);
                 Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showRegionSelectionDialog(BuildContext context, RegionalConfigService regionalService) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bölge Seç'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: Region.values.map((region) {
+            return RadioListTile<Region>(
+              title: Text(region.name),
+              value: region,
+              groupValue: regionalService.currentRegion,
+              onChanged: (value) {
+                if (value != null) {
+                  regionalService.setRegion(value);
+                  Navigator.pop(context);
+                }
               },
             );
           }).toList(),

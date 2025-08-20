@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/security_models.dart';
 import '../../services/security_service.dart';
+import '../../services/regional_config_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/security/security_dashboard_widget.dart';
 
@@ -75,6 +76,7 @@ class _SecurityScreenState extends State<SecurityScreen>
 
   @override
   Widget build(BuildContext context) {
+    final region = context.watch<RegionalConfigService>().currentRegion;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Güvenlik & Uyumluluk'),
@@ -108,6 +110,28 @@ class _SecurityScreenState extends State<SecurityScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Onam & Yasal Bilgilendirme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(_consentTextByRegion(context.read<RegionalConfigService>().currentRegion), style: const TextStyle(fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(onPressed: (){}, icon: const Icon(Icons.check), label: const Text('Kabul Et')),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(onPressed: (){}, icon: const Icon(Icons.close), label: const Text('Reddet')),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             'Güvenlik Durumu',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -982,5 +1006,16 @@ class _SecurityScreenState extends State<SecurityScreen>
         );
       }
     }
+  }
+}
+
+String _consentTextByRegion(Region region) {
+  switch (region) {
+    case Region.TR:
+      return 'KVKK Aydınlatma Metni ve Açık Rıza\nKişisel verileriniz 6698 sayılı KVKK kapsamında işlenir.';
+    case Region.US:
+      return 'HIPAA Notice of Privacy Practices\nYour protected health information may be used and disclosed...';
+    case Region.EU:
+      return 'GDPR Consent\nYour personal data is processed in accordance with GDPR Article 9...';
   }
 }

@@ -538,8 +538,6 @@ Lütfen şu bilgileri içeren JSON formatında yanıt ver:
   }
 }
 ''',
-  };
-
     'us_psychiatry_ai': '''
 You are an experienced US board-certified psychiatrist. Analyze the data considering US healthcare, HIPAA, CPT billing context, and cultural factors.
 
@@ -632,6 +630,7 @@ Please respond in JSON with:
   }
 }
 ''',
+  };
 
   // Prompt Optimization Strategies
   static const Map<String, Map<String, dynamic>> _optimizationStrategies = {

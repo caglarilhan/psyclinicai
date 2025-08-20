@@ -28,6 +28,7 @@ import 'services/ai_orchestration_service.dart';
 import 'services/ai_cache_service.dart';
 import 'services/ai_prompt_service.dart';
 import 'services/real_time_session_ai_service.dart'; // ADDED
+import 'services/regional_config_service.dart';
 import 'utils/theme.dart';
 
 void main() async {
@@ -85,6 +86,7 @@ class PsyClinicAIApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => OfflineSyncService()),
+        ChangeNotifierProvider<RegionalConfigService>(create: (_) => RegionalConfigService.instance),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {

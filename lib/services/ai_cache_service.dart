@@ -17,6 +17,12 @@ class AICacheService {
   final Map<String, CachedResponse> _memoryCache = {};
   static const int _maxMemoryCacheSize = 100;
 
+  // Metrics
+  int _memoryHits = 0;
+  int _diskHits = 0;
+  int _misses = 0;
+  int _evictions = 0;
+
   Future<void> initialize() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
@@ -49,6 +55,7 @@ class AICacheService {
       final cached = _memoryCache[cacheKey]!;
       if (!cached.isExpired) {
         _logger.debug('Cache hit from memory', context: 'AICacheService', data: {'key': cacheKey});
+        _memoryHits++;
         return cached;
       } else {
         _memoryCache.remove(cacheKey);
@@ -66,6 +73,7 @@ class AICacheService {
           // Move to memory cache
           _addToMemoryCache(cacheKey, cached);
           _logger.debug('Cache hit from disk', context: 'AICacheService', data: {'key': cacheKey});
+          _diskHits++;
           return cached;
         } else {
           // Remove expired cache
@@ -76,6 +84,7 @@ class AICacheService {
       _logger.warning('Error reading cache file', context: 'AICacheService', error: e);
     }
 
+    _misses++;
     return null;
   }
 
@@ -114,6 +123,7 @@ class AICacheService {
       // Remove oldest entry
       final oldestKey = _memoryCache.keys.first;
       _memoryCache.remove(oldestKey);
+      _evictions++;
     }
     _memoryCache[key] = response;
   }
@@ -190,6 +200,10 @@ class AICacheService {
       'diskCacheSize': diskCacheSize,
       'totalDiskSizeBytes': totalDiskSize,
       'maxMemoryCacheSize': _maxMemoryCacheSize,
+      'memoryHits': _memoryHits,
+      'diskHits': _diskHits,
+      'misses': _misses,
+      'evictions': _evictions,
     };
   }
 }

@@ -42,7 +42,7 @@ class VoiceAnalysis {
 class VoiceEmotion {
   final String id;
   final EmotionType primaryEmotion;
-  final Map<EmotionType, double> emotionConfidence;
+  final Map<String, double> emotionConfidence;
   final double intensity;
   final double instability;
   final List<String> emotionalTriggers;
@@ -281,6 +281,15 @@ class VoiceRhythm {
 }
 
 // Enums
+enum SpeechDisorder {
+  none,
+  stuttering,
+  dysarthria,
+  apraxia,
+  articulation,
+  phonological,
+  fluency,
+}
 enum EmotionType {
   joy,
   sadness,

@@ -1,623 +1,766 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/ai_config.dart';
-import '../config/env_config.dart';
 import '../models/diagnosis_models.dart';
-import 'ai_logger.dart';
-import 'ai_performance_monitor.dart';
+import '../services/ai_orchestration_service.dart';
+import '../utils/ai_logger.dart';
 
-class DiagnosisService {
+class DiagnosisService extends ChangeNotifier {
   static final DiagnosisService _instance = DiagnosisService._internal();
   factory DiagnosisService() => _instance;
   DiagnosisService._internal();
 
   final AILogger _logger = AILogger();
-  final AIPerformanceMonitor _performanceMonitor = AIPerformanceMonitor();
+  final AIOrchestrationService _aiService = AIOrchestrationService();
   
-  SharedPreferences? _prefs;
+  // Diagnosis systems
+  List<DiagnosisSystem> _diagnosisSystems = [];
+  List<DiagnosticCategory> _categories = [];
+  List<MentalDisorder> _disorders = [];
+  List<DiagnosticCriteria> _criteria = [];
+  List<TreatmentGuideline> _guidelines = [];
   
-  // ICD-11 ve DSM-5 veritabanları (mock data - gerçek implementasyonda API'den gelecek)
-  static const Map<String, Map<String, dynamic>> _icd11Database = {
-    '6A70': {
-      'code': '6A70',
-      'title': 'Depressive disorder',
-      'description': 'A mood disorder characterized by persistent sadness and loss of interest',
-      'translations': {
-        'tr': 'Depresif bozukluk',
-        'de': 'Depressive Störung',
-        'fr': 'Trouble dépressif'
-      },
-      'symptoms': ['Persistent sadness', 'Loss of interest', 'Fatigue', 'Sleep problems'],
-      'severity': 'Moderate',
-      'category': 'Mood disorders',
-      'subcategory': 'Depressive disorders'
-    },
-    '6B00': {
-      'code': '6B00',
-      'title': 'Generalized anxiety disorder',
-      'description': 'Excessive anxiety and worry about various aspects of life',
-      'translations': {
-        'tr': 'Yaygın anksiyete bozukluğu',
-        'de': 'Generalisierte Angststörung',
-        'fr': 'Trouble d\'anxiété généralisée'
-      },
-      'symptoms': ['Excessive worry', 'Restlessness', 'Difficulty concentrating', 'Muscle tension'],
-      'severity': 'Moderate',
-      'category': 'Anxiety disorders',
-      'subcategory': 'Generalized anxiety disorders'
-    }
-  };
+  // Assessment data
+  List<DiagnosisAssessment> _assessments = [];
+  
+  // Getters
+  List<DiagnosisSystem> get diagnosisSystems => List.unmodifiable(_diagnosisSystems);
+  List<DiagnosticCategory> get categories => List.unmodifiable(_categories);
+  List<MentalDisorder> get disorders => List.unmodifiable(_disorders);
+  List<DiagnosticCriteria> get criteria => List.unmodifiable(_criteria);
+  List<TreatmentGuideline> get guidelines => List.unmodifiable(_guidelines);
+  List<DiagnosisAssessment> get assessments => List.unmodifiable(_assessments);
 
-  static const Map<String, Map<String, dynamic>> _dsm5Database = {
-    'F32.1': {
-      'code': 'F32.1',
-      'title': 'Major Depressive Disorder, Moderate',
-      'description': 'Depressive disorder with moderate symptom severity',
-      'criteria': [
-        'Depressed mood most of the day',
-        'Markedly diminished interest in activities',
-        'Significant weight loss or gain',
-        'Insomnia or hypersomnia'
-      ],
-      'symptoms': ['Depressed mood', 'Loss of interest', 'Weight changes', 'Sleep disturbances'],
-      'severity': 'Moderate',
-      'category': 'Depressive Disorders',
-      'subcategory': 'Major Depressive Disorder'
-    }
-  };
-
-  // Singleton pattern ve SharedPreferences başlatma
-  Future<void> _initialize() async {
-    if (_prefs == null) {
-      _prefs = await SharedPreferences.getInstance();
-    }
-  }
-
-  // ICD-11 tanı arama
-  Future<List<ICD11Diagnosis>> searchICD11({
-    String? query,
-    String? category,
-    String? subcategory,
-    String language = 'en',
-    int maxResults = 50,
-  }) async {
-    _performanceMonitor.startOperation(
-      'search_icd11',
-      context: 'diagnosis_service',
-      metadata: {
-        'query': query,
-        'category': category,
-        'language': language,
-        'max_results': maxResults,
-      },
-    );
-
+  Future<void> initialize() async {
     try {
-      _logger.info(
-        'Searching ICD-11 diagnoses',
-        context: 'diagnosis_service',
-        data: {'query': query, 'language': language},
-      );
-
-      // Mock search implementation - gerçek implementasyonda API'den gelecek
-      List<ICD11Diagnosis> results = [];
+      _logger.info('DiagnosisService initializing...', context: 'DiagnosisService');
       
-      for (final entry in _icd11Database.entries) {
-        final data = entry.value;
-        
-        // Query filter
-        if (query != null && query.isNotEmpty) {
-          final searchText = '${data['title']} ${data['description']}'.toLowerCase();
-          if (!searchText.contains(query.toLowerCase())) continue;
-        }
-        
-        // Category filter
-        if (category != null && data['category'] != category) continue;
-        
-        // Subcategory filter
-        if (subcategory != null && data['subcategory'] != subcategory) continue;
-        
-        // Create ICD11Diagnosis object
-        final diagnosis = ICD11Diagnosis(
-          code: data['code'],
-          title: data['translations'][language] ?? data['title'],
-          description: data['description'],
-          translations: Map<String, String>.from(data['translations']),
-          keywords: [],
-          synonyms: [],
-          inclusionCriteria: [],
-          exclusionCriteria: [],
-          relatedConditions: [],
-          symptoms: List<String>.from(data['symptoms']),
-          riskFactors: [],
-          complications: [],
-          severity: data['severity'],
-          chronicity: 'Unknown',
-          category: data['category'],
-          subcategory: data['subcategory'],
-          treatmentOptions: [],
-          medications: [],
-          therapies: [],
-          metadata: {},
-          isActive: true,
-          lastUpdated: DateTime.now(),
-        );
-        
-        results.add(diagnosis);
-        
-        if (results.length >= maxResults) break;
-      }
-
-      _performanceMonitor.endOperation(
-        'search_icd11',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': true,
-          'results_count': results.length,
-        },
-      );
-
-      return results;
-    } catch (e) {
-      _logger.error(
-        'Failed to search ICD-11 diagnoses',
-        context: 'diagnosis_service',
-        data: {'query': query, 'error': e.toString()},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'search_icd11',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      return [];
-    }
-  }
-
-  // DSM-5 tanı arama
-  Future<List<DSM5Diagnosis>> searchDSM5({
-    String? query,
-    String? category,
-    String? subcategory,
-    String language = 'en',
-    int maxResults = 50,
-  }) async {
-    _performanceMonitor.startOperation(
-      'search_dsm5',
-      context: 'diagnosis_service',
-      metadata: {
-        'query': query,
-        'category': category,
-        'language': language,
-        'max_results': maxResults,
-      },
-    );
-
-    try {
-      _logger.info(
-        'Searching DSM-5 diagnoses',
-        context: 'diagnosis_service',
-        data: {'query': query, 'language': language},
-      );
-
-      // Mock search implementation
-      List<DSM5Diagnosis> results = [];
+      await _loadDiagnosisData();
+      await _loadAssessments();
       
-      for (final entry in _dsm5Database.entries) {
-        final data = entry.value;
-        
-        // Query filter
-        if (query != null && query.isNotEmpty) {
-          final searchText = '${data['title']} ${data['description']}'.toLowerCase();
-          if (!searchText.contains(query.toLowerCase())) continue;
-        }
-        
-        // Category filter
-        if (category != null && data['category'] != category) continue;
-        
-        // Subcategory filter
-        if (subcategory != null && data['subcategory'] != subcategory) continue;
-        
-        // Create DSM5Diagnosis object
-        final diagnosis = DSM5Diagnosis(
-          code: data['code'],
-          title: data['title'],
-          description: data['description'],
-          translations: {},
-          criteria: data['criteria'].map((c) => DSM5Criterion(
-            code: 'C${data['criteria'].indexOf(c)}',
-            description: c,
-            translations: {},
-            examples: [],
-            type: 'required',
-            minRequired: 1,
-            maxAllowed: 1,
-            subCriteria: [],
-            metadata: {},
-          )).toList(),
-          symptoms: List<String>.from(data['symptoms']),
-          riskFactors: [],
-          complications: [],
-          severity: data['severity'],
-          chronicity: 'Unknown',
-          differentialDiagnosis: [],
-          comorbidities: [],
-          treatmentOptions: [],
-          medications: [],
-          therapies: [],
-          metadata: {},
-          isActive: true,
-          lastUpdated: DateTime.now(),
-        );
-        
-        results.add(diagnosis);
-        
-        if (results.length >= maxResults) break;
-      }
-
-      _performanceMonitor.endOperation(
-        'search_dsm5',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': true,
-          'results_count': results.length,
-        },
-      );
-
-      return results;
+      _logger.info('DiagnosisService initialized successfully', context: 'DiagnosisService');
     } catch (e) {
-      _logger.error(
-        'Failed to search DSM-5 diagnoses',
-        context: 'diagnosis_service',
-        data: {'query': query, 'error': e.toString()},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'search_dsm5',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      return [];
+      _logger.error('Failed to initialize DiagnosisService', context: 'DiagnosisService', error: e);
+      rethrow;
     }
   }
 
-  // AI destekli tanı önerisi
-  Future<List<AIDiagnosisSuggestion>> getAIDiagnosisSuggestions({
-    required List<String> symptoms,
-    required List<String> patientInfo,
-    String language = 'en',
-    int maxSuggestions = 5,
-    double minConfidence = 0.6,
-  }) async {
-    _performanceMonitor.startOperation(
-      'get_ai_diagnosis_suggestions',
-      context: 'diagnosis_service',
-      metadata: {
-        'symptoms_count': symptoms.length,
-        'patient_info_count': patientInfo.length,
-        'language': language,
-        'max_suggestions': maxSuggestions,
-        'min_confidence': minConfidence,
-      },
-    );
-
+  Future<void> _loadDiagnosisData() async {
     try {
-      _logger.info(
-        'Getting AI diagnosis suggestions',
-        context: 'diagnosis_service',
-        data: {'symptoms': symptoms, 'language': language},
-      );
-
-      // AI prompt oluştur
-      final prompt = '''
-      Sen deneyimli bir klinik psikolog ve psikiyatristsin. 
-      Aşağıdaki belirtilere ve hasta bilgilerine göre olası tanıları öner:
-
-      Belirtiler: ${symptoms.join(', ')}
-      Hasta Bilgileri: ${patientInfo.join(', ')}
-
-      Lütfen şu formatta JSON yanıt ver:
-      {
-        "suggestions": [
-          {
-            "diagnosis": "Tanı adı",
-            "code": "ICD-11 kodu",
-            "system": "ICD-11 veya DSM-5",
-            "confidence": 0.85,
-            "supporting_symptoms": ["belirti1", "belirti2"],
-            "reasoning": "Tanı gerekçesi",
-            "differential": ["ayırıcı tanı1", "ayırıcı tanı2"],
-            "assessments": ["değerlendirme1", "değerlendirme2"]
-          }
-        ]
-      }
-      ''';
-
-      // OpenAI API'yi çağır
-      final response = await _callOpenAI(prompt);
+      // Load DSM-5 data
+      await _loadDSM5Data();
       
-      if (response.containsKey('suggestions')) {
-        final suggestions = response['suggestions'] as List;
-        
-        final aiSuggestions = suggestions.take(maxSuggestions).map((s) => AIDiagnosisSuggestion(
-          suggestedDiagnosis: s['diagnosis'] ?? 'Unknown',
-          diagnosisCode: s['code'] ?? 'Unknown',
-          classificationSystem: s['system'] ?? 'Unknown',
-          confidence: (s['confidence'] ?? 0.0).toDouble(),
-          supportingSymptoms: List<String>.from(s['supporting_symptoms'] ?? []),
-          supportingCriteria: [],
-          conflictingSymptoms: [],
-          conflictingCriteria: [],
-          differentialDiagnoses: List<String>.from(s['differential'] ?? []),
-          recommendedAssessments: List<String>.from(s['assessments'] ?? []),
-          recommendedTests: [],
-          reasoning: s['reasoning'] ?? 'No reasoning provided',
-          metadata: {},
-          generatedAt: DateTime.now(),
-        )).where((s) => s.confidence >= minConfidence).toList();
-
-        _performanceMonitor.endOperation(
-          'get_ai_diagnosis_suggestions',
-          context: 'diagnosis_service',
-          resultMetadata: {
-            'success': true,
-            'suggestions_count': aiSuggestions.length,
-            'average_confidence': aiSuggestions.isNotEmpty 
-                ? aiSuggestions.map((s) => s.confidence).reduce((a, b) => a + b) / aiSuggestions.length 
-                : 0.0,
-          },
-        );
-
-        return aiSuggestions;
-      }
-
-      // Fallback: Mock suggestions
-      return _getMockAISuggestions(symptoms, language, maxSuggestions);
-
+      // Load ICD-11 data
+      await _loadICD11Data();
+      
+      // Load treatment guidelines
+      await _loadTreatmentGuidelines();
+      
+      _logger.info('Diagnosis data loaded: ${_disorders.length} disorders, ${_criteria.length} criteria', 
+                   context: 'DiagnosisService');
     } catch (e) {
-      _logger.error(
-        'Failed to get AI diagnosis suggestions',
-        context: 'diagnosis_service',
-        data: {'symptoms': symptoms, 'error': e.toString()},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'get_ai_diagnosis_suggestions',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      // Fallback: Mock suggestions
-      return _getMockAISuggestions(symptoms, language, maxSuggestions);
+      _logger.error('Failed to load diagnosis data', context: 'DiagnosisService', error: e);
     }
   }
 
-  // Mock AI suggestions (fallback)
-  List<AIDiagnosisSuggestion> _getMockAISuggestions(
-    List<String> symptoms, 
-    String language, 
-    int maxSuggestions
-  ) {
-    final mockSuggestions = [
-      {
-        'diagnosis': language == 'tr' ? 'Depresif Bozukluk' : 'Depressive Disorder',
-        'code': '6A70',
-        'system': 'ICD-11',
-        'confidence': 0.85,
-        'supporting_symptoms': ['Persistent sadness', 'Loss of interest'],
-        'reasoning': 'Symptoms match major depressive disorder criteria',
-        'differential': ['Bipolar disorder', 'Adjustment disorder'],
-        'assessments': ['Beck Depression Inventory', 'PHQ-9']
-      },
-      {
-        'diagnosis': language == 'tr' ? 'Yaygın Anksiyete Bozukluğu' : 'Generalized Anxiety Disorder',
-        'code': '6B00',
-        'system': 'ICD-11',
-        'confidence': 0.72,
-        'supporting_symptoms': ['Excessive worry', 'Restlessness'],
-        'reasoning': 'Anxiety symptoms present with worry',
-        'differential': ['Panic disorder', 'Social anxiety disorder'],
-        'assessments': ['GAD-7', 'Beck Anxiety Inventory']
-      }
-    ];
-
-    return mockSuggestions.take(maxSuggestions).map((s) => AIDiagnosisSuggestion(
-      suggestedDiagnosis: s['diagnosis'] as String,
-      diagnosisCode: s['code'] as String,
-      classificationSystem: s['system'] as String,
-      confidence: (s['confidence'] as num).toDouble(),
-      supportingSymptoms: List<String>.from(s['supporting_symptoms'] as List),
-      supportingCriteria: [],
-      conflictingSymptoms: [],
-      conflictingCriteria: [],
-      differentialDiagnoses: List<String>.from(s['differential'] as List),
-      recommendedAssessments: List<String>.from(s['assessments'] as List),
-      recommendedTests: [],
-      reasoning: s['reasoning'] as String,
-      metadata: {},
-      generatedAt: DateTime.now(),
-    )).toList();
-  }
-
-  // OpenAI API çağrısı
-  Future<Map<String, dynamic>> _callOpenAI(String prompt) async {
-    await _initialize();
-    
-    final apiKey = _prefs?.getString('openai_api_key') ?? EnvConfig.openaiApiKey;
-    
-    if (apiKey == 'YOUR_OPENAI_API_KEY') {
-      throw Exception('OpenAI API key not configured');
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse('${AIConfig.openaiBaseUrl}/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        },
-        body: jsonEncode({
-          'model': EnvConfig.openaiModel,
-          'messages': [
-            {
-              'role': 'system',
-              'content': 'Sen deneyimli bir klinik psikolog ve psikiyatristsin. Lütfen sadece JSON formatında yanıt ver.',
-            },
-            {
-              'role': 'user',
-              'content': prompt,
-            },
-          ],
-          'max_tokens': EnvConfig.openaiMaxTokens,
-          'temperature': EnvConfig.openaiTemperature,
-        }),
-      ).timeout(Duration(seconds: EnvConfig.timeoutSeconds));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final content = data['choices'][0]['message']['content'];
-        
-        try {
-          return jsonDecode(content);
-        } catch (e) {
-          return {'suggestions': []};
-        }
-      } else {
-        throw Exception('HTTP ${response.statusCode}: ${response.body}');
-      }
-    } catch (e) {
-      _logger.error(
-        'OpenAI API call failed',
-        context: 'diagnosis_service',
-        data: {'error': e.toString()},
-        error: e,
-      );
-      return {'suggestions': []};
-    }
-  }
-
-  // Kapsamlı tanı arama
-  Future<DiagnosisSearchResult> searchDiagnoses({
-    required String query,
-    DiagnosisSearchFilters? filters,
-    String language = 'en',
-  }) async {
-    _performanceMonitor.startOperation(
-      'search_diagnoses',
-      context: 'diagnosis_service',
-      metadata: {
-        'query': query,
-        'language': language,
-        'filters': filters?.toJson(),
-      },
-    );
-
-    try {
-      _logger.info(
-        'Comprehensive diagnosis search',
-        context: 'diagnosis_service',
-        data: {'query': query, 'language': language},
-      );
-
-      // Paralel arama yap
-      final futures = await Future.wait([
-        searchICD11(query: query, language: language),
-        searchDSM5(query: query, language: language),
-        getAIDiagnosisSuggestions(
-          symptoms: [query],
-          patientInfo: [],
-          language: language,
+  Future<void> _loadDSM5Data() async {
+    // DSM-5 Major Depressive Disorder
+    final mdd = MentalDisorder(
+      id: 'mdd_dsm5',
+      name: 'Major Depressive Disorder',
+      code: 'F32.1',
+      categoryId: 'mood_disorders',
+      description: 'A mental health disorder characterized by persistently depressed mood or loss of interest in activities.',
+      symptoms: [
+        Symptom(
+          id: 'depressed_mood',
+          name: 'Depressed mood',
+          description: 'Persistent feeling of sadness, emptiness, or hopelessness',
+          type: SymptomType.mood,
+          severity: SymptomSeverity.moderate,
+          relatedSymptoms: ['anhedonia', 'fatigue', 'sleep_changes'],
+          triggers: ['stress', 'loss', 'seasonal_changes'],
+          alleviators: ['exercise', 'social_support', 'therapy'],
+          duration: Duration.chronic,
+          frequency: Frequency.continuous,
         ),
-      ]);
+        Symptom(
+          id: 'anhedonia',
+          name: 'Anhedonia',
+          description: 'Markedly diminished interest or pleasure in activities',
+          type: SymptomType.mood,
+          severity: SymptomSeverity.severe,
+          relatedSymptoms: ['depressed_mood', 'social_withdrawal'],
+          triggers: ['depression', 'isolation'],
+          alleviators: ['engagement', 'social_activities'],
+          duration: Duration.chronic,
+          frequency: Frequency.continuous,
+        ),
+        Symptom(
+          id: 'sleep_changes',
+          name: 'Sleep changes',
+          description: 'Insomnia or hypersomnia nearly every day',
+          type: SymptomType.sleep,
+          severity: SymptomSeverity.moderate,
+          relatedSymptoms: ['fatigue', 'concentration_problems'],
+          triggers: ['anxiety', 'depression', 'stress'],
+          alleviators: ['sleep_hygiene', 'medication'],
+          duration: Duration.chronic,
+          frequency: Frequency.continuous,
+        ),
+      ],
+      criteria: [
+        DiagnosticCriteria(
+          id: 'mdd_criterion_a',
+          disorderId: 'mdd_dsm5',
+          criterion: 'Five or more of the following symptoms have been present during the same 2-week period',
+          criterionNumber: 1,
+          requiredSymptoms: ['depressed_mood', 'anhedonia', 'sleep_changes', 'fatigue', 'concentration_problems'],
+          minimumSymptoms: 5,
+          minimumDuration: Duration.subacute,
+          exclusionCriteria: ['substance_induced', 'medical_condition'],
+          specifiers: ['mild', 'moderate', 'severe'],
+        ),
+      ],
+      differentialDiagnoses: ['bipolar_disorder', 'dysthymia', 'adjustment_disorder'],
+      comorbidities: ['anxiety_disorder', 'substance_use_disorder', 'personality_disorder'],
+      severity: SeverityLevel.moderate,
+      treatmentOptions: [
+        TreatmentOption(
+          id: 'mdd_ssri',
+          name: 'SSRI Antidepressants',
+          modality: TreatmentModality.medication,
+          description: 'Selective serotonin reuptake inhibitors for depression',
+          indications: ['major_depressive_disorder', 'anxiety_disorder'],
+          contraindications: ['bipolar_disorder', 'pregnancy'],
+          sideEffects: ['nausea', 'sexual_dysfunction', 'weight_gain'],
+          duration: Duration.chronic,
+          effectiveness: 0.7,
+          alternatives: ['snri', 'ndri', 'psychotherapy'],
+        ),
+        TreatmentOption(
+          id: 'mdd_cbt',
+          name: 'Cognitive Behavioral Therapy',
+          modality: TreatmentModality.psychotherapy,
+          description: 'Evidence-based psychotherapy for depression',
+          indications: ['major_depressive_disorder', 'mild_to_moderate'],
+          contraindications: ['severe_depression', 'psychosis'],
+          sideEffects: ['emotional_discomfort', 'time_commitment'],
+          duration: Duration.subacute,
+          effectiveness: 0.6,
+          alternatives: ['interpersonal_therapy', 'psychodynamic_therapy'],
+        ),
+      ],
+      riskFactors: ['family_history', 'trauma', 'chronic_illness'],
+      protectiveFactors: ['social_support', 'coping_skills', 'physical_activity'],
+      prognosis: Prognosis.good,
+    );
 
-      final icd11Results = futures[0] as List<ICD11Diagnosis>;
-      final dsm5Results = futures[1] as List<DSM5Diagnosis>;
-      final aiSuggestions = futures[2] as List<AIDiagnosisSuggestion>;
+    // DSM-5 Generalized Anxiety Disorder
+    final gad = MentalDisorder(
+      id: 'gad_dsm5',
+      name: 'Generalized Anxiety Disorder',
+      code: 'F41.1',
+      categoryId: 'anxiety_disorders',
+      description: 'Excessive anxiety and worry about various aspects of life.',
+      symptoms: [
+        Symptom(
+          id: 'excessive_worry',
+          name: 'Excessive worry',
+          description: 'Persistent and excessive worry about various activities or events',
+          type: SymptomType.anxiety,
+          severity: SymptomSeverity.moderate,
+          relatedSymptoms: ['restlessness', 'fatigue', 'concentration_problems'],
+          triggers: ['uncertainty', 'stress', 'life_changes'],
+          alleviators: ['relaxation', 'problem_solving', 'therapy'],
+          duration: Duration.chronic,
+          frequency: Frequency.continuous,
+        ),
+        Symptom(
+          id: 'restlessness',
+          name: 'Restlessness',
+          description: 'Feeling keyed up or on edge',
+          type: SymptomType.anxiety,
+          severity: SymptomSeverity.moderate,
+          relatedSymptoms: ['excessive_worry', 'sleep_problems'],
+          triggers: ['anxiety', 'caffeine', 'stress'],
+          alleviators: ['exercise', 'relaxation', 'medication'],
+          duration: Duration.chronic,
+          frequency: Frequency.continuous,
+        ),
+      ],
+      criteria: [
+        DiagnosticCriteria(
+          id: 'gad_criterion_a',
+          disorderId: 'gad_dsm5',
+          criterion: 'Excessive anxiety and worry occurring more days than not for at least 6 months',
+          criterionNumber: 1,
+          requiredSymptoms: ['excessive_worry', 'restlessness', 'fatigue', 'concentration_problems'],
+          minimumSymptoms: 3,
+          minimumDuration: Duration.chronic,
+          exclusionCriteria: ['substance_induced', 'medical_condition'],
+          specifiers: ['mild', 'moderate', 'severe'],
+        ),
+      ],
+      differentialDiagnoses: ['panic_disorder', 'social_anxiety', 'depression'],
+      comorbidities: ['depression', 'substance_use', 'other_anxiety_disorders'],
+      severity: SeverityLevel.moderate,
+      treatmentOptions: [
+        TreatmentOption(
+          id: 'gad_ssri',
+          name: 'SSRI Antidepressants',
+          modality: TreatmentModality.medication,
+          description: 'First-line medication for anxiety disorders',
+          indications: ['generalized_anxiety_disorder', 'depression'],
+          contraindications: ['bipolar_disorder', 'pregnancy'],
+          sideEffects: ['nausea', 'sexual_dysfunction', 'initial_anxiety'],
+          duration: Duration.chronic,
+          effectiveness: 0.65,
+          alternatives: ['snri', 'benzodiazepines', 'psychotherapy'],
+        ),
+        TreatmentOption(
+          id: 'gad_cbt',
+          name: 'Cognitive Behavioral Therapy',
+          modality: TreatmentModality.psychotherapy,
+          description: 'Gold standard psychotherapy for anxiety',
+          indications: ['generalized_anxiety_disorder', 'mild_to_moderate'],
+          contraindications: ['severe_anxiety', 'psychosis'],
+          sideEffects: ['emotional_discomfort', 'time_commitment'],
+          duration: Duration.subacute,
+          effectiveness: 0.7,
+          alternatives: ['acceptance_commitment_therapy', 'mindfulness'],
+        ),
+      ],
+      riskFactors: ['genetics', 'trauma', 'stressful_life_events'],
+      protectiveFactors: ['coping_skills', 'social_support', 'physical_activity'],
+      prognosis: Prognosis.good,
+    );
 
-      final result = DiagnosisSearchResult(
-        icd11Results: icd11Results,
-        dsm5Results: dsm5Results,
-        aiSuggestions: aiSuggestions,
-        totalResults: icd11Results.length + dsm5Results.length + aiSuggestions.length,
-        searchQuery: query,
-        filters: filters?.toJson().keys.toList() ?? [],
-        metadata: {
-          'search_time': DateTime.now().toIso8601String(),
-          'language': language,
-          'systems_searched': ['ICD-11', 'DSM-5', 'AI'],
-        },
-        searchedAt: DateTime.now(),
-      );
+    _disorders.addAll([mdd, gad]);
+    
+    // Add categories
+    _categories.addAll([
+      DiagnosticCategory(
+        id: 'mood_disorders',
+        name: 'Mood Disorders',
+        code: 'F30-F39',
+        description: 'Disorders characterized by disturbances in mood',
+        parentCategories: [],
+        childCategories: ['depressive_disorders', 'bipolar_disorders'],
+        disorderIds: ['mdd_dsm5'],
+        type: DiagnosticCategoryType.bipolar,
+      ),
+      DiagnosticCategory(
+        id: 'anxiety_disorders',
+        name: 'Anxiety Disorders',
+        code: 'F40-F48',
+        description: 'Disorders characterized by excessive fear and anxiety',
+        parentCategories: [],
+        childCategories: ['panic_disorders', 'phobias'],
+        disorderIds: ['gad_dsm5'],
+        type: DiagnosticCategoryType.anxiety,
+      ),
+    ]);
+  }
 
-      _performanceMonitor.endOperation(
-        'search_diagnoses',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': true,
-          'total_results': result.totalResults,
-          'icd11_count': icd11Results.length,
-          'dsm5_count': dsm5Results.length,
-          'ai_count': aiSuggestions.length,
-        },
-      );
+  Future<void> _loadICD11Data() async {
+    // ICD-11 Bipolar Disorder
+    final bipolar = MentalDisorder(
+      id: 'bipolar_icd11',
+      name: 'Bipolar Disorder',
+      code: 'F31',
+      categoryId: 'mood_disorders',
+      description: 'A mental disorder characterized by episodes of mania and depression.',
+      symptoms: [
+        Symptom(
+          id: 'mania',
+          name: 'Mania',
+          description: 'Elevated, expansive, or irritable mood with increased activity',
+          type: SymptomType.mood,
+          severity: SymptomSeverity.severe,
+          relatedSymptoms: ['decreased_sleep', 'grandiosity', 'racing_thoughts'],
+          triggers: ['stress', 'sleep_deprivation', 'medication_changes'],
+          alleviators: ['mood_stabilizers', 'sleep_regulation'],
+          duration: Duration.episodic,
+          frequency: Frequency.episodic,
+        ),
+        Symptom(
+          id: 'depression',
+          name: 'Depression',
+          description: 'Depressed mood with loss of interest and energy',
+          type: SymptomType.mood,
+          severity: SymptomSeverity.severe,
+          relatedSymptoms: ['anhedonia', 'fatigue', 'suicidal_thoughts'],
+          triggers: ['stress', 'life_events', 'medication_changes'],
+          alleviators: ['antidepressants', 'therapy', 'social_support'],
+          duration: Duration.episodic,
+          frequency: Frequency.episodic,
+        ),
+      ],
+      criteria: [
+        DiagnosticCriteria(
+          id: 'bipolar_criterion_a',
+          disorderId: 'bipolar_icd11',
+          criterion: 'At least one manic episode and one depressive episode',
+          criterionNumber: 1,
+          requiredSymptoms: ['mania', 'depression'],
+          minimumSymptoms: 2,
+          minimumDuration: Duration.episodic,
+          exclusionCriteria: ['substance_induced', 'medical_condition'],
+          specifiers: ['bipolar_i', 'bipolar_ii', 'cyclothymia'],
+        ),
+      ],
+      differentialDiagnoses: ['major_depression', 'schizophrenia', 'personality_disorder'],
+      comorbidities: ['anxiety', 'substance_use', 'adhd'],
+      severity: SeverityLevel.severe,
+      treatmentOptions: [
+        TreatmentOption(
+          id: 'bipolar_mood_stabilizer',
+          name: 'Mood Stabilizers',
+          modality: TreatmentModality.medication,
+          description: 'Lithium, valproate, or lamotrigine for bipolar disorder',
+          indications: ['bipolar_disorder', 'mania', 'depression'],
+          contraindications: ['kidney_disease', 'pregnancy'],
+          sideEffects: ['weight_gain', 'tremor', 'kidney_problems'],
+          duration: Duration.chronic,
+          effectiveness: 0.8,
+          alternatives: ['antipsychotics', 'antidepressants'],
+        ),
+      ],
+      riskFactors: ['genetics', 'stress', 'substance_use'],
+      protectiveFactors: ['medication_adherence', 'sleep_regulation', 'stress_management'],
+      prognosis: Prognosis.fair,
+    );
 
-      return result;
+    _disorders.add(bipolar);
+  }
+
+  Future<void> _loadTreatmentGuidelines() async {
+    _guidelines.addAll([
+      TreatmentGuideline(
+        id: 'mdd_guideline',
+        disorderId: 'mdd_dsm5',
+        title: 'Major Depressive Disorder Treatment Guidelines',
+        description: 'Evidence-based treatment recommendations for MDD',
+        level: TreatmentLevel.firstLine,
+        modalities: [TreatmentModality.medication, TreatmentModality.psychotherapy],
+        medications: [
+          MedicationRecommendation(
+            id: 'mdd_ssri_rec',
+            medicationName: 'Sertraline',
+            genericName: 'Sertraline',
+            indications: ['major_depressive_disorder', 'anxiety'],
+            contraindications: ['bipolar_disorder', 'pregnancy'],
+            sideEffects: ['nausea', 'sexual_dysfunction', 'weight_gain'],
+            drugInteractions: ['maoi', 'warfarin'],
+            monitoringRequirements: ['suicidal_thoughts', 'mood_changes'],
+            treatmentDuration: Duration.chronic,
+            alternatives: ['fluoxetine', 'escitalopram'],
+          ),
+        ],
+        psychotherapies: [
+          PsychotherapyRecommendation(
+            id: 'mdd_cbt_rec',
+            therapyName: 'Cognitive Behavioral Therapy',
+            description: 'Evidence-based psychotherapy for depression',
+            indications: ['mild_to_moderate_depression'],
+            contraindications: ['severe_depression', 'psychosis'],
+            sessionDuration: Duration(seconds: 3600), // 1 hour
+            totalSessions: 16,
+            effectiveness: 0.6,
+            techniques: ['cognitive_restructuring', 'behavioral_activation'],
+          ),
+        ],
+        contraindications: ['bipolar_disorder', 'active_psychosis'],
+        sideEffects: ['initial_worsening', 'emotional_discomfort'],
+        expectedDuration: Duration.chronic,
+        outcomeMeasures: ['phq9', 'hamd', 'functional_improvement'],
+      ),
+    ]);
+  }
+
+  Future<void> _loadAssessments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final assessmentsJson = prefs.getString('diagnosis_assessments');
+      
+      if (assessmentsJson != null) {
+        final List<dynamic> assessmentsList = json.decode(assessmentsJson);
+        _assessments = assessmentsList.map((assessment) => DiagnosisAssessment.fromJson(assessment)).toList();
+      }
+      
+      _logger.info('Assessments loaded: ${_assessments.length} assessments', context: 'DiagnosisService');
     } catch (e) {
-      _logger.error(
-        'Failed to search diagnoses',
-        context: 'diagnosis_service',
-        data: {'query': query, 'error': e.toString()},
-        error: e,
+      _logger.error('Failed to load assessments', context: 'DiagnosisService', error: e);
+    }
+  }
+
+  // ===== DIAGNOSIS FUNCTIONS =====
+
+  Future<List<MentalDisorder>> searchDisorders({
+    String? query,
+    String? categoryId,
+    List<SymptomType>? symptomTypes,
+    SeverityLevel? severity,
+    int limit = 20,
+  }) async {
+    try {
+      List<MentalDisorder> results = _disorders;
+
+      // Filter by query
+      if (query != null && query.isNotEmpty) {
+        results = results.where((disorder) =>
+          disorder.name.toLowerCase().contains(query.toLowerCase()) ||
+          disorder.description.toLowerCase().contains(query.toLowerCase()) ||
+          disorder.code.toLowerCase().contains(query.toLowerCase())
+        ).toList();
+      }
+
+      // Filter by category
+      if (categoryId != null) {
+        results = results.where((disorder) => disorder.categoryId == categoryId).toList();
+      }
+
+      // Filter by symptom types
+      if (symptomTypes != null && symptomTypes.isNotEmpty) {
+        results = results.where((disorder) =>
+          disorder.symptoms.any((symptom) => symptomTypes.contains(symptom.type))
+        ).toList();
+      }
+
+      // Filter by severity
+      if (severity != null) {
+        results = results.where((disorder) => disorder.severity == severity).toList();
+      }
+
+      // Limit results
+      if (results.length > limit) {
+        results = results.take(limit).toList();
+      }
+
+      return results;
+    } catch (e) {
+      _logger.error('Failed to search disorders', context: 'DiagnosisService', error: e);
+      return [];
+    }
+  }
+
+  Future<List<DiagnosticCategory>> getCategories({String? parentCategoryId}) async {
+    try {
+      if (parentCategoryId == null) {
+        return _categories.where((cat) => cat.parentCategories.isEmpty).toList();
+      } else {
+        return _categories.where((cat) => cat.parentCategories.contains(parentCategoryId)).toList();
+      }
+    } catch (e) {
+      _logger.error('Failed to get categories', context: 'DiagnosisService', error: e);
+      return [];
+    }
+  }
+
+  Future<MentalDisorder?> getDisorder(String disorderId) async {
+    try {
+      return _disorders.firstWhere((disorder) => disorder.id == disorderId);
+    } catch (e) {
+      _logger.error('Failed to get disorder', context: 'DiagnosisService', error: e);
+      return null;
+    }
+  }
+
+  // ===== AI DIAGNOSIS ASSISTANT =====
+
+  Future<DiagnosisAssessment> generateAIDiagnosis({
+    required String patientId,
+    required String clinicianId,
+    required List<SymptomAssessment> symptoms,
+    required String clinicalNotes,
+    String? preferredSystem, // DSM-5, ICD-11
+  }) async {
+    try {
+      _logger.info('Generating AI diagnosis', context: 'DiagnosisService', data: {
+        'patientId': patientId,
+        'symptomCount': symptoms.length,
+        'preferredSystem': preferredSystem,
+      });
+
+      // Prepare data for AI analysis
+      final symptomData = symptoms.map((s) => {
+        'name': s.symptomName,
+        'severity': s.severity.name,
+        'duration': s.duration.name,
+        'frequency': s.frequency.name,
+        'impact': s.impact,
+      }).toList();
+
+      // Call AI service for diagnosis
+      final aiResponse = await _aiService.processRequest(
+        promptType: 'psychiatric_diagnosis',
+        parameters: {
+          'symptoms': symptomData,
+          'clinicalNotes': clinicalNotes,
+          'preferredSystem': preferredSystem ?? 'DSM-5',
+          'availableDisorders': _disorders.map((d) => {
+            'id': d.id,
+            'name': d.name,
+            'code': d.code,
+            'symptoms': d.symptoms.map((s) => s.name).toList(),
+            'criteria': d.criteria.map((c) => c.criterion).toList(),
+          }).toList(),
+        },
+        taskId: 'diagnosis_${DateTime.now().millisecondsSinceEpoch}',
       );
 
-      _performanceMonitor.endOperation(
-        'search_diagnoses',
-        context: 'diagnosis_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
+      // Parse AI response and create assessment
+      final assessment = _parseAIDiagnosisResponse(
+        patientId: patientId,
+        clinicianId: clinicianId,
+        symptoms: symptoms,
+        clinicalNotes: clinicalNotes,
+        aiResponse: aiResponse,
+      );
+
+      // Save assessment
+      _assessments.add(assessment);
+      await _saveAssessments();
+
+      _logger.info('AI diagnosis generated successfully', context: 'DiagnosisService', data: {
+        'assessmentId': assessment.id,
+        'diagnosisCount': assessment.diagnoses.length,
+      });
+
+      return assessment;
+    } catch (e) {
+      _logger.error('Failed to generate AI diagnosis', context: 'DiagnosisService', error: e);
+      rethrow;
+    }
+  }
+
+  DiagnosisAssessment _parseAIDiagnosisResponse({
+    required String patientId,
+    required String clinicianId,
+    required List<SymptomAssessment> symptoms,
+    required String clinicalNotes,
+    required Map<String, dynamic> aiResponse,
+  }) {
+    try {
+      final diagnoses = <DiagnosisResult>[];
+      final treatmentRecommendations = <TreatmentRecommendation>[];
+
+      // Parse diagnoses from AI response
+      if (aiResponse['diagnoses'] != null) {
+        for (final diagnosisData in aiResponse['diagnoses']) {
+          final disorder = _disorders.firstWhere(
+            (d) => d.id == diagnosisData['disorderId'],
+            orElse: () => _disorders.first,
+          );
+
+          diagnoses.add(DiagnosisResult(
+            id: _generateId(),
+            disorderId: disorder.id,
+            disorderName: disorder.name,
+            disorderCode: disorder.code,
+            severity: _parseSeverity(diagnosisData['severity']),
+            confidence: diagnosisData['confidence']?.toDouble() ?? 0.0,
+            metCriteria: diagnosisData['metCriteria'] ?? [],
+            unmetCriteria: diagnosisData['unmetCriteria'] ?? [],
+            specifiers: diagnosisData['specifiers'] ?? [],
+            isPrimary: diagnosisData['isPrimary'] ?? false,
+            isProvisional: diagnosisData['isProvisional'] ?? false,
+          ));
+        }
+      }
+
+      // Parse treatment recommendations
+      if (aiResponse['treatments'] != null) {
+        for (final treatmentData in aiResponse['treatments']) {
+          treatmentRecommendations.add(TreatmentRecommendation(
+            id: _generateId(),
+            treatmentId: treatmentData['treatmentId'] ?? '',
+            treatmentName: treatmentData['treatmentName'] ?? '',
+            modality: _parseModality(treatmentData['modality']),
+            rationale: treatmentData['rationale'] ?? '',
+            duration: _parseDuration(treatmentData['duration']),
+            goals: treatmentData['goals'] ?? [],
+            expectedOutcomes: treatmentData['expectedOutcomes'] ?? [],
+            monitoringRequirements: treatmentData['monitoringRequirements'] ?? [],
+          ));
+        }
+      }
+
+      return DiagnosisAssessment(
+        id: _generateId(),
+        patientId: patientId,
+        clinicianId: clinicianId,
+        assessmentDate: DateTime.now(),
+        diagnoses: diagnoses,
+        symptoms: symptoms,
+        overallSeverity: _calculateOverallSeverity(symptoms),
+        differentialDiagnoses: aiResponse['differentialDiagnoses'] ?? [],
+        comorbidities: aiResponse['comorbidities'] ?? [],
+        riskFactors: aiResponse['riskFactors'] ?? [],
+        protectiveFactors: aiResponse['protectiveFactors'] ?? [],
+        prognosis: _parsePrognosis(aiResponse['prognosis']),
+        treatmentRecommendations: treatmentRecommendations,
+        clinicalNotes: clinicalNotes,
+        metadata: {
+          'aiGenerated': true,
+          'aiConfidence': aiResponse['overallConfidence'] ?? 0.0,
+          'systemUsed': aiResponse['systemUsed'] ?? 'DSM-5',
         },
       );
-
-      return DiagnosisSearchResult(
-        icd11Results: [],
-        dsm5Results: [],
-        aiSuggestions: [],
-        totalResults: 0,
-        searchQuery: query,
-        filters: [],
-        metadata: {'error': e.toString()},
-        searchedAt: DateTime.now(),
+    } catch (e) {
+      _logger.error('Failed to parse AI diagnosis response', context: 'DiagnosisService', error: e);
+      
+      // Return basic assessment if parsing fails
+      return DiagnosisAssessment(
+        id: _generateId(),
+        patientId: patientId,
+        clinicianId: clinicianId,
+        assessmentDate: DateTime.now(),
+        diagnoses: [],
+        symptoms: symptoms,
+        overallSeverity: _calculateOverallSeverity(symptoms),
+        differentialDiagnoses: [],
+        comorbidities: [],
+        riskFactors: [],
+        protectiveFactors: [],
+        prognosis: Prognosis.fair,
+        treatmentRecommendations: [],
+        clinicalNotes: clinicalNotes,
+        metadata: {'aiGenerated': false, 'error': e.toString()},
       );
     }
   }
 
-  // Performance monitoring getter'ları
-  AIPerformanceMonitor get performanceMonitor => _performanceMonitor;
-  AILogger get logger => _logger;
+  // ===== ASSESSMENT MANAGEMENT =====
 
-  // Performance statistics
-  Map<String, dynamic> getPerformanceStatistics({String? context}) {
-    return _performanceMonitor.getPerformanceStatistics(context: context);
+  Future<void> saveAssessment(DiagnosisAssessment assessment) async {
+    try {
+      final existingIndex = _assessments.indexWhere((a) => a.id == assessment.id);
+      
+      if (existingIndex >= 0) {
+        _assessments[existingIndex] = assessment;
+      } else {
+        _assessments.add(assessment);
+      }
+      
+      await _saveAssessments();
+      
+      _logger.info('Assessment saved successfully', context: 'DiagnosisService', data: {
+        'assessmentId': assessment.id,
+        'patientId': assessment.patientId,
+      });
+      
+      notifyListeners();
+    } catch (e) {
+      _logger.error('Failed to save assessment', context: 'DiagnosisService', error: e);
+      rethrow;
+    }
   }
 
-  // Export performance data
-  Map<String, dynamic> exportPerformanceData() {
-    return _performanceMonitor.exportPerformanceData();
+  Future<DiagnosisAssessment?> getAssessment(String assessmentId) async {
+    try {
+      return _assessments.firstWhere((a) => a.id == assessmentId);
+    } catch (e) {
+      _logger.error('Failed to get assessment', context: 'DiagnosisService', error: e);
+      return null;
+    }
+  }
+
+  List<DiagnosisAssessment> getPatientAssessments(String patientId) {
+    return _assessments.where((a) => a.patientId == patientId).toList();
+  }
+
+  List<DiagnosisAssessment> getClinicianAssessments(String clinicianId) {
+    return _assessments.where((a) => a.clinicianId == clinicianId).toList();
+  }
+
+  // ===== UTILITY METHODS =====
+
+  SeverityLevel _calculateOverallSeverity(List<SymptomAssessment> symptoms) {
+    if (symptoms.isEmpty) return SeverityLevel.none;
+    
+    final severityScores = symptoms.map((s) {
+      switch (s.severity) {
+        case SymptomSeverity.none: return 0;
+        case SymptomSeverity.mild: return 1;
+        case SymptomSeverity.moderate: return 2;
+        case SymptomSeverity.severe: return 3;
+        case SymptomSeverity.extreme: return 4;
+      }
+    }).toList();
+    
+    final averageScore = severityScores.reduce((a, b) => a + b) / severityScores.length;
+    
+    if (averageScore >= 3.5) return SeverityLevel.extreme;
+    if (averageScore >= 2.5) return SeverityLevel.severe;
+    if (averageScore >= 1.5) return SeverityLevel.moderate;
+    if (averageScore >= 0.5) return SeverityLevel.mild;
+    return SeverityLevel.none;
+  }
+
+  SeverityLevel _parseSeverity(String? severity) {
+    if (severity == null) return SeverityLevel.moderate;
+    
+    switch (severity.toLowerCase()) {
+      case 'none': return SeverityLevel.none;
+      case 'mild': return SeverityLevel.mild;
+      case 'moderate': return SeverityLevel.moderate;
+      case 'severe': return SeverityLevel.severe;
+      case 'extreme': return SeverityLevel.extreme;
+      default: return SeverityLevel.moderate;
+    }
+  }
+
+  TreatmentModality _parseModality(String? modality) {
+    if (modality == null) return TreatmentModality.other;
+    
+    switch (modality.toLowerCase()) {
+      case 'medication': return TreatmentModality.medication;
+      case 'psychotherapy': return TreatmentModality.psychotherapy;
+      case 'brain_stimulation': return TreatmentModality.brainStimulation;
+      case 'lifestyle': return TreatmentModality.lifestyle;
+      case 'complementary': return TreatmentModality.complementary;
+      default: return TreatmentModality.other;
+    }
+  }
+
+  Duration _parseDuration(String? duration) {
+    if (duration == null) return Duration.chronic;
+    
+    switch (duration.toLowerCase()) {
+      case 'acute': return Duration.acute;
+      case 'subacute': return Duration.subacute;
+      case 'chronic': return Duration.chronic;
+      case 'episodic': return Duration.episodic;
+      case 'continuous': return Duration.continuous;
+      default: return Duration.chronic;
+    }
+  }
+
+  Prognosis _parsePrognosis(String? prognosis) {
+    if (prognosis == null) return Prognosis.fair;
+    
+    switch (prognosis.toLowerCase()) {
+      case 'excellent': return Prognosis.excellent;
+      case 'good': return Prognosis.good;
+      case 'fair': return Prognosis.fair;
+      case 'poor': return Prognosis.poor;
+      case 'guarded': return Prognosis.guarded;
+      default: return Prognosis.fair;
+    }
+  }
+
+  String _generateId() => DateTime.now().millisecondsSinceEpoch.toString();
+
+  Future<void> _saveAssessments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final assessmentsJson = json.encode(_assessments.map((a) => a.toJson()).toList());
+      await prefs.setString('diagnosis_assessments', assessmentsJson);
+    } catch (e) {
+      _logger.error('Failed to save assessments', context: 'DiagnosisService', error: e);
+      rethrow;
+    }
   }
 }

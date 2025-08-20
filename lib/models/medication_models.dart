@@ -2,657 +2,588 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'medication_models.g.dart';
 
-// WHO Drug Dictionary - Uluslararası standart
 @JsonSerializable()
-class WHODrug {
-  final String atcCode;
+class Medication {
+  final String id;
   final String name;
   final String genericName;
   final String brandName;
+  final String atcCode;
+  final String rxNormCode;
+  final String dinCode;
+  final String barcode;
+  final MedicationClass medicationClass;
+  final List<String> activeIngredients;
+  final List<String> inactiveIngredients;
+  final String dosageForm;
+  final List<String> strengths;
   final String manufacturer;
   final String country;
-  final List<String> activeIngredients;
-  final List<String> excipients;
-  final String dosageForm;
-  final String strength;
-  final String route;
+  final bool isControlled;
+  final bool requiresPrescription;
   final List<String> indications;
   final List<String> contraindications;
   final List<String> sideEffects;
-  final List<String> interactions;
   final List<String> warnings;
   final List<String> precautions;
-  final Map<String, String> translations;
+  final List<String> drugInteractions;
+  final List<String> foodInteractions;
+  final List<String> labInteractions;
+  final List<String> monitoringRequirements;
+  final List<String> pregnancyCategory;
+  final List<String> breastfeedingCategory;
+  final List<String> pediatricUse;
+  final List<String> geriatricUse;
+  final List<String> renalAdjustment;
+  final List<String> hepaticAdjustment;
+  final Map<String, dynamic> metadata;
   final bool isActive;
   final DateTime lastUpdated;
 
-  WHODrug({
-    required this.atcCode,
+  const Medication({
+    required this.id,
     required this.name,
     required this.genericName,
     required this.brandName,
+    required this.atcCode,
+    required this.rxNormCode,
+    required this.dinCode,
+    required this.barcode,
+    required this.medicationClass,
+    required this.activeIngredients,
+    required this.inactiveIngredients,
+    required this.dosageForm,
+    required this.strengths,
     required this.manufacturer,
     required this.country,
-    required this.activeIngredients,
-    required this.excipients,
-    required this.dosageForm,
-    required this.strength,
-    required this.route,
+    required this.isControlled,
+    required this.requiresPrescription,
     required this.indications,
     required this.contraindications,
     required this.sideEffects,
-    required this.interactions,
     required this.warnings,
     required this.precautions,
-    required this.translations,
-    required this.isActive,
-    required this.lastUpdated,
-  });
-
-  factory WHODrug.fromJson(Map<String, dynamic> json) => _$WHODrugFromJson(json);
-  Map<String, dynamic> toJson() => _$WHODrugToJson(this);
-}
-
-// FDA Orange Book - ABD onaylı ilaçlar
-@JsonSerializable()
-class FDADrug {
-  final String ndcCode;
-  final String name;
-  final String genericName;
-  final String brandName;
-  final String manufacturer;
-  final String dosageForm;
-  final String strength;
-  final String route;
-  final String approvalDate;
-  final String patentExpiry;
-  final String exclusivityExpiry;
-  final List<String> activeIngredients;
-  final List<String> indications;
-  final List<String> contraindications;
-  final List<String> sideEffects;
-  final List<String> interactions;
-  final List<String> warnings;
-  final List<String> precautions;
-  final String pregnancyCategory;
-  final String lactationCategory;
-  final bool isGeneric;
-  final bool isBrand;
-  final bool isActive;
-  final DateTime lastUpdated;
-
-  FDADrug({
-    required this.ndcCode,
-    required this.name,
-    required this.genericName,
-    required this.brandName,
-    required this.manufacturer,
-    required this.dosageForm,
-    required this.strength,
-    required this.route,
-    required this.approvalDate,
-    required this.patentExpiry,
-    required this.exclusivityExpiry,
-    required this.activeIngredients,
-    required this.indications,
-    required this.contraindications,
-    required this.sideEffects,
-    required this.interactions,
-    required this.warnings,
-    required this.precautions,
+    required this.drugInteractions,
+    required this.foodInteractions,
+    required this.labInteractions,
+    required this.monitoringRequirements,
     required this.pregnancyCategory,
-    required this.lactationCategory,
-    required this.isGeneric,
-    required this.isBrand,
+    required this.breastfeedingCategory,
+    required this.pediatricUse,
+    required this.geriatricUse,
+    required this.renalAdjustment,
+    required this.hepaticAdjustment,
+    this.metadata = const {},
     required this.isActive,
     required this.lastUpdated,
   });
 
-  factory FDADrug.fromJson(Map<String, dynamic> json) => _$FDADrugFromJson(json);
-  Map<String, dynamic> toJson() => _$FDADrugToJson(this);
+  factory Medication.fromJson(Map<String, dynamic> json) =>
+      _$MedicationFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MedicationToJson(this);
 }
 
-// EMA Database - Avrupa ilaç ajansı
 @JsonSerializable()
-class EMADrug {
-  final String emaCode;
-  final String name;
-  final String genericName;
-  final String brandName;
-  final String manufacturer;
-  final String dosageForm;
-  final String strength;
-  final String route;
-  final String approvalDate;
-  final String expiryDate;
-  final List<String> activeIngredients;
-  final List<String> indications;
+class Prescription {
+  final String id;
+  final String patientId;
+  final String clinicianId;
+  final DateTime prescriptionDate;
+  final DateTime? expiryDate;
+  final PrescriptionStatus status;
+  final List<PrescribedMedication> medications;
+  final String diagnosis;
+  final String clinicalNotes;
+  final List<String> allergies;
   final List<String> contraindications;
-  final List<String> sideEffects;
-  final List<String> interactions;
   final List<String> warnings;
-  final List<String> precautions;
-  final String pregnancyCategory;
-  final String lactationCategory;
-  final List<String> authorizedCountries;
-  final bool isActive;
-  final DateTime lastUpdated;
+  final List<String> instructions;
+  final int refillsAllowed;
+  final int refillsUsed;
+  final String pharmacy;
+  final String prescriberSignature;
+  final bool isElectronic;
+  final String prescriptionNumber;
+  final Map<String, dynamic> metadata;
 
-  EMADrug({
-    required this.emaCode,
-    required this.name,
-    required this.genericName,
-    required this.brandName,
-    required this.manufacturer,
-    required this.dosageForm,
-    required this.strength,
-    required this.route,
-    required this.approvalDate,
-    required this.expiryDate,
-    required this.activeIngredients,
-    required this.indications,
+  const Prescription({
+    required this.id,
+    required this.patientId,
+    required this.clinicianId,
+    required this.prescriptionDate,
+    this.expiryDate,
+    required this.status,
+    required this.medications,
+    required this.diagnosis,
+    required this.clinicalNotes,
+    required this.allergies,
     required this.contraindications,
-    required this.sideEffects,
-    required this.interactions,
     required this.warnings,
-    required this.precautions,
-    required this.pregnancyCategory,
-    required this.lactationCategory,
-    required this.authorizedCountries,
-    required this.isActive,
-    required this.lastUpdated,
+    required this.instructions,
+    required this.refillsAllowed,
+    required this.refillsUsed,
+    required this.pharmacy,
+    required this.prescriberSignature,
+    required this.isElectronic,
+    required this.prescriptionNumber,
+    this.metadata = const {},
   });
 
-  factory EMADrug.fromJson(Map<String, dynamic> json) => _$EMADrugFromJson(json);
-  Map<String, dynamic> toJson() => _$EMADrugToJson(this);
+  factory Prescription.fromJson(Map<String, dynamic> json) =>
+      _$PrescriptionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PrescriptionToJson(this);
 }
 
-// Türkiye İlaç Kurumu - Yerel veritabanı
 @JsonSerializable()
-class TurkeyDrug {
-  final String ruhsatNo;
-  final String name;
-  final String genericName;
-  final String brandName;
-  final String manufacturer;
-  final String importer;
-  final String dosageForm;
-  final String strength;
+class PrescribedMedication {
+  final String id;
+  final String medicationId;
+  final String medicationName;
+  final String dosage;
+  final String frequency;
   final String route;
-  final String ruhsatDate;
-  final String expiryDate;
-  final List<String> activeIngredients;
-  final List<String> indications;
-  final List<String> contraindications;
+  final String duration;
+  final String instructions;
+  final int quantity;
+  final String strength;
+  final List<String> specialInstructions;
   final List<String> sideEffects;
-  final List<String> interactions;
   final List<String> warnings;
-  final List<String> precautions;
-  final String pregnancyCategory;
-  final String lactationCategory;
-  final String reimbursementStatus;
-  final bool isActive;
-  final DateTime lastUpdated;
+  final bool requiresMonitoring;
+  final List<String> monitoringTests;
+  final List<String> followUpSchedule;
+  final Map<String, dynamic> metadata;
 
-  TurkeyDrug({
-    required this.ruhsatNo,
-    required this.name,
-    required this.genericName,
-    required this.brandName,
-    required this.manufacturer,
-    required this.importer,
-    required this.dosageForm,
-    required this.strength,
+  const PrescribedMedication({
+    required this.id,
+    required this.medicationId,
+    required this.medicationName,
+    required this.dosage,
+    required this.frequency,
     required this.route,
-    required this.ruhsatDate,
-    required this.expiryDate,
-    required this.activeIngredients,
-    required this.indications,
-    required this.contraindications,
+    required this.duration,
+    required this.instructions,
+    required this.quantity,
+    required this.strength,
+    required this.specialInstructions,
     required this.sideEffects,
-    required this.interactions,
     required this.warnings,
-    required this.precautions,
-    required this.pregnancyCategory,
-    required this.lactationCategory,
-    required this.reimbursementStatus,
-    required this.isActive,
-    required this.lastUpdated,
+    required this.requiresMonitoring,
+    required this.monitoringTests,
+    required this.followUpSchedule,
+    this.metadata = const {},
   });
 
-  factory TurkeyDrug.fromJson(Map<String, dynamic> json) => _$TurkeyDrugFromJson(json);
-  Map<String, dynamic> toJson() => _$TurkeyDrugToJson(this);
+  factory PrescribedMedication.fromJson(Map<String, dynamic> json) =>
+      _$PrescribedMedicationFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PrescribedMedicationToJson(this);
 }
 
-// İlaç Etkileşimi
 @JsonSerializable()
 class DrugInteraction {
   final String id;
-  final String drug1Id;
-  final String drug1Name;
-  final String drug2Id;
-  final String drug2Name;
-  final String interactionType; // major, moderate, minor
-  final String severity; // high, medium, low
-  final String description;
+  final String medication1Id;
+  final String medication1Name;
+  final String medication2Id;
+  final String medication2Name;
+  final InteractionSeverity severity;
+  final InteractionType type;
   final String mechanism;
+  final String description;
+  final String clinicalSignificance;
   final List<String> symptoms;
   final List<String> recommendations;
   final List<String> alternatives;
+  final List<String> monitoring;
   final String evidence;
   final String source;
-  final DateTime lastUpdated;
+  final Map<String, dynamic> metadata;
 
-  DrugInteraction({
+  const DrugInteraction({
     required this.id,
-    required this.drug1Id,
-    required this.drug1Name,
-    required this.drug2Id,
-    required this.drug2Name,
-    required this.interactionType,
+    required this.medication1Id,
+    required this.medication1Name,
+    required this.medication2Id,
+    required this.medication2Name,
     required this.severity,
-    required this.description,
+    required this.type,
     required this.mechanism,
+    required this.description,
+    required this.clinicalSignificance,
     required this.symptoms,
     required this.recommendations,
     required this.alternatives,
+    required this.monitoring,
     required this.evidence,
     required this.source,
-    required this.lastUpdated,
+    this.metadata = const {},
   });
 
-  factory DrugInteraction.fromJson(Map<String, dynamic> json) => _$DrugInteractionFromJson(json);
+  factory DrugInteraction.fromJson(Map<String, dynamic> json) =>
+      _$DrugInteractionFromJson(json);
+
   Map<String, dynamic> toJson() => _$DrugInteractionToJson(this);
 }
 
-// İlaç-Besin Etkileşimi
 @JsonSerializable()
-class DrugFoodInteraction {
+class DosageTitration {
   final String id;
-  final String drugId;
-  final String drugName;
-  final String foodItem;
-  final String interactionType;
-  final String severity;
-  final String description;
-  final String mechanism;
-  final List<String> recommendations;
-  final String timing;
-  final String source;
-  final DateTime lastUpdated;
-
-  DrugFoodInteraction({
-    required this.id,
-    required this.drugId,
-    required this.drugName,
-    required this.foodItem,
-    required this.interactionType,
-    required this.severity,
-    required this.description,
-    required this.mechanism,
-    required this.recommendations,
-    required this.timing,
-    required this.source,
-    required this.lastUpdated,
-  });
-
-  factory DrugFoodInteraction.fromJson(Map<String, dynamic> json) => _$DrugFoodInteractionFromJson(json);
-  Map<String, dynamic> toJson() => _$DrugFoodInteractionToJson(this);
-}
-
-// İlaç-Hastalık Etkileşimi
-@JsonSerializable()
-class DrugDiseaseInteraction {
-  final String id;
-  final String drugId;
-  final String drugName;
-  final String diseaseId;
-  final String diseaseName;
-  final String interactionType;
-  final String severity;
-  final String description;
-  final String mechanism;
-  final List<String> recommendations;
-  final List<String> alternatives;
-  final String source;
-  final DateTime lastUpdated;
-
-  DrugDiseaseInteraction({
-    required this.id,
-    required this.drugId,
-    required this.drugName,
-    required this.diseaseId,
-    required this.diseaseName,
-    required this.interactionType,
-    required this.severity,
-    required this.description,
-    required this.mechanism,
-    required this.recommendations,
-    required this.alternatives,
-    required this.source,
-    required this.lastUpdated,
-  });
-
-  factory DrugDiseaseInteraction.fromJson(Map<String, dynamic> json) => _$DrugDiseaseInteractionFromJson(json);
-  Map<String, dynamic> toJson() => _$DrugDiseaseInteractionToJson(this);
-}
-
-// Yan Etki
-@JsonSerializable()
-class SideEffect {
-  final String id;
-  final String drugId;
-  final String drugName;
-  final String name;
-  final String description;
-  final String frequency; // very common, common, uncommon, rare, very rare
-  final String severity; // mild, moderate, severe, life-threatening
-  final List<String> symptoms;
-  final List<String> riskFactors;
-  final List<String> management;
-  final String onset;
-  final String duration;
-  final bool isReversible;
-  final String source;
-  final DateTime lastUpdated;
-
-  SideEffect({
-    required this.id,
-    required this.drugId,
-    required this.drugName,
-    required this.name,
-    required this.description,
-    required this.frequency,
-    required this.severity,
-    required this.symptoms,
-    required this.riskFactors,
-    required this.management,
-    required this.onset,
-    required this.duration,
-    required this.isReversible,
-    required this.source,
-    required this.lastUpdated,
-  });
-
-  factory SideEffect.fromJson(Map<String, dynamic> json) => _$SideEffectFromJson(json);
-  Map<String, dynamic> toJson() => _$SideEffectToJson(this);
-}
-
-// Doz Bilgisi
-@JsonSerializable()
-class DosageInfo {
-  final String id;
-  final String drugId;
-  final String drugName;
+  final String medicationId;
+  final String medicationName;
   final String indication;
-  final String ageGroup;
-  final String weightRange;
-  final String renalFunction;
-  final String hepaticFunction;
-  final String loadingDose;
-  final String maintenanceDose;
-  final String maxDose;
+  final List<TitrationStep> steps;
+  final TitrationStrategy strategy;
+  final String rationale;
+  final List<String> monitoringParameters;
+  final List<String> adverseEffects;
+  final List<String> contraindications;
+  final String duration;
+  final Map<String, dynamic> metadata;
+
+  const DosageTitration({
+    required this.id,
+    required this.medicationId,
+    required this.medicationName,
+    required this.indication,
+    required this.steps,
+    required this.strategy,
+    required this.rationale,
+    required this.monitoringParameters,
+    required this.adverseEffects,
+    required this.contraindications,
+    required this.duration,
+    this.metadata = const {},
+  });
+
+  factory DosageTitration.fromJson(Map<String, dynamic> json) =>
+      _$DosageTitrationFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DosageTitrationToJson(this);
+}
+
+@JsonSerializable()
+class TitrationStep {
+  final String id;
+  final int stepNumber;
+  final String dosage;
   final String frequency;
   final String duration;
-  final String route;
-  final List<String> adjustments;
-  final List<String> contraindications;
-  final String source;
-  final DateTime lastUpdated;
+  final String instructions;
+  final List<String> monitoring;
+  final List<String> sideEffects;
+  final List<String> warnings;
+  final bool requiresAdjustment;
+  final String adjustmentCriteria;
+  final Map<String, dynamic> metadata;
 
-  DosageInfo({
+  const TitrationStep({
     required this.id,
-    required this.drugId,
-    required this.drugName,
-    required this.indication,
-    required this.ageGroup,
-    required this.weightRange,
-    required this.renalFunction,
-    required this.hepaticFunction,
-    required this.loadingDose,
-    required this.maintenanceDose,
-    required this.maxDose,
+    required this.stepNumber,
+    required this.dosage,
     required this.frequency,
     required this.duration,
-    required this.route,
-    required this.adjustments,
-    required this.contraindications,
-    required this.source,
-    required this.lastUpdated,
-  });
-
-  factory DosageInfo.fromJson(Map<String, dynamic> json) => _$DosageInfoFromJson(json);
-  Map<String, dynamic> toJson() => _$DosageInfoToJson(this);
-}
-
-// AI Destekli İlaç Önerisi
-@JsonSerializable()
-class AIMedicationSuggestion {
-  final String id;
-  final String suggestedMedication;
-  final String medicationCode;
-  final String classificationSystem; // WHO, FDA, EMA, Turkey
-  final double confidence;
-  final List<String> supportingFactors;
-  final List<String> contraindications;
-  final List<String> interactions;
-  final List<String> sideEffects;
-  final String recommendedDosage;
-  final String reasoning;
-  final List<String> alternatives;
-  final List<String> monitoring;
-  final Map<String, dynamic> metadata;
-  final DateTime generatedAt;
-
-  AIMedicationSuggestion({
-    required this.id,
-    required this.suggestedMedication,
-    required this.medicationCode,
-    required this.classificationSystem,
-    required this.confidence,
-    required this.supportingFactors,
-    required this.contraindications,
-    required this.interactions,
-    required this.sideEffects,
-    required this.recommendedDosage,
-    required this.reasoning,
-    required this.alternatives,
+    required this.instructions,
     required this.monitoring,
-    required this.metadata,
-    required this.generatedAt,
+    required this.sideEffects,
+    required this.warnings,
+    required this.requiresAdjustment,
+    required this.adjustmentCriteria,
+    this.metadata = const {},
   });
 
-  factory AIMedicationSuggestion.fromJson(Map<String, dynamic> json) => _$AIMedicationSuggestionFromJson(json);
-  Map<String, dynamic> toJson() => _$AIMedicationSuggestionToJson(this);
+  factory TitrationStep.fromJson(Map<String, dynamic> json) =>
+      _$TitrationStepFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TitrationStepToJson(this);
 }
 
-// İlaç Arama Sonucu
 @JsonSerializable()
-class MedicationSearchResult {
-  final List<WHODrug> whoResults;
-  final List<FDADrug> fdaResults;
-  final List<EMADrug> emaResults;
-  final List<TurkeyDrug> turkeyResults;
-  final List<AIMedicationSuggestion> aiSuggestions;
-  final int totalResults;
-  final String searchQuery;
-  final List<String> filters;
-  final Map<String, dynamic> metadata;
-  final DateTime searchedAt;
-
-  MedicationSearchResult({
-    required this.whoResults,
-    required this.fdaResults,
-    required this.emaResults,
-    required this.turkeyResults,
-    required this.aiSuggestions,
-    required this.totalResults,
-    required this.searchQuery,
-    required this.filters,
-    required this.metadata,
-    required this.searchedAt,
-  });
-
-  factory MedicationSearchResult.fromJson(Map<String, dynamic> json) => _$MedicationSearchResultFromJson(json);
-  Map<String, dynamic> toJson() => _$MedicationSearchResultToJson(this);
-}
-
-// İlaç Arama Filtreleri
-@JsonSerializable()
-class MedicationSearchFilters {
-  final List<String> classificationSystems;
-  final List<String> dosageForms;
-  final List<String> routes;
-  final List<String> manufacturers;
-  final List<String> countries;
-  final bool includeGeneric;
-  final bool includeBrand;
-  final bool includeInactive;
-  final bool includeAI;
-  final int maxResults;
-  final String sortBy;
-  final String sortOrder;
-  final Map<String, dynamic> customFilters;
-
-  MedicationSearchFilters({
-    required this.classificationSystems,
-    required this.dosageForms,
-    required this.routes,
-    required this.manufacturers,
-    required this.countries,
-    required this.includeGeneric,
-    required this.includeBrand,
-    required this.includeInactive,
-    required this.includeAI,
-    required this.maxResults,
-    required this.sortBy,
-    required this.sortOrder,
-    required this.customFilters,
-  });
-
-  factory MedicationSearchFilters.fromJson(Map<String, dynamic> json) => _$MedicationSearchFiltersFromJson(json);
-  Map<String, dynamic> toJson() => _$MedicationSearchFiltersToJson(this);
-}
-
-// İlaç Öneri Ayarları
-@JsonSerializable()
-class MedicationSuggestionSettings {
-  final double minConfidence;
-  final int maxSuggestions;
-  final List<String> preferredSystems;
-  final List<String> excludedCategories;
-  final bool includeInteractions;
-  final bool includeSideEffects;
-  final bool includeAlternatives;
-  final bool includeMonitoring;
-  final String language;
-  final Map<String, dynamic> customSettings;
-
-  MedicationSuggestionSettings({
-    required this.minConfidence,
-    required this.maxSuggestions,
-    required this.preferredSystems,
-    required this.excludedCategories,
-    required this.includeInteractions,
-    required this.includeSideEffects,
-    required this.includeAlternatives,
-    required this.includeMonitoring,
-    required this.language,
-    required this.customSettings,
-  });
-
-  factory MedicationSuggestionSettings.fromJson(Map<String, dynamic> json) => _$MedicationSuggestionSettingsFromJson(json);
-  Map<String, dynamic> toJson() => _$MedicationSuggestionSettingsToJson(this);
-}
-
-// Hasta İlaç Profili
-@JsonSerializable()
-class PatientMedicationProfile {
-  final String patientId;
-  final List<String> currentMedications;
-  final List<String> pastMedications;
-  final List<String> allergies;
-  final List<String> intolerances;
-  final List<String> medicalConditions;
-  final Map<String, dynamic> labResults;
-  final Map<String, dynamic> vitalSigns;
-  final String age;
-  final String gender;
-  final String weight;
-  final String height;
-  final String renalFunction;
-  final String hepaticFunction;
-  final String pregnancyStatus;
-  final String lactationStatus;
-  final List<String> geneticFactors;
-  final Map<String, dynamic> metadata;
-  final DateTime lastUpdated;
-
-  PatientMedicationProfile({
-    required this.patientId,
-    required this.currentMedications,
-    required this.pastMedications,
-    required this.allergies,
-    required this.intolerances,
-    required this.medicalConditions,
-    required this.labResults,
-    required this.vitalSigns,
-    required this.age,
-    required this.gender,
-    required this.weight,
-    required this.height,
-    required this.renalFunction,
-    required this.hepaticFunction,
-    required this.pregnancyStatus,
-    required this.lactationStatus,
-    required this.geneticFactors,
-    required this.metadata,
-    required this.lastUpdated,
-  });
-
-  factory PatientMedicationProfile.fromJson(Map<String, dynamic> json) => _$PatientMedicationProfileFromJson(json);
-  Map<String, dynamic> toJson() => _$PatientMedicationProfileToJson(this);
-}
-
-// İlaç Güvenlik Uyarısı
-@JsonSerializable()
-class MedicationSafetyAlert {
+class MedicationAdherence {
   final String id;
   final String patientId;
   final String medicationId;
   final String medicationName;
-  final String alertType; // interaction, allergy, contraindication, dosage, pregnancy, lactation
-  final String severity; // critical, high, medium, low
-  final String description;
-  final String recommendation;
-  final List<String> affectedMedications;
-  final List<String> affectedConditions;
-  final bool requiresAction;
-  final bool isAcknowledged;
-  final DateTime createdAt;
-  final DateTime? acknowledgedAt;
-  final String acknowledgedBy;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final AdherenceStatus status;
+  final double adherenceRate;
+  final List<AdherenceEvent> events;
+  final List<String> barriers;
+  final List<String> facilitators;
+  final List<String> interventions;
+  final String notes;
   final Map<String, dynamic> metadata;
 
-  MedicationSafetyAlert({
+  const MedicationAdherence({
     required this.id,
     required this.patientId,
     required this.medicationId,
     required this.medicationName,
-    required this.alertType,
-    required this.severity,
-    required this.description,
-    required this.recommendation,
-    required this.affectedMedications,
-    required this.affectedConditions,
-    required this.requiresAction,
-    required this.isAcknowledged,
-    required this.createdAt,
-    this.acknowledgedAt,
-    required this.acknowledgedBy,
-    required this.metadata,
+    required this.startDate,
+    this.endDate,
+    required this.status,
+    required this.adherenceRate,
+    required this.events,
+    required this.barriers,
+    required this.facilitators,
+    required this.interventions,
+    required this.notes,
+    this.metadata = const {},
   });
 
-  factory MedicationSafetyAlert.fromJson(Map<String, dynamic> json) => _$MedicationSafetyAlertFromJson(json);
-  Map<String, dynamic> toJson() => _$MedicationSafetyAlertToJson(this);
+  factory MedicationAdherence.fromJson(Map<String, dynamic> json) =>
+      _$MedicationAdherenceFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MedicationAdherenceToJson(this);
+}
+
+@JsonSerializable()
+class AdherenceEvent {
+  final String id;
+  final DateTime timestamp;
+  final AdherenceEventType type;
+  final String description;
+  final String reason;
+  final String action;
+  final Map<String, dynamic> metadata;
+
+  const AdherenceEvent({
+    required this.id,
+    required this.timestamp,
+    required this.type,
+    required this.description,
+    required this.reason,
+    required this.action,
+    this.metadata = const {},
+  });
+
+  factory AdherenceEvent.fromJson(Map<String, dynamic> json) =>
+      _$AdherenceEventFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AdherenceEventToJson(this);
+}
+
+@JsonSerializable()
+class SideEffectReport {
+  final String id;
+  final String patientId;
+  final String medicationId;
+  final String medicationName;
+  final DateTime reportDate;
+  final String sideEffect;
+  final SideEffectSeverity severity;
+  final String description;
+  final List<String> symptoms;
+  final DateTime? onsetDate;
+  final DateTime? resolutionDate;
+  final String outcome;
+  final bool requiredDiscontinuation;
+  final bool requiredDoseReduction;
+  final String action;
+  final String notes;
+  final Map<String, dynamic> metadata;
+
+  const SideEffectReport({
+    required this.id,
+    required this.patientId,
+    required this.medicationId,
+    required this.medicationName,
+    required this.reportDate,
+    required this.sideEffect,
+    required this.severity,
+    required this.description,
+    required this.symptoms,
+    this.onsetDate,
+    this.resolutionDate,
+    required this.outcome,
+    required this.requiredDiscontinuation,
+    required this.requiredDoseReduction,
+    required this.action,
+    required this.notes,
+    this.metadata = const {},
+  });
+
+  factory SideEffectReport.fromJson(Map<String, dynamic> json) =>
+      _$SideEffectReportFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SideEffectReportToJson(this);
+}
+
+@JsonSerializable()
+class MedicationReminder {
+  final String id;
+  final String patientId;
+  final String medicationId;
+  final String medicationName;
+  final String dosage;
+  final String frequency;
+  final DateTime nextDoseTime;
+  final List<DateTime> scheduledTimes;
+  final ReminderStatus status;
+  final List<String> notificationMethods;
+  final bool isActive;
+  final String notes;
+  final Map<String, dynamic> metadata;
+
+  const MedicationReminder({
+    required this.id,
+    required this.patientId,
+    required this.medicationId,
+    required this.medicationName,
+    required this.dosage,
+    required this.frequency,
+    required this.nextDoseTime,
+    required this.scheduledTimes,
+    required this.status,
+    required this.notificationMethods,
+    required this.isActive,
+    required this.notes,
+    this.metadata = const {},
+  });
+
+  factory MedicationReminder.fromJson(Map<String, dynamic> json) =>
+      _$MedicationReminderFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MedicationReminderToJson(this);
+}
+
+@JsonSerializable()
+class MedicationHistory {
+  final String id;
+  final String patientId;
+  final String medicationId;
+  final String medicationName;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final String reason;
+  final String outcome;
+  final List<String> sideEffects;
+  final List<String> allergies;
+  final List<String> interactions;
+  final String notes;
+  final Map<String, dynamic> metadata;
+
+  const MedicationHistory({
+    required this.id,
+    required this.patientId,
+    required this.medicationId,
+    required this.medicationName,
+    required this.startDate,
+    this.endDate,
+    required this.reason,
+    required this.outcome,
+    required this.sideEffects,
+    required this.allergies,
+    required this.interactions,
+    required this.notes,
+    this.metadata = const {},
+  });
+
+  factory MedicationHistory.fromJson(Map<String, dynamic> json) =>
+      _$MedicationHistoryFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MedicationHistoryToJson(this);
+}
+
+// Enums
+enum MedicationClass {
+  antidepressants,
+  antipsychotics,
+  anxiolytics,
+  moodStabilizers,
+  stimulants,
+  sedatives,
+  hypnotics,
+  anticonvulsants,
+  other,
+}
+
+enum PrescriptionStatus {
+  active,
+  expired,
+  cancelled,
+  completed,
+  suspended,
+  pending,
+}
+
+enum InteractionSeverity {
+  minor,
+  moderate,
+  major,
+  contraindicated,
+}
+
+enum InteractionType {
+  pharmacokinetic,
+  pharmacodynamic,
+  additive,
+  antagonistic,
+  synergistic,
+  other,
+}
+
+enum TitrationStrategy {
+  startLowGoSlow,
+  rapidTitration,
+  stepwise,
+  individualized,
+  other,
+}
+
+enum AdherenceStatus {
+  excellent,
+  good,
+  fair,
+  poor,
+  nonAdherent,
+}
+
+enum AdherenceEventType {
+  taken,
+  missed,
+  delayed,
+  skipped,
+  doubled,
+  other,
+}
+
+enum SideEffectSeverity {
+  mild,
+  moderate,
+  severe,
+  lifeThreatening,
+}
+
+enum ReminderStatus {
+  active,
+  paused,
+  completed,
+  cancelled,
+}
+
+enum MedicationRoute {
+  oral,
+  sublingual,
+  intramuscular,
+  intravenous,
+  subcutaneous,
+  transdermal,
+  nasal,
+  rectal,
+  other,
+}
+
+enum DosageForm {
+  tablet,
+  capsule,
+  liquid,
+  injection,
+  patch,
+  inhaler,
+  suppository,
+  other,
 }

@@ -29,6 +29,8 @@ import 'services/ai_cache_service.dart';
 import 'services/ai_prompt_service.dart';
 import 'services/real_time_session_ai_service.dart'; // ADDED
 import 'services/regional_config_service.dart';
+import 'services/diagnosis_service.dart';
+import 'services/medication_service.dart';
 import 'utils/theme.dart';
 import 'services/consent_service.dart';
 import 'widgets/ai_analytics/ai_analytics_dashboard_widget.dart';
@@ -70,6 +72,10 @@ Future<void> _initializeServices() async {
     await AIOrchestrationService().initialize();
     await RealTimeSessionAIService().initialize();
     
+    // Initialize psychiatric services
+    await DiagnosisService().initialize();
+    await MedicationService().initialize();
+    
     // Initialize new services
     await ConsentService().initialize();
     
@@ -90,6 +96,8 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OfflineSyncService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
         ChangeNotifierProvider(create: (_) => ConsentService()),
+        ChangeNotifierProvider(create: (_) => DiagnosisService()),
+        ChangeNotifierProvider(create: (_) => MedicationService()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {

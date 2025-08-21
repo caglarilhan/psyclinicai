@@ -1,3 +1,4 @@
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +13,7 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/education/education_screen.dart';
 import 'screens/therapy_simulation/therapy_simulation_screen.dart';
 import 'screens/medication_guide/medication_guide_screen.dart';
-import 'screens/ai_case_management/ai_case_management_screen.dart';
+
 import 'screens/ai_appointment/ai_appointment_screen.dart';
 import 'screens/ai_diagnosis/ai_diagnosis_screen.dart';
 import 'screens/security/security_screen.dart';
@@ -24,36 +25,51 @@ import 'services/theme_service.dart';
 import 'services/offline_sync_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/biometric_auth_service.dart';
+import 'services/ai_service.dart';
 import 'services/ai_orchestration_service.dart';
-import 'services/ai_cache_service.dart';
-import 'services/ai_prompt_service.dart';
-import 'services/real_time_session_ai_service.dart'; // ADDED
+import 'services/real_time_session_ai_service.dart';
 import 'services/regional_config_service.dart';
 import 'services/diagnosis_service.dart';
 import 'services/medication_service.dart';
-import 'utils/theme.dart';
+import 'services/telehealth_service.dart';
+import 'services/advanced_ai_service.dart';
 import 'services/consent_service.dart';
-import 'widgets/ai_analytics/ai_analytics_dashboard_widget.dart';
-import 'widgets/turkey_specific/turkey_psychiatry_dashboard_widget.dart';
-import 'widgets/us/us_billing_dashboard_widget.dart';
-import 'widgets/eu/eu_eprescription_dashboard_widget.dart';
+import 'services/clinical_decision_support_service.dart';
+import 'services/performance_optimization_service.dart';
+import 'services/documentation_service.dart';
+import 'services/ai_diagnosis_service.dart';
+import 'services/ai_case_management_service.dart';
 import 'screens/consent/consent_compliance_screen.dart';
+import 'screens/sprint3/sprint3_test_screen.dart';
+import 'services/therapy_note_service.dart';
+import 'services/treatment_plan_service.dart';
+import 'services/homework_service.dart';
+import 'services/assessment_scoring_service.dart';
+import 'screens/therapist/therapy_note_editor_screen.dart';
+import 'screens/therapist/treatment_plan_screen.dart';
+import 'screens/therapist/homework_screen.dart';
+import 'screens/therapist/assessments_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final sentryDsn = const String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
-  // Sistem UI ayarları
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = sentryDsn;
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () async {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+      );
+      await _initializeServices();
+      runApp(const PsyClinicAIApp());
+    },
   );
-
-  // Servisleri başlat
-  await _initializeServices();
-
-  runApp(const PsyClinicAIApp());
 }
 
 Future<void> _initializeServices() async {
@@ -76,9 +92,24 @@ Future<void> _initializeServices() async {
     await DiagnosisService().initialize();
     await MedicationService().initialize();
     
+    // Initialize telehealth & advanced AI services
+    await TelehealthService().initialize();
+    await AdvancedAIService().initialize();
+    
     // Initialize new services
     await ConsentService().initialize();
     
+    // Initialize Sprint 3 services
+    await ClinicalDecisionSupportService().initialize();
+    await PerformanceOptimizationService().initialize();
+    await DocumentationService().initialize();
+    
+    // Initialize therapist services
+    await TherapyNoteService().initialize();
+    await TreatmentPlanService().initialize();
+    await HomeworkService().initialize();
+    // AssessmentScoringService has only pure methods; no init needed
+
     print('All services initialized successfully');
   } catch (e) {
     print('Service initialization failed: $e');
@@ -98,6 +129,15 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ConsentService()),
         ChangeNotifierProvider(create: (_) => DiagnosisService()),
         ChangeNotifierProvider(create: (_) => MedicationService()),
+                     ChangeNotifierProvider(create: (_) => TelehealthService()),
+             ChangeNotifierProvider(create: (_) => AdvancedAIService()),
+             ChangeNotifierProvider(create: (_) => ClinicalDecisionSupportService()),
+             ChangeNotifierProvider(create: (_) => PerformanceOptimizationService()),
+             ChangeNotifierProvider(create: (_) => DocumentationService()),
+        ChangeNotifierProvider(create: (_) => TherapyNoteService()),
+        ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
+        ChangeNotifierProvider(create: (_) => HomeworkService()),
+        ChangeNotifierProvider(create: (_) => AssessmentScoringService()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -111,7 +151,11 @@ class PsyClinicAIApp extends StatelessWidget {
             routes: {
               '/login': (context) => const LoginScreen(),
               '/dashboard': (context) => const DashboardScreen(),
-              '/session': (context) => const SessionScreen(),
+              '/session': (context) => const SessionScreen(
+                sessionId: 'demo_session_001',
+                clientId: 'demo_client_001',
+                clientName: 'Demo Client',
+              ),
               '/diagnosis': (context) => const DiagnosisScreen(),
               '/prescription': (context) => const PrescriptionScreen(),
               '/flag': (context) => const FlagScreen(),
@@ -120,7 +164,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/education': (context) => const EducationScreen(),
               '/therapy-simulation': (context) => const TherapySimulationScreen(),
               '/medication-guide': (context) => const MedicationGuideScreen(),
-                                   '/ai-case-management': (context) => const AICaseManagementScreen(),
+ 
                      '/ai-appointment': (context) => const AIAppointmentScreen(),
                      '/ai-diagnosis': (context) => const AIDiagnosisScreen(
                        clientId: 'demo_client_001',
@@ -131,6 +175,11 @@ class PsyClinicAIApp extends StatelessWidget {
               '/supervisor': (context) => const SupervisorDashboardScreen(),
               '/client-management': (context) => const ClientManagementScreen(),
               '/consent-compliance': (context) => const ConsentComplianceScreen(),
+              '/sprint3-test': (context) => const Sprint3TestScreen(),
+              '/therapy-notes': (context) => const TherapyNoteEditorScreen(),
+              '/treatment-plan': (context) => const TreatmentPlanScreen(),
+              '/homework': (context) => const HomeworkScreen(),
+              '/assessments': (context) => const AssessmentsScreen(),
             },
           );
         },

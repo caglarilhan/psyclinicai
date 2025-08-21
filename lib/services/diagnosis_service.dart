@@ -36,7 +36,7 @@ class DiagnosisService extends ChangeNotifier {
       _logger.info('DiagnosisService initializing...', context: 'DiagnosisService');
       
       await _loadDiagnosisData();
-      await _loadAssessments();
+              // await _loadAssessments(); // TODO: Implement assessments loading
       
       _logger.info('DiagnosisService initialized successfully', context: 'DiagnosisService');
     } catch (e) {
@@ -81,7 +81,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['anhedonia', 'fatigue', 'sleep_changes'],
           triggers: ['stress', 'loss', 'seasonal_changes'],
           alleviators: ['exercise', 'social_support', 'therapy'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           frequency: Frequency.continuous,
         ),
         Symptom(
@@ -93,7 +93,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['depressed_mood', 'social_withdrawal'],
           triggers: ['depression', 'isolation'],
           alleviators: ['engagement', 'social_activities'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           frequency: Frequency.continuous,
         ),
         Symptom(
@@ -105,7 +105,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['fatigue', 'concentration_problems'],
           triggers: ['anxiety', 'depression', 'stress'],
           alleviators: ['sleep_hygiene', 'medication'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           frequency: Frequency.continuous,
         ),
       ],
@@ -117,7 +117,7 @@ class DiagnosisService extends ChangeNotifier {
           criterionNumber: 1,
           requiredSymptoms: ['depressed_mood', 'anhedonia', 'sleep_changes', 'fatigue', 'concentration_problems'],
           minimumSymptoms: 5,
-          minimumDuration: Duration.subacute,
+          minimumDuration: TreatmentDuration.subacute,
           exclusionCriteria: ['substance_induced', 'medical_condition'],
           specifiers: ['mild', 'moderate', 'severe'],
         ),
@@ -134,7 +134,7 @@ class DiagnosisService extends ChangeNotifier {
           indications: ['major_depressive_disorder', 'anxiety_disorder'],
           contraindications: ['bipolar_disorder', 'pregnancy'],
           sideEffects: ['nausea', 'sexual_dysfunction', 'weight_gain'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           effectiveness: 0.7,
           alternatives: ['snri', 'ndri', 'psychotherapy'],
         ),
@@ -146,7 +146,7 @@ class DiagnosisService extends ChangeNotifier {
           indications: ['major_depressive_disorder', 'mild_to_moderate'],
           contraindications: ['severe_depression', 'psychosis'],
           sideEffects: ['emotional_discomfort', 'time_commitment'],
-          duration: Duration.subacute,
+          duration: TreatmentDuration.subacute,
           effectiveness: 0.6,
           alternatives: ['interpersonal_therapy', 'psychodynamic_therapy'],
         ),
@@ -173,7 +173,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['restlessness', 'fatigue', 'concentration_problems'],
           triggers: ['uncertainty', 'stress', 'life_changes'],
           alleviators: ['relaxation', 'problem_solving', 'therapy'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           frequency: Frequency.continuous,
         ),
         Symptom(
@@ -185,7 +185,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['excessive_worry', 'sleep_problems'],
           triggers: ['anxiety', 'caffeine', 'stress'],
           alleviators: ['exercise', 'relaxation', 'medication'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           frequency: Frequency.continuous,
         ),
       ],
@@ -197,7 +197,7 @@ class DiagnosisService extends ChangeNotifier {
           criterionNumber: 1,
           requiredSymptoms: ['excessive_worry', 'restlessness', 'fatigue', 'concentration_problems'],
           minimumSymptoms: 3,
-          minimumDuration: Duration.chronic,
+          minimumDuration: TreatmentDuration.chronic,
           exclusionCriteria: ['substance_induced', 'medical_condition'],
           specifiers: ['mild', 'moderate', 'severe'],
         ),
@@ -214,7 +214,7 @@ class DiagnosisService extends ChangeNotifier {
           indications: ['generalized_anxiety_disorder', 'depression'],
           contraindications: ['bipolar_disorder', 'pregnancy'],
           sideEffects: ['nausea', 'sexual_dysfunction', 'initial_anxiety'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           effectiveness: 0.65,
           alternatives: ['snri', 'benzodiazepines', 'psychotherapy'],
         ),
@@ -226,7 +226,7 @@ class DiagnosisService extends ChangeNotifier {
           indications: ['generalized_anxiety_disorder', 'mild_to_moderate'],
           contraindications: ['severe_anxiety', 'psychosis'],
           sideEffects: ['emotional_discomfort', 'time_commitment'],
-          duration: Duration.subacute,
+          duration: TreatmentDuration.subacute,
           effectiveness: 0.7,
           alternatives: ['acceptance_commitment_therapy', 'mindfulness'],
         ),
@@ -281,7 +281,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['decreased_sleep', 'grandiosity', 'racing_thoughts'],
           triggers: ['stress', 'sleep_deprivation', 'medication_changes'],
           alleviators: ['mood_stabilizers', 'sleep_regulation'],
-          duration: Duration.episodic,
+          duration: TreatmentDuration.episodic,
           frequency: Frequency.episodic,
         ),
         Symptom(
@@ -293,7 +293,7 @@ class DiagnosisService extends ChangeNotifier {
           relatedSymptoms: ['anhedonia', 'fatigue', 'suicidal_thoughts'],
           triggers: ['stress', 'life_events', 'medication_changes'],
           alleviators: ['antidepressants', 'therapy', 'social_support'],
-          duration: Duration.episodic,
+          duration: TreatmentDuration.episodic,
           frequency: Frequency.episodic,
         ),
       ],
@@ -305,7 +305,7 @@ class DiagnosisService extends ChangeNotifier {
           criterionNumber: 1,
           requiredSymptoms: ['mania', 'depression'],
           minimumSymptoms: 2,
-          minimumDuration: Duration.episodic,
+          minimumDuration: TreatmentDuration.episodic,
           exclusionCriteria: ['substance_induced', 'medical_condition'],
           specifiers: ['bipolar_i', 'bipolar_ii', 'cyclothymia'],
         ),
@@ -322,7 +322,7 @@ class DiagnosisService extends ChangeNotifier {
           indications: ['bipolar_disorder', 'mania', 'depression'],
           contraindications: ['kidney_disease', 'pregnancy'],
           sideEffects: ['weight_gain', 'tremor', 'kidney_problems'],
-          duration: Duration.chronic,
+          duration: TreatmentDuration.chronic,
           effectiveness: 0.8,
           alternatives: ['antipsychotics', 'antidepressants'],
         ),
@@ -354,7 +354,7 @@ class DiagnosisService extends ChangeNotifier {
             sideEffects: ['nausea', 'sexual_dysfunction', 'weight_gain'],
             drugInteractions: ['maoi', 'warfarin'],
             monitoringRequirements: ['suicidal_thoughts', 'mood_changes'],
-            treatmentDuration: Duration.chronic,
+            treatmentDuration: TreatmentDuration.chronic,
             alternatives: ['fluoxetine', 'escitalopram'],
           ),
         ],
@@ -365,7 +365,7 @@ class DiagnosisService extends ChangeNotifier {
             description: 'Evidence-based psychotherapy for depression',
             indications: ['mild_to_moderate_depression'],
             contraindications: ['severe_depression', 'psychosis'],
-            sessionDuration: Duration(seconds: 3600), // 1 hour
+            sessionDuration: const DurationPeriod(value: 1, unit: DurationUnit.hours), // 1 hour
             totalSessions: 16,
             effectiveness: 0.6,
             techniques: ['cognitive_restructuring', 'behavioral_activation'],
@@ -373,7 +373,7 @@ class DiagnosisService extends ChangeNotifier {
         ],
         contraindications: ['bipolar_disorder', 'active_psychosis'],
         sideEffects: ['initial_worsening', 'emotional_discomfort'],
-        expectedDuration: Duration.chronic,
+        expectedDuration: TreatmentDuration.chronic,
         outcomeMeasures: ['phq9', 'hamd', 'functional_improvement'],
       ),
     ]);
@@ -725,16 +725,16 @@ class DiagnosisService extends ChangeNotifier {
     }
   }
 
-  Duration _parseDuration(String? duration) {
-    if (duration == null) return Duration.chronic;
+  TreatmentDuration _parseDuration(String? duration) {
+    if (duration == null) return TreatmentDuration.chronic;
     
     switch (duration.toLowerCase()) {
-      case 'acute': return Duration.acute;
-      case 'subacute': return Duration.subacute;
-      case 'chronic': return Duration.chronic;
-      case 'episodic': return Duration.episodic;
-      case 'continuous': return Duration.continuous;
-      default: return Duration.chronic;
+      case 'acute': return TreatmentDuration.acute;
+      case 'subacute': return TreatmentDuration.subacute;
+      case 'chronic': return TreatmentDuration.chronic;
+      case 'episodic': return TreatmentDuration.episodic;
+      case 'continuous': return TreatmentDuration.continuous;
+      default: return TreatmentDuration.chronic;
     }
   }
 

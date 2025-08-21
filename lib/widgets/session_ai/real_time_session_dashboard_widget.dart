@@ -102,7 +102,7 @@ class _RealTimeSessionDashboardWidgetState extends State<RealTimeSessionDashboar
         _currentAnalysis = analysis;
         _emotionalHistory.addAll(analysis.emotionalStates);
         if (_emotionalHistory.length > 20) {
-          _emotionalHistory = _emotionalHistory.takeLast(20).toList();
+          _emotionalHistory = _emotionalHistory.skip(_emotionalHistory.length - 20).toList();
         }
       });
     });
@@ -112,7 +112,7 @@ class _RealTimeSessionDashboardWidgetState extends State<RealTimeSessionDashboar
       setState(() {
         _activeAlerts.add(alert);
         if (_activeAlerts.length > 10) {
-          _activeAlerts = _activeAlerts.takeLast(10).toList();
+          _activeAlerts = _activeAlerts.skip(_activeAlerts.length - 10).toList();
         }
       });
       
@@ -127,7 +127,7 @@ class _RealTimeSessionDashboardWidgetState extends State<RealTimeSessionDashboar
       setState(() {
         _interventions.add(intervention);
         if (_interventions.length > 10) {
-          _interventions = _interventions.takeLast(10).toList();
+          _interventions = _interventions.skip(_interventions.length - 10).toList();
         }
       });
     });

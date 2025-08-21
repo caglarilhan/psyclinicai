@@ -282,7 +282,7 @@ class ReportableCondition {
   factory ReportableCondition.fromJson(Map<String, dynamic> json) =>
       _$ReportableConditionFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ReportableConditionFromJson(this);
+  Map<String, dynamic> toJson() => _$ReportableConditionToJson(this);
 }
 
 @JsonSerializable()

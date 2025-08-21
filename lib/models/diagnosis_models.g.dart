@@ -174,7 +174,7 @@ Symptom _$SymptomFromJson(Map<String, dynamic> json) => Symptom(
   alleviators: (json['alleviators'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  duration: $enumDecode(_$DurationEnumMap, json['duration']),
+  duration: $enumDecode(_$TreatmentDurationEnumMap, json['duration']),
   frequency: $enumDecode(_$FrequencyEnumMap, json['frequency']),
   metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
 );
@@ -188,7 +188,7 @@ Map<String, dynamic> _$SymptomToJson(Symptom instance) => <String, dynamic>{
   'relatedSymptoms': instance.relatedSymptoms,
   'triggers': instance.triggers,
   'alleviators': instance.alleviators,
-  'duration': _$DurationEnumMap[instance.duration]!,
+  'duration': _$TreatmentDurationEnumMap[instance.duration]!,
   'frequency': _$FrequencyEnumMap[instance.frequency]!,
   'metadata': instance.metadata,
 };
@@ -218,12 +218,12 @@ const _$SymptomSeverityEnumMap = {
   SymptomSeverity.extreme: 'extreme',
 };
 
-const _$DurationEnumMap = {
-  Duration.acute: 'acute',
-  Duration.subacute: 'subacute',
-  Duration.chronic: 'chronic',
-  Duration.episodic: 'episodic',
-  Duration.continuous: 'continuous',
+const _$TreatmentDurationEnumMap = {
+  TreatmentDuration.acute: 'acute',
+  TreatmentDuration.subacute: 'subacute',
+  TreatmentDuration.chronic: 'chronic',
+  TreatmentDuration.episodic: 'episodic',
+  TreatmentDuration.continuous: 'continuous',
 };
 
 const _$FrequencyEnumMap = {
@@ -234,6 +234,9 @@ const _$FrequencyEnumMap = {
   Frequency.always: 'always',
   Frequency.episodic: 'episodic',
   Frequency.continuous: 'continuous',
+  Frequency.daily: 'daily',
+  Frequency.weekly: 'weekly',
+  Frequency.monthly: 'monthly',
 };
 
 DiagnosticCriteria _$DiagnosticCriteriaFromJson(Map<String, dynamic> json) =>
@@ -246,7 +249,10 @@ DiagnosticCriteria _$DiagnosticCriteriaFromJson(Map<String, dynamic> json) =>
           .map((e) => e as String)
           .toList(),
       minimumSymptoms: (json['minimumSymptoms'] as num).toInt(),
-      minimumDuration: $enumDecode(_$DurationEnumMap, json['minimumDuration']),
+      minimumDuration: $enumDecode(
+        _$TreatmentDurationEnumMap,
+        json['minimumDuration'],
+      ),
       exclusionCriteria: (json['exclusionCriteria'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -264,62 +270,68 @@ Map<String, dynamic> _$DiagnosticCriteriaToJson(DiagnosticCriteria instance) =>
       'criterionNumber': instance.criterionNumber,
       'requiredSymptoms': instance.requiredSymptoms,
       'minimumSymptoms': instance.minimumSymptoms,
-      'minimumDuration': _$DurationEnumMap[instance.minimumDuration]!,
+      'minimumDuration': _$TreatmentDurationEnumMap[instance.minimumDuration]!,
       'exclusionCriteria': instance.exclusionCriteria,
       'specifiers': instance.specifiers,
       'metadata': instance.metadata,
     };
 
-TreatmentGuideline _$TreatmentGuidelineFromJson(
-  Map<String, dynamic> json,
-) => TreatmentGuideline(
-  id: json['id'] as String,
-  disorderId: json['disorderId'] as String,
-  title: json['title'] as String,
-  description: json['description'] as String,
-  level: $enumDecode(_$TreatmentLevelEnumMap, json['level']),
-  modalities: (json['modalities'] as List<dynamic>)
-      .map((e) => $enumDecode(_$TreatmentModalityEnumMap, e))
-      .toList(),
-  medications: (json['medications'] as List<dynamic>)
-      .map((e) => MedicationRecommendation.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  psychotherapies: (json['psychotherapies'] as List<dynamic>)
-      .map(
-        (e) => PsychotherapyRecommendation.fromJson(e as Map<String, dynamic>),
-      )
-      .toList(),
-  contraindications: (json['contraindications'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  sideEffects: (json['sideEffects'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  expectedDuration: $enumDecode(_$DurationEnumMap, json['expectedDuration']),
-  outcomeMeasures: (json['outcomeMeasures'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
-);
-
-Map<String, dynamic> _$TreatmentGuidelineToJson(TreatmentGuideline instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'disorderId': instance.disorderId,
-      'title': instance.title,
-      'description': instance.description,
-      'level': _$TreatmentLevelEnumMap[instance.level]!,
-      'modalities': instance.modalities
-          .map((e) => _$TreatmentModalityEnumMap[e]!)
+TreatmentGuideline _$TreatmentGuidelineFromJson(Map<String, dynamic> json) =>
+    TreatmentGuideline(
+      id: json['id'] as String,
+      disorderId: json['disorderId'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      level: $enumDecode(_$TreatmentLevelEnumMap, json['level']),
+      modalities: (json['modalities'] as List<dynamic>)
+          .map((e) => $enumDecode(_$TreatmentModalityEnumMap, e))
           .toList(),
-      'medications': instance.medications,
-      'psychotherapies': instance.psychotherapies,
-      'contraindications': instance.contraindications,
-      'sideEffects': instance.sideEffects,
-      'expectedDuration': _$DurationEnumMap[instance.expectedDuration]!,
-      'outcomeMeasures': instance.outcomeMeasures,
-      'metadata': instance.metadata,
-    };
+      medications: (json['medications'] as List<dynamic>)
+          .map(
+            (e) => MedicationRecommendation.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+      psychotherapies: (json['psychotherapies'] as List<dynamic>)
+          .map(
+            (e) =>
+                PsychotherapyRecommendation.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+      contraindications: (json['contraindications'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      sideEffects: (json['sideEffects'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      expectedDuration: $enumDecode(
+        _$TreatmentDurationEnumMap,
+        json['expectedDuration'],
+      ),
+      outcomeMeasures: (json['outcomeMeasures'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
+
+Map<String, dynamic> _$TreatmentGuidelineToJson(
+  TreatmentGuideline instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'disorderId': instance.disorderId,
+  'title': instance.title,
+  'description': instance.description,
+  'level': _$TreatmentLevelEnumMap[instance.level]!,
+  'modalities': instance.modalities
+      .map((e) => _$TreatmentModalityEnumMap[e]!)
+      .toList(),
+  'medications': instance.medications,
+  'psychotherapies': instance.psychotherapies,
+  'contraindications': instance.contraindications,
+  'sideEffects': instance.sideEffects,
+  'expectedDuration': _$TreatmentDurationEnumMap[instance.expectedDuration]!,
+  'outcomeMeasures': instance.outcomeMeasures,
+  'metadata': instance.metadata,
+};
 
 const _$TreatmentLevelEnumMap = {
   TreatmentLevel.firstLine: 'firstLine',
@@ -353,7 +365,7 @@ TreatmentOption _$TreatmentOptionFromJson(Map<String, dynamic> json) =>
       sideEffects: (json['sideEffects'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
-      duration: $enumDecode(_$DurationEnumMap, json['duration']),
+      duration: $enumDecode(_$TreatmentDurationEnumMap, json['duration']),
       effectiveness: (json['effectiveness'] as num).toDouble(),
       alternatives: (json['alternatives'] as List<dynamic>)
           .map((e) => e as String)
@@ -370,7 +382,7 @@ Map<String, dynamic> _$TreatmentOptionToJson(TreatmentOption instance) =>
       'indications': instance.indications,
       'contraindications': instance.contraindications,
       'sideEffects': instance.sideEffects,
-      'duration': _$DurationEnumMap[instance.duration]!,
+      'duration': _$TreatmentDurationEnumMap[instance.duration]!,
       'effectiveness': instance.effectiveness,
       'alternatives': instance.alternatives,
       'metadata': instance.metadata,
@@ -397,7 +409,10 @@ MedicationRecommendation _$MedicationRecommendationFromJson(
   monitoringRequirements: (json['monitoringRequirements'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  treatmentDuration: $enumDecode(_$DurationEnumMap, json['treatmentDuration']),
+  treatmentDuration: $enumDecode(
+    _$TreatmentDurationEnumMap,
+    json['treatmentDuration'],
+  ),
   alternatives: (json['alternatives'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
@@ -415,7 +430,7 @@ Map<String, dynamic> _$MedicationRecommendationToJson(
   'sideEffects': instance.sideEffects,
   'drugInteractions': instance.drugInteractions,
   'monitoringRequirements': instance.monitoringRequirements,
-  'treatmentDuration': _$DurationEnumMap[instance.treatmentDuration]!,
+  'treatmentDuration': _$TreatmentDurationEnumMap[instance.treatmentDuration]!,
   'alternatives': instance.alternatives,
   'metadata': instance.metadata,
 };
@@ -432,7 +447,9 @@ PsychotherapyRecommendation _$PsychotherapyRecommendationFromJson(
   contraindications: (json['contraindications'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  sessionDuration: $enumDecode(_$DurationEnumMap, json['sessionDuration']),
+  sessionDuration: DurationPeriod.fromJson(
+    json['sessionDuration'] as Map<String, dynamic>,
+  ),
   totalSessions: (json['totalSessions'] as num).toInt(),
   effectiveness: (json['effectiveness'] as num).toDouble(),
   techniques: (json['techniques'] as List<dynamic>)
@@ -449,7 +466,7 @@ Map<String, dynamic> _$PsychotherapyRecommendationToJson(
   'description': instance.description,
   'indications': instance.indications,
   'contraindications': instance.contraindications,
-  'sessionDuration': _$DurationEnumMap[instance.sessionDuration]!,
+  'sessionDuration': instance.sessionDuration,
   'totalSessions': instance.totalSessions,
   'effectiveness': instance.effectiveness,
   'techniques': instance.techniques,
@@ -513,40 +530,104 @@ Map<String, dynamic> _$DiagnosisAssessmentToJson(
 DiagnosisResult _$DiagnosisResultFromJson(Map<String, dynamic> json) =>
     DiagnosisResult(
       id: json['id'] as String,
-      disorderId: json['disorderId'] as String,
-      disorderName: json['disorderName'] as String,
-      disorderCode: json['disorderCode'] as String,
-      severity: $enumDecode(_$SeverityLevelEnumMap, json['severity']),
+      clientId: json['clientId'] as String,
+      therapistId: json['therapistId'] as String,
+      analysisDate: DateTime.parse(json['analysisDate'] as String),
+      symptoms: (json['symptoms'] as List<dynamic>)
+          .map((e) => Symptom.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      symptomAnalysis: SymptomAnalysis.fromJson(
+        json['symptomAnalysis'] as Map<String, dynamic>,
+      ),
+      riskAssessment: RiskAssessment.fromJson(
+        json['riskAssessment'] as Map<String, dynamic>,
+      ),
+      diagnosisSuggestions: (json['diagnosisSuggestions'] as List<dynamic>)
+          .map((e) => DiagnosisSuggestion.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      treatmentPlan: TreatmentPlan.fromJson(
+        json['treatmentPlan'] as Map<String, dynamic>,
+      ),
       confidence: (json['confidence'] as num).toDouble(),
-      metCriteria: (json['metCriteria'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      unmetCriteria: (json['unmetCriteria'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      specifiers: (json['specifiers'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      isPrimary: json['isPrimary'] as bool,
-      isProvisional: json['isProvisional'] as bool,
+      aiModel: json['aiModel'] as String,
+      processingTime: (json['processingTime'] as num).toInt(),
       metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
 
 Map<String, dynamic> _$DiagnosisResultToJson(DiagnosisResult instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'disorderId': instance.disorderId,
-      'disorderName': instance.disorderName,
-      'disorderCode': instance.disorderCode,
-      'severity': _$SeverityLevelEnumMap[instance.severity]!,
+      'clientId': instance.clientId,
+      'therapistId': instance.therapistId,
+      'analysisDate': instance.analysisDate.toIso8601String(),
+      'symptoms': instance.symptoms,
+      'symptomAnalysis': instance.symptomAnalysis,
+      'riskAssessment': instance.riskAssessment,
+      'diagnosisSuggestions': instance.diagnosisSuggestions,
+      'treatmentPlan': instance.treatmentPlan,
       'confidence': instance.confidence,
-      'metCriteria': instance.metCriteria,
-      'unmetCriteria': instance.unmetCriteria,
-      'specifiers': instance.specifiers,
-      'isPrimary': instance.isPrimary,
-      'isProvisional': instance.isProvisional,
+      'aiModel': instance.aiModel,
+      'processingTime': instance.processingTime,
       'metadata': instance.metadata,
     };
+
+SymptomAnalysis _$SymptomAnalysisFromJson(Map<String, dynamic> json) =>
+    SymptomAnalysis(
+      id: json['id'] as String,
+      symptoms: (json['symptoms'] as List<dynamic>)
+          .map((e) => Symptom.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      overallSeverity: (json['overallSeverity'] as num).toDouble(),
+      primaryCategories: (json['primaryCategories'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      patterns: (json['patterns'] as List<dynamic>)
+          .map((e) => Pattern.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recommendations: (json['recommendations'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      analysisDate: DateTime.parse(json['analysisDate'] as String),
+    );
+
+Map<String, dynamic> _$SymptomAnalysisToJson(SymptomAnalysis instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'symptoms': instance.symptoms,
+      'overallSeverity': instance.overallSeverity,
+      'primaryCategories': instance.primaryCategories,
+      'patterns': instance.patterns,
+      'recommendations': instance.recommendations,
+      'analysisDate': instance.analysisDate.toIso8601String(),
+    };
+
+Pattern _$PatternFromJson(Map<String, dynamic> json) => Pattern(
+  id: json['id'] as String,
+  type: $enumDecode(_$PatternTypeEnumMap, json['type']),
+  description: json['description'] as String,
+  confidence: (json['confidence'] as num).toDouble(),
+  symptoms: (json['symptoms'] as List<dynamic>)
+      .map((e) => Symptom.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$PatternToJson(Pattern instance) => <String, dynamic>{
+  'id': instance.id,
+  'type': _$PatternTypeEnumMap[instance.type]!,
+  'description': instance.description,
+  'confidence': instance.confidence,
+  'symptoms': instance.symptoms,
+};
+
+const _$PatternTypeEnumMap = {
+  PatternType.mood: 'mood',
+  PatternType.sleep: 'sleep',
+  PatternType.anxiety: 'anxiety',
+  PatternType.cognitive: 'cognitive',
+  PatternType.behavioral: 'behavioral',
+  PatternType.physical: 'physical',
+  PatternType.social: 'social',
+};
 
 SymptomAssessment _$SymptomAssessmentFromJson(Map<String, dynamic> json) =>
     SymptomAssessment(
@@ -554,7 +635,7 @@ SymptomAssessment _$SymptomAssessmentFromJson(Map<String, dynamic> json) =>
       symptomId: json['symptomId'] as String,
       symptomName: json['symptomName'] as String,
       severity: $enumDecode(_$SymptomSeverityEnumMap, json['severity']),
-      duration: $enumDecode(_$DurationEnumMap, json['duration']),
+      duration: $enumDecode(_$TreatmentDurationEnumMap, json['duration']),
       frequency: $enumDecode(_$FrequencyEnumMap, json['frequency']),
       triggers: (json['triggers'] as List<dynamic>)
           .map((e) => e as String)
@@ -572,7 +653,7 @@ Map<String, dynamic> _$SymptomAssessmentToJson(SymptomAssessment instance) =>
       'symptomId': instance.symptomId,
       'symptomName': instance.symptomName,
       'severity': _$SymptomSeverityEnumMap[instance.severity]!,
-      'duration': _$DurationEnumMap[instance.duration]!,
+      'duration': _$TreatmentDurationEnumMap[instance.duration]!,
       'frequency': _$FrequencyEnumMap[instance.frequency]!,
       'triggers': instance.triggers,
       'alleviators': instance.alleviators,
@@ -588,7 +669,7 @@ TreatmentRecommendation _$TreatmentRecommendationFromJson(
   treatmentName: json['treatmentName'] as String,
   modality: $enumDecode(_$TreatmentModalityEnumMap, json['modality']),
   rationale: json['rationale'] as String,
-  duration: $enumDecode(_$DurationEnumMap, json['duration']),
+  duration: $enumDecode(_$TreatmentDurationEnumMap, json['duration']),
   goals: (json['goals'] as List<dynamic>).map((e) => e as String).toList(),
   expectedOutcomes: (json['expectedOutcomes'] as List<dynamic>)
       .map((e) => e as String)
@@ -607,9 +688,256 @@ Map<String, dynamic> _$TreatmentRecommendationToJson(
   'treatmentName': instance.treatmentName,
   'modality': _$TreatmentModalityEnumMap[instance.modality]!,
   'rationale': instance.rationale,
-  'duration': _$DurationEnumMap[instance.duration]!,
+  'duration': _$TreatmentDurationEnumMap[instance.duration]!,
   'goals': instance.goals,
   'expectedOutcomes': instance.expectedOutcomes,
   'monitoringRequirements': instance.monitoringRequirements,
   'metadata': instance.metadata,
 };
+
+DiagnosisSuggestion _$DiagnosisSuggestionFromJson(Map<String, dynamic> json) =>
+    DiagnosisSuggestion(
+      id: json['id'] as String,
+      diagnosis: json['diagnosis'] as String,
+      confidence: (json['confidence'] as num).toDouble(),
+      evidence: (json['evidence'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      differentialDiagnoses: (json['differentialDiagnoses'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      icd10Code: json['icd10Code'] as String,
+      severity: $enumDecode(_$DiagnosisSeverityEnumMap, json['severity']),
+      treatmentPriority: $enumDecode(
+        _$TreatmentPriorityEnumMap,
+        json['treatmentPriority'],
+      ),
+      notes: json['notes'] as String?,
+    );
+
+Map<String, dynamic> _$DiagnosisSuggestionToJson(
+  DiagnosisSuggestion instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'diagnosis': instance.diagnosis,
+  'confidence': instance.confidence,
+  'evidence': instance.evidence,
+  'differentialDiagnoses': instance.differentialDiagnoses,
+  'icd10Code': instance.icd10Code,
+  'severity': _$DiagnosisSeverityEnumMap[instance.severity]!,
+  'treatmentPriority': _$TreatmentPriorityEnumMap[instance.treatmentPriority]!,
+  'notes': instance.notes,
+};
+
+const _$DiagnosisSeverityEnumMap = {
+  DiagnosisSeverity.mild: 'mild',
+  DiagnosisSeverity.moderate: 'moderate',
+  DiagnosisSeverity.severe: 'severe',
+  DiagnosisSeverity.verySevere: 'verySevere',
+};
+
+const _$TreatmentPriorityEnumMap = {
+  TreatmentPriority.low: 'low',
+  TreatmentPriority.medium: 'medium',
+  TreatmentPriority.high: 'high',
+  TreatmentPriority.urgent: 'urgent',
+};
+
+RiskAssessment _$RiskAssessmentFromJson(Map<String, dynamic> json) =>
+    RiskAssessment(
+      id: json['id'] as String,
+      riskLevel: $enumDecode(_$RiskLevelEnumMap, json['riskLevel']),
+      recommendations: (json['recommendations'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      assessmentDate: DateTime.parse(json['assessmentDate'] as String),
+      riskFactors: (json['riskFactors'] as List<dynamic>)
+          .map((e) => RiskFactor.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      urgency: $enumDecode(_$UrgencyEnumMap, json['urgency']),
+    );
+
+Map<String, dynamic> _$RiskAssessmentToJson(RiskAssessment instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'riskLevel': _$RiskLevelEnumMap[instance.riskLevel]!,
+      'riskFactors': instance.riskFactors,
+      'urgency': _$UrgencyEnumMap[instance.urgency]!,
+      'recommendations': instance.recommendations,
+      'assessmentDate': instance.assessmentDate.toIso8601String(),
+    };
+
+const _$RiskLevelEnumMap = {
+  RiskLevel.low: 'low',
+  RiskLevel.medium: 'medium',
+  RiskLevel.high: 'high',
+  RiskLevel.critical: 'critical',
+};
+
+const _$UrgencyEnumMap = {
+  Urgency.routine: 'routine',
+  Urgency.urgent: 'urgent',
+  Urgency.immediate: 'immediate',
+};
+
+RiskFactor _$RiskFactorFromJson(Map<String, dynamic> json) => RiskFactor(
+  id: json['id'] as String,
+  type: $enumDecode(_$RiskTypeEnumMap, json['type']),
+  severity: $enumDecode(_$RiskSeverityEnumMap, json['severity']),
+  description: json['description'] as String,
+  probability: (json['probability'] as num).toDouble(),
+  mitigation: json['mitigation'] as String,
+);
+
+Map<String, dynamic> _$RiskFactorToJson(RiskFactor instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': _$RiskTypeEnumMap[instance.type]!,
+      'severity': _$RiskSeverityEnumMap[instance.severity]!,
+      'description': instance.description,
+      'probability': instance.probability,
+      'mitigation': instance.mitigation,
+    };
+
+const _$RiskTypeEnumMap = {
+  RiskType.biological: 'biological',
+  RiskType.psychological: 'psychological',
+  RiskType.social: 'social',
+  RiskType.environmental: 'environmental',
+  RiskType.genetic: 'genetic',
+  RiskType.lifestyle: 'lifestyle',
+  RiskType.medication: 'medication',
+  RiskType.substance: 'substance',
+  RiskType.trauma: 'trauma',
+  RiskType.other: 'other',
+};
+
+const _$RiskSeverityEnumMap = {
+  RiskSeverity.low: 'low',
+  RiskSeverity.medium: 'medium',
+  RiskSeverity.high: 'high',
+  RiskSeverity.critical: 'critical',
+};
+
+TreatmentPlan _$TreatmentPlanFromJson(Map<String, dynamic> json) =>
+    TreatmentPlan(
+      id: json['id'] as String,
+      diagnoses: (json['diagnoses'] as List<dynamic>)
+          .map((e) => DiagnosisSuggestion.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      interventions: (json['interventions'] as List<dynamic>)
+          .map((e) => TreatmentIntervention.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      goals: (json['goals'] as List<dynamic>)
+          .map((e) => TreatmentGoal.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      timeline: DurationPeriod.fromJson(
+        json['timeline'] as Map<String, dynamic>,
+      ),
+      riskFactors: (json['riskFactors'] as List<dynamic>)
+          .map((e) => RiskFactor.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      monitoringSchedule: MonitoringSchedule.fromJson(
+        json['monitoringSchedule'] as Map<String, dynamic>,
+      ),
+      planDate: DateTime.parse(json['planDate'] as String),
+    );
+
+Map<String, dynamic> _$TreatmentPlanToJson(TreatmentPlan instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'diagnoses': instance.diagnoses,
+      'interventions': instance.interventions,
+      'goals': instance.goals,
+      'timeline': instance.timeline,
+      'riskFactors': instance.riskFactors,
+      'monitoringSchedule': instance.monitoringSchedule,
+      'planDate': instance.planDate.toIso8601String(),
+    };
+
+TreatmentIntervention _$TreatmentInterventionFromJson(
+  Map<String, dynamic> json,
+) => TreatmentIntervention(
+  id: json['id'] as String,
+  type: $enumDecode(_$InterventionTypeEnumMap, json['type']),
+  name: json['name'] as String,
+  description: json['description'] as String,
+  frequency: json['frequency'] as String,
+  duration: json['duration'] as String,
+  priority: $enumDecode(_$InterventionPriorityEnumMap, json['priority']),
+);
+
+Map<String, dynamic> _$TreatmentInterventionToJson(
+  TreatmentIntervention instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'type': _$InterventionTypeEnumMap[instance.type]!,
+  'name': instance.name,
+  'description': instance.description,
+  'frequency': instance.frequency,
+  'duration': instance.duration,
+  'priority': _$InterventionPriorityEnumMap[instance.priority]!,
+};
+
+const _$InterventionTypeEnumMap = {
+  InterventionType.psychotherapy: 'psychotherapy',
+  InterventionType.medication: 'medication',
+  InterventionType.lifestyle: 'lifestyle',
+  InterventionType.social: 'social',
+  InterventionType.educational: 'educational',
+  InterventionType.emergency: 'emergency',
+};
+
+const _$InterventionPriorityEnumMap = {
+  InterventionPriority.low: 'low',
+  InterventionPriority.medium: 'medium',
+  InterventionPriority.high: 'high',
+  InterventionPriority.critical: 'critical',
+};
+
+TreatmentGoal _$TreatmentGoalFromJson(Map<String, dynamic> json) =>
+    TreatmentGoal(
+      id: json['id'] as String,
+      description: json['description'] as String,
+      target: json['target'] as String,
+      timeline: json['timeline'] as String,
+      priority: $enumDecode(_$GoalPriorityEnumMap, json['priority']),
+    );
+
+Map<String, dynamic> _$TreatmentGoalToJson(TreatmentGoal instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'description': instance.description,
+      'target': instance.target,
+      'timeline': instance.timeline,
+      'priority': _$GoalPriorityEnumMap[instance.priority]!,
+    };
+
+const _$GoalPriorityEnumMap = {
+  GoalPriority.low: 'low',
+  GoalPriority.medium: 'medium',
+  GoalPriority.high: 'high',
+  GoalPriority.critical: 'critical',
+};
+
+MonitoringSchedule _$MonitoringScheduleFromJson(Map<String, dynamic> json) =>
+    MonitoringSchedule(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      frequency: json['frequency'] as String,
+      parameters: (json['parameters'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      nextDue: DateTime.parse(json['nextDue'] as String),
+      isActive: json['isActive'] as bool,
+    );
+
+Map<String, dynamic> _$MonitoringScheduleToJson(MonitoringSchedule instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'frequency': instance.frequency,
+      'parameters': instance.parameters,
+      'nextDue': instance.nextDue.toIso8601String(),
+      'isActive': instance.isActive,
+    };

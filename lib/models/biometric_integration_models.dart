@@ -292,7 +292,7 @@ class BloodPressureReading {
     required this.systolic,
     required this.diastolic,
     required this.pulse,
-    this.notes,
+    this.notes = '',
   });
 
   factory BloodPressureReading.fromJson(Map<String, dynamic> json) =>

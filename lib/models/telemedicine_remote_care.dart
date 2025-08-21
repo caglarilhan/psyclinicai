@@ -30,7 +30,7 @@ class TelemedicineRemoteCare {
   factory TelemedicineRemoteCare.fromJson(Map<String, dynamic> json) =>
       _$TelemedicineRemoteCareFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TelemedicineRemoteCareFromJson(this);
+  Map<String, dynamic> toJson() => _$TelemedicineRemoteCareToJson(this);
 }
 
 // Global Video Konsültasyonlar
@@ -75,7 +75,7 @@ class GlobalVideoConsultations {
   factory GlobalVideoConsultations.fromJson(Map<String, dynamic> json) =>
       _$GlobalVideoConsultationsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$GlobalVideoConsultationsFromJson(this);
+  Map<String, dynamic> toJson() => _$GlobalVideoConsultationsToJson(this);
 }
 
 // VR/AR Terapi Seansları
@@ -116,7 +116,7 @@ class VRARTherapySessions {
   factory VRARTherapySessions.fromJson(Map<String, dynamic> json) =>
       _$VRARTherapySessionsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$VRARTherapySessionsFromJson(this);
+  Map<String, dynamic> toJson() => _$VRARTherapySessionsToJson(this);
 }
 
 // Uzaktan İzleme
@@ -155,7 +155,7 @@ class RemoteMonitoring {
   factory RemoteMonitoring.fromJson(Map<String, dynamic> json) =>
       _$RemoteMonitoringFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteMonitoringFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteMonitoringToJson(this);
 }
 
 // Dijital Terapötikler
@@ -194,7 +194,7 @@ class DigitalTherapeutics {
   factory DigitalTherapeutics.fromJson(Map<String, dynamic> json) =>
       _$DigitalTherapeuticsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DigitalTherapeuticsFromJson(this);
+  Map<String, dynamic> toJson() => _$DigitalTherapeuticsToJson(this);
 }
 
 // Uzaktan Hasta Eğitimi
@@ -233,7 +233,7 @@ class RemotePatientEducation {
   factory RemotePatientEducation.fromJson(Map<String, dynamic> json) =>
       _$RemotePatientEducationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemotePatientEducationFromJson(this);
+  Map<String, dynamic> toJson() => _$RemotePatientEducationToJson(this);
 }
 
 // Uzaktan Rehabilitasyon
@@ -270,7 +270,7 @@ class RemoteRehabilitation {
   factory RemoteRehabilitation.fromJson(Map<String, dynamic> json) =>
       _$RemoteRehabilitationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteRehabilitationFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteRehabilitationToJson(this);
 }
 
 // Uzaktan İlaç Yönetimi
@@ -303,7 +303,7 @@ class RemoteMedicationManagement {
   factory RemoteMedicationManagement.fromJson(Map<String, dynamic> json) =>
       _$RemoteMedicationManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteMedicationManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteMedicationManagementToJson(this);
 }
 
 // Uzaktan Destek Grupları
@@ -342,7 +342,7 @@ class RemoteSupportGroups {
   factory RemoteSupportGroups.fromJson(Map<String, dynamic> json) =>
       _$RemoteSupportGroupsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteSupportGroupsFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteSupportGroupsToJson(this);
 }
 
 // Uzaktan Acil Müdahale
@@ -377,7 +377,7 @@ class RemoteEmergencyIntervention {
   factory RemoteEmergencyIntervention.fromJson(Map<String, dynamic> json) =>
       _$RemoteEmergencyInterventionFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteEmergencyInterventionFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteEmergencyInterventionToJson(this);
 }
 
 // Uzaktan Sağlık Taraması
@@ -410,7 +410,7 @@ class RemoteHealthScreening {
   factory RemoteHealthScreening.fromJson(Map<String, dynamic> json) =>
       _$RemoteHealthScreeningFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteHealthScreeningFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteHealthScreeningToJson(this);
 }
 
 // Uzaktan Takip
@@ -447,7 +447,7 @@ class RemoteFollowUp {
   factory RemoteFollowUp.fromJson(Map<String, dynamic> json) =>
       _$RemoteFollowUpFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteFollowUpFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteFollowUpToJson(this);
 }
 
 // Uzaktan Konsültasyon Notları
@@ -484,7 +484,7 @@ class RemoteConsultationNotes {
   factory RemoteConsultationNotes.fromJson(Map<String, dynamic> json) =>
       _$RemoteConsultationNotesFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteConsultationNotesFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteConsultationNotesToJson(this);
 }
 
 // Uzaktan Reçete Yönetimi
@@ -519,7 +519,7 @@ class RemotePrescriptionManagement {
   factory RemotePrescriptionManagement.fromJson(Map<String, dynamic> json) =>
       _$RemotePrescriptionManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemotePrescriptionManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$RemotePrescriptionManagementToJson(this);
 }
 
 // Uzaktan Laboratuvar Sonuçları
@@ -552,7 +552,7 @@ class RemoteLabResults {
   factory RemoteLabResults.fromJson(Map<String, dynamic> json) =>
       _$RemoteLabResultsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteLabResultsFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteLabResultsToJson(this);
 }
 
 // Uzaktan Görüntüleme Sonuçları
@@ -585,5 +585,5 @@ class RemoteImagingResults {
   factory RemoteImagingResults.fromJson(Map<String, dynamic> json) =>
       _$RemoteImagingResultsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RemoteImagingResultsFromJson(this);
+  Map<String, dynamic> toJson() => _$RemoteImagingResultsToJson(this);
 }

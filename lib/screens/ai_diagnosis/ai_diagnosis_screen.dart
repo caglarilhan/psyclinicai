@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/ai_diagnosis_models.dart';
+import '../../models/diagnosis_models.dart';
 import '../../services/ai_diagnosis_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/ai_diagnosis/ai_diagnosis_panel.dart';
@@ -85,51 +85,66 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
         id: '1',
         name: 'Depresif ruh hali',
         description: 'Sürekli üzgün, umutsuz hissetme',
-        category: 'mood',
-        severity: 8.5,
-        onsetDate: DateTime.now().subtract(const Duration(days: 30)),
-        duration: const Duration(days: 30),
-        notes: 'Günün çoğunda devam ediyor',
+        type: SymptomType.mood,
+        severity: SymptomSeverity.severe,
+        relatedSymptoms: ['anhedonia', 'fatigue'],
+        triggers: ['stress', 'isolation'],
+        alleviators: ['therapy', 'medication'],
+        duration: TreatmentDuration.chronic,
+        frequency: Frequency.daily,
+        metadata: const {},
       ),
       Symptom(
         id: '2',
         name: 'İlgi kaybı',
         description: 'Önceden keyif alınan aktivitelere karşı ilgisizlik',
-        category: 'mood',
-        severity: 7.0,
-        onsetDate: DateTime.now().subtract(const Duration(days: 25)),
-        duration: const Duration(days: 25),
-        notes: 'Sosyal aktivitelerden kaçınıyor',
+        type: SymptomType.mood,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: ['depression', 'isolation'],
+        triggers: ['social_pressure', 'fatigue'],
+        alleviators: ['social_support', 'medication'],
+        duration: TreatmentDuration.subacute,
+        frequency: Frequency.often,
+        metadata: const {},
       ),
       Symptom(
         id: '3',
         name: 'Uyku bozukluğu',
         description: 'Uykuya dalmada güçlük ve erken uyanma',
-        category: 'sleep',
-        severity: 6.5,
-        onsetDate: DateTime.now().subtract(const Duration(days: 20)),
-        duration: const Duration(days: 20),
-        notes: 'Günde 4-5 saat uyuyor',
+        type: SymptomType.sleep,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: ['insomnia', 'fatigue'],
+        triggers: ['anxiety', 'stress'],
+        alleviators: ['sleep_hygiene', 'medication'],
+        duration: TreatmentDuration.subacute,
+        frequency: Frequency.often,
+        metadata: const {},
       ),
       Symptom(
         id: '4',
         name: 'Yorgunluk',
         description: 'Sürekli yorgun ve enerjisiz hissetme',
-        category: 'physical',
-        severity: 7.5,
-        onsetDate: DateTime.now().subtract(const Duration(days: 28)),
-        duration: const Duration(days: 28),
-        notes: 'Günlük aktiviteleri etkiliyor',
+        type: SymptomType.energy,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: ['sleep_disturbance', 'depression'],
+        triggers: ['lack_of_sleep', 'medication'],
+        alleviators: ['rest', 'exercise'],
+        duration: TreatmentDuration.chronic,
+        frequency: Frequency.daily,
+        metadata: const {},
       ),
       Symptom(
         id: '5',
         name: 'Konsantrasyon güçlüğü',
         description: 'Düşünceleri toplamada ve karar vermede zorluk',
-        category: 'cognitive',
-        severity: 6.0,
-        onsetDate: DateTime.now().subtract(const Duration(days: 22)),
-        duration: const Duration(days: 22),
-        notes: 'İş performansını etkiliyor',
+        type: SymptomType.cognitive,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: ['attention_deficit', 'memory_problems'],
+        triggers: ['stress', 'depression'],
+        alleviators: ['cognitive_therapy', 'medication'],
+        duration: TreatmentDuration.subacute,
+        frequency: Frequency.often,
+        metadata: const {},
       ),
     ];
   }
@@ -151,10 +166,12 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
     try {
       // Listen to progress updates
       _aiService.progressStream.listen((progress) {
-        setState(() {
-          _analysisProgress = progress.progress;
-          _analysisMessage = progress.message;
-        });
+        if (mounted) {
+          setState(() {
+            _analysisProgress = progress.progress;
+            _analysisMessage = progress.message;
+          });
+        }
       });
 
       // Start AI analysis
@@ -389,7 +406,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
             
             const SizedBox(height: 12),
             Text(
-              'Timeline: ${_formatDuration(plan.timeline)}',
+              'Timeline: ${plan.timeline.value} ${plan.timeline.unit.name}',
               style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.blue),
             ),
           ],
@@ -461,18 +478,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
     }
   }
 
-  String _formatDuration(Duration duration) {
-    final weeks = duration.inDays ~/ 7;
-    final months = weeks ~/ 4;
-    
-    if (months > 0) {
-      return '$months ay';
-    } else if (weeks > 0) {
-      return '$weeks hafta';
-    } else {
-      return '${duration.inDays} gün';
-    }
-  }
+
 
   void _saveResults(DiagnosisResult result) {
     // TODO: Save to database
@@ -593,32 +599,32 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    symptom.severity.toStringAsFixed(1),
+                    symptom.severity.name,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(symptom.description, style: const TextStyle(color: Colors.grey[600])),
+            Text(symptom.description, style: TextStyle(color: Colors.grey[600])),
             const SizedBox(height: 8),
             Row(
               children: [
                 Chip(
-                  label: Text(symptom.category),
+                  label: Text(symptom.type.name),
                   backgroundColor: AppTheme.secondaryColor.withOpacity(0.2),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${symptom.duration.inDays} gün',
+                  symptom.duration.name,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
-            if (symptom.notes != null) ...[
+            if (symptom.triggers.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'Not: ${symptom.notes}',
+                'Tetikleyiciler: ${symptom.triggers.join(', ')}',
                 style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
               ),
             ],
@@ -628,11 +634,19 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
     );
   }
 
-  DiagnosisSeverity _mapSeverity(double severity) {
-    if (severity <= 3) return DiagnosisSeverity.mild;
-    if (severity <= 6) return DiagnosisSeverity.moderate;
-    if (severity <= 8) return DiagnosisSeverity.severe;
-    return DiagnosisSeverity.verySevere;
+  DiagnosisSeverity _mapSeverity(SymptomSeverity severity) {
+    switch (severity) {
+      case SymptomSeverity.mild:
+        return DiagnosisSeverity.mild;
+      case SymptomSeverity.moderate:
+        return DiagnosisSeverity.moderate;
+      case SymptomSeverity.severe:
+        return DiagnosisSeverity.severe;
+      case SymptomSeverity.extreme:
+        return DiagnosisSeverity.verySevere;
+      default:
+        return DiagnosisSeverity.mild;
+    }
   }
 
   void _addSymptom() {
@@ -684,7 +698,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Ortalama şiddet: ${(_symptoms.fold(0.0, (sum, s) => sum + s.severity) / _symptoms.length).toStringAsFixed(1)}',
+                      'En yaygın şiddet: ${_symptoms.isNotEmpty ? _symptoms.map((s) => s.severity.name).join(', ') : 'Yok'}',
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],

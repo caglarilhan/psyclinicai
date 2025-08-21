@@ -348,7 +348,7 @@ BloodPressureReading _$BloodPressureReadingFromJson(
   systolic: (json['systolic'] as num).toInt(),
   diastolic: (json['diastolic'] as num).toInt(),
   pulse: (json['pulse'] as num).toInt(),
-  notes: json['notes'] as String,
+  notes: json['notes'] as String? ?? '',
 );
 
 Map<String, dynamic> _$BloodPressureReadingToJson(

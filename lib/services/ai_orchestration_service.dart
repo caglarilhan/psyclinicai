@@ -1,501 +1,496 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
-import 'package:http/http.dart' as http;
-import '../config/ai_config.dart';
-import '../config/env_config.dart';
-import '../models/ai_performance_metrics.dart';
-import '../services/ai_cache_service.dart';
-import '../services/ai_prompt_service.dart';
-import '../utils/ai_logger.dart';
+import 'package:flutter/foundation.dart';
+import '../models/ai_orchestration_models.dart';
+import 'ai_service.dart';
 
-class AIOrchestrationService {
+class AIOrchestrationService extends ChangeNotifier {
   static final AIOrchestrationService _instance = AIOrchestrationService._internal();
   factory AIOrchestrationService() => _instance;
   AIOrchestrationService._internal();
 
-  final AILogger _logger = AILogger();
-  final AICacheService _cacheService = AICacheService();
-  final AIPromptService _promptService = AIPromptService();
-  
-  // AI Models Configuration
-  static const Map<String, Map<String, dynamic>> _aiModels = {
-    'openai': {
-      'name': 'OpenAI GPT-4',
-      'baseUrl': 'https://api.openai.com/v1',
-      'model': 'gpt-4-turbo-preview',
-      'maxTokens': 4000,
-      'temperature': 0.7,
-      'priority': 1,
-    },
-    'claude': {
-      'name': 'Anthropic Claude',
-      'baseUrl': 'https://api.anthropic.com/v1',
-      'model': 'claude-3-sonnet-20240229',
-      'maxTokens': 4000,
-      'temperature': 0.7,
-      'priority': 2,
-    },
-    'llama': {
-      'name': 'Meta LLaMA',
-      'baseUrl': 'https://api.meta.ai/v1',
-      'model': 'llama-3-70b',
-      'maxTokens': 4000,
-      'temperature': 0.7,
-      'priority': 3,
-    },
-  };
+  AIService? _aiService;
+  List<AIWorkflow> _workflows = [];
+  List<AIOrchestrationTask> _tasks = [];
+  List<AIOrchestrationResult> _results = [];
+  bool _isInitialized = false;
 
-  // Performance tracking
-  final Map<String, AIModelPerformance> _modelPerformance = {};
-  final Map<String, List<AITaskResult>> _taskHistory = {};
+  bool get isInitialized => _isInitialized;
+  List<AIWorkflow> get workflows => _workflows;
+  List<AIOrchestrationTask> get tasks => _tasks;
+  List<AIOrchestrationResult> get results => _results;
 
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     try {
-      await _cacheService.initialize();
-      await _loadModelPerformance();
-      _logger.info('AIOrchestrationService initialized successfully', context: 'AIOrchestrationService');
+      _aiService = AIService();
+      await _loadWorkflows();
+      _isInitialized = true;
+      notifyListeners();
+      print('AIOrchestrationService initialized successfully');
     } catch (e) {
-      _logger.error('Failed to initialize AIOrchestrationService', context: 'AIOrchestrationService', error: e);
+      print('AIOrchestrationService initialization failed: $e');
+      rethrow;
     }
   }
 
-  Future<Map<String, dynamic>> processRequest({
-    required String promptType,
-    required Map<String, dynamic> parameters,
-    required String taskId,
-    List<String>? preferredModels,
-    bool useCache = true,
-    Duration? cacheExpiry,
+  Future<void> _loadWorkflows() async {
+    // Load predefined workflows
+    _workflows.addAll([
+      AIWorkflow(
+        id: 'diagnosis_workflow',
+        name: 'Diagnosis Workflow',
+        description: 'Complete diagnostic workflow from symptoms to treatment',
+        steps: [
+          AIWorkflowStep(
+            id: 'symptom_analysis',
+            name: 'Symptom Analysis',
+            type: 'ai_analysis',
+            order: 1,
+            dependencies: [],
+            parameters: {'model': 'claude-3-sonnet', 'prompt_type': 'symptom_analysis'},
+          ),
+          AIWorkflowStep(
+            id: 'diagnosis_generation',
+            name: 'Diagnosis Generation',
+            type: 'ai_analysis',
+            order: 2,
+            dependencies: ['symptom_analysis'],
+            parameters: {'model': 'claude-3-sonnet', 'prompt_type': 'diagnosis_generation'},
+          ),
+          AIWorkflowStep(
+            id: 'treatment_planning',
+            name: 'Treatment Planning',
+            type: 'ai_analysis',
+            order: 3,
+            dependencies: ['diagnosis_generation'],
+            parameters: {'model': 'claude-3-sonnet', 'prompt_type': 'treatment_planning'},
+          ),
+        ],
+        isActive: true,
+      ),
+      AIWorkflow(
+        id: 'session_analysis_workflow',
+        name: 'Session Analysis Workflow',
+        description: 'Real-time session analysis and insights',
+        steps: [
+          AIWorkflowStep(
+            id: 'real_time_monitoring',
+            name: 'Real-time Monitoring',
+            type: 'ai_monitoring',
+            order: 1,
+            dependencies: [],
+            parameters: {'model': 'claude-3-haiku', 'prompt_type': 'real_time_analysis'},
+          ),
+          AIWorkflowStep(
+            id: 'crisis_detection',
+            name: 'Crisis Detection',
+            type: 'ai_analysis',
+            order: 2,
+            dependencies: ['real_time_monitoring'],
+            parameters: {'model': 'claude-3-sonnet', 'prompt_type': 'crisis_detection'},
+          ),
+        ],
+        isActive: true,
+      ),
+    ]);
+  }
+
+  Future<AIOrchestrationTask> executeWorkflow({
+    required String workflowId,
+    required String clientId,
+    required String clinicianId,
+    required Map<String, dynamic> inputData,
+    Map<String, dynamic>? parameters,
   }) async {
-    _logger.info('Processing AI request', context: 'AIOrchestrationService', data: {
-      'taskId': taskId,
-      'promptType': promptType,
-      'useCache': useCache,
-    });
-
-    // Check cache first
-    if (useCache) {
-      final cachedResponse = await _getCachedResponse(promptType, parameters);
-      if (cachedResponse != null) {
-        _logger.info('Cache hit, returning cached response', context: 'AIOrchestrationService');
-        return cachedResponse;
-      }
-    }
-
-    // Generate prompt
-    final prompt = _promptService.generatePrompt(promptType, parameters);
-    if (prompt.isEmpty) {
-      throw Exception('Failed to generate prompt');
-    }
-
-    // Select models to use
-    final modelsToUse = _selectModels(preferredModels);
+    final workflow = _workflows.firstWhere((w) => w.id == workflowId);
     
-    // Process with multiple models in parallel
-    final results = await _processWithMultipleModels(prompt, modelsToUse, taskId);
-    
-    // Select best result
-    final bestResult = _selectBestResult(results);
-    
-    // Cache the result
-    if (useCache) {
-      await _cacheService.cacheResponse(
-        promptType,
-        bestResult['modelId'],
-        parameters,
-        bestResult['response'],
-        cacheExpiry,
-      );
-    }
+    final task = AIOrchestrationTask(
+      id: _generateId(),
+      workflowId: workflowId,
+      clientId: clientId,
+      clinicianId: clinicianId,
+      status: 'running',
+      inputData: inputData,
+      parameters: parameters ?? {},
+      currentStep: 0,
+      totalSteps: workflow.steps.length,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
-    // Update performance metrics
-    await _updatePerformanceMetrics(results, taskId);
+    _tasks.add(task);
+    notifyListeners();
 
-    return bestResult['response'];
+    // Execute workflow asynchronously
+    _executeWorkflowAsync(task, workflow);
+
+    return task;
   }
 
-  Future<Map<String, dynamic>?> _getCachedResponse(
-    String promptType,
-    Map<String, dynamic> parameters,
-  ) async {
-    // Try to get from cache for any model
-    for (final modelId in _aiModels.keys) {
-      final cached = await _cacheService.getCachedResponse(promptType, modelId, parameters);
-      if (cached != null) {
-        return cached.response;
+  Future<void> _executeWorkflowAsync(AIOrchestrationTask task, AIWorkflow workflow) async {
+    try {
+      for (int i = 0; i < workflow.steps.length; i++) {
+        final step = workflow.steps[i];
+        
+        // Check dependencies
+        if (!_checkStepDependencies(task, step)) {
+          await Future.delayed(const Duration(seconds: 1));
+          continue;
+        }
+
+        // Execute step
+        await _executeStep(task, step, i);
+        
+        // Update task progress
+        task.currentStep = i + 1;
+        task.updatedAt = DateTime.now();
+        notifyListeners();
+
+        // Add delay between steps
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      // Complete task
+      task.status = 'completed';
+      task.updatedAt = DateTime.now();
+      notifyListeners();
+
+      // Create result
+      final result = AIOrchestrationResult(
+        id: _generateId(),
+        taskId: task.id,
+        workflowId: workflow.id,
+        status: 'success',
+        outputData: task.outputData,
+        executionTime: DateTime.now().difference(task.createdAt),
+        createdAt: DateTime.now(),
+      );
+
+      _results.add(result);
+      notifyListeners();
+
+    } catch (e) {
+      // Handle error
+      task.status = 'failed';
+      task.errorMessage = e.toString();
+      task.updatedAt = DateTime.now();
+      notifyListeners();
+
+      final result = AIOrchestrationResult(
+        id: _generateId(),
+        taskId: task.id,
+        workflowId: workflow.id,
+        status: 'failed',
+        errorMessage: e.toString(),
+        executionTime: DateTime.now().difference(task.createdAt),
+        createdAt: DateTime.now(),
+      );
+
+      _results.add(result);
+      notifyListeners();
+    }
+  }
+
+  bool _checkStepDependencies(AIOrchestrationTask task, AIWorkflowStep step) {
+    if (step.dependencies.isEmpty) return true;
+    
+    for (final dependency in step.dependencies) {
+      final dependencyStep = _getStepByDependency(task, dependency);
+      if (dependencyStep == null || !dependencyStep.isCompleted) {
+        return false;
       }
     }
+    
+    return true;
+  }
+
+  AIWorkflowStep? _getStepByDependency(AIOrchestrationTask task, String dependency) {
+    // This would need to be implemented based on your specific dependency tracking
     return null;
   }
 
-  List<String> _selectModels(List<String>? preferredModels) {
-    if (preferredModels != null && preferredModels.isNotEmpty) {
-      return preferredModels.where((id) => _aiModels.containsKey(id)).toList();
+  Future<void> _executeStep(AIOrchestrationTask task, AIWorkflowStep step, int stepIndex) async {
+    if (_aiService == null) {
+      throw Exception('AI Service not initialized');
     }
 
-    // Select models based on performance and priority
-    final availableModels = _aiModels.keys.toList();
-    availableModels.sort((a, b) {
-      final aPerf = _modelPerformance[a];
-      final bPerf = _modelPerformance[b];
-      
-      if (aPerf == null && bPerf == null) {
-        return _aiModels[a]!['priority'].compareTo(_aiModels[b]!['priority']);
-      }
-      
-      if (aPerf == null) return 1;
-      if (bPerf == null) return -1;
-      
-      // Sort by accuracy first, then by response time
-      final accuracyComparison = bPerf.accuracy.compareTo(aPerf.accuracy);
-      if (accuracyComparison != 0) return accuracyComparison;
-      
-      return aPerf.responseTime.compareTo(bPerf.responseTime);
-    });
-
-    // Return top 2 models for redundancy
-    return availableModels.take(2).toList();
-  }
-
-  Future<List<Map<String, dynamic>>> _processWithMultipleModels(
-    String prompt,
-    List<String> modelIds,
-    String taskId,
-  ) async {
-    final futures = <Future<Map<String, dynamic>>>[];
-    
-    for (final modelId in modelIds) {
-      futures.add(_processWithModel(prompt, modelId, taskId));
-    }
-
-    final results = await Future.wait(futures);
-    return results.where((result) => result['success'] == true).toList();
-  }
-
-  Future<Map<String, dynamic>> _processWithModel(
-    String prompt,
-    String modelId,
-    String taskId,
-  ) async {
-    final startTime = DateTime.now();
-    
     try {
-      final modelConfig = _aiModels[modelId]!;
-      final response = await _callAIModel(prompt, modelId, modelConfig);
-      
-      final responseTime = DateTime.now().difference(startTime);
-      
-      return {
-        'modelId': modelId,
-        'modelName': modelConfig['name'],
-        'success': true,
-        'response': response,
-        'responseTime': responseTime.inMilliseconds / 1000.0,
-        'confidence': _calculateConfidence(response),
-        'taskId': taskId,
-      };
-    } catch (e) {
-      final responseTime = DateTime.now().difference(startTime);
-      
-      _logger.error('AI model request failed', context: 'AIOrchestrationService', data: {
-        'modelId': modelId,
-        'error': e.toString(),
-      });
-
-      return {
-        'modelId': modelId,
-        'modelName': _aiModels[modelId]!['name'],
-        'success': false,
-        'response': {},
-        'responseTime': responseTime.inMilliseconds / 1000.0,
-        'confidence': 0.0,
-        'error': e.toString(),
-        'taskId': taskId,
-      };
-    }
-  }
-
-  Future<Map<String, dynamic>> _callAIModel(
-    String prompt,
-    String modelId,
-    Map<String, dynamic> modelConfig,
-  ) async {
-    final apiKey = _getApiKey(modelId);
-    if (apiKey.isEmpty) {
-      throw Exception('API key not found for model: $modelId');
-    }
-
-    final headers = _getHeaders(modelId, apiKey);
-    final body = _getRequestBody(prompt, modelId, modelConfig);
-
-    final response = await http.post(
-      Uri.parse('${modelConfig['baseUrl']}/chat/completions'),
-      headers: headers,
-      body: jsonEncode(body),
-    ).timeout(Duration(seconds: EnvConfig.timeoutSeconds));
-
-    if (response.statusCode != 200) {
-      throw Exception('API request failed: ${response.statusCode} - ${response.body}');
-    }
-
-    final responseData = jsonDecode(response.body);
-    return _parseResponse(responseData, modelId);
-  }
-
-  String _getApiKey(String modelId) {
-    switch (modelId) {
-      case 'openai':
-        return EnvConfig.openaiApiKey;
-      case 'claude':
-        return EnvConfig.claudeApiKey;
-      case 'llama':
-        return 'YOUR_LLAMA_API_KEY'; // TODO: Add to env config
-      default:
-        return '';
-    }
-  }
-
-  Map<String, String> _getHeaders(String modelId, String apiKey) {
-    switch (modelId) {
-      case 'openai':
-        return {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        };
-      case 'claude':
-        return {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        };
-      case 'llama':
-        return {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        };
-      default:
-        return {'Content-Type': 'application/json'};
-    }
-  }
-
-  Map<String, dynamic> _getRequestBody(
-    String prompt,
-    String modelId,
-    Map<String, dynamic> modelConfig,
-  ) {
-    switch (modelId) {
-      case 'openai':
-        return {
-          'model': modelConfig['model'],
-          'messages': [
-            {'role': 'system', 'content': 'Sen deneyimli bir klinik psikologsun.'},
-            {'role': 'user', 'content': prompt},
-          ],
-          'max_tokens': modelConfig['maxTokens'],
-          'temperature': modelConfig['temperature'],
-        };
-      case 'claude':
-        return {
-          'model': modelConfig['model'],
-          'max_tokens': modelConfig['maxTokens'],
-          'temperature': modelConfig['temperature'],
-          'messages': [
-            {'role': 'user', 'content': prompt},
-          ],
-        };
-      case 'llama':
-        return {
-          'model': modelConfig['model'],
-          'prompt': prompt,
-          'max_tokens': modelConfig['maxTokens'],
-          'temperature': modelConfig['temperature'],
-        };
-      default:
-        return {'prompt': prompt};
-    }
-  }
-
-  Map<String, dynamic> _parseResponse(Map<String, dynamic> responseData, String modelId) {
-    try {
-      switch (modelId) {
-        case 'openai':
-          final content = responseData['choices']?[0]?['message']?['content'];
-          if (content != null) {
-            return _parseJsonResponse(content);
-          }
+      switch (step.type) {
+        case 'ai_analysis':
+          await _executeAIAnalysisStep(task, step, stepIndex);
           break;
-        case 'claude':
-          final content = responseData['content']?[0]?['text'];
-          if (content != null) {
-            return _parseJsonResponse(content);
-          }
+        case 'ai_monitoring':
+          await _executeAIMonitoringStep(task, step, stepIndex);
           break;
-        case 'llama':
-          final content = responseData['choices']?[0]?['text'];
-          if (content != null) {
-            return _parseJsonResponse(content);
-          }
-          break;
+        default:
+          throw Exception('Unknown step type: ${step.type}');
       }
     } catch (e) {
-      _logger.warning('Failed to parse AI response', context: 'AIOrchestrationService', error: e);
-    }
-
-    return {'error': 'Failed to parse response'};
-  }
-
-  Map<String, dynamic> _parseJsonResponse(String content) {
-    try {
-      // Try to extract JSON from the response
-      final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(content);
-      if (jsonMatch != null) {
-        final jsonString = jsonMatch.group(0)!;
-        return jsonDecode(jsonString);
-      }
-      
-      // If no JSON found, return the raw content
-      return {'content': content};
-    } catch (e) {
-      return {'content': content, 'parseError': e.toString()};
+      print('Step execution failed: $e');
+      rethrow;
     }
   }
 
-  double _calculateConfidence(Map<String, dynamic> response) {
-    // Try to extract confidence from response
-    if (response.containsKey('confidence')) {
-      final conf = response['confidence'];
-      if (conf is num) return conf.toDouble();
-      if (conf is String) {
-        final parsed = double.tryParse(conf);
-        if (parsed != null) return parsed;
-      }
-    }
+  Future<void> _executeAIAnalysisStep(AIOrchestrationTask task, AIWorkflowStep step, int stepIndex) async {
+    final prompt = _buildStepPrompt(step, task.inputData);
+    final response = await _aiService!.generateResponse(prompt);
     
-    // Default confidence based on response structure
-    if (response.containsKey('error')) return 0.0;
-    if (response.keys.length > 3) return 0.8;
-    if (response.keys.length > 1) return 0.6;
-    return 0.4;
-  }
-
-  Map<String, dynamic> _selectBestResult(List<Map<String, dynamic>> results) {
-    if (results.isEmpty) {
-      throw Exception('No successful AI model responses');
-    }
-
-    // Sort by confidence, then by response time
-    results.sort((a, b) {
-      final confidenceComparison = b['confidence'].compareTo(a['confidence']);
-      if (confidenceComparison != 0) return confidenceComparison;
-      
-      return a['responseTime'].compareTo(b['responseTime']);
-    });
-
-    return results.first;
-  }
-
-  Future<void> _updatePerformanceMetrics(
-    List<Map<String, dynamic>> results,
-    String taskId,
-  ) async {
-    for (final result in results) {
-      final modelId = result['modelId'];
-      final taskResult = AITaskResult(
-        taskId: taskId,
-        modelId: modelId,
-        taskType: 'ai_request',
-        success: result['success'],
-        confidence: result['confidence'],
-        responseTime: Duration(milliseconds: (result['responseTime'] * 1000).round()),
-        errorMessage: result['error'],
-        result: result['response'],
-        timestamp: DateTime.now(),
-      );
-
-      // Update task history
-      _taskHistory.putIfAbsent(modelId, () => []).add(taskResult);
-
-      // Update model performance
-      await _updateModelPerformance(modelId, taskResult);
-    }
-  }
-
-  Future<void> _updateModelPerformance(String modelId, AITaskResult taskResult) async {
-    final current = _modelPerformance[modelId];
-    final modelConfig = _aiModels[modelId]!;
-
-    if (current == null) {
-      // Initialize performance for new model
-      _modelPerformance[modelId] = AIModelPerformance(
-        modelId: modelId,
-        modelName: modelConfig['name'],
-        taskType: 'general',
-        accuracy: taskResult.success ? 1.0 : 0.0,
-        responseTime: taskResult.responseTime.inMilliseconds / 1000.0,
-        confidenceScore: taskResult.confidence,
-        totalRequests: 1,
-        successfulRequests: taskResult.success ? 1 : 0,
-        failedRequests: taskResult.success ? 0 : 1,
-        lastUsed: DateTime.now(),
-      );
-    } else {
-      // Update existing performance
-      final totalRequests = current.totalRequests + 1;
-      final successfulRequests = current.successfulRequests + (taskResult.success ? 1 : 0);
-      final failedRequests = current.failedRequests + (taskResult.success ? 0 : 1);
-      
-      // Calculate new accuracy
-      final newAccuracy = successfulRequests / totalRequests;
-      
-      // Calculate new response time (weighted average)
-      final newResponseTime = (current.responseTime * current.totalRequests + 
-                              taskResult.responseTime.inMilliseconds / 1000.0) / totalRequests;
-      
-      // Calculate new confidence score (weighted average)
-      final newConfidence = (current.confidenceScore * current.totalRequests + 
-                            taskResult.confidence) / totalRequests;
-
-      _modelPerformance[modelId] = current.copyWith(
-        accuracy: newAccuracy,
-        responseTime: newResponseTime,
-        confidenceScore: newConfidence,
-        totalRequests: totalRequests,
-        successfulRequests: successfulRequests,
-        failedRequests: failedRequests,
-        lastUsed: DateTime.now(),
-      );
-    }
-  }
-
-  Future<void> _loadModelPerformance() async {
-    // TODO: Load from persistent storage
-    _logger.info('Model performance loaded', context: 'AIOrchestrationService');
-  }
-
-  Future<void> saveModelPerformance() async {
-    // TODO: Save to persistent storage
-    _logger.info('Model performance saved', context: 'AIOrchestrationService');
-  }
-
-  Map<String, AIModelPerformance> getModelPerformance() => Map.unmodifiable(_modelPerformance);
-  
-  List<AITaskResult> getTaskHistory(String modelId) => 
-      List.unmodifiable(_taskHistory[modelId] ?? []);
-  
-  Map<String, dynamic> getServiceStats() {
-    final totalRequests = _modelPerformance.values.fold<int>(
-      0, (sum, model) => sum + model.totalRequests);
-    
-    final totalSuccessful = _modelPerformance.values.fold<int>(
-      0, (sum, model) => sum + model.successfulRequests);
-    
-    return {
-      'totalRequests': totalRequests,
-      'totalSuccessful': totalSuccessful,
-      'overallSuccessRate': totalRequests > 0 ? totalSuccessful / totalRequests : 0.0,
-      'activeModels': _modelPerformance.length,
-      'cacheStats': _cacheService.getCacheStats(),
+    // Store step output
+    if (task.outputData == null) task.outputData = {};
+    task.outputData!['step_${stepIndex + 1}'] = {
+      'step_id': step.id,
+      'step_name': step.name,
+      'output': response,
+      'timestamp': DateTime.now().toIso8601String(),
     };
+  }
+
+  Future<void> _executeAIMonitoringStep(AIOrchestrationTask task, AIWorkflowStep step, int stepIndex) async {
+    // For monitoring steps, we might want to set up continuous monitoring
+    // For now, just execute once
+    await _executeAIAnalysisStep(task, step, stepIndex);
+  }
+
+  String _buildStepPrompt(AIWorkflowStep step, Map<String, dynamic> inputData) {
+    final promptType = step.parameters['prompt_type'] ?? 'general';
+    
+    switch (promptType) {
+      case 'symptom_analysis':
+        return '''
+        Analyze the following psychiatric symptoms and provide insights:
+        
+        Input Data: $inputData
+        
+        Please provide:
+        1. Symptom severity assessment
+        2. Potential risk factors
+        3. Immediate concerns
+        4. Recommended next steps
+        ''';
+      
+      case 'diagnosis_generation':
+        return '''
+        Based on the symptom analysis, generate diagnostic suggestions:
+        
+        Previous Analysis: ${inputData['step_1']}
+        
+        Please provide:
+        1. Primary diagnosis suggestions
+        2. Differential diagnoses
+        3. Confidence levels
+        4. Supporting evidence
+        ''';
+      
+      case 'treatment_planning':
+        return '''
+        Based on the diagnosis, create a treatment plan:
+        
+        Diagnosis: ${inputData['step_2']}
+        
+        Please provide:
+        1. Treatment recommendations
+        2. Medication options
+        3. Therapy approaches
+        4. Monitoring plan
+        ''';
+      
+      case 'real_time_analysis':
+        return '''
+        Analyze the current session data in real-time:
+        
+        Session Data: $inputData
+        
+        Please provide:
+        1. Current emotional state
+        2. Risk indicators
+        3. Intervention suggestions
+        4. Session progress
+        ''';
+      
+      case 'crisis_detection':
+        return '''
+        Assess for crisis indicators in the session:
+        
+        Session Analysis: ${inputData['step_1']}
+        
+        Please provide:
+        1. Crisis risk level
+        2. Immediate actions needed
+        3. Safety assessment
+        4. Emergency protocols
+        ''';
+      
+      default:
+        return '''
+        Please analyze the following data:
+        
+        Input: $inputData
+        
+        Provide comprehensive analysis and recommendations.
+        ''';
+    }
+  }
+
+  Future<AIOrchestrationResult> processRequest({
+    required String promptType,
+    required Map<String, dynamic> parameters,
+    required String taskId,
+    bool useCache = true,
+  }) async {
+    try {
+      // Create task
+      final task = AIOrchestrationTask(
+        id: taskId,
+        workflowId: 'manual_request',
+        clientId: parameters['clientId'] ?? 'unknown',
+        clinicianId: parameters['clinicianId'] ?? 'unknown',
+        status: 'running',
+        startTime: DateTime.now(),
+        parameters: parameters,
+        promptType: promptType,
+      );
+
+      _tasks.add(task);
+      notifyListeners();
+
+      // Process with AI service
+      final aiResponse = await _aiService?.generateResponse(
+        _buildPrompt(promptType, parameters),
+      ) ?? 'AI service not available';
+
+      // Create result
+      final result = AIOrchestrationResult(
+        id: 'result_${taskId}',
+        taskId: taskId,
+        status: 'completed',
+        startTime: task.startTime,
+        endTime: DateTime.now(),
+        outputData: {'ai_response': aiResponse},
+        metrics: {
+          'response_time': DateTime.now().difference(task.startTime).inMilliseconds,
+          'prompt_type': promptType,
+        },
+      );
+
+      // Update task
+      task.status = 'completed';
+      task.endTime = DateTime.now();
+      task.outputData = result.outputData;
+
+      _results.add(result);
+      notifyListeners();
+
+      return result;
+    } catch (e) {
+      // Create error result
+      final result = AIOrchestrationResult(
+        id: 'error_${taskId}',
+        taskId: taskId,
+        status: 'failed',
+        startTime: DateTime.now(),
+        endTime: DateTime.now(),
+        outputData: {'error': e.toString()},
+        metrics: {'error': true},
+      );
+
+      _results.add(result);
+      notifyListeners();
+
+      rethrow;
+    }
+  }
+
+  String _buildPrompt(String promptType, Map<String, dynamic> parameters) {
+    switch (promptType) {
+      case 'real_time_session_analysis':
+        return '''
+        Analyze the following real-time session data:
+        Session ID: ${parameters['sessionId']}
+        Client ID: ${parameters['clientId']}
+        Session Duration: ${parameters['sessionDuration']} minutes
+        Current Phase: ${parameters['currentPhase']}
+        
+        Provide insights on:
+        1. Emotional state and progress
+        2. Risk factors and alerts
+        3. Intervention suggestions
+        4. Session recommendations
+        ''';
+      
+      case 'multimodal_session_analysis':
+        return '''
+        Analyze multimodal session data including voice, facial, and biometric data:
+        ${parameters.toString()}
+        
+        Provide comprehensive analysis of:
+        1. Voice patterns and emotional indicators
+        2. Facial expressions and micro-expressions
+        3. Biometric responses and stress levels
+        4. Integrated insights and recommendations
+        ''';
+      
+      case 'crisis_intervention_ai':
+        return '''
+        CRISIS INTERVENTION REQUIRED:
+        Crisis Type: ${parameters['crisisType']}
+        Crisis Level: ${parameters['crisisLevel']}
+        Client Status: ${parameters['clientStatus']}
+        Current Risks: ${parameters['currentRisks']}
+        
+        Provide immediate:
+        1. Risk assessment and escalation protocols
+        2. Crisis intervention strategies
+        3. Safety measures and emergency contacts
+        4. Follow-up recommendations
+        ''';
+      
+      default:
+        return '''
+        Analyze the following data:
+        ${parameters.toString()}
+        
+        Provide comprehensive analysis and recommendations.
+        ''';
+    }
+  }
+
+  AIOrchestrationTask? getTask(String taskId) {
+    try {
+      return _tasks.firstWhere((t) => t.id == taskId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  List<AIOrchestrationTask> getTasksByClient(String clientId) {
+    return _tasks.where((t) => t.clientId == clientId).toList();
+  }
+
+  List<AIOrchestrationTask> getTasksByClinician(String clinicianId) {
+    return _tasks.where((t) => t.clinicianId == clinicianId).toList();
+  }
+
+  List<AIOrchestrationTask> getTasksByStatus(String status) {
+    return _tasks.where((t) => t.status == status).toList();
+  }
+
+  AIOrchestrationResult? getResult(String resultId) {
+    try {
+      return _results.firstWhere((r) => r.id == resultId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  List<AIOrchestrationResult> getResultsByTask(String taskId) {
+    return _results.where((r) => r.taskId == taskId).toList();
+  }
+
+  List<AIOrchestrationResult> getResultsByWorkflow(String workflowId) {
+    return _results.where((r) => r.workflowId == workflowId).toList();
+  }
+
+  String _generateId() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
   }
 }

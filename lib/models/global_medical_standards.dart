@@ -340,7 +340,7 @@ class CountrySpecificProtocols {
   factory CountrySpecificProtocols.fromJson(Map<String, dynamic> json) =>
       _$CountrySpecificProtocolsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CountrySpecificProtocolsFromJson(this);
+  Map<String, dynamic> toJson() => _$CountrySpecificProtocolsToJson(this);
 }
 
 // Standard Compliance Tracking

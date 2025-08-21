@@ -295,7 +295,7 @@ class AccessControlSystem {
   factory AccessControlSystem.fromJson(Map<String, dynamic> json) =>
       _$AccessControlSystemFromJson(json);
 
-  Map<String, dynamic> toJson() => _$AccessControlSystemFromJson(this);
+  Map<String, dynamic> toJson() => _$AccessControlSystemToJson(this);
 }
 
 // Multi-Factor Authentication
@@ -357,7 +357,7 @@ class SessionManagement {
   factory SessionManagement.fromJson(Map<String, dynamic> json) =>
       _$SessionManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SessionManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$SessionManagementToJson(this);
 }
 
 // Audit Trail System
@@ -388,7 +388,7 @@ class AuditTrailSystem {
   factory AuditTrailSystem.fromJson(Map<String, dynamic> json) =>
       _$AuditTrailSystemFromJson(json);
 
-  Map<String, dynamic> toJson() => _$AuditTrailSystemFromJson(this);
+  Map<String, dynamic> toJson() => _$AuditTrailSystemToJson(this);
 }
 
 // Data Loss Prevention
@@ -417,7 +417,7 @@ class DataLossPrevention {
   factory DataLossPrevention.fromJson(Map<String, dynamic> json) =>
       _$DataLossPreventionFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataLossPreventionFromJson(this);
+  Map<String, dynamic> toJson() => _$DataLossPreventionToJson(this);
 }
 
 // Threat Detection & Response
@@ -446,7 +446,7 @@ class ThreatDetectionResponse {
   factory ThreatDetectionResponse.fromJson(Map<String, dynamic> json) =>
       _$ThreatDetectionResponseFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ThreatDetectionResponseFromJson(this);
+  Map<String, dynamic> toJson() => _$ThreatDetectionResponseToJson(this);
 }
 
 // Privacy by Design
@@ -473,7 +473,7 @@ class PrivacyByDesign {
   factory PrivacyByDesign.fromJson(Map<String, dynamic> json) =>
       _$PrivacyByDesignFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PrivacyByDesignFromJson(this);
+  Map<String, dynamic> toJson() => _$PrivacyByDesignToJson(this);
 }
 
 // Data Anonymization
@@ -502,7 +502,7 @@ class DataAnonymization {
   factory DataAnonymization.fromJson(Map<String, dynamic> json) =>
       _$DataAnonymizationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataAnonymizationFromJson(this);
+  Map<String, dynamic> toJson() => _$DataAnonymizationToJson(this);
 }
 
 // Secure Communication
@@ -531,7 +531,7 @@ class SecureCommunication {
   factory SecureCommunication.fromJson(Map<String, dynamic> json) =>
       _$SecureCommunicationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SecureCommunicationFromJson(this);
+  Map<String, dynamic> toJson() => _$SecureCommunicationToJson(this);
 }
 
 // Security Assessment
@@ -564,5 +564,5 @@ class SecurityAssessment {
   factory SecurityAssessment.fromJson(Map<String, dynamic> json) =>
       _$SecurityAssessmentFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SecurityAssessmentFromJson(this);
+  Map<String, dynamic> toJson() => _$SecurityAssessmentToJson(this);
 }

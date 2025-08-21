@@ -466,7 +466,7 @@ class MedicationAccessibility {
   factory MedicationAccessibility.fromJson(Map<String, dynamic> json) =>
       _$MedicationAccessibilityFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MedicationAccessibilityFromJson(this);
+  Map<String, dynamic> toJson() => _$MedicationAccessibilityToJson(this);
 }
 
 // İlaç Kalite Kontrolü

@@ -26,6 +26,12 @@ class AIService {
     }
   }
 
+  // Public initialize metodu
+  Future<void> initialize() async {
+    await _initialize();
+    _logger.info('AIService initialized successfully');
+  }
+
   // Rate limiting kontrolü
   bool _checkRateLimit() {
     final now = DateTime.now();
@@ -69,6 +75,17 @@ class AIService {
     }
     
     return apiKey;
+  }
+
+  // Generate response method
+  Future<String> generateResponse(String prompt) async {
+    try {
+      final response = await _callOpenAI(prompt);
+      return response['choices'][0]['message']['content'] ?? 'No response generated';
+    } catch (e) {
+      _logger.error('Error generating response: $e');
+      return 'Error: Unable to generate response';
+    }
   }
 
   // OpenAI API çağrısı

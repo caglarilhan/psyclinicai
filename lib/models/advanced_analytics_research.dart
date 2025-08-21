@@ -30,7 +30,7 @@ class AdvancedAnalyticsResearch {
   factory AdvancedAnalyticsResearch.fromJson(Map<String, dynamic> json) =>
       _$AdvancedAnalyticsResearchFromJson(json);
 
-  Map<String, dynamic> toJson() => _$AdvancedAnalyticsResearchFromJson(this);
+  Map<String, dynamic> toJson() => _$AdvancedAnalyticsResearchToJson(this);
 }
 
 // Tahminsel Analitik
@@ -71,7 +71,7 @@ class PredictiveAnalytics {
   factory PredictiveAnalytics.fromJson(Map<String, dynamic> json) =>
       _$PredictiveAnalyticsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PredictiveAnalyticsFromJson(this);
+  Map<String, dynamic> toJson() => _$PredictiveAnalyticsToJson(this);
 }
 
 // Nüfus Sağlığı İçgörüleri
@@ -110,7 +110,7 @@ class PopulationHealthInsights {
   factory PopulationHealthInsights.fromJson(Map<String, dynamic> json) =>
       _$PopulationHealthInsightsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PopulationHealthInsightsFromJson(this);
+  Map<String, dynamic> toJson() => _$PopulationHealthInsightsToJson(this);
 }
 
 // Tedavi Sonuç Takibi
@@ -151,7 +151,7 @@ class TreatmentOutcomeTracking {
   factory TreatmentOutcomeTracking.fromJson(Map<String, dynamic> json) =>
       _$TreatmentOutcomeTrackingFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TreatmentOutcomeTrackingFromJson(this);
+  Map<String, dynamic> toJson() => _$TreatmentOutcomeTrackingToJson(this);
 }
 
 // Araştırma İşbirliği
@@ -192,7 +192,7 @@ class ResearchCollaboration {
   factory ResearchCollaboration.fromJson(Map<String, dynamic> json) =>
       _$ResearchCollaborationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ResearchCollaborationFromJson(this);
+  Map<String, dynamic> toJson() => _$ResearchCollaborationToJson(this);
 }
 
 // Veri Analizi Platformu
@@ -227,7 +227,7 @@ class DataAnalyticsPlatform {
   factory DataAnalyticsPlatform.fromJson(Map<String, dynamic> json) =>
       _$DataAnalyticsPlatformFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataAnalyticsPlatformFromJson(this);
+  Map<String, dynamic> toJson() => _$DataAnalyticsPlatformToJson(this);
 }
 
 // Makine Öğrenmesi Modelleri
@@ -270,7 +270,7 @@ class MachineLearningModels {
   factory MachineLearningModels.fromJson(Map<String, dynamic> json) =>
       _$MachineLearningModelsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MachineLearningModelsFromJson(this);
+  Map<String, dynamic> toJson() => _$MachineLearningModelsToJson(this);
 }
 
 // Veri Görselleştirme
@@ -305,7 +305,7 @@ class DataVisualization {
   factory DataVisualization.fromJson(Map<String, dynamic> json) =>
       _$DataVisualizationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataVisualizationFromJson(this);
+  Map<String, dynamic> toJson() => _$DataVisualizationToJson(this);
 }
 
 // İstatistiksel Analiz
@@ -342,7 +342,7 @@ class StatisticalAnalysis {
   factory StatisticalAnalysis.fromJson(Map<String, dynamic> json) =>
       _$StatisticalAnalysisFromJson(json);
 
-  Map<String, dynamic> toJson() => _$StatisticalAnalysisFromJson(this);
+  Map<String, dynamic> toJson() => _$StatisticalAnalysisToJson(this);
 }
 
 // Veri Kalitesi Yönetimi
@@ -375,7 +375,7 @@ class DataQualityManagement {
   factory DataQualityManagement.fromJson(Map<String, dynamic> json) =>
       _$DataQualityManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataQualityManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$DataQualityManagementToJson(this);
 }
 
 // Araştırma Metodolojisi
@@ -410,7 +410,7 @@ class ResearchMethodology {
   factory ResearchMethodology.fromJson(Map<String, dynamic> json) =>
       _$ResearchMethodologyFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ResearchMethodologyFromJson(this);
+  Map<String, dynamic> toJson() => _$ResearchMethodologyToJson(this);
 }
 
 // Etik Gözden Geçirme
@@ -449,7 +449,7 @@ class EthicalReview {
   factory EthicalReview.fromJson(Map<String, dynamic> json) =>
       _$EthicalReviewFromJson(json);
 
-  Map<String, dynamic> toJson() => _$EthicalReviewFromJson(this);
+  Map<String, dynamic> toJson() => _$EthicalReviewToJson(this);
 }
 
 // Yayın Yönetimi
@@ -488,7 +488,7 @@ class PublicationManagement {
   factory PublicationManagement.fromJson(Map<String, dynamic> json) =>
       _$PublicationManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PublicationManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$PublicationManagementToJson(this);
 }
 
 // Veri Paylaşımı
@@ -525,7 +525,7 @@ class DataSharing {
   factory DataSharing.fromJson(Map<String, dynamic> json) =>
       _$DataSharingFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DataSharingFromJson(this);
+  Map<String, dynamic> toJson() => _$DataSharingToJson(this);
 }
 
 // Performans İzleme
@@ -558,5 +558,5 @@ class PerformanceMonitoring {
   factory PerformanceMonitoring.fromJson(Map<String, dynamic> json) =>
       _$PerformanceMonitoringFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PerformanceMonitoringFromJson(this);
+  Map<String, dynamic> toJson() => _$PerformanceMonitoringToJson(this);
 }

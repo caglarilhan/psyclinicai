@@ -8,7 +8,7 @@ import '../diagnosis/diagnosis_screen.dart';
 import '../prescription/prescription_screen.dart';
 import '../flag/flag_screen.dart';
 import '../client_management/client_management_screen.dart';
-import '../ai_case_management/ai_case_management_screen.dart';
+
 import '../ai_appointment/ai_appointment_screen.dart';
 import '../finance/finance_dashboard_screen.dart';
 import '../supervisor/supervisor_dashboard_screen.dart';
@@ -18,8 +18,12 @@ import '../../widgets/medication_reminder/medication_reminder_widget.dart';
 import '../../widgets/emergency_contact/emergency_contact_widget.dart';
 import '../../widgets/progress_dashboard/progress_dashboard_widget.dart';
 import '../../widgets/offline_mode/offline_mode_widget.dart';
+import '../../widgets/telehealth/telehealth_dashboard_widget.dart';
+import '../../widgets/advanced_ai/advanced_ai_dashboard_widget.dart';
+import '../../widgets/sprint3/sprint3_dashboard_widget.dart';
 import '../../services/theme_service.dart';
 import '../../services/offline_sync_service.dart';
+import '../../widgets/therapist/therapist_tools_dashboard_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,7 +37,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const DashboardHome(),
-    const SessionScreen(),
+    SessionScreen(
+      sessionId: 'demo_session_001',
+      clientId: 'demo_client_001',
+      clientName: 'Demo Client',
+    ),
     const DiagnosisScreen(),
     const PrescriptionScreen(),
     const ClientManagementScreen(),
@@ -154,6 +162,59 @@ class DashboardHome extends StatelessWidget {
             // Offline Mode Widget
             const OfflineModeWidget(),
             const SizedBox(height: 24),
+
+            // Telehealth Dashboard Widget
+            const TelehealthDashboardWidget(),
+            const SizedBox(height: 24),
+
+            // Advanced AI Dashboard Widget
+            const AdvancedAIDashboardWidget(),
+            const SizedBox(height: 24),
+
+            // Sprint 3 Dashboard
+            const Sprint3DashboardWidget(),
+            const SizedBox(height: 24),
+            
+            // Sprint 3 Test Butonu
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '🧪 Test & Geliştirme',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/sprint3-test');
+                            },
+                            icon: const Icon(Icons.science),
+                            label: const Text('Sprint 3 Test Ekranı'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // AI Analytics
 
             // Temel Modüller
             Text(

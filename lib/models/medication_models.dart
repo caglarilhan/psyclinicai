@@ -338,6 +338,40 @@ class MedicationAdherence {
       _$MedicationAdherenceFromJson(json);
 
   Map<String, dynamic> toJson() => _$MedicationAdherenceToJson(this);
+
+  MedicationAdherence copyWith({
+    String? id,
+    String? patientId,
+    String? medicationId,
+    String? medicationName,
+    DateTime? startDate,
+    DateTime? endDate,
+    AdherenceStatus? status,
+    double? adherenceRate,
+    List<AdherenceEvent>? events,
+    List<String>? barriers,
+    List<String>? facilitators,
+    List<String>? interventions,
+    String? notes,
+    Map<String, dynamic>? metadata,
+  }) {
+    return MedicationAdherence(
+      id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      medicationId: medicationId ?? this.medicationId,
+      medicationName: medicationName ?? this.medicationName,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+      adherenceRate: adherenceRate ?? this.adherenceRate,
+      events: events ?? this.events,
+      barriers: barriers ?? this.barriers,
+      facilitators: facilitators ?? this.facilitators,
+      interventions: interventions ?? this.interventions,
+      notes: notes ?? this.notes,
+      metadata: metadata ?? this.metadata,
+    );
+  }
 }
 
 @JsonSerializable()

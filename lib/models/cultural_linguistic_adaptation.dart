@@ -262,7 +262,7 @@ class CulturalCompatibilityAssessment {
   factory CulturalCompatibilityAssessment.fromJson(Map<String, dynamic> json) =>
       _$CulturalCompatibilityAssessmentFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalCompatibilityAssessmentFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalCompatibilityAssessmentToJson(this);
 }
 
 // Çok Dilli İletişim
@@ -295,7 +295,7 @@ class MultilingualCommunication {
   factory MultilingualCommunication.fromJson(Map<String, dynamic> json) =>
       _$MultilingualCommunicationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MultilingualCommunicationFromJson(this);
+  Map<String, dynamic> toJson() => _$MultilingualCommunicationToJson(this);
 }
 
 // Kültürel İçerik Yönetimi
@@ -330,7 +330,7 @@ class CulturalContentManagement {
   factory CulturalContentManagement.fromJson(Map<String, dynamic> json) =>
       _$CulturalContentManagementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalContentManagementFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalContentManagementToJson(this);
 }
 
 // Kültürel Veri Analizi
@@ -363,7 +363,7 @@ class CulturalDataAnalysis {
   factory CulturalDataAnalysis.fromJson(Map<String, dynamic> json) =>
       _$CulturalDataAnalysisFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalDataAnalysisFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalDataAnalysisToJson(this);
 }
 
 // Kültürel Performans Metrikleri
@@ -396,7 +396,7 @@ class CulturalPerformanceMetrics {
   factory CulturalPerformanceMetrics.fromJson(Map<String, dynamic> json) =>
       _$CulturalPerformanceMetricsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalPerformanceMetricsFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalPerformanceMetricsToJson(this);
 }
 
 // Kültürel Kalite Kontrolü
@@ -431,7 +431,7 @@ class CulturalQualityControl {
   factory CulturalQualityControl.fromJson(Map<String, dynamic> json) =>
       _$CulturalQualityControlFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalQualityControlFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalQualityControlToJson(this);
 }
 
 // Kültürel Sürekli İyileştirme
@@ -466,7 +466,7 @@ class CulturalContinuousImprovement {
   factory CulturalContinuousImprovement.fromJson(Map<String, dynamic> json) =>
       _$CulturalContinuousImprovementFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalContinuousImprovementFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalContinuousImprovementToJson(this);
 }
 
 // Kültürel İnovasyon
@@ -501,5 +501,5 @@ class CulturalInnovation {
   factory CulturalInnovation.fromJson(Map<String, dynamic> json) =>
       _$CulturalInnovationFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CulturalInnovationFromJson(this);
+  Map<String, dynamic> toJson() => _$CulturalInnovationToJson(this);
 }

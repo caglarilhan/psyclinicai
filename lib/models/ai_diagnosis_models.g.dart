@@ -350,48 +350,6 @@ const _$MonitoringTypeEnumMap = {
   MonitoringType.followUp: 'followUp',
 };
 
-DiagnosisResult _$DiagnosisResultFromJson(Map<String, dynamic> json) =>
-    DiagnosisResult(
-      id: json['id'] as String,
-      clientId: json['clientId'] as String,
-      therapistId: json['therapistId'] as String,
-      analysisDate: DateTime.parse(json['analysisDate'] as String),
-      symptoms: (json['symptoms'] as List<dynamic>)
-          .map((e) => Symptom.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      symptomAnalysis: SymptomAnalysis.fromJson(
-        json['symptomAnalysis'] as Map<String, dynamic>,
-      ),
-      riskAssessment: RiskAssessment.fromJson(
-        json['riskAssessment'] as Map<String, dynamic>,
-      ),
-      diagnosisSuggestions: (json['diagnosisSuggestions'] as List<dynamic>)
-          .map((e) => DiagnosisSuggestion.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      treatmentPlan: TreatmentPlan.fromJson(
-        json['treatmentPlan'] as Map<String, dynamic>,
-      ),
-      confidence: (json['confidence'] as num).toDouble(),
-      aiModel: json['aiModel'] as String,
-      processingTime: (json['processingTime'] as num).toInt(),
-    );
-
-Map<String, dynamic> _$DiagnosisResultToJson(DiagnosisResult instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'clientId': instance.clientId,
-      'therapistId': instance.therapistId,
-      'analysisDate': instance.analysisDate.toIso8601String(),
-      'symptoms': instance.symptoms,
-      'symptomAnalysis': instance.symptomAnalysis,
-      'riskAssessment': instance.riskAssessment,
-      'diagnosisSuggestions': instance.diagnosisSuggestions,
-      'treatmentPlan': instance.treatmentPlan,
-      'confidence': instance.confidence,
-      'aiModel': instance.aiModel,
-      'processingTime': instance.processingTime,
-    };
-
 DiagnosisProgress _$DiagnosisProgressFromJson(Map<String, dynamic> json) =>
     DiagnosisProgress(
       (json['progress'] as num).toDouble(),

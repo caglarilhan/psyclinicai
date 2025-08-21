@@ -377,7 +377,7 @@ class _SAASAnalyticsDashboardWidgetState extends State<SAASAnalyticsDashboardWid
               height: 200,
               child: PieChart(
                 PieChartData(
-                  sections: _buildRegionalSections(),
+                  sections: _buildRegionalPieChart(),
                   centerSpaceRadius: 40,
                   sectionsSpace: 2,
                 ),
@@ -389,12 +389,12 @@ class _SAASAnalyticsDashboardWidgetState extends State<SAASAnalyticsDashboardWid
     );
   }
 
-  List<PieChartSectionData> _buildRegionalSections() {
+  List<PieChartSectionData> _buildRegionalPieChart() {
     final colors = [
+      Colors.red,
       Colors.blue,
       Colors.green,
       Colors.orange,
-      Colors.red,
       Colors.purple,
       Colors.teal,
       Colors.indigo,
@@ -405,7 +405,7 @@ class _SAASAnalyticsDashboardWidgetState extends State<SAASAnalyticsDashboardWid
 
     return entries.asMap().entries.map((entry) {
       final index = entry.key;
-      final data = entry.value;
+      final data = entry.value.value; // Fix: access the value from MapEntry
       final percentage = (data / total * 100).toStringAsFixed(1);
       
       return PieChartSectionData(

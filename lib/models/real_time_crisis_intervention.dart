@@ -30,7 +30,7 @@ class RealTimeCrisisIntervention {
   factory RealTimeCrisisIntervention.fromJson(Map<String, dynamic> json) =>
       _$RealTimeCrisisInterventionFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RealTimeCrisisInterventionFromJson(this);
+  Map<String, dynamic> toJson() => _$RealTimeCrisisInterventionToJson(this);
 }
 
 // AI Risk Tespiti
@@ -67,7 +67,7 @@ class AIRiskDetection {
   factory AIRiskDetection.fromJson(Map<String, dynamic> json) =>
       _$AIRiskDetectionFromJson(json);
 
-  Map<String, dynamic> toJson() => _$AIRiskDetectionFromJson(this);
+  Map<String, dynamic> toJson() => _$AIRiskDetectionToJson(this);
 }
 
 // Acil Durum Protokolleri
@@ -104,7 +104,7 @@ class EmergencyProtocols {
   factory EmergencyProtocols.fromJson(Map<String, dynamic> json) =>
       _$EmergencyProtocolsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$EmergencyProtocolsFromJson(this);
+  Map<String, dynamic> toJson() => _$EmergencyProtocolsToJson(this);
 }
 
 // Dünya Çapında Kriz Hatları
@@ -141,7 +141,7 @@ class GlobalCrisisHotlines {
   factory GlobalCrisisHotlines.fromJson(Map<String, dynamic> json) =>
       _$GlobalCrisisHotlinesFromJson(json);
 
-  Map<String, dynamic> toJson() => _$GlobalCrisisHotlinesFromJson(this);
+  Map<String, dynamic> toJson() => _$GlobalCrisisHotlinesToJson(this);
 }
 
 // Gerçek Zamanlı İzleme
@@ -178,7 +178,7 @@ class RealTimeMonitoring {
   factory RealTimeMonitoring.fromJson(Map<String, dynamic> json) =>
       _$RealTimeMonitoringFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RealTimeMonitoringFromJson(this);
+  Map<String, dynamic> toJson() => _$RealTimeMonitoringToJson(this);
 }
 
 // Kriz Müdahale Ekibi
@@ -213,7 +213,7 @@ class CrisisInterventionTeam {
   factory CrisisInterventionTeam.fromJson(Map<String, dynamic> json) =>
       _$CrisisInterventionTeamFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CrisisInterventionTeamFromJson(this);
+  Map<String, dynamic> toJson() => _$CrisisInterventionTeamToJson(this);
 }
 
 // Acil Durum Müdahale Planı
@@ -252,7 +252,7 @@ class EmergencyInterventionPlan {
   factory EmergencyInterventionPlan.fromJson(Map<String, dynamic> json) =>
       _$EmergencyInterventionPlanFromJson(json);
 
-  Map<String, dynamic> toJson() => _$EmergencyInterventionPlanFromJson(this);
+  Map<String, dynamic> toJson() => _$EmergencyInterventionPlanToJson(this);
 }
 
 // Risk Uyarı Sistemi
@@ -287,7 +287,7 @@ class RiskAlertSystem {
   factory RiskAlertSystem.fromJson(Map<String, dynamic> json) =>
       _$RiskAlertSystemFromJson(json);
 
-  Map<String, dynamic> toJson() => _$RiskAlertSystemFromJson(this);
+  Map<String, dynamic> toJson() => _$RiskAlertSystemToJson(this);
 }
 
 // Güvenlik Planı
@@ -322,7 +322,7 @@ class SafetyPlan {
   factory SafetyPlan.fromJson(Map<String, dynamic> json) =>
       _$SafetyPlanFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SafetyPlanFromJson(this);
+  Map<String, dynamic> toJson() => _$SafetyPlanToJson(this);
 }
 
 // Kriz Sonrası Takip
@@ -359,7 +359,7 @@ class PostCrisisFollowUp {
   factory PostCrisisFollowUp.fromJson(Map<String, dynamic> json) =>
       _$PostCrisisFollowUpFromJson(json);
 
-  Map<String, dynamic> toJson() => _$PostCrisisFollowUpFromJson(this);
+  Map<String, dynamic> toJson() => _$PostCrisisFollowUpToJson(this);
 }
 
 // Kriz Müdahale Eğitimi
@@ -394,7 +394,7 @@ class CrisisInterventionTraining {
   factory CrisisInterventionTraining.fromJson(Map<String, dynamic> json) =>
       _$CrisisInterventionTrainingFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CrisisInterventionTrainingFromJson(this);
+  Map<String, dynamic> toJson() => _$CrisisInterventionTrainingToJson(this);
 }
 
 // Kriz Müdahale Performans Metrikleri
@@ -427,5 +427,5 @@ class CrisisInterventionPerformanceMetrics {
   factory CrisisInterventionPerformanceMetrics.fromJson(Map<String, dynamic> json) =>
       _$CrisisInterventionPerformanceMetricsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CrisisInterventionPerformanceMetricsFromJson(this);
+  Map<String, dynamic> toJson() => _$CrisisInterventionPerformanceMetricsToJson(this);
 }

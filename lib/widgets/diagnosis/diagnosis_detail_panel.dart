@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../models/diagnosis_models.dart';
+import '../../models/diagnosis_models.dart' hide Duration;
 import '../../utils/theme.dart';
 
 class DiagnosisDetailPanel extends StatefulWidget {
-  final ICD11Diagnosis? icd11Diagnosis;
-  final DSM5Diagnosis? dsm5Diagnosis;
-  final AIDiagnosisSuggestion? aiSuggestion;
+  final MentalDisorder? disorder;
+  final DiagnosisResult? aiSuggestion;
   final VoidCallback? onClose;
-  final Function(ICD11Diagnosis)? onSaveICD11;
-  final Function(DSM5Diagnosis)? onSaveDSM5;
-  final Function(AIDiagnosisSuggestion)? onSaveAI;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const DiagnosisDetailPanel({
     super.key,
-    this.icd11Diagnosis,
-    this.dsm5Diagnosis,
+    this.disorder,
     this.aiSuggestion,
     this.onClose,
-    this.onSaveICD11,
-    this.onSaveDSM5,
-    this.onSaveAI,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -106,19 +102,14 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
     IconData icon = Icons.medical_services;
     Color color = AppTheme.primaryColor;
 
-    if (widget.icd11Diagnosis != null) {
-      title = 'ICD-11: ${widget.icd11Diagnosis!.code}';
-      subtitle = widget.icd11Diagnosis!.title;
-      icon = Icons.medical_services;
-      color = AppTheme.primaryColor;
-    } else if (widget.dsm5Diagnosis != null) {
-      title = 'DSM-5: ${widget.dsm5Diagnosis!.code}';
-      subtitle = widget.dsm5Diagnosis!.title;
+    if (widget.disorder != null) {
+      title = 'DSM-5: ${widget.disorder!.code}';
+      subtitle = widget.disorder!.name;
       icon = Icons.psychology;
       color = AppTheme.secondaryColor;
     } else if (widget.aiSuggestion != null) {
       title = 'AI Önerisi';
-      subtitle = widget.aiSuggestion!.suggestedDiagnosis;
+      subtitle = widget.aiSuggestion!.disorderName;
       icon = Icons.auto_awesome;
       color = AppTheme.accentColor;
     }
@@ -145,30 +136,26 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
                     color: color,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: widget.onClose,
-            icon: Icon(
-              Icons.close,
-              color: Colors.grey[600],
+          if (widget.onClose != null)
+            IconButton(
+              onPressed: widget.onClose,
+              icon: const Icon(Icons.close),
+              tooltip: 'Kapat',
             ),
-            tooltip: 'Kapat',
-          ),
         ],
       ),
     );
@@ -177,7 +164,6 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
   Widget _buildTabBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
         border: Border(
           bottom: BorderSide(
             color: Theme.of(context).dividerColor,
@@ -188,10 +174,8 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
       child: TabBar(
         controller: _tabController,
         labelColor: AppTheme.primaryColor,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: Theme.of(context).textTheme.bodySmall?.color,
         indicatorColor: AppTheme.primaryColor,
-        indicatorWeight: 3,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
         tabs: const [
           Tab(text: 'Genel'),
           Tab(text: 'Kriterler'),
@@ -218,51 +202,23 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.icd11Diagnosis != null) ...[
-            _buildInfoSection('Kod', widget.icd11Diagnosis!.code, Icons.tag),
-            _buildInfoSection('Başlık', widget.icd11Diagnosis!.title, Icons.title),
-            _buildInfoSection('Açıklama', widget.icd11Diagnosis!.description, Icons.description),
-            _buildInfoSection('Kategori', widget.icd11Diagnosis!.category, Icons.category),
-            _buildInfoSection('Alt Kategori', widget.icd11Diagnosis!.subcategory, Icons.subdirectory_arrow_right),
-            _buildInfoSection('Şiddet', widget.icd11Diagnosis!.severity, Icons.trending_up),
-            _buildInfoSection('Kronisite', widget.icd11Diagnosis!.chronicity, Icons.schedule),
-            if (widget.icd11Diagnosis!.symptoms.isNotEmpty)
-              _buildListSection('Belirtiler', widget.icd11Diagnosis!.symptoms, Icons.medical_services),
-            if (widget.icd11Diagnosis!.riskFactors.isNotEmpty)
-              _buildListSection('Risk Faktörleri', widget.icd11Diagnosis!.riskFactors, Icons.warning),
-            if (widget.icd11Diagnosis!.complications.isNotEmpty)
-              _buildListSection('Komplikasyonlar', widget.icd11Diagnosis!.complications, Icons.error),
-          ] else if (widget.dsm5Diagnosis != null) ...[
-            _buildInfoSection('Kod', widget.dsm5Diagnosis!.code, Icons.tag),
-            _buildInfoSection('Başlık', widget.dsm5Diagnosis!.title, Icons.title),
-            _buildInfoSection('Açıklama', widget.dsm5Diagnosis!.description, Icons.description),
-                          _buildInfoSection('Kategori', widget.dsm5Diagnosis!.title, Icons.category),
-              _buildInfoSection('Alt Kategori', widget.dsm5Diagnosis!.code, Icons.subdirectory_arrow_right),
-            _buildInfoSection('Şiddet', widget.dsm5Diagnosis!.severity, Icons.trending_up),
-            _buildInfoSection('Kronisite', widget.dsm5Diagnosis!.chronicity, Icons.schedule),
-            if (widget.dsm5Diagnosis!.symptoms.isNotEmpty)
-              _buildListSection('Belirtiler', widget.dsm5Diagnosis!.symptoms, Icons.medical_services),
-            if (widget.dsm5Diagnosis!.riskFactors.isNotEmpty)
-              _buildListSection('Risk Faktörleri', widget.dsm5Diagnosis!.riskFactors, Icons.warning),
-            if (widget.dsm5Diagnosis!.comorbidities.isNotEmpty)
-              _buildListSection('Komorbiditeler', widget.dsm5Diagnosis!.comorbidities, Icons.merge_type),
+          if (widget.disorder != null) ...[
+            _buildInfoSection('Tanı Kodu', widget.disorder!.code),
+            _buildInfoSection('Tanı Adı', widget.disorder!.name),
+            _buildInfoSection('Kategori', widget.disorder!.categoryId),
+            _buildInfoSection('Şiddet', widget.disorder!.severity.name),
+            
+            const SizedBox(height: 24),
+            
+            _buildSymptomsList('Belirtiler', widget.disorder!.symptoms.map((s) => s.name).toList()),
           ] else if (widget.aiSuggestion != null) ...[
-            _buildInfoSection('Önerilen Tanı', widget.aiSuggestion!.suggestedDiagnosis, Icons.auto_awesome),
-            _buildInfoSection('Kod', widget.aiSuggestion!.diagnosisCode, Icons.tag),
-            _buildInfoSection('Sistem', widget.aiSuggestion!.classificationSystem, Icons.system_update),
-            _buildInfoSection('Güven', '${(widget.aiSuggestion!.confidence * 100).round()}%', Icons.verified),
-            _buildInfoSection('Gerekçe', widget.aiSuggestion!.reasoning, Icons.psychology),
-            if (widget.aiSuggestion!.supportingSymptoms.isNotEmpty)
-              _buildListSection('Destekleyen Belirtiler', widget.aiSuggestion!.supportingSymptoms, Icons.check_circle),
-            if (widget.aiSuggestion!.differentialDiagnoses.isNotEmpty)
-              _buildListSection('Ayırıcı Tanılar', widget.aiSuggestion!.differentialDiagnoses, Icons.compare_arrows),
-            if (widget.aiSuggestion!.recommendedAssessments.isNotEmpty)
-              _buildListSection('Önerilen Değerlendirmeler', widget.aiSuggestion!.recommendedAssessments, Icons.assessment),
+            _buildInfoSection('AI Önerisi', widget.aiSuggestion!.disorderName),
+            _buildInfoSection('Tanı Kodu', widget.aiSuggestion!.disorderCode),
+            _buildInfoSection('Güven Skoru', '${(widget.aiSuggestion!.confidence * 100).toStringAsFixed(1)}%'),
+            
+            const SizedBox(height: 24),
           ],
           
-          const SizedBox(height: 20),
-          
-          // Metadata
           _buildMetadataSection(),
         ],
       ),
@@ -270,72 +226,10 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
   }
 
   Widget _buildCriteriaTab() {
-    if (widget.dsm5Diagnosis != null && widget.dsm5Diagnosis!.criteria.isNotEmpty) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'DSM-5 Tanı Kriterleri',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.secondaryColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...widget.dsm5Diagnosis!.criteria.map((criterion) => _buildCriterionCard(criterion)),
-          ],
-        ),
-      );
-    } else if (widget.icd11Diagnosis != null) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ICD-11 Kriterleri',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (widget.icd11Diagnosis!.inclusionCriteria.isNotEmpty) ...[
-              _buildListSection('Dahil Etme Kriterleri', widget.icd11Diagnosis!.inclusionCriteria, Icons.check_circle),
-              const SizedBox(height: 16),
-            ],
-            if (widget.icd11Diagnosis!.exclusionCriteria.isNotEmpty) ...[
-              _buildListSection('Hariç Tutma Kriterleri', widget.icd11Diagnosis!.exclusionCriteria, Icons.cancel),
-              const SizedBox(height: 16),
-            ],
-            if (widget.icd11Diagnosis!.relatedConditions.isNotEmpty) ...[
-              _buildListSection('İlgili Durumlar', widget.icd11Diagnosis!.relatedConditions, Icons.link),
-            ],
-          ],
-        ),
-      );
-    } else {
+    if (widget.disorder == null) {
       return const Center(
-        child: Text('Bu tanı için kriter bilgisi bulunmuyor'),
+        child: Text('Kriter bilgisi mevcut değil'),
       );
-    }
-  }
-
-  Widget _buildTreatmentTab() {
-    List<String> treatments = [];
-    List<String> medications = [];
-    List<String> therapies = [];
-
-    if (widget.icd11Diagnosis != null) {
-      treatments = widget.icd11Diagnosis!.treatmentOptions;
-      medications = widget.icd11Diagnosis!.medications;
-      therapies = widget.icd11Diagnosis!.therapies;
-    } else if (widget.dsm5Diagnosis != null) {
-      treatments = widget.dsm5Diagnosis!.treatmentOptions;
-      medications = widget.dsm5Diagnosis!.medications;
-      therapies = widget.dsm5Diagnosis!.therapies;
     }
 
     return SingleChildScrollView(
@@ -343,150 +237,128 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (treatments.isNotEmpty) ...[
-            _buildListSection('Tedavi Seçenekleri', treatments, Icons.healing),
-            const SizedBox(height: 16),
-          ],
-          if (medications.isNotEmpty) ...[
-            _buildListSection('İlaçlar', medications, Icons.medication),
-            const SizedBox(height: 16),
-          ],
-          if (therapies.isNotEmpty) ...[
-            _buildListSection('Terapiler', therapies, Icons.psychology),
-            const SizedBox(height: 16),
-          ],
-          if (treatments.isEmpty && medications.isEmpty && therapies.isEmpty) ...[
-            Center(
+          Text(
+            'Tanı Kriterleri',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          ...widget.disorder!.criteria.map((criterion) => 
+            _buildCriterionCard(criterion)
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTreatmentTab() {
+    if (widget.disorder == null) {
+      return const Center(
+        child: Text('Tedavi bilgisi mevcut değil'),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tedavi Seçenekleri',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          ...widget.disorder!.treatmentOptions.map((option) => Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    'Tedavi bilgisi bulunmuyor',
+                    option.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Bu tanı için henüz tedavi önerileri eklenmemiş',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[500],
-                    ),
-                    textAlign: TextAlign.center,
+                    option.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
-          ],
+          )),
         ],
       ),
     );
   }
 
-  Widget _buildInfoSection(String label, String value, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+  Widget _buildInfoSection(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: AppTheme.primaryColor, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).textTheme.bodySmall?.color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14),
-            ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildListSection(String label, List<String> items, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildSymptomsList(String title, List<String> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...items.map((item) => Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
             children: [
-              Icon(icon, color: AppTheme.primaryColor, size: 16),
+              Icon(
+                Icons.circle,
+                size: 6,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                  fontSize: 14,
+              Expanded(
+                child: Text(
+                  item,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: items.map((item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '• ',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              )).toList(),
-            ),
-          ),
-        ],
-      ),
+        )),
+      ],
     );
   }
 
-  Widget _buildCriterionCard(DSM5Criterion criterion) {
+  Widget _buildCriterionCard(DiagnosticCriteria criterion) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -499,60 +371,45 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
+                    color: _getCriterionTypeColor('required'),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    criterion.code,
-                    style: TextStyle(
-                      color: AppTheme.secondaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                    'Kriter ${criterion.criterionNumber}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _getCriterionTypeColor(criterion.type).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    criterion.type,
-                    style: TextStyle(
-                      color: _getCriterionTypeColor(criterion.type),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
+                Text(
+                  criterion.id,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
-              criterion.description,
-              style: const TextStyle(fontSize: 14),
+              criterion.criterion,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            if (criterion.examples.isNotEmpty) ...[
+            if (criterion.requiredSymptoms.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'Örnekler:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                  fontSize: 12,
+                'Gerekli Belirtiler:',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 4),
-              ...criterion.examples.map((example) => Padding(
-                padding: const EdgeInsets.only(left: 8),
+              ...criterion.requiredSymptoms.map((symptom) => Padding(
+                padding: const EdgeInsets.only(left: 16, bottom: 2),
                 child: Text(
-                  '• $example',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  '• $symptom',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               )),
             ],
@@ -562,82 +419,40 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
     );
   }
 
-  Color _getCriterionTypeColor(String type) {
-    switch (type) {
+  Color _getCriterionTypeColor(String category) {
+    switch (category) {
       case 'required':
-        return AppTheme.primaryColor;
+        return Colors.red;
       case 'optional':
-        return AppTheme.secondaryColor;
+        return Colors.orange;
       case 'exclusion':
-        return AppTheme.errorColor;
+        return Colors.blue;
       default:
         return Colors.grey;
     }
   }
 
   Widget _buildMetadataSection() {
-    DateTime? lastUpdated;
-    String? source = 'Unknown';
-
-    if (widget.icd11Diagnosis != null) {
-      lastUpdated = widget.icd11Diagnosis!.lastUpdated;
-      source = 'ICD-11';
-    } else if (widget.dsm5Diagnosis != null) {
-      lastUpdated = widget.dsm5Diagnosis!.lastUpdated;
-      source = 'DSM-5';
-    } else if (widget.aiSuggestion != null) {
-      lastUpdated = widget.aiSuggestion!.generatedAt;
-      source = 'AI Generated';
-    }
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: Theme.of(context).dividerColor,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Meta Bilgiler',
-            style: TextStyle(
+            'Metadata',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-              fontSize: 14,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.source, color: Colors.grey[600], size: 16),
-              const SizedBox(width: 8),
-              Text(
-                'Kaynak: $source',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          if (lastUpdated != null) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.update, color: Colors.grey[600], size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  'Güncellenme: ${_formatDate(lastUpdated)}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          const SizedBox(height: 12),
+          _buildInfoSection('Son Güncelleme', DateTime.now().toString().split(' ')[0]),
         ],
       ),
     );
@@ -656,41 +471,30 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
       ),
       child: Row(
         children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: widget.onClose,
-              child: const Text('Kapat'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: _handleSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
+          if (widget.onEdit != null)
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: widget.onEdit,
+                icon: const Icon(Icons.edit),
+                label: const Text('Düzenle'),
               ),
-              child: const Text('Kaydet'),
             ),
-          ),
+          if (widget.onEdit != null && widget.onDelete != null)
+            const SizedBox(width: 12),
+          if (widget.onDelete != null)
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: widget.onDelete,
+                icon: const Icon(Icons.delete),
+                label: const Text('Sil'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+            ),
         ],
       ),
     );
-  }
-
-  void _handleSave() {
-    if (widget.icd11Diagnosis != null && widget.onSaveICD11 != null) {
-      widget.onSaveICD11!(widget.icd11Diagnosis!);
-    } else if (widget.dsm5Diagnosis != null && widget.onSaveDSM5 != null) {
-      widget.onSaveDSM5!(widget.dsm5Diagnosis!);
-    } else if (widget.aiSuggestion != null && widget.onSaveAI != null) {
-      widget.onSaveAI!(widget.aiSuggestion!);
-    }
-    
-    widget.onClose?.call();
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

@@ -20,6 +20,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
       StreamController<Alert>.broadcast();
   final StreamController<InterventionSuggestion> _interventionController = 
       StreamController<InterventionSuggestion>.broadcast();
+  final StreamController<RealTimeSessionAnalysis> _crisisController = 
+      StreamController<RealTimeSessionAnalysis>.broadcast();
 
   // Active sessions
   final Map<String, SessionAnalysisSession> _activeSessions = {};
@@ -34,6 +36,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
   Stream<RealTimeSessionAnalysis> get analysisStream => _analysisController.stream;
   Stream<Alert> get alertStream => _alertController.stream;
   Stream<InterventionSuggestion> get interventionStream => _interventionController.stream;
+  Stream<RealTimeSessionAnalysis> get crisisStream => _crisisController.stream;
 
   // Getters
   bool get isEnabled => _isEnabled;
@@ -242,7 +245,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
       'sessionGoals': session.sessionGoals,
       'clientHistory': session.clientHistory,
       'recentSessionData': session.sessionData
-          .takeLast(10) // Last 10 data points
+          .skip(session.sessionData.length - 10).take(10) // Last 10 data points
           .map((d) => {
                 'type': d.type,
                 'data': d.data,
@@ -506,6 +509,173 @@ class RealTimeSessionAIService extends ChangeNotifier {
            dataType == 'harm_to_others';
   }
 
+  // Helper methods for multimodal data analysis
+  bool _hasMultimodalData(SessionAnalysisSession session) {
+    return session.sessionData.any((data) => 
+      data.type == 'voice' || 
+      data.type == 'facial' || 
+      data.type == 'biometric'
+    );
+  }
+
+  Map<String, dynamic> _extractVoiceData(SessionAnalysisSession session) {
+    final voiceData = session.sessionData
+        .where((data) => data.type == 'voice')
+        .map((data) => data.data)
+        .toList();
+    
+    return {
+      'hasVoiceData': voiceData.isNotEmpty,
+      'dataPoints': voiceData.length,
+      'lastUpdate': voiceData.isNotEmpty ? voiceData.last['timestamp'] : null,
+    };
+  }
+
+  Map<String, dynamic> _extractFacialData(SessionAnalysisSession session) {
+    final facialData = session.sessionData
+        .where((data) => data.type == 'facial')
+        .map((data) => data.data)
+        .toList();
+    
+    return {
+      'hasFacialData': facialData.isNotEmpty,
+      'dataPoints': facialData.length,
+      'lastUpdate': facialData.isNotEmpty ? facialData.last['timestamp'] : null,
+    };
+  }
+
+  Map<String, dynamic> _extractBiometricData(SessionAnalysisSession session) {
+    final biometricData = session.sessionData
+        .where((data) => data.type == 'biometric')
+        .map((data) => data.data)
+        .toList();
+    
+    return {
+      'hasBiometricData': biometricData.isNotEmpty,
+      'dataPoints': biometricData.length,
+      'lastUpdate': biometricData.isNotEmpty ? biometricData.last['timestamp'] : null,
+    };
+  }
+
+  bool _detectCrisisIndicators(SessionAnalysisSession session) {
+    // Check for crisis indicators in session data
+    return session.sessionData.any((data) {
+      if (data.type == 'risk_assessment') {
+        final riskData = data.data as Map<String, dynamic>;
+        return riskData['riskLevel'] == 'high' || riskData['riskLevel'] == 'critical';
+      }
+      return false;
+    });
+  }
+
+  String _determineCrisisType(SessionAnalysisSession session) {
+    // Analyze session data to determine crisis type
+    if (session.sessionData.any((data) => 
+        data.type == 'risk_assessment' && 
+        (data.data as Map<String, dynamic>)['riskType'] == 'suicidal')) {
+      return 'suicidal_ideation';
+    }
+    if (session.sessionData.any((data) => 
+        data.type == 'risk_assessment' && 
+        (data.data as Map<String, dynamic>)['riskType'] == 'violent')) {
+      return 'violent_behavior';
+    }
+    return 'general_crisis';
+  }
+
+  String _assessCrisisLevel(SessionAnalysisSession session) {
+    // Assess crisis level based on session data
+    final highRiskData = session.sessionData
+        .where((data) => 
+            data.type == 'risk_assessment' && 
+            (data.data as Map<String, dynamic>)['riskLevel'] == 'critical')
+        .length;
+    
+    if (highRiskData > 3) return 'critical';
+    if (highRiskData > 1) return 'high';
+    return 'moderate';
+  }
+
+  String _assessClientStatus(SessionAnalysisSession session) {
+    // Assess overall client status
+    final riskData = session.sessionData
+        .where((data) => data.type == 'risk_assessment')
+        .map((data) => data.data as Map<String, dynamic>)
+        .toList();
+    
+    if (riskData.any((r) => r['riskLevel'] == 'critical')) {
+      return 'critical_condition';
+    }
+    if (riskData.any((r) => r['riskLevel'] == 'high')) {
+      return 'high_risk';
+    }
+    return 'stable';
+  }
+
+  List<String> _identifyCurrentRisks(SessionAnalysisSession session) {
+    // Identify current risks from session data
+    final risks = <String>[];
+    for (final data in session.sessionData) {
+      if (data.type == 'risk_assessment') {
+        final riskData = data.data as Map<String, dynamic>;
+        if (riskData['riskType'] != null) {
+          risks.add(riskData['riskType']);
+        }
+      }
+    }
+    return risks.toSet().toList();
+  }
+
+  List<String> _getPreviousInterventions(SessionAnalysisSession session) {
+    // Get previous interventions from client history
+    return session.clientHistory['interventions']?.cast<String>() ?? [];
+  }
+
+  void _handleCrisisEscalation(RealTimeSessionAnalysis analysis, SessionAnalysisSession session) {
+    // Handle crisis escalation
+    _logger.warning('Crisis escalation detected', context: 'RealTimeSessionAIService', data: {
+      'sessionId': session.sessionId,
+      'crisisType': analysis.crisisType,
+      'crisisLevel': analysis.crisisLevel,
+    });
+    
+    // Emit crisis alert
+    _crisisController.add(analysis);
+  }
+
+  // Helper methods for data parsing
+  List<Map<String, dynamic>> _parseGoalProgress(List<dynamic> data) {
+    return data.map((item) => {
+      'goal': item['goal'] ?? '',
+      'progress': item['progress'] ?? 0.0,
+      'status': item['status'] ?? 'pending',
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _parseMilestones(List<dynamic> data) {
+    return data.map((item) => {
+      'milestone': item['milestone'] ?? '',
+      'achieved': item['achieved'] ?? false,
+      'date': item['date'] != null ? DateTime.parse(item['date']) : null,
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _parseChallenges(List<dynamic> data) {
+    return data.map((item) => {
+      'challenge': item['challenge'] ?? '',
+      'severity': item['severity'] ?? 'medium',
+      'status': item['status'] ?? 'active',
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _parseBreakthroughs(List<dynamic> data) {
+    return data.map((item) => {
+      'breakthrough': item['breakthrough'] ?? '',
+      'impact': item['impact'] ?? 'medium',
+      'date': item['date'] != null ? DateTime.parse(item['date']) : null,
+    }).toList();
+  }
+
   // Helper methods for parsing enums
   EmotionType _parseEmotionType(String value) {
     try {
@@ -519,7 +689,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
     try {
       return RiskType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return RiskType.other; // Default
+      return RiskType.values.first; // Default to first value
     }
   }
 
@@ -602,6 +772,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
     _analysisController.close();
     _alertController.close();
     _interventionController.close();
+    _crisisController.close();
     super.dispose();
   }
 }

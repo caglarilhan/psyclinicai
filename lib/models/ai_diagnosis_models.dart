@@ -347,41 +347,7 @@ enum MonitoringType {
   followUp
 }
 
-// ===== ANA TANI SONUCU =====
 
-@JsonSerializable()
-class DiagnosisResult {
-  final String id;
-  final String clientId;
-  final String therapistId;
-  final DateTime analysisDate;
-  final List<Symptom> symptoms;
-  final SymptomAnalysis symptomAnalysis;
-  final RiskAssessment riskAssessment;
-  final List<DiagnosisSuggestion> diagnosisSuggestions;
-  final TreatmentPlan treatmentPlan;
-  final double confidence;
-  final String aiModel;
-  final int processingTime;
-
-  const DiagnosisResult({
-    required this.id,
-    required this.clientId,
-    required this.therapistId,
-    required this.analysisDate,
-    required this.symptoms,
-    required this.symptomAnalysis,
-    required this.riskAssessment,
-    required this.diagnosisSuggestions,
-    required this.treatmentPlan,
-    required this.confidence,
-    required this.aiModel,
-    required this.processingTime,
-  });
-
-  factory DiagnosisResult.fromJson(Map<String, dynamic> json) => _$DiagnosisResultFromJson(json);
-  Map<String, dynamic> toJson() => _$DiagnosisResultToJson(this);
-}
 
 // ===== İLERLEME VE UYARI MODELLERİ =====
 

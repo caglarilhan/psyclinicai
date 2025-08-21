@@ -709,14 +709,15 @@ class MedicationService extends ChangeNotifier {
         ),
       );
 
-      // Add event
-      adherence.events.add(event);
-      
-      // Update adherence rate
-      adherence.adherenceRate = _calculateAdherenceRate(adherence.events);
-      
-      // Update status
-      adherence.status = _calculateAdherenceStatus(adherence.adherenceRate);
+      // Add event and update adherence
+      final updatedEvents = [...adherence.events, event];
+      final updatedAdherenceRate = _calculateAdherenceRate(updatedEvents);
+      final updatedStatus = _calculateAdherenceStatus(updatedAdherenceRate);
+      adherence = adherence.copyWith(
+        events: updatedEvents,
+        adherenceRate: updatedAdherenceRate,
+        status: updatedStatus,
+      );
 
       // Save or update record
       final existingIndex = _adherenceRecords.indexWhere((a) => a.id == adherence.id);
@@ -760,7 +761,7 @@ class MedicationService extends ChangeNotifier {
     }
   }
 
-  Future<List<LaboratoryResult>> getPatientLabResults(String patientId) {
+  List<LaboratoryResult> getPatientLabResults(String patientId) {
     return _labResults.where((result) => result.patientId == patientId).toList();
   }
 

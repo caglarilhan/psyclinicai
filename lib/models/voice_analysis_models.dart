@@ -3,382 +3,301 @@ import 'package:json_annotation/json_annotation.dart';
 part 'voice_analysis_models.g.dart';
 
 @JsonSerializable()
-class VoiceAnalysis {
+class VoiceAnalysisSession {
+  final String id;
+  final String sessionId;
+  final String patientId;
+  final DateTime startTime;
+  final DateTime endTime;
+  final VoiceEmotionData emotionData;
+  final VoiceStressData stressData;
+  final VoicePatternData patternData;
+  final List<VoiceAlert> alerts;
+  final Map<String, dynamic> metadata;
+
+  const VoiceAnalysisSession({
+    required this.id,
+    required this.sessionId,
+    required this.patientId,
+    required this.startTime,
+    required this.endTime,
+    required this.emotionData,
+    required this.stressData,
+    required this.patternData,
+    this.alerts = const [],
+    this.metadata = const {},
+  });
+
+  factory VoiceAnalysisSession.fromJson(Map<String, dynamic> json) => _$VoiceAnalysisSessionFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceAnalysisSessionToJson(this);
+}
+
+@JsonSerializable()
+class VoiceEmotionData {
+  final double happiness;
+  final double sadness;
+  final double anger;
+  final double fear;
+  final double surprise;
+  final double disgust;
+  final double neutral;
+  final List<EmotionTimeline> timeline;
+  final Map<String, dynamic> metadata;
+
+  const VoiceEmotionData({
+    required this.happiness,
+    required this.sadness,
+    required this.anger,
+    required this.fear,
+    required this.surprise,
+    required this.disgust,
+    required this.neutral,
+    this.timeline = const [],
+    this.metadata = const {},
+  });
+
+  factory VoiceEmotionData.fromJson(Map<String, dynamic> json) => _$VoiceEmotionDataFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceEmotionDataToJson(this);
+}
+
+@JsonSerializable()
+class EmotionTimeline {
+  final DateTime timestamp;
+  final String dominantEmotion;
+  final double confidence;
+  final Map<String, double> emotionScores;
+
+  const EmotionTimeline({
+    required this.timestamp,
+    required this.dominantEmotion,
+    required this.confidence,
+    required this.emotionScores,
+  });
+
+  factory EmotionTimeline.fromJson(Map<String, dynamic> json) => _$EmotionTimelineFromJson(json);
+  Map<String, dynamic> toJson() => _$EmotionTimelineToJson(this);
+}
+
+@JsonSerializable()
+class VoiceStressData {
+  final double stressLevel;
+  final StressCategory category;
+  final List<StressIndicator> indicators;
+  final List<StressTrigger> triggers;
+  final Map<String, dynamic> metadata;
+
+  const VoiceStressData({
+    required this.stressLevel,
+    required this.category,
+    required this.indicators,
+    required this.triggers,
+    this.metadata = const {},
+  });
+
+  factory VoiceStressData.fromJson(Map<String, dynamic> json) => _$VoiceStressDataFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceStressDataToJson(this);
+}
+
+enum StressCategory {
+  low,
+  moderate,
+  high,
+  critical
+}
+
+@JsonSerializable()
+class StressIndicator {
+  final String type;
+  final double intensity;
+  final String description;
+  final DateTime detectedAt;
+
+  const StressIndicator({
+    required this.type,
+    required this.intensity,
+    required this.description,
+    required this.detectedAt,
+  });
+
+  factory StressIndicator.fromJson(Map<String, dynamic> json) => _$StressIndicatorFromJson(json);
+  Map<String, dynamic> toJson() => _$StressIndicatorToJson(this);
+}
+
+@JsonSerializable()
+class StressTrigger {
+  final String trigger;
+  final double impact;
+  final String context;
+  final DateTime timestamp;
+
+  const StressTrigger({
+    required this.trigger,
+    required this.impact,
+    required this.context,
+    required this.timestamp,
+  });
+
+  factory StressTrigger.fromJson(Map<String, dynamic> json) => _$StressTriggerFromJson(json);
+  Map<String, dynamic> toJson() => _$StressTriggerToJson(this);
+}
+
+@JsonSerializable()
+class VoicePatternData {
+  final double speakingRate;
+  final double volumeVariation;
+  final double pitchVariation;
+  final List<SpeechPattern> patterns;
+  final List<Anomaly> anomalies;
+  final Map<String, dynamic> metadata;
+
+  const VoicePatternData({
+    required this.speakingRate,
+    required this.volumeVariation,
+    required this.pitchVariation,
+    required this.patterns,
+    required this.anomalies,
+    this.metadata = const {},
+  });
+
+  factory VoicePatternData.fromJson(Map<String, dynamic> json) => _$VoicePatternDataFromJson(json);
+  Map<String, dynamic> toJson() => _$VoicePatternDataToJson(this);
+}
+
+@JsonSerializable()
+class SpeechPattern {
+  final String type;
+  final double frequency;
+  final String description;
+  final List<DateTime> occurrences;
+
+  const SpeechPattern({
+    required this.type,
+    required this.frequency,
+    required this.description,
+    required this.occurrences,
+  });
+
+  factory SpeechPattern.fromJson(Map<String, dynamic> json) => _$SpeechPatternFromJson(json);
+  Map<String, dynamic> toJson() => _$SpeechPatternToJson(this);
+}
+
+@JsonSerializable()
+class Anomaly {
+  final String type;
+  final double severity;
+  final String description;
+  final DateTime detectedAt;
+  final Map<String, dynamic> context;
+
+  const Anomaly({
+    required this.type,
+    required this.severity,
+    required this.description,
+    required this.detectedAt,
+    this.context = const {},
+  });
+
+  factory Anomaly.fromJson(Map<String, dynamic> json) => _$AnomalyFromJson(json);
+  Map<String, dynamic> toJson() => _$AnomalyToJson(this);
+}
+
+@JsonSerializable()
+class VoiceAlert {
+  final String id;
+  final AlertType type;
+  final AlertSeverity severity;
+  final String message;
+  final DateTime timestamp;
+  final bool acknowledged;
+  final String? acknowledgedBy;
+  final DateTime? acknowledgedAt;
+  final Map<String, dynamic> metadata;
+
+  const VoiceAlert({
+    required this.id,
+    required this.type,
+    required this.severity,
+    required this.message,
+    required this.timestamp,
+    this.acknowledged = false,
+    this.acknowledgedBy,
+    this.acknowledgedAt,
+    this.metadata = const {},
+  });
+
+  factory VoiceAlert.fromJson(Map<String, dynamic> json) => _$VoiceAlertFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceAlertToJson(this);
+}
+
+enum AlertType {
+  stressSpike,
+  emotionChange,
+  speechPattern,
+  crisisIndicator,
+  complianceIssue
+}
+
+enum AlertSeverity {
+  low,
+  medium,
+  high,
+  critical
+}
+
+@JsonSerializable()
+class VoiceAnalysisConfig {
+  final bool realTimeAnalysis;
+  final bool emotionDetection;
+  final bool stressMonitoring;
+  final bool patternAnalysis;
+  final bool anomalyDetection;
+  final int analysisInterval;
+  final double sensitivityThreshold;
+  final List<String> enabledFeatures;
+  final Map<String, dynamic> metadata;
+
+  const VoiceAnalysisConfig({
+    required this.realTimeAnalysis,
+    required this.emotionDetection,
+    required this.stressMonitoring,
+    required this.patternAnalysis,
+    required this.anomalyDetection,
+    required this.analysisInterval,
+    required this.sensitivityThreshold,
+    required this.enabledFeatures,
+    this.metadata = const {},
+  });
+
+  factory VoiceAnalysisConfig.fromJson(Map<String, dynamic> json) => _$VoiceAnalysisConfigFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceAnalysisConfigToJson(this);
+}
+
+@JsonSerializable()
+class VoiceAnalysisResult {
   final String id;
   final String sessionId;
   final DateTime timestamp;
-  final VoiceEmotion voiceEmotion;
-  final VoiceStress voiceStress;
-  final VoiceClarity voiceClarity;
-  final List<VoicePattern> patterns;
-  final List<SpeechAnomaly> anomalies;
-  final VoiceBiometrics biometrics;
+  final VoiceEmotionData emotionData;
+  final VoiceStressData stressData;
+  final VoicePatternData patternData;
+  final List<VoiceAlert> alerts;
+  final double confidence;
+  final Map<String, dynamic> insights;
   final Map<String, dynamic> metadata;
 
-  const VoiceAnalysis({
+  const VoiceAnalysisResult({
     required this.id,
     required this.sessionId,
     required this.timestamp,
-    required this.voiceEmotion,
-    required this.voiceStress,
-    required this.voiceClarity,
-    required this.patterns,
-    required this.anomalies,
-    required this.biometrics,
-    required this.metadata,
-  });
-
-  factory VoiceAnalysis.fromJson(Map<String, dynamic> json) =>
-      _$VoiceAnalysisFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceAnalysisToJson(this);
-
-  bool get hasHighStress => voiceStress.stressLevel > 0.7;
-  bool get hasEmotionalInstability => voiceEmotion.instability > 0.6;
-  bool get hasSpeechProblems => voiceClarity.clarity < 0.5;
-}
-
-@JsonSerializable()
-class VoiceEmotion {
-  final String id;
-  final EmotionType primaryEmotion;
-  final Map<String, double> emotionConfidence;
-  final double intensity;
-  final double instability;
-  final List<String> emotionalTriggers;
-  final VoiceTone tone;
-  final VoicePitch pitch;
-  final VoiceRhythm rhythm;
-
-  const VoiceEmotion({
-    required this.id,
-    required this.primaryEmotion,
-    required this.emotionConfidence,
-    required this.intensity,
-    required this.instability,
-    required this.emotionalTriggers,
-    required this.tone,
-    required this.pitch,
-    required this.rhythm,
-  });
-
-  factory VoiceEmotion.fromJson(Map<String, dynamic> json) =>
-      _$VoiceEmotionFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceEmotionToJson(this);
-}
-
-@JsonSerializable()
-class VoiceStress {
-  final String id;
-  final double stressLevel;
-  final StressType stressType;
-  final List<String> stressIndicators;
-  final double cortisolLevel;
-  final double heartRateVariability;
-  final List<String> copingMechanisms;
-  final DateTime stressOnset;
-
-  const VoiceStress({
-    required this.id,
-    required this.stressLevel,
-    required this.stressType,
-    required this.stressIndicators,
-    required this.cortisolLevel,
-    required this.heartRateVariability,
-    required this.copingMechanisms,
-    required this.stressOnset,
-  });
-
-  factory VoiceStress.fromJson(Map<String, dynamic> json) =>
-      _$VoiceStressFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceStressToJson(this);
-}
-
-@JsonSerializable()
-class VoiceClarity {
-  final String id;
-  final double clarity;
-  final double articulation;
-  final double fluency;
-  final List<SpeechDisorder> disorders;
-  final List<String> improvementSuggestions;
-  final double confidence;
-
-  const VoiceClarity({
-    required this.id,
-    required this.clarity,
-    required this.articulation,
-    required this.fluency,
-    required this.disorders,
-    required this.improvementSuggestions,
+    required this.emotionData,
+    required this.stressData,
+    required this.patternData,
+    required this.alerts,
     required this.confidence,
+    required this.insights,
+    this.metadata = const {},
   });
 
-  factory VoiceClarity.fromJson(Map<String, dynamic> json) =>
-      _$VoiceClarityFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceClarityToJson(this);
-}
-
-@JsonSerializable()
-class VoicePattern {
-  final String id;
-  final PatternType type;
-  final String description;
-  final double frequency;
-  final List<String> triggers;
-  final List<String> interventions;
-  final bool isPathological;
-
-  const VoicePattern({
-    required this.id,
-    required this.type,
-    required this.description,
-    required this.frequency,
-    required this.triggers,
-    required this.interventions,
-    required this.isPathological,
-  });
-
-  factory VoicePattern.fromJson(Map<String, dynamic> json) =>
-      _$VoicePatternFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoicePatternToJson(this);
-}
-
-@JsonSerializable()
-class SpeechAnomaly {
-  final String id;
-  final AnomalyType type;
-  final String description;
-  final double severity;
-  final DateTime detectedAt;
-  final List<String> symptoms;
-  final List<String> possibleCauses;
-  final List<String> recommendations;
-
-  const SpeechAnomaly({
-    required this.id,
-    required this.type,
-    required this.description,
-    required this.severity,
-    required this.detectedAt,
-    required this.symptoms,
-    required this.possibleCauses,
-    required this.recommendations,
-  });
-
-  factory SpeechAnomaly.fromJson(Map<String, dynamic> json) =>
-      _$SpeechAnomalyFromJson(json);
-
-  Map<String, dynamic> toJson() => _$SpeechAnomalyToJson(this);
-}
-
-@JsonSerializable()
-class VoiceBiometrics {
-  final String id;
-  final double pitch;
-  final double volume;
-  final double tempo;
-  final double rhythm;
-  final double breathingRate;
-  final double pauseFrequency;
-  final double fillerWordUsage;
-  final Map<String, double> biomarkers;
-
-  const VoiceBiometrics({
-    required this.id,
-    required this.pitch,
-    required this.volume,
-    required this.tempo,
-    required this.rhythm,
-    required this.breathingRate,
-    required this.pauseFrequency,
-    required this.fillerWordUsage,
-    required this.biomarkers,
-  });
-
-  factory VoiceBiometrics.fromJson(Map<String, dynamic> json) =>
-      _$VoiceBiometricsFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceBiometricsToJson(this);
-}
-
-@JsonSerializable()
-class VoiceTone {
-  final String id;
-  final ToneType type;
-  final double warmth;
-  final double harshness;
-  final double monotony;
-  final double expressiveness;
-  final List<String> characteristics;
-
-  const VoiceTone({
-    required this.id,
-    required this.type,
-    required this.warmth,
-    required this.harshness,
-    required this.monotony,
-    required this.expressiveness,
-    required this.characteristics,
-  });
-
-  factory VoiceTone.fromJson(Map<String, dynamic> json) =>
-      _$VoiceToneFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceToneToJson(this);
-}
-
-@JsonSerializable()
-class VoicePitch {
-  final String id;
-  final double averagePitch;
-  final double pitchRange;
-  final double pitchVariability;
-  final List<double> pitchHistory;
-  final PitchPattern pattern;
-
-  const VoicePitch({
-    required this.id,
-    required this.averagePitch,
-    required this.pitchRange,
-    required this.pitchVariability,
-    required this.pitchHistory,
-    required this.pattern,
-  });
-
-  factory VoicePitch.fromJson(Map<String, dynamic> json) =>
-      _$VoicePitchFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoicePitchToJson(this);
-}
-
-@JsonSerializable()
-class VoiceRhythm {
-  final String id;
-  final double speakingRate;
-  final double pauseDuration;
-  final double rhythmRegularity;
-  final List<String> rhythmPatterns;
-  final bool isRhythmic;
-
-  const VoiceRhythm({
-    required this.id,
-    required this.speakingRate,
-    required this.pauseDuration,
-    required this.rhythmRegularity,
-    required this.rhythmPatterns,
-    required this.isRhythmic,
-  });
-
-  factory VoiceRhythm.fromJson(Map<String, dynamic> json) =>
-      _$VoiceRhythmFromJson(json);
-
-  Map<String, dynamic> toJson() => _$VoiceRhythmToJson(this);
-}
-
-// Enums
-enum SpeechDisorder {
-  none,
-  stuttering,
-  dysarthria,
-  apraxia,
-  articulation,
-  phonological,
-  fluency,
-}
-enum EmotionType {
-  joy,
-  sadness,
-  anger,
-  fear,
-  surprise,
-  disgust,
-  anxiety,
-  depression,
-  excitement,
-  calm,
-  confusion,
-  frustration,
-  hope,
-  despair,
-  love,
-  hate,
-  guilt,
-  shame,
-  pride,
-  envy,
-  contempt,
-  amusement,
-  relief,
-  satisfaction,
-  disappointment,
-}
-
-enum StressType {
-  acute,
-  chronic,
-  episodic,
-  situational,
-  performance,
-  social,
-  financial,
-  health,
-  relationship,
-  work,
-}
-
-enum PatternType {
-  stuttering,
-  repetition,
-  hesitation,
-  rapidSpeech,
-  slowSpeech,
-  monotone,
-  emotionalOutbursts,
-  defensiveResponses,
-  avoidancePatterns,
-  compulsiveBehaviors,
-}
-
-enum AnomalyType {
-  stuttering,
-  slurredSpeech,
-  rapidSpeech,
-  slowSpeech,
-  monotone,
-  breathlessness,
-  hoarseness,
-  nasality,
-  articulationProblems,
-  fluencyIssues,
-}
-
-enum ToneType {
-  warm,
-  cold,
-  harsh,
-  soft,
-  monotone,
-  expressive,
-  flat,
-  animated,
-  tense,
-  relaxed,
-}
-
-enum PitchPattern {
-  rising,
-  falling,
-  flat,
-  variable,
-  monotone,
-  expressive,
-  nervous,
-  confident,
-  uncertain,
-  aggressive,
+  factory VoiceAnalysisResult.fromJson(Map<String, dynamic> json) => _$VoiceAnalysisResultFromJson(json);
+  Map<String, dynamic> toJson() => _$VoiceAnalysisResultToJson(this);
 }

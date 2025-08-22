@@ -6,375 +6,318 @@ part of 'voice_analysis_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-VoiceAnalysis _$VoiceAnalysisFromJson(Map<String, dynamic> json) =>
-    VoiceAnalysis(
-      id: json['id'] as String,
-      sessionId: json['sessionId'] as String,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      voiceEmotion: VoiceEmotion.fromJson(
-        json['voiceEmotion'] as Map<String, dynamic>,
-      ),
-      voiceStress: VoiceStress.fromJson(
-        json['voiceStress'] as Map<String, dynamic>,
-      ),
-      voiceClarity: VoiceClarity.fromJson(
-        json['voiceClarity'] as Map<String, dynamic>,
-      ),
-      patterns: (json['patterns'] as List<dynamic>)
-          .map((e) => VoicePattern.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      anomalies: (json['anomalies'] as List<dynamic>)
-          .map((e) => SpeechAnomaly.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      biometrics: VoiceBiometrics.fromJson(
-        json['biometrics'] as Map<String, dynamic>,
-      ),
-      metadata: json['metadata'] as Map<String, dynamic>,
+VoiceAnalysisSession _$VoiceAnalysisSessionFromJson(
+  Map<String, dynamic> json,
+) => VoiceAnalysisSession(
+  id: json['id'] as String,
+  sessionId: json['sessionId'] as String,
+  patientId: json['patientId'] as String,
+  startTime: DateTime.parse(json['startTime'] as String),
+  endTime: DateTime.parse(json['endTime'] as String),
+  emotionData: VoiceEmotionData.fromJson(
+    json['emotionData'] as Map<String, dynamic>,
+  ),
+  stressData: VoiceStressData.fromJson(
+    json['stressData'] as Map<String, dynamic>,
+  ),
+  patternData: VoicePatternData.fromJson(
+    json['patternData'] as Map<String, dynamic>,
+  ),
+  alerts:
+      (json['alerts'] as List<dynamic>?)
+          ?.map((e) => VoiceAlert.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+);
+
+Map<String, dynamic> _$VoiceAnalysisSessionToJson(
+  VoiceAnalysisSession instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'sessionId': instance.sessionId,
+  'patientId': instance.patientId,
+  'startTime': instance.startTime.toIso8601String(),
+  'endTime': instance.endTime.toIso8601String(),
+  'emotionData': instance.emotionData,
+  'stressData': instance.stressData,
+  'patternData': instance.patternData,
+  'alerts': instance.alerts,
+  'metadata': instance.metadata,
+};
+
+VoiceEmotionData _$VoiceEmotionDataFromJson(Map<String, dynamic> json) =>
+    VoiceEmotionData(
+      happiness: (json['happiness'] as num).toDouble(),
+      sadness: (json['sadness'] as num).toDouble(),
+      anger: (json['anger'] as num).toDouble(),
+      fear: (json['fear'] as num).toDouble(),
+      surprise: (json['surprise'] as num).toDouble(),
+      disgust: (json['disgust'] as num).toDouble(),
+      neutral: (json['neutral'] as num).toDouble(),
+      timeline:
+          (json['timeline'] as List<dynamic>?)
+              ?.map((e) => EmotionTimeline.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
 
-Map<String, dynamic> _$VoiceAnalysisToJson(VoiceAnalysis instance) =>
+Map<String, dynamic> _$VoiceEmotionDataToJson(VoiceEmotionData instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'sessionId': instance.sessionId,
-      'timestamp': instance.timestamp.toIso8601String(),
-      'voiceEmotion': instance.voiceEmotion,
-      'voiceStress': instance.voiceStress,
-      'voiceClarity': instance.voiceClarity,
-      'patterns': instance.patterns,
-      'anomalies': instance.anomalies,
-      'biometrics': instance.biometrics,
+      'happiness': instance.happiness,
+      'sadness': instance.sadness,
+      'anger': instance.anger,
+      'fear': instance.fear,
+      'surprise': instance.surprise,
+      'disgust': instance.disgust,
+      'neutral': instance.neutral,
+      'timeline': instance.timeline,
       'metadata': instance.metadata,
     };
 
-VoiceEmotion _$VoiceEmotionFromJson(Map<String, dynamic> json) => VoiceEmotion(
-  id: json['id'] as String,
-  primaryEmotion: $enumDecode(_$EmotionTypeEnumMap, json['primaryEmotion']),
-  emotionConfidence: (json['emotionConfidence'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, (e as num).toDouble()),
-  ),
-  intensity: (json['intensity'] as num).toDouble(),
-  instability: (json['instability'] as num).toDouble(),
-  emotionalTriggers: (json['emotionalTriggers'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  tone: VoiceTone.fromJson(json['tone'] as Map<String, dynamic>),
-  pitch: VoicePitch.fromJson(json['pitch'] as Map<String, dynamic>),
-  rhythm: VoiceRhythm.fromJson(json['rhythm'] as Map<String, dynamic>),
-);
-
-Map<String, dynamic> _$VoiceEmotionToJson(VoiceEmotion instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'primaryEmotion': _$EmotionTypeEnumMap[instance.primaryEmotion]!,
-      'emotionConfidence': instance.emotionConfidence,
-      'intensity': instance.intensity,
-      'instability': instance.instability,
-      'emotionalTriggers': instance.emotionalTriggers,
-      'tone': instance.tone,
-      'pitch': instance.pitch,
-      'rhythm': instance.rhythm,
-    };
-
-const _$EmotionTypeEnumMap = {
-  EmotionType.joy: 'joy',
-  EmotionType.sadness: 'sadness',
-  EmotionType.anger: 'anger',
-  EmotionType.fear: 'fear',
-  EmotionType.surprise: 'surprise',
-  EmotionType.disgust: 'disgust',
-  EmotionType.anxiety: 'anxiety',
-  EmotionType.depression: 'depression',
-  EmotionType.excitement: 'excitement',
-  EmotionType.calm: 'calm',
-  EmotionType.confusion: 'confusion',
-  EmotionType.frustration: 'frustration',
-  EmotionType.hope: 'hope',
-  EmotionType.despair: 'despair',
-  EmotionType.love: 'love',
-  EmotionType.hate: 'hate',
-  EmotionType.guilt: 'guilt',
-  EmotionType.shame: 'shame',
-  EmotionType.pride: 'pride',
-  EmotionType.envy: 'envy',
-  EmotionType.contempt: 'contempt',
-  EmotionType.amusement: 'amusement',
-  EmotionType.relief: 'relief',
-  EmotionType.satisfaction: 'satisfaction',
-  EmotionType.disappointment: 'disappointment',
-};
-
-VoiceStress _$VoiceStressFromJson(Map<String, dynamic> json) => VoiceStress(
-  id: json['id'] as String,
-  stressLevel: (json['stressLevel'] as num).toDouble(),
-  stressType: $enumDecode(_$StressTypeEnumMap, json['stressType']),
-  stressIndicators: (json['stressIndicators'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  cortisolLevel: (json['cortisolLevel'] as num).toDouble(),
-  heartRateVariability: (json['heartRateVariability'] as num).toDouble(),
-  copingMechanisms: (json['copingMechanisms'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  stressOnset: DateTime.parse(json['stressOnset'] as String),
-);
-
-Map<String, dynamic> _$VoiceStressToJson(VoiceStress instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'stressLevel': instance.stressLevel,
-      'stressType': _$StressTypeEnumMap[instance.stressType]!,
-      'stressIndicators': instance.stressIndicators,
-      'cortisolLevel': instance.cortisolLevel,
-      'heartRateVariability': instance.heartRateVariability,
-      'copingMechanisms': instance.copingMechanisms,
-      'stressOnset': instance.stressOnset.toIso8601String(),
-    };
-
-const _$StressTypeEnumMap = {
-  StressType.acute: 'acute',
-  StressType.chronic: 'chronic',
-  StressType.episodic: 'episodic',
-  StressType.situational: 'situational',
-  StressType.performance: 'performance',
-  StressType.social: 'social',
-  StressType.financial: 'financial',
-  StressType.health: 'health',
-  StressType.relationship: 'relationship',
-  StressType.work: 'work',
-};
-
-VoiceClarity _$VoiceClarityFromJson(Map<String, dynamic> json) => VoiceClarity(
-  id: json['id'] as String,
-  clarity: (json['clarity'] as num).toDouble(),
-  articulation: (json['articulation'] as num).toDouble(),
-  fluency: (json['fluency'] as num).toDouble(),
-  disorders: (json['disorders'] as List<dynamic>)
-      .map((e) => $enumDecode(_$SpeechDisorderEnumMap, e))
-      .toList(),
-  improvementSuggestions: (json['improvementSuggestions'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  confidence: (json['confidence'] as num).toDouble(),
-);
-
-Map<String, dynamic> _$VoiceClarityToJson(VoiceClarity instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'clarity': instance.clarity,
-      'articulation': instance.articulation,
-      'fluency': instance.fluency,
-      'disorders': instance.disorders
-          .map((e) => _$SpeechDisorderEnumMap[e]!)
-          .toList(),
-      'improvementSuggestions': instance.improvementSuggestions,
-      'confidence': instance.confidence,
-    };
-
-const _$SpeechDisorderEnumMap = {
-  SpeechDisorder.none: 'none',
-  SpeechDisorder.stuttering: 'stuttering',
-  SpeechDisorder.dysarthria: 'dysarthria',
-  SpeechDisorder.apraxia: 'apraxia',
-  SpeechDisorder.articulation: 'articulation',
-  SpeechDisorder.phonological: 'phonological',
-  SpeechDisorder.fluency: 'fluency',
-};
-
-VoicePattern _$VoicePatternFromJson(Map<String, dynamic> json) => VoicePattern(
-  id: json['id'] as String,
-  type: $enumDecode(_$PatternTypeEnumMap, json['type']),
-  description: json['description'] as String,
-  frequency: (json['frequency'] as num).toDouble(),
-  triggers: (json['triggers'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  interventions: (json['interventions'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  isPathological: json['isPathological'] as bool,
-);
-
-Map<String, dynamic> _$VoicePatternToJson(VoicePattern instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'type': _$PatternTypeEnumMap[instance.type]!,
-      'description': instance.description,
-      'frequency': instance.frequency,
-      'triggers': instance.triggers,
-      'interventions': instance.interventions,
-      'isPathological': instance.isPathological,
-    };
-
-const _$PatternTypeEnumMap = {
-  PatternType.stuttering: 'stuttering',
-  PatternType.repetition: 'repetition',
-  PatternType.hesitation: 'hesitation',
-  PatternType.rapidSpeech: 'rapidSpeech',
-  PatternType.slowSpeech: 'slowSpeech',
-  PatternType.monotone: 'monotone',
-  PatternType.emotionalOutbursts: 'emotionalOutbursts',
-  PatternType.defensiveResponses: 'defensiveResponses',
-  PatternType.avoidancePatterns: 'avoidancePatterns',
-  PatternType.compulsiveBehaviors: 'compulsiveBehaviors',
-};
-
-SpeechAnomaly _$SpeechAnomalyFromJson(Map<String, dynamic> json) =>
-    SpeechAnomaly(
-      id: json['id'] as String,
-      type: $enumDecode(_$AnomalyTypeEnumMap, json['type']),
-      description: json['description'] as String,
-      severity: (json['severity'] as num).toDouble(),
-      detectedAt: DateTime.parse(json['detectedAt'] as String),
-      symptoms: (json['symptoms'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      possibleCauses: (json['possibleCauses'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      recommendations: (json['recommendations'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-    );
-
-Map<String, dynamic> _$SpeechAnomalyToJson(SpeechAnomaly instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'type': _$AnomalyTypeEnumMap[instance.type]!,
-      'description': instance.description,
-      'severity': instance.severity,
-      'detectedAt': instance.detectedAt.toIso8601String(),
-      'symptoms': instance.symptoms,
-      'possibleCauses': instance.possibleCauses,
-      'recommendations': instance.recommendations,
-    };
-
-const _$AnomalyTypeEnumMap = {
-  AnomalyType.stuttering: 'stuttering',
-  AnomalyType.slurredSpeech: 'slurredSpeech',
-  AnomalyType.rapidSpeech: 'rapidSpeech',
-  AnomalyType.slowSpeech: 'slowSpeech',
-  AnomalyType.monotone: 'monotone',
-  AnomalyType.breathlessness: 'breathlessness',
-  AnomalyType.hoarseness: 'hoarseness',
-  AnomalyType.nasality: 'nasality',
-  AnomalyType.articulationProblems: 'articulationProblems',
-  AnomalyType.fluencyIssues: 'fluencyIssues',
-};
-
-VoiceBiometrics _$VoiceBiometricsFromJson(Map<String, dynamic> json) =>
-    VoiceBiometrics(
-      id: json['id'] as String,
-      pitch: (json['pitch'] as num).toDouble(),
-      volume: (json['volume'] as num).toDouble(),
-      tempo: (json['tempo'] as num).toDouble(),
-      rhythm: (json['rhythm'] as num).toDouble(),
-      breathingRate: (json['breathingRate'] as num).toDouble(),
-      pauseFrequency: (json['pauseFrequency'] as num).toDouble(),
-      fillerWordUsage: (json['fillerWordUsage'] as num).toDouble(),
-      biomarkers: (json['biomarkers'] as Map<String, dynamic>).map(
+EmotionTimeline _$EmotionTimelineFromJson(Map<String, dynamic> json) =>
+    EmotionTimeline(
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      dominantEmotion: json['dominantEmotion'] as String,
+      confidence: (json['confidence'] as num).toDouble(),
+      emotionScores: (json['emotionScores'] as Map<String, dynamic>).map(
         (k, e) => MapEntry(k, (e as num).toDouble()),
       ),
     );
 
-Map<String, dynamic> _$VoiceBiometricsToJson(VoiceBiometrics instance) =>
+Map<String, dynamic> _$EmotionTimelineToJson(EmotionTimeline instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'pitch': instance.pitch,
-      'volume': instance.volume,
-      'tempo': instance.tempo,
-      'rhythm': instance.rhythm,
-      'breathingRate': instance.breathingRate,
-      'pauseFrequency': instance.pauseFrequency,
-      'fillerWordUsage': instance.fillerWordUsage,
-      'biomarkers': instance.biomarkers,
+      'timestamp': instance.timestamp.toIso8601String(),
+      'dominantEmotion': instance.dominantEmotion,
+      'confidence': instance.confidence,
+      'emotionScores': instance.emotionScores,
     };
 
-VoiceTone _$VoiceToneFromJson(Map<String, dynamic> json) => VoiceTone(
-  id: json['id'] as String,
-  type: $enumDecode(_$ToneTypeEnumMap, json['type']),
-  warmth: (json['warmth'] as num).toDouble(),
-  harshness: (json['harshness'] as num).toDouble(),
-  monotony: (json['monotony'] as num).toDouble(),
-  expressiveness: (json['expressiveness'] as num).toDouble(),
-  characteristics: (json['characteristics'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-);
+VoiceStressData _$VoiceStressDataFromJson(Map<String, dynamic> json) =>
+    VoiceStressData(
+      stressLevel: (json['stressLevel'] as num).toDouble(),
+      category: $enumDecode(_$StressCategoryEnumMap, json['category']),
+      indicators: (json['indicators'] as List<dynamic>)
+          .map((e) => StressIndicator.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      triggers: (json['triggers'] as List<dynamic>)
+          .map((e) => StressTrigger.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
 
-Map<String, dynamic> _$VoiceToneToJson(VoiceTone instance) => <String, dynamic>{
-  'id': instance.id,
-  'type': _$ToneTypeEnumMap[instance.type]!,
-  'warmth': instance.warmth,
-  'harshness': instance.harshness,
-  'monotony': instance.monotony,
-  'expressiveness': instance.expressiveness,
-  'characteristics': instance.characteristics,
-};
-
-const _$ToneTypeEnumMap = {
-  ToneType.warm: 'warm',
-  ToneType.cold: 'cold',
-  ToneType.harsh: 'harsh',
-  ToneType.soft: 'soft',
-  ToneType.monotone: 'monotone',
-  ToneType.expressive: 'expressive',
-  ToneType.flat: 'flat',
-  ToneType.animated: 'animated',
-  ToneType.tense: 'tense',
-  ToneType.relaxed: 'relaxed',
-};
-
-VoicePitch _$VoicePitchFromJson(Map<String, dynamic> json) => VoicePitch(
-  id: json['id'] as String,
-  averagePitch: (json['averagePitch'] as num).toDouble(),
-  pitchRange: (json['pitchRange'] as num).toDouble(),
-  pitchVariability: (json['pitchVariability'] as num).toDouble(),
-  pitchHistory: (json['pitchHistory'] as List<dynamic>)
-      .map((e) => (e as num).toDouble())
-      .toList(),
-  pattern: $enumDecode(_$PitchPatternEnumMap, json['pattern']),
-);
-
-Map<String, dynamic> _$VoicePitchToJson(VoicePitch instance) =>
+Map<String, dynamic> _$VoiceStressDataToJson(VoiceStressData instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'averagePitch': instance.averagePitch,
-      'pitchRange': instance.pitchRange,
-      'pitchVariability': instance.pitchVariability,
-      'pitchHistory': instance.pitchHistory,
-      'pattern': _$PitchPatternEnumMap[instance.pattern]!,
+      'stressLevel': instance.stressLevel,
+      'category': _$StressCategoryEnumMap[instance.category]!,
+      'indicators': instance.indicators,
+      'triggers': instance.triggers,
+      'metadata': instance.metadata,
     };
 
-const _$PitchPatternEnumMap = {
-  PitchPattern.rising: 'rising',
-  PitchPattern.falling: 'falling',
-  PitchPattern.flat: 'flat',
-  PitchPattern.variable: 'variable',
-  PitchPattern.monotone: 'monotone',
-  PitchPattern.expressive: 'expressive',
-  PitchPattern.nervous: 'nervous',
-  PitchPattern.confident: 'confident',
-  PitchPattern.uncertain: 'uncertain',
-  PitchPattern.aggressive: 'aggressive',
+const _$StressCategoryEnumMap = {
+  StressCategory.low: 'low',
+  StressCategory.moderate: 'moderate',
+  StressCategory.high: 'high',
+  StressCategory.critical: 'critical',
 };
 
-VoiceRhythm _$VoiceRhythmFromJson(Map<String, dynamic> json) => VoiceRhythm(
-  id: json['id'] as String,
-  speakingRate: (json['speakingRate'] as num).toDouble(),
-  pauseDuration: (json['pauseDuration'] as num).toDouble(),
-  rhythmRegularity: (json['rhythmRegularity'] as num).toDouble(),
-  rhythmPatterns: (json['rhythmPatterns'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  isRhythmic: json['isRhythmic'] as bool,
-);
+StressIndicator _$StressIndicatorFromJson(Map<String, dynamic> json) =>
+    StressIndicator(
+      type: json['type'] as String,
+      intensity: (json['intensity'] as num).toDouble(),
+      description: json['description'] as String,
+      detectedAt: DateTime.parse(json['detectedAt'] as String),
+    );
 
-Map<String, dynamic> _$VoiceRhythmToJson(VoiceRhythm instance) =>
+Map<String, dynamic> _$StressIndicatorToJson(StressIndicator instance) =>
     <String, dynamic>{
-      'id': instance.id,
+      'type': instance.type,
+      'intensity': instance.intensity,
+      'description': instance.description,
+      'detectedAt': instance.detectedAt.toIso8601String(),
+    };
+
+StressTrigger _$StressTriggerFromJson(Map<String, dynamic> json) =>
+    StressTrigger(
+      trigger: json['trigger'] as String,
+      impact: (json['impact'] as num).toDouble(),
+      context: json['context'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+
+Map<String, dynamic> _$StressTriggerToJson(StressTrigger instance) =>
+    <String, dynamic>{
+      'trigger': instance.trigger,
+      'impact': instance.impact,
+      'context': instance.context,
+      'timestamp': instance.timestamp.toIso8601String(),
+    };
+
+VoicePatternData _$VoicePatternDataFromJson(Map<String, dynamic> json) =>
+    VoicePatternData(
+      speakingRate: (json['speakingRate'] as num).toDouble(),
+      volumeVariation: (json['volumeVariation'] as num).toDouble(),
+      pitchVariation: (json['pitchVariation'] as num).toDouble(),
+      patterns: (json['patterns'] as List<dynamic>)
+          .map((e) => SpeechPattern.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      anomalies: (json['anomalies'] as List<dynamic>)
+          .map((e) => Anomaly.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
+
+Map<String, dynamic> _$VoicePatternDataToJson(VoicePatternData instance) =>
+    <String, dynamic>{
       'speakingRate': instance.speakingRate,
-      'pauseDuration': instance.pauseDuration,
-      'rhythmRegularity': instance.rhythmRegularity,
-      'rhythmPatterns': instance.rhythmPatterns,
-      'isRhythmic': instance.isRhythmic,
+      'volumeVariation': instance.volumeVariation,
+      'pitchVariation': instance.pitchVariation,
+      'patterns': instance.patterns,
+      'anomalies': instance.anomalies,
+      'metadata': instance.metadata,
     };
+
+SpeechPattern _$SpeechPatternFromJson(Map<String, dynamic> json) =>
+    SpeechPattern(
+      type: json['type'] as String,
+      frequency: (json['frequency'] as num).toDouble(),
+      description: json['description'] as String,
+      occurrences: (json['occurrences'] as List<dynamic>)
+          .map((e) => DateTime.parse(e as String))
+          .toList(),
+    );
+
+Map<String, dynamic> _$SpeechPatternToJson(
+  SpeechPattern instance,
+) => <String, dynamic>{
+  'type': instance.type,
+  'frequency': instance.frequency,
+  'description': instance.description,
+  'occurrences': instance.occurrences.map((e) => e.toIso8601String()).toList(),
+};
+
+Anomaly _$AnomalyFromJson(Map<String, dynamic> json) => Anomaly(
+  type: json['type'] as String,
+  severity: (json['severity'] as num).toDouble(),
+  description: json['description'] as String,
+  detectedAt: DateTime.parse(json['detectedAt'] as String),
+  context: json['context'] as Map<String, dynamic>? ?? const {},
+);
+
+Map<String, dynamic> _$AnomalyToJson(Anomaly instance) => <String, dynamic>{
+  'type': instance.type,
+  'severity': instance.severity,
+  'description': instance.description,
+  'detectedAt': instance.detectedAt.toIso8601String(),
+  'context': instance.context,
+};
+
+VoiceAlert _$VoiceAlertFromJson(Map<String, dynamic> json) => VoiceAlert(
+  id: json['id'] as String,
+  type: $enumDecode(_$AlertTypeEnumMap, json['type']),
+  severity: $enumDecode(_$AlertSeverityEnumMap, json['severity']),
+  message: json['message'] as String,
+  timestamp: DateTime.parse(json['timestamp'] as String),
+  acknowledged: json['acknowledged'] as bool? ?? false,
+  acknowledgedBy: json['acknowledgedBy'] as String?,
+  acknowledgedAt: json['acknowledgedAt'] == null
+      ? null
+      : DateTime.parse(json['acknowledgedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+);
+
+Map<String, dynamic> _$VoiceAlertToJson(VoiceAlert instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': _$AlertTypeEnumMap[instance.type]!,
+      'severity': _$AlertSeverityEnumMap[instance.severity]!,
+      'message': instance.message,
+      'timestamp': instance.timestamp.toIso8601String(),
+      'acknowledged': instance.acknowledged,
+      'acknowledgedBy': instance.acknowledgedBy,
+      'acknowledgedAt': instance.acknowledgedAt?.toIso8601String(),
+      'metadata': instance.metadata,
+    };
+
+const _$AlertTypeEnumMap = {
+  AlertType.stressSpike: 'stressSpike',
+  AlertType.emotionChange: 'emotionChange',
+  AlertType.speechPattern: 'speechPattern',
+  AlertType.crisisIndicator: 'crisisIndicator',
+  AlertType.complianceIssue: 'complianceIssue',
+};
+
+const _$AlertSeverityEnumMap = {
+  AlertSeverity.low: 'low',
+  AlertSeverity.medium: 'medium',
+  AlertSeverity.high: 'high',
+  AlertSeverity.critical: 'critical',
+};
+
+VoiceAnalysisConfig _$VoiceAnalysisConfigFromJson(Map<String, dynamic> json) =>
+    VoiceAnalysisConfig(
+      realTimeAnalysis: json['realTimeAnalysis'] as bool,
+      emotionDetection: json['emotionDetection'] as bool,
+      stressMonitoring: json['stressMonitoring'] as bool,
+      patternAnalysis: json['patternAnalysis'] as bool,
+      anomalyDetection: json['anomalyDetection'] as bool,
+      analysisInterval: (json['analysisInterval'] as num).toInt(),
+      sensitivityThreshold: (json['sensitivityThreshold'] as num).toDouble(),
+      enabledFeatures: (json['enabledFeatures'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
+
+Map<String, dynamic> _$VoiceAnalysisConfigToJson(
+  VoiceAnalysisConfig instance,
+) => <String, dynamic>{
+  'realTimeAnalysis': instance.realTimeAnalysis,
+  'emotionDetection': instance.emotionDetection,
+  'stressMonitoring': instance.stressMonitoring,
+  'patternAnalysis': instance.patternAnalysis,
+  'anomalyDetection': instance.anomalyDetection,
+  'analysisInterval': instance.analysisInterval,
+  'sensitivityThreshold': instance.sensitivityThreshold,
+  'enabledFeatures': instance.enabledFeatures,
+  'metadata': instance.metadata,
+};
+
+VoiceAnalysisResult _$VoiceAnalysisResultFromJson(Map<String, dynamic> json) =>
+    VoiceAnalysisResult(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      emotionData: VoiceEmotionData.fromJson(
+        json['emotionData'] as Map<String, dynamic>,
+      ),
+      stressData: VoiceStressData.fromJson(
+        json['stressData'] as Map<String, dynamic>,
+      ),
+      patternData: VoicePatternData.fromJson(
+        json['patternData'] as Map<String, dynamic>,
+      ),
+      alerts: (json['alerts'] as List<dynamic>)
+          .map((e) => VoiceAlert.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      confidence: (json['confidence'] as num).toDouble(),
+      insights: json['insights'] as Map<String, dynamic>,
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
+
+Map<String, dynamic> _$VoiceAnalysisResultToJson(
+  VoiceAnalysisResult instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'sessionId': instance.sessionId,
+  'timestamp': instance.timestamp.toIso8601String(),
+  'emotionData': instance.emotionData,
+  'stressData': instance.stressData,
+  'patternData': instance.patternData,
+  'alerts': instance.alerts,
+  'confidence': instance.confidence,
+  'insights': instance.insights,
+  'metadata': instance.metadata,
+};

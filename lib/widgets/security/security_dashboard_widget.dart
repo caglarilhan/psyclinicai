@@ -87,7 +87,18 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
                     children: [
                       _buildOverviewTab(consentService, regionalService),
                       _buildConsentTab(consentService),
-                      _buildComplianceTab(consentService, regionalService),
+                      FutureBuilder<Widget>(
+                  future: _buildComplianceTab(consentService, regionalService),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Hata: ${snapshot.error}'));
+                    }
+                    return snapshot.data ?? const SizedBox.shrink();
+                  },
+                ),
                       _buildAuditTab(consentService),
                     ],
                   ),
@@ -102,7 +113,7 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
 
   Widget _buildOverviewTab(ConsentService consentService, RegionalConfigService regionalService) {
     final region = regionalService.currentRegion;
-    final activeConsents = consentService.getActiveConsents().length;
+    final activeConsents = consentService.getActiveConsents('all', 'all').length;
     final expiringConsents = consentService.getExpiringConsents().length;
     
     return SingleChildScrollView(
@@ -159,7 +170,7 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
   }
 
   Widget _buildConsentTab(ConsentService consentService) {
-    final consents = consentService.getActiveConsents();
+    final consents = consentService.getActiveConsents('all', 'all');
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,10 +188,10 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
               return Card(
                 child: ListTile(
                   title: Text('Hasta: ${consent.patientId}'),
-                  subtitle: Text('Tarih: ${consent.createdAt.toString().split(' ')[0]}'),
+                  subtitle: Text('Tarih: ${consent.consentDate.toString().split(' ')[0]}'),
                   trailing: Icon(
-                    consent.status == 'active' ? Icons.check_circle : Icons.pending,
-                    color: consent.status == 'active' ? Colors.green : Colors.orange,
+                    consent.isActive ? Icons.check_circle : Icons.pending,
+                    color: consent.isActive ? Colors.green : Colors.orange,
                   ),
                 ),
               );
@@ -191,9 +202,9 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
     );
   }
 
-  Widget _buildComplianceTab(ConsentService consentService, RegionalConfigService regionalService) {
+  Future<Widget> _buildComplianceTab(ConsentService consentService, RegionalConfigService regionalService) async {
     final region = regionalService.currentRegion;
-    final complianceReport = consentService.generateComplianceReport(region.code);
+    final complianceReport = await consentService.generateComplianceReport(region: region.name);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +220,7 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Durum: ${complianceReport.status}'),
+                Text('Durum: ${complianceReport.complianceStatus}'),
                 const SizedBox(height: 8),
                 Text('Son Güncelleme: ${complianceReport.generatedAt.toString().split(' ')[0]}'),
                 const SizedBox(height: 8),
@@ -293,11 +304,11 @@ class _SecurityDashboardWidgetState extends State<SecurityDashboardWidget>
     String status = 'Aktif';
     Color statusColor = Colors.green;
     
-    if (region.code == 'TR') {
+    if (region.name == 'TR') {
       status = 'KVKK Uyumlu';
-    } else if (region.code == 'US') {
+    } else if (region.name == 'US') {
       status = 'HIPAA Uyumlu';
-    } else if (region.code == 'EU') {
+    } else if (region.name == 'EU') {
       status = 'GDPR Uyumlu';
     }
     

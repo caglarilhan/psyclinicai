@@ -181,7 +181,7 @@ class _DiagnosisDashboardWidgetState extends State<DiagnosisDashboardWidget>
                     color: system.isActive ? Colors.green : Colors.red,
                   ),
                   title: Text(system.name),
-                  subtitle: Text('${system.version} - ${system.description}'),
+                  subtitle: Text('${system.version} - ${system.name}'),
                   trailing: Text(system.isActive ? 'Aktif' : 'Pasif'),
                 ),
               );
@@ -253,7 +253,7 @@ class _DiagnosisDashboardWidgetState extends State<DiagnosisDashboardWidget>
                     return Card(
                       child: ListTile(
                         title: Text('Hasta: ${assessment.patientId}'),
-                        subtitle: Text('Tarih: ${assessment.createdAt.toString().split(' ')[0]}'),
+                        subtitle: Text('Tarih: ${assessment.assessmentDate.toString().split(' ')[0]}'),
                         trailing: Icon(
                           Icons.assessment,
                           color: Colors.blue,

@@ -6,7 +6,7 @@ import '../../utils/theme.dart';
 class DiagnosisSearchWidget extends StatefulWidget {
   final String language;
   final Function(MentalDisorder)? onDiagnosisSelected;
-  final Function(DiagnosisResult)? onAISelected;
+  final Function(DiagnosisSuggestion)? onAISelected;
 
   const DiagnosisSearchWidget({
     super.key,
@@ -24,7 +24,7 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
   final DiagnosisService _diagnosisService = DiagnosisService();
   
   List<MentalDisorder> _searchResults = [];
-  List<DiagnosisResult> _aiSuggestions = [];
+  List<DiagnosisSuggestion> _aiSuggestions = [];
   bool _isSearching = false;
   String? _error;
   String _selectedCategory = 'all';
@@ -334,7 +334,7 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
     );
   }
 
-  Widget _buildAIResult(DiagnosisResult suggestion) {
+  Widget _buildAIResult(DiagnosisSuggestion suggestion) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -376,7 +376,7 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      suggestion.disorderName,
+                      suggestion.diagnosis,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -392,20 +392,20 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
               ),
               const SizedBox(height: 8),
               Text(
-                'AI analizi - ${suggestion.metCriteria.length} kriter karşılanıyor',
+                'AI analizi - ${suggestion.evidence.length} kanıt bulundu',
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
                 ),
               ),
-              if (suggestion.metCriteria.isNotEmpty) ...[
+              if (suggestion.evidence.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 4,
                   runSpacing: 4,
-                  children: suggestion.metCriteria.take(3).map((criterion) => Chip(
+                  children: suggestion.evidence.take(3).map((evidence) => Chip(
                     label: Text(
-                      criterion,
+                      evidence,
                       style: const TextStyle(fontSize: 11),
                     ),
                     backgroundColor: AppTheme.accentColor.withValues(alpha: 0.1),
@@ -434,17 +434,19 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
       final disorders = await _diagnosisService.searchDisorders(query: query);
       
       // Generate AI diagnosis if we have symptoms
-      List<DiagnosisResult> aiResults = [];
+      List<DiagnosisSuggestion> aiResults = [];
       if (query.length > 10) { // Only generate AI suggestions for longer queries
         try {
           // Create mock symptom assessments for AI diagnosis
           final mockSymptoms = [
             SymptomAssessment(
               id: 'mock_symptom_1',
+              patientId: 'mock_patient_001',
+              clinicianId: 'mock_clinician_001',
               symptomId: 'symptom_1',
               symptomName: 'Depressed mood',
               severity: SymptomSeverity.moderate,
-              duration: Duration.chronic,
+              duration: TreatmentDuration.chronic,
               frequency: Frequency.continuous,
               triggers: ['stress'],
               alleviators: ['exercise'],
@@ -460,7 +462,12 @@ class _DiagnosisSearchWidgetState extends State<DiagnosisSearchWidget> {
           );
           
           if (aiDiagnosis.diagnoses.isNotEmpty) {
-            aiResults.addAll(aiDiagnosis.diagnoses);
+            // Convert DiagnosisResult to DiagnosisSuggestion
+            for (final diagnosis in aiDiagnosis.diagnoses) {
+              if (diagnosis.diagnosisSuggestions.isNotEmpty) {
+                aiResults.addAll(diagnosis.diagnosisSuggestions);
+              }
+            }
           }
         } catch (e) {
           print('AI diagnosis failed: $e');

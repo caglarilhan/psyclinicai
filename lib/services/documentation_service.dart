@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../models/diagnosis_models.dart';
+import '../models/clinical_decision_support_models.dart' show DurationPeriod, DurationUnit;
+import '../models/medication_models.dart';
 
 class DocumentationService extends ChangeNotifier {
   static final DocumentationService _instance = DocumentationService._internal();
@@ -237,7 +240,7 @@ AI Teşhis Sistemi, DSM-5 ve ICD-11 kriterlerine göre psikiyatrik bozuklukları
         id: 'depression_diagnosis',
         title: 'Depresyon Teşhisi Örneği',
         description: 'AI ile major depresif bozukluk teşhisi',
-        code: '''
+        code: r'''
 // Hasta belirtileri
 final symptoms = [
   SymptomAssessment(
@@ -265,8 +268,64 @@ final diagnosis = await diagnosisService.generateAIDiagnosis(
   ),
 );
 
-print('Teşhis: ${diagnosis.disorderName}');
-print('Güven: ${(diagnosis.confidence * 100).toStringAsFixed(1)}%');
+// Mock diagnosis data for documentation
+final diagnosis = DiagnosisResult(
+  id: 'mock_diagnosis',
+  clientId: 'mock_client',
+  therapistId: 'mock_therapist',
+  analysisDate: DateTime.now(),
+  symptoms: [],
+  symptomAnalysis: SymptomAnalysis(
+    id: 'mock_analysis',
+    symptoms: [],
+    overallSeverity: 0.5,
+    primaryCategories: [],
+    patterns: [],
+    recommendations: [],
+    analysisDate: DateTime.now(),
+  ),
+  riskAssessment: RiskAssessment(
+    id: 'mock_risk',
+    riskLevel: RiskLevel.low,
+    riskFactors: [],
+    urgency: Urgency.routine,
+    recommendations: [],
+    assessmentDate: DateTime.now(),
+  ),
+  diagnosisSuggestions: [
+    DiagnosisSuggestion(
+      id: 'mock_suggestion',
+      diagnosis: 'Major Depressive Disorder',
+      confidence: 0.85,
+      evidence: ['Depressed mood', 'Anhedonia'],
+      differentialDiagnoses: ['Bipolar Disorder'],
+      icd10Code: 'F32.1',
+      severity: DiagnosisSeverity.moderate,
+      treatmentPriority: TreatmentPriority.high,
+      notes: 'Mock diagnosis for documentation',
+    )
+  ],
+  treatmentPlan: TreatmentPlan(
+    id: 'mock_plan',
+    diagnoses: [],
+    interventions: [],
+    goals: [],
+    timeline: DurationPeriod(value: 30, unit: DurationUnit.days),
+    riskFactors: [],
+    monitoringSchedule: MonitoringSchedule(
+      id: 'mock_schedule',
+      events: [],
+      createdDate: DateTime.now(),
+    ),
+    planDate: DateTime.now(),
+  ),
+  confidence: 0.85,
+  aiModel: 'Mock-AI',
+  processingTime: 1000,
+);
+
+print('Teşhis: Major Depressive Disorder');
+print('Güven: 85.0%');
         ''',
         language: 'dart',
         category: 'ai_diagnosis',
@@ -278,7 +337,7 @@ print('Güven: ${(diagnosis.confidence * 100).toStringAsFixed(1)}%');
         id: 'drug_interaction_check',
         title: 'İlaç Etkileşim Kontrolü',
         description: 'İki ilaç arasındaki etkileşimi kontrol etme',
-        code: '''
+        code: r'''
 // İlaç listesi
 final medications = [
   'Sertraline 50mg',
@@ -291,9 +350,31 @@ final interactions = await medicationService.checkDrugInteractions(
   medications: medications,
 );
 
-for (final interaction in interactions) {
-  print('${interaction.drug1} + ${interaction.drug2}');
-  print('Risk: ${interaction.severity}');
+// Mock interaction data for documentation
+final mockInteractions = [
+  DrugInteraction(
+    id: 'mock_interaction_1',
+    medicationIds: ['Sertraline', 'Lithium'],
+    severity: InteractionSeverity.moderate,
+    description: 'Serotonin sendromu riski',
+    recommendations: ['Doz ayarlaması gerekli', 'Sık takip'],
+    contraindicated: false,
+    monitoringRequired: true,
+  ),
+  DrugInteraction(
+    id: 'mock_interaction_2',
+    medicationIds: ['Lithium', 'Risperidone'],
+    severity: InteractionSeverity.low,
+    description: 'Minimal etkileşim',
+    recommendations: ['Normal dozda devam edilebilir'],
+    contraindicated: false,
+    monitoringRequired: false,
+  ),
+];
+
+for (final interaction in mockInteractions) {
+  print('${interaction.medicationIds.join(' + ')}');
+  print('Risk: ${interaction.severity.name}');
   print('Öneri: ${interaction.recommendations.join(', ')}');
 }
         ''',

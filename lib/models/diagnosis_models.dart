@@ -442,8 +442,46 @@ enum PatternType {
 }
 
 @JsonSerializable()
+class DiagnosisProgress {
+  final double progress; // 0.0 - 1.0
+  final String message;
+
+  const DiagnosisProgress(this.progress, this.message);
+
+  factory DiagnosisProgress.fromJson(Map<String, dynamic> json) => _$DiagnosisProgressFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisProgressToJson(this);
+}
+
+@JsonSerializable()
+class RiskAlert {
+  final String id;
+  final RiskAssessment assessment;
+  final DateTime timestamp;
+  final AlertPriority priority;
+
+  const RiskAlert({
+    required this.id,
+    required this.assessment,
+    required this.timestamp,
+    required this.priority,
+  });
+
+  factory RiskAlert.fromJson(Map<String, dynamic> json) => _$RiskAlertFromJson(json);
+  Map<String, dynamic> toJson() => _$RiskAlertToJson(this);
+}
+
+enum AlertPriority {
+  low,
+  medium,
+  high,
+  critical
+}
+
+@JsonSerializable()
 class SymptomAssessment {
   final String id;
+  final String patientId;
+  final String clinicianId;
   final String symptomId;
   final String symptomName;
   final SymptomSeverity severity;
@@ -456,6 +494,8 @@ class SymptomAssessment {
 
   const SymptomAssessment({
     required this.id,
+    required this.patientId,
+    required this.clinicianId,
     required this.symptomId,
     required this.symptomName,
     required this.severity,
@@ -526,6 +566,7 @@ enum DiagnosticCategoryType {
   neurocognitive,
   personality,
   paraphilic,
+  clinical,
   other,
 }
 
@@ -825,21 +866,43 @@ enum GoalPriority {
 }
 
 @JsonSerializable()
-class MonitoringSchedule {
+class MonitoringEvent {
   final String id;
+  final MonitoringType type;
   final String name;
   final String frequency;
-  final List<String> parameters;
   final DateTime nextDue;
-  final bool isActive;
+
+  const MonitoringEvent({
+    required this.id,
+    required this.type,
+    required this.name,
+    required this.frequency,
+    required this.nextDue,
+  });
+
+  factory MonitoringEvent.fromJson(Map<String, dynamic> json) => _$MonitoringEventFromJson(json);
+  Map<String, dynamic> toJson() => _$MonitoringEventToJson(this);
+}
+
+enum MonitoringType {
+  assessment,
+  safety,
+  medication,
+  therapy,
+  followUp
+}
+
+@JsonSerializable()
+class MonitoringSchedule {
+  final String id;
+  final List<MonitoringEvent> events;
+  final DateTime createdDate;
 
   const MonitoringSchedule({
     required this.id,
-    required this.name,
-    required this.frequency,
-    required this.parameters,
-    required this.nextDue,
-    required this.isActive,
+    required this.events,
+    required this.createdDate,
   });
 
   factory MonitoringSchedule.fromJson(Map<String, dynamic> json) => _$MonitoringScheduleFromJson(json);

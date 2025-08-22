@@ -109,7 +109,9 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
       color = AppTheme.secondaryColor;
     } else if (widget.aiSuggestion != null) {
       title = 'AI Önerisi';
-      subtitle = widget.aiSuggestion!.disorderName;
+      subtitle = widget.aiSuggestion!.diagnosisSuggestions.isNotEmpty 
+          ? widget.aiSuggestion!.diagnosisSuggestions.first.diagnosis 
+          : 'AI Önerisi';
       icon = Icons.auto_awesome;
       color = AppTheme.accentColor;
     }
@@ -212,8 +214,12 @@ class _DiagnosisDetailPanelState extends State<DiagnosisDetailPanel>
             
             _buildSymptomsList('Belirtiler', widget.disorder!.symptoms.map((s) => s.name).toList()),
           ] else if (widget.aiSuggestion != null) ...[
-            _buildInfoSection('AI Önerisi', widget.aiSuggestion!.disorderName),
-            _buildInfoSection('Tanı Kodu', widget.aiSuggestion!.disorderCode),
+            _buildInfoSection('AI Önerisi', widget.aiSuggestion!.diagnosisSuggestions.isNotEmpty 
+                ? widget.aiSuggestion!.diagnosisSuggestions.first.diagnosis 
+                : 'AI Önerisi'),
+            _buildInfoSection('Tanı Kodu', widget.aiSuggestion!.diagnosisSuggestions.isNotEmpty 
+                ? widget.aiSuggestion!.diagnosisSuggestions.first.icd10Code 
+                : 'Kod Yok'),
             _buildInfoSection('Güven Skoru', '${(widget.aiSuggestion!.confidence * 100).toStringAsFixed(1)}%'),
             
             const SizedBox(height: 24),

@@ -128,12 +128,15 @@ class _EnhancedAIChatbotWidgetState extends State<EnhancedAIChatbotWidget>
       final taskId = 'chat_${DateTime.now().millisecondsSinceEpoch}';
 
       // Process with AI
-      final response = await _aiService.processRequest(
+      final aiResult = await _aiService.processRequest(
         promptType: _selectedPromptType,
         parameters: parameters,
         taskId: taskId,
         useCache: true,
       );
+
+      // Convert AI result to expected format
+      final response = aiResult.outputData ?? {};
 
       // Stop typing animation
       _typingController.stop();

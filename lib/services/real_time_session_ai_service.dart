@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../models/session_ai_models.dart';
+import '../models/treatment_plan_models.dart';
 import '../services/ai_orchestration_service.dart';
 import '../utils/ai_logger.dart';
 
@@ -196,12 +197,15 @@ class RealTimeSessionAIService extends ChangeNotifier {
       }
       
       // Process with AI
-      final response = await _aiService.processRequest(
+      final aiResult = await _aiService.processRequest(
         promptType: promptType,
         parameters: analysisData,
         taskId: taskId,
         useCache: false, // Real-time analysis should not use cache
       );
+
+      // Convert AI result to expected format
+      final response = aiResult.outputData ?? {};
 
       // Process AI response
       final analysis = _processAIResponse(response, session);
@@ -405,6 +409,104 @@ class RealTimeSessionAIService extends ChangeNotifier {
       lastAssessment: DateTime.now(),
     );
   }
+
+  List<GoalProgress> _parseGoalProgress(List<dynamic> data) {
+    return data.map((item) => GoalProgress(
+      id: item['id'] ?? '',
+      goalId: item['goalId'] ?? '',
+      goalTitle: item['goalTitle'] ?? '',
+      progress: (item['progress'] ?? 0.0).toDouble(),
+      achievements: List<String>.from(item['achievements'] ?? []),
+      obstacles: List<String>.from(item['obstacles'] ?? []),
+      status: item['status'] ?? '',
+      lastUpdated: DateTime.now(),
+    )).toList();
+  }
+
+  List<Milestone> _parseMilestones(List<dynamic> data) {
+    return data.map((item) => Milestone(
+      id: item['id'] ?? '',
+      title: item['title'] ?? '',
+      description: item['description'] ?? '',
+      achievedAt: DateTime.tryParse(item['achievedAt'] ?? '') ?? DateTime.now(),
+      significance: (item['significance'] ?? 0.0).toDouble(),
+      contributingFactors: List<String>.from(item['contributingFactors'] ?? []),
+      celebrationNote: item['celebrationNote'] ?? '',
+    )).toList();
+  }
+
+  GoalStatus _parseGoalStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return GoalStatus.active;
+      case 'on_hold':
+        return GoalStatus.onHold;
+      case 'completed':
+        return GoalStatus.completed;
+      default:
+        return GoalStatus.active;
+    }
+  }
+
+
+
+  List<Challenge> _parseChallenges(List<dynamic> data) {
+    return data.map((item) => Challenge(
+      id: item['id'] ?? '',
+      title: item['title'] ?? '',
+      description: item['description'] ?? '',
+      type: _parseChallengeType(item['type'] ?? ''),
+      difficulty: (item['difficulty'] ?? 0.0).toDouble(),
+      copingStrategies: List<String>.from(item['copingStrategies'] ?? []),
+      currentStatus: item['currentStatus'] ?? '',
+      identifiedAt: DateTime.now(),
+    )).toList();
+  }
+
+  List<Breakthrough> _parseBreakthroughs(List<dynamic> data) {
+    return data.map((item) => Breakthrough(
+      id: item['id'] ?? '',
+      title: item['title'] ?? '',
+      description: item['description'] ?? '',
+      significance: (item['significance'] ?? 0.0).toDouble(),
+      contributingFactors: List<String>.from(item['contributingFactors'] ?? []),
+      impact: item['impact'] ?? '',
+      occurredAt: DateTime.now(),
+      celebrationNote: item['celebrationNote'] ?? '',
+    )).toList();
+  }
+
+  ChallengeType _parseChallengeType(String type) {
+    switch (type.toLowerCase()) {
+      case 'emotional':
+        return ChallengeType.emotional;
+      case 'cognitive':
+        return ChallengeType.cognitive;
+      case 'behavioral':
+        return ChallengeType.behavioral;
+      case 'interpersonal':
+        return ChallengeType.interpersonal;
+      default:
+        return ChallengeType.emotional;
+    }
+  }
+
+  double _parseChallengeDifficulty(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return 1.0;
+      case 'moderate':
+        return 2.0;
+      case 'hard':
+        return 3.0;
+      case 'very_hard':
+        return 4.0;
+      default:
+        return 2.0;
+    }
+  }
+
+
 
   List<Alert> _parseAlerts(List<dynamic> data) {
     return data.map((item) => Alert(
@@ -635,46 +737,15 @@ class RealTimeSessionAIService extends ChangeNotifier {
     // Handle crisis escalation
     _logger.warning('Crisis escalation detected', context: 'RealTimeSessionAIService', data: {
       'sessionId': session.sessionId,
-      'crisisType': analysis.crisisType,
-      'crisisLevel': analysis.crisisLevel,
+      'crisisType': analysis.metadata['crisisType'] ?? 'unknown',
+      'crisisLevel': analysis.metadata['crisisLevel'] ?? 'unknown',
     });
     
     // Emit crisis alert
     _crisisController.add(analysis);
   }
 
-  // Helper methods for data parsing
-  List<Map<String, dynamic>> _parseGoalProgress(List<dynamic> data) {
-    return data.map((item) => {
-      'goal': item['goal'] ?? '',
-      'progress': item['progress'] ?? 0.0,
-      'status': item['status'] ?? 'pending',
-    }).toList();
-  }
 
-  List<Map<String, dynamic>> _parseMilestones(List<dynamic> data) {
-    return data.map((item) => {
-      'milestone': item['milestone'] ?? '',
-      'achieved': item['achieved'] ?? false,
-      'date': item['date'] != null ? DateTime.parse(item['date']) : null,
-    }).toList();
-  }
-
-  List<Map<String, dynamic>> _parseChallenges(List<dynamic> data) {
-    return data.map((item) => {
-      'challenge': item['challenge'] ?? '',
-      'severity': item['severity'] ?? 'medium',
-      'status': item['status'] ?? 'active',
-    }).toList();
-  }
-
-  List<Map<String, dynamic>> _parseBreakthroughs(List<dynamic> data) {
-    return data.map((item) => {
-      'breakthrough': item['breakthrough'] ?? '',
-      'impact': item['impact'] ?? 'medium',
-      'date': item['date'] != null ? DateTime.parse(item['date']) : null,
-    }).toList();
-  }
 
   // Helper methods for parsing enums
   EmotionType _parseEmotionType(String value) {

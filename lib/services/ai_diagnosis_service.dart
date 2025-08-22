@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/diagnosis_models.dart';
+import '../models/clinical_decision_support_models.dart';
 import '../utils/ai_logger.dart';
 import 'ai_service.dart';
 
@@ -189,8 +190,9 @@ class AIDiagnosisService extends ChangeNotifier {
       TreatmentGuideline(
         id: 'dsm5_mdd_treatment_1',
         disorderId: 'dsm5_mdd',
-        name: 'First-line Treatment for MDD',
+        title: 'MDD First Line Treatment',
         description: 'SSRIs and psychotherapy as first-line treatment',
+        level: TreatmentLevel.firstLine,
         modalities: [TreatmentModality.medication, TreatmentModality.psychotherapy],
         medications: [],
         psychotherapies: [],
@@ -198,34 +200,6 @@ class AIDiagnosisService extends ChangeNotifier {
         sideEffects: [],
         expectedDuration: TreatmentDuration.acute,
         outcomeMeasures: [],
-        options: [
-          TreatmentOption(
-            id: 'ssri_treatment',
-            name: 'SSRI Medication',
-            description: 'Selective serotonin reuptake inhibitors',
-            modality: TreatmentModality.medication,
-            indications: ['depression'],
-            contraindications: ['bipolar_disorder'],
-            sideEffects: ['nausea', 'sexual_dysfunction'],
-            drugInteractions: [],
-            monitoringRequirements: ['mood_changes'],
-            treatmentDuration: TreatmentDuration.chronic,
-            alternatives: [],
-          ),
-          TreatmentOption(
-            id: 'cbt_therapy',
-            name: 'Cognitive Behavioral Therapy',
-            description: 'Evidence-based psychotherapy approach',
-            modality: TreatmentModality.psychotherapy,
-            indications: ['depression'],
-            contraindications: ['active_psychosis'],
-            sideEffects: ['initial_worsening'],
-            sessionDuration: DurationPeriod(value: 1, unit: DurationUnit.hours),
-            totalSessions: 16,
-            effectiveness: 0.8,
-            techniques: ['cognitive_restructuring', 'behavioral_activation'],
-          ),
-        ],
       ),
     ]);
   }
@@ -357,8 +331,8 @@ class AIDiagnosisService extends ChangeNotifier {
     // Simulate AI symptom analysis
     await Future.delayed(const Duration(milliseconds: 800));
     
-    final severity = symptoms.fold(0.0, (sum, s) => sum + s.severity) / symptoms.length;
-    final categories = symptoms.map((s) => s.category).toSet().toList();
+    final severity = symptoms.fold(0.0, (sum, s) => sum + _severityToNumber(s.severity)) / symptoms.length;
+    final categories = symptoms.map((s) => s.type.name).toSet().toList();
     
     return SymptomAnalysis(
       id: _generateId(),
@@ -442,7 +416,7 @@ class AIDiagnosisService extends ChangeNotifier {
         differentialDiagnoses: ['Acute Stress Disorder', 'Adjustment Disorder'],
         icd10Code: 'F43.1',
         severity: DiagnosisSeverity.severe,
-        treatmentPriority: TreatmentPriority.critical,
+        treatmentPriority: TreatmentPriority.urgent,
         notes: 'Immediate safety assessment required',
       ));
     }
@@ -540,24 +514,24 @@ class AIDiagnosisService extends ChangeNotifier {
     final patterns = <Pattern>[];
     
     // Mood patterns
-    if (symptoms.any((s) => s.category == 'mood')) {
+    if (symptoms.any((s) => s.type.name == 'mood')) {
       patterns.add(Pattern(
         id: _generateId(),
         type: PatternType.mood,
         description: 'Mood-related symptoms cluster',
         confidence: 0.85,
-        symptoms: symptoms.where((s) => s.category == 'mood').toList(),
+        symptoms: symptoms.where((s) => s.type.name == 'mood').toList(),
       ));
     }
     
     // Sleep patterns
-    if (symptoms.any((s) => s.category == 'sleep')) {
+    if (symptoms.any((s) => s.type.name == 'sleep')) {
       patterns.add(Pattern(
         id: _generateId(),
         type: PatternType.sleep,
         description: 'Sleep disturbance pattern',
         confidence: 0.78,
-        symptoms: symptoms.where((s) => s.category == 'sleep').toList(),
+        symptoms: symptoms.where((s) => s.type.name == 'sleep').toList(),
       ));
     }
     
@@ -567,15 +541,15 @@ class AIDiagnosisService extends ChangeNotifier {
   List<String> _generateSymptomRecommendations(List<Symptom> symptoms) {
     final recommendations = <String>[];
     
-    if (symptoms.any((s) => s.severity > 7)) {
+    if (symptoms.any((s) => s.severity == SymptomSeverity.severe)) {
       recommendations.add('Yüksek şiddetli semptomlar için acil değerlendirme gerekli');
     }
     
-    if (symptoms.any((s) => s.category == 'suicidal')) {
+    if (symptoms.any((s) => s.type.name == 'suicidal')) {
       recommendations.add('İntihar düşünceleri için acil psikiyatrik değerlendirme');
     }
     
-    if (symptoms.any((s) => s.category == 'psychosis')) {
+    if (symptoms.any((s) => s.type.name == 'psychosis')) {
       recommendations.add('Psikotik semptomlar için psikiyatrik değerlendirme');
     }
     
@@ -586,10 +560,10 @@ class AIDiagnosisService extends ChangeNotifier {
     final riskFactors = <RiskFactor>[];
     
     // Symptom-based risks
-    if (symptoms.any((s) => s.category == 'suicidal')) {
+    if (symptoms.any((s) => s.type.name == 'suicidal')) {
       riskFactors.add(RiskFactor(
         id: _generateId(),
-        type: RiskType.suicidal,
+        type: RiskType.other,
         severity: RiskSeverity.critical,
         description: 'İntihar düşünceleri mevcut',
         probability: 0.95,
@@ -597,12 +571,12 @@ class AIDiagnosisService extends ChangeNotifier {
       ));
     }
     
-    if (symptoms.any((s) => s.category == 'psychosis')) {
+    if (symptoms.any((s) => s.type.name == 'psychosis')) {
       riskFactors.add(RiskFactor(
         id: _generateId(),
-        type: RiskType.psychosis,
+        type: RiskType.other,
         severity: RiskSeverity.high,
-        description: 'Psikotik semptomlar',
+        description: 'İntihar düşünceleri mevcut',
         probability: 0.80,
         mitigation: 'Psikiyatrik değerlendirme, antipsikotik tedavi',
       ));
@@ -612,7 +586,7 @@ class AIDiagnosisService extends ChangeNotifier {
     if (clientHistory['previousAttempts'] == true) {
       riskFactors.add(RiskFactor(
         id: _generateId(),
-        type: RiskType.historical,
+        type: RiskType.other,
         severity: RiskSeverity.high,
         description: 'Önceki intihar girişimi öyküsü',
         probability: 0.85,
@@ -648,7 +622,7 @@ class AIDiagnosisService extends ChangeNotifier {
       return Urgency.urgent;
     }
     
-    if (symptoms.any((s) => s.severity > 8)) {
+    if (symptoms.any((s) => s.severity == SymptomSeverity.severe)) {
       return Urgency.urgent;
     }
     
@@ -706,15 +680,15 @@ class AIDiagnosisService extends ChangeNotifier {
     return goals;
   }
 
-  Duration _calculateTimeline(List<TreatmentIntervention> interventions) {
-    if (interventions.isEmpty) return const Duration(days: 30);
+  DurationPeriod _calculateTimeline(List<TreatmentIntervention> interventions) {
+    if (interventions.isEmpty) return DurationPeriod(value: 30, unit: DurationUnit.days);
     
     final maxDuration = interventions.fold<int>(0, (max, i) {
       final weeks = _parseDuration(i.duration);
       return weeks > max ? weeks : max;
     });
     
-    return Duration(days: maxDuration * 7);
+    return DurationPeriod(value: maxDuration * 7, unit: DurationUnit.days);
   }
 
   int _parseDuration(String duration) {
@@ -909,17 +883,83 @@ class AIDiagnosisService extends ChangeNotifier {
     // Parse AI response and create DiagnosisResult
     // This is a simplified parser - in production, you'd want more sophisticated parsing
     
+    // Create mock data for required fields
+    final symptoms = [
+      Symptom(
+        id: _generateId(),
+        name: assessment.symptomName,
+        description: 'AI generated symptom',
+        type: SymptomType.mood,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: [],
+        triggers: [],
+        alleviators: [],
+        duration: TreatmentDuration.episodic,
+        frequency: Frequency.daily,
+      )
+    ];
+    
+    final symptomAnalysis = SymptomAnalysis(
+      id: _generateId(),
+      symptoms: symptoms,
+      overallSeverity: 0.5,
+      primaryCategories: ['mood'],
+      patterns: [],
+      recommendations: ['AI analysis recommended'],
+      analysisDate: DateTime.now(),
+    );
+    
+    final riskAssessment = RiskAssessment(
+      id: _generateId(),
+      riskLevel: RiskLevel.low,
+      riskFactors: [],
+      urgency: Urgency.routine,
+      recommendations: ['Continue monitoring'],
+      assessmentDate: DateTime.now(),
+    );
+    
+    final diagnosisSuggestions = [
+      DiagnosisSuggestion(
+        id: _generateId(),
+        diagnosis: 'AI Generated Diagnosis',
+        confidence: 0.85,
+        evidence: [assessment.symptomName],
+        differentialDiagnoses: ['Alternative Diagnosis 1', 'Alternative Diagnosis 2'],
+        icd10Code: 'AI-001',
+        severity: DiagnosisSeverity.mild,
+        treatmentPriority: TreatmentPriority.medium,
+        notes: aiResponse,
+      )
+    ];
+    
+    final treatmentPlan = TreatmentPlan(
+      id: _generateId(),
+      diagnoses: diagnosisSuggestions,
+      interventions: [],
+      goals: [],
+      timeline: DurationPeriod(value: 30, unit: DurationUnit.days),
+      riskFactors: [],
+      monitoringSchedule: MonitoringSchedule(
+        id: _generateId(),
+        events: [],
+        createdDate: DateTime.now(),
+      ),
+      planDate: DateTime.now(),
+    );
+    
     return DiagnosisResult(
       id: _generateId(),
-      assessmentId: assessment.id,
-      disorderName: 'AI Generated Diagnosis',
-      disorderCode: 'AI-001',
+      clientId: assessment.patientId,
+      therapistId: assessment.clinicianId,
+      analysisDate: DateTime.now(),
+      symptoms: symptoms,
+      symptomAnalysis: symptomAnalysis,
+      riskAssessment: riskAssessment,
+      diagnosisSuggestions: diagnosisSuggestions,
+      treatmentPlan: treatmentPlan,
       confidence: 0.85,
-      supportingSymptoms: [assessment.symptomName],
-      differentialDiagnoses: ['Alternative Diagnosis 1', 'Alternative Diagnosis 2'],
-      recommendedAssessments: ['PANSS', 'HAM-D'],
-      reasoning: aiResponse,
-      createdAt: DateTime.now(),
+      aiModel: 'AI-Diagnosis-v1',
+      processingTime: 1500,
     );
   }
 
@@ -956,6 +996,21 @@ class AIDiagnosisService extends ChangeNotifier {
         return SymptomSeverity.severe;
       default:
         return SymptomSeverity.mild;
+    }
+  }
+
+  double _severityToNumber(SymptomSeverity severity) {
+    switch (severity) {
+      case SymptomSeverity.none:
+        return 0.0;
+      case SymptomSeverity.mild:
+        return 1.0;
+      case SymptomSeverity.moderate:
+        return 2.0;
+      case SymptomSeverity.severe:
+        return 3.0;
+      case SymptomSeverity.extreme:
+        return 4.0;
     }
   }
 

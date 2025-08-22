@@ -88,6 +88,7 @@ const _$DiagnosticCategoryTypeEnumMap = {
   DiagnosticCategoryType.neurocognitive: 'neurocognitive',
   DiagnosticCategoryType.personality: 'personality',
   DiagnosticCategoryType.paraphilic: 'paraphilic',
+  DiagnosticCategoryType.clinical: 'clinical',
   DiagnosticCategoryType.other: 'other',
 };
 
@@ -629,9 +630,46 @@ const _$PatternTypeEnumMap = {
   PatternType.social: 'social',
 };
 
+DiagnosisProgress _$DiagnosisProgressFromJson(Map<String, dynamic> json) =>
+    DiagnosisProgress(
+      (json['progress'] as num).toDouble(),
+      json['message'] as String,
+    );
+
+Map<String, dynamic> _$DiagnosisProgressToJson(DiagnosisProgress instance) =>
+    <String, dynamic>{
+      'progress': instance.progress,
+      'message': instance.message,
+    };
+
+RiskAlert _$RiskAlertFromJson(Map<String, dynamic> json) => RiskAlert(
+  id: json['id'] as String,
+  assessment: RiskAssessment.fromJson(
+    json['assessment'] as Map<String, dynamic>,
+  ),
+  timestamp: DateTime.parse(json['timestamp'] as String),
+  priority: $enumDecode(_$AlertPriorityEnumMap, json['priority']),
+);
+
+Map<String, dynamic> _$RiskAlertToJson(RiskAlert instance) => <String, dynamic>{
+  'id': instance.id,
+  'assessment': instance.assessment,
+  'timestamp': instance.timestamp.toIso8601String(),
+  'priority': _$AlertPriorityEnumMap[instance.priority]!,
+};
+
+const _$AlertPriorityEnumMap = {
+  AlertPriority.low: 'low',
+  AlertPriority.medium: 'medium',
+  AlertPriority.high: 'high',
+  AlertPriority.critical: 'critical',
+};
+
 SymptomAssessment _$SymptomAssessmentFromJson(Map<String, dynamic> json) =>
     SymptomAssessment(
       id: json['id'] as String,
+      patientId: json['patientId'] as String,
+      clinicianId: json['clinicianId'] as String,
       symptomId: json['symptomId'] as String,
       symptomName: json['symptomName'] as String,
       severity: $enumDecode(_$SymptomSeverityEnumMap, json['severity']),
@@ -650,6 +688,8 @@ SymptomAssessment _$SymptomAssessmentFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$SymptomAssessmentToJson(SymptomAssessment instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'patientId': instance.patientId,
+      'clinicianId': instance.clinicianId,
       'symptomId': instance.symptomId,
       'symptomName': instance.symptomName,
       'severity': _$SymptomSeverityEnumMap[instance.severity]!,
@@ -920,24 +960,44 @@ const _$GoalPriorityEnumMap = {
   GoalPriority.critical: 'critical',
 };
 
+MonitoringEvent _$MonitoringEventFromJson(Map<String, dynamic> json) =>
+    MonitoringEvent(
+      id: json['id'] as String,
+      type: $enumDecode(_$MonitoringTypeEnumMap, json['type']),
+      name: json['name'] as String,
+      frequency: json['frequency'] as String,
+      nextDue: DateTime.parse(json['nextDue'] as String),
+    );
+
+Map<String, dynamic> _$MonitoringEventToJson(MonitoringEvent instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': _$MonitoringTypeEnumMap[instance.type]!,
+      'name': instance.name,
+      'frequency': instance.frequency,
+      'nextDue': instance.nextDue.toIso8601String(),
+    };
+
+const _$MonitoringTypeEnumMap = {
+  MonitoringType.assessment: 'assessment',
+  MonitoringType.safety: 'safety',
+  MonitoringType.medication: 'medication',
+  MonitoringType.therapy: 'therapy',
+  MonitoringType.followUp: 'followUp',
+};
+
 MonitoringSchedule _$MonitoringScheduleFromJson(Map<String, dynamic> json) =>
     MonitoringSchedule(
       id: json['id'] as String,
-      name: json['name'] as String,
-      frequency: json['frequency'] as String,
-      parameters: (json['parameters'] as List<dynamic>)
-          .map((e) => e as String)
+      events: (json['events'] as List<dynamic>)
+          .map((e) => MonitoringEvent.fromJson(e as Map<String, dynamic>))
           .toList(),
-      nextDue: DateTime.parse(json['nextDue'] as String),
-      isActive: json['isActive'] as bool,
+      createdDate: DateTime.parse(json['createdDate'] as String),
     );
 
 Map<String, dynamic> _$MonitoringScheduleToJson(MonitoringSchedule instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'name': instance.name,
-      'frequency': instance.frequency,
-      'parameters': instance.parameters,
-      'nextDue': instance.nextDue.toIso8601String(),
-      'isActive': instance.isActive,
+      'events': instance.events,
+      'createdDate': instance.createdDate.toIso8601String(),
     };

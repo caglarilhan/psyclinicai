@@ -22,10 +22,10 @@ class _AIAnalyticsDashboardWidgetState extends State<AIAnalyticsDashboardWidget>
   late AnimationController _chartController;
   late AnimationController _metricController;
   
-  Map<String, AIModelPerformance> _modelPerformance = {};
+  Map<String, dynamic> _modelPerformance = {};
   Map<String, dynamic> _serviceStats = {};
   Map<String, dynamic> _cacheStats = {};
-  List<AITaskResult> _recentTasks = [];
+  List<Map<String, dynamic>> _recentTasks = [];
   
   bool _isLoading = true;
   String _selectedTimeRange = '24h';
@@ -85,14 +85,14 @@ class _AIAnalyticsDashboardWidgetState extends State<AIAnalyticsDashboardWidget>
       final cacheStats = await _cacheService.getCacheStats();
       
       // Get recent tasks from all models
-      final allTasks = <AITaskResult>[];
+      final allTasks = <Map<String, dynamic>>[];
       for (final modelId in performance.keys) {
         final tasks = _aiService.getTaskHistory(modelId);
-        allTasks.addAll(tasks);
+        allTasks.addAll(tasks.cast<Map<String, dynamic>>());
       }
       
       // Sort by timestamp and take recent ones
-      allTasks.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      allTasks.sort((a, b) => (b['createdAt'] ?? '').compareTo(a['createdAt'] ?? ''));
       
       setState(() {
         _modelPerformance = performance;
@@ -126,7 +126,7 @@ class _AIAnalyticsDashboardWidgetState extends State<AIAnalyticsDashboardWidget>
     if (_modelPerformance.isEmpty) return 0.0;
     
     final totalTime = _modelPerformance.values.fold<double>(
-      0.0, (sum, model) => sum + model.responseTime);
+      0.0, (sum, model) => sum + (model['averageExecutionTime'] ?? 0.0));
     
     return totalTime / _modelPerformance.length;
   }
@@ -682,7 +682,7 @@ class _AIAnalyticsDashboardWidgetState extends State<AIAnalyticsDashboardWidget>
 
   Widget _buildTasksOverview() {
     final totalTasks = _recentTasks.length;
-    final successfulTasks = _recentTasks.where((t) => t.success).length;
+    final successfulTasks = _recentTasks.where((t) => t['status'] == 'completed').length;
     final failedTasks = totalTasks - successfulTasks;
     
     return Card(
@@ -770,16 +770,16 @@ class _AIAnalyticsDashboardWidgetState extends State<AIAnalyticsDashboardWidget>
                 final task = _recentTasks[index];
                 return ListTile(
                   leading: Icon(
-                    task.success ? Icons.check_circle : Icons.error,
-                    color: task.success ? Colors.green : Colors.red,
+                    task['status'] == 'completed' ? Icons.check_circle : Icons.error,
+                    color: task['status'] == 'completed' ? Colors.green : Colors.red,
                   ),
-                  title: Text('${task.modelId.toUpperCase()} - ${task.taskType}'),
+                  title: Text('${task['workflowId']?.toUpperCase() ?? 'UNKNOWN'} - ${task['id']}'),
                   subtitle: Text(
-                    'Güven: ${(task.confidence * 100).toStringAsFixed(1)}% | '
-                    'Süre: ${task.responseTime.inMilliseconds}ms',
+                    'Durum: ${task['status']} | '
+                    'Süre: ${task['executionTime']}ms',
                   ),
                   trailing: Text(
-                    _formatDateTime(task.timestamp),
+                    _formatDateTime(DateTime.tryParse(task['createdAt'] ?? '') ?? DateTime.now()),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 );

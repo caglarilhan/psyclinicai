@@ -142,8 +142,10 @@ class AIOrchestrationService extends ChangeNotifier {
         await _executeStep(task, step, i);
         
         // Update task progress
-        task.currentStep = i + 1;
-        task.updatedAt = DateTime.now();
+        task = task.copyWith(
+          currentStep: i + 1,
+          updatedAt: DateTime.now(),
+        );
         notifyListeners();
 
         // Add delay between steps
@@ -151,8 +153,10 @@ class AIOrchestrationService extends ChangeNotifier {
       }
 
       // Complete task
-      task.status = 'completed';
-      task.updatedAt = DateTime.now();
+      task = task.copyWith(
+        status: 'completed',
+        updatedAt: DateTime.now(),
+      );
       notifyListeners();
 
       // Create result
@@ -171,9 +175,11 @@ class AIOrchestrationService extends ChangeNotifier {
 
     } catch (e) {
       // Handle error
-      task.status = 'failed';
-      task.errorMessage = e.toString();
-      task.updatedAt = DateTime.now();
+      task = task.copyWith(
+        status: 'failed',
+        errorMessage: e.toString(),
+        updatedAt: DateTime.now(),
+      );
       notifyListeners();
 
       final result = AIOrchestrationResult(
@@ -236,13 +242,15 @@ class AIOrchestrationService extends ChangeNotifier {
     final response = await _aiService!.generateResponse(prompt);
     
     // Store step output
-    if (task.outputData == null) task.outputData = {};
-    task.outputData!['step_${stepIndex + 1}'] = {
+    final currentOutputData = task.outputData ?? {};
+    final updatedOutputData = Map<String, dynamic>.from(currentOutputData);
+    updatedOutputData['step_${stepIndex + 1}'] = {
       'step_id': step.id,
       'step_name': step.name,
       'output': response,
       'timestamp': DateTime.now().toIso8601String(),
     };
+    task = task.copyWith(outputData: updatedOutputData);
   }
 
   Future<void> _executeAIMonitoringStep(AIOrchestrationTask task, AIWorkflowStep step, int stepIndex) async {
@@ -339,15 +347,18 @@ class AIOrchestrationService extends ChangeNotifier {
   }) async {
     try {
       // Create task
-      final task = AIOrchestrationTask(
+      var task = AIOrchestrationTask(
         id: taskId,
         workflowId: 'manual_request',
         clientId: parameters['clientId'] ?? 'unknown',
         clinicianId: parameters['clinicianId'] ?? 'unknown',
         status: 'running',
-        startTime: DateTime.now(),
+        inputData: parameters,
         parameters: parameters,
-        promptType: promptType,
+        currentStep: 0,
+        totalSteps: 1,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       _tasks.add(task);
@@ -362,20 +373,18 @@ class AIOrchestrationService extends ChangeNotifier {
       final result = AIOrchestrationResult(
         id: 'result_${taskId}',
         taskId: taskId,
+        workflowId: 'manual_request',
         status: 'completed',
-        startTime: task.startTime,
-        endTime: DateTime.now(),
         outputData: {'ai_response': aiResponse},
-        metrics: {
-          'response_time': DateTime.now().difference(task.startTime).inMilliseconds,
-          'prompt_type': promptType,
-        },
+        executionTime: Duration(milliseconds: DateTime.now().difference(task.createdAt).inMilliseconds),
+        createdAt: DateTime.now(),
       );
 
       // Update task
-      task.status = 'completed';
-      task.endTime = DateTime.now();
-      task.outputData = result.outputData;
+      task = task.copyWith(
+        status: 'completed',
+        outputData: result.outputData,
+      );
 
       _results.add(result);
       notifyListeners();
@@ -386,11 +395,11 @@ class AIOrchestrationService extends ChangeNotifier {
       final result = AIOrchestrationResult(
         id: 'error_${taskId}',
         taskId: taskId,
+        workflowId: 'manual_request',
         status: 'failed',
-        startTime: DateTime.now(),
-        endTime: DateTime.now(),
         outputData: {'error': e.toString()},
-        metrics: {'error': true},
+        executionTime: Duration.zero,
+        createdAt: DateTime.now(),
       );
 
       _results.add(result);
@@ -492,5 +501,67 @@ class AIOrchestrationService extends ChangeNotifier {
 
   String _generateId() {
     return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  // Analytics methods
+  Map<String, dynamic> getModelPerformance() {
+    final models = <String, dynamic>{};
+    
+    // Group results by model
+    for (final result in _results) {
+      final modelId = result.outputData?['model'] ?? 'unknown';
+      if (!models.containsKey(modelId)) {
+        models[modelId] = {
+          'totalTasks': 0,
+          'successfulTasks': 0,
+          'averageExecutionTime': 0.0,
+          'errorRate': 0.0,
+        };
+      }
+      
+      models[modelId]['totalTasks']++;
+      if (result.status == 'completed') {
+        models[modelId]['successfulTasks']++;
+      }
+      models[modelId]['averageExecutionTime'] = 
+          (models[modelId]['averageExecutionTime'] + result.executionTime.inMilliseconds) / models[modelId]['totalTasks'];
+    }
+    
+    // Calculate error rates
+    for (final model in models.keys) {
+      final total = models[model]['totalTasks'];
+      final successful = models[model]['successfulTasks'];
+      models[model]['errorRate'] = total > 0 ? (total - successful) / total : 0.0;
+    }
+    
+    return models;
+  }
+
+  Map<String, dynamic> getServiceStats() {
+    return {
+      'totalWorkflows': _workflows.length,
+      'totalTasks': _tasks.length,
+      'totalResults': _results.length,
+      'activeTasks': _tasks.where((t) => t.status == 'in_progress').length,
+      'completedTasks': _tasks.where((t) => t.status == 'completed').length,
+      'failedTasks': _tasks.where((t) => t.status == 'failed').length,
+      'averageTaskTime': _results.isNotEmpty 
+          ? _results.map((r) => r.executionTime.inMilliseconds).reduce((a, b) => a + b) / _results.length 
+          : 0.0,
+    };
+  }
+
+  List<dynamic> getTaskHistory(String modelId) {
+    return _results
+        .where((r) => r.outputData?['model'] == modelId)
+        .map((r) => {
+          'id': r.id,
+          'taskId': r.taskId,
+          'workflowId': r.workflowId,
+          'status': r.status,
+          'executionTime': r.executionTime.inMilliseconds,
+          'createdAt': r.createdAt.toIso8601String(),
+        })
+        .toList();
   }
 }

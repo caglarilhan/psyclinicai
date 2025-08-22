@@ -81,7 +81,7 @@ class AICacheService {
         }
       }
     } catch (e) {
-      _logger.warning('Error reading cache file', context: 'AICacheService', data: e.toString());
+      _logger.warning('Error reading cache file', context: 'AICacheService', data: {'error': e.toString()});
     }
 
     _misses++;
@@ -191,7 +191,7 @@ class AICacheService {
           }
         }
       } catch (e) {
-        _logger.warning('Error calculating disk cache stats', context: 'AICacheService', data: e.toString());
+        _logger.warning('Error calculating disk cache stats', context: 'AICacheService', data: {'error': e.toString()});
       }
     }
 

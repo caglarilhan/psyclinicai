@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/ai_diagnosis_models.dart';
+import '../../models/diagnosis_models.dart';
 import '../../services/ai_diagnosis_service.dart';
 import '../../utils/theme.dart';
 
@@ -85,19 +85,27 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
         id: '1',
         name: 'Depresif ruh hali',
         description: 'Sürekli üzgün, umutsuz hissetme',
-        category: 'mood',
-        severity: 8.5,
-        onsetDate: DateTime.now().subtract(const Duration(days: 30)),
-        duration: const Duration(days: 30),
+        type: SymptomType.mood,
+        severity: SymptomSeverity.severe,
+        relatedSymptoms: [],
+        triggers: ['Stres', 'Yalnızlık'],
+        alleviators: ['Sosyal aktivite', 'Egzersiz'],
+        duration: TreatmentDuration.chronic,
+        frequency: Frequency.daily,
+        metadata: {'category': 'mood'},
       ),
       Symptom(
         id: '2',
         name: 'Uyku bozukluğu',
         description: 'Uykuya dalmada güçlük',
-        category: 'sleep',
-        severity: 6.5,
-        onsetDate: DateTime.now().subtract(const Duration(days: 20)),
-        duration: const Duration(days: 20),
+        type: SymptomType.sleep,
+        severity: SymptomSeverity.moderate,
+        relatedSymptoms: [],
+        triggers: ['Anksiyete', 'Kafein'],
+        alleviators: ['Rahatlatıcı aktiviteler', 'Düzenli uyku'],
+        duration: TreatmentDuration.episodic,
+        frequency: Frequency.daily,
+        metadata: {'category': 'sleep'},
       ),
     ];
   }
@@ -568,7 +576,7 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    symptom.severity.toStringAsFixed(1),
+                    symptom.severity.name,
                     style: TextStyle(
                       fontSize: 10,
                       color: _getSeverityColor(_mapSeverity(symptom.severity)),
@@ -644,11 +652,18 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
     }
   }
 
-  DiagnosisSeverity _mapSeverity(double severity) {
-    if (severity <= 3) return DiagnosisSeverity.mild;
-    if (severity <= 6) return DiagnosisSeverity.moderate;
-    if (severity <= 8) return DiagnosisSeverity.severe;
-    return DiagnosisSeverity.verySevere;
+  DiagnosisSeverity _mapSeverity(SymptomSeverity severity) {
+    switch (severity) {
+      case SymptomSeverity.none:
+      case SymptomSeverity.mild:
+        return DiagnosisSeverity.mild;
+      case SymptomSeverity.moderate:
+        return DiagnosisSeverity.moderate;
+      case SymptomSeverity.severe:
+        return DiagnosisSeverity.severe;
+      case SymptomSeverity.extreme:
+        return DiagnosisSeverity.verySevere;
+    }
   }
 
   String _formatDate(DateTime date) {

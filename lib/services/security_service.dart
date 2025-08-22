@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' hide Key;
+import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/ai_logger.dart';
@@ -16,9 +16,9 @@ class SecurityService extends ChangeNotifier {
   final AILogger _logger = AILogger();
   
   // Encryption keys
-  late Encrypter _encrypter;
-  late IV _iv;
-  late Key _key;
+  late enc.Encrypter _encrypter;
+  late enc.IV _iv;
+  late enc.Key _key;
   
   // Security state
   bool _isInitialized = false;
@@ -96,9 +96,9 @@ class SecurityService extends ChangeNotifier {
         await prefs.setString('encryption_iv', storedIV);
       }
       
-      _key = Key(Uint8List.fromList(storedKey.codeUnits));
-      _iv = IV(Uint8List.fromList(storedIV.codeUnits));
-      _encrypter = Encrypter(AES(_key));
+      _key = enc.Key(Uint8List.fromList(base64.decode(storedKey)));
+      _iv = enc.IV(Uint8List.fromList(base64.decode(storedIV)));
+      _encrypter = enc.Encrypter(enc.AES(_key));
       
       _logger.info('Encryption initialized successfully', context: 'SecurityService');
     } catch (e) {
@@ -279,7 +279,7 @@ class SecurityService extends ChangeNotifier {
     if (!_encryptionEnabled) return encryptedData;
     
     try {
-      final encrypted = Encrypted.fromBase64(encryptedData);
+      final encrypted = enc.Encrypted.fromBase64(encryptedData);
       return _encrypter.decrypt(encrypted, iv: _iv);
     } catch (e) {
       _logger.error('Failed to decrypt data', context: 'SecurityService', error: e);

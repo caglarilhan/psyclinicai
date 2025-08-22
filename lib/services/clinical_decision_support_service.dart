@@ -375,10 +375,18 @@ class ClinicalDecisionSupportService extends ChangeNotifier {
     final response = responses[node.id];
     if (response == null) {
       return CDSSResult(
+        id: 'missing_info_${DateTime.now().millisecondsSinceEpoch}',
+        patientId: 'unknown',
+        clinicianId: 'unknown',
+        analysisDate: DateTime.now(),
+        analysisType: 'decision_tree',
+        symptoms: [],
         diagnosis: 'Eksik bilgi',
-        severity: 'unknown',
+        recommendations: [],
+        drugInteractions: [],
         confidence: 0.0,
-        recommendations: ['Hasta yanıtları eksik'],
+        reasoning: ['Hasta yanıtları eksik'],
+        warnings: [],
       );
     }
 

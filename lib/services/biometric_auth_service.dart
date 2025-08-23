@@ -3,6 +3,18 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Biometric Status Enum
+enum BiometricStatus {
+  notAvailable,
+  available,
+  enabled,
+  disabled,
+  locked,
+  error,
+  unknown,
+  notSupported,
+}
+
 class BiometricAuthService {
   static const String _biometricKey = 'biometric_auth';
   
@@ -24,6 +36,30 @@ class BiometricAuthService {
 
   // Check if biometric is available
   Future<bool> isBiometricAvailable() async => true;
+
+  // Enable biometric authentication
+  Future<void> enableBiometric() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Mock implementation
+  }
+
+  // Disable biometric authentication
+  Future<void> disableBiometric() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Mock implementation
+  }
+
+  // Initialize biometric service
+  Future<void> initialize() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    // Mock implementation
+  }
+
+  // Get current biometric status
+  BiometricStatus get currentStatus => BiometricStatus.available;
+
+  // Get biometric status stream
+  Stream<BiometricStatus> get statusStream => Stream.value(BiometricStatus.available);
 
   // Check if biometric is enrolled
   Future<bool> isBiometricEnrolled(String userId) async {

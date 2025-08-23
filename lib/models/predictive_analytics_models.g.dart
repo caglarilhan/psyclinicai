@@ -11,6 +11,7 @@ PredictiveModel _$PredictiveModelFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
+      version: json['version'] as String,
       type: $enumDecode(_$ModelTypeEnumMap, json['type']),
       status: $enumDecode(_$ModelStatusEnumMap, json['status']),
       accuracy: (json['accuracy'] as num).toDouble(),
@@ -25,6 +26,7 @@ Map<String, dynamic> _$PredictiveModelToJson(PredictiveModel instance) =>
       'id': instance.id,
       'name': instance.name,
       'description': instance.description,
+      'version': instance.version,
       'type': _$ModelTypeEnumMap[instance.type]!,
       'status': _$ModelStatusEnumMap[instance.status]!,
       'accuracy': instance.accuracy,
@@ -41,6 +43,10 @@ const _$ModelTypeEnumMap = {
   ModelType.timeSeries: 'timeSeries',
   ModelType.anomalyDetection: 'anomalyDetection',
   ModelType.recommendation: 'recommendation',
+  ModelType.treatmentOutcome: 'treatmentOutcome',
+  ModelType.relapseRisk: 'relapseRisk',
+  ModelType.crisisPrediction: 'crisisPrediction',
+  ModelType.patientProgress: 'patientProgress',
 };
 
 const _$ModelStatusEnumMap = {
@@ -258,6 +264,7 @@ ModelPerformanceMetrics _$ModelPerformanceMetricsFromJson(
   id: json['id'] as String,
   modelId: json['modelId'] as String,
   evaluationDate: DateTime.parse(json['evaluationDate'] as String),
+  lastUpdated: DateTime.parse(json['lastUpdated'] as String),
   accuracy: (json['accuracy'] as num).toDouble(),
   precision: (json['precision'] as num).toDouble(),
   recall: (json['recall'] as num).toDouble(),
@@ -278,6 +285,7 @@ Map<String, dynamic> _$ModelPerformanceMetricsToJson(
   'id': instance.id,
   'modelId': instance.modelId,
   'evaluationDate': instance.evaluationDate.toIso8601String(),
+  'lastUpdated': instance.lastUpdated.toIso8601String(),
   'accuracy': instance.accuracy,
   'precision': instance.precision,
   'recall': instance.recall,
@@ -315,11 +323,14 @@ ModelTrainingJob _$ModelTrainingJobFromJson(
 ) => ModelTrainingJob(
   id: json['id'] as String,
   modelId: json['modelId'] as String,
+  modelName: json['modelName'] as String,
   status: $enumDecode(_$TrainingStatusEnumMap, json['status']),
   startTime: DateTime.parse(json['startTime'] as String),
   endTime: json['endTime'] == null
       ? null
       : DateTime.parse(json['endTime'] as String),
+  duration: Duration(microseconds: (json['duration'] as num).toInt()),
+  startedAt: DateTime.parse(json['startedAt'] as String),
   progress: (json['progress'] as num).toDouble(),
   hyperparameters: json['hyperparameters'] as Map<String, dynamic>? ?? const {},
   trainingMetrics: json['trainingMetrics'] as Map<String, dynamic>? ?? const {},
@@ -331,9 +342,12 @@ Map<String, dynamic> _$ModelTrainingJobToJson(ModelTrainingJob instance) =>
     <String, dynamic>{
       'id': instance.id,
       'modelId': instance.modelId,
+      'modelName': instance.modelName,
       'status': _$TrainingStatusEnumMap[instance.status]!,
       'startTime': instance.startTime.toIso8601String(),
       'endTime': instance.endTime?.toIso8601String(),
+      'duration': instance.duration.inMicroseconds,
+      'startedAt': instance.startedAt.toIso8601String(),
       'progress': instance.progress,
       'hyperparameters': instance.hyperparameters,
       'trainingMetrics': instance.trainingMetrics,

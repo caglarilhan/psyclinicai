@@ -7,6 +7,7 @@ class PredictiveModel {
   final String id;
   final String name;
   final String description;
+  final String version;
   final ModelType type;
   final ModelStatus status;
   final double accuracy;
@@ -19,6 +20,7 @@ class PredictiveModel {
     required this.id,
     required this.name,
     required this.description,
+    required this.version,
     required this.type,
     required this.status,
     required this.accuracy,
@@ -38,7 +40,11 @@ enum ModelType {
   clustering,
   timeSeries,
   anomalyDetection,
-  recommendation
+  recommendation,
+  treatmentOutcome,
+  relapseRisk,
+  crisisPrediction,
+  patientProgress
 }
 
 enum ModelStatus {
@@ -47,6 +53,14 @@ enum ModelStatus {
   inactive,
   deprecated,
   error
+}
+
+enum TrainingJobStatus {
+  pending,
+  running,
+  completed,
+  failed,
+  cancelled
 }
 
 @JsonSerializable()
@@ -241,6 +255,7 @@ class ModelPerformanceMetrics {
   final String id;
   final String modelId;
   final DateTime evaluationDate;
+  final DateTime lastUpdated;
   final double accuracy;
   final double precision;
   final double recall;
@@ -254,6 +269,7 @@ class ModelPerformanceMetrics {
     required this.id,
     required this.modelId,
     required this.evaluationDate,
+    required this.lastUpdated,
     required this.accuracy,
     required this.precision,
     required this.recall,
@@ -292,9 +308,12 @@ class FeatureImportance {
 class ModelTrainingJob {
   final String id;
   final String modelId;
+  final String modelName;
   final TrainingStatus status;
   final DateTime startTime;
   final DateTime? endTime;
+  final Duration duration;
+  final DateTime startedAt;
   final double progress;
   final Map<String, dynamic> hyperparameters;
   final Map<String, dynamic> trainingMetrics;
@@ -304,9 +323,12 @@ class ModelTrainingJob {
   const ModelTrainingJob({
     required this.id,
     required this.modelId,
+    required this.modelName,
     required this.status,
     required this.startTime,
     this.endTime,
+    required this.duration,
+    required this.startedAt,
     required this.progress,
     this.hyperparameters = const {},
     this.trainingMetrics = const {},

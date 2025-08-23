@@ -1,222 +1,160 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/predictive_analytics_models.dart';
+import 'package:psyclinicai/models/predictive_analytics_models.dart';
 
+/// Predictive Analytics Service for PsyClinicAI
+/// Provides AI-powered predictive analytics for mental health outcomes
 class PredictiveAnalyticsService {
-  static const String _predictionsKey = 'predictions';
-  static const String _modelsKey = 'models';
-  
-  // Singleton pattern
   static final PredictiveAnalyticsService _instance = PredictiveAnalyticsService._internal();
   factory PredictiveAnalyticsService() => _instance;
   PredictiveAnalyticsService._internal();
 
-  // Mock models for development
-  final List<PredictiveModel> _mockModels = [
-    PredictiveModel(
-      id: 'model_001',
-      name: 'Treatment Outcome Predictor',
-      description: 'Predicts treatment success probability and duration',
-      type: ModelType.regression,
-      status: ModelStatus.active,
-      accuracy: 0.87,
-      lastTrained: DateTime.now().subtract(const Duration(days: 7)),
-      lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
-      parameters: {
-        'algorithm': 'Random Forest',
-        'features': 45,
-        'training_samples': 15000,
-      },
-    ),
-    PredictiveModel(
-      id: 'model_002',
-      name: 'Relapse Risk Analyzer',
-      description: 'Identifies patients at risk of relapse',
-      type: ModelType.classification,
-      status: ModelStatus.active,
-      accuracy: 0.92,
-      lastTrained: DateTime.now().subtract(const Duration(days: 14)),
-      lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
-      parameters: {
-        'algorithm': 'XGBoost',
-        'features': 38,
-        'training_samples': 12000,
-      },
-    ),
-    PredictiveModel(
-      id: 'model_003',
-      name: 'Crisis Prediction Engine',
-      description: 'Predicts potential crisis situations',
-      type: ModelType.anomalyDetection,
-      status: ModelStatus.active,
-      accuracy: 0.89,
-      lastTrained: DateTime.now().subtract(const Duration(days: 21)),
-      lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
-      parameters: {
-        'algorithm': 'Isolation Forest',
-        'features': 52,
-        'training_samples': 8000,
-      },
-    ),
-  ];
+  final List<PredictiveModel> _models = [];
+  final List<ModelTrainingJob> _trainingJobs = [];
+  final StreamController<PredictionResult> _predictionController = StreamController<PredictionResult>.broadcast();
+  final StreamController<ModelTrainingJob> _trainingController = StreamController<ModelTrainingJob>.broadcast();
 
-  // Get all available models
-  List<PredictiveModel> getAvailableModels() {
-    return _mockModels;
+  Stream<PredictionResult> get predictionStream => _predictionController.stream;
+  Stream<ModelTrainingJob> get trainingStream => _trainingController.stream;
+
+  // Initialize service
+  Future<void> initialize() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    _loadMockData();
+  }
+
+  // Load mock data
+  void _loadMockData() {
+    _models.addAll([
+      PredictiveModel(
+        id: 'model_001',
+        name: 'Treatment Outcome Predictor',
+        description: 'Predicts treatment success probability',
+        version: '1.0.0',
+        type: ModelType.treatmentOutcome,
+        status: ModelStatus.active,
+        accuracy: 0.87,
+        lastTrained: DateTime.now().subtract(const Duration(days: 7)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
+        parameters: {
+          'training_samples': 15000,
+          'features': 25,
+          'algorithm': 'neural_network',
+        },
+      ),
+      PredictiveModel(
+        id: 'model_002',
+        name: 'Relapse Risk Analyzer',
+        description: 'Assesses risk of mental health relapse',
+        version: '1.2.0',
+        type: ModelType.relapseRisk,
+        status: ModelStatus.active,
+        accuracy: 0.82,
+        lastTrained: DateTime.now().subtract(const Duration(days: 14)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
+        parameters: {
+          'training_samples': 12000,
+          'features': 30,
+          'algorithm': 'gradient_boosting',
+        },
+      ),
+      PredictiveModel(
+        id: 'model_003',
+        name: 'Crisis Prediction Model',
+        description: 'Predicts mental health crises',
+        version: '1.1.0',
+        type: ModelType.crisisPrediction,
+        status: ModelStatus.active,
+        accuracy: 0.89,
+        lastTrained: DateTime.now().subtract(const Duration(days: 21)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 7)),
+        parameters: {
+          'training_samples': 8000,
+          'features': 20,
+          'algorithm': 'random_forest',
+        },
+      ),
+      PredictiveModel(
+        id: 'model_004',
+        name: 'Patient Progress Tracker',
+        description: 'Tracks patient treatment progress',
+        version: '1.3.0',
+        type: ModelType.patientProgress,
+        status: ModelStatus.active,
+        accuracy: 0.85,
+        lastTrained: DateTime.now().subtract(const Duration(days: 10)),
+        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
+        parameters: {
+          'training_samples': 20000,
+          'features': 35,
+          'algorithm': 'lstm',
+        },
+      ),
+    ]);
+
+    _trainingJobs.addAll([
+      ModelTrainingJob(
+        id: 'job_001',
+        modelId: 'model_001',
+        modelName: 'Treatment Outcome Predictor',
+        status: TrainingStatus.completed,
+        startTime: DateTime.now().subtract(const Duration(days: 7)),
+        endTime: DateTime.now().subtract(const Duration(days: 6)),
+        duration: Duration(days: 1),
+        startedAt: DateTime.now().subtract(const Duration(days: 7)),
+        progress: 100.0,
+        hyperparameters: {
+          'layers': [64, 32, 16],
+          'activation': 'relu',
+          'batch_normalization': true,
+        },
+        trainingMetrics: {
+          'accuracy': 0.87,
+          'loss': 0.13,
+          'epochs': 100,
+        },
+      ),
+      ModelTrainingJob(
+        id: 'job_002',
+        modelId: 'model_002',
+        modelName: 'Relapse Risk Analyzer',
+        status: TrainingStatus.running,
+        startTime: DateTime.now().subtract(const Duration(hours: 2)),
+        endTime: null,
+        duration: Duration(hours: 2),
+        startedAt: DateTime.now().subtract(const Duration(hours: 2)),
+        progress: 65.0,
+        hyperparameters: {
+          'layers': [128, 64, 32],
+          'activation': 'gelu',
+          'batch_normalization': true,
+        },
+        trainingMetrics: {
+          'accuracy': 0.0,
+          'loss': 0.0,
+          'epochs': 65,
+        },
+      ),
+    ]);
+  }
+
+  // Get available models
+  Future<List<PredictiveModel>> getAvailableModels() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return _models;
   }
 
   // Get model by ID
   PredictiveModel? getModelById(String modelId) {
     try {
-      return _mockModels.firstWhere((model) => model.id == modelId);
+      return _models.firstWhere((model) => model.id == modelId);
     } catch (e) {
       return null;
     }
   }
 
-  // Predict treatment outcome
-  Future<TreatmentOutcomePrediction> predictTreatmentOutcome({
-    required String patientId,
-    required String treatmentId,
-    required Map<String, dynamic> patientData,
-    required Map<String, dynamic> treatmentData,
-  }) async {
-    // Simulate AI processing delay
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    // Mock prediction logic
-    final random = Random();
-    final baseSuccessRate = 0.75;
-    final patientFactors = _calculatePatientFactors(patientData);
-    final treatmentFactors = _calculateTreatmentFactors(treatmentData);
-    
-    final successProbability = (baseSuccessRate * patientFactors * treatmentFactors)
-        .clamp(0.1, 0.95);
-    
-    final estimatedDuration = _estimateTreatmentDuration(patientData, treatmentData);
-    final riskFactors = _identifyRiskFactors(patientData);
-    final adjustments = _recommendAdjustments(patientData, treatmentData);
-    
-    return TreatmentOutcomePrediction(
-      id: 'pred_${DateTime.now().millisecondsSinceEpoch}',
-      patientId: patientId,
-      treatmentId: treatmentId,
-      successProbability: successProbability,
-      estimatedDurationWeeks: estimatedDuration,
-      riskFactors: riskFactors,
-      recommendedAdjustments: adjustments,
-      confidenceIntervals: {
-        'success_probability': [successProbability - 0.1, successProbability + 0.1],
-        'duration_weeks': [estimatedDuration - 2, estimatedDuration + 2],
-      },
-    );
-  }
-
-  // Predict relapse risk
-  Future<RelapseRiskPrediction> predictRelapseRisk({
-    required String patientId,
-    required Map<String, dynamic> patientData,
-    required Map<String, dynamic> clinicalHistory,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    
-    final random = Random();
-    final baseRisk = 0.3;
-    final historyFactors = _calculateHistoryFactors(clinicalHistory);
-    final currentFactors = _calculateCurrentFactors(patientData);
-    
-    final relapseRisk = (baseRisk * historyFactors * currentFactors)
-        .clamp(0.05, 0.85);
-    
-    final riskLevel = _determineRiskLevel(relapseRisk);
-    final riskFactors = _identifyRelapseRiskFactors(patientData, clinicalHistory);
-    final protectiveFactors = _identifyProtectiveFactors(patientData, clinicalHistory);
-    final preventionStrategies = _generatePreventionStrategies(riskFactors);
-    
-    return RelapseRiskPrediction(
-      id: 'relapse_${DateTime.now().millisecondsSinceEpoch}',
-      patientId: patientId,
-      relapseRisk: relapseRisk,
-      riskLevel: riskLevel,
-      riskFactors: riskFactors,
-      protectiveFactors: protectiveFactors,
-      predictedRiskPeriod: DateTime.now().add(Duration(days: 30 + random.nextInt(60))),
-      preventionStrategies: preventionStrategies,
-    );
-  }
-
-  // Predict patient progress
-  Future<PatientProgressPrediction> predictPatientProgress({
-    required String patientId,
-    required Map<String, dynamic> patientData,
-    required Map<String, dynamic> treatmentHistory,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 700));
-    
-    final random = Random();
-    final baseImprovement = 0.6;
-    final patientFactors = _calculateProgressFactors(patientData);
-    final treatmentFactors = _calculateTreatmentProgressFactors(treatmentHistory);
-    
-    final improvementScore = (baseImprovement * patientFactors * treatmentFactors)
-        .clamp(0.2, 0.9);
-    
-    final recoveryWeeks = _estimateRecoveryTime(patientData, treatmentHistory);
-    final milestones = _generateMilestones(improvementScore, recoveryWeeks);
-    final challenges = _identifyChallenges(patientData, treatmentHistory);
-    
-    return PatientProgressPrediction(
-      id: 'progress_${DateTime.now().millisecondsSinceEpoch}',
-      patientId: patientId,
-      predictionDate: DateTime.now(),
-      improvementScore: improvementScore,
-      estimatedRecoveryWeeks: recoveryWeeks,
-      milestones: milestones,
-      challenges: challenges,
-      confidenceMetrics: {
-        'improvement_score': 0.85,
-        'recovery_time': 0.78,
-        'milestone_accuracy': 0.82,
-      },
-    );
-  }
-
-  // Predict crisis situations
-  Future<CrisisPrediction> predictCrisis({
-    required String patientId,
-    required Map<String, dynamic> patientData,
-    required Map<String, dynamic> recentBehavior,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    final random = Random();
-    final baseCrisisRisk = 0.15;
-    final behaviorFactors = _calculateBehaviorFactors(recentBehavior);
-    final patientFactors = _calculateCrisisFactors(patientData);
-    
-    final crisisProbability = (baseCrisisRisk * behaviorFactors * patientFactors)
-        .clamp(0.01, 0.7);
-    
-    final crisisType = _determineCrisisType(patientData, recentBehavior);
-    final urgency = _determineUrgency(crisisProbability, crisisType);
-    final warningSigns = _identifyWarningSigns(patientData, recentBehavior);
-    final interventions = _generateInterventionStrategies(crisisType, urgency);
-    
-    return CrisisPrediction(
-      id: 'crisis_${DateTime.now().millisecondsSinceEpoch}',
-      patientId: patientId,
-      crisisType: crisisType,
-      crisisProbability: crisisProbability,
-      predictedTimeframe: DateTime.now().add(Duration(days: 1 + random.nextInt(14))),
-      warningSigns: warningSigns,
-      interventionStrategies: interventions,
-      urgency: urgency,
-    );
-  }
-
   // Get model performance metrics
-  Future<ModelPerformanceMetrics> getModelPerformance(String modelId) async {
+  Future<ModelPerformanceMetrics> getModelPerformanceMetrics(String modelId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     
     final model = getModelById(modelId);
@@ -232,6 +170,7 @@ class PredictiveAnalyticsService {
       id: 'metrics_${DateTime.now().millisecondsSinceEpoch}',
       modelId: modelId,
       evaluationDate: DateTime.now(),
+      lastUpdated: DateTime.now(),
       accuracy: (baseAccuracy + (random.nextDouble() - 0.5) * variation).clamp(0.0, 1.0),
       precision: (baseAccuracy + (random.nextDouble() - 0.5) * variation).clamp(0.0, 1.0),
       recall: (baseAccuracy + (random.nextDouble() - 0.5) * variation).clamp(0.0, 1.0),
@@ -250,437 +189,225 @@ class PredictiveAnalyticsService {
     );
   }
 
-  // Get feature importance for a model
-  Future<List<FeatureImportance>> getFeatureImportance(String modelId) async {
+  // Get training jobs
+  Future<List<ModelTrainingJob>> getTrainingJobs() async {
     await Future.delayed(const Duration(milliseconds: 400));
-    
-    final features = [
-      'age', 'gender', 'diagnosis', 'symptom_severity', 'treatment_history',
-      'medication_compliance', 'social_support', 'stress_level', 'sleep_quality',
-      'exercise_frequency', 'substance_use', 'family_history', 'trauma_history'
-    ];
-    
-    final random = Random();
-    final importanceList = <FeatureImportance>[];
-    
-    for (final feature in features) {
-      final importance = random.nextDouble();
-      final stdDev = random.nextDouble() * 0.1;
-      final history = List.generate(10, (index) => 
-          importance + (random.nextDouble() - 0.5) * 0.2);
-      
-      importanceList.add(FeatureImportance(
-        featureName: feature,
-        importance: importance,
-        standardDeviation: stdDev,
-        importanceHistory: history,
-      ));
-    }
-    
-    // Sort by importance
-    importanceList.sort((a, b) => b.importance.compareTo(a.importance));
-    
-    return importanceList;
+    return _trainingJobs;
   }
 
-  // Start model training
-  Future<ModelTrainingJob> startModelTraining({
-    required String modelId,
-    required Map<String, dynamic> hyperparameters,
-    required Map<String, dynamic> trainingData,
+  // Predict treatment outcome
+  Future<TreatmentOutcomePrediction> predictTreatmentOutcome({
+    required Map<String, dynamic> patientData,
+    required Map<String, dynamic> treatmentData,
+    required String treatmentId,
+    required String diagnosis,
+    required String proposedTreatment,
+    required List<String> patientFactors,
   }) async {
-    final job = ModelTrainingJob(
-      id: 'job_${DateTime.now().millisecondsSinceEpoch}',
-      modelId: modelId,
-      status: TrainingStatus.pending,
-      startTime: DateTime.now(),
-      progress: 0.0,
-      hyperparameters: hyperparameters,
-      trainingMetrics: {},
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final random = Random();
+    final baseProbability = 0.7 + (random.nextDouble() - 0.5) * 0.3;
+    
+    return TreatmentOutcomePrediction(
+      id: 'outcome_${DateTime.now().millisecondsSinceEpoch}',
+      patientId: patientData['id'] ?? 'unknown',
+      treatmentId: treatmentId,
+      predictedOutcome: baseProbability > 0.6 ? TreatmentOutcome.successful : TreatmentOutcome.partial,
+      successProbability: baseProbability,
+      predictedDuration: Duration(days: 30 + random.nextInt(90)),
+      keyFactors: _identifyKeyFactors(patientData),
+      recommendations: _generateTreatmentRecommendations(diagnosis, proposedTreatment),
+      confidence: 0.85 + random.nextDouble() * 0.1,
     );
-    
-    // Simulate training process
-    _simulateTraining(job);
-    
-    return job;
   }
 
-  // Helper methods for mock predictions
-  double _calculatePatientFactors(Map<String, dynamic> patientData) {
+  // Predict relapse risk
+  Future<RelapseRiskPrediction> predictRelapseRisk({
+    required Map<String, dynamic> clinicalHistory,
+    required Map<String, dynamic> patientData,
+    required String diagnosis,
+    required List<String> treatmentHistory,
+    required List<String> currentSymptoms,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    
     final random = Random();
-    double factor = 1.0;
+    final baseRisk = 0.3 + (random.nextDouble() - 0.5) * 0.4;
     
-    if (patientData['age'] != null) {
-      final age = patientData['age'] as int;
-      if (age < 25) factor *= 0.9;
-      else if (age > 65) factor *= 0.85;
-    }
-    
-    if (patientData['compliance'] != null) {
-      factor *= (patientData['compliance'] as double);
-    }
-    
-    return factor + (random.nextDouble() - 0.5) * 0.2;
+    return RelapseRiskPrediction(
+      id: 'relapse_${DateTime.now().millisecondsSinceEpoch}',
+      patientId: patientData['id'] ?? 'unknown',
+      relapseRisk: baseRisk,
+      riskLevel: _determineRiskLevel(baseRisk),
+      timeToRelapse: Duration(days: 60 + random.nextInt(180)),
+      warningSigns: _identifyWarningSigns(currentSymptoms),
+      preventiveMeasures: _generatePreventiveMeasures(diagnosis, treatmentHistory),
+      confidence: 0.82 + random.nextDouble() * 0.12,
+    );
   }
 
-  double _calculateTreatmentFactors(Map<String, dynamic> treatmentData) {
+  // Predict crisis
+  Future<CrisisPrediction> predictCrisis({
+    required Map<String, dynamic> patientData,
+    required List<String> currentSymptoms,
+    required List<String> riskFactors,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 700));
+    
     final random = Random();
-    double factor = 1.0;
+    final crisisProbability = 0.1 + random.nextDouble() * 0.3;
     
-    if (treatmentData['evidence_level'] != null) {
-      factor *= (treatmentData['evidence_level'] as double);
-    }
-    
-    if (treatmentData['duration'] != null) {
-      final duration = treatmentData['duration'] as int;
-      if (duration > 12) factor *= 1.1;
-    }
-    
-    return factor + (random.nextDouble() - 0.5) * 0.15;
+    return CrisisPrediction(
+      id: 'crisis_${DateTime.now().millisecondsSinceEpoch}',
+      patientId: patientData['id'] ?? 'unknown',
+      crisisType: _determineCrisisType(currentSymptoms),
+      crisisProbability: crisisProbability,
+      predictedTimeframe: DateTime.now().add(Duration(days: 1 + random.nextInt(14))),
+      warningSigns: _identifyCrisisWarningSigns(currentSymptoms),
+      interventionStrategies: _generateCrisisInterventionStrategies(crisisProbability),
+      urgency: _determineUrgency(crisisProbability),
+    );
   }
 
-  int _estimateTreatmentDuration(Map<String, dynamic> patientData, Map<String, dynamic> treatmentData) {
+  // Predict patient progress
+  Future<PatientProgressPrediction> predictPatientProgress({
+    required Map<String, dynamic> patientData,
+    required List<String> treatmentHistory,
+    required String diagnosis,
+    required Map<String, dynamic> treatmentPlan,
+    required Map<String, dynamic> currentProgress,
+    required double adherence,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    
     final random = Random();
-    int baseDuration = 8;
+    final progressScore = 0.5 + (adherence * 0.4) + (random.nextDouble() - 0.5) * 0.2;
     
-    if (patientData['severity'] != null) {
-      final severity = patientData['severity'] as double;
-      baseDuration += (severity * 4).round();
-    }
-    
-    return (baseDuration + random.nextInt(6)).clamp(4, 24);
+    return PatientProgressPrediction(
+      id: 'progress_${DateTime.now().millisecondsSinceEpoch}',
+      patientId: patientData['id'] ?? 'unknown',
+      progressScore: progressScore.clamp(0.0, 1.0),
+      expectedCompletion: _estimateCompletionTime(progressScore, treatmentPlan),
+      milestones: _generateMilestones(progressScore, treatmentPlan),
+      challenges: _identifyChallenges(progressScore, currentProgress),
+      recommendations: _generateProgressRecommendations(progressScore, adherence),
+      confidence: 0.88 + random.nextDouble() * 0.08,
+    );
   }
 
-  List<String> _identifyRiskFactors(Map<String, dynamic> patientData) {
-    final factors = <String>[];
-    
-    if (patientData['substance_use'] == true) factors.add('Substance use');
-    if (patientData['social_isolation'] == true) factors.add('Social isolation');
-    if (patientData['financial_stress'] == true) factors.add('Financial stress');
-    if (patientData['family_conflict'] == true) factors.add('Family conflict');
-    if (patientData['work_stress'] == true) factors.add('Work stress');
-    
-    if (factors.isEmpty) factors.add('Low risk profile');
-    
-    return factors;
+  // Helper methods
+  List<String> _identifyKeyFactors(Map<String, dynamic> patientData) {
+    return [
+      'Age: ${patientData['age'] ?? 'Unknown'}',
+      'Diagnosis: ${patientData['diagnosis'] ?? 'Unknown'}',
+      'Treatment History: ${patientData['treatmentHistory']?.length ?? 0} previous treatments',
+      'Social Support: ${patientData['socialSupport'] ?? 'Unknown'}',
+    ];
   }
 
-  List<String> _recommendAdjustments(Map<String, dynamic> patientData, Map<String, dynamic> treatmentData) {
-    final adjustments = <String>[];
-    
-    if (patientData['sleep_issues'] == true) {
-      adjustments.add('Implement sleep hygiene protocols');
-    }
-    
-    if (patientData['medication_side_effects'] == true) {
-      adjustments.add('Review medication dosage and timing');
-    }
-    
-    if (patientData['therapy_resistance'] == true) {
-      adjustments.add('Consider alternative therapeutic approaches');
-    }
-    
-    if (adjustments.isEmpty) {
-      adjustments.add('Continue current treatment plan');
-    }
-    
-    return adjustments;
-  }
-
-  double _calculateHistoryFactors(Map<String, dynamic> clinicalHistory) {
-    double factor = 1.0;
-    
-    if (clinicalHistory['previous_relapses'] != null) {
-      final relapses = clinicalHistory['previous_relapses'] as int;
-      factor *= (1.0 + relapses * 0.2);
-    }
-    
-    if (clinicalHistory['treatment_compliance'] != null) {
-      factor *= (2.0 - clinicalHistory['treatment_compliance'] as double);
-    }
-    
-    return factor.clamp(0.5, 2.0);
-  }
-
-  double _calculateCurrentFactors(Map<String, dynamic> patientData) {
-    double factor = 1.0;
-    
-    if (patientData['stress_level'] != null) {
-      factor *= (1.0 + (patientData['stress_level'] as double) * 0.3);
-    }
-    
-    if (patientData['social_support'] != null) {
-      factor *= (1.5 - (patientData['social_support'] as double) * 0.5);
-    }
-    
-    return factor.clamp(0.5, 2.0);
+  List<String> _generateTreatmentRecommendations(String diagnosis, String proposedTreatment) {
+    return [
+      'Regular monitoring of symptoms',
+      'Adherence to medication schedule',
+      'Lifestyle modifications',
+      'Regular therapy sessions',
+    ];
   }
 
   RiskLevel _determineRiskLevel(double risk) {
-    if (risk < 0.25) return RiskLevel.low;
-    if (risk < 0.5) return RiskLevel.moderate;
-    if (risk < 0.75) return RiskLevel.high;
+    if (risk < 0.2) return RiskLevel.low;
+    if (risk < 0.5) return RiskLevel.medium;
+    if (risk < 0.8) return RiskLevel.high;
     return RiskLevel.critical;
   }
 
-  List<String> _identifyRelapseRiskFactors(Map<String, dynamic> patientData, Map<String, dynamic> clinicalHistory) {
-    final factors = <String>[];
-    
-    if (patientData['recent_stress'] == true) factors.add('Recent stress events');
-    if (patientData['medication_skipped'] == true) factors.add('Medication non-compliance');
-    if (patientData['therapy_missed'] == true) factors.add('Missed therapy sessions');
-    if (clinicalHistory['previous_relapses'] != null) factors.add('History of relapses');
-    
-    return factors;
+  List<String> _identifyWarningSigns(List<String> symptoms) {
+    return [
+      'Increased anxiety',
+      'Sleep disturbances',
+      'Social withdrawal',
+      'Mood changes',
+    ];
   }
 
-  List<String> _identifyProtectiveFactors(Map<String, dynamic> patientData, Map<String, dynamic> clinicalHistory) {
-    final factors = <String>[];
-    
-    if (patientData['strong_support'] == true) factors.add('Strong social support');
-    if (patientData['coping_skills'] == true) factors.add('Good coping skills');
-    if (patientData['stable_environment'] == true) factors.add('Stable environment');
-    if (patientData['motivation'] == true) factors.add('High motivation');
-    
-    return factors;
+  List<String> _generatePreventiveMeasures(String diagnosis, List<String> treatmentHistory) {
+    return [
+      'Regular therapy sessions',
+      'Medication adherence',
+      'Stress management techniques',
+      'Social support network',
+    ];
   }
 
-  List<String> _generatePreventionStrategies(List<String> riskFactors) {
-    final strategies = <String>[];
-    
-    if (riskFactors.contains('Recent stress events')) {
-      strategies.add('Implement stress management techniques');
-    }
-    
-    if (riskFactors.contains('Medication non-compliance')) {
-      strategies.add('Set up medication reminders and monitoring');
-    }
-    
-    if (riskFactors.contains('Missed therapy sessions')) {
-      strategies.add('Schedule regular check-ins and follow-ups');
-    }
-    
-    strategies.add('Increase monitoring frequency');
-    strategies.add('Provide crisis intervention resources');
-    
-    return strategies;
-  }
-
-  double _calculateProgressFactors(Map<String, dynamic> patientData) {
-    double factor = 1.0;
-    
-    if (patientData['motivation'] != null) {
-      factor *= (1.0 + (patientData['motivation'] as double) * 0.3);
-    }
-    
-    if (patientData['support_system'] != null) {
-      factor *= (1.0 + (patientData['support_system'] as double) * 0.2);
-    }
-    
-    return factor.clamp(0.7, 1.5);
-  }
-
-  double _calculateTreatmentProgressFactors(Map<String, dynamic> treatmentHistory) {
-    double factor = 1.0;
-    
-    if (treatmentHistory['consistency'] != null) {
-      factor *= (treatmentHistory['consistency'] as double);
-    }
-    
-    if (treatmentHistory['response'] != null) {
-      factor *= (1.0 + (treatmentHistory['response'] as double) * 0.4);
-    }
-    
-    return factor.clamp(0.6, 1.4);
-  }
-
-  int _estimateRecoveryTime(Map<String, dynamic> patientData, Map<String, dynamic> treatmentHistory) {
-    final random = Random();
-    int baseTime = 12;
-    
-    if (patientData['severity'] != null) {
-      final severity = patientData['severity'] as double;
-      baseTime += (severity * 6).round();
-    }
-    
-    if (treatmentHistory['previous_treatments'] != null) {
-      final previous = treatmentHistory['previous_treatments'] as int;
-      if (previous > 2) baseTime += 4;
-    }
-    
-    return (baseTime + random.nextInt(8)).clamp(8, 36);
-  }
-
-  List<String> _generateMilestones(double improvementScore, int recoveryWeeks) {
-    final milestones = <String>[];
-    final weeks = recoveryWeeks ~/ 4;
-    
-    if (weeks >= 1) milestones.add('Week 4: Initial symptom reduction');
-    if (weeks >= 2) milestones.add('Week 8: Improved daily functioning');
-    if (weeks >= 3) milestones.add('Week 12: Significant mood improvement');
-    if (weeks >= 4) milestones.add('Week 16: Stable recovery state');
-    
-    return milestones;
-  }
-
-  List<String> _identifyChallenges(Map<String, dynamic> patientData, Map<String, dynamic> treatmentHistory) {
-    final challenges = <String>[];
-    
-    if (patientData['complex_diagnosis'] == true) {
-      challenges.add('Complex diagnosis requiring multiple approaches');
-    }
-    
-    if (patientData['co_morbidity'] == true) {
-      challenges.add('Co-morbid conditions');
-    }
-    
-    if (treatmentHistory['resistance'] == true) {
-      challenges.add('Treatment resistance');
-    }
-    
-    if (challenges.isEmpty) {
-      challenges.add('Standard treatment progression');
-    }
-    
-    return challenges;
-  }
-
-  double _calculateBehaviorFactors(Map<String, dynamic> recentBehavior) {
-    double factor = 1.0;
-    
-    if (recentBehavior['agitation'] == true) factor *= 1.5;
-    if (recentBehavior['isolation'] == true) factor *= 1.3;
-    if (recentBehavior['risk_behavior'] == true) factor *= 2.0;
-    if (recentBehavior['verbal_threats'] == true) factor *= 1.8;
-    
-    return factor.clamp(0.5, 3.0);
-  }
-
-  double _calculateCrisisFactors(Map<String, dynamic> patientData) {
-    double factor = 1.0;
-    
-    if (patientData['suicide_history'] == true) factor *= 2.5;
-    if (patientData['violence_history'] == true) factor *= 2.0;
-    if (patientData['psychosis'] == true) factor *= 1.8;
-    if (patientData['substance_abuse'] == true) factor *= 1.6;
-    
-    return factor.clamp(0.5, 4.0);
-  }
-
-  CrisisType _determineCrisisType(Map<String, dynamic> patientData, Map<String, dynamic> recentBehavior) {
-    if (recentBehavior['suicidal_thoughts'] == true || patientData['suicide_history'] == true) {
-      return CrisisType.suicidal;
-    }
-    
-    if (recentBehavior['violent_behavior'] == true || patientData['violence_history'] == true) {
-      return CrisisType.violent;
-    }
-    
-    if (recentBehavior['psychotic_symptoms'] == true || patientData['psychosis'] == true) {
-      return CrisisType.psychotic;
-    }
-    
-    if (recentBehavior['substance_use'] == true || patientData['substance_abuse'] == true) {
-      return CrisisType.substanceAbuse;
-    }
-    
-    if (recentBehavior['self_harm'] == true) {
-      return CrisisType.selfHarm;
-    }
-    
+  CrisisType _determineCrisisType(List<String> symptoms) {
+    if (symptoms.contains('suicidal')) return CrisisType.suicidal;
+    if (symptoms.contains('violent')) return CrisisType.violent;
+    if (symptoms.contains('psychotic')) return CrisisType.psychotic;
     return CrisisType.other;
   }
 
-  UrgencyLevel _determineUrgency(double crisisProbability, CrisisType crisisType) {
-    if (crisisProbability > 0.6 || crisisType == CrisisType.suicidal) {
-      return UrgencyLevel.immediate;
-    }
-    
-    if (crisisProbability > 0.4 || crisisType == CrisisType.violent) {
-      return UrgencyLevel.high;
-    }
-    
-    if (crisisProbability > 0.2) {
-      return UrgencyLevel.medium;
-    }
-    
-    return UrgencyLevel.low;
+  List<String> _identifyCrisisWarningSigns(List<String> symptoms) {
+    return [
+      'Severe mood swings',
+      'Isolation',
+      'Substance use',
+      'Risk-taking behavior',
+    ];
   }
 
-  List<String> _identifyWarningSigns(Map<String, dynamic> patientData, Map<String, dynamic> recentBehavior) {
-    final signs = <String>[];
-    
-    if (recentBehavior['mood_changes'] == true) signs.add('Significant mood changes');
-    if (recentBehavior['sleep_disturbance'] == true) signs.add('Sleep disturbance');
-    if (recentBehavior['appetite_changes'] == true) signs.add('Appetite changes');
-    if (recentBehavior['social_withdrawal'] == true) signs.add('Social withdrawal');
-    if (recentBehavior['increased_anxiety'] == true) signs.add('Increased anxiety');
-    
-    return signs;
+  List<String> _generateCrisisInterventionStrategies(double probability) {
+    return [
+      'Immediate crisis assessment',
+      'Safety planning',
+      'Emergency contact activation',
+      'Professional intervention',
+    ];
   }
 
-  List<String> _generateInterventionStrategies(CrisisType crisisType, UrgencyLevel urgency) {
-    final strategies = <String>[];
-    
-    if (urgency == UrgencyLevel.immediate) {
-      strategies.add('Immediate crisis intervention');
-      strategies.add('Contact emergency services if needed');
-      strategies.add('24/7 monitoring');
-    }
-    
-    if (crisisType == CrisisType.suicidal) {
-      strategies.add('Suicide risk assessment');
-      strategies.add('Safety planning');
-      strategies.add('Remove access to means');
-    }
-    
-    if (crisisType == CrisisType.violent) {
-      strategies.add('Violence risk assessment');
-      strategies.add('Environmental safety measures');
-      strategies.add('Behavioral intervention');
-    }
-    
-    strategies.add('Increase therapy frequency');
-    strategies.add('Medication review');
-    strategies.add('Family involvement');
-    
-    return strategies;
+  UrgencyLevel _determineUrgency(double probability) {
+    if (probability < 0.3) return UrgencyLevel.low;
+    if (probability < 0.6) return UrgencyLevel.medium;
+    if (probability < 0.9) return UrgencyLevel.high;
+    return UrgencyLevel.immediate;
   }
 
-  void _simulateTraining(ModelTrainingJob job) async {
-    // Simulate training progress
-    for (int i = 0; i <= 100; i += 10) {
-      await Future.delayed(const Duration(milliseconds: 200));
-      
-      if (i == 100) {
-        job = ModelTrainingJob(
-          id: job.id,
-          modelId: job.modelId,
-          status: TrainingStatus.completed,
-          startTime: job.startTime,
-          endTime: DateTime.now(),
-          progress: 1.0,
-          hyperparameters: job.hyperparameters,
-          trainingMetrics: {
-            'final_accuracy': 0.89,
-            'training_time': '2h 15m',
-            'epochs': 150,
-          },
-        );
-      } else {
-        job = ModelTrainingJob(
-          id: job.id,
-          modelId: job.modelId,
-          status: TrainingStatus.running,
-          startTime: job.startTime,
-          progress: i / 100,
-          hyperparameters: job.hyperparameters,
-          trainingMetrics: {
-            'current_accuracy': 0.75 + (i / 100) * 0.14,
-            'epoch': i * 1.5,
-          },
-        );
-      }
-    }
+  Duration _estimateCompletionTime(double progressScore, Map<String, dynamic> treatmentPlan) {
+    final baseDuration = Duration(days: 90);
+    final remainingProgress = 1.0 - progressScore;
+    return Duration(days: (remainingProgress * baseDuration.inDays).round());
+  }
+
+  List<String> _generateMilestones(double progressScore, Map<String, dynamic> treatmentPlan) {
+    return [
+      'Complete initial assessment',
+      'Establish treatment goals',
+      'Begin therapy sessions',
+      'Monitor progress regularly',
+    ];
+  }
+
+  List<String> _identifyChallenges(double progressScore, Map<String, dynamic> currentProgress) {
+    return [
+      'Maintaining consistency',
+      'Managing setbacks',
+      'Balancing multiple treatments',
+      'Long-term commitment',
+    ];
+  }
+
+  List<String> _generateProgressRecommendations(double progressScore, double adherence) {
+    return [
+      'Increase session frequency if needed',
+      'Focus on adherence improvement',
+      'Consider additional support',
+      'Review and adjust goals',
+    ];
+  }
+
+  // Dispose resources
+  void dispose() {
+    _predictionController.close();
+    _trainingController.close();
   }
 }

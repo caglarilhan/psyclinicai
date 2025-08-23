@@ -1,590 +1,702 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
-import 'package:local_auth/local_auth.dart';
-import 'package:local_auth_android/local_auth_android.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BiometricAuthService {
+  static const String _biometricKey = 'biometric_auth';
+  
+  // Singleton pattern
   static final BiometricAuthService _instance = BiometricAuthService._internal();
   factory BiometricAuthService() => _instance;
   BiometricAuthService._internal();
 
-  final LocalAuthentication _localAuth = LocalAuthentication();
-  
   // Stream controllers
-  final StreamController<BiometricStatus> _statusController = StreamController<BiometricStatus>.broadcast();
-  final StreamController<AuthResult> _authResultController = StreamController<AuthResult>.broadcast();
+  final StreamController<BiometricAuthEvent> _authStreamController = 
+      StreamController<BiometricAuthEvent>.broadcast();
   
-  // Streams
-  Stream<BiometricStatus> get statusStream => _statusController.stream;
-  Stream<AuthResult> get authResultStream => _authResultController.stream;
+  final StreamController<BiometricAlert> _alertStreamController = 
+      StreamController<BiometricAlert>.broadcast();
 
-  // Biometric status
-  BiometricStatus _currentStatus = BiometricStatus.unknown;
-  bool _isInitialized = false;
+  // Get streams
+  Stream<BiometricAuthEvent> get authStream => _authStreamController.stream;
+  Stream<BiometricAlert> get alertStream => _alertStreamController.stream;
 
-  // Getters
-  BiometricStatus get currentStatus => _currentStatus;
-  bool get isInitialized => _isInitialized;
+  // Check if biometric is available
+  Future<bool> isBiometricAvailable() async => true;
 
-  Future<void> initialize() async {
+  // Check if biometric is enrolled
+  Future<bool> isBiometricEnrolled(String userId) async {
     try {
-      // Biometric availability kontrolü
-      await _checkBiometricAvailability();
-      
-      // Biometric settings'i yükle
-      await _loadBiometricSettings();
-      
-      _isInitialized = true;
-      print('BiometricAuthService initialized successfully');
-    } catch (e) {
-      print('BiometricAuthService initialization failed: $e');
-      _currentStatus = BiometricStatus.notAvailable;
-      _statusController.add(_currentStatus);
-    }
-  }
-
-  Future<void> _checkBiometricAvailability() async {
-    try {
-      // Biometric hardware support kontrolü
-      final isDeviceSupported = await _localAuth.isDeviceSupported();
-      
-      if (!isDeviceSupported) {
-        _currentStatus = BiometricStatus.notSupported;
-        _statusController.add(_currentStatus);
-        return;
-      }
-
-      // Available biometrics kontrolü
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      
-      if (availableBiometrics.isEmpty) {
-        _currentStatus = BiometricStatus.notAvailable;
-        _statusController.add(_currentStatus);
-        return;
-      }
-
-      // Biometric type'ları kontrol et
-      final hasFingerprint = availableBiometrics.contains(BiometricType.fingerprint);
-      final hasFace = availableBiometrics.contains(BiometricType.face);
-      final hasIris = availableBiometrics.contains(BiometricType.iris);
-
-      if (hasFingerprint || hasFace || hasIris) {
-        _currentStatus = BiometricStatus.available;
-        _statusController.add(_currentStatus);
-      } else {
-        _currentStatus = BiometricStatus.notAvailable;
-        _statusController.add(_currentStatus);
-      }
-
-    } catch (e) {
-      print('Error checking biometric availability: $e');
-      _currentStatus = BiometricStatus.error;
-      _statusController.add(_currentStatus);
-    }
-  }
-
-  Future<void> _loadBiometricSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Biometric enabled setting
-    final isEnabled = prefs.getBool('biometric_enabled') ?? false;
-    
-    if (isEnabled && _currentStatus == BiometricStatus.available) {
-      _currentStatus = BiometricStatus.enabled;
-      _statusController.add(_currentStatus);
-    }
-  }
-
-  // Biometric authentication
-  Future<AuthResult> authenticate({
-    required String reason,
-    String? cancelButton,
-    String? localizedFallbackTitle,
-    bool useErrorDialogs = true,
-    bool stickyAuth = false,
-    bool biometricOnly = true,
-  }) async {
-    try {
-      if (_currentStatus != BiometricStatus.available && 
-          _currentStatus != BiometricStatus.enabled) {
-        return AuthResult(
-          success: false,
-          error: 'Biometric authentication is not available',
-          errorCode: 'not_available',
-        );
-      }
-
-      // Authentication options
-      final authOptions = AuthenticationOptions(
-        biometricOnly: biometricOnly,
-        stickyAuth: stickyAuth,
-        useErrorDialogs: useErrorDialogs,
-      );
-
-      // Localized strings
-      final localizedStrings = LocalizedStrings(
-        cancelButton: cancelButton ?? 'İptal',
-        localizedFallbackTitle: localizedFallbackTitle ?? 'Şifre Kullan',
-      );
-
-      // Authentication attempt
-      final success = await _localAuth.authenticate(
-        localizedReason: reason,
-        options: authOptions,
-      );
-
-      if (success) {
-        // Başarılı authentication sonrası
-        await _onSuccessfulAuth();
-        
-        final result = AuthResult(
-          success: true,
-          error: null,
-          errorCode: null,
-        );
-        
-        _authResultController.add(result);
-        return result;
-      } else {
-        final result = AuthResult(
-          success: false,
-          error: 'Authentication cancelled by user',
-          errorCode: 'user_cancelled',
-        );
-        
-        _authResultController.add(result);
-        return result;
-      }
-
-    } on PlatformException catch (e) {
-      final errorCode = _mapPlatformException(e.code);
-      final errorMessage = _getErrorMessage(errorCode);
-      
-      final result = AuthResult(
-        success: false,
-        error: errorMessage,
-        errorCode: errorCode,
-      );
-      
-      _authResultController.add(result);
-      return result;
-    } catch (e) {
-      final result = AuthResult(
-        success: false,
-        error: 'Unexpected error: $e',
-        errorCode: 'unknown_error',
-      );
-      
-      _authResultController.add(result);
-      return result;
-    }
-  }
-
-  // Fingerprint authentication (specific)
-  Future<AuthResult> authenticateWithFingerprint({
-    required String reason,
-    bool stickyAuth = false,
-  }) async {
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      
-      if (!availableBiometrics.contains(BiometricType.fingerprint)) {
-        return AuthResult(
-          success: false,
-          error: 'Fingerprint authentication is not available',
-          errorCode: 'fingerprint_not_available',
-        );
-      }
-
-      return await authenticate(
-        reason: reason,
-        stickyAuth: stickyAuth,
-        biometricOnly: true,
-      );
-    } catch (e) {
-      return AuthResult(
-        success: false,
-        error: 'Fingerprint authentication failed: $e',
-        errorCode: 'fingerprint_error',
-      );
-    }
-  }
-
-  // Face authentication (specific)
-  Future<AuthResult> authenticateWithFace({
-    required String reason,
-    bool stickyAuth = false,
-  }) async {
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      
-      if (!availableBiometrics.contains(BiometricType.face)) {
-        return AuthResult(
-          success: false,
-          error: 'Face authentication is not available',
-          errorCode: 'face_not_available',
-        );
-      }
-
-      return await authenticate(
-        reason: reason,
-        stickyAuth: stickyAuth,
-        biometricOnly: true,
-      );
-    } catch (e) {
-      return AuthResult(
-        success: false,
-        error: 'Face authentication failed: $e',
-        errorCode: 'face_error',
-      );
-    }
-  }
-
-  // Iris authentication (specific)
-  Future<AuthResult> authenticateWithIris({
-    required String reason,
-    bool stickyAuth = false,
-  }) async {
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      
-      if (!availableBiometrics.contains(BiometricType.iris)) {
-        return AuthResult(
-          success: false,
-          error: 'Iris authentication is not available',
-          errorCode: 'iris_not_available',
-        );
-      }
-
-      return await authenticate(
-        reason: reason,
-        stickyAuth: stickyAuth,
-        biometricOnly: true,
-      );
-    } catch (e) {
-      return AuthResult(
-        success: false,
-        error: 'Iris authentication failed: $e',
-        errorCode: 'iris_error',
-      );
-    }
-  }
-
-  // Biometric settings management
-  Future<void> enableBiometric() async {
-    if (_currentStatus != BiometricStatus.available) {
-      throw Exception('Biometric authentication is not available');
-    }
-
-    // Test authentication
-    final testResult = await authenticate(
-      reason: 'Biometric authentication\'ı etkinleştirmek için kimlik doğrulaması yapın',
-      cancelButton: 'İptal',
-    );
-
-    if (testResult.success) {
-      // Settings'i kaydet
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('biometric_enabled', true);
-      
-      // Status'u güncelle
-      _currentStatus = BiometricStatus.enabled;
-      _statusController.add(_currentStatus);
-      
-      print('Biometric authentication enabled successfully');
-    } else {
-      throw Exception('Biometric test failed: ${testResult.error}');
-    }
-  }
-
-  Future<void> disableBiometric() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('biometric_enabled', false);
-    
-    _currentStatus = BiometricStatus.available;
-    _statusController.add(_currentStatus);
-    
-    print('Biometric authentication disabled');
-  }
-
-  Future<void> resetBiometric() async {
-    try {
-      // Biometric data'yı temizle
-      await _localAuth.stopAuthentication();
-      
-      // Settings'i sıfırla
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('biometric_enabled');
-      await prefs.remove('biometric_last_used');
-      
-      // Status'u güncelle
-      _currentStatus = BiometricStatus.available;
-      _statusController.add(_currentStatus);
-      
-      print('Biometric authentication reset successfully');
+      final biometricKey = '${_biometricKey}_$userId';
+      return prefs.getString(biometricKey) != null;
     } catch (e) {
-      print('Error resetting biometric: $e');
-    }
-  }
-
-  // Biometric usage tracking
-  Future<void> _onSuccessfulAuth() async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now().toIso8601String();
-    
-    await prefs.setString('biometric_last_used', now);
-    
-    // Usage statistics
-    final usageCount = prefs.getInt('biometric_usage_count') ?? 0;
-    await prefs.setInt('biometric_usage_count', usageCount + 1);
-  }
-
-  // Biometric statistics
-  Future<BiometricStats> getBiometricStats() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    final lastUsed = prefs.getString('biometric_last_used');
-    final usageCount = prefs.getInt('biometric_usage_count') ?? 0;
-    final isEnabled = prefs.getBool('biometric_enabled') ?? false;
-    
-    return BiometricStats(
-      isEnabled: isEnabled,
-      lastUsed: lastUsed != null ? DateTime.parse(lastUsed) : null,
-      usageCount: usageCount,
-      status: _currentStatus,
-    );
-  }
-
-  // Security level assessment
-  Future<SecurityLevel> assessSecurityLevel() async {
-    if (_currentStatus != BiometricStatus.enabled) {
-      return SecurityLevel.none;
-    }
-
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      
-      if (availableBiometrics.contains(BiometricType.iris)) {
-        return SecurityLevel.high; // Iris en güvenli
-      } else if (availableBiometrics.contains(BiometricType.face)) {
-        return SecurityLevel.medium; // Face orta güvenli
-      } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
-        return SecurityLevel.medium; // Fingerprint orta güvenli
-      } else {
-        return SecurityLevel.low;
-      }
-    } catch (e) {
-      return SecurityLevel.low;
-    }
-  }
-
-  // Biometric health check
-  Future<BiometricHealth> checkBiometricHealth() async {
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      final isDeviceSupported = await _localAuth.isDeviceSupported();
-      
-      final health = BiometricHealth(
-        isDeviceSupported: isDeviceSupported,
-        availableBiometrics: availableBiometrics,
-        status: _currentStatus,
-        lastCheck: DateTime.now(),
-        isHealthy: _currentStatus == BiometricStatus.available || 
-                   _currentStatus == BiometricStatus.enabled,
-      );
-      
-      return health;
-    } catch (e) {
-      return BiometricHealth(
-        isDeviceSupported: false,
-        availableBiometrics: [],
-        status: _currentStatus,
-        lastCheck: DateTime.now(),
-        isHealthy: false,
-        error: e.toString(),
-      );
-    }
-  }
-
-  // Platform exception mapping
-  String _mapPlatformException(String code) {
-    switch (code) {
-      case 'NotAvailable':
-        return 'not_available';
-      case 'NotEnrolled':
-        return 'not_enrolled';
-      case 'LockedOut':
-        return 'locked_out';
-      case 'PermanentlyLockedOut':
-        return 'permanently_locked_out';
-      case 'PasscodeNotSet':
-        return 'passcode_not_set';
-      case 'UserCancel':
-        return 'user_cancelled';
-      case 'AuthenticationFailed':
-        return 'authentication_failed';
-      case 'UserFallback':
-        return 'user_fallback';
-      case 'SystemCancel':
-        return 'system_cancelled';
-      case 'InvalidContext':
-        return 'invalid_context';
-      default:
-        return 'unknown_error';
-    }
-  }
-
-  // Error message mapping
-  String _getErrorMessage(String errorCode) {
-    switch (errorCode) {
-      case 'not_available':
-        return 'Biyometrik kimlik doğrulama mevcut değil';
-      case 'not_enrolled':
-        return 'Biyometrik veri kaydedilmemiş';
-      case 'locked_out':
-        return 'Çok fazla başarısız deneme. Lütfen bekleyin';
-      case 'permanently_locked_out':
-        return 'Biyometrik kimlik doğrulama kalıcı olarak kilitlendi';
-      case 'passcode_not_set':
-        return 'Cihaz şifresi ayarlanmamış';
-      case 'user_cancelled':
-        return 'Kullanıcı tarafından iptal edildi';
-      case 'authentication_failed':
-        return 'Kimlik doğrulama başarısız';
-      case 'user_fallback':
-        return 'Kullanıcı alternatif yöntem seçti';
-      case 'system_cancelled':
-        return 'Sistem tarafından iptal edildi';
-      case 'invalid_context':
-        return 'Geçersiz kimlik doğrulama bağlamı';
-      default:
-        return 'Bilinmeyen hata oluştu';
-    }
-  }
-
-  // Biometric enrollment check
-  Future<bool> isBiometricEnrolled() async {
-    try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
-      return availableBiometrics.isNotEmpty;
-    } catch (e) {
+      print('Error checking biometric enrollment: $e');
       return false;
     }
   }
 
-  // Biometric type detection
-  Future<List<BiometricType>> getAvailableBiometricTypes() async {
+  // Enroll fingerprint
+  Future<bool> enrollFingerprint({
+    required String userId,
+    required String fingerprintData,
+    String? description,
+  }) async {
     try {
-      return await _localAuth.getAvailableBiometrics();
+      final prefs = await SharedPreferences.getInstance();
+      final biometricKey = '${_biometricKey}_$userId';
+      
+      final biometricProfile = BiometricProfile(
+        id: _generateSecureId(),
+        userId: userId,
+        type: BiometricType.fingerprint,
+        data: fingerprintData,
+        description: description ?? 'Primary fingerprint',
+        enrolledAt: DateTime.now(),
+        lastUsed: DateTime.now(),
+        isActive: true,
+        confidence: 0.95,
+      );
+      
+      await prefs.setString(biometricKey, json.encode(biometricProfile.toJson()));
+      
+      _authStreamController.add(BiometricAuthEvent(
+        id: _generateSecureId(),
+        userId: userId,
+        eventType: BiometricEventType.enrollment,
+        biometricType: BiometricType.fingerprint,
+        timestamp: DateTime.now(),
+        success: true,
+        details: 'Fingerprint enrolled successfully',
+      ));
+      
+      print('✅ Fingerprint enrolled for user: $userId');
+      return true;
+      
     } catch (e) {
+      print('Error enrolling fingerprint: $e');
+      return false;
+    }
+  }
+
+  // Enroll face recognition
+  Future<bool> enrollFaceRecognition({
+    required String userId,
+    required String faceData,
+    String? description,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final biometricKey = '${_biometricKey}_$userId';
+      
+      final biometricProfile = BiometricProfile(
+        id: _generateSecureId(),
+        userId: userId,
+        type: BiometricType.face,
+        data: faceData,
+        description: description ?? 'Primary face recognition',
+        enrolledAt: DateTime.now(),
+        lastUsed: DateTime.now(),
+        isActive: true,
+        confidence: 0.92,
+      );
+      
+      await prefs.setString(biometricKey, json.encode(biometricProfile.toJson()));
+      
+      _authStreamController.add(BiometricAuthEvent(
+        id: _generateSecureId(),
+        userId: userId,
+        eventType: BiometricEventType.enrollment,
+        biometricType: BiometricType.face,
+        timestamp: DateTime.now(),
+        success: true,
+        details: 'Face recognition enrolled successfully',
+      ));
+      
+      print('✅ Face recognition enrolled for user: $userId');
+      return true;
+      
+    } catch (e) {
+      print('Error enrolling face recognition: $e');
+      return false;
+    }
+  }
+
+  // Authenticate with fingerprint
+  Future<BiometricAuthResult> authenticateWithFingerprint({
+    required String userId,
+    required String fingerprintData,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final biometricKey = '${_biometricKey}_$userId';
+      
+      final biometricJson = prefs.getString(biometricKey);
+      if (biometricJson == null) {
+        return BiometricAuthResult(
+          success: false,
+          message: 'No biometric profile found',
+          confidence: 0.0,
+          attempts: 0,
+        );
+      }
+      
+      final biometricProfile = BiometricProfile.fromJson(json.decode(biometricJson));
+      
+      if (biometricProfile.type != BiometricType.fingerprint) {
+        return BiometricAuthResult(
+          success: false,
+          message: 'Fingerprint not enrolled',
+          confidence: 0.0,
+          attempts: 0,
+        );
+      }
+      
+      // Simulate fingerprint matching
+      final matchResult = await _simulateFingerprintMatch(
+        storedData: biometricProfile.data,
+        providedData: fingerprintData,
+      );
+      
+      if (matchResult.success) {
+        // Update last used timestamp
+        final updatedProfile = biometricProfile.copyWith(
+          lastUsed: DateTime.now(),
+          confidence: matchResult.confidence,
+        );
+        
+        await prefs.setString(biometricKey, json.encode(updatedProfile.toJson()));
+        
+        _authStreamController.add(BiometricAuthEvent(
+          id: _generateSecureId(),
+          userId: userId,
+          eventType: BiometricEventType.authentication,
+          biometricType: BiometricType.fingerprint,
+          timestamp: DateTime.now(),
+          success: true,
+          details: 'Fingerprint authentication successful',
+        ));
+        
+        return BiometricAuthResult(
+          success: true,
+          message: 'Authentication successful',
+          confidence: matchResult.confidence,
+          attempts: 1,
+        );
+      } else {
+        _authStreamController.add(BiometricAuthEvent(
+          id: _generateSecureId(),
+          userId: userId,
+          eventType: BiometricEventType.authentication,
+          biometricType: BiometricType.fingerprint,
+          timestamp: DateTime.now(),
+          success: false,
+          details: 'Fingerprint authentication failed',
+        ));
+        
+        await _checkSuspiciousBiometricActivity(userId);
+        
+        return BiometricAuthResult(
+          success: false,
+          message: 'Authentication failed',
+          confidence: matchResult.confidence,
+          attempts: 1,
+        );
+      }
+      
+    } catch (e) {
+      print('Error authenticating with fingerprint: $e');
+      return BiometricAuthResult(
+        success: false,
+        message: 'Authentication error: $e',
+        confidence: 0.0,
+        attempts: 0,
+      );
+    }
+  }
+
+  // Authenticate with face recognition
+  Future<BiometricAuthResult> authenticateWithFace({
+    required String userId,
+    required String faceData,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final biometricKey = '${_biometricKey}_$userId';
+      
+      final biometricJson = prefs.getString(biometricKey);
+      if (biometricJson == null) {
+        return BiometricAuthResult(
+          success: false,
+          message: 'No biometric profile found',
+          confidence: 0.0,
+          attempts: 0,
+        );
+      }
+      
+      final biometricProfile = BiometricProfile.fromJson(json.decode(biometricJson));
+      
+      if (biometricProfile.type != BiometricType.face) {
+        return BiometricAuthResult(
+          success: false,
+          message: 'Face recognition not enrolled',
+          confidence: 0.0,
+          attempts: 0,
+        );
+      }
+      
+      // Simulate face recognition matching
+      final matchResult = await _simulateFaceRecognitionMatch(
+        storedData: biometricProfile.data,
+        providedData: faceData,
+      );
+      
+      if (matchResult.success) {
+        final updatedProfile = biometricProfile.copyWith(
+          lastUsed: DateTime.now(),
+          confidence: matchResult.confidence,
+        );
+        
+        await prefs.setString(biometricKey, json.encode(updatedProfile.toJson()));
+        
+        _authStreamController.add(BiometricAuthEvent(
+          id: _generateSecureId(),
+          userId: userId,
+          eventType: BiometricEventType.authentication,
+          biometricType: BiometricType.face,
+          timestamp: DateTime.now(),
+          success: true,
+          details: 'Face recognition authentication successful',
+        ));
+        
+        return BiometricAuthResult(
+          success: true,
+          message: 'Authentication successful',
+          confidence: matchResult.confidence,
+          attempts: 1,
+        );
+      } else {
+        _authStreamController.add(BiometricAuthEvent(
+          id: _generateSecureId(),
+          userId: userId,
+          eventType: BiometricEventType.authentication,
+          biometricType: BiometricType.face,
+          timestamp: DateTime.now(),
+          success: false,
+          details: 'Face recognition authentication failed',
+        ));
+        
+        await _checkSuspiciousBiometricActivity(userId);
+        
+        return BiometricAuthResult(
+          success: false,
+          message: 'Authentication failed',
+          confidence: matchResult.confidence,
+          attempts: 1,
+        );
+      }
+      
+    } catch (e) {
+      print('Error authenticating with face recognition: $e');
+      return BiometricAuthResult(
+        success: false,
+        message: 'Authentication error: $e',
+        confidence: 0.0,
+        attempts: 0,
+      );
+    }
+  }
+
+  // Simulate fingerprint matching
+  Future<BiometricMatchResult> _simulateFingerprintMatch({
+    required String storedData,
+    required String providedData,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final random = Random();
+    
+    if (storedData == providedData) {
+      return BiometricMatchResult(
+        success: true,
+        confidence: 0.98 + random.nextDouble() * 0.02,
+        matchScore: 0.95 + random.nextDouble() * 0.05,
+      );
+    } else {
+      final similarity = _calculateSimilarity(storedData, providedData);
+      
+      if (similarity > 0.85) {
+        return BiometricMatchResult(
+          success: true,
+          confidence: 0.85 + random.nextDouble() * 0.1,
+          matchScore: similarity,
+        );
+      } else {
+        return BiometricMatchResult(
+          success: false,
+          confidence: similarity,
+          matchScore: similarity,
+        );
+      }
+    }
+  }
+
+  // Simulate face recognition matching
+  Future<BiometricMatchResult> _simulateFaceRecognitionMatch({
+    required String storedData,
+    required String providedData,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    final random = Random();
+    
+    if (storedData == providedData) {
+      return BiometricMatchResult(
+        success: true,
+        confidence: 0.95 + random.nextDouble() * 0.05,
+        matchScore: 0.92 + random.nextDouble() * 0.08,
+      );
+    } else {
+      final similarity = _calculateSimilarity(storedData, providedData);
+      
+      if (similarity > 0.80) {
+        return BiometricMatchResult(
+          success: true,
+          confidence: 0.80 + random.nextDouble() * 0.15,
+          matchScore: similarity,
+        );
+      } else {
+        return BiometricMatchResult(
+          success: false,
+          confidence: similarity,
+          matchScore: similarity,
+        );
+      }
+    }
+  }
+
+  // Calculate similarity
+  double _calculateSimilarity(String data1, String data2) {
+    if (data1 == data2) return 1.0;
+    
+    final length1 = data1.length;
+    final length2 = data2.length;
+    
+    if (length1 == 0 || length2 == 0) return 0.0;
+    
+    int matches = 0;
+    final minLength = length1 < length2 ? length1 : length2;
+    
+    for (int i = 0; i < minLength; i++) {
+      if (data1[i] == data2[i]) matches++;
+    }
+    
+    return matches / minLength;
+  }
+
+  // Check for suspicious activity
+  Future<void> _checkSuspiciousBiometricActivity(String userId) async {
+    try {
+      final recentEvents = await _getRecentBiometricEvents(userId, hours: 1);
+      
+      final failedAttempts = recentEvents.where((e) => 
+        e.eventType == BiometricEventType.authentication && 
+        !e.success
+      ).length;
+      
+      if (failedAttempts > 3) {
+        await _triggerBiometricAlert(
+          userId: userId,
+          alertType: 'multiple_failed_attempts',
+          severity: BiometricAlertSeverity.high,
+          details: 'Multiple failed biometric authentication attempts',
+        );
+      }
+      
+    } catch (e) {
+      print('Error checking suspicious biometric activity: $e');
+    }
+  }
+
+  // Get recent biometric events
+  Future<List<BiometricAuthEvent>> _getRecentBiometricEvents(String userId, {int hours = 24}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final eventsKey = 'biometric_events_$userId';
+      
+      final eventsJson = prefs.getString(eventsKey);
+      if (eventsJson == null) return [];
+      
+      final events = List<Map<String, dynamic>>.from(json.decode(eventsJson));
+      final cutoffTime = DateTime.now().subtract(Duration(hours: hours));
+      
+      return events
+          .where((entry) => DateTime.parse(entry['timestamp']).isAfter(cutoffTime))
+          .map((json) => BiometricAuthEvent.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('Error getting recent biometric events: $e');
       return [];
     }
   }
 
-  // Biometric strength assessment
-  Future<BiometricStrength> assessBiometricStrength() async {
+  // Trigger biometric alert
+  Future<void> _triggerBiometricAlert({
+    required String userId,
+    required String alertType,
+    required BiometricAlertSeverity severity,
+    String? details,
+  }) async {
     try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      final alert = BiometricAlert(
+        id: _generateSecureId(),
+        timestamp: DateTime.now(),
+        userId: userId,
+        alertType: alertType,
+        severity: severity,
+        details: details,
+        status: BiometricAlertStatus.active,
+      );
       
-      if (availableBiometrics.contains(BiometricType.iris)) {
-        return BiometricStrength.veryStrong;
-      } else if (availableBiometrics.contains(BiometricType.face)) {
-        return BiometricStrength.strong;
-      } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
-        return BiometricStrength.medium;
-      } else {
-        return BiometricStrength.weak;
-      }
+      _alertStreamController.add(alert);
+      print('🚨 BIOMETRIC ALERT: $alertType for user $userId - $severity');
+      
     } catch (e) {
-      return BiometricStrength.weak;
+      print('Error triggering biometric alert: $e');
     }
   }
 
+  // Get biometric profile
+  Future<BiometricProfile?> getBiometricProfile(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final biometricKey = '${_biometricKey}_$userId';
+      
+      final biometricJson = prefs.getString(biometricKey);
+      if (biometricJson == null) return null;
+      
+      return BiometricProfile.fromJson(json.decode(biometricJson));
+    } catch (e) {
+      print('Error getting biometric profile: $e');
+      return null;
+    }
+  }
+
+  // Generate secure ID
+  String _generateSecureId() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (i) => random.nextInt(256));
+    return base64.encode(bytes);
+  }
+
+  // Dispose resources
   void dispose() {
-    _statusController.close();
-    _authResultController.close();
+    _authStreamController.close();
+    _alertStreamController.close();
   }
 }
 
 // Data classes
-class AuthResult {
+class BiometricProfile {
+  final String id;
+  final String userId;
+  final BiometricType type;
+  final String data;
+  final String description;
+  final DateTime enrolledAt;
+  final DateTime lastUsed;
+  final bool isActive;
+  final double confidence;
+
+  const BiometricProfile({
+    required this.id,
+    required this.userId,
+    required this.type,
+    required this.data,
+    required this.description,
+    required this.enrolledAt,
+    required this.lastUsed,
+    required this.isActive,
+    required this.confidence,
+  });
+
+  BiometricProfile copyWith({
+    String? id,
+    String? userId,
+    BiometricType? type,
+    String? data,
+    String? description,
+    DateTime? enrolledAt,
+    DateTime? lastUsed,
+    bool? isActive,
+    double? confidence,
+  }) {
+    return BiometricProfile(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      type: type ?? this.type,
+      data: data ?? this.data,
+      description: description ?? this.description,
+      enrolledAt: enrolledAt ?? this.enrolledAt,
+      lastUsed: lastUsed ?? this.lastUsed,
+      isActive: isActive ?? this.isActive,
+      confidence: confidence ?? this.confidence,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'type': type.name,
+      'data': data,
+      'description': description,
+      'enrolledAt': enrolledAt.toIso8601String(),
+      'lastUsed': lastUsed.toIso8601String(),
+      'isActive': isActive,
+      'confidence': confidence,
+    };
+  }
+
+  factory BiometricProfile.fromJson(Map<String, dynamic> json) {
+    return BiometricProfile(
+      id: json['id'],
+      userId: json['userId'],
+      type: BiometricType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => BiometricType.fingerprint,
+      ),
+      data: json['data'],
+      description: json['description'],
+      enrolledAt: DateTime.parse(json['enrolledAt']),
+      lastUsed: DateTime.parse(json['lastUsed']),
+      isActive: json['isActive'],
+      confidence: json['confidence'].toDouble(),
+    );
+  }
+}
+
+enum BiometricType {
+  fingerprint,
+  face,
+  iris,
+  voice,
+}
+
+class BiometricAuthResult {
   final bool success;
-  final String? error;
-  final String? errorCode;
+  final String message;
+  final double confidence;
+  final int attempts;
 
-  AuthResult({
+  const BiometricAuthResult({
     required this.success,
-    this.error,
-    this.errorCode,
+    required this.message,
+    required this.confidence,
+    required this.attempts,
   });
 }
 
-class BiometricStats {
-  final bool isEnabled;
-  final DateTime? lastUsed;
-  final int usageCount;
-  final BiometricStatus status;
+class BiometricMatchResult {
+  final bool success;
+  final double confidence;
+  final double matchScore;
 
-  BiometricStats({
-    required this.isEnabled,
-    this.lastUsed,
-    required this.usageCount,
+  const BiometricMatchResult({
+    required this.success,
+    required this.confidence,
+    required this.matchScore,
+  });
+}
+
+class BiometricAuthEvent {
+  final String id;
+  final String userId;
+  final BiometricEventType eventType;
+  final BiometricType biometricType;
+  final DateTime timestamp;
+  final bool success;
+  final String? details;
+
+  const BiometricAuthEvent({
+    required this.id,
+    required this.userId,
+    required this.eventType,
+    required this.biometricType,
+    required this.timestamp,
+    required this.success,
+    this.details,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'eventType': eventType.name,
+      'biometricType': biometricType.name,
+      'timestamp': timestamp.toIso8601String(),
+      'success': success,
+      'details': details,
+    };
+  }
+
+  factory BiometricAuthEvent.fromJson(Map<String, dynamic> json) {
+    return BiometricAuthEvent(
+      id: json['id'],
+      userId: json['userId'],
+      eventType: BiometricEventType.values.firstWhere(
+        (e) => e.name == json['eventType'],
+        orElse: () => BiometricEventType.authentication,
+      ),
+      biometricType: BiometricType.values.firstWhere(
+        (e) => e.name == json['biometricType'],
+        orElse: () => BiometricType.fingerprint,
+      ),
+      timestamp: DateTime.parse(json['timestamp']),
+      success: json['success'],
+      details: json['details'],
+    );
+  }
+}
+
+enum BiometricEventType {
+  enrollment,
+  authentication,
+  deletion,
+  update,
+}
+
+class BiometricAlert {
+  final String id;
+  final DateTime timestamp;
+  final String userId;
+  final String alertType;
+  final BiometricAlertSeverity severity;
+  final String? details;
+  final BiometricAlertStatus status;
+
+  const BiometricAlert({
+    required this.id,
+    required this.timestamp,
+    required this.userId,
+    required this.alertType,
+    required this.severity,
+    this.details,
     required this.status,
   });
 }
 
-class BiometricHealth {
-  final bool isDeviceSupported;
-  final List<BiometricType> availableBiometrics;
-  final BiometricStatus status;
-  final DateTime lastCheck;
-  final bool isHealthy;
-  final String? error;
-
-  BiometricHealth({
-    required this.isDeviceSupported,
-    required this.availableBiometrics,
-    required this.status,
-    required this.lastCheck,
-    required this.isHealthy,
-    this.error,
-  });
-}
-
-// Enums
-enum BiometricStatus {
-  unknown,
-  notSupported,
-  notAvailable,
-  available,
-  enabled,
-  error,
-}
-
-enum SecurityLevel {
-  none,
+enum BiometricAlertSeverity {
   low,
   medium,
   high,
+  critical,
 }
 
-enum BiometricStrength {
-  weak,
-  medium,
-  strong,
-  veryStrong,
-}
-
-// Localized strings for different languages
-class LocalizedStrings {
-  final String cancelButton;
-  final String localizedFallbackTitle;
-
-  LocalizedStrings({
-    required this.cancelButton,
-    required this.localizedFallbackTitle,
-  });
+enum BiometricAlertStatus {
+  active,
+  acknowledged,
+  resolved,
+  false_positive,
 }

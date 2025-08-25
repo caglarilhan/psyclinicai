@@ -625,8 +625,28 @@ class MedicationService extends ChangeNotifier {
       );
     }
 
-    // QT uzaması için kaba kural (veri yoksa üretmeyelim)
-    // Gerekli meta olmadığından şu an pasif.
+    // QT uzaması riski: Risperidone + Venlafaxine kombinasyonu
+    if ((nameA.toLowerCase().contains('risperidone') && nameB.toLowerCase().contains('venlafaxine')) ||
+        (nameB.toLowerCase().contains('risperidone') && nameA.toLowerCase().contains('venlafaxine'))) {
+      return DrugInteraction(
+        id: 'rule_qt_risperidone_venlafaxine_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.moderate,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Her iki ilaç da QT aralığını uzatma potansiyeline sahiptir',
+        description: 'Birlikte kullanımda QT uzaması ve aritmi riski artabilir',
+        clinicalSignificance: 'Dikkatle kullanın ve EKG takibi düşünün',
+        symptoms: ['Çarpıntı', 'Senkop', 'Baş dönmesi'],
+        recommendations: ['Bazal ve takip EKG', 'Elektrolit bozukluklarını düzeltin'],
+        alternatives: ['Daha düşük QT riski olan alternatifler düşünün'],
+        monitoring: ['EKG', 'Potasyum', 'Magnezyum'],
+        evidence: 'Gözlemsel veriler ve vaka raporları',
+        source: 'Clinical references',
+      );
+    }
 
     return null;
   }

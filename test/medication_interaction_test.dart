@@ -26,5 +26,17 @@ void main() {
       expect(result.any((i) => i.severity.name == 'moderate' || i.severity.name == 'major'), isTrue,
           reason: 'Lithium+SSRI en az orta şiddette etkileşim olmalı');
     });
+
+    test('Risperidone + Venlafaxine should raise QT risk (>= moderate)', () async {
+      final service = MedicationService();
+      await service.initialize();
+
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['risperidone', 'venlafaxine'],
+      );
+
+      expect(result.any((i) => i.severity.name == 'moderate' || i.severity.name == 'major'), isTrue,
+          reason: 'Risperidone+Venlafaxine QT riski nedeniyle en az orta şiddet olmalı');
+    });
   });
 }

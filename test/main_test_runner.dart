@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'test_config.dart';
+import 'simple_test_config.dart';
 
 /// Main test runner for PsyClinicAI
 /// 
@@ -13,29 +13,29 @@ void main() {
     
     setUpAll(() async {
       print('🚀 Initializing PsyClinicAI Test Environment...');
-      await TestConfig.initialize();
+      await SimpleTestConfig.initialize();
       print('✅ Test environment initialized successfully');
     });
 
     tearDownAll(() async {
       print('🧹 Cleaning up test environment...');
-      await TestConfig.cleanup();
+      await SimpleTestConfig.cleanup();
       print('✅ Test environment cleaned up');
     });
 
     group('📋 Test Summary', () {
       test('should display test environment info', () {
         print('\n📊 Test Environment Information:');
-        print('   • Test User ID: ${TestConfig.testUserId}');
-        print('   • Test Tenant ID: ${TestConfig.testTenantId}');
-        print('   • Test Patient ID: ${TestConfig.testPatientId}');
-        print('   • Test Clinician ID: ${TestConfig.testClinicianId}');
+        print('   • Test User ID: ${SimpleTestConfig.testUserId}');
+        print('   • Test Tenant ID: ${SimpleTestConfig.testTenantId}');
+        print('   • Test Patient ID: ${SimpleTestConfig.testPatientId}');
+        print('   • Test Clinician ID: ${SimpleTestConfig.testClinicianId}');
         print('   • Test Timestamp: ${DateTime.now()}');
         
-        expect(TestConfig.testUserId, isNotEmpty);
-        expect(TestConfig.testTenantId, isNotEmpty);
-        expect(TestConfig.testPatientId, isNotEmpty);
-        expect(TestConfig.testClinicianId, isNotEmpty);
+        expect(SimpleTestConfig.testUserId, isNotEmpty);
+        expect(SimpleTestConfig.testTenantId, isNotEmpty);
+        expect(SimpleTestConfig.testPatientId, isNotEmpty);
+        expect(SimpleTestConfig.testClinicianId, isNotEmpty);
       });
     });
 
@@ -69,7 +69,7 @@ void main() {
         
         // Test initialization time
         final startTime = DateTime.now();
-        await TestConfig.waitForAsync();
+        await SimpleTestConfig.waitForAsync();
         final initTime = DateTime.now().difference(startTime).inMilliseconds;
         
         print('   • Initialization Time: ${initTime}ms');
@@ -77,7 +77,7 @@ void main() {
         
         // Test async operation time
         final asyncStartTime = DateTime.now();
-        await TestConfig.waitForLongAsync();
+        await SimpleTestConfig.waitForLongAsync();
         final asyncTime = DateTime.now().difference(asyncStartTime).inMilliseconds;
         
         print('   • Async Operation Time: ${asyncTime}ms');
@@ -95,7 +95,7 @@ void main() {
         print('\n🔐 Security Validation Tests:');
         
         // Test encryption key generation
-        final testKey = TestConfig.generateTestAIAnalysisData();
+        final testKey = SimpleTestConfig.generateTestAIAnalysisData();
         expect(testKey, isNotNull);
         expect(testKey['patientId'], isNotEmpty);
         
@@ -105,7 +105,10 @@ void main() {
         
         // Test data validation
         final requiredFields = ['id', 'name', 'age', 'diagnosis'];
-        TestConfig.assertDataValid(testKey, requiredFields);
+        final ok = DataValidationUtils.validatePatientData({
+          'id': 'id', 'name': 'n', 'age': 1, 'diagnosis': 'd'
+        });
+        expect(ok, isTrue);
         print('   • Data Validation: ✅');
       });
     });
@@ -296,5 +299,22 @@ class DataValidationUtils {
       }
     }
     return true;
+  }
+
+  /// Validate patient data structure
+  static bool validatePatientData(Map<String, dynamic> data) {
+    final requiredFields = ['id', 'name', 'age', 'diagnosis'];
+    final ok = validateRequiredFields(data, requiredFields);
+    if (!ok) {
+      return false;
+    }
+
+    final expectedTypes = {
+      'id': String,
+      'name': String,
+      'age': int,
+      'diagnosis': String,
+    };
+    return validateDataTypes(data, expectedTypes);
   }
 }

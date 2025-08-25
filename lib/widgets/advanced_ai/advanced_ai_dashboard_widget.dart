@@ -48,16 +48,19 @@ class _AdvancedAIDashboardWidgetState extends State<AdvancedAIDashboardWidget>
               children: [
                 // Header
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '🤖 Advanced AI Dashboard',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                    Expanded(
+                      child: Text(
+                        '🤖 Advanced AI Dashboard',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    _buildViewSelector(),
+                    const SizedBox(width: 8),
+                    Flexible(child: Align(alignment: Alignment.centerRight, child: _buildViewSelector())),
                   ],
                 ),
                 const SizedBox(height: 16),

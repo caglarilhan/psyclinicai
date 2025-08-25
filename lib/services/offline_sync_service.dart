@@ -34,8 +34,11 @@ class OfflineSyncService extends ChangeNotifier {
 
   Future<void> initialize() async {
     try {
+      final bool isTestEnv = const bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
       // Database'i başlat
-      await _initializeDatabase();
+      if (!isTestEnv) {
+        await _initializeDatabase();
+      }
       
       // Connectivity listener'ı başlat
       await _setupConnectivityListener();

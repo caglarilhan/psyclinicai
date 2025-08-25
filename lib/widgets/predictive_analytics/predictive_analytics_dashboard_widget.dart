@@ -521,7 +521,7 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
 
   /// Performance Tab
   Widget _buildPerformanceTab() {
-    if (_performanceMetrics.isEmpty) {
+    if (_performanceMetrics == null) {
       return _buildNoPerformanceDataView();
     }
 
@@ -542,17 +542,10 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
 
   /// Performance Overview
   Widget _buildPerformanceOverview() {
-    final avgAccuracy = _performanceMetrics
-        .map((m) => m.accuracy)
-        .reduce((a, b) => a + b) / _performanceMetrics.length;
-
-    final avgPrecision = _performanceMetrics
-        .map((m) => m.precision)
-        .reduce((a, b) => a + b) / _performanceMetrics.length;
-
-    final avgRecall = _performanceMetrics
-        .map((m) => m.recall)
-        .reduce((a, b) => a + b) / _performanceMetrics.length;
+    final metrics = _performanceMetrics!;
+    final avgAccuracy = metrics.accuracy;
+    final avgPrecision = metrics.precision;
+    final avgRecall = metrics.recall;
 
     return Card(
       child: Padding(
@@ -667,18 +660,19 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
                   DataColumn(label: Text('F1 Score')),
                   DataColumn(label: Text('Last Updated')),
                 ],
-                rows: _performanceMetrics.map((metric) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(metric.modelId)),
-                      DataCell(Text('${(metric.accuracy * 100).toStringAsFixed(1)}%')),
-                      DataCell(Text('${(metric.precision * 100).toStringAsFixed(1)}%')),
-                      DataCell(Text('${(metric.recall * 100).toStringAsFixed(1)}%')),
-                      DataCell(Text('${(metric.f1Score * 100).toStringAsFixed(1)}%')),
-                      DataCell(Text(_formatDate(metric.lastUpdated))),
-                    ],
-                  );
-                }).toList(),
+                rows: [
+                  if (_performanceMetrics != null)
+                    DataRow(
+                      cells: [
+                        DataCell(Text(_performanceMetrics!.modelId)),
+                        DataCell(Text('${(_performanceMetrics!.accuracy * 100).toStringAsFixed(1)}%')),
+                        DataCell(Text('${(_performanceMetrics!.precision * 100).toStringAsFixed(1)}%')),
+                        DataCell(Text('${(_performanceMetrics!.recall * 100).toStringAsFixed(1)}%')),
+                        DataCell(Text('${(_performanceMetrics!.f1Score * 100).toStringAsFixed(1)}%')),
+                        DataCell(Text(_formatDate(_performanceMetrics!.lastUpdated))),
+                      ],
+                    ),
+                ],
               ),
             ),
           ],
@@ -758,7 +752,7 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
                 ),
               ],
             ),
-            if (job.status == TrainingJobStatus.running) ...[
+            if (job.status == TrainingStatus.running) ...[
               const SizedBox(height: 16),
               LinearProgressIndicator(
                 value: job.progress,
@@ -776,14 +770,14 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (job.status == TrainingJobStatus.running)
+                if (job.status == TrainingStatus.running)
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _stopTraining(job),
                       child: const Text('Stop Training'),
                     ),
                   ),
-                if (job.status == TrainingJobStatus.completed)
+                if (job.status == TrainingStatus.completed)
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _deployModel(job),
@@ -824,28 +818,28 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
   }
 
   /// Training Status Chip
-  Widget _buildTrainingStatusChip(TrainingJobStatus status) {
+  Widget _buildTrainingStatusChip(TrainingStatus status) {
     Color color;
     String text;
     
     switch (status) {
-      case TrainingJobStatus.pending:
+      case TrainingStatus.pending:
         color = Colors.grey;
         text = 'Pending';
         break;
-      case TrainingJobStatus.running:
+      case TrainingStatus.running:
         color = Colors.blue;
         text = 'Running';
         break;
-      case TrainingJobStatus.completed:
+      case TrainingStatus.completed:
         color = Colors.green;
         text = 'Completed';
         break;
-      case TrainingJobStatus.failed:
+      case TrainingStatus.failed:
         color = Colors.red;
         text = 'Failed';
         break;
-      case TrainingJobStatus.cancelled:
+      case TrainingStatus.cancelled:
         color = Colors.orange;
         text = 'Cancelled';
         break;
@@ -1124,12 +1118,8 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
 
   /// Helper Methods
   String _calculateAverageAccuracy() {
-    if (_performanceMetrics.isEmpty) return '0.0%';
-    
-    final avgAccuracy = _performanceMetrics
-        .map((m) => m.accuracy)
-        .reduce((a, b) => a + b) / _performanceMetrics.length;
-    
+    if (_performanceMetrics == null) return '0.0%';
+    final avgAccuracy = _performanceMetrics!.accuracy;
     return '${(avgAccuracy * 100).toStringAsFixed(1)}%';
   }
 
@@ -1163,34 +1153,34 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
     }
   }
 
-  IconData _getTrainingStatusIcon(TrainingJobStatus status) {
+  IconData _getTrainingStatusIcon(TrainingStatus status) {
     switch (status) {
-      case TrainingJobStatus.pending:
+      case TrainingStatus.pending:
         return Icons.schedule;
-      case TrainingJobStatus.running:
+      case TrainingStatus.running:
         return Icons.train;
-      case TrainingJobStatus.completed:
+      case TrainingStatus.completed:
         return Icons.check_circle;
-      case TrainingJobStatus.failed:
+      case TrainingStatus.failed:
         return Icons.error;
-      case TrainingJobStatus.cancelled:
+      case TrainingStatus.cancelled:
         return Icons.cancel;
       default:
         return Icons.help;
     }
   }
 
-  Color _getTrainingStatusColor(TrainingJobStatus status) {
+  Color _getTrainingStatusColor(TrainingStatus status) {
     switch (status) {
-      case TrainingJobStatus.pending:
+      case TrainingStatus.pending:
         return Colors.grey;
-      case TrainingJobStatus.running:
+      case TrainingStatus.running:
         return Colors.blue;
-      case TrainingJobStatus.completed:
+      case TrainingStatus.completed:
         return Colors.green;
-      case TrainingJobStatus.failed:
+      case TrainingStatus.failed:
         return Colors.red;
-      case TrainingJobStatus.cancelled:
+      case TrainingStatus.cancelled:
         return Colors.orange;
       default:
         return Colors.grey;
@@ -1282,10 +1272,12 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
       });
 
       final prediction = await _predictiveService.predictTreatmentOutcome(
-        patientId: 'demo_patient_001',
+        patientData: {'id': 'demo_patient_001', 'age': 30, 'severity': 'moderate'},
+        treatmentData: {'name': 'CBT + Sertraline'},
+        treatmentId: 'tx_demo_001',
         diagnosis: 'Major Depressive Disorder',
         proposedTreatment: 'CBT + Sertraline',
-        patientFactors: {'age': 30, 'severity': 'moderate'},
+        patientFactors: ['moderate_severity'],
       );
 
       setState(() {
@@ -1309,7 +1301,8 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
       });
 
       final prediction = await _predictiveService.predictRelapseRisk(
-        patientId: 'demo_patient_001',
+        clinicalHistory: {'visits': 5},
+        patientData: {'id': 'demo_patient_001'},
         diagnosis: 'Major Depressive Disorder',
         treatmentHistory: ['CBT', 'Sertraline'],
         currentSymptoms: ['mild_sadness'],
@@ -1336,10 +1329,9 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
       });
 
       final prediction = await _predictiveService.predictCrisis(
-        patientId: 'demo_patient_001',
+        patientData: {'id': 'demo_patient_001'},
         currentSymptoms: ['hopelessness', 'isolation'],
         riskFactors: ['previous_attempts', 'substance_use'],
-        recentBehavior: 'withdrawn',
       );
 
       setState(() {
@@ -1363,10 +1355,11 @@ class _PredictiveAnalyticsDashboardWidgetState extends State<PredictiveAnalytics
       });
 
       final prediction = await _predictiveService.predictPatientProgress(
-        patientId: 'demo_patient_001',
+        patientData: {'id': 'demo_patient_001'},
+        treatmentHistory: ['CBT', 'Sertraline'],
         diagnosis: 'Major Depressive Disorder',
-        treatmentPlan: 'CBT + Sertraline',
-        currentProgress: 0.4,
+        treatmentPlan: {'plan': 'CBT + Sertraline'},
+        currentProgress: {'score': 0.4},
         adherence: 0.8,
       );
 

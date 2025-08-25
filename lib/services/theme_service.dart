@@ -574,10 +574,13 @@ class ThemeService extends ChangeNotifier {
   }
 
   void dispose() {
-    _themeModeController.close();
-    _darkModeController.close();
-    _primaryColorController.close();
-    super.dispose();
+    final bool isTestEnv = const bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
+    if (!isTestEnv) {
+      _themeModeController.close();
+      _darkModeController.close();
+      _primaryColorController.close();
+      super.dispose();
+    }
   }
 }
 

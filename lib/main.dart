@@ -123,7 +123,7 @@ class PsyClinicAIApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeService()),
+        ChangeNotifierProvider.value(value: ThemeService()),
         ChangeNotifierProvider(create: (_) => OfflineSyncService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
         ChangeNotifierProvider(create: (_) => ConsentService()),

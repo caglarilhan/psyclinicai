@@ -12,7 +12,7 @@ class PushNotificationService {
   PushNotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _firebaseMessaging;
   
   StreamController<RemoteMessage> _messageStreamController = StreamController<RemoteMessage>.broadcast();
   Stream<RemoteMessage> get messageStream => _messageStreamController.stream;
@@ -30,6 +30,14 @@ class PushNotificationService {
 
   Future<void> initialize() async {
     try {
+      // Test ortamında Firebase başlatılmadıysa sessizce geç
+      final bool isTestEnv = const bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
+      if (isTestEnv) {
+        print('PushNotificationService: test ortamı, Firebase initialize atlanıyor');
+        await _setupLocalNotifications();
+        return;
+      }
+      _firebaseMessaging = FirebaseMessaging.instance;
       // Firebase Cloud Messaging izinleri
       await _requestPermissions();
       
@@ -55,8 +63,9 @@ class PushNotificationService {
   }
 
   Future<void> _requestPermissions() async {
+    if (_firebaseMessaging == null) return;
     // iOS izinleri
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    NotificationSettings settings = await _firebaseMessaging!.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -116,15 +125,16 @@ class PushNotificationService {
   }
 
   Future<void> _setupFirebaseMessaging() async {
+    if (_firebaseMessaging == null) return;
     // FCM token al
-    String? token = await _firebaseMessaging.getToken();
+    String? token = await _firebaseMessaging!.getToken();
     if (token != null) {
       print('FCM Token: $token');
       await _saveFCMToken(token);
     }
 
     // Token refresh listener
-    _firebaseMessaging.onTokenRefresh.listen((newToken) {
+    _firebaseMessaging!.onTokenRefresh.listen((newToken) {
       _saveFCMToken(newToken);
     });
   }

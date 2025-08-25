@@ -503,16 +503,17 @@ class MedicationService extends ChangeNotifier {
           final med1Id = medicationIds[i];
           final med2Id = medicationIds[j];
 
-          final interaction = _drugInteractions.firstWhere(
+          // 1) Static catalog lookup
+          final staticInteraction = _drugInteractions.firstWhere(
             (interaction) =>
               (interaction.medication1Id == med1Id && interaction.medication2Id == med2Id) ||
               (interaction.medication1Id == med2Id && interaction.medication2Id == med1Id),
-            orElse: () => DrugInteraction(
+            orElse: () => const DrugInteraction(
               id: 'no_interaction',
-              medication1Id: med1Id,
-              medication1Name: 'Unknown',
-              medication2Id: med2Id,
-              medication2Name: 'Unknown',
+              medication1Id: '',
+              medication1Name: '',
+              medication2Id: '',
+              medication2Name: '',
               severity: InteractionSeverity.minor,
               type: InteractionType.other,
               mechanism: 'No known interaction',
@@ -527,8 +528,17 @@ class MedicationService extends ChangeNotifier {
             ),
           );
 
-          if (interaction.id != 'no_interaction') {
-            interactions.add(interaction);
+          if (staticInteraction.id != 'no_interaction') {
+            interactions.add(staticInteraction);
+            continue; // static takes precedence
+          }
+
+          // 2) Rule-based evaluation using available metadata
+          final medA = await getMedication(med1Id);
+          final medB = await getMedication(med2Id);
+          final ruleResult = _evaluatePairwiseRules(med1Id, med2Id, medA, medB);
+          if (ruleResult != null) {
+            interactions.add(ruleResult);
           }
         }
       }
@@ -549,6 +559,76 @@ class MedicationService extends ChangeNotifier {
       _logger.error('Failed to check drug interactions', context: 'MedicationService', error: e);
       return [];
     }
+  }
+
+  DrugInteraction? _evaluatePairwiseRules(
+    String med1Id,
+    String med2Id,
+    Medication? medA,
+    Medication? medB,
+  ) {
+    final idA = med1Id.toLowerCase();
+    final idB = med2Id.toLowerCase();
+
+    String nameA = medA?.name ?? med1Id;
+    String nameB = medB?.name ?? med2Id;
+
+    // SSRI + MAOI (generic) safeguard - if we ever lack static entry
+    final isSsri = (medA?.medicationClass == MedicationClass.antidepressants &&
+                    (medA?.metadata['class']?.toString().toLowerCase().contains('ssri') ?? false)) ||
+                   nameA.toLowerCase().contains('sertraline');
+    final isMaoi = idA.contains('maoi') || idB.contains('maoi') ||
+                   nameA.toLowerCase().contains('maoi') || nameB.toLowerCase().contains('maoi');
+    if ((isSsri && isMaoi) ||
+        (nameA.toLowerCase().contains('sertraline') && isMaoi) ||
+        (nameB.toLowerCase().contains('sertraline') && isMaoi)) {
+      return DrugInteraction(
+        id: 'rule_ssri_maoi_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Serotonin artışı nedeniyle serotonin sendromu riski',
+        description: 'SSRI ve MAOI kombinasyonu ciddi serotonin sendromuna yol açabilir',
+        clinicalSignificance: 'Birlikte kullanım kontrendikedir',
+        symptoms: ['Ajitasyon', 'Konfüzyon', 'Hipertermi', 'Taşikardi', 'Rigidite'],
+        recommendations: ['Birlikte kullanmayın', 'İlaçlar arası 14 gün ara verin'],
+        alternatives: ['Non-serotonerjik antidepresan düşünün'],
+        monitoring: ['Hayati bulgular', 'Nörolojik muayene'],
+        evidence: 'Kılavuzlar ve olgu bildirimleri',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // Lithium + SSRI (fallback if static unavailable)
+    if ((idA.contains('lithium') && nameB.toLowerCase().contains('sertraline')) ||
+        (idB.contains('lithium') && nameA.toLowerCase().contains('sertraline'))) {
+      return DrugInteraction(
+        id: 'rule_lithium_ssri_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.moderate,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'SSRI ile birlikte lityum düzeyleri ve serotonin sendromu riski artabilir',
+        description: 'Yakın izlem ve gerekirse doz ayarlaması önerilir',
+        clinicalSignificance: 'Dikkatli kullanım ve yakın takip gerekir',
+        symptoms: ['Tremor', 'Konfüzyon', 'Bulantı', 'İshal'],
+        recommendations: ['Lityum düzeylerini izleyin', 'Semptomları takip edin'],
+        alternatives: ['Alternatif duygu durum dengeleyici düşünün'],
+        monitoring: ['Lityum düzeyi', 'Böbrek fonksiyonları', 'Mental durum'],
+        evidence: 'Klinik çalışmalar ve olgu bildirimleri',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // QT uzaması için kaba kural (veri yoksa üretmeyelim)
+    // Gerekli meta olmadığından şu an pasif.
+
+    return null;
   }
 
   // ===== DOSAGE TITRATION FUNCTIONS =====

@@ -69,5 +69,35 @@ void main() {
       expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
           reason: 'Greyfurt 3A4 inhibisyonu ile simvastatin düzeyini yükseltir, miyopati riski');
     });
+
+    test('Valproate + Pregnancy should be contraindicated', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['valproate', 'pregnancy'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Valproate hamilelikte kontrendikedir');
+    });
+
+    test('Isotretinoin + Pregnancy should be contraindicated', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['isotretinoin', 'pregnancy'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Isotretinoin hamilelikte kesin kontrendikedir');
+    });
+
+    test('Lithium + Breastfeeding should be major', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['lithium', 'breastfeeding'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Lityum emzirme döneminde majör risk taşır');
+    });
   });
 }

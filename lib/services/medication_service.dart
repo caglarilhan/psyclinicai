@@ -717,6 +717,142 @@ class MedicationService extends ChangeNotifier {
       );
     }
 
+    // Özel popülasyon kuralları: Hamilelik/Emzirme
+    final lowerA = nameA.toLowerCase();
+    final lowerB = nameB.toLowerCase();
+
+    // Valproate + Pregnancy: kontrendike (teratojenite, nöral tüp defekti)
+    if (((idA.contains('valproate') || lowerA.contains('valproate') || lowerA.contains('valproic'))) &&
+        (idB.contains('pregnancy') || lowerB.contains('pregnancy'))) {
+      return DrugInteraction(
+        id: 'rule_preg_valproate_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Güçlü teratojenite; nöral tüp defekti riski',
+        description: 'Hamilelikte valproate kullanımı kontrendikedir',
+        clinicalSignificance: 'Alternatif tedaviye geçin',
+        symptoms: [],
+        recommendations: ['Gebelikte kaçının', 'Alternatif ajan seçin'],
+        alternatives: ['Lamotrigine (klinik bağlama göre)'],
+        monitoring: ['Gebelik öncesi risk danışmanlığı'],
+        evidence: 'Güçlü kılavuz kanıtı',
+        source: 'Clinical guidelines',
+      );
+    }
+    if (((idB.contains('valproate') || lowerB.contains('valproate') || lowerB.contains('valproic'))) &&
+        (idA.contains('pregnancy') || lowerA.contains('pregnancy'))) {
+      return DrugInteraction(
+        id: 'rule_preg_valproate_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Güçlü teratojenite; nöral tüp defekti riski',
+        description: 'Hamilelikte valproate kullanımı kontrendikedir',
+        clinicalSignificance: 'Alternatif tedaviye geçin',
+        symptoms: [],
+        recommendations: ['Gebelikte kaçının', 'Alternatif ajan seçin'],
+        alternatives: ['Lamotrigine (klinik bağlama göre)'],
+        monitoring: ['Gebelik öncesi risk danışmanlığı'],
+        evidence: 'Güçlü kılavuz kanıtı',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // Isotretinoin + Pregnancy: kontrendike (şiddetli teratojenite)
+    if (((idA.contains('isotretinoin') || lowerA.contains('isotretinoin'))) &&
+        (idB.contains('pregnancy') || lowerB.contains('pregnancy'))) {
+      return DrugInteraction(
+        id: 'rule_preg_isotretinoin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Yüksek teratojenite',
+        description: 'Hamilelikte isotretinoin kesinlikle kontrendikedir',
+        clinicalSignificance: 'Kesin kaçının',
+        symptoms: [],
+        recommendations: ['Gebelik önleme programı', 'Alternatif tedavi'],
+        alternatives: ['Topikal tedaviler (klinik bağlama göre)'],
+        monitoring: ['Gebelik testi protokolleri'],
+        evidence: 'Güçlü kılavuz kanıtı',
+        source: 'Clinical guidelines',
+      );
+    }
+    if (((idB.contains('isotretinoin') || lowerB.contains('isotretinoin'))) &&
+        (idA.contains('pregnancy') || lowerA.contains('pregnancy'))) {
+      return DrugInteraction(
+        id: 'rule_preg_isotretinoin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Yüksek teratojenite',
+        description: 'Hamilelikte isotretinoin kesinlikle kontrendikedir',
+        clinicalSignificance: 'Kesin kaçının',
+        symptoms: [],
+        recommendations: ['Gebelik önleme programı', 'Alternatif tedavi'],
+        alternatives: ['Topikal tedaviler (klinik bağlama göre)'],
+        monitoring: ['Gebelik testi protokolleri'],
+        evidence: 'Güçlü kılavuz kanıtı',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // Lithium + Breastfeeding: majör (bebekte toksisite riski)
+    if (((idA.contains('lithium') || lowerA.contains('lithium'))) &&
+        (idB.contains('breastfeeding') || lowerB.contains('breastfeeding'))) {
+      return DrugInteraction(
+        id: 'rule_bf_lithium_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Anne sütüne geçiş ve bebekte toksisite riski',
+        description: 'Emzirme döneminde lityum genellikle önerilmez',
+        clinicalSignificance: 'Risk/yarar değerlendirmesi ve yakın izlem gerekir',
+        symptoms: ['Letarji', 'Hipotoni', 'Beslenme güçlüğü'],
+        recommendations: ['Emzirmeyi durdurmayı veya ilacı değiştirmeyi değerlendirin'],
+        alternatives: ['Alternatif duygudurum dengeleyiciler'],
+        monitoring: ['Bebek klinik izlem', 'Gerekirse düzey izlemi'],
+        evidence: 'Olgu serileri ve kılavuz önerileri',
+        source: 'Clinical references',
+      );
+    }
+    if (((idB.contains('lithium') || lowerB.contains('lithium'))) &&
+        (idA.contains('breastfeeding') || lowerA.contains('breastfeeding'))) {
+      return DrugInteraction(
+        id: 'rule_bf_lithium_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Anne sütüne geçiş ve bebekte toksisite riski',
+        description: 'Emzirme döneminde lityum genellikle önerilmez',
+        clinicalSignificance: 'Risk/yarar değerlendirmesi ve yakın izlem gerekir',
+        symptoms: ['Letarji', 'Hipotoni', 'Beslenme güçlüğü'],
+        recommendations: ['Emzirmeyi durdurmayı veya ilacı değiştirmeyi değerlendirin'],
+        alternatives: ['Alternatif duygudurum dengeleyiciler'],
+        monitoring: ['Bebek klinik izlem', 'Gerekirse düzey izlemi'],
+        evidence: 'Olgu serileri ve kılavuz önerileri',
+        source: 'Clinical references',
+      );
+    }
+ 
     return null;
   }
 

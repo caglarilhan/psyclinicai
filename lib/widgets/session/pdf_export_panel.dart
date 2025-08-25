@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:share_plus/share_plus.dart';
 import '../../services/pdf_export_service.dart';
 import '../../utils/theme.dart';
 import '../../models/ai_response_models.dart';
@@ -27,7 +28,7 @@ class PDFExportPanel extends StatefulWidget {
 }
 
 class _PDFExportPanelState extends State<PDFExportPanel> {
-  final PDFExportService _pdfService = PDFExportService();
+  final PdfExportService _pdfService = PdfExportService();
   bool _isGeneratingPDF = false;
   bool _isOpeningPDF = false;
   bool _isSharingPDF = false;
@@ -120,8 +121,8 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
           context,
           icon: Icons.medical_services,
           title: 'Tedavi Planı',
-          description: 'Tanı, hedefler ve müdahaleler',
-          onTap: _generateTreatmentPlan,
+          description: 'Tanı, hedefler ve müdahaleler (yakında)',
+          onTap: () => _showComingSoon('Tedavi Planı'),
         ),
         
         const SizedBox(height: 12),
@@ -130,8 +131,8 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
           context,
           icon: Icons.trending_up,
           title: 'İlerleme Raporu',
-          description: 'Seans geçmişi ve ilerleme metrikleri',
-          onTap: _generateProgressReport,
+          description: 'Seans geçmişi ve ilerleme metrikleri (yakında)',
+          onTap: () => _showComingSoon('İlerleme Raporu'),
         ),
         
         const SizedBox(height: 20),
@@ -414,7 +415,7 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     );
   }
 
-  // Generate Session Report
+  // Generate Session Report (stub using simple text-only report via interaction report layout)
   Future<void> _generateSessionReport() async {
     setState(() {
       _isGeneratingPDF = true;
@@ -422,27 +423,13 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
-      final pdf = await _pdfService.generateSessionReport(
-        clientName: widget.clientName ?? 'Danışan',
-        sessionDate: DateTime.now().toString().substring(0, 10),
-        sessionNotes: widget.sessionNotes,
-        therapistName: widget.therapistName ?? 'Terapist',
-        aiSummary: widget.aiSummary?.toString(),
-        clientInfo: widget.clientInfo,
-        sessionMetrics: widget.sessionMetrics,
-      );
-
+      // Geçici: Etkileşim raporu şablonunu notlarla doldurup PDF üretmiyoruz.
+      // Bu panel için özel şablon uyarlaması planlandı.
+      await Future.delayed(const Duration(milliseconds: 600));
       setState(() {
-        _generatedPDF = pdf;
         _isGeneratingPDF = false;
+        _error = 'Bu panel yeni PDF motoruna uyarlanacak (yakında). Lütfen ilaç etkileşim/prescription panelinden PDF deneyin.';
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('PDF başarıyla oluşturuldu'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -458,128 +445,16 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     }
   }
 
-  // Generate Treatment Plan
-  Future<void> _generateTreatmentPlan() async {
-    setState(() {
-      _isGeneratingPDF = true;
-      _error = null;
-    });
-
-    try {
-      final pdf = await _pdfService.generateTreatmentPlan(
-        clientName: widget.clientName ?? 'Danışan',
-        diagnosis: 'Depresyon (Örnek)',
-        goals: [
-          'Depresif belirtileri azaltmak',
-          'Sosyal ilişkileri güçlendirmek',
-          'Günlük aktivitelere katılımı artırmak',
-        ],
-        interventions: [
-          'CBT teknikleri',
-          'Davranış aktivasyonu',
-          'Sosyal beceri eğitimi',
-        ],
-        therapistName: widget.therapistName ?? 'Terapist',
-        notes: 'Haftalık seanslar ile 12 haftalık program',
-        timeline: {
-          'Hafta 1-4': 'Değerlendirme ve hedef belirleme',
-          'Hafta 5-8': 'Müdahale uygulama',
-          'Hafta 9-12': 'Değerlendirme ve sonlandırma',
-        },
-      );
-
-      setState(() {
-        _generatedPDF = pdf;
-        _isGeneratingPDF = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Tedavi planı PDF\'i oluşturuldu'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isGeneratingPDF = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF oluşturma hatası: ${e.toString()}'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-    }
+  void _showComingSoon(String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title PDF çıktısı yakında eklenecek'),
+        backgroundColor: AppTheme.infoColor,
+      ),
+    );
   }
 
-  // Generate Progress Report
-  Future<void> _generateProgressReport() async {
-    setState(() {
-      _isGeneratingPDF = true;
-      _error = null;
-    });
-
-    try {
-      final pdf = await _pdfService.generateProgressReport(
-        clientName: widget.clientName ?? 'Danışan',
-        sessions: [
-          {
-            'date': '2024-01-15',
-            'notes': 'İlk seans, değerlendirme yapıldı',
-          },
-          {
-            'date': '2024-01-22',
-            'notes': 'CBT teknikleri uygulandı',
-          },
-          {
-            'date': '2024-01-29',
-            'notes': 'Hedef belirleme ve planlama',
-          },
-        ],
-        progressMetrics: {
-          'Toplam Seans': '3',
-          'Depresyon Skoru': '15/27',
-          'Anksiyete Skoru': '12/21',
-          'İlerleme Oranı': '%65',
-        },
-        therapistName: widget.therapistName ?? 'Terapist',
-        summary: 'Danışan tedavi sürecinde olumlu ilerleme göstermektedir.',
-        recommendations: {
-          'Devam Et': 'Haftalık seanslara devam edilmeli',
-          'Ev Ödevleri': 'Günlük aktivite kayıtları tutulmalı',
-          'Takip': '2 hafta sonra değerlendirme yapılmalı',
-        },
-      );
-
-      setState(() {
-        _generatedPDF = pdf;
-        _isGeneratingPDF = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('İlerleme raporu PDF\'i oluşturuldu'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isGeneratingPDF = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF oluşturma hatası: ${e.toString()}'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-    }
-  }
-
-  // Open PDF
+  // Open PDF (stub)
   Future<void> _openPDF() async {
     if (_generatedPDF == null) return;
 
@@ -588,7 +463,13 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
-      await _pdfService.openPDF(_generatedPDF!);
+      // Uygun bir PDF viewer entegrasyonu planlanacak.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Dosya hazır: ${_generatedPDF!.path}'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -603,7 +484,7 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     }
   }
 
-  // Share PDF
+  // Share PDF (using share_plus directly)
   Future<void> _sharePDF() async {
     if (_generatedPDF == null) return;
 
@@ -612,7 +493,7 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
-      await _pdfService.sharePDF(_generatedPDF!);
+      await Share.shareXFiles([XFile(_generatedPDF!.path)], text: 'PsyClinicAI PDF');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

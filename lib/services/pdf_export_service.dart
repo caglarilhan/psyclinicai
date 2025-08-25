@@ -1,946 +1,689 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
-// open_file removed
-import 'package:share_plus/share_plus.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:image/image.dart' as img;
-import '../config/env_config.dart';
-import 'ai_logger.dart';
-import 'ai_performance_monitor.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../models/medication_models.dart';
+import '../models/session_models.dart';
+import '../models/patient_models.dart';
 
-class PDFExportService {
-  static final PDFExportService _instance = PDFExportService._internal();
-  factory PDFExportService() => _instance;
-  PDFExportService._internal();
+class PdfExportService {
+  static const String _appName = 'PsyClinicAI';
+  static const String _version = '2.0.0';
+  
+  // PDF Export Templates
+  static const Map<String, String> _templates = {
+    'session_report': 'Session Report Template',
+    'medication_interaction': 'Drug Interaction Report',
+    'prescription': 'Prescription Report',
+    'patient_summary': 'Patient Summary Report',
+    'treatment_plan': 'Treatment Plan Report',
+  };
 
-  final AILogger _logger = AILogger();
-  final AIPerformanceMonitor _performanceMonitor = AIPerformanceMonitor();
-
-  // PDF tema ve stilleri
-  static const PdfColor _primaryColor = PdfColor(0.2, 0.4, 0.8);
-  static const PdfColor _secondaryColor = PdfColor(0.6, 0.8, 1.0);
-  static const PdfColor _accentColor = PdfColor(0.9, 0.6, 0.2);
-  static const PdfColor _textColor = PdfColor(0.1, 0.1, 0.1);
-  static const PdfColor _lightGray = PdfColor(0.9, 0.9, 0.9);
-
-  // Seans notu PDF'i oluştur
-  Future<File> generateSessionReport({
-    required String clientName,
-    required String sessionDate,
-    required String sessionNotes,
-    required String therapistName,
-    String? aiSummary,
-    Map<String, dynamic>? clientInfo,
-    Map<String, dynamic>? sessionMetrics,
+  /// Export session report to PDF
+  Future<File?> exportSessionReport({
+    required Session session,
+    required Patient patient,
+    required String template,
+    String? customNotes,
   }) async {
-    _performanceMonitor.startOperation(
-      'generate_session_report',
-      context: 'pdf_export',
-      metadata: {
-        'client_name': clientName,
-        'notes_length': sessionNotes.length,
-        'has_ai_summary': aiSummary != null,
-      },
-    );
-
     try {
-      _logger.info(
-        'Generating session report PDF',
-        context: 'pdf_export',
-        data: {'client_name': clientName, 'session_date': sessionDate},
-      );
+      // Request storage permission
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        throw Exception('Storage permission required for PDF export');
+      }
 
-      final pdf = pw.Document(
-        title: 'Seans Raporu - $clientName',
-        author: therapistName,
-        creator: 'PsyClinicAI',
-        subject: 'Psikoterapi Seans Raporu',
-      );
-
-      // PDF sayfalarını oluştur
-      pdf.addPage(_buildSessionReportPage(
-        clientName: clientName,
-        sessionDate: sessionDate,
-        sessionNotes: sessionNotes,
-        therapistName: therapistName,
-        aiSummary: aiSummary,
-        clientInfo: clientInfo,
-        sessionMetrics: sessionMetrics,
-      ));
-
-      // Dosyayı kaydet
-      final file = await _savePDF(pdf, 'seans_raporu_${clientName}_$sessionDate');
+      final pdf = pw.Document();
       
-      _performanceMonitor.endOperation(
-        'generate_session_report',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': true,
-          'file_size': await file.length(),
-          'file_path': file.path,
-        },
+      // Add session report content
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => _buildSessionReportPage(
+            session: session,
+            patient: patient,
+            template: template,
+            customNotes: customNotes,
+          ),
+        ),
       );
 
-      _logger.info(
-        'Session report PDF generated successfully',
-        context: 'pdf_export',
-        data: {'file_path': file.path, 'file_size': await file.length()},
-      );
-
+      // Save PDF
+      final output = await getTemporaryDirectory();
+      final file = File('${output.path}/session_report_${session.id}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+      
       return file;
     } catch (e) {
-      _logger.error(
-        'Failed to generate session report PDF',
-        context: 'pdf_export',
-        data: {'client_name': clientName, 'error': e.toString()},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'generate_session_report',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      rethrow;
+      print('PDF export failed: $e');
+      return null;
     }
   }
 
-  // Tedavi planı PDF'i oluştur
-  Future<File> generateTreatmentPlan({
-    required String clientName,
-    required String diagnosis,
-    required List<String> goals,
-    required List<String> interventions,
-    required String therapistName,
-    String? notes,
-    Map<String, dynamic>? timeline,
+  /// Export medication interaction report to PDF
+  Future<File?> exportInteractionReport({
+    required List<DrugInteraction> interactions,
+    required Patient patient,
+    required String template,
+    String? additionalNotes,
   }) async {
-    _performanceMonitor.startOperation(
-      'generate_treatment_plan',
-      context: 'pdf_export',
-      metadata: {
-        'client_name': clientName,
-        'diagnosis': diagnosis,
-        'goals_count': goals.length,
-        'interventions_count': interventions.length,
-      },
-    );
-
     try {
-      final pdf = pw.Document(
-        title: 'Tedavi Planı - $clientName',
-        author: therapistName,
-        creator: 'PsyClinicAI',
-        subject: 'Psikoterapi Tedavi Planı',
-      );
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        throw Exception('Storage permission required for PDF export');
+      }
 
-      pdf.addPage(_buildTreatmentPlanPage(
-        clientName: clientName,
-        diagnosis: diagnosis,
-        goals: goals,
-        interventions: interventions,
-        therapistName: therapistName,
-        notes: notes,
-        timeline: timeline,
-      ));
-
-      final file = await _savePDF(pdf, 'tedavi_plani_${clientName}_${DateTime.now().millisecondsSinceEpoch}');
+      final pdf = pw.Document();
       
-      _performanceMonitor.endOperation(
-        'generate_treatment_plan',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': true,
-          'file_size': await file.length(),
-          'file_path': file.path,
-        },
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => _buildInteractionReportPage(
+            interactions: interactions,
+            patient: patient,
+            template: template,
+            additionalNotes: additionalNotes,
+          ),
+        ),
       );
 
+      final output = await getTemporaryDirectory();
+      final file = File('${output.path}/interaction_report_${patient.id}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+      
       return file;
     } catch (e) {
-      _performanceMonitor.endOperation(
-        'generate_treatment_plan',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-      rethrow;
+      print('Interaction report export failed: $e');
+      return null;
     }
   }
 
-  // İlerleme raporu PDF'i oluştur
-  Future<File> generateProgressReport({
-    required String clientName,
-    required List<Map<String, dynamic>> sessions,
-    required Map<String, dynamic> progressMetrics,
-    required String therapistName,
-    String? summary,
-    Map<String, dynamic>? recommendations,
+  /// Export prescription report to PDF
+  Future<File?> exportPrescriptionReport({
+    required Prescription prescription,
+    required Patient patient,
+    required String template,
+    List<DrugInteraction>? interactions,
   }) async {
-    _performanceMonitor.startOperation(
-      'generate_progress_report',
-      context: 'pdf_export',
-      metadata: {
-        'client_name': clientName,
-        'sessions_count': sessions.length,
-        'has_summary': summary != null,
-      },
-    );
-
     try {
-      final pdf = pw.Document(
-        title: 'İlerleme Raporu - $clientName',
-        author: therapistName,
-        creator: 'PsyClinicAI',
-        subject: 'Psikoterapi İlerleme Raporu',
-      );
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        throw Exception('Storage permission required for PDF export');
+      }
 
-      pdf.addPage(_buildProgressReportPage(
-        clientName: clientName,
-        sessions: sessions,
-        progressMetrics: progressMetrics,
-        therapistName: therapistName,
-        summary: summary,
-        recommendations: recommendations,
-      ));
-
-      final file = await _savePDF(pdf, 'ilerleme_raporu_${clientName}_${DateTime.now().millisecondsSinceEpoch}');
+      final pdf = pw.Document();
       
-      _performanceMonitor.endOperation(
-        'generate_progress_report',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': true,
-          'file_size': await file.length(),
-          'file_path': file.path,
-        },
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => _buildPrescriptionReportPage(
+            prescription: prescription,
+            patient: patient,
+            template: template,
+            interactions: interactions,
+          ),
+        ),
       );
 
+      final output = await getTemporaryDirectory();
+      final file = File('${output.path}/prescription_${prescription.id}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(await pdf.save());
+      
       return file;
     } catch (e) {
-      _performanceMonitor.endOperation(
-        'generate_progress_report',
-        context: 'pdf_export',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-      rethrow;
+      print('Prescription export failed: $e');
+      return null;
     }
   }
 
-  // Seans raporu sayfası oluştur
-  pw.Page _buildSessionReportPage({
-    required String clientName,
-    required String sessionDate,
-    required String sessionNotes,
-    required String therapistName,
-    String? aiSummary,
-    Map<String, dynamic>? clientInfo,
-    Map<String, dynamic>? sessionMetrics,
+  /// Build session report page
+  pw.Widget _buildSessionReportPage({
+    required Session session,
+    required Patient patient,
+    required String template,
+    String? customNotes,
   }) {
-    return pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(40),
-      build: (context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(clientName, sessionDate, therapistName),
-            
-            pw.SizedBox(height: 30),
-            
-            // Client Info
-            if (clientInfo != null) ...[
-              _buildClientInfoSection(clientInfo),
-              pw.SizedBox(height: 20),
-            ],
-            
-            // Session Notes
-            _buildSectionTitle('Seans Notları'),
-            pw.SizedBox(height: 10),
-            _buildTextContent(sessionNotes),
-            
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Header
+          _buildHeader(),
+          
+          pw.SizedBox(height: 20),
+          
+          // Patient Information
+          _buildPatientInfo(patient),
+          
+          pw.SizedBox(height: 20),
+          
+          // Session Details
+          _buildSessionDetails(session),
+          
+          if (customNotes != null) ...[
             pw.SizedBox(height: 20),
-            
-            // AI Summary
-            if (aiSummary != null) ...[
-              _buildSectionTitle('AI Analizi'),
-              pw.SizedBox(height: 10),
-              _buildAISummarySection(aiSummary),
-              pw.SizedBox(height: 20),
-            ],
-            
-            // Session Metrics
-            if (sessionMetrics != null) ...[
-              _buildSectionTitle('Seans Metrikleri'),
-              pw.SizedBox(height: 10),
-              _buildMetricsSection(sessionMetrics),
-              pw.SizedBox(height: 20),
-            ],
-            
-            // Footer
-            _buildFooter(),
+            _buildCustomNotes(customNotes),
           ],
-        );
-      },
+          
+          pw.SizedBox(height: 20),
+          
+          // Footer
+          _buildFooter(),
+        ],
+      ),
     );
   }
 
-  // Tedavi planı sayfası oluştur
-  pw.Page _buildTreatmentPlanPage({
-    required String clientName,
-    required String diagnosis,
-    required List<String> goals,
-    required List<String> interventions,
-    required String therapistName,
-    String? notes,
-    Map<String, dynamic>? timeline,
+  /// Build interaction report page
+  pw.Widget _buildInteractionReportPage({
+    required List<DrugInteraction> interactions,
+    required Patient patient,
+    required String template,
+    String? additionalNotes,
   }) {
-    return pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(40),
-      build: (context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(clientName, 'Tedavi Planı', therapistName),
-            
-            pw.SizedBox(height: 30),
-            
-            // Diagnosis
-            _buildSectionTitle('Tanı'),
-            pw.SizedBox(height: 10),
-            _buildTextContent(diagnosis),
-            
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Header
+          _buildHeader(),
+          
+          pw.SizedBox(height: 20),
+          
+          // Patient Information
+          _buildPatientInfo(patient),
+          
+          pw.SizedBox(height: 20),
+          
+          // Interaction Summary
+          _buildInteractionSummary(interactions),
+          
+          pw.SizedBox(height: 20),
+          
+          // Detailed Interactions
+          _buildDetailedInteractions(interactions),
+          
+          if (additionalNotes != null) ...[
             pw.SizedBox(height: 20),
-            
-            // Goals
-            _buildSectionTitle('Hedefler'),
-            pw.SizedBox(height: 10),
-            _buildListContent(goals),
-            
-            pw.SizedBox(height: 20),
-            
-            // Interventions
-            _buildSectionTitle('Müdahaleler'),
-            pw.SizedBox(height: 10),
-            _buildListContent(interventions),
-            
-            if (timeline != null) ...[
-              pw.SizedBox(height: 20),
-              _buildSectionTitle('Zaman Çizelgesi'),
-              pw.SizedBox(height: 10),
-              _buildTimelineSection(timeline),
-            ],
-            
-            if (notes != null) ...[
-              pw.SizedBox(height: 20),
-              _buildSectionTitle('Notlar'),
-              pw.SizedBox(height: 10),
-              _buildTextContent(notes),
-            ],
-            
-            pw.SizedBox(height: 20),
-            _buildFooter(),
+            _buildAdditionalNotes(additionalNotes),
           ],
-        );
-      },
+          
+          pw.SizedBox(height: 20),
+          
+          // Footer
+          _buildFooter(),
+        ],
+      ),
     );
   }
 
-  // İlerleme raporu sayfası oluştur
-  pw.Page _buildProgressReportPage({
-    required String clientName,
-    required List<Map<String, dynamic>> sessions,
-    required Map<String, dynamic> progressMetrics,
-    required String therapistName,
-    String? summary,
-    Map<String, dynamic>? recommendations,
+  /// Build prescription report page
+  pw.Widget _buildPrescriptionReportPage({
+    required Prescription prescription,
+    required Patient patient,
+    required String template,
+    List<DrugInteraction>? interactions,
   }) {
-    return pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(40),
-      build: (context) {
-        return pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(clientName, 'İlerleme Raporu', therapistName),
-            
-            pw.SizedBox(height: 30),
-            
-            // Progress Summary
-            if (summary != null) ...[
-              _buildSectionTitle('İlerleme Özeti'),
-              pw.SizedBox(height: 10),
-              _buildTextContent(summary),
-              pw.SizedBox(height: 20),
-            ],
-            
-            // Progress Metrics
-            _buildSectionTitle('İlerleme Metrikleri'),
-            pw.SizedBox(height: 10),
-            _buildMetricsSection(progressMetrics),
-            
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Header
+          _buildHeader(),
+          
+          pw.SizedBox(height: 20),
+          
+          // Patient Information
+          _buildPatientInfo(patient),
+          
+          pw.SizedBox(height: 20),
+          
+          // Prescription Details
+          _buildPrescriptionDetails(prescription),
+          
+          if (interactions != null && interactions.isNotEmpty) ...[
             pw.SizedBox(height: 20),
-            
-            // Recent Sessions
-            _buildSectionTitle('Son Seanslar'),
-            pw.SizedBox(height: 10),
-            _buildSessionsSection(sessions),
-            
-            if (recommendations != null) ...[
-              pw.SizedBox(height: 20),
-              _buildSectionTitle('Öneriler'),
-              pw.SizedBox(height: 10),
-              _buildRecommendationsSection(recommendations),
-            ],
-            
-            pw.SizedBox(height: 20),
-            _buildFooter(),
+            _buildPrescriptionInteractions(interactions),
           ],
-        );
-      },
+          
+          pw.SizedBox(height: 20),
+          
+          // Footer
+          _buildFooter(),
+        ],
+      ),
     );
   }
 
-  // Header oluştur
-  pw.Widget _buildHeader(String clientName, String title, String therapistName) {
+  /// Build header section
+  pw.Widget _buildHeader() {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
       decoration: pw.BoxDecoration(
-        color: _primaryColor,
+        color: PdfColors.blue50,
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
       ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
+      child: pw.Row(
         children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'PsyClinicAI',
-                style: pw.TextStyle(
-                  color: PdfColors.white,
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Container(
-                padding: const pw.EdgeInsets.all(8),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.white,
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-                ),
-                child: pw.Text(
-                  DateTime.now().day.toString().padLeft(2, '0') + '/' +
-                  DateTime.now().month.toString().padLeft(2, '0') + '/' +
-                  DateTime.now().year.toString(),
-                  style: pw.TextStyle(
-                    color: _primaryColor,
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 15),
-          pw.Text(
-            title,
-            style: pw.TextStyle(
-              color: PdfColors.white,
-              fontSize: 20,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'Danışan: $clientName',
-            style: pw.TextStyle(
-              color: PdfColors.white,
-              fontSize: 16,
-            ),
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'Terapist: $therapistName',
-            style: pw.TextStyle(
-              color: PdfColors.white,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Section title oluştur
-  pw.Widget _buildSectionTitle(String title) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      decoration: pw.BoxDecoration(
-        color: _secondaryColor,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-      ),
-      child: pw.Text(
-        title,
-        style: pw.TextStyle(
-          color: _primaryColor,
-          fontSize: 16,
-          fontWeight: pw.FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  // Text content oluştur
-  pw.Widget _buildTextContent(String text) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
-      ),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          color: _textColor,
-          fontSize: 12,
-          height: 1.5,
-        ),
-      ),
-    );
-  }
-
-  // List content oluştur
-  pw.Widget _buildListContent(List<String> items) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: items.map((item) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 8),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '• ',
-                style: pw.TextStyle(
-                  color: _accentColor,
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  item,
-                  style: pw.TextStyle(
-                    color: _textColor,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        )).toList(),
-      ),
-    );
-  }
-
-  // AI Summary section oluştur
-  pw.Widget _buildAISummarySection(String aiSummary) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.blue50,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _accentColor, width: 2),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(
-            children: [
-              pw.Icon(
-                pw.IconData(0xe3b3), // AI icon
-                color: _accentColor,
-                size: 20,
-              ),
-              pw.SizedBox(width: 8),
-              pw.Text(
-                'AI Analizi',
-                style: pw.TextStyle(
-                  color: _accentColor,
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 10),
-          pw.Text(
-            aiSummary,
-            style: pw.TextStyle(
-              color: _textColor,
-              fontSize: 12,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Metrics section oluştur
-  pw.Widget _buildMetricsSection(Map<String, dynamic> metrics) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
-      ),
-      child: pw.Column(
-        children: metrics.entries.map((entry) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 8),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                entry.key,
-                style: pw.TextStyle(
-                  color: _textColor,
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.normal,
-                ),
-              ),
-              pw.Text(
-                entry.value.toString(),
-                style: pw.TextStyle(
-                  color: _primaryColor,
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        )).toList(),
-      ),
-    );
-  }
-
-  // Client info section oluştur
-  pw.Widget _buildClientInfoSection(Map<String, dynamic> clientInfo) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            'Danışan Bilgileri',
-            style: pw.TextStyle(
-              color: _primaryColor,
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 10),
-          ...clientInfo.entries.map((entry) => pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 5),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  entry.key,
+                  _appName,
                   style: pw.TextStyle(
-                    color: _textColor,
-                    fontSize: 11,
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blue900,
                   ),
                 ),
                 pw.Text(
-                  entry.value.toString(),
+                  'Version $_version',
                   style: pw.TextStyle(
-                    color: _textColor,
-                    fontSize: 11,
-                    fontWeight: pw.FontWeight.normal,
+                    fontSize: 12,
+                    color: PdfColors.blue700,
                   ),
                 ),
               ],
             ),
-          )).toList(),
+          ),
+          pw.Text(
+            DateTime.now().toString().split(' ')[0],
+            style: pw.TextStyle(
+              fontSize: 12,
+              color: PdfColors.blue700,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // Timeline section oluştur
-  pw.Widget _buildTimelineSection(Map<String, dynamic> timeline) {
+  /// Build patient information section
+  pw.Widget _buildPatientInfo(Patient patient) {
     return pw.Container(
-      width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
-        children: timeline.entries.map((entry) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 10),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Patient Information',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
             children: [
-              pw.Container(
-                width: 8,
-                height: 8,
-                decoration: pw.BoxDecoration(
-                  color: _accentColor,
-                  shape: pw.BoxShape.circle,
-                ),
-              ),
-              pw.SizedBox(width: 10),
               pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      entry.key,
-                      style: pw.TextStyle(
-                        color: _primaryColor,
-                        fontSize: 12,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.Text(
-                      entry.value.toString(),
-                      style: pw.TextStyle(
-                        color: _textColor,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
+                child: pw.Text('Name: ${patient.fullName}'),
+              ),
+              pw.Expanded(
+                child: pw.Text('ID: ${patient.id}'),
               ),
             ],
           ),
-        )).toList(),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: pw.Text('Age: ${patient.age}'),
+              ),
+              pw.Expanded(
+                child: pw.Text('Gender: ${patient.gender}'),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text('Contact: ${patient.phoneNumber}'),
+        ],
       ),
     );
   }
 
-  // Sessions section oluştur
-  pw.Widget _buildSessionsSection(List<Map<String, dynamic>> sessions) {
+  /// Build session details section
+  pw.Widget _buildSessionDetails(Session session) {
     return pw.Container(
-      width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: _secondaryColor, width: 1),
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
-        children: sessions.take(5).map((session) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 10),
-          child: pw.Container(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Session Details',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Text('Date: ${session.date.toString().split(' ')[0]}'),
+          pw.SizedBox(height: 5),
+          pw.Text('Duration: ${session.duration} minutes'),
+          pw.SizedBox(height: 5),
+          pw.Text('Type: ${session.type}'),
+          pw.SizedBox(height: 10),
+          pw.Text(
+            'Notes:',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.Text(session.notes ?? 'No notes available'),
+        ],
+      ),
+    );
+  }
+
+  /// Build interaction summary section
+  pw.Widget _buildInteractionSummary(List<DrugInteraction> interactions) {
+    final severityCounts = <String, int>{};
+    for (final interaction in interactions) {
+      final severity = interaction.severity.name;
+      severityCounts[severity] = (severityCounts[severity] ?? 0) + 1;
+    }
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Interaction Summary',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Text('Total Interactions: ${interactions.length}'),
+          pw.SizedBox(height: 10),
+          ...severityCounts.entries.map((entry) => pw.Text(
+            '${entry.key}: ${entry.value}',
+            style: pw.TextStyle(
+              color: _getSeverityColor(entry.key),
+              fontWeight: pw.FontWeight.bold,
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  /// Build detailed interactions section
+  pw.Widget _buildDetailedInteractions(List<DrugInteraction> interactions) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Detailed Interactions',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          ...interactions.map((interaction) => pw.Container(
+            margin: const pw.EdgeInsets.only(bottom: 10),
             padding: const pw.EdgeInsets.all(10),
             decoration: pw.BoxDecoration(
-              color: PdfColors.white,
+              color: _getSeverityBackgroundColor(interaction.severity.name),
               borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  session['date'] ?? 'Tarih belirtilmemiş',
+                  '${interaction.medication1Name} + ${interaction.medication2Name}',
                   style: pw.TextStyle(
-                    color: _primaryColor,
-                    fontSize: 11,
                     fontWeight: pw.FontWeight.bold,
+                    color: _getSeverityColor(interaction.severity.name),
                   ),
                 ),
                 pw.SizedBox(height: 5),
-                pw.Text(
-                  session['notes'] ?? 'Not bulunamadı',
-                  style: pw.TextStyle(
-                    color: _textColor,
-                    fontSize: 10,
-                  ),
-                  maxLines: 3,
-                ),
+                pw.Text('Severity: ${interaction.severity.name}'),
+                pw.SizedBox(height: 5),
+                pw.Text('Type: ${interaction.type.name}'),
+                pw.SizedBox(height: 5),
+                pw.Text('Description: ${interaction.description}'),
+                if (interaction.recommendations.isNotEmpty) ...[
+                  pw.SizedBox(height: 5),
+                  pw.Text('Recommendations: ${interaction.recommendations.join(', ')}'),
+                ],
               ],
             ),
-          ),
-        )).toList(),
+          )),
+        ],
       ),
     );
   }
 
-  // Recommendations section oluştur
-  pw.Widget _buildRecommendationsSection(Map<String, dynamic> recommendations) {
+  /// Build prescription details section
+  pw.Widget _buildPrescriptionDetails(Prescription prescription) {
     return pw.Container(
-      width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        color: PdfColors.green50,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
-        border: pw.Border.all(color: PdfColors.green, width: 1),
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: recommendations.entries.map((entry) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 8),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                entry.key,
-                style: pw.TextStyle(
-                  color: PdfColors.green,
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Text(
-                entry.value.toString(),
-                style: pw.TextStyle(
-                  color: _textColor,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+        children: [
+          pw.Text(
+            'Prescription Details',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
           ),
-        )).toList(),
+          pw.SizedBox(height: 10),
+          pw.Text('Date: ${prescription.date.toString().split(' ')[0]}'),
+          pw.SizedBox(height: 5),
+          pw.Text('Status: ${prescription.status}'),
+          pw.SizedBox(height: 10),
+          pw.Text(
+            'Medications:',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          ...prescription.medications.map((med) => pw.Text(
+            '• ${med.name} - ${med.dosage}',
+          )),
+        ],
       ),
     );
   }
 
-  // Footer oluştur
+  /// Build prescription interactions section
+  pw.Widget _buildPrescriptionInteractions(List<DrugInteraction> interactions) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.orange300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            '⚠️ Drug Interactions Found',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.orange800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          ...interactions.take(3).map((interaction) => pw.Text(
+            '• ${interaction.medication1Name} + ${interaction.medication2Name}: ${interaction.severity.name}',
+            style: pw.TextStyle(
+              color: _getSeverityColor(interaction.severity.name),
+            ),
+          )),
+          if (interactions.length > 3) ...[
+            pw.SizedBox(height: 5),
+            pw.Text(
+              '... and ${interactions.length - 3} more interactions',
+              style: pw.TextStyle(
+                fontSize: 12,
+                color: PdfColors.grey600,
+                fontStyle: pw.FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Build custom notes section
+  pw.Widget _buildCustomNotes(String notes) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.green300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Additional Notes',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.green800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Text(notes),
+        ],
+      ),
+    );
+  }
+
+  /// Build additional notes section
+  pw.Widget _buildAdditionalNotes(String notes) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(15),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.blue300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Additional Notes',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blue800,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+          pw.Text(notes),
+        ],
+      ),
+    );
+  }
+
+  /// Build footer section
   pw.Widget _buildFooter() {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(20),
+      padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        color: _lightGray,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+        color: PdfColors.grey100,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Column(
         children: [
-          pw.Divider(color: _secondaryColor, thickness: 1),
-          pw.SizedBox(height: 10),
           pw.Text(
-            'Bu rapor PsyClinicAI sistemi tarafından otomatik olarak oluşturulmuştur.',
+            'Generated by $_appName v$_version',
             style: pw.TextStyle(
-              color: _textColor,
               fontSize: 10,
-              fontStyle: pw.FontStyle.italic,
+              color: PdfColors.grey600,
             ),
-            textAlign: pw.TextAlign.center,
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Rapor tarihi: ${DateTime.now().toString().substring(0, 19)}',
+            'This document is for medical professionals only',
             style: pw.TextStyle(
-              color: _textColor,
-              fontSize: 9,
+              fontSize: 8,
+              color: PdfColors.grey500,
+              fontStyle: pw.FontStyle.italic,
             ),
-            textAlign: pw.TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  // PDF'i kaydet
-  Future<File> _savePDF(pw.Document pdf, String fileName) async {
-    final bytes = await pdf.save();
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$fileName.pdf');
-    await file.writeAsBytes(bytes);
-    return file;
-  }
-
-  // PDF'i aç - open_file removed, using share instead
-  Future<void> openPDF(File file) async {
-    try {
-      // Instead of opening, share the file
-      await Share.shareXFiles([XFile(file.path)], text: 'PsyClinicAI Raporu');
-      _logger.info(
-        'PDF shared successfully',
-        context: 'pdf_export',
-        data: {'file_path': file.path},
-      );
-    } catch (e) {
-      _logger.error(
-        'Failed to share PDF',
-        context: 'pdf_export',
-        data: {'file_path': file.path, 'error': e.toString()},
-        error: e,
-      );
-      rethrow;
+  /// Get severity color for PDF
+  PdfColor _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'minor':
+        return PdfColors.blue;
+      case 'moderate':
+        return PdfColors.orange;
+      case 'major':
+        return PdfColors.red;
+      case 'contraindicated':
+        return PdfColors.purple;
+      default:
+        return PdfColors.grey;
     }
   }
 
-  // PDF'i paylaş
-  Future<void> sharePDF(File file) async {
-    try {
-      await Share.shareXFiles([XFile(file.path)], text: 'PsyClinicAI Raporu');
-      _logger.info(
-        'PDF shared successfully',
-        context: 'pdf_export',
-        data: {'file_path': file.path},
-      );
-    } catch (e) {
-      _logger.error(
-        'Failed to share PDF',
-        context: 'pdf_export',
-        data: {'file_path': file.path, 'error': e.toString()},
-        error: e,
-      );
-      rethrow;
+  /// Get severity background color for PDF
+  PdfColor _getSeverityBackgroundColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'minor':
+        return PdfColors.blue50;
+      case 'moderate':
+        return PdfColors.orange50;
+      case 'major':
+        return PdfColors.red50;
+      case 'contraindicated':
+        return PdfColors.purple50;
+      default:
+        return PdfColors.grey50;
     }
   }
 
-  // Performance monitoring getter'ları
-  AIPerformanceMonitor get performanceMonitor => _performanceMonitor;
-  AILogger get logger => _logger;
-
-  // Performance statistics
-  Map<String, dynamic> getPerformanceStatistics({String? context}) {
-    return _performanceMonitor.getPerformanceStatistics(context: context);
+  /// Get available templates
+  Map<String, String> getAvailableTemplates() {
+    return Map.unmodifiable(_templates);
   }
 
-  // Export performance data
-  Map<String, dynamic> exportPerformanceData() {
-    return _performanceMonitor.exportPerformanceData();
+  /// Get template by name
+  String? getTemplate(String templateName) {
+    return _templates[templateName];
   }
 }

@@ -6,505 +6,604 @@ part of 'ai_training_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-TrainingJob _$TrainingJobFromJson(Map<String, dynamic> json) => TrainingJob(
+TrainingDataset _$TrainingDatasetFromJson(Map<String, dynamic> json) =>
+    TrainingDataset(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      dataType: $enumDecode(_$TrainingDataTypeEnumMap, json['dataType']),
+      totalSamples: (json['totalSamples'] as num).toInt(),
+      trainingSamples: (json['trainingSamples'] as num).toInt(),
+      validationSamples: (json['validationSamples'] as num).toInt(),
+      testSamples: (json['testSamples'] as num).toInt(),
+      metadata: json['metadata'] as Map<String, dynamic>,
+      quality: $enumDecode(_$DataQualityEnumMap, json['quality']),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      source: json['source'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isActive: json['isActive'] as bool,
+    );
+
+Map<String, dynamic> _$TrainingDatasetToJson(TrainingDataset instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'dataType': _$TrainingDataTypeEnumMap[instance.dataType]!,
+      'totalSamples': instance.totalSamples,
+      'trainingSamples': instance.trainingSamples,
+      'validationSamples': instance.validationSamples,
+      'testSamples': instance.testSamples,
+      'metadata': instance.metadata,
+      'quality': _$DataQualityEnumMap[instance.quality]!,
+      'tags': instance.tags,
+      'source': instance.source,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'isActive': instance.isActive,
+    };
+
+const _$TrainingDataTypeEnumMap = {
+  TrainingDataType.text: 'text',
+  TrainingDataType.image: 'image',
+  TrainingDataType.audio: 'audio',
+  TrainingDataType.video: 'video',
+  TrainingDataType.tabular: 'tabular',
+  TrainingDataType.multimodal: 'multimodal',
+};
+
+const _$DataQualityEnumMap = {
+  DataQuality.excellent: 'excellent',
+  DataQuality.good: 'good',
+  DataQuality.fair: 'fair',
+  DataQuality.poor: 'poor',
+  DataQuality.unknown: 'unknown',
+};
+
+TrainingDataSample _$TrainingDataSampleFromJson(Map<String, dynamic> json) =>
+    TrainingDataSample(
+      id: json['id'] as String,
+      datasetId: json['datasetId'] as String,
+      content: json['content'] as String,
+      labels: json['labels'] as Map<String, dynamic>,
+      features: json['features'] as Map<String, dynamic>,
+      metadata: json['metadata'] as Map<String, dynamic>,
+      isAnnotated: json['isAnnotated'] as bool,
+      annotatorId: json['annotatorId'] as String?,
+      annotatedAt: json['annotatedAt'] == null
+          ? null
+          : DateTime.parse(json['annotatedAt'] as String),
+      confidence: (json['confidence'] as num).toDouble(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+
+Map<String, dynamic> _$TrainingDataSampleToJson(TrainingDataSample instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'datasetId': instance.datasetId,
+      'content': instance.content,
+      'labels': instance.labels,
+      'features': instance.features,
+      'metadata': instance.metadata,
+      'isAnnotated': instance.isAnnotated,
+      'annotatorId': instance.annotatorId,
+      'annotatedAt': instance.annotatedAt?.toIso8601String(),
+      'confidence': instance.confidence,
+      'tags': instance.tags,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+    };
+
+AIModelDefinition _$AIModelDefinitionFromJson(Map<String, dynamic> json) =>
+    AIModelDefinition(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      architecture: $enumDecode(
+        _$ModelArchitectureEnumMap,
+        json['architecture'],
+      ),
+      framework: $enumDecode(_$TrainingFrameworkEnumMap, json['framework']),
+      hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
+      modelConfig: json['modelConfig'] as Map<String, dynamic>,
+      parameterCount: (json['parameterCount'] as num).toInt(),
+      modelSize: json['modelSize'] as String,
+      supportedTasks: (json['supportedTasks'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      supportedLanguages: (json['supportedLanguages'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      requirements: json['requirements'] as Map<String, dynamic>,
+      version: json['version'] as String,
+      author: json['author'] as String,
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isActive: json['isActive'] as bool,
+    );
+
+Map<String, dynamic> _$AIModelDefinitionToJson(AIModelDefinition instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'architecture': _$ModelArchitectureEnumMap[instance.architecture]!,
+      'framework': _$TrainingFrameworkEnumMap[instance.framework]!,
+      'hyperparameters': instance.hyperparameters,
+      'modelConfig': instance.modelConfig,
+      'parameterCount': instance.parameterCount,
+      'modelSize': instance.modelSize,
+      'supportedTasks': instance.supportedTasks,
+      'supportedLanguages': instance.supportedLanguages,
+      'requirements': instance.requirements,
+      'version': instance.version,
+      'author': instance.author,
+      'tags': instance.tags,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'isActive': instance.isActive,
+    };
+
+const _$ModelArchitectureEnumMap = {
+  ModelArchitecture.transformer: 'transformer',
+  ModelArchitecture.cnn: 'cnn',
+  ModelArchitecture.rnn: 'rnn',
+  ModelArchitecture.lstm: 'lstm',
+  ModelArchitecture.gru: 'gru',
+  ModelArchitecture.autoencoder: 'autoencoder',
+  ModelArchitecture.gan: 'gan',
+  ModelArchitecture.custom: 'custom',
+};
+
+const _$TrainingFrameworkEnumMap = {
+  TrainingFramework.pytorch: 'pytorch',
+  TrainingFramework.tensorflow: 'tensorflow',
+  TrainingFramework.keras: 'keras',
+  TrainingFramework.scikitLearn: 'scikit_learn',
+  TrainingFramework.custom: 'custom',
+};
+
+TrainingSession _$TrainingSessionFromJson(Map<String, dynamic> json) =>
+    TrainingSession(
+      id: json['id'] as String,
+      modelId: json['modelId'] as String,
+      datasetId: json['datasetId'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      status: $enumDecode(_$TrainingStatusEnumMap, json['status']),
+      hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
+      trainingConfig: json['trainingConfig'] as Map<String, dynamic>,
+      startTime: DateTime.parse(json['startTime'] as String),
+      endTime: json['endTime'] == null
+          ? null
+          : DateTime.parse(json['endTime'] as String),
+      duration: json['duration'] == null
+          ? null
+          : Duration(microseconds: (json['duration'] as num).toInt()),
+      currentEpoch: (json['currentEpoch'] as num).toInt(),
+      totalEpochs: (json['totalEpochs'] as num).toInt(),
+      currentLoss: (json['currentLoss'] as num).toDouble(),
+      currentAccuracy: (json['currentAccuracy'] as num).toDouble(),
+      metrics: json['metrics'] as Map<String, dynamic>,
+      checkpoints: json['checkpoints'] as Map<String, dynamic>,
+      trainedModelPath: json['trainedModelPath'] as String?,
+      logsPath: json['logsPath'] as String?,
+      metadata: json['metadata'] as Map<String, dynamic>,
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      createdBy: json['createdBy'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+
+Map<String, dynamic> _$TrainingSessionToJson(TrainingSession instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'modelId': instance.modelId,
+      'datasetId': instance.datasetId,
+      'name': instance.name,
+      'description': instance.description,
+      'status': _$TrainingStatusEnumMap[instance.status]!,
+      'hyperparameters': instance.hyperparameters,
+      'trainingConfig': instance.trainingConfig,
+      'startTime': instance.startTime.toIso8601String(),
+      'endTime': instance.endTime?.toIso8601String(),
+      'duration': instance.duration?.inMicroseconds,
+      'currentEpoch': instance.currentEpoch,
+      'totalEpochs': instance.totalEpochs,
+      'currentLoss': instance.currentLoss,
+      'currentAccuracy': instance.currentAccuracy,
+      'metrics': instance.metrics,
+      'checkpoints': instance.checkpoints,
+      'trainedModelPath': instance.trainedModelPath,
+      'logsPath': instance.logsPath,
+      'metadata': instance.metadata,
+      'tags': instance.tags,
+      'createdBy': instance.createdBy,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+    };
+
+const _$TrainingStatusEnumMap = {
+  TrainingStatus.pending: 'pending',
+  TrainingStatus.inProgress: 'in_progress',
+  TrainingStatus.completed: 'completed',
+  TrainingStatus.failed: 'failed',
+  TrainingStatus.cancelled: 'cancelled',
+  TrainingStatus.paused: 'paused',
+};
+
+TrainingMetrics _$TrainingMetricsFromJson(Map<String, dynamic> json) =>
+    TrainingMetrics(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      epoch: (json['epoch'] as num).toInt(),
+      trainingLoss: (json['trainingLoss'] as num).toDouble(),
+      validationLoss: (json['validationLoss'] as num).toDouble(),
+      trainingAccuracy: (json['trainingAccuracy'] as num).toDouble(),
+      validationAccuracy: (json['validationAccuracy'] as num).toDouble(),
+      learningRate: (json['learningRate'] as num).toDouble(),
+      gradientNorm: (json['gradientNorm'] as num).toDouble(),
+      additionalMetrics: json['additionalMetrics'] as Map<String, dynamic>,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+
+Map<String, dynamic> _$TrainingMetricsToJson(TrainingMetrics instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'sessionId': instance.sessionId,
+      'epoch': instance.epoch,
+      'trainingLoss': instance.trainingLoss,
+      'validationLoss': instance.validationLoss,
+      'trainingAccuracy': instance.trainingAccuracy,
+      'validationAccuracy': instance.validationAccuracy,
+      'learningRate': instance.learningRate,
+      'gradientNorm': instance.gradientNorm,
+      'additionalMetrics': instance.additionalMetrics,
+      'timestamp': instance.timestamp.toIso8601String(),
+    };
+
+ModelCheckpoint _$ModelCheckpointFromJson(Map<String, dynamic> json) =>
+    ModelCheckpoint(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      epoch: (json['epoch'] as num).toInt(),
+      modelPath: json['modelPath'] as String,
+      optimizerPath: json['optimizerPath'] as String,
+      metrics: json['metrics'] as Map<String, dynamic>,
+      checkpointType: json['checkpointType'] as String,
+      modelSize: (json['modelSize'] as num).toDouble(),
+      metadata: json['metadata'] as Map<String, dynamic>,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+
+Map<String, dynamic> _$ModelCheckpointToJson(ModelCheckpoint instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'sessionId': instance.sessionId,
+      'epoch': instance.epoch,
+      'modelPath': instance.modelPath,
+      'optimizerPath': instance.optimizerPath,
+      'metrics': instance.metrics,
+      'checkpointType': instance.checkpointType,
+      'modelSize': instance.modelSize,
+      'metadata': instance.metadata,
+      'createdAt': instance.createdAt.toIso8601String(),
+    };
+
+TrainedModel _$TrainedModelFromJson(Map<String, dynamic> json) => TrainedModel(
   id: json['id'] as String,
-  modelName: json['modelName'] as String,
-  description: json['description'] as String,
-  category: $enumDecode(_$ModelCategoryEnumMap, json['category']),
-  templateId: json['templateId'] as String,
-  templateName: json['templateName'] as String,
-  datasetId: json['datasetId'] as String,
-  datasetName: json['datasetName'] as String,
-  status: $enumDecode(_$TrainingStatusEnumMap, json['status']),
-  progress: (json['progress'] as num).toInt(),
-  currentEpoch: (json['currentEpoch'] as num).toInt(),
-  totalEpochs: (json['totalEpochs'] as num).toInt(),
-  currentAccuracy: (json['currentAccuracy'] as num).toDouble(),
-  currentLoss: (json['currentLoss'] as num).toDouble(),
-  elapsedTime: Duration(microseconds: (json['elapsedTime'] as num).toInt()),
+  definitionId: json['definitionId'] as String,
+  sessionId: json['sessionId'] as String,
+  name: json['name'] as String,
+  version: json['version'] as String,
+  modelPath: json['modelPath'] as String,
+  performance: json['performance'] as Map<String, dynamic>,
+  evaluation: json['evaluation'] as Map<String, dynamic>,
+  metadata: json['metadata'] as Map<String, dynamic>,
+  supportedTasks: (json['supportedTasks'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  status: json['status'] as String,
+  trainingCompletedAt: DateTime.parse(json['trainingCompletedAt'] as String),
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),
+  isDeployed: json['isDeployed'] as bool,
+);
+
+Map<String, dynamic> _$TrainedModelToJson(TrainedModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'definitionId': instance.definitionId,
+      'sessionId': instance.sessionId,
+      'name': instance.name,
+      'version': instance.version,
+      'modelPath': instance.modelPath,
+      'performance': instance.performance,
+      'evaluation': instance.evaluation,
+      'metadata': instance.metadata,
+      'supportedTasks': instance.supportedTasks,
+      'status': instance.status,
+      'trainingCompletedAt': instance.trainingCompletedAt.toIso8601String(),
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'isDeployed': instance.isDeployed,
+    };
+
+ModelEvaluation _$ModelEvaluationFromJson(Map<String, dynamic> json) =>
+    ModelEvaluation(
+      id: json['id'] as String,
+      modelId: json['modelId'] as String,
+      datasetId: json['datasetId'] as String,
+      metrics: json['metrics'] as Map<String, dynamic>,
+      confusionMatrix: json['confusionMatrix'] as Map<String, dynamic>,
+      classificationReport:
+          json['classificationReport'] as Map<String, dynamic>,
+      predictions: (json['predictions'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      groundTruth: (json['groundTruth'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      analysis: json['analysis'] as Map<String, dynamic>,
+      evaluatorId: json['evaluatorId'] as String,
+      evaluatedAt: DateTime.parse(json['evaluatedAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+
+Map<String, dynamic> _$ModelEvaluationToJson(ModelEvaluation instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'modelId': instance.modelId,
+      'datasetId': instance.datasetId,
+      'metrics': instance.metrics,
+      'confusionMatrix': instance.confusionMatrix,
+      'classificationReport': instance.classificationReport,
+      'predictions': instance.predictions,
+      'groundTruth': instance.groundTruth,
+      'analysis': instance.analysis,
+      'evaluatorId': instance.evaluatorId,
+      'evaluatedAt': instance.evaluatedAt.toIso8601String(),
+      'createdAt': instance.createdAt.toIso8601String(),
+    };
+
+TrainingConfiguration _$TrainingConfigurationFromJson(
+  Map<String, dynamic> json,
+) => TrainingConfiguration(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
   hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
-  logs: (json['logs'] as List<dynamic>).map((e) => e as String).toList(),
-  errorMessage: json['errorMessage'] as String?,
-  metrics: json['metrics'] as Map<String, dynamic>?,
+  dataConfig: json['dataConfig'] as Map<String, dynamic>,
+  modelConfig: json['modelConfig'] as Map<String, dynamic>,
+  optimizerConfig: json['optimizerConfig'] as Map<String, dynamic>,
+  schedulerConfig: json['schedulerConfig'] as Map<String, dynamic>,
+  augmentationConfig: json['augmentationConfig'] as Map<String, dynamic>,
+  validationConfig: json['validationConfig'] as Map<String, dynamic>,
+  checkpointConfig: json['checkpointConfig'] as Map<String, dynamic>,
+  loggingConfig: json['loggingConfig'] as Map<String, dynamic>,
+  tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+  createdBy: json['createdBy'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  isActive: json['isActive'] as bool,
+);
+
+Map<String, dynamic> _$TrainingConfigurationToJson(
+  TrainingConfiguration instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'hyperparameters': instance.hyperparameters,
+  'dataConfig': instance.dataConfig,
+  'modelConfig': instance.modelConfig,
+  'optimizerConfig': instance.optimizerConfig,
+  'schedulerConfig': instance.schedulerConfig,
+  'augmentationConfig': instance.augmentationConfig,
+  'validationConfig': instance.validationConfig,
+  'checkpointConfig': instance.checkpointConfig,
+  'loggingConfig': instance.loggingConfig,
+  'tags': instance.tags,
+  'createdBy': instance.createdBy,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'isActive': instance.isActive,
+};
+
+TrainingJob _$TrainingJobFromJson(Map<String, dynamic> json) => TrainingJob(
+  id: json['id'] as String,
+  sessionId: json['sessionId'] as String,
+  configurationId: json['configurationId'] as String,
+  status: json['status'] as String,
+  priority: (json['priority'] as num).toInt(),
+  scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+  startedAt: json['startedAt'] == null
+      ? null
+      : DateTime.parse(json['startedAt'] as String),
+  completedAt: json['completedAt'] == null
+      ? null
+      : DateTime.parse(json['completedAt'] as String),
+  estimatedDuration: json['estimatedDuration'] == null
+      ? null
+      : Duration(microseconds: (json['estimatedDuration'] as num).toInt()),
+  actualDuration: json['actualDuration'] == null
+      ? null
+      : Duration(microseconds: (json['actualDuration'] as num).toInt()),
+  resources: json['resources'] as Map<String, dynamic>,
+  constraints: json['constraints'] as Map<String, dynamic>,
+  assignedTo: json['assignedTo'] as String,
+  metadata: json['metadata'] as Map<String, dynamic>,
+  tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
 );
 
 Map<String, dynamic> _$TrainingJobToJson(TrainingJob instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'modelName': instance.modelName,
-      'description': instance.description,
-      'category': _$ModelCategoryEnumMap[instance.category]!,
-      'templateId': instance.templateId,
-      'templateName': instance.templateName,
-      'datasetId': instance.datasetId,
-      'datasetName': instance.datasetName,
-      'status': _$TrainingStatusEnumMap[instance.status]!,
-      'progress': instance.progress,
-      'currentEpoch': instance.currentEpoch,
-      'totalEpochs': instance.totalEpochs,
-      'currentAccuracy': instance.currentAccuracy,
-      'currentLoss': instance.currentLoss,
-      'elapsedTime': instance.elapsedTime.inMicroseconds,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
-      'hyperparameters': instance.hyperparameters,
-      'logs': instance.logs,
-      'errorMessage': instance.errorMessage,
-      'metrics': instance.metrics,
-    };
-
-const _$ModelCategoryEnumMap = {
-  ModelCategory.diagnosis: 'diagnosis',
-  ModelCategory.treatment: 'treatment',
-  ModelCategory.riskAssessment: 'riskAssessment',
-  ModelCategory.prognosis: 'prognosis',
-  ModelCategory.screening: 'screening',
-  ModelCategory.monitoring: 'monitoring',
-};
-
-const _$TrainingStatusEnumMap = {
-  TrainingStatus.pending: 'pending',
-  TrainingStatus.running: 'running',
-  TrainingStatus.paused: 'paused',
-  TrainingStatus.completed: 'completed',
-  TrainingStatus.failed: 'failed',
-};
-
-CustomModel _$CustomModelFromJson(Map<String, dynamic> json) => CustomModel(
-  id: json['id'] as String,
-  name: json['name'] as String,
-  description: json['description'] as String,
-  category: $enumDecode(_$ModelCategoryEnumMap, json['category']),
-  version: json['version'] as String,
-  size: (json['size'] as num).toDouble(),
-  createdAt: DateTime.parse(json['createdAt'] as String),
-  updatedAt: DateTime.parse(json['updatedAt'] as String),
-  performance: ModelPerformance.fromJson(
-    json['performance'] as Map<String, dynamic>,
-  ),
-  metadata: json['metadata'] as Map<String, dynamic>,
-  tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
-  isDeployed: json['isDeployed'] as bool,
-  deploymentUrl: json['deploymentUrl'] as String?,
-  configuration: json['configuration'] as Map<String, dynamic>?,
-);
-
-Map<String, dynamic> _$CustomModelToJson(CustomModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'category': _$ModelCategoryEnumMap[instance.category]!,
-      'version': instance.version,
-      'size': instance.size,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
-      'performance': instance.performance,
+      'sessionId': instance.sessionId,
+      'configurationId': instance.configurationId,
+      'status': instance.status,
+      'priority': instance.priority,
+      'scheduledAt': instance.scheduledAt.toIso8601String(),
+      'startedAt': instance.startedAt?.toIso8601String(),
+      'completedAt': instance.completedAt?.toIso8601String(),
+      'estimatedDuration': instance.estimatedDuration?.inMicroseconds,
+      'actualDuration': instance.actualDuration?.inMicroseconds,
+      'resources': instance.resources,
+      'constraints': instance.constraints,
+      'assignedTo': instance.assignedTo,
       'metadata': instance.metadata,
       'tags': instance.tags,
-      'isDeployed': instance.isDeployed,
-      'deploymentUrl': instance.deploymentUrl,
-      'configuration': instance.configuration,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
     };
 
-ModelPerformance _$ModelPerformanceFromJson(Map<String, dynamic> json) =>
-    ModelPerformance(
-      accuracy: (json['accuracy'] as num).toDouble(),
-      precision: (json['precision'] as num).toDouble(),
-      recall: (json['recall'] as num).toDouble(),
-      f1Score: (json['f1Score'] as num).toDouble(),
-      auc: (json['auc'] as num).toDouble(),
-      mse: (json['mse'] as num).toDouble(),
-      mae: (json['mae'] as num).toDouble(),
-      classMetrics: (json['classMetrics'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, (e as num).toDouble()),
-      ),
-      customMetrics: (json['customMetrics'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, (e as num).toDouble()),
-      ),
+ModelDeployment _$ModelDeploymentFromJson(Map<String, dynamic> json) =>
+    ModelDeployment(
+      id: json['id'] as String,
+      modelId: json['modelId'] as String,
+      environment: json['environment'] as String,
+      status: json['status'] as String,
+      endpoint: json['endpoint'] as String,
+      configuration: json['configuration'] as Map<String, dynamic>,
+      resources: json['resources'] as Map<String, dynamic>,
+      monitoring: json['monitoring'] as Map<String, dynamic>,
+      deployedAt: DateTime.parse(json['deployedAt'] as String),
+      undeployedAt: json['undeployedAt'] == null
+          ? null
+          : DateTime.parse(json['undeployedAt'] as String),
+      deployedBy: json['deployedBy'] as String,
+      metadata: json['metadata'] as Map<String, dynamic>,
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
 
-Map<String, dynamic> _$ModelPerformanceToJson(ModelPerformance instance) =>
+Map<String, dynamic> _$ModelDeploymentToJson(ModelDeployment instance) =>
     <String, dynamic>{
-      'accuracy': instance.accuracy,
-      'precision': instance.precision,
-      'recall': instance.recall,
-      'f1Score': instance.f1Score,
-      'auc': instance.auc,
-      'mse': instance.mse,
-      'mae': instance.mae,
-      'classMetrics': instance.classMetrics,
-      'customMetrics': instance.customMetrics,
+      'id': instance.id,
+      'modelId': instance.modelId,
+      'environment': instance.environment,
+      'status': instance.status,
+      'endpoint': instance.endpoint,
+      'configuration': instance.configuration,
+      'resources': instance.resources,
+      'monitoring': instance.monitoring,
+      'deployedAt': instance.deployedAt.toIso8601String(),
+      'undeployedAt': instance.undeployedAt?.toIso8601String(),
+      'deployedBy': instance.deployedBy,
+      'metadata': instance.metadata,
+      'tags': instance.tags,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
     };
 
-Dataset _$DatasetFromJson(Map<String, dynamic> json) => Dataset(
+TrainingProgress _$TrainingProgressFromJson(Map<String, dynamic> json) =>
+    TrainingProgress(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      currentEpoch: (json['currentEpoch'] as num).toInt(),
+      totalEpochs: (json['totalEpochs'] as num).toInt(),
+      progress: (json['progress'] as num).toDouble(),
+      currentLoss: (json['currentLoss'] as num).toDouble(),
+      currentAccuracy: (json['currentAccuracy'] as num).toDouble(),
+      learningRate: (json['learningRate'] as num).toDouble(),
+      metrics: json['metrics'] as Map<String, dynamic>,
+      status: json['status'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+
+Map<String, dynamic> _$TrainingProgressToJson(TrainingProgress instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'sessionId': instance.sessionId,
+      'currentEpoch': instance.currentEpoch,
+      'totalEpochs': instance.totalEpochs,
+      'progress': instance.progress,
+      'currentLoss': instance.currentLoss,
+      'currentAccuracy': instance.currentAccuracy,
+      'learningRate': instance.learningRate,
+      'metrics': instance.metrics,
+      'status': instance.status,
+      'timestamp': instance.timestamp.toIso8601String(),
+      'createdAt': instance.createdAt.toIso8601String(),
+    };
+
+DataPreprocessingPipeline _$DataPreprocessingPipelineFromJson(
+  Map<String, dynamic> json,
+) => DataPreprocessingPipeline(
   id: json['id'] as String,
   name: json['name'] as String,
   description: json['description'] as String,
-  format: $enumDecode(_$DatasetFormatEnumMap, json['format']),
-  samples: (json['samples'] as num).toInt(),
-  features: (json['features'] as num).toInt(),
-  size: (json['size'] as num).toDouble(),
+  steps: (json['steps'] as List<dynamic>).map((e) => e as String).toList(),
+  configuration: json['configuration'] as Map<String, dynamic>,
+  parameters: json['parameters'] as Map<String, dynamic>,
+  inputFormats: (json['inputFormats'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  outputFormats: (json['outputFormats'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  validation: json['validation'] as Map<String, dynamic>,
+  tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+  createdBy: json['createdBy'] as String,
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),
-  quality: (json['quality'] as num).toDouble(),
-  trainSplit: (json['trainSplit'] as num).toDouble(),
-  validationSplit: (json['validationSplit'] as num).toDouble(),
-  testSplit: (json['testSplit'] as num).toDouble(),
-  schema: json['schema'] as Map<String, dynamic>,
-  columns: (json['columns'] as List<dynamic>).map((e) => e as String).toList(),
-  statistics: json['statistics'] as Map<String, dynamic>,
-  tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
-  source: json['source'] as String?,
-  metadata: json['metadata'] as Map<String, dynamic>?,
+  isActive: json['isActive'] as bool,
 );
 
-Map<String, dynamic> _$DatasetToJson(Dataset instance) => <String, dynamic>{
+Map<String, dynamic> _$DataPreprocessingPipelineToJson(
+  DataPreprocessingPipeline instance,
+) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
   'description': instance.description,
-  'format': _$DatasetFormatEnumMap[instance.format]!,
-  'samples': instance.samples,
-  'features': instance.features,
-  'size': instance.size,
+  'steps': instance.steps,
+  'configuration': instance.configuration,
+  'parameters': instance.parameters,
+  'inputFormats': instance.inputFormats,
+  'outputFormats': instance.outputFormats,
+  'validation': instance.validation,
+  'tags': instance.tags,
+  'createdBy': instance.createdBy,
   'createdAt': instance.createdAt.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
-  'quality': instance.quality,
-  'trainSplit': instance.trainSplit,
-  'validationSplit': instance.validationSplit,
-  'testSplit': instance.testSplit,
-  'schema': instance.schema,
-  'columns': instance.columns,
-  'statistics': instance.statistics,
-  'tags': instance.tags,
-  'source': instance.source,
-  'metadata': instance.metadata,
+  'isActive': instance.isActive,
 };
 
-const _$DatasetFormatEnumMap = {
-  DatasetFormat.csv: 'csv',
-  DatasetFormat.json: 'json',
-  DatasetFormat.parquet: 'parquet',
-  DatasetFormat.hdf5: 'hdf5',
-  DatasetFormat.numpy: 'numpy',
-  DatasetFormat.pandas: 'pandas',
-};
+ModelVersion _$ModelVersionFromJson(Map<String, dynamic> json) => ModelVersion(
+  id: json['id'] as String,
+  modelId: json['modelId'] as String,
+  version: json['version'] as String,
+  description: json['description'] as String,
+  changes: json['changes'] as Map<String, dynamic>,
+  commitHash: json['commitHash'] as String,
+  branch: json['branch'] as String,
+  metadata: json['metadata'] as Map<String, dynamic>,
+  createdBy: json['createdBy'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  isStable: json['isStable'] as bool,
+);
 
-ModelTemplate _$ModelTemplateFromJson(Map<String, dynamic> json) =>
-    ModelTemplate(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      category: $enumDecode(_$ModelCategoryEnumMap, json['category']),
-      architecture: json['architecture'] as String,
-      parameters: (json['parameters'] as num).toInt(),
-      size: (json['size'] as num).toDouble(),
-      supportedTasks: (json['supportedTasks'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      defaultHyperparameters:
-          json['defaultHyperparameters'] as Map<String, dynamic>,
-      constraints: json['constraints'] as Map<String, dynamic>,
-      requirements: (json['requirements'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      paperUrl: json['paperUrl'] as String?,
-      repositoryUrl: json['repositoryUrl'] as String?,
-      metadata: json['metadata'] as Map<String, dynamic>?,
-    );
-
-Map<String, dynamic> _$ModelTemplateToJson(ModelTemplate instance) =>
+Map<String, dynamic> _$ModelVersionToJson(ModelVersion instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'category': _$ModelCategoryEnumMap[instance.category]!,
-      'architecture': instance.architecture,
-      'parameters': instance.parameters,
-      'size': instance.size,
-      'supportedTasks': instance.supportedTasks,
-      'defaultHyperparameters': instance.defaultHyperparameters,
-      'constraints': instance.constraints,
-      'requirements': instance.requirements,
-      'paperUrl': instance.paperUrl,
-      'repositoryUrl': instance.repositoryUrl,
-      'metadata': instance.metadata,
-    };
-
-TrainingConfig _$TrainingConfigFromJson(Map<String, dynamic> json) =>
-    TrainingConfig(
-      modelName: json['modelName'] as String,
-      description: json['description'] as String,
-      category: $enumDecode(_$ModelCategoryEnumMap, json['category']),
-      templateId: json['templateId'] as String,
-      datasetId: json['datasetId'] as String,
-      learningRate: (json['learningRate'] as num).toDouble(),
-      epochs: (json['epochs'] as num).toInt(),
-      batchSize: (json['batchSize'] as num).toInt(),
-      validationSplit: (json['validationSplit'] as num).toDouble(),
-      hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
-      augmentation: json['augmentation'] as Map<String, dynamic>,
-      callbacks: json['callbacks'] as Map<String, dynamic>,
-      optimizer: json['optimizer'] as Map<String, dynamic>,
-      lossFunction: json['lossFunction'] as Map<String, dynamic>,
-      metrics: json['metrics'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$TrainingConfigToJson(TrainingConfig instance) =>
-    <String, dynamic>{
-      'modelName': instance.modelName,
-      'description': instance.description,
-      'category': _$ModelCategoryEnumMap[instance.category]!,
-      'templateId': instance.templateId,
-      'datasetId': instance.datasetId,
-      'learningRate': instance.learningRate,
-      'epochs': instance.epochs,
-      'batchSize': instance.batchSize,
-      'validationSplit': instance.validationSplit,
-      'hyperparameters': instance.hyperparameters,
-      'augmentation': instance.augmentation,
-      'callbacks': instance.callbacks,
-      'optimizer': instance.optimizer,
-      'lossFunction': instance.lossFunction,
-      'metrics': instance.metrics,
-    };
-
-TrainingMetrics _$TrainingMetricsFromJson(Map<String, dynamic> json) =>
-    TrainingMetrics(
-      loss: (json['loss'] as num).toDouble(),
-      accuracy: (json['accuracy'] as num).toDouble(),
-      valLoss: (json['valLoss'] as num).toDouble(),
-      valAccuracy: (json['valAccuracy'] as num).toDouble(),
-      epoch: (json['epoch'] as num).toInt(),
-      duration: Duration(microseconds: (json['duration'] as num).toInt()),
-      customMetrics: (json['customMetrics'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, (e as num).toDouble()),
-      ),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$TrainingMetricsToJson(TrainingMetrics instance) =>
-    <String, dynamic>{
-      'loss': instance.loss,
-      'accuracy': instance.accuracy,
-      'valLoss': instance.valLoss,
-      'valAccuracy': instance.valAccuracy,
-      'epoch': instance.epoch,
-      'duration': instance.duration.inMicroseconds,
-      'customMetrics': instance.customMetrics,
-      'metadata': instance.metadata,
-    };
-
-TrainingLog _$TrainingLogFromJson(Map<String, dynamic> json) => TrainingLog(
-  timestamp: DateTime.parse(json['timestamp'] as String),
-  level: json['level'] as String,
-  message: json['message'] as String,
-  data: json['data'] as Map<String, dynamic>?,
-  source: json['source'] as String?,
-);
-
-Map<String, dynamic> _$TrainingLogToJson(TrainingLog instance) =>
-    <String, dynamic>{
-      'timestamp': instance.timestamp.toIso8601String(),
-      'level': instance.level,
-      'message': instance.message,
-      'data': instance.data,
-      'source': instance.source,
-    };
-
-DeploymentConfig _$DeploymentConfigFromJson(Map<String, dynamic> json) =>
-    DeploymentConfig(
-      modelId: json['modelId'] as String,
-      environment: json['environment'] as String,
-      resources: json['resources'] as Map<String, dynamic>,
-      scaling: json['scaling'] as Map<String, dynamic>,
-      monitoring: json['monitoring'] as Map<String, dynamic>,
-      security: json['security'] as Map<String, dynamic>,
-      endpoints: (json['endpoints'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$DeploymentConfigToJson(DeploymentConfig instance) =>
-    <String, dynamic>{
       'modelId': instance.modelId,
-      'environment': instance.environment,
-      'resources': instance.resources,
-      'scaling': instance.scaling,
-      'monitoring': instance.monitoring,
-      'security': instance.security,
-      'endpoints': instance.endpoints,
-      'metadata': instance.metadata,
-    };
-
-ModelEvaluation _$ModelEvaluationFromJson(Map<String, dynamic> json) =>
-    ModelEvaluation(
-      modelId: json['modelId'] as String,
-      datasetId: json['datasetId'] as String,
-      evaluatedAt: DateTime.parse(json['evaluatedAt'] as String),
-      performance: ModelPerformance.fromJson(
-        json['performance'] as Map<String, dynamic>,
-      ),
-      predictions: json['predictions'] as Map<String, dynamic>,
-      confusionMatrix: json['confusionMatrix'] as Map<String, dynamic>,
-      errors: (json['errors'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$ModelEvaluationToJson(ModelEvaluation instance) =>
-    <String, dynamic>{
-      'modelId': instance.modelId,
-      'datasetId': instance.datasetId,
-      'evaluatedAt': instance.evaluatedAt.toIso8601String(),
-      'performance': instance.performance,
-      'predictions': instance.predictions,
-      'confusionMatrix': instance.confusionMatrix,
-      'errors': instance.errors,
-      'metadata': instance.metadata,
-    };
-
-TrainingJobRequest _$TrainingJobRequestFromJson(Map<String, dynamic> json) =>
-    TrainingJobRequest(
-      modelName: json['modelName'] as String,
-      description: json['description'] as String,
-      category: $enumDecode(_$ModelCategoryEnumMap, json['category']),
-      templateId: json['templateId'] as String,
-      datasetId: json['datasetId'] as String,
-      learningRate: (json['learningRate'] as num).toDouble(),
-      epochs: (json['epochs'] as num).toInt(),
-      batchSize: (json['batchSize'] as num).toInt(),
-      validationSplit: (json['validationSplit'] as num).toDouble(),
-      customHyperparameters:
-          json['customHyperparameters'] as Map<String, dynamic>?,
-      augmentation: json['augmentation'] as Map<String, dynamic>?,
-      callbacks: json['callbacks'] as Map<String, dynamic>?,
-      optimizer: json['optimizer'] as Map<String, dynamic>?,
-      lossFunction: json['lossFunction'] as Map<String, dynamic>?,
-      metrics: json['metrics'] as Map<String, dynamic>?,
-    );
-
-Map<String, dynamic> _$TrainingJobRequestToJson(TrainingJobRequest instance) =>
-    <String, dynamic>{
-      'modelName': instance.modelName,
+      'version': instance.version,
       'description': instance.description,
-      'category': _$ModelCategoryEnumMap[instance.category]!,
-      'templateId': instance.templateId,
-      'datasetId': instance.datasetId,
-      'learningRate': instance.learningRate,
-      'epochs': instance.epochs,
-      'batchSize': instance.batchSize,
-      'validationSplit': instance.validationSplit,
-      'customHyperparameters': instance.customHyperparameters,
-      'augmentation': instance.augmentation,
-      'callbacks': instance.callbacks,
-      'optimizer': instance.optimizer,
-      'lossFunction': instance.lossFunction,
-      'metrics': instance.metrics,
+      'changes': instance.changes,
+      'commitHash': instance.commitHash,
+      'branch': instance.branch,
+      'metadata': instance.metadata,
+      'createdBy': instance.createdBy,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'isStable': instance.isStable,
     };
-
-TrainingJobResponse _$TrainingJobResponseFromJson(Map<String, dynamic> json) =>
-    TrainingJobResponse(
-      success: json['success'] as bool,
-      jobId: json['jobId'] as String?,
-      message: json['message'] as String?,
-      data: json['data'] as Map<String, dynamic>?,
-      errors: (json['errors'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-    );
-
-Map<String, dynamic> _$TrainingJobResponseToJson(
-  TrainingJobResponse instance,
-) => <String, dynamic>{
-  'success': instance.success,
-  'jobId': instance.jobId,
-  'message': instance.message,
-  'data': instance.data,
-  'errors': instance.errors,
-};
-
-ModelExportConfig _$ModelExportConfigFromJson(Map<String, dynamic> json) =>
-    ModelExportConfig(
-      modelId: json['modelId'] as String,
-      format: json['format'] as String,
-      options: json['options'] as Map<String, dynamic>,
-      includeMetadata: json['includeMetadata'] as bool,
-      includeWeights: json['includeWeights'] as bool,
-      outputPath: json['outputPath'] as String?,
-      customOptions: json['customOptions'] as Map<String, dynamic>?,
-    );
-
-Map<String, dynamic> _$ModelExportConfigToJson(ModelExportConfig instance) =>
-    <String, dynamic>{
-      'modelId': instance.modelId,
-      'format': instance.format,
-      'options': instance.options,
-      'includeMetadata': instance.includeMetadata,
-      'includeWeights': instance.includeWeights,
-      'outputPath': instance.outputPath,
-      'customOptions': instance.customOptions,
-    };
-
-DatasetUploadConfig _$DatasetUploadConfigFromJson(Map<String, dynamic> json) =>
-    DatasetUploadConfig(
-      name: json['name'] as String,
-      description: json['description'] as String,
-      format: $enumDecode(_$DatasetFormatEnumMap, json['format']),
-      filePath: json['filePath'] as String,
-      trainSplit: (json['trainSplit'] as num).toDouble(),
-      validationSplit: (json['validationSplit'] as num).toDouble(),
-      testSplit: (json['testSplit'] as num).toDouble(),
-      schema: json['schema'] as Map<String, dynamic>?,
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
-      metadata: json['metadata'] as Map<String, dynamic>?,
-    );
-
-Map<String, dynamic> _$DatasetUploadConfigToJson(
-  DatasetUploadConfig instance,
-) => <String, dynamic>{
-  'name': instance.name,
-  'description': instance.description,
-  'format': _$DatasetFormatEnumMap[instance.format]!,
-  'filePath': instance.filePath,
-  'trainSplit': instance.trainSplit,
-  'validationSplit': instance.validationSplit,
-  'testSplit': instance.testSplit,
-  'schema': instance.schema,
-  'tags': instance.tags,
-  'metadata': instance.metadata,
-};
-
-DatasetValidationResult _$DatasetValidationResultFromJson(
-  Map<String, dynamic> json,
-) => DatasetValidationResult(
-  isValid: json['isValid'] as bool,
-  samples: (json['samples'] as num).toInt(),
-  features: (json['features'] as num).toInt(),
-  size: (json['size'] as num).toDouble(),
-  quality: (json['quality'] as num).toDouble(),
-  warnings: (json['warnings'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  errors: (json['errors'] as List<dynamic>).map((e) => e as String).toList(),
-  statistics: json['statistics'] as Map<String, dynamic>,
-  schema: json['schema'] as Map<String, dynamic>,
-);
-
-Map<String, dynamic> _$DatasetValidationResultToJson(
-  DatasetValidationResult instance,
-) => <String, dynamic>{
-  'isValid': instance.isValid,
-  'samples': instance.samples,
-  'features': instance.features,
-  'size': instance.size,
-  'quality': instance.quality,
-  'warnings': instance.warnings,
-  'errors': instance.errors,
-  'statistics': instance.statistics,
-  'schema': instance.schema,
-};

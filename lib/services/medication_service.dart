@@ -648,6 +648,75 @@ class MedicationService extends ChangeNotifier {
       );
     }
 
+    // CYP2D6 inhibitörü Fluoxetine + Codeine (2D6 ile aktifleşir) → analjezi azalır
+    if ((nameA.toLowerCase().contains('fluoxetine') && nameB.toLowerCase().contains('codeine')) ||
+        (nameB.toLowerCase().contains('fluoxetine') && nameA.toLowerCase().contains('codeine'))) {
+      return DrugInteraction(
+        id: 'rule_cyp2d6_fluoxetine_codeine_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.moderate,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'CYP2D6 inhibisyonu: Fluoxetine codeine\'in morfine dönüşümünü azaltır',
+        description: 'Azalmış analjezik etki ve tedavi başarısızlığı riski',
+        clinicalSignificance: 'Ağrı kontrolü yetersiz olabilir',
+        symptoms: ['Yetersiz ağrı kontrolü'],
+        recommendations: ['2D6 bağımsız opioid düşünün', 'Klinik yanıtı yakından izleyin'],
+        alternatives: ['Morfin', 'Oksikodon (klinik bağlama göre)'],
+        monitoring: ['Ağrı skorları', 'Ek kurtarıcı ilaç ihtiyacı'],
+        evidence: 'Farmakokinetik veriler ve kılavuzlar',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // CYP3A4 indükleyici Carbamazepine + Quetiapine (3A4 substratı) → düzey düşer
+    if ((nameA.toLowerCase().contains('carbamazepine') && nameB.toLowerCase().contains('quetiapine')) ||
+        (nameB.toLowerCase().contains('carbamazepine') && nameA.toLowerCase().contains('quetiapine'))) {
+      return DrugInteraction(
+        id: 'rule_cyp3a4_carbamazepine_quetiapine_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.moderate,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'CYP3A4 indüksiyonu: Carbamazepine quetiapine düzeylerini düşürür',
+        description: 'Etkililik azalması; doz ayarlaması gerekebilir',
+        clinicalSignificance: 'Semptom kontrolü bozulabilir',
+        symptoms: ['Semptomlarda alevlenme'],
+        recommendations: ['Doz ayarlamasını değerlendirin', 'Klinik yanıtı izleyin'],
+        alternatives: ['3A4 ile daha az etkileşen ajanlar'],
+        monitoring: ['Semptom ölçekleri', 'Gerekirse terapötik izlem'],
+        evidence: 'İlaç etkileşim veritabanları',
+        source: 'Clinical references',
+      );
+    }
+
+    // Greyfurt (grapefruit) + Simvastatin (CYP3A4 substratı) → düzey artışı, miyopati riski
+    if ((nameA.toLowerCase().contains('grapefruit') && nameB.toLowerCase().contains('simvastatin')) ||
+        (nameB.toLowerCase().contains('grapefruit') && nameA.toLowerCase().contains('simvastatin'))) {
+      return DrugInteraction(
+        id: 'rule_cyp3a4_grapefruit_simvastatin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'CYP3A4 inhibisyonu: Greyfurt simvastatin düzeylerini yükseltir',
+        description: 'Miyopati/rabdomiyoliz riski artar',
+        clinicalSignificance: 'Birlikte kullanımdan kaçının',
+        symptoms: ['Kas ağrısı', 'Zayıflık', 'CK artışı'],
+        recommendations: ['Greyfurtu kaçının', 'Alternatif statin düşünün (pravastatin, rosuvastatin)'],
+        alternatives: ['Pravastatin', 'Rosuvastatin'],
+        monitoring: ['CK düzeyi', 'Kas semptomları'],
+        evidence: 'Kılavuzlar ve farmakokinetik çalışmalar',
+        source: 'Clinical guidelines',
+      );
+    }
+
     return null;
   }
 

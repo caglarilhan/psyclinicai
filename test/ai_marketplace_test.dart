@@ -33,12 +33,12 @@ void main() {
     });
 
     group('Model Management Tests', () {
-      test('should return available models', () async {
-        final models = await service.getAvailableModels();
-        expect(models, isNotEmpty);
-        expect(models.length, equals(2));
-        expect(models.first, isA<MarketplaceAIModel>());
-      });
+                 test('should return available models', () async {
+             final models = await service.getAvailableModels();
+             expect(models, isNotEmpty);
+             expect(models.length, equals(4)); // Updated to 4 models
+             expect(models.first, isA<MarketplaceAIModel>());
+           });
 
       test('should return model by ID', () async {
         final model = await service.getModelById('model_001');
@@ -49,9 +49,9 @@ void main() {
 
       test('should cache models after first fetch', () async {
         final models1 = await service.getAvailableModels();
-        expect(models1.length, equals(2));
+        expect(models1.length, equals(4));
         final models2 = await service.getAvailableModels();
-        expect(models2.length, equals(2));
+        expect(models2.length, equals(4));
         expect(models1.length, equals(models2.length));
       });
 
@@ -62,12 +62,12 @@ void main() {
     });
 
     group('Vendor Management Tests', () {
-      test('should return vendors', () async {
-        final vendors = await service.getVendors();
-        expect(vendors, isNotEmpty);
-        expect(vendors.length, equals(2));
-        expect(vendors.first, isA<ModelVendor>());
-      });
+                 test('should return vendors', () async {
+             final vendors = await service.getVendors();
+             expect(vendors, isNotEmpty);
+             expect(vendors.length, equals(5)); // Updated to 5 vendors
+             expect(vendors.first, isA<ModelVendor>());
+           });
 
       test('should return vendor by ID', () async {
         final vendor = await service.getVendorById('vendor_001');
@@ -78,9 +78,9 @@ void main() {
 
       test('should cache vendors after first fetch', () async {
         final vendors1 = await service.getVendors();
-        expect(vendors1.length, equals(2));
+        expect(vendors1.length, equals(5));
         final vendors2 = await service.getVendors();
-        expect(vendors2.length, equals(2));
+        expect(vendors2.length, equals(5));
         expect(vendors1.length, equals(vendors2.length));
       });
     });
@@ -243,6 +243,34 @@ void main() {
         );
         expect(models, isNotEmpty);
         expect(models.length, lessThanOrEqualTo(5));
+      });
+
+      test('should perform semantic search', () async {
+        final models = await service.semanticSearch(
+          query: 'crisis prediction',
+          page: 1,
+          pageSize: 10,
+        );
+        expect(models, isNotEmpty);
+      });
+
+      test('should get similar models', () async {
+        final models = await service.getSimilarModels(
+          modelId: 'model_001',
+          limit: 5,
+        );
+        expect(models, isNotEmpty);
+        expect(models.length, lessThanOrEqualTo(5));
+      });
+
+      test('should get models by benchmark', () async {
+        final models = await service.getModelsByBenchmark(
+          benchmarkName: 'accuracy',
+          minScore: 0.9,
+          limit: 10,
+        );
+        expect(models, isNotEmpty);
+        expect(models.length, lessThanOrEqualTo(10));
       });
     });
 

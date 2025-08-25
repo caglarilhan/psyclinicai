@@ -564,6 +564,129 @@ class AIMarketplaceService {
     );
   }
 
+  /// Advanced search with semantic matching
+  Future<List<MarketplaceAIModel>> semanticSearch({
+    required String query,
+    ModelSearchFilters? filters,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/models/semantic-search'),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'query': query,
+          'filters': filters?.toJson(),
+          'page': page,
+          'page_size': pageSize,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final models = (data['models'] as List)
+            .map((json) => MarketplaceAIModel.fromJson(json))
+            .toList();
+
+        return models;
+      } else {
+        throw Exception('Failed to perform semantic search: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Fallback to regular search with enhanced filtering
+      final allModels = _getMockModels();
+      final filteredModels = _applyAdvancedFilters(allModels, query, filters);
+      return _paginateResults(filteredModels, page, pageSize);
+    }
+  }
+
+  /// Get models by similarity to existing model
+  Future<List<MarketplaceAIModel>> getSimilarModels({
+    required String modelId,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/models/$modelId/similar?limit=$limit'),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final models = (data['models'] as List)
+            .map((json) => MarketplaceAIModel.fromJson(json))
+            .toList();
+
+        return models;
+      } else {
+        throw Exception('Failed to get similar models: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return mock similar models based on category and tags
+      final targetModel = await getModelById(modelId);
+      if (targetModel == null) return [];
+
+      final allModels = _getMockModels();
+      final similarModels = allModels
+          .where((model) => 
+              model.id != modelId && 
+              (model.category == targetModel.category || 
+               model.tags.any((tag) => targetModel.tags.contains(tag))))
+          .take(limit)
+          .toList();
+
+      return similarModels;
+    }
+  }
+
+  /// Get models by performance benchmarks
+  Future<List<MarketplaceAIModel>> getModelsByBenchmark({
+    required String benchmarkName,
+    double? minScore,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'benchmark': benchmarkName,
+        'limit': limit.toString(),
+      };
+      if (minScore != null) {
+        queryParams['min_score'] = minScore.toString();
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/models/benchmarks').replace(queryParameters: queryParams),
+        headers: {
+          'Authorization': 'Bearer $_apiKey',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final models = (data['models'] as List)
+            .map((json) => MarketplaceAIModel.fromJson(json))
+            .toList();
+
+        return models;
+      } else {
+        throw Exception('Failed to get benchmark models: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Return mock benchmark results
+      final allModels = _getMockModels();
+      allModels.sort((a, b) => b.performance.accuracy.compareTo(a.performance.accuracy));
+      return allModels.take(limit).toList();
+    }
+  }
+
   /// Get trending models
   Future<List<MarketplaceAIModel>> getTrendingModels({int limit = 10}) async {
     try {
@@ -643,6 +766,100 @@ class AIMarketplaceService {
     if (!_subscriptionController.isClosed) {
       _subscriptionController.close();
     }
+  }
+
+  // Helper methods for advanced filtering and pagination
+  List<MarketplaceAIModel> _applyAdvancedFilters(
+    List<MarketplaceAIModel> models,
+    String? query,
+    ModelSearchFilters? filters,
+  ) {
+    var filteredModels = List<MarketplaceAIModel>.from(models);
+
+    // Apply text search
+    if (query != null && query.isNotEmpty) {
+      final lowerQuery = query.toLowerCase();
+      filteredModels = filteredModels.where((model) {
+        return model.name.toLowerCase().contains(lowerQuery) ||
+               model.description.toLowerCase().contains(lowerQuery) ||
+               model.tags.any((tag) => tag.toLowerCase().contains(lowerQuery)) ||
+               model.vendorName.toLowerCase().contains(lowerQuery);
+      }).toList();
+    }
+
+    // Apply filters
+    if (filters != null) {
+      if (filters.categories != null && filters.categories!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            filters.categories!.contains(model.category)).toList();
+      }
+
+      if (filters.licenseTypes != null && filters.licenseTypes!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            filters.licenseTypes!.contains(model.licenseType)).toList();
+      }
+
+      if (filters.pricingModels != null && filters.pricingModels!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            filters.pricingModels!.contains(model.pricingModel)).toList();
+      }
+
+      if (filters.minPrice != null) {
+        filteredModels = filteredModels.where((model) =>
+            model.price >= filters.minPrice!).toList();
+      }
+
+      if (filters.maxPrice != null) {
+        filteredModels = filteredModels.where((model) =>
+            model.price <= filters.maxPrice!).toList();
+      }
+
+      if (filters.minRating != null) {
+        filteredModels = filteredModels.where((model) =>
+            model.averageRating >= filters.minRating!).toList();
+      }
+
+      if (filters.tags != null && filters.tags!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            model.tags.any((tag) => filters.tags!.contains(tag))).toList();
+      }
+
+      if (filters.vendors != null && filters.vendors!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            filters.vendors!.contains(model.vendorId)).toList();
+      }
+
+      if (filters.useCases != null && filters.useCases!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            model.useCases.any((useCase) => filters.useCases!.contains(useCase))).toList();
+      }
+
+      if (filters.industries != null && filters.industries!.isNotEmpty) {
+        filteredModels = filteredModels.where((model) =>
+            model.industries.any((industry) => filters.industries!.contains(industry))).toList();
+      }
+
+      if (filters.isCustomizable != null) {
+        filteredModels = filteredModels.where((model) =>
+            model.isCustomizable == filters.isCustomizable).toList();
+      }
+    }
+
+    return filteredModels;
+  }
+
+  List<MarketplaceAIModel> _paginateResults(
+    List<MarketplaceAIModel> models,
+    int page,
+    int pageSize,
+  ) {
+    final startIndex = (page - 1) * pageSize;
+    final endIndex = startIndex + pageSize;
+    
+    if (startIndex >= models.length) return [];
+    if (endIndex > models.length) return models.sublist(startIndex);
+    
+    return models.sublist(startIndex, endIndex);
   }
 
   // Mock data methods
@@ -836,6 +1053,195 @@ class AIMarketplaceService {
         supportedLanguages: ['English'],
         metadata: {'accessibility': 'WCAG 2.1 AA', 'privacy': 'GDPR compliant'},
       ),
+      // Yeni güçlendirilmiş modeller
+      MarketplaceAIModel(
+        id: 'model_003',
+        name: 'CrisisPredict AI',
+        description: 'Advanced crisis prediction and intervention AI model',
+        vendorId: 'vendor_003',
+        vendorName: 'CrisisTech Solutions',
+        category: AIModelCategory.predictive,
+        tags: ['crisis', 'prediction', 'intervention', 'risk-assessment', 'safety'],
+        licenseType: ModelLicenseType.commercial,
+        pricingModel: PricingModel.usageBased,
+        price: 0.15,
+        currency: 'USD',
+        pricingTiers: {
+          'starter': 0.15,
+          'professional': 0.10,
+          'enterprise': 0.05,
+        },
+        performance: ModelPerformanceMetrics(
+          accuracy: 0.91,
+          precision: 0.89,
+          recall: 0.93,
+          f1Score: 0.91,
+          auc: 0.94,
+          latency: 0.3,
+          throughput: 500,
+          customMetrics: {'crisis_detection': 0.93, 'false_alarm_rate': 0.07},
+          lastUpdated: DateTime.now().subtract(const Duration(days: 3)),
+          evaluationDataset: 'Crisis Prediction Dataset v3.0 (100,000+ cases)',
+        ),
+        requirements: ModelRequirements(
+          minimumRam: '16GB',
+          minimumStorage: '5GB',
+          minimumCpu: 'Intel i7 or equivalent',
+          recommendedGpu: 'NVIDIA RTX 3080 or better',
+          supportedPlatforms: ['Linux', 'Windows Server', 'Docker'],
+          dependencies: ['Python 3.9+', 'PyTorch 1.12+', 'CUDA 11.6+'],
+          pythonVersion: '3.9+',
+          frameworkVersions: {'pytorch': '1.12+', 'transformers': '4.20+'},
+        ),
+        documentation: ModelDocumentation(
+          overview: 'Real-time crisis prediction and intervention system',
+          installation: 'Docker-based deployment with health checks',
+          usage: 'Real-time API with WebSocket support',
+          api: 'REST API + WebSocket for real-time updates',
+          examples: 'Emergency room integration, School safety systems',
+          troubleshooting: 'Comprehensive troubleshooting guide',
+          changelog: 'Weekly updates with security patches',
+          license: 'Enterprise license with SLA guarantees',
+          tutorials: ['Quick Start', 'Real-time Integration', 'Emergency Protocols'],
+          support: '24/7 emergency support with dedicated team',
+        ),
+        versions: [
+          ModelVersion(
+            version: '3.2.1',
+            description: 'Enhanced crisis detection with reduced false positives',
+            releaseDate: DateTime.now().subtract(const Duration(days: 3)),
+            features: ['Improved crisis detection', 'Reduced false alarms', 'Real-time alerts'],
+            bugFixes: ['Fixed memory leak in long-running sessions', 'Improved error handling'],
+            breakingChanges: ['API response format updated'],
+            downloadUrl: 'https://download.example.com/v3.2.1',
+            checksum: 'sha256:ghi789...',
+            isLatest: true,
+            isStable: true,
+          ),
+        ],
+        reviews: [
+          ModelReview(
+            id: 'review_003',
+            userId: 'user_003',
+            userName: 'Dr. Emergency',
+            rating: 4.9,
+            comment: 'Critical for our emergency department, saves lives daily',
+            pros: ['High accuracy', 'Real-time alerts', 'Excellent support'],
+            cons: ['Expensive', 'Complex setup'],
+            createdAt: DateTime.now().subtract(const Duration(days: 2)),
+            verified: true,
+            helpfulVotes: 45,
+          ),
+        ],
+        averageRating: 4.9,
+        totalReviews: 234,
+        downloads: 567,
+        status: MarketplaceStatus.active,
+        createdAt: DateTime.now().subtract(const Duration(days: 90)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+        useCases: ['Emergency rooms', 'Schools', 'Mental health facilities'],
+        industries: ['Healthcare', 'Education', 'Public Safety'],
+        modelSize: '8.5GB',
+        trainingData: 'Crisis Dataset (100,000+ cases, 50+ institutions)',
+        lastTrained: '2024-02-01',
+        isCustomizable: true,
+        supportedLanguages: ['English', 'Spanish', 'French', 'German'],
+        metadata: {'certification': 'FDA Class III', 'compliance': 'HIPAA, FERPA', 'sla': '99.9%'},
+      ),
+      MarketplaceAIModel(
+        id: 'model_004',
+        name: 'GenomicMind AI',
+        description: 'AI-powered genomic analysis for mental health insights',
+        vendorId: 'vendor_004',
+        vendorName: 'GenomicHealth Labs',
+        category: AIModelCategory.research,
+        tags: ['genomics', 'mental-health', 'research', 'personalized-medicine', 'biomarkers'],
+        licenseType: ModelLicenseType.academic,
+        pricingModel: PricingModel.tiered,
+        price: 299.99,
+        currency: 'USD',
+        pricingTiers: {
+          'academic': 99.99,
+          'research': 199.99,
+          'commercial': 299.99,
+        },
+        performance: ModelPerformanceMetrics(
+          accuracy: 0.88,
+          precision: 0.86,
+          recall: 0.90,
+          f1Score: 0.88,
+          auc: 0.91,
+          latency: 2.5,
+          throughput: 50,
+          customMetrics: {'genomic_accuracy': 0.89, 'variant_detection': 0.87},
+          lastUpdated: DateTime.now().subtract(const Duration(days: 21)),
+          evaluationDataset: 'Genomic Mental Health Dataset v2.0 (10,000+ samples)',
+        ),
+        requirements: ModelRequirements(
+          minimumRam: '32GB',
+          minimumStorage: '20GB',
+          minimumCpu: 'Intel Xeon or AMD EPYC',
+          recommendedGpu: 'NVIDIA A100 or better',
+          supportedPlatforms: ['Linux', 'Docker', 'Kubernetes'],
+          dependencies: ['Python 3.10+', 'Biopython', 'PLINK', 'VCF tools'],
+          pythonVersion: '3.10+',
+          frameworkVersions: {'tensorflow': '2.10+', 'pytorch': '1.13+'},
+        ),
+        documentation: ModelDocumentation(
+          overview: 'Advanced genomic analysis for mental health research',
+          installation: 'Containerized deployment with GPU support',
+          usage: 'Comprehensive genomic analysis pipeline',
+          api: 'REST API with batch processing support',
+          examples: 'Depression biomarker discovery, Anxiety genetic patterns',
+          troubleshooting: 'Genomics-specific troubleshooting guide',
+          changelog: 'Monthly updates with new genomic features',
+          license: 'Academic license with commercial options',
+          tutorials: ['Genomics Basics', 'Analysis Pipeline', 'Result Interpretation'],
+          support: 'Academic support with research collaboration',
+        ),
+        versions: [
+          ModelVersion(
+            version: '2.0.3',
+            description: 'Enhanced variant calling and annotation',
+            releaseDate: DateTime.now().subtract(const Duration(days: 21)),
+            features: ['Improved variant detection', 'New annotation databases', 'Batch processing'],
+            bugFixes: ['Fixed memory issues with large genomes', 'Improved error reporting'],
+            breakingChanges: ['Database schema updated'],
+            downloadUrl: 'https://download.example.com/v2.0.3',
+            checksum: 'sha256:jkl012...',
+            isLatest: true,
+            isStable: true,
+          ),
+        ],
+        reviews: [
+          ModelReview(
+            id: 'review_004',
+            userId: 'user_004',
+            userName: 'Dr. Genomics',
+            rating: 4.7,
+            comment: 'Excellent tool for our mental health genomics research',
+            pros: ['Advanced genomics', 'Good documentation', 'Research-focused'],
+            cons: ['High computational requirements', 'Steep learning curve'],
+            createdAt: DateTime.now().subtract(const Duration(days: 45)),
+            verified: true,
+            helpfulVotes: 23,
+          ),
+        ],
+        averageRating: 4.7,
+        totalReviews: 67,
+        downloads: 89,
+        status: MarketplaceStatus.active,
+        createdAt: DateTime.now().subtract(const Duration(days: 365)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 21)),
+        useCases: ['Research studies', 'Clinical trials', 'Drug development'],
+        industries: ['Research', 'Pharmaceuticals', 'Academia'],
+        modelSize: '45.2GB',
+        trainingData: 'Genomic Dataset (10,000+ samples, 50+ research institutions)',
+        lastTrained: '2024-01-10',
+        isCustomizable: true,
+        supportedLanguages: ['English'],
+        metadata: {'certification': 'Research Grade', 'compliance': 'GDPR, HIPAA', 'collaboration': 'Open for research'},
+      ),
     ];
   }
 
@@ -882,6 +1288,70 @@ class AIMarketplaceService {
         createdAt: DateTime.now().subtract(const Duration(days: 730)),
         updatedAt: DateTime.now().subtract(const Duration(days: 15)),
         metadata: {'certifications': ['HIPAA'], 'partners': ['Calm', 'Headspace']},
+      ),
+      // Yeni güçlendirilmiş satıcılar
+      ModelVendor(
+        id: 'vendor_003',
+        name: 'CrisisTech Solutions',
+        description: 'Specialized in crisis prediction and emergency response AI',
+        website: 'https://crisistech-solutions.com',
+        email: 'emergency@crisistech.com',
+        phone: '+1-555-0789',
+        address: '789 Emergency Drive, Safety City, TX 75001',
+        country: 'United States',
+        industry: 'Public Safety AI',
+        foundedYear: 2019,
+        employeeCount: 200,
+        rating: 4.9,
+        totalModels: 15,
+        specializations: ['Crisis Prediction', 'Emergency Response', 'Public Safety'],
+        verificationStatus: 'verified',
+        verifiedAt: DateTime.now().subtract(const Duration(days: 180)),
+        createdAt: DateTime.now().subtract(const Duration(days: 1460)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 5)),
+        metadata: {'certifications': ['ISO 27001', 'SOC 2', 'FedRAMP'], 'partners': ['FEMA', 'Red Cross', 'Emergency Departments']},
+      ),
+      ModelVendor(
+        id: 'vendor_004',
+        name: 'GenomicHealth Labs',
+        description: 'Pioneering genomic AI for mental health research',
+        website: 'https://genomichealth-labs.com',
+        email: 'research@genomichealth.com',
+        phone: '+1-555-0456',
+        address: '456 Research Avenue, Science Park, MA 02142',
+        country: 'United States',
+        industry: 'Genomic Research',
+        foundedYear: 2018,
+        employeeCount: 120,
+        rating: 4.7,
+        totalModels: 8,
+        specializations: ['Genomics', 'Mental Health', 'Research', 'Biomarkers'],
+        verificationStatus: 'verified',
+        verifiedAt: DateTime.now().subtract(const Duration(days: 365)),
+        createdAt: DateTime.now().subtract(const Duration(days: 1825)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 25)),
+        metadata: {'certifications': ['ISO 27001', 'CLIA', 'CAP'], 'partners': ['NIH', 'Harvard', 'MIT', 'Research Institutions']},
+      ),
+      ModelVendor(
+        id: 'vendor_005',
+        name: 'QuantumMind Systems',
+        description: 'Next-generation quantum AI for mental health diagnostics',
+        website: 'https://quantummind-systems.com',
+        email: 'quantum@quantummind.com',
+        phone: '+1-555-0999',
+        address: '999 Quantum Lane, Innovation District, CA 94025',
+        country: 'United States',
+        industry: 'Quantum AI',
+        foundedYear: 2022,
+        employeeCount: 85,
+        rating: 4.6,
+        totalModels: 5,
+        specializations: ['Quantum AI', 'Advanced Diagnostics', 'Research'],
+        verificationStatus: 'verified',
+        verifiedAt: DateTime.now().subtract(const Duration(days: 90)),
+        createdAt: DateTime.now().subtract(const Duration(days: 730)),
+        updatedAt: DateTime.now().subtract(const Duration(days: 10)),
+        metadata: {'certifications': ['ISO 27001'], 'partners': ['Google Quantum', 'IBM Quantum', 'Research Universities']},
       ),
     ];
   }

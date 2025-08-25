@@ -129,5 +129,15 @@ void main() {
       expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
           reason: 'Digoxin böbrek yetmezliğinde majör risk taşır');
     });
+
+    test('Benzodiazepine + Opioid in elderly should be major', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['alprazolam', 'morphine'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Benzodiazepin+Opioid yaşlılarda majör risk taşır');
+    });
   });
 }

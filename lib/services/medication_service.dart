@@ -985,6 +985,31 @@ class MedicationService extends ChangeNotifier {
         source: 'Clinical guidelines',
       );
     }
+
+    // Yaşlılarda Benzodiazepin + Opioid: majör (düşme, sedasyon riski)
+    if (((idA.contains('benzodiazepine') || lowerA.contains('benzodiazepine') || lowerA.contains('alprazolam') || lowerA.contains('diazepam') || lowerA.contains('lorazepam')) &&
+         (idB.contains('opioid') || lowerB.contains('opioid') || lowerB.contains('morphine') || lowerB.contains('oxycodone') || lowerB.contains('fentanyl'))) ||
+        ((idB.contains('benzodiazepine') || lowerB.contains('benzodiazepine') || lowerB.contains('alprazolam') || lowerB.contains('diazepam') || lowerB.contains('lorazepam')) &&
+         (idA.contains('opioid') || lowerA.contains('opioid') || lowerA.contains('morphine') || lowerA.contains('oxycodone') || lowerA.contains('fentanyl')))) {
+      return DrugInteraction(
+        id: 'rule_elderly_benzodiazepine_opioid_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacodynamic,
+        mechanism: 'Merkezi sinir sistemi baskılanması potansiyeli artar',
+        description: 'Yaşlılarda düşme, sedasyon ve solunum depresyonu riski',
+        clinicalSignificance: 'Dikkatli kullanım ve yakın izlem gerekir',
+        symptoms: ['Aşırı sedasyon', 'Solunum depresyonu', 'Düşme riski', 'Konfüzyon'],
+        recommendations: ['Dozları azaltın', 'Yakın izlem yapın', 'Alternatif tedavi düşünün'],
+        alternatives: ['Non-farmakolojik tedaviler', 'Daha kısa yarılanma ömrü olan ajanlar'],
+        monitoring: ['Solunum hızı', 'Bilinç düzeyi', 'Düşme riski değerlendirmesi'],
+        evidence: 'Kılavuz önerileri ve gözlemsel çalışmalar',
+        source: 'Clinical guidelines',
+      );
+    }
  
     return null;
   }

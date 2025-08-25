@@ -99,5 +99,35 @@ void main() {
       expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
           reason: 'Lityum emzirme döneminde majör risk taşır');
     });
+
+    test('Metformin + Renal failure should be contraindicated', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['metformin', 'renal'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Metformin böbrek yetmezliğinde kontrendikedir');
+    });
+
+    test('Statin + Liver disease should be major', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['statin', 'liver'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Statin karaciğer hastalığında majör risk taşır');
+    });
+
+    test('Digoxin + Renal failure should be major', () async {
+      final service = MedicationService();
+      await service.initialize();
+      final result = await service.checkDrugInteractions(
+        medicationIds: ['digoxin', 'renal'],
+      );
+      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+          reason: 'Digoxin böbrek yetmezliğinde majör risk taşır');
+    });
   });
 }

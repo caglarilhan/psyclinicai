@@ -852,6 +852,139 @@ class MedicationService extends ChangeNotifier {
         source: 'Clinical references',
       );
     }
+
+    // Böbrek/Karaciğer doz ayarlama kuralları
+    // Metformin + Böbrek yetmezliği: kontrendike (laktik asidoz riski)
+    if (((idA.contains('metformin') || lowerA.contains('metformin'))) &&
+        (idB.contains('renal') || lowerB.contains('renal') || lowerB.contains('kidney') || lowerB.contains('creatinine'))) {
+      return DrugInteraction(
+        id: 'rule_renal_metformin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Böbrek yetmezliğinde metformin eliminasyonu azalır, laktik asidoz riski',
+        description: 'eGFR <30 ml/dk/1.73m²\'de kontrendike',
+        clinicalSignificance: 'Alternatif tedavi gerekir',
+        symptoms: ['Laktik asidoz', 'Bulantı', 'Kusma', 'Karın ağrısı'],
+        recommendations: ['Metformin\'i durdurun', 'Alternatif oral ajan seçin'],
+        alternatives: ['DPP-4 inhibitörleri', 'GLP-1 agonisti'],
+        monitoring: ['eGFR', 'Laktat düzeyi', 'Asit-baz durumu'],
+        evidence: 'Kılavuz önerileri ve farmakokinetik veriler',
+        source: 'Clinical guidelines',
+      );
+    }
+    if (((idB.contains('metformin') || lowerB.contains('metformin'))) &&
+        (idA.contains('renal') || lowerA.contains('renal') || lowerA.contains('kidney') || lowerA.contains('creatinine'))) {
+      return DrugInteraction(
+        id: 'rule_renal_metformin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.contraindicated,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Böbrek yetmezliğinde metformin eliminasyonu azalır, laktik asidoz riski',
+        description: 'eGFR <30 ml/dk/1.73m²\'de kontrendike',
+        clinicalSignificance: 'Alternatif tedavi gerekir',
+        symptoms: ['Laktik asidoz', 'Bulantı', 'Kusma', 'Karın ağrısı'],
+        recommendations: ['Metformin\'i durdurun', 'Alternatif oral ajan seçin'],
+        alternatives: ['DPP-4 inhibitörleri', 'GLP-1 agonisti'],
+        monitoring: ['eGFR', 'Laktat düzeyi', 'Asit-baz durumu'],
+        evidence: 'Kılavuz önerileri ve farmakokinetik veriler',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // Statin + Karaciğer hastalığı: majör (hepatotoksisite riski)
+    if (((idA.contains('statin') || lowerA.contains('statin') || lowerA.contains('simvastatin') || lowerA.contains('atorvastatin'))) &&
+        (idB.contains('liver') || lowerB.contains('liver') || lowerB.contains('hepatic') || lowerB.contains('transaminase'))) {
+      return DrugInteraction(
+        id: 'rule_hepatic_statin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Karaciğer hastalığında statin metabolizması bozulur',
+        description: 'Aktif karaciğer hastalığında kontrendike',
+        clinicalSignificance: 'Karaciğer fonksiyonları normale dönene kadar bekleyin',
+        symptoms: ['Karaciğer enzim yükselmesi', 'Hepatit', 'Sarılık'],
+        recommendations: ['Statin\'i durdurun', 'Karaciğer fonksiyonlarını izleyin'],
+        alternatives: ['Pravastatin (daha az hepatik metabolizma)'],
+        monitoring: ['ALT/AST', 'Bilirubin', 'Karaciğer fonksiyonları'],
+        evidence: 'Kılavuz önerileri ve olgu serileri',
+        source: 'Clinical guidelines',
+      );
+    }
+    if (((idB.contains('statin') || lowerB.contains('statin') || lowerB.contains('simvastatin') || lowerB.contains('atorvastatin'))) &&
+        (idA.contains('liver') || lowerA.contains('liver') || lowerA.contains('hepatic') || lowerA.contains('transaminase'))) {
+      return DrugInteraction(
+        id: 'rule_hepatic_statin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Karaciğer hastalığında statin metabolizması bozulur',
+        description: 'Aktif karaciğer hastalığında kontrendike',
+        clinicalSignificance: 'Karaciğer fonksiyonları normale dönene kadar bekleyin',
+        symptoms: ['Karaciğer enzim yükselmesi', 'Hepatit', 'Sarılık'],
+        recommendations: ['Statin\'i durdurun', 'Karaciğer fonksiyonlarını izleyin'],
+        alternatives: ['Pravastatin (daha az hepatik metabolizma)'],
+        monitoring: ['ALT/AST', 'Bilirubin', 'Karaciğer fonksiyonları'],
+        evidence: 'Kılavuz önerileri ve olgu serileri',
+        source: 'Clinical guidelines',
+      );
+    }
+
+    // Digoxin + Böbrek yetmezliği: majör (toksisite riski)
+    if (((idA.contains('digoxin') || lowerA.contains('digoxin'))) &&
+        (idB.contains('renal') || lowerB.contains('renal') || lowerB.contains('kidney') || lowerB.contains('creatinine'))) {
+      return DrugInteraction(
+        id: 'rule_renal_digoxin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Böbrek yetmezliğinde digoxin eliminasyonu azalır',
+        description: 'Doz azaltımı gerekir, toksisite riski artar',
+        clinicalSignificance: 'Doz ayarlaması ve yakın izlem gerekir',
+        symptoms: ['Bulantı', 'Kusma', 'Görme bozuklukları', 'Bradikardi'],
+        recommendations: ['Dozu azaltın', 'Digoxin düzeyini izleyin'],
+        alternatives: ['Alternatif inotropik ajanlar'],
+        monitoring: ['Digoxin düzeyi', 'eGFR', 'Potasyum', 'EKG'],
+        evidence: 'Farmakokinetik veriler ve kılavuz önerileri',
+        source: 'Clinical guidelines',
+      );
+    }
+    if (((idB.contains('digoxin') || lowerB.contains('digoxin'))) &&
+        (idA.contains('renal') || lowerA.contains('renal') || lowerA.contains('kidney') || lowerA.contains('creatinine'))) {
+      return DrugInteraction(
+        id: 'rule_renal_digoxin_${med1Id}_$med2Id',
+        medication1Id: med1Id,
+        medication1Name: nameA,
+        medication2Id: med2Id,
+        medication2Name: nameB,
+        severity: InteractionSeverity.major,
+        type: InteractionType.pharmacokinetic,
+        mechanism: 'Böbrek yetmezliğinde digoxin eliminasyonu azalır',
+        description: 'Doz azaltımı gerekir, toksisite riski artar',
+        clinicalSignificance: 'Doz ayarlaması ve yakın izlem gerekir',
+        symptoms: ['Bulantı', 'Kusma', 'Görme bozuklukları', 'Bradikardi'],
+        recommendations: ['Dozu azaltın', 'Digoxin düzeyini izleyin'],
+        alternatives: ['Alternatif inotropik ajanlar'],
+        monitoring: ['Digoxin düzeyi', 'eGFR', 'Potasyum', 'EKG'],
+        evidence: 'Farmakokinetik veriler ve kılavuz önerileri',
+        source: 'Clinical guidelines',
+      );
+    }
  
     return null;
   }

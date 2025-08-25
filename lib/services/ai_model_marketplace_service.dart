@@ -1,454 +1,287 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-import 'package:psyclinicai/models/ai_marketplace_models.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:openai_dart/openai_dart.dart';
+import 'package:anthropic_dart/anthropic_dart.dart';
+import '../models/ai_model_marketplace_models.dart';
 
-/// AI Model Marketplace Service for PsyClinicAI
-/// Handles browsing, installing, and managing third-party AI models
+/// AI Model Marketplace Service for integrating third-party AI models
 class AIModelMarketplaceService {
-  static final AIModelMarketplaceService _instance = AIModelMarketplaceService._internal();
-  factory AIModelMarketplaceService() => _instance;
-  AIModelMarketplaceService._internal();
-
-  // Mock data storage
-  final List<MarketplaceModel> _availableModels = [];
-  final List<InstalledModel> _installedModels = [];
-  final List<ModelProvider> _providers = [];
-  final List<ModelReview> _reviews = [];
+  static const String _marketplaceUrl = 'https://api.aimarketplace.com/v1';
+  static const String _apiKey = 'demo_marketplace_key_12345';
+  
+  // Available AI models
+  final Map<String, AIModel> _availableModels = {};
+  final Map<String, AIModelInstance> _activeModels = {};
   
   // Stream controllers for real-time updates
-  final StreamController<MarketplaceModel> _modelController = StreamController<MarketplaceModel>.broadcast();
-  final StreamController<InstalledModel> _installedModelController = StreamController<InstalledModel>.broadcast();
-  final StreamController<String> _marketplaceLogController = StreamController<String>.broadcast();
+  final StreamController<List<AIModel>> _modelsController = 
+      StreamController<List<AIModel>>.broadcast();
+  final StreamController<AIModelPerformance> _performanceController = 
+      StreamController<AIModelPerformance>.broadcast();
   
-  // Streams
-  Stream<MarketplaceModel> get modelStream => _modelController.stream;
-  Stream<InstalledModel> get installedModelStream => _installedModelController.stream;
-  Stream<String> get marketplaceLogStream => _marketplaceLogController.stream;
-
   /// Initialize the marketplace service
   Future<void> initialize() async {
-    print('🏪 Initializing AI Model Marketplace Service...');
+    await _loadAvailableModels();
+    await _loadActiveModels();
+  }
+
+  /// Get all available AI models
+  Future<List<AIModel>> getAvailableModels() async {
+    if (_availableModels.isEmpty) {
+      await _loadAvailableModels();
+    }
+    return _availableModels.values.toList();
+  }
+
+  /// Get models by capability
+  Future<List<AIModel>> getModelsByCapability(String capability) async {
+    final models = await getAvailableModels();
+    return models.where((model) => 
+      model.capabilities.any((cap) => cap.toLowerCase().contains(capability.toLowerCase()))
+    ).toList();
+  }
+
+  /// Get models by provider
+  Future<List<AIModel>> getModelsByProvider(String provider) async {
+    final models = await getAvailableModels();
+    return models.where((model) => 
+      model.provider.toLowerCase() == provider.toLowerCase()
+    ).toList();
+  }
+
+  /// Get models by language support
+  Future<List<AIModel>> getModelsByLanguage(String language) async {
+    final models = await getAvailableModels();
+    return models.where((model) => 
+      model.supportedLanguages.any((lang) => lang.toLowerCase().contains(language.toLowerCase()))
+    ).toList();
+  }
+
+  /// Get active model instances
+  Future<List<AIModelInstance>> getActiveModels() async {
+    return _activeModels.values.toList();
+  }
+
+  /// Activate a model for use
+  Future<AIModelInstance> activateModel(String modelId, Map<String, dynamic> configuration) async {
+    final model = _availableModels[modelId];
+    if (model == null) {
+      throw Exception('Model not found: $modelId');
+    }
+
+    final instance = AIModelInstance(
+      id: 'instance_${modelId}_${DateTime.now().millisecondsSinceEpoch}',
+      modelId: modelId,
+      name: model.name,
+      provider: model.provider,
+      configuration: configuration,
+      isActive: true,
+      createdAt: DateTime.now(),
+      totalRequests: 0,
+      totalCost: 0.0,
+      performance: {},
+    );
+
+    _activeModels[instance.id] = instance;
+    return instance;
+  }
+
+  /// Deactivate a model instance
+  Future<void> deactivateModel(String instanceId) async {
+    if (_activeModels.containsKey(instanceId)) {
+      final instance = _activeModels[instanceId]!;
+      _activeModels[instanceId] = AIModelInstance(
+        id: instance.id,
+        modelId: instance.modelId,
+        name: instance.name,
+        provider: instance.provider,
+        configuration: instance.configuration,
+        isActive: false,
+        createdAt: instance.createdAt,
+        lastUsed: instance.lastUsed,
+        totalRequests: instance.totalRequests,
+        totalCost: instance.totalCost,
+        performance: instance.performance,
+      );
+    }
+  }
+
+  /// Make a request to an AI model
+  Future<AIModelResponse> makeRequest(AIModelRequest request) async {
+    final model = _availableModels[request.modelId];
+    if (model == null) {
+      throw Exception('Model not found: $request.modelId');
+    }
+
+    try {
+      AIModelResponse response;
+      
+      switch (model.provider.toLowerCase()) {
+        case 'openai':
+          response = await _makeOpenAIRequest(request, model);
+          break;
+        case 'anthropic':
+          response = await _makeAnthropicRequest(request, model);
+          break;
+        case 'custom':
+          response = await _makeCustomRequest(request, model);
+          break;
+        default:
+          throw Exception('Unsupported provider: ${model.provider}');
+      }
+
+      // Update instance statistics
+      _updateInstanceStats(request.modelId, response);
+      
+      // Track performance
+      _trackPerformance(model, response);
+      
+      return response;
+    } catch (e) {
+      return AIModelResponse(
+        requestId: 'req_${DateTime.now().millisecondsSinceEpoch}',
+        modelId: request.modelId,
+        response: '',
+        metadata: {},
+        cost: 0.0,
+        tokensUsed: 0,
+        timestamp: DateTime.now(),
+        isSuccess: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Compare multiple models for a specific task
+  Future<Map<String, AIModelResponse>> compareModels(
+    List<String> modelIds, 
+    String prompt, 
+    Map<String, dynamic> parameters
+  ) async {
+    final results = <String, AIModelResponse>{};
     
-    // Initialize mock data
-    _initializeMockData();
+    for (final modelId in modelIds) {
+      try {
+        final request = AIModelRequest(
+          modelId: modelId,
+          prompt: prompt,
+          parameters: parameters,
+        );
+        
+        final response = await makeRequest(request);
+        results[modelId] = response;
+      } catch (e) {
+        results[modelId] = AIModelResponse(
+          requestId: 'req_${DateTime.now().millisecondsSinceEpoch}',
+          modelId: modelId,
+          response: '',
+          metadata: {},
+          cost: 0.0,
+          tokensUsed: 0,
+          timestamp: DateTime.now(),
+          isSuccess: false,
+          error: e.toString(),
+        );
+      }
+    }
     
-    print('✅ AI Model Marketplace Service initialized successfully');
+    return results;
   }
 
-  /// Initialize mock data
-  void _initializeMockData() {
-    // Mock providers
-    _providers.addAll([
-      ModelProvider(
-        id: 'provider_001',
-        name: 'MindTech AI',
-        description: 'Leading provider of mental health AI models with focus on diagnosis and screening',
-        website: 'https://mindtech.ai',
-        rating: 4.8,
-        reviewCount: 156,
-        modelsCount: 25,
-        specialties: ['depression', 'anxiety', 'diagnosis', 'screening'],
-        verified: true,
-        contactEmail: 'contact@mindtech.ai',
-        supportUrl: 'https://mindtech.ai/support',
-        joinedAt: DateTime.now().subtract(const Duration(days: 365)),
-        lastActive: DateTime.now().subtract(const Duration(hours: 2)),
+  /// Get model performance analytics
+  Future<List<AIModelPerformance>> getModelPerformance(String modelId, {Duration? timeRange}) async {
+    // This would typically query a database or analytics service
+    // For now, return mock performance data
+    return [
+      AIModelPerformance(
+        modelId: modelId,
+        modelName: _availableModels[modelId]?.name ?? 'Unknown',
+        timestamp: DateTime.now(),
+        responseTime: 1.2,
+        accuracy: 0.95,
+        costEfficiency: 0.87,
+        requestsProcessed: 150,
+        errors: [],
+        customMetrics: {
+          'user_satisfaction': 4.2,
+          'task_completion_rate': 0.92,
+        },
       ),
-      ModelProvider(
-        id: 'provider_002',
-        name: 'NeuroLogic Systems',
-        description: 'Specialized in neurological and cognitive assessment AI models',
-        website: 'https://neurologic.ai',
-        rating: 4.6,
-        reviewCount: 89,
-        modelsCount: 18,
-        specialties: ['neurology', 'cognitive_assessment', 'monitoring', 'prognosis'],
-        verified: true,
-        contactEmail: 'info@neurologic.ai',
-        supportUrl: 'https://neurologic.ai/support',
-        joinedAt: DateTime.now().subtract(const Duration(days: 180)),
-        lastActive: DateTime.now().subtract(const Duration(hours: 6)),
-      ),
-      ModelProvider(
-        id: 'provider_003',
-        name: 'CrisisGuard AI',
-        description: 'Advanced crisis detection and risk assessment AI models',
-        website: 'https://crisisguard.ai',
-        rating: 4.9,
-        reviewCount: 234,
-        modelsCount: 12,
-        specialties: ['crisis_detection', 'risk_assessment', 'suicide_prevention', 'emergency'],
-        verified: true,
-        contactEmail: 'support@crisisguard.ai',
-        supportUrl: 'https://crisisguard.ai/support',
-        joinedAt: DateTime.now().subtract(const Duration(days: 90)),
-        lastActive: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      ModelProvider(
-        id: 'provider_004',
-        name: 'TherapyBot Labs',
-        description: 'Innovative therapy and treatment recommendation AI models',
-        website: 'https://therapybot.ai',
-        rating: 4.4,
-        reviewCount: 67,
-        modelsCount: 15,
-        specialties: ['therapy', 'treatment', 'recommendations', 'wellness'],
-        verified: false,
-        contactEmail: 'hello@therapybot.ai',
-        supportUrl: 'https://therapybot.ai/support',
-        joinedAt: DateTime.now().subtract(const Duration(days: 45)),
-        lastActive: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ]);
-
-    // Mock marketplace models
-    _availableModels.addAll([
-      MarketplaceModel(
-        id: 'model_001',
-        name: 'DepressionScreen Pro',
-        description: 'Advanced depression screening model with 95% accuracy using patient responses and behavioral patterns',
-        provider: 'MindTech AI',
-        version: '2.1.0',
-        category: ModelCategory.screening,
-        price: 29.99,
-        priceUnit: 'per_month',
-        rating: 4.8,
-        reviewCount: 89,
-        specialties: ['depression', 'screening', 'mental_health'],
-        features: [
-          'Multi-modal input support',
-          'Real-time analysis',
-          'Customizable thresholds',
-          'Detailed reporting',
-          'API integration',
-        ],
-        performance: ModelPerformance(
-          accuracy: 0.95,
-          latency: 0.8,
-          throughput: 500,
-          memoryUsage: 256.0,
-          cpuUsage: 15.0,
-          customMetrics: {'sensitivity': 0.94, 'specificity': 0.96},
-        ),
-        documentation: 'Comprehensive documentation with examples and best practices',
-        requirements: ['Python 3.8+', 'TensorFlow 2.4+', '8GB RAM'],
-        metadata: {'framework': 'TensorFlow', 'architecture': 'Transformer'},
-        publishedAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 5)),
-        downloadCount: 1250,
-        isVerified: true,
-        tags: ['depression', 'screening', 'high_accuracy', 'verified'],
-        demoUrl: 'https://demo.mindtech.ai/depression-screen',
-        paperUrl: 'https://arxiv.org/abs/2023.12345',
-        repositoryUrl: 'https://github.com/mindtech/depression-screen',
-      ),
-      MarketplaceModel(
-        id: 'model_002',
-        name: 'AnxietyClassifier Elite',
-        description: 'State-of-the-art anxiety disorder classification with support for multiple anxiety types',
-        provider: 'MindTech AI',
-        version: '1.8.0',
-        category: ModelCategory.diagnosis,
-        price: 39.99,
-        priceUnit: 'per_month',
-        rating: 4.7,
-        reviewCount: 67,
-        specialties: ['anxiety', 'classification', 'diagnosis'],
-        features: [
-          'Multi-class classification',
-          'Severity assessment',
-          'Treatment recommendations',
-          'Progress tracking',
-          'Clinical validation',
-        ],
-        performance: ModelPerformance(
-          accuracy: 0.92,
-          latency: 1.2,
-          throughput: 400,
-          memoryUsage: 320.0,
-          cpuUsage: 20.0,
-          customMetrics: {'precision': 0.91, 'recall': 0.93},
-        ),
-        documentation: 'Detailed API documentation with integration examples',
-        requirements: ['Python 3.9+', 'PyTorch 1.12+', '16GB RAM'],
-        metadata: {'framework': 'PyTorch', 'architecture': 'BERT'},
-        publishedAt: DateTime.now().subtract(const Duration(days: 45)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 10)),
-        downloadCount: 890,
-        isVerified: true,
-        tags: ['anxiety', 'classification', 'diagnosis', 'verified'],
-        demoUrl: 'https://demo.mindtech.ai/anxiety-classifier',
-        paperUrl: 'https://arxiv.org/abs/2023.23456',
-        repositoryUrl: 'https://github.com/mindtech/anxiety-classifier',
-      ),
-      MarketplaceModel(
-        id: 'model_003',
-        name: 'CrisisDetect Ultra',
-        description: 'Real-time crisis detection model for suicide prevention and emergency intervention',
-        provider: 'CrisisGuard AI',
-        version: '3.0.0',
-        category: ModelCategory.riskAssessment,
-        price: 99.99,
-        priceUnit: 'per_month',
-        rating: 4.9,
-        reviewCount: 156,
-        specialties: ['crisis_detection', 'suicide_prevention', 'emergency'],
-        features: [
-          'Real-time monitoring',
-          'Multi-channel input',
-          'Risk scoring',
-          'Emergency alerts',
-          '24/7 support',
-        ],
-        performance: ModelPerformance(
-          accuracy: 0.98,
-          latency: 0.3,
-          throughput: 1000,
-          memoryUsage: 512.0,
-          cpuUsage: 25.0,
-          customMetrics: {'false_positive_rate': 0.01, 'response_time': 0.2},
-        ),
-        documentation: 'Emergency response documentation with integration guidelines',
-        requirements: ['Python 3.10+', 'ONNX Runtime', '32GB RAM'],
-        metadata: {'framework': 'ONNX', 'architecture': 'EfficientNet'},
-        publishedAt: DateTime.now().subtract(const Duration(days: 15)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-        downloadCount: 567,
-        isVerified: true,
-        tags: ['crisis', 'emergency', 'high_accuracy', 'verified'],
-        demoUrl: 'https://demo.crisisguard.ai/crisis-detect',
-        paperUrl: 'https://arxiv.org/abs/2023.34567',
-        repositoryUrl: 'https://github.com/crisisguard/crisis-detect',
-      ),
-      MarketplaceModel(
-        id: 'model_004',
-        name: 'TherapyRecommend Pro',
-        description: 'AI-powered therapy recommendation system based on patient history and preferences',
-        provider: 'TherapyBot Labs',
-        version: '1.5.0',
-        category: ModelCategory.treatment,
-        price: 19.99,
-        priceUnit: 'per_month',
-        rating: 4.3,
-        reviewCount: 34,
-        specialties: ['therapy', 'treatment', 'recommendations'],
-        features: [
-          'Personalized recommendations',
-          'Evidence-based approaches',
-          'Progress tracking',
-          'Outcome prediction',
-          'Integration ready',
-        ],
-        performance: ModelPerformance(
-          accuracy: 0.87,
-          latency: 1.5,
-          throughput: 300,
-          memoryUsage: 128.0,
-          cpuUsage: 12.0,
-          customMetrics: {'recommendation_accuracy': 0.89, 'user_satisfaction': 0.85},
-        ),
-        documentation: 'User guide with integration examples and best practices',
-        requirements: ['Python 3.8+', 'Scikit-learn 1.0+', '4GB RAM'],
-        metadata: {'framework': 'Scikit-learn', 'architecture': 'Random Forest'},
-        publishedAt: DateTime.now().subtract(const Duration(days: 60)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 20)),
-        downloadCount: 234,
-        isVerified: false,
-        tags: ['therapy', 'recommendations', 'personalized'],
-        demoUrl: 'https://demo.therapybot.ai/therapy-recommend',
-        paperUrl: 'https://arxiv.org/abs/2023.45678',
-        repositoryUrl: 'https://github.com/therapybot/therapy-recommend',
-      ),
-      MarketplaceModel(
-        id: 'model_005',
-        name: 'NeuroMonitor Plus',
-        description: 'Advanced neurological monitoring and cognitive assessment AI model',
-        provider: 'NeuroLogic Systems',
-        version: '2.2.0',
-        category: ModelCategory.monitoring,
-        price: 49.99,
-        priceUnit: 'per_month',
-        rating: 4.6,
-        reviewCount: 78,
-        specialties: ['neurology', 'cognitive_assessment', 'monitoring'],
-        features: [
-          'Cognitive assessment',
-          'Memory testing',
-          'Attention monitoring',
-          'Progress tracking',
-          'Clinical reports',
-        ],
-        performance: ModelPerformance(
-          accuracy: 0.91,
-          latency: 1.8,
-          throughput: 250,
-          memoryUsage: 256.0,
-          cpuUsage: 18.0,
-          customMetrics: {'cognitive_accuracy': 0.93, 'memory_precision': 0.89},
-        ),
-        documentation: 'Clinical documentation with assessment protocols',
-        requirements: ['Python 3.9+', 'TensorFlow 2.6+', '16GB RAM'],
-        metadata: {'framework': 'TensorFlow', 'architecture': 'LSTM'},
-        publishedAt: DateTime.now().subtract(const Duration(days: 75)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 15)),
-        downloadCount: 456,
-        isVerified: true,
-        tags: ['neurology', 'cognitive', 'monitoring', 'verified'],
-        demoUrl: 'https://demo.neurologic.ai/neuro-monitor',
-        paperUrl: 'https://arxiv.org/abs/2023.56789',
-        repositoryUrl: 'https://github.com/neurologic/neuro-monitor',
-      ),
-    ]);
-
-    // Mock installed models
-    _installedModels.addAll([
-      InstalledModel(
-        id: 'installed_001',
-        name: 'DepressionScreen Pro',
-        version: '2.1.0',
-        provider: 'MindTech AI',
-        status: ModelInstallStatus.active,
-        installedAt: DateTime.now().subtract(const Duration(days: 10)),
-        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
-        size: 256.0,
-        configuration: {'auto_update': true, 'log_level': 'info'},
-        dependencies: ['tensorflow', 'numpy', 'pandas'],
-        usageStats: {'total_requests': 1250, 'success_rate': 0.98},
-      ),
-      InstalledModel(
-        id: 'installed_002',
-        name: 'CrisisDetect Ultra',
-        version: '3.0.0',
-        provider: 'CrisisGuard AI',
-        status: ModelInstallStatus.active,
-        installedAt: DateTime.now().subtract(const Duration(days: 5)),
-        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
-        size: 512.0,
-        configuration: {'emergency_mode': true, 'alert_threshold': 0.8},
-        dependencies: ['onnxruntime', 'numpy', 'scipy'],
-        usageStats: {'total_requests': 890, 'success_rate': 0.99},
-      ),
-    ]);
-
-    // Mock reviews
-    _reviews.addAll([
-      ModelReview(
-        id: 'review_001',
-        modelId: 'model_001',
-        userId: 'user_001',
-        userName: 'Dr. Sarah Johnson',
-        rating: 5.0,
-        title: 'Excellent depression screening tool',
-        comment: 'This model has significantly improved our screening accuracy. Easy to integrate and very reliable.',
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        tags: ['accurate', 'easy_to_use', 'reliable'],
-        verified: true,
-        helpfulCount: 12,
-        images: [],
-      ),
-      ModelReview(
-        id: 'review_002',
-        modelId: 'model_001',
-        userId: 'user_002',
-        userName: 'Dr. Michael Chen',
-        rating: 4.5,
-        title: 'Great tool with room for improvement',
-        comment: 'Very accurate predictions, but the API could be more flexible. Overall highly recommended.',
-        createdAt: DateTime.now().subtract(const Duration(days: 20)),
-        tags: ['accurate', 'needs_improvement', 'recommended'],
-        verified: true,
-        helpfulCount: 8,
-        images: [],
-      ),
-    ]);
+    ];
   }
 
-  /// Get all available models
-  List<MarketplaceModel> getAvailableModels() {
-    return List.unmodifiable(_availableModels);
-  }
-
-  /// Get model by ID
-  MarketplaceModel? getModel(String modelId) {
-    try {
-      return _availableModels.firstWhere((model) => model.id == modelId);
-    } catch (e) {
-      return null;
+  /// Get cost analysis for model usage
+  Future<Map<String, dynamic>> getCostAnalysis({Duration? timeRange}) async {
+    final activeModels = await getActiveModels();
+    double totalCost = 0.0;
+    int totalRequests = 0;
+    
+    for (final instance in activeModels) {
+      totalCost += instance.totalCost;
+      totalRequests += instance.totalRequests;
     }
+    
+    return {
+      'totalCost': totalCost,
+      'totalRequests': totalRequests,
+      'averageCostPerRequest': totalRequests > 0 ? totalCost / totalRequests : 0.0,
+      'costByModel': activeModels.map((instance) => {
+        'modelId': instance.modelId,
+        'modelName': instance.name,
+        'cost': instance.totalCost,
+        'requests': instance.totalRequests,
+      }).toList(),
+      'timeRange': timeRange?.inDays ?? 30,
+    };
   }
 
-  /// Get all installed models
-  List<InstalledModel> getInstalledModels() {
-    return List.unmodifiable(_installedModels);
-  }
-
-  /// Get installed model by ID
-  InstalledModel? getInstalledModel(String modelId) {
-    try {
-      return _installedModels.firstWhere((model) => model.id == modelId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Get all providers
-  List<ModelProvider> getProviders() {
-    return List.unmodifiable(_providers);
-  }
-
-  /// Get provider by ID
-  ModelProvider? getProvider(String providerId) {
-    try {
-      return _providers.firstWhere((provider) => provider.id == providerId);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Get all reviews
-  List<ModelReview> getReviews() {
-    return List.unmodifiable(_reviews);
-  }
-
-  /// Get reviews for a specific model
-  List<ModelReview> getModelReviews(String modelId) {
-    return _reviews.where((review) => review.modelId == modelId).toList();
-  }
-
-  /// Search models with filters
-  List<MarketplaceModel> searchModels({
+  /// Search for models by criteria
+  Future<List<AIModel>> searchModels({
     String? query,
-    ModelCategory? category,
-    String? specialty,
-    String? provider,
+    List<String>? capabilities,
+    List<String>? providers,
+    List<String>? languages,
     double? minRating,
-    double? maxPrice,
-  }) {
-    return _availableModels.where((model) {
-      // Query filter
+    double? maxCostPerToken,
+  }) async {
+    final models = await getAvailableModels();
+    
+    return models.where((model) {
+      // Query search
       if (query != null && query.isNotEmpty) {
-        final queryLower = query.toLowerCase();
-        if (!model.name.toLowerCase().contains(queryLower) &&
-            !model.description.toLowerCase().contains(queryLower) &&
-            !model.provider.toLowerCase().contains(queryLower)) {
+        final searchText = '${model.name} ${model.description} ${model.provider}'.toLowerCase();
+        if (!searchText.contains(query.toLowerCase())) {
           return false;
         }
       }
       
-      // Category filter
-      if (category != null && model.category != category) {
-        return false;
-      }
-      
-      // Specialty filter
-      if (specialty != null && !model.specialties.contains(specialty)) {
-        return false;
+      // Capability filter
+      if (capabilities != null && capabilities.isNotEmpty) {
+        if (!capabilities.any((cap) => 
+          model.capabilities.any((modelCap) => modelCap.toLowerCase().contains(cap.toLowerCase()))
+        )) {
+          return false;
+        }
       }
       
       // Provider filter
-      if (provider != null && model.provider != provider) {
-        return false;
+      if (providers != null && providers.isNotEmpty) {
+        if (!providers.any((provider) => 
+          model.provider.toLowerCase() == provider.toLowerCase()
+        )) {
+          return false;
+        }
+      }
+      
+      // Language filter
+      if (languages != null && languages.isNotEmpty) {
+        if (!languages.any((lang) => 
+          model.supportedLanguages.any((modelLang) => modelLang.toLowerCase().contains(lang.toLowerCase()))
+        )) {
+          return false;
+        }
       }
       
       // Rating filter
@@ -456,8 +289,8 @@ class AIModelMarketplaceService {
         return false;
       }
       
-      // Price filter
-      if (maxPrice != null && model.price > maxPrice) {
+      // Cost filter
+      if (maxCostPerToken != null && model.costPerToken > maxCostPerToken) {
         return false;
       }
       
@@ -465,428 +298,252 @@ class AIModelMarketplaceService {
     }).toList();
   }
 
-  /// Install a model
-  Future<void> installModel(String modelId) async {
-    print('📥 Installing model: $modelId');
-    
-    final model = getModel(modelId);
-    if (model == null) {
-      throw Exception('Model not found: $modelId');
-    }
-    
-    // Check if already installed
-    final existingInstallation = _installedModels.any((installed) => 
-        installed.name == model.name && installed.provider == model.provider);
-    
-    if (existingInstallation) {
-      throw Exception('Model already installed');
-    }
-    
-    // Simulate installation process
-    await Future.delayed(Duration(seconds: 3));
-    
-    // Create installed model
-    final installedModel = InstalledModel(
-      id: 'installed_${DateTime.now().millisecondsSinceEpoch}',
-      name: model.name,
-      version: model.version,
-      provider: model.provider,
-      status: ModelInstallStatus.active,
-      installedAt: DateTime.now(),
-      lastUpdated: DateTime.now(),
-      size: model.performance.memoryUsage,
-      configuration: {
-        'auto_update': true,
-        'log_level': 'info',
-        'performance_mode': 'balanced',
-      },
-      dependencies: model.requirements,
-      usageStats: {'total_requests': 0, 'success_rate': 1.0},
-    );
-    
-    // Add to installed models
-    _installedModels.add(installedModel);
-    
-    // Update download count
-    final modelIndex = _availableModels.indexWhere((m) => m.id == modelId);
-    if (modelIndex != -1) {
-      final updatedModel = model.copyWith(
-        downloadCount: model.downloadCount + 1,
-      );
-      _availableModels[modelIndex] = updatedModel;
-      _modelController.add(updatedModel);
-    }
-    
-    // Notify listeners
-    _installedModelController.add(installedModel);
-    _marketplaceLogController.add('Model ${model.name} installed successfully');
-    
-    print('✅ Model installed successfully: $modelId');
-  }
-
-  /// Uninstall a model
-  Future<void> uninstallModel(String modelId) async {
-    print('🗑️ Uninstalling model: $modelId');
-    
-    final installedModel = getInstalledModel(modelId);
-    if (installedModel == null) {
-      throw Exception('Installed model not found: $modelId');
-    }
-    
-    // Simulate uninstallation process
-    await Future.delayed(Duration(seconds: 2));
-    
-    // Remove from installed models
-    _installedModels.removeWhere((model) => model.id == modelId);
-    
-    // Notify listeners
-    _marketplaceLogController.add('Model ${installedModel.name} uninstalled successfully');
-    
-    print('✅ Model uninstalled successfully: $modelId');
-  }
-
-  /// Update a model
-  Future<void> updateModel(String modelId) async {
-    print('🔄 Updating model: $modelId');
-    
-    final installedModel = getInstalledModel(modelId);
-    if (installedModel == null) {
-      throw Exception('Installed model not found: $modelId');
-    }
-    
-    // Find corresponding marketplace model
-    final marketplaceModel = _availableModels.firstWhere(
-      (model) => model.name == installedModel.name && model.provider == installedModel.provider,
-      orElse: () => throw Exception('Marketplace model not found'),
-    );
-    
-    // Check if update is available
-    if (marketplaceModel.version == installedModel.version) {
-      throw Exception('Model is already up to date');
-    }
-    
-    // Simulate update process
-    await Future.delayed(Duration(seconds: 5));
-    
-    // Update installed model
-    final updatedModel = installedModel.copyWith(
-      version: marketplaceModel.version,
-      lastUpdated: DateTime.now(),
-      status: ModelInstallStatus.active,
-      size: marketplaceModel.performance.memoryUsage,
-      configuration: {
-        ...installedModel.configuration,
-        'last_update': DateTime.now().toIso8601String(),
-      },
-    );
-    
-    // Update in list
-    final index = _installedModels.indexWhere((model) => model.id == modelId);
-    if (index != -1) {
-      _installedModels[index] = updatedModel;
-      _installedModelController.add(updatedModel);
-    }
-    
-    // Notify listeners
-    _marketplaceLogController.add('Model ${installedModel.name} updated to version ${marketplaceModel.version}');
-    
-    print('✅ Model updated successfully: $modelId');
-  }
-
-  /// Test a model
-  Future<Map<String, dynamic>> testModel(String modelId, Map<String, dynamic> testData) async {
-    print('🧪 Testing model: $modelId');
-    
-    final model = getModel(modelId);
-    if (model == null) {
-      throw Exception('Model not found: $modelId');
-    }
-    
-    // Simulate testing process
-    await Future.delayed(Duration(seconds: 2));
-    
-    // Generate mock test results
-    final results = {
-      'model_id': modelId,
-      'test_timestamp': DateTime.now().toIso8601String(),
-      'execution_time': Random().nextDouble() * 2.0 + 0.5,
-      'accuracy': model.performance.accuracy + Random().nextDouble() * 0.1 - 0.05,
-      'latency': model.performance.latency + Random().nextDouble() * 0.5 - 0.25,
-      'throughput': model.performance.throughput + Random().nextInt(100) - 50,
-      'test_data_size': testData.length,
-      'success': true,
-    };
-    
-    print('✅ Model test completed: $modelId');
-    return results;
-  }
-
-  /// Compare models
-  Future<ModelPerformanceComparison> compareModels(List<String> modelIds) async {
-    print('🔍 Comparing models: ${modelIds.join(', ')}');
-    
-    if (modelIds.length < 2) {
-      throw Exception('At least 2 models required for comparison');
-    }
-    
-    if (modelIds.length > 5) {
-      throw Exception('Maximum 5 models allowed for comparison');
-    }
-    
-    // Get models
-    final models = modelIds.map((id) => getModel(id)).whereType<MarketplaceModel>().toList();
-    if (models.length != modelIds.length) {
-      throw Exception('Some models not found');
-    }
-    
-    // Simulate comparison process
-    await Future.delayed(Duration(seconds: 3));
-    
-    // Calculate scores for each model
-    final scores = <String, double>{};
-    final detailedMetrics = <String, ModelComparisonMetrics>{};
+  /// Get model recommendations for a specific task
+  Future<List<AIModel>> getModelRecommendations(String task, Map<String, dynamic> requirements) async {
+    final models = await getAvailableModels();
+    final recommendations = <AIModel>[];
     
     for (final model in models) {
-      final score = model.performance.performanceScore;
-      scores[model.id] = score;
+      double score = 0.0;
       
-      detailedMetrics[model.id] = ModelComparisonMetrics(
-        modelId: model.id,
-        modelName: model.name,
-        accuracy: model.performance.accuracy,
-        latency: model.performance.latency,
-        throughput: model.performance.throughput,
-        price: model.price,
-        rating: model.rating,
-        downloadCount: model.downloadCount,
-        customMetrics: model.performance.customMetrics,
-      );
+      // Task capability match
+      if (model.capabilities.any((cap) => cap.toLowerCase().contains(task.toLowerCase()))) {
+        score += 3.0;
+      }
+      
+      // Rating score
+      score += model.rating;
+      
+      // Cost efficiency (lower cost = higher score)
+      score += (1.0 - model.costPerToken) * 2.0;
+      
+      // Usage popularity
+      score += (model.usageCount / 1000).clamp(0.0, 2.0);
+      
+      if (score >= 5.0) {
+        recommendations.add(model);
+      }
     }
     
-    // Find winner
-    final winner = scores.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+    // Sort by score (descending)
+    recommendations.sort((a, b) {
+      final scoreA = _calculateModelScore(a, task, requirements);
+      final scoreB = _calculateModelScore(b, task, requirements);
+      return scoreB.compareTo(scoreA);
+    });
     
-    // Generate insights
-    final insights = _generateComparisonInsights(models, scores);
+    return recommendations.take(5).toList();
+  }
+
+  // Private helper methods
+
+  double _calculateModelScore(AIModel model, String task, Map<String, dynamic> requirements) {
+    double score = 0.0;
     
-    final comparison = ModelPerformanceComparison(
-      winner: winner,
-      insights: insights,
-      scores: scores,
-      detailedMetrics: detailedMetrics,
+    // Task capability match
+    if (model.capabilities.any((cap) => cap.toLowerCase().contains(task.toLowerCase()))) {
+      score += 3.0;
+    }
+    
+    // Rating score
+    score += model.rating;
+    
+    // Cost efficiency
+    score += (1.0 - model.costPerToken) * 2.0;
+    
+    // Usage popularity
+    score += (model.usageCount / 1000).clamp(0.0, 2.0);
+    
+    return score;
+  }
+
+  void _updateInstanceStats(String modelId, AIModelResponse response) {
+    for (final instance in _activeModels.values) {
+      if (instance.modelId == modelId) {
+        final updatedInstance = AIModelInstance(
+          id: instance.id,
+          modelId: instance.modelId,
+          name: instance.name,
+          provider: instance.provider,
+          configuration: instance.configuration,
+          isActive: instance.isActive,
+          createdAt: instance.createdAt,
+          lastUsed: DateTime.now(),
+          totalRequests: instance.totalRequests + 1,
+          totalCost: instance.totalCost + response.cost,
+          performance: instance.performance,
+        );
+        _activeModels[instance.id] = updatedInstance;
+        break;
+      }
+    }
+  }
+
+  void _trackPerformance(AIModel model, AIModelResponse response) {
+    final performance = AIModelPerformance(
+      modelId: model.id,
+      modelName: model.name,
+      timestamp: DateTime.now(),
+      responseTime: response.metadata['responseTime']?.toDouble() ?? 0.0,
+      accuracy: response.metadata['accuracy']?.toDouble() ?? 0.0,
+      costEfficiency: response.metadata['costEfficiency']?.toDouble() ?? 0.0,
+      requestsProcessed: 1,
+      errors: response.isSuccess ? [] : [response.error ?? 'Unknown error'],
+      customMetrics: response.metadata,
     );
     
-    print('✅ Model comparison completed');
-    return comparison;
+    _performanceController.add(performance);
   }
 
-  /// Generate comparison insights
-  List<String> _generateComparisonInsights(List<MarketplaceModel> models, Map<String, double> scores) {
-    final insights = <String>[];
+  // Provider-specific request methods
+
+  Future<AIModelResponse> _makeOpenAIRequest(AIModelRequest request, AIModel model) async {
+    // Mock OpenAI request - production'da gerçek OpenAI API kullanılacak
+    await Future.delayed(const Duration(milliseconds: 1000));
     
-    // Performance insights
-    final sortedScores = scores.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final topModel = models.firstWhere((m) => m.id == sortedScores.first.key);
-    final bottomModel = models.firstWhere((m) => m.id == sortedScores.last.key);
-    
-    insights.add('${topModel.name} shows the best overall performance with a score of ${sortedScores.first.value.toStringAsFixed(2)}');
-    
-    if (sortedScores.first.value - sortedScores.last.value > 0.3) {
-      insights.add('There is a significant performance gap between the top and bottom performers');
-    }
-    
-    // Price insights
-    final priceRange = models.map((m) => m.price).reduce((a, b) => a > b ? a : b) - 
-                       models.map((m) => m.price).reduce((a, b) => a < b ? a : b);
-    if (priceRange > 50) {
-      insights.add('Price varies significantly across models, consider cost-performance ratio');
-    }
-    
-    // Accuracy insights
-    final accuracyRange = models.map((m) => m.performance.accuracy).reduce((a, b) => a > b ? a : b) - 
-                          models.map((m) => m.performance.accuracy).reduce((a, b) => a < b ? a : b);
-    if (accuracyRange > 0.1) {
-      insights.add('Accuracy varies considerably - ${topModel.name} leads with ${(topModel.performance.accuracy * 100).toStringAsFixed(1)}%');
-    }
-    
-    // Latency insights
-    final fastestModel = models.reduce((a, b) => a.performance.latency < b.performance.latency ? a : b);
-    if (fastestModel.performance.latency < 1.0) {
-      insights.add('${fastestModel.name} offers the fastest response time at ${fastestModel.performance.latency.toStringAsFixed(2)}s');
-    }
-    
-    // Specialized insights
-    if (models.any((m) => m.isVerified) && models.any((m) => !m.isVerified)) {
-      insights.add('Consider verified models for production use cases');
-    }
-    
-    if (models.any((m) => m.isFree) && models.any((m) => !m.isFree)) {
-      insights.add('Free models available for testing before purchasing premium options');
-    }
-    
-    return insights;
+    return AIModelResponse(
+      requestId: 'openai_${DateTime.now().millisecondsSinceEpoch}',
+      modelId: request.modelId,
+      response: 'Mock OpenAI response for: ${request.prompt}',
+      metadata: {
+        'responseTime': 1.2,
+        'accuracy': 0.95,
+        'costEfficiency': 0.87,
+        'provider': 'openai',
+      },
+      cost: 0.002,
+      tokensUsed: 150,
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
   }
 
-  /// Get marketplace statistics
-  Map<String, dynamic> getMarketplaceStatistics() {
-    final totalModels = _availableModels.length;
-    final freeModels = _availableModels.where((m) => m.isFree).length;
-    final premiumModels = _availableModels.where((m) => m.isPremium).length;
-    final verifiedModels = _availableModels.where((m) => m.isVerified).length;
+  Future<AIModelResponse> _makeAnthropicRequest(AIModelRequest request, AIModel model) async {
+    // Mock Anthropic request - production'da gerçek Anthropic API kullanılacak
+    await Future.delayed(const Duration(milliseconds: 1200));
     
-    final totalProviders = _providers.length;
-    final verifiedProviders = _providers.where((p) => p.verified).length;
-    
-    final totalDownloads = _availableModels.map((m) => m.downloadCount).reduce((a, b) => a + b);
-    final averageRating = _availableModels.map((m) => m.rating).reduce((a, b) => a + b) / totalModels;
-    
-    final totalInstalled = _installedModels.length;
-    final activeInstalled = _installedModels.where((m) => m.status == ModelInstallStatus.active).length;
-    
-    return {
-      'total_models': totalModels,
-      'free_models': freeModels,
-      'premium_models': premiumModels,
-      'verified_models': verifiedModels,
-      'total_providers': totalProviders,
-      'verified_providers': verifiedProviders,
-      'total_downloads': totalDownloads,
-      'average_rating': averageRating.toStringAsFixed(2),
-      'total_installed': totalInstalled,
-      'active_installed': activeInstalled,
-      'marketplace_health': 'excellent',
-    };
+    return AIModelResponse(
+      requestId: 'anthropic_${DateTime.now().millisecondsSinceEpoch}',
+      modelId: request.modelId,
+      response: 'Mock Anthropic response for: ${request.prompt}',
+      metadata: {
+        'responseTime': 1.5,
+        'accuracy': 0.93,
+        'costEfficiency': 0.82,
+        'provider': 'anthropic',
+      },
+      cost: 0.003,
+      tokensUsed: 180,
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
   }
 
-  /// Get trending models
-  List<MarketplaceModel> getTrendingModels({int limit = 5}) {
-    final sortedModels = List<MarketplaceModel>.from(_availableModels);
+  Future<AIModelResponse> _makeCustomRequest(AIModelRequest request, AIModel model) async {
+    // Mock custom API request
+    await Future.delayed(const Duration(milliseconds: 800));
     
-    // Sort by popularity score (downloads + rating + recency)
-    sortedModels.sort((a, b) {
-      final aScore = a.downloadCount + (a.rating * 100) + (a.isRecent ? 50 : 0);
-      final bScore = b.downloadCount + (b.rating * 100) + (b.isRecent ? 50 : 0);
-      return bScore.compareTo(aScore);
+    return AIModelResponse(
+      requestId: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+      modelId: request.modelId,
+      response: 'Mock custom API response for: ${request.prompt}',
+      metadata: {
+        'responseTime': 0.8,
+        'accuracy': 0.90,
+        'costEfficiency': 0.75,
+        'provider': 'custom',
+      },
+      cost: 0.001,
+      tokensUsed: 120,
+      timestamp: DateTime.now(),
+      isSuccess: true,
+    );
+  }
+
+  // Mock data loading methods
+
+  Future<void> _loadAvailableModels() async {
+    _availableModels.clear();
+    
+    // Add mock models
+    _availableModels['gpt-4'] = AIModel(
+      id: 'gpt-4',
+      name: 'GPT-4',
+      provider: 'OpenAI',
+      description: 'Advanced language model for complex reasoning tasks',
+      capabilities: ['text-generation', 'reasoning', 'analysis', 'creative-writing'],
+      supportedLanguages: ['English', 'Spanish', 'French', 'German', 'Italian'],
+      parameters: {'max_tokens': 8192, 'temperature': 0.7},
+      costPerToken: 0.00003,
+      costPerRequest: 0.0,
+      rating: 4.8,
+      usageCount: 15000,
+      isActive: true,
+      lastUpdated: DateTime.now(),
+      metadata: {'version': '4.0', 'training_data': '2023'},
+    );
+    
+    _availableModels['claude-3'] = AIModel(
+      id: 'claude-3',
+      name: 'Claude 3',
+      provider: 'Anthropic',
+      description: 'Constitutional AI model focused on safety and helpfulness',
+      capabilities: ['text-generation', 'safety', 'helpfulness', 'analysis'],
+      supportedLanguages: ['English', 'Spanish', 'French'],
+      parameters: {'max_tokens': 100000, 'temperature': 0.5},
+      costPerToken: 0.000015,
+      costPerRequest: 0.0,
+      rating: 4.7,
+      usageCount: 12000,
+      isActive: true,
+      lastUpdated: DateTime.now(),
+      metadata: {'version': '3.0', 'constitutional_approach': true},
+    );
+    
+    _availableModels['custom-mental-health'] = AIModel(
+      id: 'custom-mental-health',
+      name: 'Mental Health Specialist AI',
+      provider: 'Custom',
+      description: 'Specialized AI for mental health assessment and support',
+      capabilities: ['mental-health', 'assessment', 'support', 'crisis-detection'],
+      supportedLanguages: ['English', 'Spanish'],
+      parameters: {'max_tokens': 4096, 'temperature': 0.3},
+      costPerToken: 0.00001,
+      costPerRequest: 0.0,
+      rating: 4.5,
+      usageCount: 8000,
+      isActive: true,
+      lastUpdated: DateTime.now(),
+      metadata: {'specialization': 'mental-health', 'certified': true},
+    );
+    
+    _modelsController.add(_availableModels.values.toList());
+  }
+
+  Future<void> _loadActiveModels() async {
+    _activeModels.clear();
+    
+    // Add default active models
+    final gpt4Instance = await activateModel('gpt-4', {
+      'temperature': 0.7,
+      'max_tokens': 2048,
+      'auto_retry': true,
     });
     
-    return sortedModels.take(limit).toList();
-  }
-
-  /// Get recommended models
-  List<MarketplaceModel> getRecommendedModels({int limit = 5}) {
-    final sortedModels = List<MarketplaceModel>.from(_availableModels);
-    
-    // Sort by quality score (accuracy + rating + verification)
-    sortedModels.sort((a, b) {
-      final aScore = a.performance.accuracy + (a.rating / 5.0) + (a.isVerified ? 0.2 : 0.0);
-      final bScore = b.performance.accuracy + (b.rating / 5.0) + (b.isVerified ? 0.2 : 0.0);
-      return bScore.compareTo(aScore);
+    final claudeInstance = await activateModel('claude-3', {
+      'temperature': 0.5,
+      'max_tokens': 4096,
+      'safety_level': 'high',
     });
-    
-    return sortedModels.take(limit).toList();
   }
 
-  /// Add model review
-  Future<void> addReview(ModelReview review) async {
-    print('📝 Adding review for model: ${review.modelId}');
-    
-    // Validate review
-    if (review.rating < 1.0 || review.rating > 5.0) {
-      throw Exception('Rating must be between 1.0 and 5.0');
-    }
-    
-    if (review.title.isEmpty || review.comment.isEmpty) {
-      throw Exception('Title and comment are required');
-    }
-    
-    // Add review
-    _reviews.add(review);
-    
-    // Update model rating
-    final modelIndex = _availableModels.indexWhere((m) => m.id == review.modelId);
-    if (modelIndex != -1) {
-      final model = _availableModels[modelIndex];
-      final newRating = (_reviews
-          .where((r) => r.modelId == review.modelId)
-          .map((r) => r.rating)
-          .reduce((a, b) => a + b)) / _reviews.where((r) => r.modelId == review.modelId).length;
-      
-      final updatedModel = model.copyWith(
-        rating: newRating,
-        reviewCount: model.reviewCount + 1,
-      );
-      
-      _availableModels[modelIndex] = updatedModel;
-      _modelController.add(updatedModel);
-    }
-    
-    print('✅ Review added successfully');
-  }
+  /// Get streams for real-time updates
+  Stream<List<AIModel>> get modelsStream => _modelsController.stream;
+  Stream<AIModelPerformance> get performanceStream => _performanceController.stream;
 
-  /// Get model analytics
-  Map<String, dynamic> getModelAnalytics(String modelId) {
-    final model = getModel(modelId);
-    if (model == null) {
-      throw Exception('Model not found: $modelId');
-    }
-    
-    final modelReviews = getModelReviews(modelId);
-    final averageRating = modelReviews.isNotEmpty 
-        ? modelReviews.map((r) => r.rating).reduce((a, b) => a + b) / modelReviews.length
-        : 0.0;
-    
-    final ratingDistribution = <String, int>{
-      '5_star': modelReviews.where((r) => r.rating == 5.0).length,
-      '4_star': modelReviews.where((r) => r.rating >= 4.0 && r.rating < 5.0).length,
-      '3_star': modelReviews.where((r) => r.rating >= 3.0 && r.rating < 4.0).length,
-      '2_star': modelReviews.where((r) => r.rating >= 2.0 && r.rating < 3.0).length,
-      '1_star': modelReviews.where((r) => r.rating >= 1.0 && r.rating < 2.0).length,
-    };
-    
-    final recentReviews = modelReviews
-        .where((r) => r.isRecent)
-        .take(5)
-        .map((r) => r.summary)
-        .toList();
-    
-    return {
-      'model_id': modelId,
-      'model_name': model.name,
-      'total_reviews': modelReviews.length,
-      'average_rating': averageRating.toStringAsFixed(2),
-      'rating_distribution': ratingDistribution,
-      'recent_reviews': recentReviews,
-      'download_trend': 'increasing',
-      'performance_metrics': model.performance.summary,
-      'market_position': _getMarketPosition(model),
-    };
-  }
-
-  /// Get market position
-  String _getMarketPosition(MarketplaceModel model) {
-    final similarModels = _availableModels
-        .where((m) => m.category == model.category)
-        .toList();
-    
-    if (similarModels.isEmpty) return 'unique';
-    
-    final sortedModels = List<MarketplaceModel>.from(similarModels)
-      ..sort((a, b) => b.performance.performanceScore.compareTo(a.performance.performanceScore));
-    
-    final position = sortedModels.indexWhere((m) => m.id == model.id) + 1;
-    final total = sortedModels.length;
-    
-    if (position <= total * 0.2) return 'leader';
-    if (position <= total * 0.4) return 'strong';
-    if (position <= total * 0.6) return 'average';
-    if (position <= total * 0.8) return 'below_average';
-    return 'needs_improvement';
-  }
-
-  /// Clean up resources
+  /// Dispose resources
   void dispose() {
-    _modelController.close();
-    _installedModelController.close();
-    _marketplaceLogController.close();
+    _modelsController.close();
+    _performanceController.close();
   }
 }

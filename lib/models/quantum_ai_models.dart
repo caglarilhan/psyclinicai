@@ -2,9 +2,102 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'quantum_ai_models.g.dart';
 
-/// Quantum AI Models for PsyClinicAI
-/// Provides cutting-edge quantum computing integration for healthcare AI
+/// Quantum Computing Type - Kuantum hesaplama türleri
+enum QuantumComputingType {
+  @JsonValue('superposition') superposition,     // Süperpozisyon
+  @JsonValue('entanglement') entanglement,       // Dolanıklık
+  @JsonValue('interference') interference,       // Girişim
+  @JsonValue('tunneling') tunneling,             // Tünelleme
+  @JsonValue('coherence') coherence,             // Tutarlılık
+}
 
+/// Quantum Algorithm Type - Kuantum algoritma türleri
+enum QuantumAlgorithmType {
+  @JsonValue('grover') grover,                   // Grover Arama Algoritması
+  @JsonValue('shor') shor,                       // Shor Faktörizasyon
+  @JsonValue('quantum_fourier') quantum_fourier, // Kuantum Fourier Dönüşümü
+  @JsonValue('quantum_ml') quantum_ml,           // Kuantum Machine Learning
+  @JsonValue('quantum_annealing') quantum_annealing, // Kuantum Tavlama
+  @JsonValue('vqe') vqe,                         // Variational Quantum Eigensolver
+  @JsonValue('qaoa') qaoa,                       // Quantum Approximate Optimization
+}
+
+/// Quantum Hardware Type - Kuantum donanım türleri
+enum QuantumHardwareType {
+  @JsonValue('superconducting') superconducting, // Süperiletken kubitler
+  @JsonValue('trapped_ion') trapped_ion,         // Yakalanmış iyonlar
+  @JsonValue('photonic') photonic,               // Fotonik kubitler
+  @JsonValue('topological') topological,         // Topolojik kubitler
+  @JsonValue('silicon') silicon,                 // Silikon kubitler
+  @JsonValue('nitrogen_vacancy') nitrogen_vacancy, // Azot boşluğu
+}
+
+/// Quantum State - Kuantum durumu
+enum QuantumState {
+  @JsonValue('ground') ground,                   // Temel durum
+  @JsonValue('excited') excited,                 // Uyarılmış durum
+  @JsonValue('superposition') superposition,     // Süperpozisyon
+  @JsonValue('entangled') entangled,             // Dolanık durum
+  @JsonValue('mixed') mixed,                     // Karışık durum
+}
+
+/// Quantum Error Correction - Kuantum hata düzeltme
+enum QuantumErrorCorrection {
+  @JsonValue('surface_code') surface_code,       // Yüzey kodu
+  @JsonValue('stabilizer_code') stabilizer_code, // Stabilizatör kodu
+  @JsonValue('color_code') color_code,           // Renk kodu
+  @JsonValue('steane_code') steane_code,         // Steane kodu
+  @JsonValue('shor_code') shor_code,             // Shor kodu
+}
+
+/// Quantum AI Model - Kuantum AI modeli
+@JsonSerializable()
+class QuantumAIModel {
+  final String id;
+  final String name;
+  final String description;
+  final QuantumAlgorithmType algorithmType;
+  final QuantumHardwareType hardwareType;
+  final int qubitCount;
+  final double coherenceTime; // microseconds
+  final double gateFidelity;
+  final double errorRate;
+  final Map<String, dynamic> parameters;
+  final Map<String, dynamic> performance;
+  final bool isTrained;
+  final bool isDeployed;
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
+
+  const QuantumAIModel({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.algorithmType,
+    required this.hardwareType,
+    required this.qubitCount,
+    required this.coherenceTime,
+    required this.gateFidelity,
+    required this.errorRate,
+    required this.parameters,
+    required this.performance,
+    required this.isTrained,
+    required this.isDeployed,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.metadata,
+  });
+
+  factory QuantumAIModel.fromJson(Map<String, dynamic> json) =>
+      _$QuantumAIModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuantumAIModelToJson(this);
+}
+
+/// Quantum Circuit - Kuantum devre
 @JsonSerializable()
 class QuantumCircuit {
   final String id;
@@ -13,13 +106,13 @@ class QuantumCircuit {
   final int qubitCount;
   final int depth;
   final List<QuantumGate> gates;
-  final QuantumCircuitType type;
   final Map<String, dynamic> parameters;
-  final DateTime createdAt;
-  final DateTime lastModified;
+  final QuantumState initialState;
+  final QuantumState targetState;
+  final Map<String, dynamic> metadata;
   final String createdBy;
-  final QuantumCircuitStatus status;
-  final Map<String, double> performanceMetrics;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const QuantumCircuit({
     required this.id,
@@ -28,54 +121,31 @@ class QuantumCircuit {
     required this.qubitCount,
     required this.depth,
     required this.gates,
-    required this.type,
     required this.parameters,
-    required this.createdAt,
-    required this.lastModified,
+    required this.initialState,
+    required this.targetState,
+    required this.metadata,
     required this.createdBy,
-    required this.status,
-    required this.performanceMetrics,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  factory QuantumCircuit.fromJson(Map<String, dynamic> json) => _$QuantumCircuitFromJson(json);
+  factory QuantumCircuit.fromJson(Map<String, dynamic> json) =>
+      _$QuantumCircuitFromJson(json);
+
   Map<String, dynamic> toJson() => _$QuantumCircuitToJson(this);
-
-  bool get isOptimized => performanceMetrics['fidelity'] != null && performanceMetrics['fidelity']! > 0.95;
-  bool get isProductionReady => status == QuantumCircuitStatus.production;
-  double get estimatedRuntime => (qubitCount * depth * 0.001); // Estimated runtime in seconds
 }
 
-enum QuantumCircuitType { 
-  variational, 
-  quantumFourier, 
-  quantumPhase, 
-  quantumAmplitude, 
-  quantumMachineLearning,
-  quantumOptimization,
-  quantumSimulation,
-  quantumErrorCorrection,
-  quantumRandomWalk,
-  quantumTeleportation
-}
-
-enum QuantumCircuitStatus { 
-  design, 
-  testing, 
-  optimization, 
-  validation, 
-  production, 
-  deprecated 
-}
-
+/// Quantum Gate - Kuantum kapı
 @JsonSerializable()
 class QuantumGate {
   final String id;
   final String name;
-  final QuantumGateType type;
+  final String type;
   final List<int> qubits;
   final Map<String, dynamic> parameters;
-  final double duration;
-  final double errorRate;
+  final double duration; // nanoseconds
+  final double fidelity;
   final Map<String, dynamic> metadata;
 
   const QuantumGate({
@@ -85,447 +155,378 @@ class QuantumGate {
     required this.qubits,
     required this.parameters,
     required this.duration,
-    required this.errorRate,
+    required this.fidelity,
     required this.metadata,
   });
 
-  factory QuantumGate.fromJson(Map<String, dynamic> json) => _$QuantumGateFromJson(json);
+  factory QuantumGate.fromJson(Map<String, dynamic> json) =>
+      _$QuantumGateFromJson(json);
+
   Map<String, dynamic> toJson() => _$QuantumGateToJson(this);
-
-  bool get isSingleQubit => qubits.length == 1;
-  bool get isMultiQubit => qubits.length > 1;
-  bool get isHighFidelity => errorRate < 0.001;
 }
 
-enum QuantumGateType { 
-  hadamard, 
-  pauliX, 
-  pauliY, 
-  pauliZ, 
-  phase, 
-  rotationX, 
-  rotationY, 
-  rotationZ, 
-  cnot, 
-  swap, 
-  toffoli, 
-  fredkin,
-  controlledPhase,
-  controlledRotation,
-  custom
-}
-
+/// Quantum Training Session - Kuantum eğitim oturumu
 @JsonSerializable()
-class QuantumProcessor {
+class QuantumTrainingSession {
+  final String id;
+  final String modelId;
+  final String name;
+  final String description;
+  final QuantumAlgorithmType algorithmType;
+  final Map<String, dynamic> hyperparameters;
+  final int iterationCount;
+  final double learningRate;
+  final double convergenceThreshold;
+  final Map<String, dynamic> trainingData;
+  final Map<String, dynamic> validationData;
+  final Map<String, dynamic> results;
+  final bool isCompleted;
+  final bool isSuccessful;
+  final String status;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final int duration; // seconds
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
+
+  const QuantumTrainingSession({
+    required this.id,
+    required this.modelId,
+    required this.name,
+    required this.description,
+    required this.algorithmType,
+    required this.hyperparameters,
+    required this.iterationCount,
+    required this.learningRate,
+    required this.convergenceThreshold,
+    required this.trainingData,
+    required this.validationData,
+    required this.results,
+    required this.isCompleted,
+    required this.isSuccessful,
+    required this.status,
+    required this.startTime,
+    this.endTime,
+    required this.duration,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.metadata,
+  });
+
+  factory QuantumTrainingSession.fromJson(Map<String, dynamic> json) =>
+      _$QuantumTrainingSessionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuantumTrainingSessionToJson(this);
+}
+
+/// Quantum Optimization Problem - Kuantum optimizasyon problemi
+@JsonSerializable()
+class QuantumOptimizationProblem {
   final String id;
   final String name;
-  final String manufacturer;
-  final QuantumProcessorType type;
+  final String description;
+  final String problemType;
+  final int variableCount;
+  final Map<String, dynamic> constraints;
+  final Map<String, dynamic> objectiveFunction;
+  final Map<String, dynamic> parameters;
+  final QuantumAlgorithmType algorithmType;
+  final Map<String, dynamic> solution;
+  final double optimalValue;
+  final bool isSolved;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
+
+  const QuantumOptimizationProblem({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.problemType,
+    required this.variableCount,
+    required this.constraints,
+    required this.objectiveFunction,
+    required this.parameters,
+    required this.algorithmType,
+    required this.solution,
+    required this.optimalValue,
+    required this.isSolved,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.metadata,
+  });
+
+  factory QuantumOptimizationProblem.fromJson(Map<String, dynamic> json) =>
+      _$QuantumOptimizationProblemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuantumOptimizationProblemToJson(this);
+}
+
+/// Quantum Encryption - Kuantum şifreleme
+@JsonSerializable()
+class QuantumEncryption {
+  final String id;
+  final String name;
+  final String description;
+  final String encryptionType;
+  final int keyLength;
+  final String keyDistributionMethod;
+  final double securityLevel;
+  final Map<String, dynamic> parameters;
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
+
+  const QuantumEncryption({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.encryptionType,
+    required this.keyLength,
+    required this.keyDistributionMethod,
+    required this.securityLevel,
+    required this.parameters,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.metadata,
+  });
+
+  factory QuantumEncryption.fromJson(Map<String, dynamic> json) =>
+      _$QuantumEncryptionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuantumEncryptionToJson(this);
+}
+
+/// Quantum Machine Learning Model - Kuantum Machine Learning modeli
+@JsonSerializable()
+class QuantumMLModel {
+  final String id;
+  final String name;
+  final String description;
+  final String modelType;
+  final QuantumAlgorithmType algorithmType;
+  final int featureCount;
+  final int outputClasses;
+  final Map<String, dynamic> architecture;
+  final Map<String, dynamic> hyperparameters;
+  final Map<String, dynamic> trainingMetrics;
+  final Map<String, dynamic> validationMetrics;
+  final bool isTrained;
+  final bool isDeployed;
+  final DateTime lastTrained;
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
+
+  const QuantumMLModel({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.modelType,
+    required this.algorithmType,
+    required this.featureCount,
+    required this.outputClasses,
+    required this.architecture,
+    required this.hyperparameters,
+    required this.trainingMetrics,
+    required this.validationMetrics,
+    required this.isTrained,
+    required this.isDeployed,
+    required this.lastTrained,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.metadata,
+  });
+
+  factory QuantumMLModel.fromJson(Map<String, dynamic> json) =>
+      _$QuantumMLModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuantumMLModelToJson(this);
+}
+
+/// Quantum Hardware Configuration - Kuantum donanım konfigürasyonu
+@JsonSerializable()
+class QuantumHardwareConfig {
+  final String id;
+  final String name;
+  final String description;
+  final QuantumHardwareType hardwareType;
   final int qubitCount;
-  final int maxQubits;
   final double coherenceTime;
   final double gateFidelity;
-  final double readoutFidelity;
-  final List<String> supportedGates;
+  final double errorRate;
   final Map<String, dynamic> specifications;
-  final QuantumProcessorStatus status;
+  final Map<String, dynamic> calibration;
+  final bool isOnline;
+  final bool isCalibrated;
   final DateTime lastCalibration;
-  final Map<String, double> performanceMetrics;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> metadata;
 
-  const QuantumProcessor({
+  const QuantumHardwareConfig({
     required this.id,
     required this.name,
-    required this.manufacturer,
-    required this.type,
+    required this.description,
+    required this.hardwareType,
     required this.qubitCount,
-    required this.maxQubits,
     required this.coherenceTime,
     required this.gateFidelity,
-    required this.readoutFidelity,
-    required this.supportedGates,
+    required this.errorRate,
     required this.specifications,
-    required this.status,
+    required this.calibration,
+    required this.isOnline,
+    required this.isCalibrated,
     required this.lastCalibration,
-    required this.performanceMetrics,
-  });
-
-  factory QuantumProcessor.fromJson(Map<String, dynamic> json) => _$QuantumProcessorFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumProcessorToJson(this);
-
-  bool get isAvailable => status == QuantumProcessorStatus.available;
-  bool get needsCalibration => DateTime.now().difference(lastCalibration).inDays > 7;
-  double get quantumVolume => qubitCount * (gateFidelity * readoutFidelity);
-  bool get isHighPerformance => quantumVolume > 100;
-}
-
-enum QuantumProcessorType { 
-  superconducting, 
-  trappedIon, 
-  topological, 
-  photonic, 
-  neutralAtom, 
-  silicon, 
-  diamondNV, 
-  hybrid 
-}
-
-enum QuantumProcessorStatus { 
-  offline, 
-  maintenance, 
-  available, 
-  busy, 
-  error, 
-  calibrating 
-}
-
-@JsonSerializable()
-class QuantumAlgorithm {
-  final String id;
-  final String name;
-  final String description;
-  final QuantumAlgorithmType type;
-  final List<String> applications;
-  final int complexityClass;
-  final Map<String, dynamic> parameters;
-  final List<QuantumCircuit> circuits;
-  final Map<String, double> performanceMetrics;
-  final DateTime createdAt;
-  final String createdBy;
-  final QuantumAlgorithmStatus status;
-  final List<String> references;
-  final Map<String, dynamic> metadata;
-
-  const QuantumAlgorithm({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.type,
-    required this.applications,
-    required this.complexityClass,
-    required this.parameters,
-    required this.circuits,
-    required this.performanceMetrics,
     required this.createdAt,
-    required this.createdBy,
-    required this.status,
-    required this.references,
+    required this.updatedAt,
     required this.metadata,
   });
 
-  factory QuantumAlgorithm.fromJson(Map<String, dynamic> json) => _$QuantumAlgorithmFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumAlgorithmToJson(this);
+  factory QuantumHardwareConfig.fromJson(Map<String, dynamic> json) =>
+      _$QuantumHardwareConfigFromJson(json);
 
-  bool get isQuantumSupremacy => complexityClass == 1;
-  bool get isHybrid => type == QuantumAlgorithmType.hybrid;
-  double get successRate => performanceMetrics['success_rate'] ?? 0.0;
-  bool get isProductionReady => status == QuantumAlgorithmStatus.production;
+  Map<String, dynamic> toJson() => _$QuantumHardwareConfigToJson(this);
 }
 
-enum QuantumAlgorithmType { 
-  quantumMachineLearning, 
-  quantumOptimization, 
-  quantumSimulation, 
-  quantumCryptography, 
-  quantumErrorCorrection,
-  quantumChemistry,
-  quantumFinance,
-  quantumLogistics,
-  hybrid,
-  custom
-}
-
-enum QuantumAlgorithmStatus { 
-  research, 
-  development, 
-  testing, 
-  validation, 
-  production, 
-  deprecated 
-}
-
+/// Quantum Error Correction Code - Kuantum hata düzeltme kodu
 @JsonSerializable()
-class QuantumJob {
+class QuantumErrorCorrectionCode {
   final String id;
   final String name;
   final String description;
-  final QuantumJobType type;
-  final String algorithmId;
-  final String processorId;
+  final QuantumErrorCorrection codeType;
+  final int logicalQubits;
+  final int physicalQubits;
+  final int distance;
+  final double errorThreshold;
   final Map<String, dynamic> parameters;
-  final QuantumJobStatus status;
-  final DateTime submittedAt;
-  final DateTime? startedAt;
-  final DateTime? completedAt;
-  final DateTime? failedAt;
-  final Map<String, dynamic> results;
-  final Map<String, double> metrics;
-  final List<String> logs;
-  final String submittedBy;
-  final int priority;
+  final bool isImplemented;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final Map<String, dynamic> metadata;
 
-  const QuantumJob({
+  const QuantumErrorCorrectionCode({
     required this.id,
     required this.name,
     required this.description,
-    required this.type,
-    required this.algorithmId,
-    required this.processorId,
+    required this.codeType,
+    required this.logicalQubits,
+    required this.physicalQubits,
+    required this.distance,
+    required this.errorThreshold,
     required this.parameters,
-    required this.status,
-    required this.submittedAt,
-    this.startedAt,
-    this.completedAt,
-    this.failedAt,
-    required this.results,
-    required this.metrics,
-    required this.logs,
-    required this.submittedBy,
-    required this.priority,
+    required this.isImplemented,
+    required this.createdAt,
+    required this.updatedAt,
     required this.metadata,
   });
 
-  factory QuantumJob.fromJson(Map<String, dynamic> json) => _$QuantumJobFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumJobToJson(this);
+  factory QuantumErrorCorrectionCode.fromJson(Map<String, dynamic> json) =>
+      _$QuantumErrorCorrectionCodeFromJson(json);
 
-  bool get isCompleted => status == QuantumJobStatus.completed;
-  bool get isFailed => status == QuantumJobStatus.failed;
-  bool get isRunning => status == QuantumJobStatus.running;
-  Duration get runtime {
-    if (startedAt == null || completedAt == null) return Duration.zero;
-    return completedAt!.difference(startedAt!);
-  }
-  double get successRate => metrics['success_rate'] ?? 0.0;
+  Map<String, dynamic> toJson() => _$QuantumErrorCorrectionCodeToJson(this);
 }
 
-enum QuantumJobType { 
-  training, 
-  inference, 
-  optimization, 
-  simulation, 
-  analysis, 
-  research 
-}
-
-enum QuantumJobStatus { 
-  queued, 
-  running, 
-  completed, 
-  failed, 
-  cancelled, 
-  paused 
-}
-
+/// Quantum Simulation Result - Kuantum simülasyon sonucu
 @JsonSerializable()
-class QuantumModel {
+class QuantumSimulationResult {
   final String id;
+  final String simulationId;
   final String name;
   final String description;
-  final QuantumModelType type;
-  final String algorithmId;
-  final Map<String, dynamic> hyperparameters;
-  final Map<String, dynamic> weights;
-  final Map<String, double> performanceMetrics;
-  final DateTime trainedAt;
-  final String trainedBy;
-  final QuantumModelStatus status;
-  final List<String> supportedTasks;
+  final Map<String, dynamic> inputParameters;
+  final Map<String, dynamic> outputResults;
+  final double executionTime;
+  final int iterationCount;
+  final double accuracy;
+  final bool isSuccessful;
+  final String status;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final Map<String, dynamic> metadata;
-  final int version;
-  final String parentModelId;
 
-  const QuantumModel({
+  const QuantumSimulationResult({
     required this.id,
+    required this.simulationId,
     required this.name,
     required this.description,
-    required this.type,
-    required this.algorithmId,
-    required this.hyperparameters,
-    required this.weights,
-    required this.performanceMetrics,
-    required this.trainedAt,
-    required this.trainedBy,
+    required this.inputParameters,
+    required this.outputResults,
+    required this.executionTime,
+    required this.iterationCount,
+    required this.accuracy,
+    required this.isSuccessful,
     required this.status,
-    required this.supportedTasks,
+    required this.startTime,
+    required this.endTime,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
     required this.metadata,
-    required this.version,
-    required this.parentModelId,
   });
 
-  factory QuantumModel.fromJson(Map<String, dynamic> json) => _$QuantumModelFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumModelToJson(this);
+  factory QuantumSimulationResult.fromJson(Map<String, dynamic> json) =>
+      _$QuantumSimulationResultFromJson(json);
 
-  bool get isProductionReady => status == QuantumModelStatus.production;
-  bool get isLatestVersion => version > 0;
-  double get accuracy => performanceMetrics['accuracy'] ?? 0.0;
-  bool get isQuantumEnhanced => type == QuantumModelType.quantumEnhanced;
+  Map<String, dynamic> toJson() => _$QuantumSimulationResultToJson(this);
 }
 
-enum QuantumModelType { 
-  classical, 
-  quantum, 
-  quantumEnhanced, 
-  hybrid, 
-  ensemble 
-}
-
-enum QuantumModelStatus { 
-  training, 
-  testing, 
-  validation, 
-  production, 
-  deprecated 
-}
-
+/// Quantum Research Project - Kuantum araştırma projesi
 @JsonSerializable()
-class QuantumExperiment {
+class QuantumResearchProject {
   final String id;
   final String name;
   final String description;
-  final String hypothesis;
-  final List<String> objectives;
-  final Map<String, dynamic> parameters;
-  final List<QuantumJob> jobs;
-  final QuantumExperimentStatus status;
+  final String researchArea;
+  final List<String> researchers;
+  final List<String> collaborators;
+  final Map<String, dynamic> objectives;
+  final Map<String, dynamic> methodology;
+  final Map<String, dynamic> results;
+  final String status;
   final DateTime startDate;
   final DateTime? endDate;
-  final String researcherId;
-  final List<String> collaborators;
-  final Map<String, dynamic> results;
-  final Map<String, double> metrics;
-  final List<String> conclusions;
+  final double budget;
+  final String fundingSource;
+  final List<String> publications;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   final Map<String, dynamic> metadata;
 
-  const QuantumExperiment({
+  const QuantumResearchProject({
     required this.id,
     required this.name,
     required this.description,
-    required this.hypothesis,
+    required this.researchArea,
+    required this.researchers,
+    required this.collaborators,
     required this.objectives,
-    required this.parameters,
-    required this.jobs,
+    required this.methodology,
+    required this.results,
     required this.status,
     required this.startDate,
     this.endDate,
-    required this.researcherId,
-    required this.collaborators,
-    required this.results,
-    required this.metrics,
-    required this.conclusions,
+    required this.budget,
+    required this.fundingSource,
+    required this.publications,
+    required this.createdAt,
+    required this.updatedAt,
     required this.metadata,
   });
 
-  factory QuantumExperiment.fromJson(Map<String, dynamic> json) => _$QuantumExperimentFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumExperimentToJson(this);
+  factory QuantumResearchProject.fromJson(Map<String, dynamic> json) =>
+      _$QuantumResearchProjectFromJson(json);
 
-  bool get isCompleted => status == QuantumExperimentStatus.completed;
-  bool get isActive => status == QuantumExperimentStatus.active;
-  Duration get duration {
-    if (endDate == null) return DateTime.now().difference(startDate);
-    return endDate!.difference(startDate);
-  }
-  int get totalJobs => jobs.length;
-  int get completedJobs => jobs.where((job) => job.isCompleted).length;
-  double get completionRate => totalJobs > 0 ? completedJobs / totalJobs : 0.0;
-}
-
-enum QuantumExperimentStatus { 
-  planning, 
-  active, 
-  paused, 
-  completed, 
-  cancelled, 
-  failed 
-}
-
-@JsonSerializable()
-class QuantumResource {
-  final String id;
-  final String name;
-  final QuantumResourceType type;
-  final String location;
-  final Map<String, dynamic> specifications;
-  final QuantumResourceStatus status;
-  final DateTime lastMaintenance;
-  final Map<String, double> utilizationMetrics;
-  final List<String> supportedOperations;
-  final Map<String, dynamic> metadata;
-
-  const QuantumResource({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.location,
-    required this.specifications,
-    required this.status,
-    required this.lastMaintenance,
-    required this.utilizationMetrics,
-    required this.supportedOperations,
-    required this.metadata,
-  });
-
-  factory QuantumResource.fromJson(Map<String, dynamic> json) => _$QuantumResourceFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumResourceToJson(this);
-
-  bool get isAvailable => status == QuantumResourceStatus.available;
-  bool get needsMaintenance => DateTime.now().difference(lastMaintenance).inDays > 30;
-  double get utilizationRate => utilizationMetrics['utilization_rate'] ?? 0.0;
-  bool get isOverutilized => utilizationRate > 0.9;
-}
-
-enum QuantumResourceType { 
-  processor, 
-  memory, 
-  network, 
-  storage, 
-  cooling, 
-  power, 
-  control, 
-  measurement 
-}
-
-enum QuantumResourceStatus { 
-  offline, 
-  available, 
-  busy, 
-  maintenance, 
-  error, 
-  reserved 
-}
-
-@JsonSerializable()
-class QuantumPerformanceReport {
-  final String id;
-  final DateTime generatedAt;
-  final String generatedBy;
-  final Map<String, QuantumProcessor> processors;
-  final Map<String, QuantumAlgorithm> algorithms;
-  final Map<String, QuantumModel> models;
-  final Map<String, QuantumJob> recentJobs;
-  final Map<String, double> systemMetrics;
-  final List<String> recommendations;
-  final Map<String, dynamic> metadata;
-
-  const QuantumPerformanceReport({
-    required this.id,
-    required this.generatedAt,
-    required this.generatedBy,
-    required this.processors,
-    required this.algorithms,
-    required this.models,
-    required this.recentJobs,
-    required this.systemMetrics,
-    required this.recommendations,
-    required this.metadata,
-  });
-
-  factory QuantumPerformanceReport.fromJson(Map<String, dynamic> json) => _$QuantumPerformanceReportFromJson(json);
-  Map<String, dynamic> toJson() => _$QuantumPerformanceReportToJson(this);
-
-  int get totalProcessors => processors.length;
-  int get totalAlgorithms => algorithms.length;
-  int get totalModels => models.length;
-  int get totalJobs => recentJobs.length;
-  double get overallSystemHealth => systemMetrics['system_health'] ?? 0.0;
-  bool get systemNeedsAttention => overallSystemHealth < 0.7;
+  Map<String, dynamic> toJson() => _$QuantumResearchProjectToJson(this);
 }

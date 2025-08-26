@@ -6,6 +6,73 @@ part of 'quantum_ai_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+QuantumAIModel _$QuantumAIModelFromJson(Map<String, dynamic> json) =>
+    QuantumAIModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      algorithmType: $enumDecode(
+        _$QuantumAlgorithmTypeEnumMap,
+        json['algorithmType'],
+      ),
+      hardwareType: $enumDecode(
+        _$QuantumHardwareTypeEnumMap,
+        json['hardwareType'],
+      ),
+      qubitCount: (json['qubitCount'] as num).toInt(),
+      coherenceTime: (json['coherenceTime'] as num).toDouble(),
+      gateFidelity: (json['gateFidelity'] as num).toDouble(),
+      errorRate: (json['errorRate'] as num).toDouble(),
+      parameters: json['parameters'] as Map<String, dynamic>,
+      performance: json['performance'] as Map<String, dynamic>,
+      isTrained: json['isTrained'] as bool,
+      isDeployed: json['isDeployed'] as bool,
+      createdBy: json['createdBy'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      metadata: json['metadata'] as Map<String, dynamic>,
+    );
+
+Map<String, dynamic> _$QuantumAIModelToJson(QuantumAIModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'algorithmType': _$QuantumAlgorithmTypeEnumMap[instance.algorithmType]!,
+      'hardwareType': _$QuantumHardwareTypeEnumMap[instance.hardwareType]!,
+      'qubitCount': instance.qubitCount,
+      'coherenceTime': instance.coherenceTime,
+      'gateFidelity': instance.gateFidelity,
+      'errorRate': instance.errorRate,
+      'parameters': instance.parameters,
+      'performance': instance.performance,
+      'isTrained': instance.isTrained,
+      'isDeployed': instance.isDeployed,
+      'createdBy': instance.createdBy,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'metadata': instance.metadata,
+    };
+
+const _$QuantumAlgorithmTypeEnumMap = {
+  QuantumAlgorithmType.grover: 'grover',
+  QuantumAlgorithmType.shor: 'shor',
+  QuantumAlgorithmType.quantum_fourier: 'quantum_fourier',
+  QuantumAlgorithmType.quantum_ml: 'quantum_ml',
+  QuantumAlgorithmType.quantum_annealing: 'quantum_annealing',
+  QuantumAlgorithmType.vqe: 'vqe',
+  QuantumAlgorithmType.qaoa: 'qaoa',
+};
+
+const _$QuantumHardwareTypeEnumMap = {
+  QuantumHardwareType.superconducting: 'superconducting',
+  QuantumHardwareType.trapped_ion: 'trapped_ion',
+  QuantumHardwareType.photonic: 'photonic',
+  QuantumHardwareType.topological: 'topological',
+  QuantumHardwareType.silicon: 'silicon',
+  QuantumHardwareType.nitrogen_vacancy: 'nitrogen_vacancy',
+};
+
 QuantumCircuit _$QuantumCircuitFromJson(Map<String, dynamic> json) =>
     QuantumCircuit(
       id: json['id'] as String,
@@ -16,14 +83,13 @@ QuantumCircuit _$QuantumCircuitFromJson(Map<String, dynamic> json) =>
       gates: (json['gates'] as List<dynamic>)
           .map((e) => QuantumGate.fromJson(e as Map<String, dynamic>))
           .toList(),
-      type: $enumDecode(_$QuantumCircuitTypeEnumMap, json['type']),
       parameters: json['parameters'] as Map<String, dynamic>,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      lastModified: DateTime.parse(json['lastModified'] as String),
+      initialState: $enumDecode(_$QuantumStateEnumMap, json['initialState']),
+      targetState: $enumDecode(_$QuantumStateEnumMap, json['targetState']),
+      metadata: json['metadata'] as Map<String, dynamic>,
       createdBy: json['createdBy'] as String,
-      status: $enumDecode(_$QuantumCircuitStatusEnumMap, json['status']),
-      performanceMetrics: (json['performanceMetrics'] as Map<String, dynamic>)
-          .map((k, e) => MapEntry(k, (e as num).toDouble())),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$QuantumCircuitToJson(QuantumCircuit instance) =>
@@ -34,47 +100,33 @@ Map<String, dynamic> _$QuantumCircuitToJson(QuantumCircuit instance) =>
       'qubitCount': instance.qubitCount,
       'depth': instance.depth,
       'gates': instance.gates,
-      'type': _$QuantumCircuitTypeEnumMap[instance.type]!,
       'parameters': instance.parameters,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'lastModified': instance.lastModified.toIso8601String(),
+      'initialState': _$QuantumStateEnumMap[instance.initialState]!,
+      'targetState': _$QuantumStateEnumMap[instance.targetState]!,
+      'metadata': instance.metadata,
       'createdBy': instance.createdBy,
-      'status': _$QuantumCircuitStatusEnumMap[instance.status]!,
-      'performanceMetrics': instance.performanceMetrics,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
     };
 
-const _$QuantumCircuitTypeEnumMap = {
-  QuantumCircuitType.variational: 'variational',
-  QuantumCircuitType.quantumFourier: 'quantumFourier',
-  QuantumCircuitType.quantumPhase: 'quantumPhase',
-  QuantumCircuitType.quantumAmplitude: 'quantumAmplitude',
-  QuantumCircuitType.quantumMachineLearning: 'quantumMachineLearning',
-  QuantumCircuitType.quantumOptimization: 'quantumOptimization',
-  QuantumCircuitType.quantumSimulation: 'quantumSimulation',
-  QuantumCircuitType.quantumErrorCorrection: 'quantumErrorCorrection',
-  QuantumCircuitType.quantumRandomWalk: 'quantumRandomWalk',
-  QuantumCircuitType.quantumTeleportation: 'quantumTeleportation',
-};
-
-const _$QuantumCircuitStatusEnumMap = {
-  QuantumCircuitStatus.design: 'design',
-  QuantumCircuitStatus.testing: 'testing',
-  QuantumCircuitStatus.optimization: 'optimization',
-  QuantumCircuitStatus.validation: 'validation',
-  QuantumCircuitStatus.production: 'production',
-  QuantumCircuitStatus.deprecated: 'deprecated',
+const _$QuantumStateEnumMap = {
+  QuantumState.ground: 'ground',
+  QuantumState.excited: 'excited',
+  QuantumState.superposition: 'superposition',
+  QuantumState.entangled: 'entangled',
+  QuantumState.mixed: 'mixed',
 };
 
 QuantumGate _$QuantumGateFromJson(Map<String, dynamic> json) => QuantumGate(
   id: json['id'] as String,
   name: json['name'] as String,
-  type: $enumDecode(_$QuantumGateTypeEnumMap, json['type']),
+  type: json['type'] as String,
   qubits: (json['qubits'] as List<dynamic>)
       .map((e) => (e as num).toInt())
       .toList(),
   parameters: json['parameters'] as Map<String, dynamic>,
   duration: (json['duration'] as num).toDouble(),
-  errorRate: (json['errorRate'] as num).toDouble(),
+  fidelity: (json['fidelity'] as num).toDouble(),
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
@@ -82,432 +134,375 @@ Map<String, dynamic> _$QuantumGateToJson(QuantumGate instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'type': _$QuantumGateTypeEnumMap[instance.type]!,
+      'type': instance.type,
       'qubits': instance.qubits,
       'parameters': instance.parameters,
       'duration': instance.duration,
-      'errorRate': instance.errorRate,
+      'fidelity': instance.fidelity,
       'metadata': instance.metadata,
     };
 
-const _$QuantumGateTypeEnumMap = {
-  QuantumGateType.hadamard: 'hadamard',
-  QuantumGateType.pauliX: 'pauliX',
-  QuantumGateType.pauliY: 'pauliY',
-  QuantumGateType.pauliZ: 'pauliZ',
-  QuantumGateType.phase: 'phase',
-  QuantumGateType.rotationX: 'rotationX',
-  QuantumGateType.rotationY: 'rotationY',
-  QuantumGateType.rotationZ: 'rotationZ',
-  QuantumGateType.cnot: 'cnot',
-  QuantumGateType.swap: 'swap',
-  QuantumGateType.toffoli: 'toffoli',
-  QuantumGateType.fredkin: 'fredkin',
-  QuantumGateType.controlledPhase: 'controlledPhase',
-  QuantumGateType.controlledRotation: 'controlledRotation',
-  QuantumGateType.custom: 'custom',
-};
-
-QuantumProcessor _$QuantumProcessorFromJson(Map<String, dynamic> json) =>
-    QuantumProcessor(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      manufacturer: json['manufacturer'] as String,
-      type: $enumDecode(_$QuantumProcessorTypeEnumMap, json['type']),
-      qubitCount: (json['qubitCount'] as num).toInt(),
-      maxQubits: (json['maxQubits'] as num).toInt(),
-      coherenceTime: (json['coherenceTime'] as num).toDouble(),
-      gateFidelity: (json['gateFidelity'] as num).toDouble(),
-      readoutFidelity: (json['readoutFidelity'] as num).toDouble(),
-      supportedGates: (json['supportedGates'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      specifications: json['specifications'] as Map<String, dynamic>,
-      status: $enumDecode(_$QuantumProcessorStatusEnumMap, json['status']),
-      lastCalibration: DateTime.parse(json['lastCalibration'] as String),
-      performanceMetrics: (json['performanceMetrics'] as Map<String, dynamic>)
-          .map((k, e) => MapEntry(k, (e as num).toDouble())),
-    );
-
-Map<String, dynamic> _$QuantumProcessorToJson(QuantumProcessor instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'manufacturer': instance.manufacturer,
-      'type': _$QuantumProcessorTypeEnumMap[instance.type]!,
-      'qubitCount': instance.qubitCount,
-      'maxQubits': instance.maxQubits,
-      'coherenceTime': instance.coherenceTime,
-      'gateFidelity': instance.gateFidelity,
-      'readoutFidelity': instance.readoutFidelity,
-      'supportedGates': instance.supportedGates,
-      'specifications': instance.specifications,
-      'status': _$QuantumProcessorStatusEnumMap[instance.status]!,
-      'lastCalibration': instance.lastCalibration.toIso8601String(),
-      'performanceMetrics': instance.performanceMetrics,
-    };
-
-const _$QuantumProcessorTypeEnumMap = {
-  QuantumProcessorType.superconducting: 'superconducting',
-  QuantumProcessorType.trappedIon: 'trappedIon',
-  QuantumProcessorType.topological: 'topological',
-  QuantumProcessorType.photonic: 'photonic',
-  QuantumProcessorType.neutralAtom: 'neutralAtom',
-  QuantumProcessorType.silicon: 'silicon',
-  QuantumProcessorType.diamondNV: 'diamondNV',
-  QuantumProcessorType.hybrid: 'hybrid',
-};
-
-const _$QuantumProcessorStatusEnumMap = {
-  QuantumProcessorStatus.offline: 'offline',
-  QuantumProcessorStatus.maintenance: 'maintenance',
-  QuantumProcessorStatus.available: 'available',
-  QuantumProcessorStatus.busy: 'busy',
-  QuantumProcessorStatus.error: 'error',
-  QuantumProcessorStatus.calibrating: 'calibrating',
-};
-
-QuantumAlgorithm _$QuantumAlgorithmFromJson(Map<String, dynamic> json) =>
-    QuantumAlgorithm(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      type: $enumDecode(_$QuantumAlgorithmTypeEnumMap, json['type']),
-      applications: (json['applications'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      complexityClass: (json['complexityClass'] as num).toInt(),
-      parameters: json['parameters'] as Map<String, dynamic>,
-      circuits: (json['circuits'] as List<dynamic>)
-          .map((e) => QuantumCircuit.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      performanceMetrics: (json['performanceMetrics'] as Map<String, dynamic>)
-          .map((k, e) => MapEntry(k, (e as num).toDouble())),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      createdBy: json['createdBy'] as String,
-      status: $enumDecode(_$QuantumAlgorithmStatusEnumMap, json['status']),
-      references: (json['references'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$QuantumAlgorithmToJson(QuantumAlgorithm instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'type': _$QuantumAlgorithmTypeEnumMap[instance.type]!,
-      'applications': instance.applications,
-      'complexityClass': instance.complexityClass,
-      'parameters': instance.parameters,
-      'circuits': instance.circuits,
-      'performanceMetrics': instance.performanceMetrics,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'createdBy': instance.createdBy,
-      'status': _$QuantumAlgorithmStatusEnumMap[instance.status]!,
-      'references': instance.references,
-      'metadata': instance.metadata,
-    };
-
-const _$QuantumAlgorithmTypeEnumMap = {
-  QuantumAlgorithmType.quantumMachineLearning: 'quantumMachineLearning',
-  QuantumAlgorithmType.quantumOptimization: 'quantumOptimization',
-  QuantumAlgorithmType.quantumSimulation: 'quantumSimulation',
-  QuantumAlgorithmType.quantumCryptography: 'quantumCryptography',
-  QuantumAlgorithmType.quantumErrorCorrection: 'quantumErrorCorrection',
-  QuantumAlgorithmType.quantumChemistry: 'quantumChemistry',
-  QuantumAlgorithmType.quantumFinance: 'quantumFinance',
-  QuantumAlgorithmType.quantumLogistics: 'quantumLogistics',
-  QuantumAlgorithmType.hybrid: 'hybrid',
-  QuantumAlgorithmType.custom: 'custom',
-};
-
-const _$QuantumAlgorithmStatusEnumMap = {
-  QuantumAlgorithmStatus.research: 'research',
-  QuantumAlgorithmStatus.development: 'development',
-  QuantumAlgorithmStatus.testing: 'testing',
-  QuantumAlgorithmStatus.validation: 'validation',
-  QuantumAlgorithmStatus.production: 'production',
-  QuantumAlgorithmStatus.deprecated: 'deprecated',
-};
-
-QuantumJob _$QuantumJobFromJson(Map<String, dynamic> json) => QuantumJob(
-  id: json['id'] as String,
-  name: json['name'] as String,
-  description: json['description'] as String,
-  type: $enumDecode(_$QuantumJobTypeEnumMap, json['type']),
-  algorithmId: json['algorithmId'] as String,
-  processorId: json['processorId'] as String,
-  parameters: json['parameters'] as Map<String, dynamic>,
-  status: $enumDecode(_$QuantumJobStatusEnumMap, json['status']),
-  submittedAt: DateTime.parse(json['submittedAt'] as String),
-  startedAt: json['startedAt'] == null
-      ? null
-      : DateTime.parse(json['startedAt'] as String),
-  completedAt: json['completedAt'] == null
-      ? null
-      : DateTime.parse(json['completedAt'] as String),
-  failedAt: json['failedAt'] == null
-      ? null
-      : DateTime.parse(json['failedAt'] as String),
-  results: json['results'] as Map<String, dynamic>,
-  metrics: (json['metrics'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, (e as num).toDouble()),
-  ),
-  logs: (json['logs'] as List<dynamic>).map((e) => e as String).toList(),
-  submittedBy: json['submittedBy'] as String,
-  priority: (json['priority'] as num).toInt(),
-  metadata: json['metadata'] as Map<String, dynamic>,
-);
-
-Map<String, dynamic> _$QuantumJobToJson(QuantumJob instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'type': _$QuantumJobTypeEnumMap[instance.type]!,
-      'algorithmId': instance.algorithmId,
-      'processorId': instance.processorId,
-      'parameters': instance.parameters,
-      'status': _$QuantumJobStatusEnumMap[instance.status]!,
-      'submittedAt': instance.submittedAt.toIso8601String(),
-      'startedAt': instance.startedAt?.toIso8601String(),
-      'completedAt': instance.completedAt?.toIso8601String(),
-      'failedAt': instance.failedAt?.toIso8601String(),
-      'results': instance.results,
-      'metrics': instance.metrics,
-      'logs': instance.logs,
-      'submittedBy': instance.submittedBy,
-      'priority': instance.priority,
-      'metadata': instance.metadata,
-    };
-
-const _$QuantumJobTypeEnumMap = {
-  QuantumJobType.training: 'training',
-  QuantumJobType.inference: 'inference',
-  QuantumJobType.optimization: 'optimization',
-  QuantumJobType.simulation: 'simulation',
-  QuantumJobType.analysis: 'analysis',
-  QuantumJobType.research: 'research',
-};
-
-const _$QuantumJobStatusEnumMap = {
-  QuantumJobStatus.queued: 'queued',
-  QuantumJobStatus.running: 'running',
-  QuantumJobStatus.completed: 'completed',
-  QuantumJobStatus.failed: 'failed',
-  QuantumJobStatus.cancelled: 'cancelled',
-  QuantumJobStatus.paused: 'paused',
-};
-
-QuantumModel _$QuantumModelFromJson(Map<String, dynamic> json) => QuantumModel(
-  id: json['id'] as String,
-  name: json['name'] as String,
-  description: json['description'] as String,
-  type: $enumDecode(_$QuantumModelTypeEnumMap, json['type']),
-  algorithmId: json['algorithmId'] as String,
-  hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
-  weights: json['weights'] as Map<String, dynamic>,
-  performanceMetrics: (json['performanceMetrics'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, (e as num).toDouble()),
-  ),
-  trainedAt: DateTime.parse(json['trainedAt'] as String),
-  trainedBy: json['trainedBy'] as String,
-  status: $enumDecode(_$QuantumModelStatusEnumMap, json['status']),
-  supportedTasks: (json['supportedTasks'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  metadata: json['metadata'] as Map<String, dynamic>,
-  version: (json['version'] as num).toInt(),
-  parentModelId: json['parentModelId'] as String,
-);
-
-Map<String, dynamic> _$QuantumModelToJson(QuantumModel instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'type': _$QuantumModelTypeEnumMap[instance.type]!,
-      'algorithmId': instance.algorithmId,
-      'hyperparameters': instance.hyperparameters,
-      'weights': instance.weights,
-      'performanceMetrics': instance.performanceMetrics,
-      'trainedAt': instance.trainedAt.toIso8601String(),
-      'trainedBy': instance.trainedBy,
-      'status': _$QuantumModelStatusEnumMap[instance.status]!,
-      'supportedTasks': instance.supportedTasks,
-      'metadata': instance.metadata,
-      'version': instance.version,
-      'parentModelId': instance.parentModelId,
-    };
-
-const _$QuantumModelTypeEnumMap = {
-  QuantumModelType.classical: 'classical',
-  QuantumModelType.quantum: 'quantum',
-  QuantumModelType.quantumEnhanced: 'quantumEnhanced',
-  QuantumModelType.hybrid: 'hybrid',
-  QuantumModelType.ensemble: 'ensemble',
-};
-
-const _$QuantumModelStatusEnumMap = {
-  QuantumModelStatus.training: 'training',
-  QuantumModelStatus.testing: 'testing',
-  QuantumModelStatus.validation: 'validation',
-  QuantumModelStatus.production: 'production',
-  QuantumModelStatus.deprecated: 'deprecated',
-};
-
-QuantumExperiment _$QuantumExperimentFromJson(Map<String, dynamic> json) =>
-    QuantumExperiment(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      hypothesis: json['hypothesis'] as String,
-      objectives: (json['objectives'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      parameters: json['parameters'] as Map<String, dynamic>,
-      jobs: (json['jobs'] as List<dynamic>)
-          .map((e) => QuantumJob.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      status: $enumDecode(_$QuantumExperimentStatusEnumMap, json['status']),
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: json['endDate'] == null
-          ? null
-          : DateTime.parse(json['endDate'] as String),
-      researcherId: json['researcherId'] as String,
-      collaborators: (json['collaborators'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      results: json['results'] as Map<String, dynamic>,
-      metrics: (json['metrics'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, (e as num).toDouble()),
-      ),
-      conclusions: (json['conclusions'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$QuantumExperimentToJson(QuantumExperiment instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'description': instance.description,
-      'hypothesis': instance.hypothesis,
-      'objectives': instance.objectives,
-      'parameters': instance.parameters,
-      'jobs': instance.jobs,
-      'status': _$QuantumExperimentStatusEnumMap[instance.status]!,
-      'startDate': instance.startDate.toIso8601String(),
-      'endDate': instance.endDate?.toIso8601String(),
-      'researcherId': instance.researcherId,
-      'collaborators': instance.collaborators,
-      'results': instance.results,
-      'metrics': instance.metrics,
-      'conclusions': instance.conclusions,
-      'metadata': instance.metadata,
-    };
-
-const _$QuantumExperimentStatusEnumMap = {
-  QuantumExperimentStatus.planning: 'planning',
-  QuantumExperimentStatus.active: 'active',
-  QuantumExperimentStatus.paused: 'paused',
-  QuantumExperimentStatus.completed: 'completed',
-  QuantumExperimentStatus.cancelled: 'cancelled',
-  QuantumExperimentStatus.failed: 'failed',
-};
-
-QuantumResource _$QuantumResourceFromJson(Map<String, dynamic> json) =>
-    QuantumResource(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      type: $enumDecode(_$QuantumResourceTypeEnumMap, json['type']),
-      location: json['location'] as String,
-      specifications: json['specifications'] as Map<String, dynamic>,
-      status: $enumDecode(_$QuantumResourceStatusEnumMap, json['status']),
-      lastMaintenance: DateTime.parse(json['lastMaintenance'] as String),
-      utilizationMetrics: (json['utilizationMetrics'] as Map<String, dynamic>)
-          .map((k, e) => MapEntry(k, (e as num).toDouble())),
-      supportedOperations: (json['supportedOperations'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      metadata: json['metadata'] as Map<String, dynamic>,
-    );
-
-Map<String, dynamic> _$QuantumResourceToJson(QuantumResource instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'type': _$QuantumResourceTypeEnumMap[instance.type]!,
-      'location': instance.location,
-      'specifications': instance.specifications,
-      'status': _$QuantumResourceStatusEnumMap[instance.status]!,
-      'lastMaintenance': instance.lastMaintenance.toIso8601String(),
-      'utilizationMetrics': instance.utilizationMetrics,
-      'supportedOperations': instance.supportedOperations,
-      'metadata': instance.metadata,
-    };
-
-const _$QuantumResourceTypeEnumMap = {
-  QuantumResourceType.processor: 'processor',
-  QuantumResourceType.memory: 'memory',
-  QuantumResourceType.network: 'network',
-  QuantumResourceType.storage: 'storage',
-  QuantumResourceType.cooling: 'cooling',
-  QuantumResourceType.power: 'power',
-  QuantumResourceType.control: 'control',
-  QuantumResourceType.measurement: 'measurement',
-};
-
-const _$QuantumResourceStatusEnumMap = {
-  QuantumResourceStatus.offline: 'offline',
-  QuantumResourceStatus.available: 'available',
-  QuantumResourceStatus.busy: 'busy',
-  QuantumResourceStatus.maintenance: 'maintenance',
-  QuantumResourceStatus.error: 'error',
-  QuantumResourceStatus.reserved: 'reserved',
-};
-
-QuantumPerformanceReport _$QuantumPerformanceReportFromJson(
+QuantumTrainingSession _$QuantumTrainingSessionFromJson(
   Map<String, dynamic> json,
-) => QuantumPerformanceReport(
+) => QuantumTrainingSession(
   id: json['id'] as String,
-  generatedAt: DateTime.parse(json['generatedAt'] as String),
-  generatedBy: json['generatedBy'] as String,
-  processors: (json['processors'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, QuantumProcessor.fromJson(e as Map<String, dynamic>)),
+  modelId: json['modelId'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  algorithmType: $enumDecode(
+    _$QuantumAlgorithmTypeEnumMap,
+    json['algorithmType'],
   ),
-  algorithms: (json['algorithms'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, QuantumAlgorithm.fromJson(e as Map<String, dynamic>)),
-  ),
-  models: (json['models'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, QuantumModel.fromJson(e as Map<String, dynamic>)),
-  ),
-  recentJobs: (json['recentJobs'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, QuantumJob.fromJson(e as Map<String, dynamic>)),
-  ),
-  systemMetrics: (json['systemMetrics'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(k, (e as num).toDouble()),
-  ),
-  recommendations: (json['recommendations'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
+  hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
+  iterationCount: (json['iterationCount'] as num).toInt(),
+  learningRate: (json['learningRate'] as num).toDouble(),
+  convergenceThreshold: (json['convergenceThreshold'] as num).toDouble(),
+  trainingData: json['trainingData'] as Map<String, dynamic>,
+  validationData: json['validationData'] as Map<String, dynamic>,
+  results: json['results'] as Map<String, dynamic>,
+  isCompleted: json['isCompleted'] as bool,
+  isSuccessful: json['isSuccessful'] as bool,
+  status: json['status'] as String,
+  startTime: DateTime.parse(json['startTime'] as String),
+  endTime: json['endTime'] == null
+      ? null
+      : DateTime.parse(json['endTime'] as String),
+  duration: (json['duration'] as num).toInt(),
+  createdBy: json['createdBy'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
-Map<String, dynamic> _$QuantumPerformanceReportToJson(
-  QuantumPerformanceReport instance,
+Map<String, dynamic> _$QuantumTrainingSessionToJson(
+  QuantumTrainingSession instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'generatedAt': instance.generatedAt.toIso8601String(),
-  'generatedBy': instance.generatedBy,
-  'processors': instance.processors,
-  'algorithms': instance.algorithms,
-  'models': instance.models,
-  'recentJobs': instance.recentJobs,
-  'systemMetrics': instance.systemMetrics,
-  'recommendations': instance.recommendations,
+  'modelId': instance.modelId,
+  'name': instance.name,
+  'description': instance.description,
+  'algorithmType': _$QuantumAlgorithmTypeEnumMap[instance.algorithmType]!,
+  'hyperparameters': instance.hyperparameters,
+  'iterationCount': instance.iterationCount,
+  'learningRate': instance.learningRate,
+  'convergenceThreshold': instance.convergenceThreshold,
+  'trainingData': instance.trainingData,
+  'validationData': instance.validationData,
+  'results': instance.results,
+  'isCompleted': instance.isCompleted,
+  'isSuccessful': instance.isSuccessful,
+  'status': instance.status,
+  'startTime': instance.startTime.toIso8601String(),
+  'endTime': instance.endTime?.toIso8601String(),
+  'duration': instance.duration,
+  'createdBy': instance.createdBy,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'metadata': instance.metadata,
+};
+
+QuantumOptimizationProblem _$QuantumOptimizationProblemFromJson(
+  Map<String, dynamic> json,
+) => QuantumOptimizationProblem(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  problemType: json['problemType'] as String,
+  variableCount: (json['variableCount'] as num).toInt(),
+  constraints: json['constraints'] as Map<String, dynamic>,
+  objectiveFunction: json['objectiveFunction'] as Map<String, dynamic>,
+  parameters: json['parameters'] as Map<String, dynamic>,
+  algorithmType: $enumDecode(
+    _$QuantumAlgorithmTypeEnumMap,
+    json['algorithmType'],
+  ),
+  solution: json['solution'] as Map<String, dynamic>,
+  optimalValue: (json['optimalValue'] as num).toDouble(),
+  isSolved: json['isSolved'] as bool,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$QuantumOptimizationProblemToJson(
+  QuantumOptimizationProblem instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'problemType': instance.problemType,
+  'variableCount': instance.variableCount,
+  'constraints': instance.constraints,
+  'objectiveFunction': instance.objectiveFunction,
+  'parameters': instance.parameters,
+  'algorithmType': _$QuantumAlgorithmTypeEnumMap[instance.algorithmType]!,
+  'solution': instance.solution,
+  'optimalValue': instance.optimalValue,
+  'isSolved': instance.isSolved,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'metadata': instance.metadata,
+};
+
+QuantumEncryption _$QuantumEncryptionFromJson(Map<String, dynamic> json) =>
+    QuantumEncryption(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      encryptionType: json['encryptionType'] as String,
+      keyLength: (json['keyLength'] as num).toInt(),
+      keyDistributionMethod: json['keyDistributionMethod'] as String,
+      securityLevel: (json['securityLevel'] as num).toDouble(),
+      parameters: json['parameters'] as Map<String, dynamic>,
+      isActive: json['isActive'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      metadata: json['metadata'] as Map<String, dynamic>,
+    );
+
+Map<String, dynamic> _$QuantumEncryptionToJson(QuantumEncryption instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'encryptionType': instance.encryptionType,
+      'keyLength': instance.keyLength,
+      'keyDistributionMethod': instance.keyDistributionMethod,
+      'securityLevel': instance.securityLevel,
+      'parameters': instance.parameters,
+      'isActive': instance.isActive,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'metadata': instance.metadata,
+    };
+
+QuantumMLModel _$QuantumMLModelFromJson(Map<String, dynamic> json) =>
+    QuantumMLModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      modelType: json['modelType'] as String,
+      algorithmType: $enumDecode(
+        _$QuantumAlgorithmTypeEnumMap,
+        json['algorithmType'],
+      ),
+      featureCount: (json['featureCount'] as num).toInt(),
+      outputClasses: (json['outputClasses'] as num).toInt(),
+      architecture: json['architecture'] as Map<String, dynamic>,
+      hyperparameters: json['hyperparameters'] as Map<String, dynamic>,
+      trainingMetrics: json['trainingMetrics'] as Map<String, dynamic>,
+      validationMetrics: json['validationMetrics'] as Map<String, dynamic>,
+      isTrained: json['isTrained'] as bool,
+      isDeployed: json['isDeployed'] as bool,
+      lastTrained: DateTime.parse(json['lastTrained'] as String),
+      createdBy: json['createdBy'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      metadata: json['metadata'] as Map<String, dynamic>,
+    );
+
+Map<String, dynamic> _$QuantumMLModelToJson(QuantumMLModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'description': instance.description,
+      'modelType': instance.modelType,
+      'algorithmType': _$QuantumAlgorithmTypeEnumMap[instance.algorithmType]!,
+      'featureCount': instance.featureCount,
+      'outputClasses': instance.outputClasses,
+      'architecture': instance.architecture,
+      'hyperparameters': instance.hyperparameters,
+      'trainingMetrics': instance.trainingMetrics,
+      'validationMetrics': instance.validationMetrics,
+      'isTrained': instance.isTrained,
+      'isDeployed': instance.isDeployed,
+      'lastTrained': instance.lastTrained.toIso8601String(),
+      'createdBy': instance.createdBy,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'updatedAt': instance.updatedAt.toIso8601String(),
+      'metadata': instance.metadata,
+    };
+
+QuantumHardwareConfig _$QuantumHardwareConfigFromJson(
+  Map<String, dynamic> json,
+) => QuantumHardwareConfig(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  hardwareType: $enumDecode(_$QuantumHardwareTypeEnumMap, json['hardwareType']),
+  qubitCount: (json['qubitCount'] as num).toInt(),
+  coherenceTime: (json['coherenceTime'] as num).toDouble(),
+  gateFidelity: (json['gateFidelity'] as num).toDouble(),
+  errorRate: (json['errorRate'] as num).toDouble(),
+  specifications: json['specifications'] as Map<String, dynamic>,
+  calibration: json['calibration'] as Map<String, dynamic>,
+  isOnline: json['isOnline'] as bool,
+  isCalibrated: json['isCalibrated'] as bool,
+  lastCalibration: DateTime.parse(json['lastCalibration'] as String),
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$QuantumHardwareConfigToJson(
+  QuantumHardwareConfig instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'hardwareType': _$QuantumHardwareTypeEnumMap[instance.hardwareType]!,
+  'qubitCount': instance.qubitCount,
+  'coherenceTime': instance.coherenceTime,
+  'gateFidelity': instance.gateFidelity,
+  'errorRate': instance.errorRate,
+  'specifications': instance.specifications,
+  'calibration': instance.calibration,
+  'isOnline': instance.isOnline,
+  'isCalibrated': instance.isCalibrated,
+  'lastCalibration': instance.lastCalibration.toIso8601String(),
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'metadata': instance.metadata,
+};
+
+QuantumErrorCorrectionCode _$QuantumErrorCorrectionCodeFromJson(
+  Map<String, dynamic> json,
+) => QuantumErrorCorrectionCode(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  codeType: $enumDecode(_$QuantumErrorCorrectionEnumMap, json['codeType']),
+  logicalQubits: (json['logicalQubits'] as num).toInt(),
+  physicalQubits: (json['physicalQubits'] as num).toInt(),
+  distance: (json['distance'] as num).toInt(),
+  errorThreshold: (json['errorThreshold'] as num).toDouble(),
+  parameters: json['parameters'] as Map<String, dynamic>,
+  isImplemented: json['isImplemented'] as bool,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$QuantumErrorCorrectionCodeToJson(
+  QuantumErrorCorrectionCode instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'codeType': _$QuantumErrorCorrectionEnumMap[instance.codeType]!,
+  'logicalQubits': instance.logicalQubits,
+  'physicalQubits': instance.physicalQubits,
+  'distance': instance.distance,
+  'errorThreshold': instance.errorThreshold,
+  'parameters': instance.parameters,
+  'isImplemented': instance.isImplemented,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'metadata': instance.metadata,
+};
+
+const _$QuantumErrorCorrectionEnumMap = {
+  QuantumErrorCorrection.surface_code: 'surface_code',
+  QuantumErrorCorrection.stabilizer_code: 'stabilizer_code',
+  QuantumErrorCorrection.color_code: 'color_code',
+  QuantumErrorCorrection.steane_code: 'steane_code',
+  QuantumErrorCorrection.shor_code: 'shor_code',
+};
+
+QuantumSimulationResult _$QuantumSimulationResultFromJson(
+  Map<String, dynamic> json,
+) => QuantumSimulationResult(
+  id: json['id'] as String,
+  simulationId: json['simulationId'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  inputParameters: json['inputParameters'] as Map<String, dynamic>,
+  outputResults: json['outputResults'] as Map<String, dynamic>,
+  executionTime: (json['executionTime'] as num).toDouble(),
+  iterationCount: (json['iterationCount'] as num).toInt(),
+  accuracy: (json['accuracy'] as num).toDouble(),
+  isSuccessful: json['isSuccessful'] as bool,
+  status: json['status'] as String,
+  startTime: DateTime.parse(json['startTime'] as String),
+  endTime: DateTime.parse(json['endTime'] as String),
+  createdBy: json['createdBy'] as String,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$QuantumSimulationResultToJson(
+  QuantumSimulationResult instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'simulationId': instance.simulationId,
+  'name': instance.name,
+  'description': instance.description,
+  'inputParameters': instance.inputParameters,
+  'outputResults': instance.outputResults,
+  'executionTime': instance.executionTime,
+  'iterationCount': instance.iterationCount,
+  'accuracy': instance.accuracy,
+  'isSuccessful': instance.isSuccessful,
+  'status': instance.status,
+  'startTime': instance.startTime.toIso8601String(),
+  'endTime': instance.endTime.toIso8601String(),
+  'createdBy': instance.createdBy,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
+  'metadata': instance.metadata,
+};
+
+QuantumResearchProject _$QuantumResearchProjectFromJson(
+  Map<String, dynamic> json,
+) => QuantumResearchProject(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String,
+  researchArea: json['researchArea'] as String,
+  researchers: (json['researchers'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  collaborators: (json['collaborators'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  objectives: json['objectives'] as Map<String, dynamic>,
+  methodology: json['methodology'] as Map<String, dynamic>,
+  results: json['results'] as Map<String, dynamic>,
+  status: json['status'] as String,
+  startDate: DateTime.parse(json['startDate'] as String),
+  endDate: json['endDate'] == null
+      ? null
+      : DateTime.parse(json['endDate'] as String),
+  budget: (json['budget'] as num).toDouble(),
+  fundingSource: json['fundingSource'] as String,
+  publications: (json['publications'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: DateTime.parse(json['updatedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$QuantumResearchProjectToJson(
+  QuantumResearchProject instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'description': instance.description,
+  'researchArea': instance.researchArea,
+  'researchers': instance.researchers,
+  'collaborators': instance.collaborators,
+  'objectives': instance.objectives,
+  'methodology': instance.methodology,
+  'results': instance.results,
+  'status': instance.status,
+  'startDate': instance.startDate.toIso8601String(),
+  'endDate': instance.endDate?.toIso8601String(),
+  'budget': instance.budget,
+  'fundingSource': instance.fundingSource,
+  'publications': instance.publications,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt.toIso8601String(),
   'metadata': instance.metadata,
 };

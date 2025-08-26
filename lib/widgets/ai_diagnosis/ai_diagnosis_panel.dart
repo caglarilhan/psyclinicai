@@ -269,6 +269,8 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
         return 'Yüksek';
       case RiskLevel.critical:
         return 'Kritik';
+      default:
+        return 'Bilinmiyor';
     }
   }
 
@@ -636,6 +638,8 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
         return Colors.red;
       case DiagnosisSeverity.verySevere:
         return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -649,6 +653,8 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
         return Colors.red;
       case RiskLevel.critical:
         return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -663,6 +669,8 @@ class _AIDiagnosisPanelState extends State<AIDiagnosisPanel>
         return DiagnosisSeverity.severe;
       case SymptomSeverity.extreme:
         return DiagnosisSeverity.verySevere;
+      default:
+        return DiagnosisSeverity.mild;
     }
   }
 

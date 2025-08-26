@@ -3,36 +3,94 @@ import 'clinical_decision_support_models.dart';
 
 part 'diagnosis_models.g.dart';
 
-@JsonSerializable()
-class DiagnosisSystem {
-  final String id;
-  final String name; // DSM-5, ICD-11
-  final String version;
-  final List<DiagnosticCategory> categories;
-  final List<DiagnosticCriteria> criteria;
-  final List<TreatmentGuideline> guidelines;
-  final bool isActive;
-  final DateTime lastUpdated;
+/// Diagnosis System - Tanı sistemi
+enum DiagnosisSystem {
+  @JsonValue('dsm_5_tr') dsm_5_tr,
+  @JsonValue('icd_11') icd_11,
+  @JsonValue('icd_10') icd_10,
+}
 
-  const DiagnosisSystem({
+// NOTE: DiagnosisSeverity enum is defined later in this file with a richer scale.
+
+@JsonSerializable()
+class DiagnosisEntry {
+  final String id; // stable unique id
+  final DiagnosisSystem system;
+  final String code; // e.g., 6B00.0 or F32.0
+  final String title; // localized title
+  final String description; // localized description
+  final List<String> synonyms; // arama için
+  final List<String> specifiers; // subtype vb.
+  final List<String> comorbidities; // birlikte görülenler
+  final DiagnosisSeverity typicalSeverity;
+  final List<String> commonTreatments; // psiko/ilaç öneri başlıkları
+  final Map<String, dynamic> metadata;
+
+  const DiagnosisEntry({
     required this.id,
-    required this.name,
-    required this.version,
-    required this.categories,
-    required this.criteria,
-    required this.guidelines,
-    required this.isActive,
-    required this.lastUpdated,
+    required this.system,
+    required this.code,
+    required this.title,
+    required this.description,
+    required this.synonyms,
+    required this.specifiers,
+    required this.comorbidities,
+    required this.typicalSeverity,
+    required this.commonTreatments,
+    required this.metadata,
   });
 
-  factory DiagnosisSystem.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisSystemFromJson(json);
-
-  Map<String, dynamic> toJson() => _$DiagnosisSystemToJson(this);
+  factory DiagnosisEntry.fromJson(Map<String, dynamic> json) =>
+      _$DiagnosisEntryFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisEntryToJson(this);
 }
 
 @JsonSerializable()
-class DiagnosticCategory {
+class DiagnosisSearchFilters {
+  final DiagnosisSystem system;
+  final String? query;
+  final DiagnosisSeverity? minSeverity;
+  final bool includeSynonyms;
+  final int limit;
+
+  const DiagnosisSearchFilters({
+    required this.system,
+    this.query,
+    this.minSeverity,
+    this.includeSynonyms = true,
+    this.limit = 20,
+  });
+
+  factory DiagnosisSearchFilters.fromJson(Map<String, dynamic> json) =>
+      _$DiagnosisSearchFiltersFromJson(json);
+  Map<String, dynamic> toJson() => _$DiagnosisSearchFiltersToJson(this);
+}
+
+// Lightweight auto-suggestion type removed to avoid name clash. Use service-local type instead.
+
+@JsonSerializable()
+class RegionalDiagnosisConfig {
+  final String region; // US, EU, TR, CA
+  final DiagnosisSystem defaultSystem;
+  final String language; // en, tr, en-fr
+  final Map<String, String> codeMappings; // crosswalk DSM <-> ICD
+  final Map<String, dynamic> metadata;
+
+  const RegionalDiagnosisConfig({
+    required this.region,
+    required this.defaultSystem,
+    required this.language,
+    required this.codeMappings,
+    required this.metadata,
+  });
+
+  factory RegionalDiagnosisConfig.fromJson(Map<String, dynamic> json) =>
+      _$RegionalDiagnosisConfigFromJson(json);
+  Map<String, dynamic> toJson() => _$RegionalDiagnosisConfigToJson(this);
+}
+
+@JsonSerializable()
+class DiagnosisCategory {
   final String id;
   final String name;
   final String code;
@@ -43,7 +101,7 @@ class DiagnosticCategory {
   final DiagnosticCategoryType type;
   final Map<String, dynamic> metadata;
 
-  const DiagnosticCategory({
+  const DiagnosisCategory({
     required this.id,
     required this.name,
     required this.code,
@@ -55,10 +113,10 @@ class DiagnosticCategory {
     this.metadata = const {},
   });
 
-  factory DiagnosticCategory.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosticCategoryFromJson(json);
+  factory DiagnosisCategory.fromJson(Map<String, dynamic> json) =>
+      _$DiagnosisCategoryFromJson(json);
 
-  Map<String, dynamic> toJson() => _$DiagnosticCategoryToJson(this);
+  Map<String, dynamic> toJson() => _$DiagnosisCategoryToJson(this);
 }
 
 @JsonSerializable()

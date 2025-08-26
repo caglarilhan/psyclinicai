@@ -6,38 +6,124 @@ part of 'diagnosis_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-DiagnosisSystem _$DiagnosisSystemFromJson(Map<String, dynamic> json) =>
-    DiagnosisSystem(
+DiagnosisEntry _$DiagnosisEntryFromJson(Map<String, dynamic> json) =>
+    DiagnosisEntry(
       id: json['id'] as String,
-      name: json['name'] as String,
-      version: json['version'] as String,
-      categories: (json['categories'] as List<dynamic>)
-          .map((e) => DiagnosticCategory.fromJson(e as Map<String, dynamic>))
+      system: $enumDecode(_$DiagnosisSystemEnumMap, json['system']),
+      code: json['code'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      synonyms: (json['synonyms'] as List<dynamic>)
+          .map((e) => e as String)
           .toList(),
-      criteria: (json['criteria'] as List<dynamic>)
-          .map((e) => DiagnosticCriteria.fromJson(e as Map<String, dynamic>))
+      specifiers: (json['specifiers'] as List<dynamic>)
+          .map((e) => e as String)
           .toList(),
-      guidelines: (json['guidelines'] as List<dynamic>)
-          .map((e) => TreatmentGuideline.fromJson(e as Map<String, dynamic>))
+      comorbidities: (json['comorbidities'] as List<dynamic>)
+          .map((e) => e as String)
           .toList(),
-      isActive: json['isActive'] as bool,
-      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+      typicalSeverity: $enumDecode(
+        _$DiagnosisSeverityEnumMap,
+        json['typicalSeverity'],
+      ),
+      commonTreatments: (json['commonTreatments'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      metadata: json['metadata'] as Map<String, dynamic>,
     );
 
-Map<String, dynamic> _$DiagnosisSystemToJson(DiagnosisSystem instance) =>
+Map<String, dynamic> _$DiagnosisEntryToJson(DiagnosisEntry instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'name': instance.name,
-      'version': instance.version,
-      'categories': instance.categories,
-      'criteria': instance.criteria,
-      'guidelines': instance.guidelines,
-      'isActive': instance.isActive,
-      'lastUpdated': instance.lastUpdated.toIso8601String(),
+      'system': _$DiagnosisSystemEnumMap[instance.system]!,
+      'code': instance.code,
+      'title': instance.title,
+      'description': instance.description,
+      'synonyms': instance.synonyms,
+      'specifiers': instance.specifiers,
+      'comorbidities': instance.comorbidities,
+      'typicalSeverity': _$DiagnosisSeverityEnumMap[instance.typicalSeverity]!,
+      'commonTreatments': instance.commonTreatments,
+      'metadata': instance.metadata,
     };
 
-DiagnosticCategory _$DiagnosticCategoryFromJson(Map<String, dynamic> json) =>
-    DiagnosticCategory(
+const _$DiagnosisSystemEnumMap = {
+  DiagnosisSystem.dsm_5_tr: 'dsm_5_tr',
+  DiagnosisSystem.icd_11: 'icd_11',
+  DiagnosisSystem.icd_10: 'icd_10',
+};
+
+const _$DiagnosisSeverityEnumMap = {
+  DiagnosisSeverity.low: 'low',
+  DiagnosisSeverity.medium: 'medium',
+  DiagnosisSeverity.high: 'high',
+  DiagnosisSeverity.critical: 'critical',
+};
+
+DiagnosisSearchFilters _$DiagnosisSearchFiltersFromJson(
+  Map<String, dynamic> json,
+) => DiagnosisSearchFilters(
+  system: $enumDecode(_$DiagnosisSystemEnumMap, json['system']),
+  query: json['query'] as String?,
+  minSeverity: $enumDecodeNullable(
+    _$DiagnosisSeverityEnumMap,
+    json['minSeverity'],
+  ),
+  includeSynonyms: json['includeSynonyms'] as bool? ?? true,
+  limit: (json['limit'] as num?)?.toInt() ?? 20,
+);
+
+Map<String, dynamic> _$DiagnosisSearchFiltersToJson(
+  DiagnosisSearchFilters instance,
+) => <String, dynamic>{
+  'system': _$DiagnosisSystemEnumMap[instance.system]!,
+  'query': instance.query,
+  'minSeverity': _$DiagnosisSeverityEnumMap[instance.minSeverity],
+  'includeSynonyms': instance.includeSynonyms,
+  'limit': instance.limit,
+};
+
+DiagnosisSuggestion _$DiagnosisSuggestionFromJson(Map<String, dynamic> json) =>
+    DiagnosisSuggestion(
+      query: json['query'] as String,
+      suggestions: (json['suggestions'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
+      system: $enumDecode(_$DiagnosisSystemEnumMap, json['system']),
+      generatedAt: DateTime.parse(json['generatedAt'] as String),
+    );
+
+Map<String, dynamic> _$DiagnosisSuggestionToJson(
+  DiagnosisSuggestion instance,
+) => <String, dynamic>{
+  'query': instance.query,
+  'suggestions': instance.suggestions,
+  'system': _$DiagnosisSystemEnumMap[instance.system]!,
+  'generatedAt': instance.generatedAt.toIso8601String(),
+};
+
+RegionalDiagnosisConfig _$RegionalDiagnosisConfigFromJson(
+  Map<String, dynamic> json,
+) => RegionalDiagnosisConfig(
+  region: json['region'] as String,
+  defaultSystem: $enumDecode(_$DiagnosisSystemEnumMap, json['defaultSystem']),
+  language: json['language'] as String,
+  codeMappings: Map<String, String>.from(json['codeMappings'] as Map),
+  metadata: json['metadata'] as Map<String, dynamic>,
+);
+
+Map<String, dynamic> _$RegionalDiagnosisConfigToJson(
+  RegionalDiagnosisConfig instance,
+) => <String, dynamic>{
+  'region': instance.region,
+  'defaultSystem': _$DiagnosisSystemEnumMap[instance.defaultSystem]!,
+  'language': instance.language,
+  'codeMappings': instance.codeMappings,
+  'metadata': instance.metadata,
+};
+
+DiagnosisCategory _$DiagnosisCategoryFromJson(Map<String, dynamic> json) =>
+    DiagnosisCategory(
       id: json['id'] as String,
       name: json['name'] as String,
       code: json['code'] as String,
@@ -55,7 +141,7 @@ DiagnosticCategory _$DiagnosticCategoryFromJson(Map<String, dynamic> json) =>
       metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
 
-Map<String, dynamic> _$DiagnosticCategoryToJson(DiagnosticCategory instance) =>
+Map<String, dynamic> _$DiagnosisCategoryToJson(DiagnosisCategory instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
@@ -767,13 +853,6 @@ Map<String, dynamic> _$DiagnosisSuggestionToJson(
   'severity': _$DiagnosisSeverityEnumMap[instance.severity]!,
   'treatmentPriority': _$TreatmentPriorityEnumMap[instance.treatmentPriority]!,
   'notes': instance.notes,
-};
-
-const _$DiagnosisSeverityEnumMap = {
-  DiagnosisSeverity.mild: 'mild',
-  DiagnosisSeverity.moderate: 'moderate',
-  DiagnosisSeverity.severe: 'severe',
-  DiagnosisSeverity.verySevere: 'verySevere',
 };
 
 const _$TreatmentPriorityEnumMap = {

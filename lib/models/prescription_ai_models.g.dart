@@ -69,53 +69,46 @@ Map<String, dynamic> _$AIMedicationRecommendationToJson(
 RecommendedMedication _$RecommendedMedicationFromJson(
   Map<String, dynamic> json,
 ) => RecommendedMedication(
+  id: json['id'] as String,
   medicationId: json['medicationId'] as String,
   medicationName: json['medicationName'] as String,
   dosage: json['dosage'] as String,
   frequency: json['frequency'] as String,
-  durationDays: (json['durationDays'] as num).toInt(),
-  titrationSchedule: json['titrationSchedule'] as String,
-  efficacyScore: (json['efficacyScore'] as num).toDouble(),
-  safetyScore: (json['safetyScore'] as num).toDouble(),
-  costEffectivenessScore: (json['costEffectivenessScore'] as num).toDouble(),
-  expectedBenefits: (json['expectedBenefits'] as List<dynamic>)
+  duration: json['duration'] as String,
+  route: json['route'] as String,
+  specialInstructions: (json['specialInstructions'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  potentialRisks: (json['potentialRisks'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  monitoringParameters: (json['monitoringParameters'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
+  priorityScore: (json['priorityScore'] as num).toDouble(),
+  reasoning: json['reasoning'] as String,
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
 Map<String, dynamic> _$RecommendedMedicationToJson(
   RecommendedMedication instance,
 ) => <String, dynamic>{
+  'id': instance.id,
   'medicationId': instance.medicationId,
   'medicationName': instance.medicationName,
   'dosage': instance.dosage,
   'frequency': instance.frequency,
-  'durationDays': instance.durationDays,
-  'titrationSchedule': instance.titrationSchedule,
-  'efficacyScore': instance.efficacyScore,
-  'safetyScore': instance.safetyScore,
-  'costEffectivenessScore': instance.costEffectivenessScore,
-  'expectedBenefits': instance.expectedBenefits,
-  'potentialRisks': instance.potentialRisks,
-  'monitoringParameters': instance.monitoringParameters,
+  'duration': instance.duration,
+  'route': instance.route,
+  'specialInstructions': instance.specialInstructions,
+  'priorityScore': instance.priorityScore,
+  'reasoning': instance.reasoning,
   'metadata': instance.metadata,
 };
 
 MedicationAlternative _$MedicationAlternativeFromJson(
   Map<String, dynamic> json,
 ) => MedicationAlternative(
+  id: json['id'] as String,
   medicationId: json['medicationId'] as String,
   medicationName: json['medicationName'] as String,
-  reason: json['reason'] as String,
+  alternativeType: json['alternativeType'] as String,
+  reasoning: json['reasoning'] as String,
   similarityScore: (json['similarityScore'] as num).toDouble(),
-  costDifference: (json['costDifference'] as num).toDouble(),
   advantages: (json['advantages'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
@@ -128,11 +121,12 @@ MedicationAlternative _$MedicationAlternativeFromJson(
 Map<String, dynamic> _$MedicationAlternativeToJson(
   MedicationAlternative instance,
 ) => <String, dynamic>{
+  'id': instance.id,
   'medicationId': instance.medicationId,
   'medicationName': instance.medicationName,
-  'reason': instance.reason,
+  'alternativeType': instance.alternativeType,
+  'reasoning': instance.reasoning,
   'similarityScore': instance.similarityScore,
-  'costDifference': instance.costDifference,
   'advantages': instance.advantages,
   'disadvantages': instance.disadvantages,
   'metadata': instance.metadata,
@@ -143,37 +137,25 @@ PatientMedicationProfile _$PatientMedicationProfileFromJson(
 ) => PatientMedicationProfile(
   id: json['id'] as String,
   patientId: json['patientId'] as String,
-  profileDate: DateTime.parse(json['profileDate'] as String),
-  currentDiagnoses: (json['currentDiagnoses'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
   currentMedications: (json['currentMedications'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  allergies: (json['allergies'] as List<dynamic>)
+  medicationAllergies: (json['medicationAllergies'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  intolerances: (json['intolerances'] as List<dynamic>)
+  medicationIntolerances: (json['medicationIntolerances'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  previousMedications: (json['previousMedications'] as List<dynamic>)
+  medicationHistory: Map<String, String>.from(json['medicationHistory'] as Map),
+  geneticFactors: (json['geneticFactors'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  adverseReactions: (json['adverseReactions'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  familyHistory: (json['familyHistory'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
+  organFunction: json['organFunction'] as Map<String, dynamic>,
   comorbidities: (json['comorbidities'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  lifestyleFactors: (json['lifestyleFactors'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  labResults: json['labResults'] as Map<String, dynamic>,
-  vitalSigns: json['vitalSigns'] as Map<String, dynamic>,
-  geneticFactors: json['geneticFactors'] as Map<String, dynamic>,
+  responsePatterns: json['responsePatterns'] as Map<String, dynamic>,
+  lastUpdated: DateTime.parse(json['lastUpdated'] as String),
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
@@ -182,19 +164,15 @@ Map<String, dynamic> _$PatientMedicationProfileToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'patientId': instance.patientId,
-  'profileDate': instance.profileDate.toIso8601String(),
-  'currentDiagnoses': instance.currentDiagnoses,
   'currentMedications': instance.currentMedications,
-  'allergies': instance.allergies,
-  'intolerances': instance.intolerances,
-  'previousMedications': instance.previousMedications,
-  'adverseReactions': instance.adverseReactions,
-  'familyHistory': instance.familyHistory,
-  'comorbidities': instance.comorbidities,
-  'lifestyleFactors': instance.lifestyleFactors,
-  'labResults': instance.labResults,
-  'vitalSigns': instance.vitalSigns,
+  'medicationAllergies': instance.medicationAllergies,
+  'medicationIntolerances': instance.medicationIntolerances,
+  'medicationHistory': instance.medicationHistory,
   'geneticFactors': instance.geneticFactors,
+  'organFunction': instance.organFunction,
+  'comorbidities': instance.comorbidities,
+  'responsePatterns': instance.responsePatterns,
+  'lastUpdated': instance.lastUpdated.toIso8601String(),
   'metadata': instance.metadata,
 };
 
@@ -206,17 +184,16 @@ SmartDosageOptimization _$SmartDosageOptimizationFromJson(
   medicationId: json['medicationId'] as String,
   currentDosage: json['currentDosage'] as String,
   optimizedDosage: json['optimizedDosage'] as String,
-  titrationSchedule: json['titrationSchedule'] as String,
   optimizationFactors: (json['optimizationFactors'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  expectedEfficacy: (json['expectedEfficacy'] as num).toDouble(),
-  expectedSafety: (json['expectedSafety'] as num).toDouble(),
-  monitoringPoints: (json['monitoringPoints'] as List<dynamic>)
+  optimizationReasoning: json['optimizationReasoning'] as String,
+  monitoringParameters: (json['monitoringParameters'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
+  titrationPlan: json['titrationPlan'] as String,
   optimizationDate: DateTime.parse(json['optimizationDate'] as String),
-  aiModel: json['aiModel'] as String,
+  confidenceScore: (json['confidenceScore'] as num).toDouble(),
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
@@ -228,13 +205,12 @@ Map<String, dynamic> _$SmartDosageOptimizationToJson(
   'medicationId': instance.medicationId,
   'currentDosage': instance.currentDosage,
   'optimizedDosage': instance.optimizedDosage,
-  'titrationSchedule': instance.titrationSchedule,
   'optimizationFactors': instance.optimizationFactors,
-  'expectedEfficacy': instance.expectedEfficacy,
-  'expectedSafety': instance.expectedSafety,
-  'monitoringPoints': instance.monitoringPoints,
+  'optimizationReasoning': instance.optimizationReasoning,
+  'monitoringParameters': instance.monitoringParameters,
+  'titrationPlan': instance.titrationPlan,
   'optimizationDate': instance.optimizationDate.toIso8601String(),
-  'aiModel': instance.aiModel,
+  'confidenceScore': instance.confidenceScore,
   'metadata': instance.metadata,
 };
 
@@ -249,22 +225,24 @@ AdvancedDrugInteraction _$AdvancedDrugInteractionFromJson(
       .map((e) => e as String)
       .toList(),
   severity: $enumDecode(_$InteractionSeverityEnumMap, json['severity']),
+  interactionType: json['interactionType'] as String,
   mechanism: json['mechanism'] as String,
   clinicalSignificance: json['clinicalSignificance'] as String,
   symptoms: (json['symptoms'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
+  riskFactors: (json['riskFactors'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
   recommendations: (json['recommendations'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  monitoringRequirements: (json['monitoringRequirements'] as List<dynamic>)
+  monitoring: (json['monitoring'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
   riskScore: (json['riskScore'] as num).toDouble(),
-  evidenceLevel: json['evidenceLevel'] as String,
-  references: (json['references'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
+  evidence: json['evidence'] as String,
+  analysisDate: DateTime.parse(json['analysisDate'] as String),
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
@@ -275,14 +253,16 @@ Map<String, dynamic> _$AdvancedDrugInteractionToJson(
   'medicationIds': instance.medicationIds,
   'medicationNames': instance.medicationNames,
   'severity': _$InteractionSeverityEnumMap[instance.severity]!,
+  'interactionType': instance.interactionType,
   'mechanism': instance.mechanism,
   'clinicalSignificance': instance.clinicalSignificance,
   'symptoms': instance.symptoms,
+  'riskFactors': instance.riskFactors,
   'recommendations': instance.recommendations,
-  'monitoringRequirements': instance.monitoringRequirements,
+  'monitoring': instance.monitoring,
   'riskScore': instance.riskScore,
-  'evidenceLevel': instance.evidenceLevel,
-  'references': instance.references,
+  'evidence': instance.evidence,
+  'analysisDate': instance.analysisDate.toIso8601String(),
   'metadata': instance.metadata,
 };
 
@@ -298,18 +278,19 @@ AIPrescriptionHistory _$AIPrescriptionHistoryFromJson(
   Map<String, dynamic> json,
 ) => AIPrescriptionHistory(
   id: json['id'] as String,
+  recommendationId: json['recommendationId'] as String,
   patientId: json['patientId'] as String,
   clinicianId: json['clinicianId'] as String,
-  prescriptionDate: DateTime.parse(json['prescriptionDate'] as String),
   status: $enumDecode(_$AIPrescriptionStatusEnumMap, json['status']),
-  medications: (json['medications'] as List<dynamic>)
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  updatedAt: json['updatedAt'] == null
+      ? null
+      : DateTime.parse(json['updatedAt'] as String),
+  reviewNotes: json['reviewNotes'] as String?,
+  rejectionReason: json['rejectionReason'] as String?,
+  modifications: (json['modifications'] as List<dynamic>)
       .map((e) => e as String)
       .toList(),
-  diagnosis: json['diagnosis'] as String,
-  aiRecommendation: json['aiRecommendation'] as String,
-  aiConfidence: (json['aiConfidence'] as num).toDouble(),
-  rejectionReason: json['rejectionReason'] as String?,
-  modificationNotes: json['modificationNotes'] as String?,
   metadata: json['metadata'] as Map<String, dynamic>,
 );
 
@@ -317,16 +298,15 @@ Map<String, dynamic> _$AIPrescriptionHistoryToJson(
   AIPrescriptionHistory instance,
 ) => <String, dynamic>{
   'id': instance.id,
+  'recommendationId': instance.recommendationId,
   'patientId': instance.patientId,
   'clinicianId': instance.clinicianId,
-  'prescriptionDate': instance.prescriptionDate.toIso8601String(),
   'status': _$AIPrescriptionStatusEnumMap[instance.status]!,
-  'medications': instance.medications,
-  'diagnosis': instance.diagnosis,
-  'aiRecommendation': instance.aiRecommendation,
-  'aiConfidence': instance.aiConfidence,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'updatedAt': instance.updatedAt?.toIso8601String(),
+  'reviewNotes': instance.reviewNotes,
   'rejectionReason': instance.rejectionReason,
-  'modificationNotes': instance.modificationNotes,
+  'modifications': instance.modifications,
   'metadata': instance.metadata,
 };
 
@@ -335,5 +315,5 @@ const _$AIPrescriptionStatusEnumMap = {
   AIPrescriptionStatus.approved: 'approved',
   AIPrescriptionStatus.rejected: 'rejected',
   AIPrescriptionStatus.modified: 'modified',
-  AIPrescriptionStatus.expired: 'expired',
+  AIPrescriptionStatus.underReview: 'under_review',
 };

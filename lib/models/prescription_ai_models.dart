@@ -4,28 +4,29 @@ part 'prescription_ai_models.g.dart';
 
 // ===== AI DESTEKLİ REÇETE SİSTEMİ MODELLERİ =====
 
-/// AI İlaç Önerisi - AI medication recommendation
+/// AI İlaç Önerisi - AI destekli ilaç reçete önerisi
+/// Bu model, yapay zeka tarafından üretilen ilaç önerilerini temsil eder
 @JsonSerializable()
 class AIMedicationRecommendation {
-  final String id;
-  final String patientId;
-  final String clinicianId;
-  final DateTime recommendationDate;
-  final String aiModel;
-  final String aiVersion;
-  final double confidenceScore; // 0-1
-  final List<RecommendedMedication> recommendedMedications;
-  final List<MedicationAlternative> alternatives;
-  final List<String> contraindications;
-  final List<String> warnings;
-  final List<String> monitoringRequirements;
-  final String clinicalRationale;
-  final Map<String, dynamic> aiAnalysis;
-  final bool isReviewed;
-  final String? reviewedBy;
-  final DateTime? reviewedAt;
-  final String? reviewNotes;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String patientId; // Hasta kimliği
+  final String clinicianId; // Klinisyen kimliği
+  final DateTime recommendationDate; // Öneri tarihi
+  final String aiModel; // Kullanılan AI model adı
+  final String aiVersion; // AI model versiyonu
+  final double confidenceScore; // Güven skoru (0-1 arası)
+  final List<RecommendedMedication> recommendedMedications; // Önerilen ilaçlar listesi
+  final List<MedicationAlternative> alternatives; // Alternatif ilaç seçenekleri
+  final List<String> contraindications; // Kontrendikasyonlar
+  final List<String> warnings; // Uyarılar
+  final List<String> monitoringRequirements; // İzleme gereksinimleri
+  final String clinicalRationale; // Klinik gerekçe
+  final Map<String, dynamic> aiAnalysis; // AI analiz detayları
+  final bool isReviewed; // İncelenme durumu
+  final String? reviewedBy; // İnceleyen kişi
+  final DateTime? reviewedAt; // İnceleme tarihi
+  final String? reviewNotes; // İnceleme notları
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const AIMedicationRecommendation({
     required this.id,
@@ -55,36 +56,33 @@ class AIMedicationRecommendation {
   Map<String, dynamic> toJson() => _$AIMedicationRecommendationToJson(this);
 }
 
-/// Önerilen İlaç - Recommended medication
+/// Önerilen İlaç - AI tarafından önerilen spesifik ilaç
+/// Her ilaç için dozaj, süre ve özel talimatları içerir
 @JsonSerializable()
 class RecommendedMedication {
-  final String medicationId;
-  final String medicationName;
-  final String dosage;
-  final String frequency;
-  final int durationDays;
-  final String titrationSchedule;
-  final double efficacyScore; // 0-1
-  final double safetyScore; // 0-1
-  final double costEffectivenessScore; // 0-1
-  final List<String> expectedBenefits;
-  final List<String> potentialRisks;
-  final List<String> monitoringParameters;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String medicationId; // İlaç kimliği
+  final String medicationName; // İlaç adı
+  final String dosage; // Önerilen dozaj
+  final String frequency; // Kullanım sıklığı
+  final String duration; // Tedavi süresi
+  final String route; // Uygulama yolu (oral, IV, IM)
+  final List<String> specialInstructions; // Özel talimatlar
+  final double priorityScore; // Öncelik skoru
+  final String reasoning; // Bu ilacın önerilme gerekçesi
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const RecommendedMedication({
+    required this.id,
     required this.medicationId,
     required this.medicationName,
     required this.dosage,
     required this.frequency,
-    required this.durationDays,
-    required this.titrationSchedule,
-    required this.efficacyScore,
-    required this.safetyScore,
-    required this.costEffectivenessScore,
-    required this.expectedBenefits,
-    required this.potentialRisks,
-    required this.monitoringParameters,
+    required this.duration,
+    required this.route,
+    required this.specialInstructions,
+    required this.priorityScore,
+    required this.reasoning,
     required this.metadata,
   });
 
@@ -94,24 +92,27 @@ class RecommendedMedication {
   Map<String, dynamic> toJson() => _$RecommendedMedicationToJson(this);
 }
 
-/// İlaç Alternatifi - Medication alternative
+/// İlaç Alternatifi - Ana öneriye alternatif olabilecek ilaçlar
+/// Farklı mekanizma veya daha uygun profilde ilaçlar
 @JsonSerializable()
 class MedicationAlternative {
-  final String medicationId;
-  final String medicationName;
-  final String reason;
-  final double similarityScore; // 0-1
-  final double costDifference;
-  final List<String> advantages;
-  final List<String> disadvantages;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String medicationId; // İlaç kimliği
+  final String medicationName; // İlaç adı
+  final String alternativeType; // Alternatif türü (mechanism, safety, cost)
+  final String reasoning; // Alternatif olma gerekçesi
+  final double similarityScore; // Ana öneriye benzerlik skoru
+  final List<String> advantages; // Avantajlar
+  final List<String> disadvantages; // Dezavantajlar
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const MedicationAlternative({
+    required this.id,
     required this.medicationId,
     required this.medicationName,
-    required this.reason,
+    required this.alternativeType,
+    required this.reasoning,
     required this.similarityScore,
-    required this.costDifference,
     required this.advantages,
     required this.disadvantages,
     required this.metadata,
@@ -123,42 +124,35 @@ class MedicationAlternative {
   Map<String, dynamic> toJson() => _$MedicationAlternativeToJson(this);
 }
 
-/// Hasta Profili - Patient profile for medication recommendations
+/// Hasta İlaç Profili - Hasta bazlı ilaç kullanım geçmişi ve özellikleri
+/// AI'ın daha iyi öneriler yapabilmesi için hasta bilgilerini içerir
 @JsonSerializable()
 class PatientMedicationProfile {
-  final String id;
-  final String patientId;
-  final DateTime profileDate;
-  final List<String> currentDiagnoses;
-  final List<String> currentMedications;
-  final List<String> allergies;
-  final List<String> intolerances;
-  final List<String> previousMedications;
-  final List<String> adverseReactions;
-  final List<String> familyHistory;
-  final List<String> comorbidities;
-  final List<String> lifestyleFactors;
-  final Map<String, dynamic> labResults;
-  final Map<String, dynamic> vitalSigns;
-  final Map<String, dynamic> geneticFactors;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String patientId; // Hasta kimliği
+  final List<String> currentMedications; // Mevcut ilaçlar
+  final List<String> medicationAllergies; // İlaç alerjileri
+  final List<String> medicationIntolerances; // İlaç intoleransları
+  final Map<String, String> medicationHistory; // İlaç kullanım geçmişi
+  final List<String> geneticFactors; // Genetik faktörler
+  final Map<String, dynamic> organFunction; // Organ fonksiyonları
+  final List<String> comorbidities; // Komorbiditeler
+  final Map<String, dynamic> responsePatterns; // İlaç yanıt paternleri
+  final DateTime lastUpdated; // Son güncelleme tarihi
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const PatientMedicationProfile({
     required this.id,
     required this.patientId,
-    required this.profileDate,
-    required this.currentDiagnoses,
     required this.currentMedications,
-    required this.allergies,
-    required this.intolerances,
-    required this.previousMedications,
-    required this.adverseReactions,
-    required this.familyHistory,
-    required this.comorbidities,
-    required this.lifestyleFactors,
-    required this.labResults,
-    required this.vitalSigns,
+    required this.medicationAllergies,
+    required this.medicationIntolerances,
+    required this.medicationHistory,
     required this.geneticFactors,
+    required this.organFunction,
+    required this.comorbidities,
+    required this.responsePatterns,
+    required this.lastUpdated,
     required this.metadata,
   });
 
@@ -168,22 +162,22 @@ class PatientMedicationProfile {
   Map<String, dynamic> toJson() => _$PatientMedicationProfileToJson(this);
 }
 
-/// Akıllı Dozaj Optimizasyonu - Smart dosage optimization
+/// Akıllı Dozaj Optimizasyonu - AI destekli dozaj ayarlaması
+/// Hasta özelliklerine göre optimal dozaj hesaplaması
 @JsonSerializable()
 class SmartDosageOptimization {
-  final String id;
-  final String patientId;
-  final String medicationId;
-  final String currentDosage;
-  final String optimizedDosage;
-  final String titrationSchedule;
-  final List<String> optimizationFactors;
-  final double expectedEfficacy;
-  final double expectedSafety;
-  final List<String> monitoringPoints;
-  final DateTime optimizationDate;
-  final String aiModel;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String patientId; // Hasta kimliği
+  final String medicationId; // İlaç kimliği
+  final String currentDosage; // Mevcut dozaj
+  final String optimizedDosage; // Optimize edilmiş dozaj
+  final List<String> optimizationFactors; // Optimizasyon faktörleri
+  final String optimizationReasoning; // Optimizasyon gerekçesi
+  final List<String> monitoringParameters; // İzleme parametreleri
+  final String titrationPlan; // Dozaj artırım planı
+  final DateTime optimizationDate; // Optimizasyon tarihi
+  final double confidenceScore; // Güven skoru
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const SmartDosageOptimization({
     required this.id,
@@ -191,13 +185,12 @@ class SmartDosageOptimization {
     required this.medicationId,
     required this.currentDosage,
     required this.optimizedDosage,
-    required this.titrationSchedule,
     required this.optimizationFactors,
-    required this.expectedEfficacy,
-    required this.expectedSafety,
-    required this.monitoringPoints,
+    required this.optimizationReasoning,
+    required this.monitoringParameters,
+    required this.titrationPlan,
     required this.optimizationDate,
-    required this.aiModel,
+    required this.confidenceScore,
     required this.metadata,
   });
 
@@ -207,36 +200,41 @@ class SmartDosageOptimization {
   Map<String, dynamic> toJson() => _$SmartDosageOptimizationToJson(this);
 }
 
-/// Gelişmiş Etkileşim Analizi - Advanced interaction analysis
+/// Gelişmiş İlaç Etkileşimi - AI destekli kapsamlı etkileşim analizi
+/// Çoklu ilaç kombinasyonlarında detaylı risk değerlendirmesi
 @JsonSerializable()
 class AdvancedDrugInteraction {
-  final String id;
-  final List<String> medicationIds;
-  final List<String> medicationNames;
-  final InteractionSeverity severity;
-  final String mechanism;
-  final String clinicalSignificance;
-  final List<String> symptoms;
-  final List<String> recommendations;
-  final List<String> monitoringRequirements;
-  final double riskScore; // 0-1
-  final String evidenceLevel;
-  final List<String> references;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final List<String> medicationIds; // Etkileşen ilaç kimlikleri
+  final List<String> medicationNames; // Etkileşen ilaç adları
+  final InteractionSeverity severity; // Etkileşim şiddeti
+  final String interactionType; // Etkileşim türü
+  final String mechanism; // Etkileşim mekanizması
+  final String clinicalSignificance; // Klinik önem
+  final List<String> symptoms; // Belirtiler
+  final List<String> riskFactors; // Risk faktörleri
+  final List<String> recommendations; // Öneriler
+  final List<String> monitoring; // İzleme gereksinimleri
+  final double riskScore; // Risk skoru (0-1 arası)
+  final String evidence; // Kanıt seviyesi
+  final DateTime analysisDate; // Analiz tarihi
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const AdvancedDrugInteraction({
     required this.id,
     required this.medicationIds,
     required this.medicationNames,
     required this.severity,
+    required this.interactionType,
     required this.mechanism,
     required this.clinicalSignificance,
     required this.symptoms,
+    required this.riskFactors,
     required this.recommendations,
-    required this.monitoringRequirements,
+    required this.monitoring,
     required this.riskScore,
-    required this.evidenceLevel,
-    required this.references,
+    required this.evidence,
+    required this.analysisDate,
     required this.metadata,
   });
 
@@ -246,52 +244,53 @@ class AdvancedDrugInteraction {
   Map<String, dynamic> toJson() => _$AdvancedDrugInteractionToJson(this);
 }
 
-/// Etkileşim Şiddeti - Interaction severity
+/// Etkileşim Şiddeti - İlaç etkileşimlerinin ciddiyet seviyeleri
+/// En düşükten en yükseğe doğru sıralanmış risk seviyeleri
 enum InteractionSeverity {
-  @JsonValue('none') none,
-  @JsonValue('mild') mild,
-  @JsonValue('moderate') moderate,
-  @JsonValue('major') major,
-  @JsonValue('contraindicated') contraindicated,
+  @JsonValue('none') none, // Etkileşim yok
+  @JsonValue('mild') mild, // Hafif etkileşim
+  @JsonValue('moderate') moderate, // Orta şiddette etkileşim
+  @JsonValue('major') major, // Majör etkileşim
+  @JsonValue('contraindicated') contraindicated, // Kontrendike
 }
 
-/// AI Reçete Durumu - AI prescription status
+/// AI Reçete Durumu - AI önerilerinin inceleme ve onay süreci
+/// Reçete önerilerinin klinisyen tarafından değerlendirilme durumları
 enum AIPrescriptionStatus {
-  @JsonValue('pending') pending,
-  @JsonValue('approved') approved,
-  @JsonValue('rejected') rejected,
-  @JsonValue('modified') modified,
-  @JsonValue('expired') expired,
+  @JsonValue('pending') pending, // Beklemede
+  @JsonValue('approved') approved, // Onaylandı
+  @JsonValue('rejected') rejected, // Reddedildi
+  @JsonValue('modified') modified, // Değiştirildi
+  @JsonValue('under_review') underReview, // İncelemede
 }
 
-/// AI Reçete Geçmişi - AI prescription history
+/// AI Reçete Geçmişi - AI önerilerinin takip edilmesi
+/// Tüm AI reçete önerilerinin durum ve sonuç takibi
 @JsonSerializable()
 class AIPrescriptionHistory {
-  final String id;
-  final String patientId;
-  final String clinicianId;
-  final DateTime prescriptionDate;
-  final AIPrescriptionStatus status;
-  final List<String> medications;
-  final String diagnosis;
-  final String aiRecommendation;
-  final double aiConfidence;
-  final String? rejectionReason;
-  final String? modificationNotes;
-  final Map<String, dynamic> metadata;
+  final String id; // Benzersiz tanımlayıcı
+  final String recommendationId; // AI öneri kimliği
+  final String patientId; // Hasta kimliği
+  final String clinicianId; // Klinisyen kimliği
+  final AIPrescriptionStatus status; // Reçete durumu
+  final DateTime createdAt; // Oluşturulma tarihi
+  final DateTime? updatedAt; // Güncellenme tarihi
+  final String? reviewNotes; // İnceleme notları
+  final String? rejectionReason; // Red gerekçesi
+  final List<String> modifications; // Yapılan değişiklikler
+  final Map<String, dynamic> metadata; // Ek meta veriler
 
   const AIPrescriptionHistory({
     required this.id,
+    required this.recommendationId,
     required this.patientId,
     required this.clinicianId,
-    required this.prescriptionDate,
     required this.status,
-    required this.medications,
-    required this.diagnosis,
-    required this.aiRecommendation,
-    required this.aiConfidence,
+    required this.createdAt,
+    this.updatedAt,
+    this.reviewNotes,
     this.rejectionReason,
-    this.modificationNotes,
+    required this.modifications,
     required this.metadata,
   });
 

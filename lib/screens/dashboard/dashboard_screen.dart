@@ -20,7 +20,7 @@ import '../../widgets/progress_dashboard/progress_dashboard_widget.dart';
 import '../../widgets/offline_mode/offline_mode_widget.dart';
 import '../../widgets/telehealth/telehealth_dashboard_widget.dart';
 import '../../widgets/advanced_ai/advanced_ai_dashboard_widget.dart';
-import '../../widgets/sprint3/sprint3_dashboard_widget.dart';
+// import '../../widgets/sprint3/sprint3_dashboard_widget.dart';
 import '../../services/theme_service.dart';
 import '../../services/offline_sync_service.dart';
 import '../../widgets/therapist/therapist_tools_dashboard_widget.dart';
@@ -172,7 +172,7 @@ class DashboardHome extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Sprint 3 Dashboard
-            const Sprint3DashboardWidget(),
+            // const Sprint3DashboardWidget(),
             const SizedBox(height: 24),
             
             // Sprint 3 Test Butonu

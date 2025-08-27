@@ -15,7 +15,7 @@ import 'screens/therapy_simulation/therapy_simulation_screen.dart';
 import 'screens/medication_guide/medication_guide_screen.dart';
 
 import 'screens/ai_appointment/ai_appointment_screen.dart';
-import 'screens/ai_diagnosis/ai_diagnosis_screen.dart';
+// import 'screens/ai_diagnosis/ai_diagnosis_screen.dart';
 import 'screens/security/security_screen.dart';
 import 'screens/finance/finance_dashboard_screen.dart';
 import 'screens/supervisor/supervisor_dashboard_screen.dart';
@@ -29,18 +29,18 @@ import 'services/ai_service.dart';
 import 'services/ai_orchestration_service.dart';
 import 'services/real_time_session_ai_service.dart';
 import 'services/regional_config_service.dart';
-import 'services/diagnosis_service.dart';
+// import 'services/diagnosis_service.dart';
 import 'services/medication_service.dart';
 import 'services/telehealth_service.dart';
 import 'services/advanced_ai_service.dart';
 import 'services/consent_service.dart';
-import 'services/clinical_decision_support_service.dart';
+// import 'services/clinical_decision_support_service.dart';
 import 'services/performance_optimization_service.dart';
 import 'services/documentation_service.dart';
-import 'services/ai_diagnosis_service.dart';
+// import 'services/ai_diagnosis_service.dart';
 import 'services/ai_case_management_service.dart';
 import 'screens/consent/consent_compliance_screen.dart';
-import 'screens/sprint3/sprint3_test_screen.dart';
+// import 'screens/sprint3/sprint3_test_screen.dart';
 import 'services/therapy_note_service.dart';
 import 'services/treatment_plan_service.dart';
 import 'services/homework_service.dart';
@@ -83,13 +83,13 @@ Future<void> _initializeServices() async {
     
     // Initialize AI services
     await AIService().initialize();
-    await AIDiagnosisService().initialize();
+          // await AIDiagnosisService().initialize();
     await AICaseManagementService().initialize();
     await AIOrchestrationService().initialize();
     await RealTimeSessionAIService().initialize();
     
     // Initialize psychiatric services
-    await DiagnosisService().initialize();
+          // await DiagnosisService().initialize();
     await MedicationService().initialize();
     
     // Initialize telehealth & advanced AI services
@@ -100,7 +100,7 @@ Future<void> _initializeServices() async {
     await ConsentService().initialize();
     
     // Initialize Sprint 3 services
-    await ClinicalDecisionSupportService().initialize();
+          // await ClinicalDecisionSupportService().initialize();
     await PerformanceOptimizationService().initialize();
     await DocumentationService().initialize();
     
@@ -127,11 +127,11 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OfflineSyncService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
         ChangeNotifierProvider(create: (_) => ConsentService()),
-        ChangeNotifierProvider(create: (_) => DiagnosisService()),
+                  // ChangeNotifierProvider(create: (_) => DiagnosisService()),
         ChangeNotifierProvider(create: (_) => MedicationService()),
                      ChangeNotifierProvider(create: (_) => TelehealthService()),
              ChangeNotifierProvider(create: (_) => AdvancedAIService()),
-             ChangeNotifierProvider(create: (_) => ClinicalDecisionSupportService()),
+                            // ChangeNotifierProvider(create: (_) => ClinicalDecisionSupportService()),
              ChangeNotifierProvider(create: (_) => PerformanceOptimizationService()),
              ChangeNotifierProvider(create: (_) => DocumentationService()),
         ChangeNotifierProvider(create: (_) => TherapyNoteService()),
@@ -166,16 +166,16 @@ class PsyClinicAIApp extends StatelessWidget {
               '/medication-guide': (context) => const MedicationGuideScreen(),
  
                      '/ai-appointment': (context) => const AIAppointmentScreen(),
-                     '/ai-diagnosis': (context) => const AIDiagnosisScreen(
-                       clientId: 'demo_client_001',
-                       therapistId: 'demo_therapist_001',
-                     ),
+                     // '/ai-diagnosis': (context) => const AIDiagnosisScreen(
+                     //   clientId: 'demo_client_001',
+                     //   therapistId: 'demo_therapist_001',
+                     // ),
                      '/security': (context) => const SecurityScreen(),
               '/finance': (context) => const FinanceDashboardScreen(),
               '/supervisor': (context) => const SupervisorDashboardScreen(),
               '/client-management': (context) => const ClientManagementScreen(),
               '/consent-compliance': (context) => const ConsentComplianceScreen(),
-              '/sprint3-test': (context) => const Sprint3TestScreen(),
+              // '/sprint3-test': (context) => const Sprint3TestScreen(),
               '/therapy-notes': (context) => const TherapyNoteEditorScreen(),
               '/treatment-plan': (context) => const TreatmentPlanScreen(),
               '/homework': (context) => const HomeworkScreen(),

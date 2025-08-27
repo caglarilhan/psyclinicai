@@ -50,6 +50,13 @@ import 'screens/therapist/therapy_note_editor_screen.dart';
 import 'screens/therapist/treatment_plan_screen.dart';
 import 'screens/therapist/homework_screen.dart';
 import 'screens/therapist/assessments_screen.dart';
+// Legal/Alert sistemleri için import'lar
+import 'services/flag_system_service.dart';
+import 'services/legal_policy_service.dart';
+import 'services/alerting_service.dart';
+import 'services/legal_compliance_orchestrator.dart';
+// Alert Konsolu ekranı
+import 'screens/alert/alert_console_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,6 +119,12 @@ Future<void> _initializeServices() async {
     await HomeworkService().initialize();
     // AssessmentScoringService has only pure methods; no init needed
 
+    // Legal/Alert sistemleri için initialization
+    await FlagSystemService().initialize();
+    await LegalPolicyService().initialize();
+    await AlertingService().initialize();
+    await LegalComplianceOrchestrator().initialize();
+
     print('All services initialized successfully');
   } catch (e) {
     print('Service initialization failed: $e');
@@ -141,6 +154,11 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
         ChangeNotifierProvider(create: (_) => HomeworkService()),
         ChangeNotifierProvider(create: (_) => AssessmentScoringService()),
+        // Legal/Alert sistemleri için provider'lar
+        ChangeNotifierProvider(create: (_) => FlagSystemService()),
+        ChangeNotifierProvider(create: (_) => LegalPolicyService()),
+        ChangeNotifierProvider(create: (_) => AlertingService()),
+        ChangeNotifierProvider(create: (_) => LegalComplianceOrchestrator()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -183,6 +201,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/treatment-plan': (context) => const TreatmentPlanScreen(),
               '/homework': (context) => const HomeworkScreen(),
               '/assessments': (context) => const AssessmentsScreen(),
+              '/alert-console': (context) => const AlertConsoleScreen(),
             },
           );
         },

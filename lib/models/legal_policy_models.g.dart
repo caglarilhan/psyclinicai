@@ -113,15 +113,41 @@ const _$UsStateCodeEnumMap = {
 LegalEvaluationContext _$LegalEvaluationContextFromJson(
   Map<String, dynamic> json,
 ) => LegalEvaluationContext(
+  patientId: json['patientId'] as String,
+  clinicianId: json['clinicianId'] as String,
+  crisisType: json['crisisType'] as String,
+  severity: json['severity'] as String,
+  description: json['description'] as String,
+  symptoms: (json['symptoms'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  riskFactors: (json['riskFactors'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  immediateActions: (json['immediateActions'] as List<dynamic>)
+      .map((e) => e as String)
+      .toList(),
+  timestamp: DateTime.parse(json['timestamp'] as String),
   state: $enumDecode(_$UsStateCodeEnumMap, json['state']),
   facts: json['facts'] as Map<String, dynamic>,
+  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
 );
 
 Map<String, dynamic> _$LegalEvaluationContextToJson(
   LegalEvaluationContext instance,
 ) => <String, dynamic>{
+  'patientId': instance.patientId,
+  'clinicianId': instance.clinicianId,
+  'crisisType': instance.crisisType,
+  'severity': instance.severity,
+  'description': instance.description,
+  'symptoms': instance.symptoms,
+  'riskFactors': instance.riskFactors,
+  'immediateActions': instance.immediateActions,
+  'timestamp': instance.timestamp.toIso8601String(),
   'state': _$UsStateCodeEnumMap[instance.state]!,
   'facts': instance.facts,
+  'metadata': instance.metadata,
 };
 
 LegalDecision _$LegalDecisionFromJson(Map<String, dynamic> json) =>

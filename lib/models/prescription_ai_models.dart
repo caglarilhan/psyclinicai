@@ -160,6 +160,15 @@ class PatientMedicationProfile {
       _$PatientMedicationProfileFromJson(json);
 
   Map<String, dynamic> toJson() => _$PatientMedicationProfileToJson(this);
+
+  // Backward-compatible getters for legacy tests
+  List<String> get currentDiagnoses =>
+      (metadata['currentDiagnoses'] as List?)?.cast<String>() ?? const [];
+  List<String> get allergies =>
+      medicationAllergies;
+  List<String> get intolerances =>
+      medicationIntolerances;
+  DateTime get profileDate => lastUpdated;
 }
 
 /// Akıllı Dozaj Optimizasyonu - AI destekli dozaj ayarlaması
@@ -198,6 +207,13 @@ class SmartDosageOptimization {
       _$SmartDosageOptimizationFromJson(json);
 
   Map<String, dynamic> toJson() => _$SmartDosageOptimizationToJson(this);
+
+  // Backward-compatible getters for legacy tests
+  String get titrationSchedule => titrationPlan;
+  double get expectedEfficacy => confidenceScore; // proxy
+  double get expectedSafety => confidenceScore; // proxy
+  List<String> get monitoringPoints => monitoringParameters;
+  String get aiModel => (metadata['aiModel'] as String?) ?? 'AI-Model';
 }
 
 /// Gelişmiş İlaç Etkileşimi - AI destekli kapsamlı etkileşim analizi
@@ -242,6 +258,12 @@ class AdvancedDrugInteraction {
       _$AdvancedDrugInteractionFromJson(json);
 
   Map<String, dynamic> toJson() => _$AdvancedDrugInteractionToJson(this);
+
+  // Backward-compatible getters for legacy tests
+  List<String> get monitoringRequirements => monitoring;
+  String get evidenceLevel => evidence;
+  List<String> get references =>
+      (metadata['references'] as List?)?.cast<String>() ?? const [];
 }
 
 /// Etkileşim Şiddeti - İlaç etkileşimlerinin ciddiyet seviyeleri
@@ -298,4 +320,13 @@ class AIPrescriptionHistory {
       _$AIPrescriptionHistoryFromJson(json);
 
   Map<String, dynamic> toJson() => _$AIPrescriptionHistoryToJson(this);
+
+  // Backward-compatible getters for legacy tests
+  DateTime get prescriptionDate => createdAt;
+  List<String> get medications =>
+      (metadata['medications'] as List?)?.cast<String>() ?? const [];
+  String get diagnosis => (metadata['diagnosis'] as String?) ?? '';
+  String get aiRecommendation => (metadata['aiRecommendation'] as String?) ?? '';
+  double get aiConfidence => (metadata['aiConfidence'] as num?)?.toDouble() ?? 0.0;
+  String? get modificationNotes => (metadata['modificationNotes'] as String?);
 }

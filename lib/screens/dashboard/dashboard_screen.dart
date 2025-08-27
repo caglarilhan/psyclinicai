@@ -171,6 +171,74 @@ class DashboardHome extends StatelessWidget {
             const AdvancedAIDashboardWidget(),
             const SizedBox(height: 24),
 
+            // Legal/Alert Sistemi Kartı
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.gavel,
+                          color: Colors.red.shade700,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '⚖️ Legal/Alert Sistemi',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Yasal uyumluluk ve acil durum bildirimleri',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/alert-console');
+                            },
+                            icon: const Icon(Icons.notifications_active),
+                            label: const Text('Alert Konsolu'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade700,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/flag');
+                            },
+                            icon: const Icon(Icons.flag),
+                            label: const Text('Flag Sistemi'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange.shade700,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Sprint 3 Dashboard
             // const Sprint3DashboardWidget(),
             const SizedBox(height: 24),

@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 
 import '../models/flag_system_models.dart';
 import '../utils/ai_logger.dart';
+// Legal/Alert entegrasyonu için import'lar
+import 'legal_compliance_orchestrator.dart';
+import '../models/legal_policy_models.dart';
 
 /// Flag Sistemi Servisi
 /// Kriz, intihar riski ve ajitasyon durumlarını yönetir
@@ -28,6 +31,9 @@ class FlagSystemService extends ChangeNotifier {
   final StreamController<AgitationAssessment> _agitationAssessmentController =
       StreamController<AgitationAssessment>.broadcast();
 
+  // Legal/Alert entegrasyonu
+  LegalComplianceOrchestrator? _legalOrchestrator;
+
   // Getters
   List<CrisisFlag> get crisisFlags => List.unmodifiable(_crisisFlags);
   List<SuicideRiskAssessment> get suicideAssessments => List.unmodifiable(_suicideAssessments);
@@ -45,6 +51,15 @@ class FlagSystemService extends ChangeNotifier {
     _logger.info('FlagSystemService initializing...', context: 'FlagSystemService');
     _loadMockData();
     _loadInterventionProtocols();
+    
+    // Legal/Alert entegrasyonu
+    try {
+      _legalOrchestrator = LegalComplianceOrchestrator();
+      _logger.info('Legal/Alert entegrasyonu başarılı', context: 'FlagSystemService');
+    } catch (e) {
+      _logger.error('Legal/Alert entegrasyonu başarısız: $e', context: 'FlagSystemService');
+    }
+    
     _logger.info('FlagSystemService initialized', context: 'FlagSystemService');
   }
 
@@ -242,8 +257,79 @@ class FlagSystemService extends ChangeNotifier {
 
     _crisisFlagController.add(flag);
     notifyListeners();
+    
+    // Legal/Alert entegrasyonu - Kriz durumunda yasal değerlendirme ve bildirim
+    if (_legalOrchestrator != null) {
+      try {
+        final context = LegalEvaluationContext(
+          patientId: patientId,
+          clinicianId: clinicianId,
+          crisisType: _mapCrisisTypeToLegalType(type),
+          severity: _mapCrisisSeverityToLegalSeverity(severity),
+          description: description,
+          symptoms: symptoms,
+          riskFactors: riskFactors,
+          immediateActions: immediateActions,
+          timestamp: DateTime.now(),
+          state: UsStateCode.ca, // Varsayılan olarak California
+          facts: {
+            'flagId': flag.id,
+            'crisisType': type.name,
+            'crisisSeverity': severity.name,
+          },
+          metadata: {
+            'flagId': flag.id,
+            'crisisType': type.name,
+            'crisisSeverity': severity.name,
+          },
+        );
+        
+        await _legalOrchestrator!.evaluateAndNotify(context);
+        _logger.info('Legal/Alert değerlendirmesi tamamlandı', context: 'FlagSystemService');
+      } catch (e) {
+        _logger.error('Legal/Alert değerlendirmesi başarısız: $e', context: 'FlagSystemService');
+      }
+    }
+    
     _logger.info('Crisis flag created: ${flag.id}', context: 'FlagSystemService');
     return flag;
+  }
+
+  // Legal/Alert entegrasyonu için mapping metodları
+  String _mapCrisisTypeToLegalType(CrisisType type) {
+    switch (type) {
+      case CrisisType.suicidalIdeation:
+        return 'suicide_risk';
+      case CrisisType.homicidalIdeation:
+        return 'threat_to_others';
+      case CrisisType.severeAgitation:
+        return 'agitation';
+      case CrisisType.psychoticBreak:
+        return 'psychotic_episode';
+      case CrisisType.selfHarm:
+        return 'self_harm';
+      case CrisisType.substanceAbuse:
+        return 'substance_abuse';
+      default:
+        return 'general_crisis';
+    }
+  }
+
+  String _mapCrisisSeverityToLegalSeverity(CrisisSeverity severity) {
+    switch (severity) {
+      case CrisisSeverity.low:
+        return 'low';
+      case CrisisSeverity.moderate:
+        return 'medium';
+      case CrisisSeverity.high:
+        return 'high';
+      case CrisisSeverity.critical:
+        return 'critical';
+      case CrisisSeverity.emergency:
+        return 'critical';
+      default:
+        return 'medium';
+    }
   }
 
   Future<void> updateFlagStatus(String flagId, FlagStatus newStatus, String reason) async {

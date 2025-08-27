@@ -119,12 +119,32 @@ class StateLegalPolicy {
 /// Değerlendirme isteği (context)
 @JsonSerializable()
 class LegalEvaluationContext {
-  final UsStateCode state;
-  final Map<String, dynamic> facts; // ör: {"risk_level":"Kritik", "threat_to_others": true}
+  final String patientId; // Hasta kimliği
+  final String clinicianId; // Klinisyen kimliği
+  final String crisisType; // Kriz türü (suicide_risk, threat_to_others, vb.)
+  final String severity; // Şiddet seviyesi (low, medium, high, critical)
+  final String description; // Kriz açıklaması
+  final List<String> symptoms; // Belirtiler
+  final List<String> riskFactors; // Risk faktörleri
+  final List<String> immediateActions; // Acil eylemler
+  final DateTime timestamp; // Zaman damgası
+  final UsStateCode state; // Eyalet kodu
+  final Map<String, dynamic> facts; // Ek gerçekler
+  final Map<String, dynamic> metadata; // Meta veriler
 
   const LegalEvaluationContext({
+    required this.patientId,
+    required this.clinicianId,
+    required this.crisisType,
+    required this.severity,
+    required this.description,
+    required this.symptoms,
+    required this.riskFactors,
+    required this.immediateActions,
+    required this.timestamp,
     required this.state,
     required this.facts,
+    this.metadata = const {},
   });
 
   factory LegalEvaluationContext.fromJson(Map<String, dynamic> json) => _$LegalEvaluationContextFromJson(json);

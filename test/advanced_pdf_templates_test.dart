@@ -125,7 +125,7 @@ void main() {
           medication1Name: 'Sertraline',
           medication2Id: 'med_002',
           medication2Name: 'St. John\'s Wort',
-          severity: InteractionSeverity.major,
+          severity: "major",
           type: InteractionType.pharmacokinetic,
           mechanism: 'Induction of CYP3A4 enzymes',
           description: 'St. John\'s Wort may decrease sertraline levels, reducing effectiveness.',
@@ -150,7 +150,7 @@ void main() {
           medication1Name: 'Sertraline',
           medication2Id: 'med_003',
           medication2Name: 'Aspirin',
-          severity: InteractionSeverity.minor,
+          severity: "minor",
           type: InteractionType.pharmacodynamic,
           mechanism: 'Serotonin-mediated platelet dysfunction',
           description: 'Increased risk of bleeding when combining SSRI with antiplatelet agents.',
@@ -297,7 +297,7 @@ void main() {
         final firstInteraction = mockInteractions.first;
         expect(firstInteraction.medication1Name, equals('Sertraline'));
         expect(firstInteraction.medication2Name, equals('St. John\'s Wort'));
-        expect(firstInteraction.severity, equals(InteractionSeverity.major));
+        expect(firstInteraction.severity, equals("major"));
         expect(firstInteraction.type, equals(InteractionType.pharmacokinetic));
       });
     });

@@ -263,7 +263,7 @@ DrugInteraction _$DrugInteractionFromJson(Map<String, dynamic> json) =>
       medication1Name: json['medication1Name'] as String,
       medication2Id: json['medication2Id'] as String,
       medication2Name: json['medication2Name'] as String,
-      severity: $enumDecode(_$InteractionSeverityEnumMap, json['severity']),
+      severity: json['severity'] as String,
       type: $enumDecode(_$InteractionTypeEnumMap, json['type']),
       mechanism: json['mechanism'] as String,
       description: json['description'] as String,
@@ -292,7 +292,7 @@ Map<String, dynamic> _$DrugInteractionToJson(DrugInteraction instance) =>
       'medication1Name': instance.medication1Name,
       'medication2Id': instance.medication2Id,
       'medication2Name': instance.medication2Name,
-      'severity': _$InteractionSeverityEnumMap[instance.severity]!,
+      'severity': instance.severity,
       'type': _$InteractionTypeEnumMap[instance.type]!,
       'mechanism': instance.mechanism,
       'description': instance.description,
@@ -305,13 +305,6 @@ Map<String, dynamic> _$DrugInteractionToJson(DrugInteraction instance) =>
       'source': instance.source,
       'metadata': instance.metadata,
     };
-
-const _$InteractionSeverityEnumMap = {
-  InteractionSeverity.minor: 'minor',
-  InteractionSeverity.moderate: 'moderate',
-  InteractionSeverity.major: 'major',
-  InteractionSeverity.contraindicated: 'contraindicated',
-};
 
 const _$InteractionTypeEnumMap = {
   InteractionType.pharmacokinetic: 'pharmacokinetic',

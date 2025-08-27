@@ -12,7 +12,7 @@ void main() {
         medicationIds: ['sertraline', 'maoi'],
       );
 
-      expect(result.any((i) => i.severity.name == 'contraindicated'), isTrue,
+      expect(result.any((i) => i.severity == 'contraindicated'), isTrue,
           reason: 'SSRI+MAOI kontrendike olmalı');
     });
 
@@ -24,7 +24,7 @@ void main() {
         medicationIds: ['lithium', 'sertraline'],
       );
 
-      expect(result.any((i) => i.severity.name == 'moderate' || i.severity.name == 'major'), isTrue,
+      expect(result.any((i) => i.severity == 'moderate' || i.severity == 'major'), isTrue,
           reason: 'Lithium+SSRI en az orta şiddette etkileşim olmalı');
     });
 
@@ -36,7 +36,7 @@ void main() {
         medicationIds: ['risperidone', 'venlafaxine'],
       );
 
-      expect(result.any((i) => i.severity.name == 'moderate' || i.severity.name == 'major'), isTrue,
+      expect(result.any((i) => i.severity == 'moderate' || i.severity == 'major'), isTrue,
           reason: 'Risperidone+Venlafaxine QT riski nedeniyle en az orta şiddet olmalı');
     });
 
@@ -46,7 +46,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['fluoxetine', 'codeine'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.moderate || i.severity == InteractionSeverity.major), isTrue,
+      expect(result.any((i) => i.severity == "moderate" || i.severity == "major"), isTrue,
           reason: 'Fluoxetine CYP2D6 inhibisyonu ile codeine etkisini düşürür');
     });
 
@@ -56,7 +56,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['carbamazepine', 'quetiapine'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.moderate || i.severity == InteractionSeverity.major), isTrue,
+      expect(result.any((i) => i.severity == "moderate" || i.severity == "major"), isTrue,
           reason: 'Carbamazepine CYP3A4 indükleyicidir, quetiapine düzeyini düşürür');
     });
 
@@ -66,7 +66,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['grapefruit', 'simvastatin'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "major" || i.severity == "contraindicated"), isTrue,
           reason: 'Greyfurt 3A4 inhibisyonu ile simvastatin düzeyini yükseltir, miyopati riski');
     });
 
@@ -76,7 +76,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['valproate', 'pregnancy'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "contraindicated"), isTrue,
           reason: 'Valproate hamilelikte kontrendikedir');
     });
 
@@ -86,7 +86,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['isotretinoin', 'pregnancy'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "contraindicated"), isTrue,
           reason: 'Isotretinoin hamilelikte kesin kontrendikedir');
     });
 
@@ -96,7 +96,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['lithium', 'breastfeeding'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "major" || i.severity == "contraindicated"), isTrue,
           reason: 'Lityum emzirme döneminde majör risk taşır');
     });
 
@@ -106,7 +106,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['metformin', 'renal'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "contraindicated"), isTrue,
           reason: 'Metformin böbrek yetmezliğinde kontrendikedir');
     });
 
@@ -116,7 +116,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['statin', 'liver'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "major" || i.severity == "contraindicated"), isTrue,
           reason: 'Statin karaciğer hastalığında majör risk taşır');
     });
 
@@ -126,7 +126,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['digoxin', 'renal'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "major" || i.severity == "contraindicated"), isTrue,
           reason: 'Digoxin böbrek yetmezliğinde majör risk taşır');
     });
 
@@ -136,7 +136,7 @@ void main() {
       final result = await service.checkDrugInteractions(
         medicationIds: ['alprazolam', 'morphine'],
       );
-      expect(result.any((i) => i.severity == InteractionSeverity.major || i.severity == InteractionSeverity.contraindicated), isTrue,
+      expect(result.any((i) => i.severity == "major" || i.severity == "contraindicated"), isTrue,
           reason: 'Benzodiazepin+Opioid yaşlılarda majör risk taşır');
     });
   });

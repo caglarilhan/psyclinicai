@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../models/medication_models.dart';
+import '../../models/prescription_ai_models.dart';
 import '../../services/medication_service.dart';
 
 class InteractionChecker extends StatefulWidget {
@@ -243,45 +244,45 @@ class _InteractionCheckerState extends State<InteractionChecker> {
     );
   }
 
-  Color _getSeverityColor(InteractionSeverity severity) {
+  Color _getSeverityColor(String severity) {
     switch (severity) {
-      case InteractionSeverity.minor:
+      case 'minor':
         return Colors.blue;
-      case InteractionSeverity.moderate:
+      case 'moderate':
         return Colors.orange;
-      case InteractionSeverity.major:
+      case 'major':
         return Colors.red;
-      case InteractionSeverity.contraindicated:
+      case 'contraindicated':
         return Colors.purple;
       default:
         return Colors.grey;
     }
   }
 
-  IconData _getSeverityIcon(InteractionSeverity severity) {
+  IconData _getSeverityIcon(String severity) {
     switch (severity) {
-      case InteractionSeverity.minor:
+      case 'minor':
         return Icons.info;
-      case InteractionSeverity.moderate:
+      case 'moderate':
         return Icons.warning;
-      case InteractionSeverity.major:
+      case 'major':
         return Icons.error;
-      case InteractionSeverity.contraindicated:
+      case 'contraindicated':
         return Icons.block;
       default:
         return Icons.help;
     }
   }
 
-  String _getSeverityText(InteractionSeverity severity) {
+  String _getSeverityText(String severity) {
     switch (severity) {
-      case InteractionSeverity.minor:
+      case 'minor':
         return 'Minör Etkileşim';
-      case InteractionSeverity.moderate:
+      case 'moderate':
         return 'Orta Etkileşim';
-      case InteractionSeverity.major:
+      case 'major':
         return 'Majör Etkileşim';
-      case InteractionSeverity.contraindicated:
+      case 'contraindicated':
         return 'Kontrendike';
       default:
         return 'Bilinmeyen';

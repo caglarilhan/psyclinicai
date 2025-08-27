@@ -31,6 +31,7 @@ import 'services/real_time_session_ai_service.dart';
 import 'services/regional_config_service.dart';
 // import 'services/diagnosis_service.dart';
 import 'services/medication_service.dart';
+import 'services/prescription_ai_service.dart';
 import 'services/telehealth_service.dart';
 import 'services/advanced_ai_service.dart';
 import 'services/consent_service.dart';
@@ -77,7 +78,8 @@ Future<void> _initializeServices() async {
     // Initialize core services
     await ThemeService().initialize();
     await ThemeService().setPresetTheme('purple_blue');
-    await OfflineSyncService().initialize();
+          await OfflineSyncService().initialize();
+      await PrescriptionAIService().initialize();
     await PushNotificationService().initialize();
     await BiometricAuthService().initialize();
     
@@ -124,7 +126,8 @@ class PsyClinicAIApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: ThemeService()),
-        ChangeNotifierProvider(create: (_) => OfflineSyncService()),
+                  ChangeNotifierProvider(create: (_) => OfflineSyncService()),
+          ChangeNotifierProvider(create: (_) => PrescriptionAIService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
         ChangeNotifierProvider(create: (_) => ConsentService()),
                   // ChangeNotifierProvider(create: (_) => DiagnosisService()),

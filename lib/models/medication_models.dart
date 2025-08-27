@@ -189,7 +189,7 @@ class DrugInteraction {
   final String medication1Name;
   final String medication2Id;
   final String medication2Name;
-  final InteractionSeverity severity;
+  final String severity;
   final InteractionType type;
   final String mechanism;
   final String description;
@@ -544,12 +544,7 @@ enum PrescriptionStatus {
   pending,
 }
 
-enum InteractionSeverity {
-  minor,
-  moderate,
-  major,
-  contraindicated,
-}
+// InteractionSeverity enum moved to prescription_ai_models.dart
 
 enum InteractionType {
   pharmacokinetic,

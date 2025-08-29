@@ -18,6 +18,7 @@ class RegionConfig {
       aiPromptSuffix: 'DSM-5-TR formatında öner.',
       hosting: 'us-central1',
       currency: '\$',
+      taxRate: 0.00,
       timezone: 'America/New_York',
       features: {
         'ai_diagnosis': true,
@@ -40,6 +41,7 @@ class RegionConfig {
       aiPromptSuffix: 'ICD-11 kodu ile özetle.',
       hosting: 'europe-west1',
       currency: '€',
+      taxRate: 0.20,
       timezone: 'Europe/Berlin',
       features: {
         'ai_diagnosis': true,
@@ -63,6 +65,7 @@ class RegionConfig {
       aiPromptSuffix: 'ICD-11 + NICE protokolleri ile özetle.',
       hosting: 'europe-west2',
       currency: '£',
+      taxRate: 0.20,
       timezone: 'Europe/London',
       features: {
         'ai_diagnosis': true,
@@ -86,6 +89,7 @@ class RegionConfig {
       aiPromptSuffix: 'ICD kodu ve Fransızca açıklama dahil.',
       hosting: 'northamerica-northeast1',
       currency: 'C\$',
+      taxRate: 0.13,
       timezone: 'America/Toronto',
       features: {
         'ai_diagnosis': true,
@@ -109,6 +113,7 @@ class RegionConfig {
       aiPromptSuffix: 'Türkçe ICD kodu ile özetle.',
       hosting: 'europe-west2',
       currency: '₺',
+      taxRate: 0.18,
       timezone: 'Europe/Istanbul',
       features: {
         'ai_diagnosis': true,
@@ -168,6 +173,9 @@ class RegionConfig {
   // Para birimi
   static String get currency => activeRegionInfo.currency;
 
+  // Vergi oranı (KDV/VAT)
+  static double get taxRate => activeRegionInfo.taxRate;
+
   // Zaman dilimi
   static String get timezone => activeRegionInfo.timezone;
 }
@@ -181,6 +189,7 @@ class RegionInfo {
   final String aiPromptSuffix;
   final String hosting;
   final String currency;
+  final double taxRate;
   final String timezone;
   final Map<String, bool> features;
   final List<String> warnings;
@@ -193,6 +202,7 @@ class RegionInfo {
     required this.aiPromptSuffix,
     required this.hosting,
     required this.currency,
+    required this.taxRate,
     required this.timezone,
     required this.features,
     required this.warnings,

@@ -5,6 +5,7 @@ import '../../services/analytics_service.dart';
 import '../../widgets/analytics/chart_widgets.dart';
 import '../../widgets/analytics/metric_cards.dart';
 import '../../widgets/analytics/trend_analysis_widget.dart';
+import '../../services/finance_service.dart';
 
 class AdvancedAnalyticsDashboardScreen extends StatefulWidget {
   const AdvancedAnalyticsDashboardScreen({super.key});
@@ -19,6 +20,7 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
   AnalyticsData? _analyticsData;
   String _selectedTimeRange = '30d';
   String _selectedMetric = 'all';
+  FinancialMetrics? _financeMetrics;
 
   @override
   void initState() {
@@ -30,8 +32,13 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
     setState(() => _isLoading = true);
     try {
       final data = await _analyticsService.getAnalyticsData(_selectedTimeRange);
+      // Finance metriklerini de dahil et
+      final finance = FinanceService();
+      finance.initialize();
+      final fm = finance.getMetrics();
       setState(() {
         _analyticsData = data;
+        _financeMetrics = fm;
         _isLoading = false;
       });
     } catch (e) {
@@ -222,7 +229,9 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
             ),
             MetricCard(
               title: 'Aylık Gelir',
-              value: '₺${_analyticsData!.monthlyRevenue.toStringAsFixed(0)}K',
+              value: (_financeMetrics != null)
+                  ? '₺${_financeMetrics!.totalIncome.toStringAsFixed(0)}'
+                  : '₺${_analyticsData!.monthlyRevenue.toStringAsFixed(0)}K',
               change: _analyticsData!.revenueGrowth,
               icon: Icons.account_balance_wallet,
               color: AppTheme.accentColor,

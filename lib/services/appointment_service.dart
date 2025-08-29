@@ -1,5 +1,6 @@
 import 'dart:math';
 import '../models/appointment_models.dart';
+import '../services/finance_service.dart';
 
 class AppointmentService {
   static final AppointmentService _instance = AppointmentService._internal();
@@ -262,6 +263,27 @@ class AppointmentService {
       status: status,
       updatedAt: DateTime.now(),
     );
+
+    // Tamamlanan randevularda otomatik finans kaydı oluştur
+    if (status == AppointmentStatus.completed) {
+      try {
+        // Finans servisinden gelir ve fatura oluştur
+        // Lazy import: doğrudan import yerine dinamik çağrı yapalım
+        // ignore: avoid_print
+        print('Auto-creating finance records for completed appointment ${appointment.id}');
+        // ignore: unused_local_variable
+        final result = await _createFinanceRecordsForAppointment(appointment);
+      } catch (e) {
+        // ignore: avoid_print
+        print('Finance auto-create failed: $e');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> _createFinanceRecordsForAppointment(Appointment appointment) async {
+    final finance = FinanceService();
+    finance.initialize();
+    return finance.createFromAppointment(appointment: appointment);
   }
 
   // Hatırlatıcıları getir

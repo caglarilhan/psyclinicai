@@ -8,6 +8,7 @@ import '../crm/crm_dashboard_screen.dart';
 import '../white_label/white_label_dashboard_screen.dart';
 import '../analytics/advanced_analytics_dashboard_screen.dart';
 import '../security/security_dashboard_screen.dart';
+import '../case/case_management_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -139,13 +140,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: _buildModuleCard(
                     context,
-                    'Vaka Yöneticisi',
-                    'Danışan gelişim takibi',
+                    'Vaka Yönetimi',
+                    'Danışan gelişim takibi ve ilerleme',
                     Icons.folder,
                     AppTheme.infoColor,
-                    () {
-                      // TODO: Vaka yöneticisi
-                    },
+                    () => Navigator.pushNamed(context, '/case-management'),
                   ),
                 ),
               ],
@@ -307,9 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Gelir-gider ve faturalama',
                     Icons.account_balance_wallet,
                     AppTheme.successColor,
-                    () {
-                      // TODO: Finans dashboard
-                    },
+                    () => Navigator.pushNamed(context, '/finance'),
                   ),
                 ),
               ],

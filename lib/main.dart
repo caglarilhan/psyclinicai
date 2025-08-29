@@ -24,6 +24,7 @@ import 'screens/crm/crm_dashboard_screen.dart';
 import 'screens/white_label/white_label_dashboard_screen.dart';
 import 'screens/appointment/appointment_calendar_screen.dart';
 import 'screens/session/session_management_screen.dart';
+import 'screens/case/case_management_screen.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/offline_sync_service.dart';
@@ -215,6 +216,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/white-label': (context) => const WhiteLabelDashboardScreen(),
               '/appointment-calendar': (context) => const AppointmentCalendarScreen(),
               '/session-management': (context) => const SessionManagementScreen(),
+              '/case-management': (context) => const CaseManagementScreen(),
             },
           );
         },

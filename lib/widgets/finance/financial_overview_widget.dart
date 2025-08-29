@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/finance_models.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_constants.dart';
 
 class FinancialOverviewWidget extends StatelessWidget {
   final FinancialMetrics metrics;
@@ -8,19 +9,20 @@ class FinancialOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canViewAmounts = _hasFullFinanceAccess();
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildStatCard('Toplam Gelir', '₺${metrics.totalIncome.toStringAsFixed(2)}', Colors.green)),
+            Expanded(child: _buildStatCard('Toplam Gelir', canViewAmounts ? '₺${metrics.totalIncome.toStringAsFixed(2)}' : '₺****', Colors.green)),
             const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Toplam Gider', '₺${metrics.totalExpenses.toStringAsFixed(2)}', Colors.red)),
+            Expanded(child: _buildStatCard('Toplam Gider', canViewAmounts ? '₺${metrics.totalExpenses.toStringAsFixed(2)}' : '₺****', Colors.red)),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildStatCard('Net Kar', '₺${metrics.netProfit.toStringAsFixed(2)}', metrics.netProfit >= 0 ? Colors.green : Colors.red)),
+            Expanded(child: _buildStatCard('Net Kar', canViewAmounts ? '₺${metrics.netProfit.toStringAsFixed(2)}' : '₺****', metrics.netProfit >= 0 ? Colors.green : Colors.red)),
             const SizedBox(width: 12),
             Expanded(child: _buildStatCard('Kar Marjı', metrics.profitMarginText, AppTheme.primaryColor)),
           ],
@@ -67,5 +69,11 @@ class FinancialOverviewWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _hasFullFinanceAccess() {
+    // Basit kontrol: admin veya finance role'ü tam görüntüler
+    final roles = AppConstants.userRoles.map((e) => e.toLowerCase()).toList();
+    return roles.contains('admin') || roles.contains('finance') || roles.contains('owner');
   }
 }

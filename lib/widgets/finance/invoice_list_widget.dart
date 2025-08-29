@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/finance_models.dart';
 import '../../utils/date_utils.dart';
+import 'package:share_plus/share_plus.dart';
 
 class InvoiceListWidget extends StatelessWidget {
   final List<Invoice> invoices;
@@ -19,7 +20,16 @@ class InvoiceListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (invoices.isEmpty) {
-      return const Center(child: Text('Henüz fatura bulunmuyor'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.receipt_long, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Henüz fatura bulunmuyor', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -62,6 +72,28 @@ class InvoiceListWidget extends StatelessWidget {
               ],
             ),
             onTap: () {},
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'PDF (stub)',
+                  icon: const Icon(Icons.picture_as_pdf),
+                  onPressed: () {
+                    // PDF export stub
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('PDF export yakında (stub)')),
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Paylaş',
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    Share.share('Fatura ${i.invoiceNumber} | Toplam: ₺${i.totalAmount.toStringAsFixed(2)} | Vade: ${AppDateUtils.formatDate(i.dueDate)}');
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },

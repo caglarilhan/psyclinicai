@@ -9,6 +9,7 @@ import '../../widgets/finance/add_transaction_dialog.dart';
 import '../../widgets/finance/add_invoice_dialog.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/date_utils.dart';
+import '../../config/region_config.dart';
 
 class FinanceDashboardScreen extends StatefulWidget {
   const FinanceDashboardScreen({super.key});
@@ -228,6 +229,8 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
         children: [
           // Finansal özet kartları
           FinancialOverviewWidget(metrics: _metrics!),
+          const SizedBox(height: 16),
+          _buildRegionCard(),
           const SizedBox(height: 24),
           
           // Son işlemler
@@ -267,6 +270,19 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
               child: Text('Henüz fatura bulunmuyor'),
             ),
           ],
+
+          const SizedBox(height: 24),
+
+          // Ödeme Hatırlatıcıları
+          Text(
+            'Ödeme Hatırlatıcıları',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildRemindersSection(),
         ],
       ),
     );
@@ -602,6 +618,70 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
           Navigator.of(context).pop();
         },
       ),
+    );
+  }
+
+  Widget _buildRegionCard() {
+    final currency = RegionConfig.currency;
+    final taxRate = RegionConfig.taxRate;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.public, color: Colors.blue),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Bölge Ayarları', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text('Para birimi: $currency  •  Vergi oranı: ${(taxRate * 100).toStringAsFixed(0)}%'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemindersSection() {
+    final reminders = FinanceService().getInvoiceReminders(daysThreshold: 7);
+    if (reminders.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: const Text('Yakında vadesi gelen fatura yok'),
+      );
+    }
+
+    return Column(
+      children: reminders.map((r) => Card(
+        child: ListTile(
+          leading: const Icon(Icons.alarm, color: Colors.orange),
+          title: Text(r),
+          trailing: TextButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Hatırlatıcı gönderildi (demo)')),
+              );
+            },
+            icon: const Icon(Icons.send),
+            label: const Text('Gönder'),
+          ),
+        ),
+      )).toList(),
     );
   }
 }

@@ -19,7 +19,16 @@ class TransactionListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return const Center(child: Text('Henüz işlem bulunmuyor'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.account_balance_wallet, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Henüz işlem bulunmuyor', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(

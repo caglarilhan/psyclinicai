@@ -70,12 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Seans notları ve AI özetleri',
                     Icons.medical_services,
                     AppTheme.primaryColor,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Sprint1DemoScreen(),
-                      ),
-                    ),
+                    () => Navigator.pushNamed(context, '/session-management'),
                   ),
                 ),
                 const SizedBox(width: 16),

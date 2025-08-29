@@ -20,6 +20,9 @@ import 'screens/security/security_screen.dart';
 import 'screens/finance/finance_dashboard_screen.dart';
 import 'screens/supervisor/supervisor_dashboard_screen.dart';
 import 'screens/client_management/client_management_screen.dart';
+import 'screens/crm/crm_dashboard_screen.dart';
+import 'screens/white_label/white_label_dashboard_screen.dart';
+import 'screens/appointment/appointment_calendar_screen.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/offline_sync_service.dart';
@@ -55,6 +58,7 @@ import 'services/flag_system_service.dart';
 import 'services/legal_policy_service.dart';
 import 'services/alerting_service.dart';
 import 'services/legal_compliance_orchestrator.dart';
+import 'services/crisis_communication_service.dart';
 // Alert Konsolu ekranı
 import 'screens/alert/alert_console_screen.dart';
 
@@ -122,6 +126,7 @@ Future<void> _initializeServices() async {
     // Legal/Alert sistemleri için initialization
     await FlagSystemService().initialize();
     await LegalPolicyService().initialize();
+    await CrisisCommunicationService().initialize();
     await AlertingService().initialize();
     await LegalComplianceOrchestrator().initialize();
 
@@ -156,35 +161,38 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AssessmentScoringService()),
         // Legal/Alert sistemleri için provider'lar
         ChangeNotifierProvider(create: (_) => FlagSystemService()),
+        ChangeNotifierProvider(create: (_) => CrisisCommunicationService()),
         ChangeNotifierProvider(create: (_) => LegalPolicyService()),
         ChangeNotifierProvider(create: (_) => AlertingService()),
         ChangeNotifierProvider(create: (_) => LegalComplianceOrchestrator()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
-          return MaterialApp(
-            title: 'PsyClinic AI',
-            debugShowCheckedModeBanner: false,
-            theme: themeService.getLightTheme(),
-            darkTheme: themeService.getDarkTheme(),
-            themeMode: themeService.currentThemeMode,
-            home: const DashboardScreen(),
-            routes: {
-              '/login': (context) => const LoginScreen(),
-              '/dashboard': (context) => const DashboardScreen(),
-              '/session': (context) => const SessionScreen(
-                sessionId: 'demo_session_001',
-                clientId: 'demo_client_001',
-                clientName: 'Demo Client',
-              ),
-              '/diagnosis': (context) => const DiagnosisScreen(),
-              '/prescription': (context) => const PrescriptionScreen(),
-              '/flag': (context) => const FlagScreen(),
-              '/appointment': (context) => const AppointmentScreen(),
-              '/profile': (context) => const ProfileScreen(),
-              '/education': (context) => const EducationScreen(),
-              '/therapy-simulation': (context) => const TherapySimulationScreen(),
-              '/medication-guide': (context) => const MedicationGuideScreen(),
+          return Consumer<WhiteLabelThemeProvider>(
+            builder: (context, whiteLabelProvider, child) {
+              return MaterialApp(
+                title: 'PsyClinic AI',
+                debugShowCheckedModeBanner: false,
+                theme: whiteLabelProvider.currentTheme,
+                darkTheme: themeService.getDarkTheme(),
+                themeMode: themeService.currentThemeMode,
+                home: const DashboardScreen(),
+                routes: {
+                  '/login': (context) => const LoginScreen(),
+                  '/dashboard': (context) => const DashboardScreen(),
+                  '/session': (context) => const SessionScreen(
+                    sessionId: 'demo_session_001',
+                    clientId: 'demo_client_001',
+                    clientName: 'Demo Client',
+                  ),
+                  '/diagnosis': (context) => const DiagnosisScreen(),
+                  '/prescription': (context) => const PrescriptionScreen(),
+                  '/flag': (context) => const FlagScreen(),
+                  '/appointment': (context) => const AppointmentScreen(),
+                  '/profile': (context) => const ProfileScreen(),
+                  '/education': (context) => const EducationScreen(),
+                  '/therapy-simulation': (context) => const TherapySimulationScreen(),
+                  '/medication-guide': (context) => const MedicationGuideScreen(),
  
                      '/ai-appointment': (context) => const AIAppointmentScreen(),
                      // '/ai-diagnosis': (context) => const AIDiagnosisScreen(
@@ -202,6 +210,9 @@ class PsyClinicAIApp extends StatelessWidget {
               '/homework': (context) => const HomeworkScreen(),
               '/assessments': (context) => const AssessmentsScreen(),
               '/alert-console': (context) => const AlertConsoleScreen(),
+              '/crm': (context) => const CRMDashboardScreen(),
+              '/white-label': (context) => const WhiteLabelDashboardScreen(),
+              '/appointment-calendar': (context) => const AppointmentCalendarScreen(),
             },
           );
         },

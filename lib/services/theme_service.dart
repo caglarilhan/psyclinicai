@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/white_label_config.dart';
 
 class ThemeService extends ChangeNotifier {
   static final ThemeService _instance = ThemeService._internal();
@@ -51,6 +52,11 @@ class ThemeService extends ChangeNotifier {
   Color get secondaryColor => _secondaryColor;
   Color get accentColor => _accentColor;
   Color get errorColor => _errorColor;
+
+  // White-label tema desteği
+  final WhiteLabelConfig _whiteLabelConfig = WhiteLabelConfig();
+
+  ThemeMode get currentWhiteLabelTheme => _whiteLabelConfig.createCustomTheme();
 
   Future<void> initialize() async {
     try {
@@ -572,6 +578,61 @@ class ThemeService extends ChangeNotifier {
         return isDark ? getDarkTheme() : getLightTheme();
     }
   }
+
+  // White-label tema güncelleme
+  void updateWhiteLabelTheme({
+    String? brandName,
+    String? brandTagline,
+    String? supportEmail,
+    String? website,
+    Color? primaryColor,
+    Color? secondaryColor,
+    Color? accentColor,
+    bool? isCustomTheme,
+    Map<String, dynamic>? customFeatures,
+    Map<String, String>? customTexts,
+    Map<String, String>? customUrls,
+  }) {
+    _whiteLabelConfig.updateConfig(
+      brandName: brandName,
+      brandTagline: brandTagline,
+      supportEmail: supportEmail,
+      website: website,
+      primaryColor: primaryColor,
+      secondaryColor: secondaryColor,
+      accentColor: accentColor,
+      isCustomTheme: isCustomTheme,
+      customFeatures: customFeatures,
+      customTexts: customTexts,
+      customUrls: customUrls,
+    );
+    notifyListeners();
+  }
+
+  // White-label tema yükleme
+  void loadPredefinedTheme(String themeName) {
+    _whiteLabelConfig.loadPredefinedTheme(themeName);
+    notifyListeners();
+  }
+
+  // White-label tema sıfırlama
+  void resetWhiteLabelTheme() {
+    _whiteLabelConfig.resetToDefault();
+    notifyListeners();
+  }
+
+  // White-label konfigürasyon durumu
+  String get whiteLabelConfigStatus => _whiteLabelConfig.getConfigStatus();
+  
+  bool get isWhiteLabelCustomized => _whiteLabelConfig.isCustomTheme;
+  
+  String get whiteLabelBrandName => _whiteLabelConfig.brandName;
+  
+  Color get whiteLabelPrimaryColor => _whiteLabelConfig.primaryColor;
+  
+  Color get whiteLabelSecondaryColor => _whiteLabelConfig.secondaryColor;
+  
+  Color get whiteLabelAccentColor => _whiteLabelConfig.accentColor;
 
   void dispose() {
     final bool isTestEnv = const bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);

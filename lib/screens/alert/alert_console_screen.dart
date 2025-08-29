@@ -41,7 +41,17 @@ class _AlertConsoleScreenState extends State<AlertConsoleScreen> {
           Expanded(
             child: Consumer<AlertingService>(
               builder: (context, alertingService, child) {
-                final alerts = alertingService.events;
+                // UI için Map tabanlı basit bir model bekleniyor; AlertEvent'i Map'e dönüştürelim
+                final alerts = alertingService.events
+                    .map((e) => {
+                          'title': 'Uyarı',
+                          'content': e.message,
+                          'severity': 'medium',
+                          'timestamp': e.createdAt,
+                          'channels': e.channels.map((c) => c.name).toList(),
+                          'key': e.key,
+                        })
+                    .toList();
                 final filteredAlerts = _filterAlerts(alerts);
                 
                 if (filteredAlerts.isEmpty) {

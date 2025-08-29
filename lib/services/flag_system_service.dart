@@ -6,6 +6,8 @@ import '../utils/ai_logger.dart';
 // Legal/Alert entegrasyonu için import'lar
 import 'legal_compliance_orchestrator.dart';
 import '../models/legal_policy_models.dart';
+// Kriz iletişim sistemi için import
+import 'crisis_communication_service.dart';
 
 /// Flag Sistemi Servisi
 /// Kriz, intihar riski ve ajitasyon durumlarını yönetir
@@ -33,6 +35,8 @@ class FlagSystemService extends ChangeNotifier {
 
   // Legal/Alert entegrasyonu
   LegalComplianceOrchestrator? _legalOrchestrator;
+  // Kriz iletişim sistemi
+  CrisisCommunicationService? _crisisCommunication;
 
   // Getters
   List<CrisisFlag> get crisisFlags => List.unmodifiable(_crisisFlags);
@@ -58,6 +62,15 @@ class FlagSystemService extends ChangeNotifier {
       _logger.info('Legal/Alert entegrasyonu başarılı', context: 'FlagSystemService');
     } catch (e) {
       _logger.error('Legal/Alert entegrasyonu başarısız: $e', context: 'FlagSystemService');
+    }
+    
+    // Kriz iletişim sistemi
+    try {
+      _crisisCommunication = CrisisCommunicationService();
+      await _crisisCommunication!.initialize();
+      _logger.info('Kriz iletişim sistemi başarılı', context: 'FlagSystemService');
+    } catch (e) {
+      _logger.error('Kriz iletişim sistemi başarısız: $e', context: 'FlagSystemService');
     }
     
     _logger.info('FlagSystemService initialized', context: 'FlagSystemService');
@@ -288,6 +301,20 @@ class FlagSystemService extends ChangeNotifier {
         _logger.info('Legal/Alert değerlendirmesi tamamlandı', context: 'FlagSystemService');
       } catch (e) {
         _logger.error('Legal/Alert değerlendirmesi başarısız: $e', context: 'FlagSystemService');
+      }
+    }
+    
+    // Kriz iletişim sistemi - Otomatik telefon, SMS, email
+    if (_crisisCommunication != null) {
+      try {
+        // Hasta iletişim bilgilerini al (gerçek uygulamada veritabanından gelecek)
+        final patientContactInfo = await _getPatientContactInfo(patientId);
+        
+        // Kriz iletişimini başlat
+        await _crisisCommunication!.initiateCrisisCommunication(flag, patientContactInfo);
+        _logger.info('Kriz iletişimi başlatıldı', context: 'FlagSystemService');
+      } catch (e) {
+        _logger.error('Kriz iletişimi başarısız: $e', context: 'FlagSystemService');
       }
     }
     
@@ -629,6 +656,38 @@ class FlagSystemService extends ChangeNotifier {
       'resolvedFlags': resolved,
       'severityDistribution': severityDist,
       'typeDistribution': typeDist,
+    };
+  }
+
+  /// Hasta iletişim bilgilerini al (mock data)
+  Future<Map<String, dynamic>> _getPatientContactInfo(String patientId) async {
+    // Gerçek uygulamada veritabanından gelecek
+    // Şimdilik mock data kullanıyoruz
+    return {
+      'name': 'Ahmet Yılmaz',
+      'phone': '+90 555 123 4567',
+      'email': 'ahmet.yilmaz@email.com',
+      'address': 'İstanbul, Türkiye',
+      'emergencyContacts': [
+        {
+          'id': 'ec1',
+          'name': 'Fatma Yılmaz',
+          'phone': '+90 555 987 6543',
+          'email': 'fatma.yilmaz@email.com',
+          'relationship': 'Eş',
+          'priority': 1,
+          'isPrimary': true,
+        },
+        {
+          'id': 'ec2',
+          'name': 'Mehmet Yılmaz',
+          'phone': '+90 555 456 7890',
+          'email': 'mehmet.yilmaz@email.com',
+          'relationship': 'Kardeş',
+          'priority': 2,
+          'isPrimary': false,
+        },
+      ],
     };
   }
 

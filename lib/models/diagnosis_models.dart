@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:flutter/material.dart';
 
 part 'diagnosis_models.g.dart';
 
@@ -11,10 +12,10 @@ enum DiagnosisSystem {
 
 /// Diagnosis Severity - Tanı şiddeti
 enum DiagnosisSeverity {
-  @JsonValue('mild') mild,
-  @JsonValue('moderate') moderate,
-  @JsonValue('severe') severe,
-  @JsonValue('very_severe') verySevere,
+  mild,
+  moderate,
+  severe,
+  critical,
 }
 
 /// Diagnosis Entry - Tanı girişi
@@ -128,25 +129,350 @@ class RegionalDiagnosisConfig {
 class DiagnosisCategory {
   final String id;
   final String name;
-  final String code;
   final String description;
-  final List<String> parentCategories;
-  final List<String> childCategories;
-  final List<String> disorderIds;
-  final Map<String, dynamic> metadata;
+  final IconData icon;
+  final Color color;
+  final int diagnosisCount;
+  final List<DiagnosisSubCategory> subCategories;
 
   const DiagnosisCategory({
     required this.id,
     required this.name,
-    required this.code,
     required this.description,
-    required this.parentCategories,
-    required this.childCategories,
-    required this.disorderIds,
-    required this.metadata,
+    required this.icon,
+    required this.color,
+    this.diagnosisCount = 0,
+    this.subCategories = const [],
   });
 
-  factory DiagnosisCategory.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisCategoryFromJson(json);
-  Map<String, dynamic> toJson() => _$DiagnosisCategoryToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'icon': icon.codePoint,
+      'color': color.value,
+      'diagnosisCount': diagnosisCount,
+      'subCategories': subCategories.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  factory DiagnosisCategory.fromJson(Map<String, dynamic> json) {
+    return DiagnosisCategory(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      icon: IconData(json['icon'] as int, fontFamily: 'MaterialIcons'),
+      color: Color(json['color'] as int),
+      diagnosisCount: json['diagnosisCount'] as int? ?? 0,
+      subCategories: (json['subCategories'] as List<dynamic>?)
+          ?.map((e) => DiagnosisSubCategory.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+    );
+  }
+}
+
+class DiagnosisSubCategory {
+  final String id;
+  final String name;
+  final String description;
+  final int diagnosisCount;
+
+  const DiagnosisSubCategory({
+    required this.id,
+    required this.name,
+    required this.description,
+    this.diagnosisCount = 0,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'diagnosisCount': diagnosisCount,
+    };
+  }
+
+  factory DiagnosisSubCategory.fromJson(Map<String, dynamic> json) {
+    return DiagnosisSubCategory(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      diagnosisCount: json['diagnosisCount'] as int? ?? 0,
+    );
+  }
+}
+
+class Diagnosis {
+  final String id;
+  final String code;
+  final String name;
+  final String description;
+  final String criteria;
+  final DiagnosisCategory category;
+  final DiagnosisSeverity severity;
+  final List<String> symptoms;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? notes;
+  final double? confidence;
+  final List<String>? differentialDiagnoses;
+  final Map<String, dynamic>? metadata;
+
+  const Diagnosis({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.description,
+    required this.criteria,
+    required this.category,
+    required this.severity,
+    required this.symptoms,
+    required this.createdAt,
+    required this.updatedAt,
+    this.notes,
+    this.confidence,
+    this.differentialDiagnoses,
+    this.metadata,
+  });
+
+  Diagnosis copyWith({
+    String? id,
+    String? code,
+    String? name,
+    String? description,
+    String? criteria,
+    DiagnosisCategory? category,
+    DiagnosisSeverity? severity,
+    List<String>? symptoms,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? notes,
+    double? confidence,
+    List<String>? differentialDiagnoses,
+    Map<String, dynamic>? metadata,
+  }) {
+    return Diagnosis(
+      id: id ?? this.id,
+      code: code ?? this.code,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      criteria: criteria ?? this.criteria,
+      category: category ?? this.category,
+      severity: severity ?? this.severity,
+      symptoms: symptoms ?? this.symptoms,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      notes: notes ?? this.notes,
+      confidence: confidence ?? this.confidence,
+      differentialDiagnoses: differentialDiagnoses ?? this.differentialDiagnoses,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code': code,
+      'name': name,
+      'description': description,
+      'criteria': criteria,
+      'category': category.toJson(),
+      'severity': severity.name,
+      'symptoms': symptoms,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'notes': notes,
+      'confidence': confidence,
+      'differentialDiagnoses': differentialDiagnoses,
+      'metadata': metadata,
+    };
+  }
+
+  factory Diagnosis.fromJson(Map<String, dynamic> json) {
+    return Diagnosis(
+      id: json['id'] as String,
+      code: json['code'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      criteria: json['criteria'] as String,
+      category: DiagnosisCategory.fromJson(json['category'] as Map<String, dynamic>),
+      severity: DiagnosisSeverity.values.firstWhere(
+        (e) => e.name == json['severity'],
+        orElse: () => DiagnosisSeverity.mild,
+      ),
+      symptoms: List<String>.from(json['symptoms'] as List),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      notes: json['notes'] as String?,
+      confidence: json['confidence'] as double?,
+      differentialDiagnoses: json['differentialDiagnoses'] != null
+          ? List<String>.from(json['differentialDiagnoses'] as List)
+          : null,
+      metadata: json['metadata'] as Map<String, dynamic>?,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Diagnosis && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() {
+    return 'Diagnosis(id: $id, code: $code, name: $name, severity: $severity)';
+  }
+}
+
+class AIDiagnosisSuggestion {
+  final String id;
+  final Diagnosis diagnosis;
+  final double confidence;
+  final String reasoning;
+  final List<String> supportingSymptoms;
+  final List<String> conflictingSymptoms;
+  final List<String> recommendations;
+  final DateTime generatedAt;
+
+  const AIDiagnosisSuggestion({
+    required this.id,
+    required this.diagnosis,
+    required this.confidence,
+    required this.reasoning,
+    required this.supportingSymptoms,
+    required this.conflictingSymptoms,
+    required this.recommendations,
+    required this.generatedAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'diagnosis': diagnosis.toJson(),
+      'confidence': confidence,
+      'reasoning': reasoning,
+      'supportingSymptoms': supportingSymptoms,
+      'conflictingSymptoms': conflictingSymptoms,
+      'recommendations': recommendations,
+      'generatedAt': generatedAt.toIso8601String(),
+    };
+  }
+
+  factory AIDiagnosisSuggestion.fromJson(Map<String, dynamic> json) {
+    return AIDiagnosisSuggestion(
+      id: json['id'] as String,
+      diagnosis: Diagnosis.fromJson(json['diagnosis'] as Map<String, dynamic>),
+      confidence: json['confidence'] as double,
+      reasoning: json['reasoning'] as String,
+      supportingSymptoms: List<String>.from(json['supportingSymptoms'] as List),
+      conflictingSymptoms: List<String>.from(json['conflictingSymptoms'] as List),
+      recommendations: List<String>.from(json['recommendations'] as List),
+      generatedAt: DateTime.parse(json['generatedAt'] as String),
+    );
+  }
+}
+
+class DiagnosisSearchResult {
+  final List<Diagnosis> diagnoses;
+  final int totalCount;
+  final String searchQuery;
+  final List<String> suggestions;
+  final Duration searchTime;
+
+  const DiagnosisSearchResult({
+    required this.diagnoses,
+    required this.totalCount,
+    required this.searchQuery,
+    this.suggestions = const [],
+    required this.searchTime,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'diagnoses': diagnoses.map((e) => e.toJson()).toList(),
+      'totalCount': totalCount,
+      'searchQuery': searchQuery,
+      'suggestions': suggestions,
+      'searchTime': searchTime.inMilliseconds,
+    };
+  }
+
+  factory DiagnosisSearchResult.fromJson(Map<String, dynamic> json) {
+    return DiagnosisSearchResult(
+      diagnoses: (json['diagnoses'] as List<dynamic>)
+          .map((e) => Diagnosis.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalCount: json['totalCount'] as int,
+      searchQuery: json['searchQuery'] as String,
+      suggestions: List<String>.from(json['suggestions'] as List),
+      searchTime: Duration(milliseconds: json['searchTime'] as int),
+    );
+  }
+}
+
+class DiagnosisStatistics {
+  final int totalDiagnoses;
+  final Map<DiagnosisCategory, int> diagnosesByCategory;
+  final Map<DiagnosisSeverity, int> diagnosesBySeverity;
+  final Map<String, int> diagnosesByMonth;
+  final double averageConfidence;
+  final List<Diagnosis> mostCommonDiagnoses;
+  final List<Diagnosis> recentDiagnoses;
+
+  const DiagnosisStatistics({
+    required this.totalDiagnoses,
+    required this.diagnosesByCategory,
+    required this.diagnosesBySeverity,
+    required this.diagnosesByMonth,
+    required this.averageConfidence,
+    required this.mostCommonDiagnoses,
+    required this.recentDiagnoses,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'totalDiagnoses': totalDiagnoses,
+      'diagnosesByCategory': diagnosesByCategory.map(
+        (key, value) => MapEntry(key.id, value),
+      ),
+      'diagnosesBySeverity': diagnosesBySeverity.map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+      'diagnosesByMonth': diagnosesByMonth,
+      'averageConfidence': averageConfidence,
+      'mostCommonDiagnoses': mostCommonDiagnoses.map((e) => e.toJson()).toList(),
+      'recentDiagnoses': recentDiagnoses.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  factory DiagnosisStatistics.fromJson(Map<String, dynamic> json) {
+    return DiagnosisStatistics(
+      totalDiagnoses: json['totalDiagnoses'] as int,
+      diagnosesByCategory: (json['diagnosesByCategory'] as Map<String, dynamic>).map(
+        (key, value) => MapEntry(
+          DiagnosisCategory.fromJson({'id': key, 'name': '', 'description': '', 'icon': 0, 'color': 0}),
+          value as int,
+        ),
+      ),
+      diagnosesBySeverity: (json['diagnosesBySeverity'] as Map<String, dynamic>).map(
+        (key, value) => MapEntry(
+          DiagnosisSeverity.values.firstWhere((e) => e.name == key),
+          value as int,
+        ),
+      ),
+      diagnosesByMonth: Map<String, int>.from(json['diagnosesByMonth'] as Map),
+      averageConfidence: json['averageConfidence'] as double,
+      mostCommonDiagnoses: (json['mostCommonDiagnoses'] as List<dynamic>)
+          .map((e) => Diagnosis.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recentDiagnoses: (json['recentDiagnoses'] as List<dynamic>)
+          .map((e) => Diagnosis.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }

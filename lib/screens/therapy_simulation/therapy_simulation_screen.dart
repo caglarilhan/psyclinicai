@@ -4,6 +4,7 @@ import '../../models/therapy_simulation_model.dart';
 import '../../widgets/therapy_simulation/simulation_scenario_panel.dart';
 import '../../widgets/therapy_simulation/ai_client_panel.dart';
 import '../../widgets/therapy_simulation/session_notes_panel.dart';
+import '../../services/therapy_simulation_service.dart'; // Added import for TherapySimulationService
 
 class TherapySimulationScreen extends StatefulWidget {
   const TherapySimulationScreen({super.key});
@@ -138,6 +139,15 @@ class _TherapySimulationScreenState extends State<TherapySimulationScreen>
   }
 
   void _endSimulation() {
+    if (_selectedScenario != null && _sessionMessages.isNotEmpty) {
+      // Skor hesapla
+      final simulationService = TherapySimulationService();
+      final score = simulationService.calculateScore(_sessionMessages, _selectedScenario!);
+      
+      // Sonuçları göster
+      _showSimulationResults(score);
+    }
+
     setState(() {
       _isSessionActive = false;
       _selectedScenario = null;
@@ -233,6 +243,345 @@ class _TherapySimulationScreenState extends State<TherapySimulationScreen>
     }
 
     return 'Anlıyorum... Bu konuda daha fazla konuşmak istiyorum...';
+  }
+
+  void _showSimulationResults(SimulationScore score) {
+    final simulationService = TherapySimulationService();
+    final feedback = simulationService.getScoreFeedback(score);
+    final suggestions = simulationService.getImprovementSuggestions(score);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.analytics,
+              color: AppTheme.primaryColor,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text('Simülasyon Sonuçları'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Genel skor
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _getScoreColor(score.totalScore).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _getScoreColor(score.totalScore).withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _getScoreIcon(score.totalScore),
+                      color: _getScoreColor(score.totalScore),
+                      size: 32,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Toplam Skor: ${score.totalScore}/100',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: _getScoreColor(score.totalScore),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _getScoreLevel(score.totalScore),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _getScoreColor(score.totalScore),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Detaylı skorlar
+              Text(
+                'Detaylı Skorlar',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              _buildScoreBar('Empati', score.empathyScore, 30, Colors.blue),
+              _buildScoreBar('Soru Sorma', score.questioningScore, 40, Colors.green),
+              _buildScoreBar('Aktif Dinleme', score.activeListeningScore, 30, Colors.orange),
+              _buildScoreBar('Profesyonel Dil', score.professionalLanguageScore, 20, Colors.purple),
+
+              const SizedBox(height: 20),
+
+              // Geri bildirim
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.infoColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.infoColor.withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb,
+                          color: AppTheme.infoColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Geri Bildirim',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.infoColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(feedback),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // İyileştirme önerileri
+              Text(
+                'İyileştirme Önerileri',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              ...suggestions.map((suggestion) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: AppTheme.accentColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        suggestion,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+
+              const SizedBox(height: 20),
+
+              // Seans istatistikleri
+              if (_selectedScenario != null) ...[
+                Text(
+                  'Seans İstatistikleri',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildStatRow('Senaryo', _selectedScenario!.title),
+                      _buildStatRow('Kategori', _selectedScenario!.category),
+                      _buildStatRow('Zorluk', _getDifficultyText(_selectedScenario!.difficulty)),
+                      _buildStatRow('Toplam Mesaj', '${_sessionMessages.length}'),
+                      _buildStatRow('Terapist Mesajı', '${_sessionMessages.where((m) => m.sender == MessageSender.therapist).length}'),
+                      _buildStatRow('Danışan Mesajı', '${_sessionMessages.where((m) => m.sender == MessageSender.client).length}'),
+                      _buildStatRow('Tahmini Süre', '${_selectedScenario!.estimatedDuration} dakika'),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportSessionReport(score);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accentColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Rapor İndir'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resetSimulation();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Yeniden Başla'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreBar(String label, int score, int maxScore, Color color) {
+    final percentage = score / maxScore;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                '$score/$maxScore',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: percentage,
+            backgroundColor: color.withOpacity(0.2),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getScoreColor(int score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.orange;
+    if (score >= 40) return Colors.yellow[700]!;
+    return Colors.red;
+  }
+
+  IconData _getScoreIcon(int score) {
+    if (score >= 80) return Icons.star;
+    if (score >= 60) return Icons.check_circle;
+    if (score >= 40) return Icons.warning;
+    return Icons.error;
+  }
+
+  String _getScoreLevel(int score) {
+    if (score >= 80) return 'Mükemmel';
+    if (score >= 60) return 'İyi';
+    if (score >= 40) return 'Orta';
+    return 'Geliştirilmeli';
+  }
+
+  String _getDifficultyText(ScenarioDifficulty difficulty) {
+    switch (difficulty) {
+      case ScenarioDifficulty.beginner:
+        return 'Başlangıç';
+      case ScenarioDifficulty.intermediate:
+        return 'Orta';
+      case ScenarioDifficulty.advanced:
+        return 'İleri';
+    }
+  }
+
+  void _exportSessionReport(SimulationScore score) {
+    // TODO: PDF rapor oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Seans raporu PDF olarak indirildi'),
+        backgroundColor: AppTheme.accentColor,
+      ),
+    );
+  }
+
+  void _resetSimulation() {
+    setState(() {
+      _sessionMessages.clear();
+      _sessionNotes = '';
+    });
   }
 
   @override

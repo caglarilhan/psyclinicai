@@ -34,6 +34,11 @@ class AppTheme {
   static const Color successColor = Color(0xFF10B981); // Yeşil - başarı
   static const Color infoColor = Color(0xFF3B82F6); // Mavi - bilgi
 
+  // Metin renkleri
+  static const Color textPrimary = Color(0xFF1F2937);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textTertiary = Color(0xFF9CA3AF);
+
   // Açık tema
   static ThemeData get lightTheme {
     return ThemeData(

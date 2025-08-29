@@ -33,6 +33,11 @@ class AlertingService extends ChangeNotifier {
   final List<AlertEvent> _events = <AlertEvent>[];
   List<AlertEvent> get events => List.unmodifiable(_events);
 
+  /// Opsiyonel başlatma adımı (uyumluluk için)
+  Future<void> initialize() async {
+    // Gerekli başlangıç işleri yok; arayüz uyumluluğu için eklendi
+  }
+
   /// Aynı key için cool-down penceresinde ise tekrar göndermez.
   /// Mesaj birebir aynıysa de-dup yapar (cool-down bitse bile aynı ise atlamayı tercih edebilirsiniz; burada sadece cooldown uygularız).
   bool send({

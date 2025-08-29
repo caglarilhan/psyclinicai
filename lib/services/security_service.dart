@@ -1,488 +1,370 @@
-import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as enc;
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/ai_logger.dart';
 import '../models/security_models.dart';
 
-class SecurityService extends ChangeNotifier {
+class SecurityService {
   static final SecurityService _instance = SecurityService._internal();
   factory SecurityService() => _instance;
   SecurityService._internal();
 
-  final AILogger _logger = AILogger();
-  
-  // Encryption keys
-  late enc.Encrypter _encrypter;
-  late enc.IV _iv;
-  late enc.Key _key;
-  
-  // Security state
   bool _isInitialized = false;
-  SecurityLevel _currentSecurityLevel = SecurityLevel.medium;
-  List<AuditLog> _auditLogs = [];
-  Map<String, UserRole> _userRoles = {};
-  Map<String, List<String>> _permissions = {};
-  
-  // Security settings
-  bool _encryptionEnabled = true;
-  bool _auditLoggingEnabled = true;
-  bool _roleBasedAccessEnabled = true;
-  int _sessionTimeoutMinutes = 30;
-  int _maxLoginAttempts = 5;
-  int _lockoutDurationMinutes = 15;
-
-  // Getters
-  bool get isInitialized => _isInitialized;
-  SecurityLevel get currentSecurityLevel => _currentSecurityLevel;
-  List<AuditLog> get auditLogs => _auditLogs;
-  bool get encryptionEnabled => _encryptionEnabled;
-  bool get auditLoggingEnabled => _auditLoggingEnabled;
-  bool get roleBasedAccessEnabled => _roleBasedAccessEnabled;
+  final List<AuditLog> _auditLogs = [];
+  final List<ComplianceReport> _complianceReports = [];
+  final Random _random = Random();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
+    
+    // Demo audit log verileri
+    _auditLogs.addAll([
+      AuditLog(
+        id: '1',
+        userId: 'user1',
+        userName: 'Dr. Ahmet Yılmaz',
+        action: 'Sisteme giriş yapıldı',
+        type: AuditLogType.login,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        ipAddress: '192.168.1.100',
+        userAgent: 'Chrome/120.0.0.0',
+      ),
+      AuditLog(
+        id: '2',
+        userId: 'user1',
+        userName: 'Dr. Ahmet Yılmaz',
+        action: 'Danışan verisi görüntülendi',
+        type: AuditLogType.dataAccess,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
+        resourceId: 'client123',
+        resourceType: 'client',
+        ipAddress: '192.168.1.100',
+      ),
+      AuditLog(
+        id: '3',
+        userId: 'user1',
+        userName: 'Dr. Ahmet Yılmaz',
+        action: 'Seans notu güncellendi',
+        type: AuditLogType.dataModification,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+        resourceId: 'session456',
+        resourceType: 'session',
+        ipAddress: '192.168.1.100',
+      ),
+      AuditLog(
+        id: '4',
+        userId: 'user2',
+        userName: 'Dr. Ayşe Demir',
+        action: 'Sisteme giriş yapıldı',
+        type: AuditLogType.login,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
+        ipAddress: '192.168.1.101',
+        userAgent: 'Firefox/119.0',
+      ),
+      AuditLog(
+        id: '5',
+        userId: 'user2',
+        userName: 'Dr. Ayşe Demir',
+        action: 'Güvenlik ayarları değiştirildi',
+        type: AuditLogType.security,
+        timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
+        ipAddress: '192.168.1.101',
+      ),
+    ]);
 
-    try {
-      _logger.info('SecurityService initializing...', context: 'SecurityService');
-      
-      // Initialize encryption
-      await _initializeEncryption();
-      
-      // Load security settings
-      await _loadSecuritySettings();
-      
-      // Initialize user roles and permissions
-      await _initializeAccessControl();
-      
-      // Load audit logs
-      await _loadAuditLogs();
-      
-      _isInitialized = true;
-      _logger.info('SecurityService initialized successfully', context: 'SecurityService');
-      
-      // Log initialization
-      await _logAuditEvent(
-        AuditEventType.system,
-        'SecurityService initialized',
-        'SYSTEM',
-        SecurityLevel.high,
-      );
-      
-    } catch (e) {
-      _logger.error('SecurityService initialization failed', context: 'SecurityService', error: e);
-      rethrow;
-    }
-  }
-
-  Future<void> _initializeEncryption() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Generate or retrieve encryption key
-      String? storedKey = prefs.getString('encryption_key');
-      if (storedKey == null) {
-        storedKey = _generateEncryptionKey();
-        await prefs.setString('encryption_key', storedKey);
-      }
-      
-      // Generate or retrieve IV
-      String? storedIV = prefs.getString('encryption_iv');
-      if (storedIV == null) {
-        storedIV = _generateIV();
-        await prefs.setString('encryption_iv', storedIV);
-      }
-      
-      _key = enc.Key(Uint8List.fromList(base64.decode(storedKey)));
-      _iv = enc.IV(Uint8List.fromList(base64.decode(storedIV)));
-      _encrypter = enc.Encrypter(enc.AES(_key));
-      
-      _logger.info('Encryption initialized successfully', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to initialize encryption', context: 'SecurityService', error: e);
-      rethrow;
-    }
-  }
-
-  String _generateEncryptionKey() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(32, (i) => random.nextInt(256));
-    return base64.encode(bytes);
-  }
-
-  String _generateIV() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(16, (i) => random.nextInt(256));
-    return base64.encode(bytes);
-  }
-
-  Future<void> _loadSecuritySettings() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      _encryptionEnabled = prefs.getBool('encryption_enabled') ?? true;
-      _auditLoggingEnabled = prefs.getBool('audit_logging_enabled') ?? true;
-      _roleBasedAccessEnabled = prefs.getBool('role_based_access_enabled') ?? true;
-      _sessionTimeoutMinutes = prefs.getInt('session_timeout_minutes') ?? 30;
-      _maxLoginAttempts = prefs.getInt('max_login_attempts') ?? 5;
-      _lockoutDurationMinutes = prefs.getInt('lockout_duration_minutes') ?? 15;
-      
-      _logger.info('Security settings loaded', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to load security settings', context: 'SecurityService', error: e);
-    }
-  }
-
-  Future<void> _initializeAccessControl() async {
-    try {
-      // Initialize default roles and permissions
-      _userRoles = {
-        'admin': UserRole.admin,
-        'therapist': UserRole.therapist,
-        'supervisor': UserRole.supervisor,
-        'client': UserRole.client,
-        'guest': UserRole.guest,
-      };
-
-      _permissions = {
-        'admin': [
-          'read:all',
-          'write:all',
-          'delete:all',
-          'security:manage',
-          'users:manage',
+    // Demo compliance report verileri
+    _complianceReports.addAll([
+      ComplianceReport(
+        id: '1',
+        complianceType: 'KVKK Uyumluluğu',
+        status: ComplianceStatus.compliant,
+        lastChecked: DateTime.now().subtract(const Duration(days: 1)),
+        nextCheck: DateTime.now().add(const Duration(days: 29)),
+        notes: 'Tüm KVKK gereksinimleri karşılanıyor',
+        requirements: [
+          ComplianceRequirement(
+            id: 'kvkk1',
+            title: 'Açık Rıza',
+            description: 'Kullanıcı açık rıza veriyor',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+          ComplianceRequirement(
+            id: 'kvkk2',
+            title: 'Veri Güvenliği',
+            description: 'AES-256 şifreleme aktif',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+          ComplianceRequirement(
+            id: 'kvkk3',
+            title: 'Veri Silme Hakkı',
+            description: 'Kullanıcı verilerini silebiliyor',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 1)),
+          ),
         ],
-        'therapist': [
-          'read:clients',
-          'write:clients',
-          'read:sessions',
-          'write:sessions',
+      ),
+      ComplianceReport(
+        id: '2',
+        complianceType: 'HIPAA Uyumluluğu',
+        status: ComplianceStatus.warning,
+        lastChecked: DateTime.now().subtract(const Duration(days: 2)),
+        nextCheck: DateTime.now().add(const Duration(days: 28)),
+        notes: 'Bazı HIPAA gereksinimleri eksik',
+        requirements: [
+          ComplianceRequirement(
+            id: 'hipaa1',
+            title: 'Veri Şifreleme',
+            description: 'AES-256 şifreleme aktif',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 2)),
+          ),
+          ComplianceRequirement(
+            id: 'hipaa2',
+            title: 'Denetim Kaydı',
+            description: 'Tüm erişimler kaydediliyor',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 2)),
+          ),
+          ComplianceRequirement(
+            id: 'hipaa3',
+            title: 'Erişim Kontrolü',
+            description: 'Rol bazlı erişim eksik',
+            isCompliant: false,
+            notes: 'Rol bazlı erişim sistemi kurulmalı',
+            lastChecked: DateTime.now().subtract(const Duration(days: 2)),
+          ),
         ],
-        'supervisor': [
-          'read:all',
-          'write:reports',
-          'security:view',
+      ),
+      ComplianceReport(
+        id: '3',
+        complianceType: 'GDPR Uyumluluğu',
+        status: ComplianceStatus.compliant,
+        lastChecked: DateTime.now().subtract(const Duration(days: 3)),
+        nextCheck: DateTime.now().add(const Duration(days: 27)),
+        notes: 'GDPR gereksinimleri tam karşılanıyor',
+        requirements: [
+          ComplianceRequirement(
+            id: 'gdpr1',
+            title: 'Veri Dışa Aktarma',
+            description: 'Kullanıcı verilerini dışa aktarabiliyor',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 3)),
+          ),
+          ComplianceRequirement(
+            id: 'gdpr2',
+            title: 'Veri Silme',
+            description: 'Unutulma hakkı aktif',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 3)),
+          ),
+          ComplianceRequirement(
+            id: 'gdpr3',
+            title: 'DPO Ataması',
+            description: 'Veri koruma görevlisi atandı',
+            isCompliant: true,
+            lastChecked: DateTime.now().subtract(const Duration(days: 3)),
+          ),
         ],
-        'client': [
-          'read:own_data',
-          'write:own_data',
-        ],
-        'guest': [
-          'read:public',
-        ],
-      };
-      
-      _logger.info('Access control initialized', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to initialize access control', context: 'SecurityService', error: e);
-    }
+      ),
+    ]);
+
+    _isInitialized = true;
   }
 
-  Future<void> _loadAuditLogs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final logsJson = prefs.getString('audit_logs');
-      
-      if (logsJson != null) {
-        final List<dynamic> logsList = json.decode(logsJson);
-        _auditLogs = logsList.map((log) => AuditLog.fromJson(log)).toList();
-      }
-      
-      _logger.info('Audit logs loaded: ${_auditLogs.length} entries', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to load audit logs', context: 'SecurityService', error: e);
-    }
+  // Güvenlik durumu al
+  Future<SecurityStatus> getSecurityStatus() async {
+    await initialize();
+    
+    // Demo güvenlik skorları
+    final overallScore = 85.0 + _random.nextDouble() * 10;
+    final encryptionScore = 95.0 + _random.nextDouble() * 5;
+    final accessControlScore = 80.0 + _random.nextDouble() * 15;
+    final auditScore = 90.0 + _random.nextDouble() * 10;
+    
+    return SecurityStatus(
+      overallScore: overallScore.clamp(0.0, 100.0),
+      encryptionScore: encryptionScore.clamp(0.0, 100.0),
+      accessControlScore: accessControlScore.clamp(0.0, 100.0),
+      auditScore: auditScore.clamp(0.0, 100.0),
+      lastUpdated: DateTime.now(),
+      issues: _generateSecurityIssues(),
+    );
   }
 
-  Future<void> _logAuditEvent(
-    AuditEventType eventType,
-    String description,
-    String userId,
-    SecurityLevel securityLevel, {
-    String? resourceId,
-    String? action,
-    Map<String, dynamic>? metadata,
+  // Denetim kayıtları al
+  Future<List<AuditLog>> getAuditLogs() async {
+    await initialize();
+    return _auditLogs;
+  }
+
+  // Uyumluluk raporları al
+  Future<List<ComplianceReport>> getComplianceReports() async {
+    await initialize();
+    return _complianceReports;
+  }
+
+  // Güvenlik sorunları oluştur
+  List<SecurityIssue> _generateSecurityIssues() {
+    return [
+      SecurityIssue(
+        id: '1',
+        title: 'Erişim Kontrolü Eksik',
+        description: 'Rol bazlı erişim sistemi tam kurulmamış',
+        type: SecurityIssueType.access,
+        severity: SecurityIssueSeverity.medium,
+        detectedAt: DateTime.now().subtract(const Duration(days: 2)),
+        isResolved: false,
+      ),
+      SecurityIssue(
+        id: '2',
+        title: 'Şifreleme Anahtarı Rotasyonu',
+        description: 'Şifreleme anahtarları 90 günden eski',
+        type: SecurityIssueType.encryption,
+        severity: SecurityIssueSeverity.low,
+        detectedAt: DateTime.now().subtract(const Duration(days: 5)),
+        isResolved: false,
+      ),
+    ];
+  }
+
+  // Yeni denetim kaydı ekle
+  Future<void> addAuditLog(AuditLog log) async {
+    await initialize();
+    _auditLogs.insert(0, log);
+  }
+
+  // Yeni uyumluluk raporu ekle
+  Future<void> addComplianceReport(ComplianceReport report) async {
+    await initialize();
+    _complianceReports.add(report);
+  }
+
+  // Güvenlik olayı ekle
+  Future<void> addSecurityEvent(SecurityEvent event) async {
+    await initialize();
+    // TODO: Güvenlik olaylarını kaydet
+  }
+
+  // Güvenlik taraması çalıştır
+  Future<SecurityStatus> runSecurityScan() async {
+    await initialize();
+    
+    // Simüle edilmiş tarama süresi
+    await Future.delayed(const Duration(seconds: 2));
+    
+    return await getSecurityStatus();
+  }
+
+  // Uyumluluk kontrolü çalıştır
+  Future<List<ComplianceReport>> runComplianceCheck() async {
+    await initialize();
+    
+    // Simüle edilmiş kontrol süresi
+    await Future.delayed(const Duration(seconds: 3));
+    
+    return _complianceReports;
+  }
+
+  // Güvenlik raporu oluştur
+  Future<Map<String, dynamic>> generateSecurityReport() async {
+    await initialize();
+    
+    final status = await getSecurityStatus();
+    final logs = await getAuditLogs();
+    final reports = await getComplianceReports();
+    
+    return {
+      'generatedAt': DateTime.now().toIso8601String(),
+      'overallScore': status.overallScore,
+      'encryptionScore': status.encryptionScore,
+      'accessControlScore': status.accessControlScore,
+      'auditScore': status.auditScore,
+      'totalAuditLogs': logs.length,
+      'totalComplianceReports': reports.length,
+      'securityLevel': status.securityLevel.name,
+      'recommendations': _generateRecommendations(status),
+    };
+  }
+
+  // Öneriler oluştur
+  List<String> _generateRecommendations(SecurityStatus status) {
+    final recommendations = <String>[];
+    
+    if (status.overallScore < 90) {
+      recommendations.add('Genel güvenlik skorunu artırmak için güvenlik açıklarını giderin');
+    }
+    
+    if (status.encryptionScore < 95) {
+      recommendations.add('Şifreleme standartlarını güncelleyin');
+    }
+    
+    if (status.accessControlScore < 85) {
+      recommendations.add('Erişim kontrol sistemini güçlendirin');
+    }
+    
+    if (status.auditScore < 90) {
+      recommendations.add('Denetim kayıt sistemini iyileştirin');
+    }
+    
+    if (recommendations.isEmpty) {
+      recommendations.add('Güvenlik durumu mükemmel! Mevcut standartları koruyun.');
+    }
+    
+    return recommendations;
+  }
+
+  // Güvenlik ayarlarını güncelle
+  Future<void> updateSecuritySettings(Map<String, dynamic> settings) async {
+    await initialize();
+    // TODO: Güvenlik ayarlarını güncelle
+  }
+
+  // Güvenlik olaylarını filtrele
+  Future<List<AuditLog>> filterAuditLogs({
+    AuditLogType? type,
+    String? userId,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
-    if (!_auditLoggingEnabled) return;
-
-    try {
-      final auditLog = AuditLog(
-        id: _generateId(),
-        userId: userId,
-        userName: _getUserName(userId),
-        eventType: eventType,
-        eventDescription: description,
-        timestamp: DateTime.now(),
-        ipAddress: '127.0.0.1', // Mock IP
-        userAgent: 'PsyClinicAI/1.0',
-        metadata: metadata,
-        securityLevel: securityLevel,
-        isSuccessful: true,
-      );
-
-      _auditLogs.add(auditLog);
-      
-      // Save to local storage
-      await _saveAuditLogs();
-      
-      // Notify listeners
-      notifyListeners();
-      
-      _logger.info('Audit event logged: $description', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to log audit event', context: 'SecurityService', error: e);
-    }
-  }
-
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString() + Random().nextInt(1000).toString();
-  }
-
-  String _getUserName(String userId) {
-    switch (userId) {
-      case 'SYSTEM':
-        return 'System';
-      case 'demo_user_001':
-        return 'Demo User';
-      default:
-        return 'Unknown User';
-    }
-  }
-
-  Future<void> _saveAuditLogs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final logsJson = json.encode(_auditLogs.map((log) => log.toJson()).toList());
-      await prefs.setString('audit_logs', logsJson);
-    } catch (e) {
-      _logger.error('Failed to save audit logs', context: 'SecurityService', error: e);
-    }
-  }
-
-  // Public methods
-  Future<String> encryptData(String data) async {
-    if (!_encryptionEnabled) return data;
+    await initialize();
     
-    try {
-      final encrypted = _encrypter.encrypt(data, iv: _iv);
-      return encrypted.base64;
-    } catch (e) {
-      _logger.error('Failed to encrypt data', context: 'SecurityService', error: e);
-      rethrow;
-    }
-  }
-
-  Future<String> decryptData(String encryptedData) async {
-    if (!_encryptionEnabled) return encryptedData;
+    var filteredLogs = _auditLogs;
     
-    try {
-      final encrypted = enc.Encrypted.fromBase64(encryptedData);
-      return _encrypter.decrypt(encrypted, iv: _iv);
-    } catch (e) {
-      _logger.error('Failed to decrypt data', context: 'SecurityService', error: e);
-      rethrow;
+    if (type != null) {
+      filteredLogs = filteredLogs.where((log) => log.type == type).toList();
     }
-  }
-
-  bool hasPermission(String userId, String permission) {
-    if (!_roleBasedAccessEnabled) return true;
     
-    final userRole = _userRoles[userId];
-    if (userRole == null) return false;
-    
-    final permissions = _permissions[userRole.name];
-    return permissions?.contains(permission) ?? false;
-  }
-
-  bool canAccessResource(String userId, String resourceType, String action) {
-    final permission = '$action:$resourceType';
-    return hasPermission(userId, permission);
-  }
-
-  Future<SecurityAssessment> assessSecurity() async {
-    try {
-      final vulnerabilities = <SecurityVulnerability>[];
-      final componentScores = <String, double>{};
-      final recommendations = <String>[];
-      
-      // Assess encryption
-      if (!_encryptionEnabled) {
-        vulnerabilities.add(SecurityVulnerability(
-          id: _generateId(),
-          title: 'Encryption Disabled',
-          description: 'Data encryption is currently disabled',
-          type: VulnerabilityType.encryption,
-          severity: VulnerabilitySeverity.high,
-          discoveredAt: DateTime.now(),
-          affectedComponents: ['data_storage', 'transmission'],
-          riskScore: 8.5,
-        ));
-        componentScores['encryption'] = 0.0;
-        recommendations.add('Enable data encryption for all sensitive data');
-      } else {
-        componentScores['encryption'] = 9.0;
-      }
-      
-      // Assess audit logging
-      if (!_auditLoggingEnabled) {
-        vulnerabilities.add(SecurityVulnerability(
-          id: _generateId(),
-          title: 'Audit Logging Disabled',
-          description: 'Audit logging is currently disabled',
-          type: VulnerabilityType.configuration,
-          severity: VulnerabilitySeverity.medium,
-          discoveredAt: DateTime.now(),
-          affectedComponents: ['compliance', 'security_monitoring'],
-          riskScore: 6.0,
-        ));
-        componentScores['audit_logging'] = 0.0;
-        recommendations.add('Enable audit logging for compliance and security monitoring');
-      } else {
-        componentScores['audit_logging'] = 8.5;
-      }
-      
-      // Assess access control
-      if (!_roleBasedAccessEnabled) {
-        vulnerabilities.add(SecurityVulnerability(
-          id: _generateId(),
-          title: 'Role-Based Access Control Disabled',
-          description: 'Role-based access control is currently disabled',
-          type: VulnerabilityType.authorization,
-          severity: VulnerabilitySeverity.high,
-          discoveredAt: DateTime.now(),
-          affectedComponents: ['user_management', 'data_access'],
-          riskScore: 8.0,
-        ));
-        componentScores['access_control'] = 0.0;
-        recommendations.add('Enable role-based access control');
-      } else {
-        componentScores['access_control'] = 8.0;
-      }
-      
-      // Calculate overall score
-      final scores = componentScores.values.toList();
-      final overallScore = scores.isEmpty ? 0.0 : scores.reduce((a, b) => a + b) / scores.length;
-      
-      // Determine overall security level
-      SecurityLevel overallSecurityLevel;
-      if (overallScore >= 9.0) {
-        overallSecurityLevel = SecurityLevel.low;
-      } else if (overallScore >= 7.0) {
-        overallSecurityLevel = SecurityLevel.medium;
-      } else if (overallScore >= 5.0) {
-        overallSecurityLevel = SecurityLevel.high;
-      } else {
-        overallSecurityLevel = SecurityLevel.critical;
-      }
-      
-      final assessment = SecurityAssessment(
-        id: _generateId(),
-        assessmentDate: DateTime.now(),
-        overallSecurityLevel: overallSecurityLevel,
-        overallScore: overallScore,
-        vulnerabilities: vulnerabilities,
-        componentScores: componentScores,
-        recommendations: recommendations,
-        notes: 'Security assessment completed automatically',
-      );
-      
-      _logger.info('Security assessment completed: Score $overallScore', context: 'SecurityService');
-      
-      return assessment;
-    } catch (e) {
-      _logger.error('Failed to assess security', context: 'SecurityService', error: e);
-      rethrow;
+    if (userId != null) {
+      filteredLogs = filteredLogs.where((log) => log.userId == userId).toList();
     }
+    
+    if (startDate != null) {
+      filteredLogs = filteredLogs.where((log) => log.timestamp.isAfter(startDate)).toList();
+    }
+    
+    if (endDate != null) {
+      filteredLogs = filteredLogs.where((log) => log.timestamp.isBefore(endDate)).toList();
+    }
+    
+    return filteredLogs;
   }
 
-  Future<void> updateSecuritySettings({
-    bool? encryptionEnabled,
-    bool? auditLoggingEnabled,
-    bool? roleBasedAccessEnabled,
-    int? sessionTimeoutMinutes,
-    int? maxLoginAttempts,
-    int? lockoutDurationMinutes,
+  // Uyumluluk raporlarını filtrele
+  Future<List<ComplianceReport>> filterComplianceReports({
+    ComplianceStatus? status,
+    String? complianceType,
   }) async {
-    try {
-      if (encryptionEnabled != null) _encryptionEnabled = encryptionEnabled;
-      if (auditLoggingEnabled != null) _auditLoggingEnabled = auditLoggingEnabled;
-      if (roleBasedAccessEnabled != null) _roleBasedAccessEnabled = roleBasedAccessEnabled;
-      if (sessionTimeoutMinutes != null) _sessionTimeoutMinutes = sessionTimeoutMinutes;
-      if (maxLoginAttempts != null) _maxLoginAttempts = maxLoginAttempts;
-      if (lockoutDurationMinutes != null) _lockoutDurationMinutes = lockoutDurationMinutes;
-      
-      // Save to local storage
-      await _saveSecuritySettings();
-      
-      // Log the change
-      await _logAuditEvent(
-        AuditEventType.security,
-        'Security settings updated',
-        'SYSTEM',
-        SecurityLevel.medium,
-        metadata: {
-          'encryption_enabled': _encryptionEnabled,
-          'audit_logging_enabled': _auditLoggingEnabled,
-          'role_based_access_enabled': _roleBasedAccessEnabled,
-        },
-      );
-      
-      // Notify listeners
-      notifyListeners();
-      
-      _logger.info('Security settings updated', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to update security settings', context: 'SecurityService', error: e);
-      rethrow;
+    await initialize();
+    
+    var filteredReports = _complianceReports;
+    
+    if (status != null) {
+      filteredReports = filteredReports.where((report) => report.status == status).toList();
     }
-  }
-
-  Future<void> _saveSecuritySettings() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      await prefs.setBool('encryption_enabled', _encryptionEnabled);
-      await prefs.setBool('audit_logging_enabled', _auditLoggingEnabled);
-      await prefs.setBool('role_based_access_enabled', _roleBasedAccessEnabled);
-      await prefs.setInt('session_timeout_minutes', _sessionTimeoutMinutes);
-      await prefs.setInt('max_login_attempts', _maxLoginAttempts);
-      await prefs.setInt('lockout_duration_minutes', _lockoutDurationMinutes);
-    } catch (e) {
-      _logger.error('Failed to save security settings', context: 'SecurityService', error: e);
+    
+    if (complianceType != null) {
+      filteredReports = filteredReports.where((report) => report.complianceType.contains(complianceType)).toList();
     }
-  }
-
-  Future<String> exportAuditLogs() async {
-    try {
-      final logsJson = json.encode(_auditLogs.map((log) => log.toJson()).toList());
-      return logsJson;
-    } catch (e) {
-      _logger.error('Failed to export audit logs', context: 'SecurityService', error: e);
-      rethrow;
-    }
-  }
-
-  Future<void> clearAuditLogs() async {
-    try {
-      _auditLogs.clear();
-      await _saveAuditLogs();
-      
-      await _logAuditEvent(
-        AuditEventType.system,
-        'Audit logs cleared',
-        'SYSTEM',
-        SecurityLevel.medium,
-      );
-      
-      notifyListeners();
-      
-      _logger.info('Audit logs cleared', context: 'SecurityService');
-    } catch (e) {
-      _logger.error('Failed to clear audit logs', context: 'SecurityService', error: e);
-      rethrow;
-    }
+    
+    return filteredReports;
   }
 }

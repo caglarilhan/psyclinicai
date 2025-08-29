@@ -1,35 +1,35 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
-import '../../models/supervision_models.dart';
-import '../../services/supervision_service.dart';
-import '../../widgets/supervisor/supervision_list_widget.dart';
-import '../../widgets/supervisor/performance_analytics_widget.dart';
-import '../../widgets/supervisor/quality_assurance_widget.dart';
+import '../../models/crm_models.dart';
+import '../../services/crm_service.dart';
+import '../../widgets/crm/customer_list_widget.dart';
+import '../../widgets/crm/sales_pipeline_widget.dart';
+import '../../widgets/crm/analytics_dashboard_widget.dart';
 
-class SupervisorDashboardScreen extends StatefulWidget {
-  const SupervisorDashboardScreen({super.key});
+class CRMDashboardScreen extends StatefulWidget {
+  const CRMDashboardScreen({super.key});
 
   @override
-  State<SupervisorDashboardScreen> createState() => _SupervisorDashboardScreenState();
+  State<CRMDashboardScreen> createState() => _CRMDashboardScreenState();
 }
 
-class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
+class _CRMDashboardScreenState extends State<CRMDashboardScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  late SupervisionService _supervisionService;
+  late CRMService _crmService;
   
-  // Süpervizyon verileri
-  List<SupervisionSession> _sessions = [];
-  List<TherapistPerformance> _performances = [];
-  QualityMetrics _qualityMetrics = QualityMetrics.empty();
+  // CRM verileri
+  List<Customer> _customers = [];
+  List<SalesOpportunity> _opportunities = [];
+  CRMAnalytics _analytics = CRMAnalytics.empty();
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _supervisionService = SupervisionService();
-    _loadSupervisionData();
+    _crmService = CRMService();
+    _loadCRMData();
   }
 
   @override
@@ -38,26 +38,26 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     super.dispose();
   }
 
-  Future<void> _loadSupervisionData() async {
+  Future<void> _loadCRMData() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await _supervisionService.initialize();
+      await _crmService.initialize();
       
-      final sessions = await _supervisionService.getSupervisionSessions();
-      final performances = await _supervisionService.getTherapistPerformances();
-      final qualityMetrics = await _supervisionService.getQualityMetrics();
+      final customers = await _crmService.getCustomers();
+      final opportunities = await _crmService.getSalesOpportunities();
+      final analytics = await _crmService.getAnalytics();
 
       setState(() {
-        _sessions = sessions;
-        _performances = performances;
-        _qualityMetrics = qualityMetrics;
+        _customers = customers;
+        _opportunities = opportunities;
+        _analytics = analytics;
         _isLoading = false;
       });
     } catch (e) {
-      print('Supervision data loading failed: $e');
+      print('CRM data loading failed: $e');
       setState(() {
         _isLoading = false;
       });
@@ -68,8 +68,8 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Süpervizyon Dashboard'),
-        backgroundColor: AppTheme.secondaryColor,
+        title: const Text('CRM Dashboard'),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
@@ -78,20 +78,20 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
           unselectedLabelColor: Colors.white70,
           tabs: const [
             Tab(icon: Icon(Icons.dashboard), text: 'Genel Bakış'),
-            Tab(icon: Icon(Icons.supervisor_account), text: 'Süpervizyon'),
-            Tab(icon: Icon(Icons.analytics), text: 'Performans'),
-            Tab(icon: Icon(Icons.verified), text: 'Kalite Güvence'),
+            Tab(icon: Icon(Icons.people), text: 'Müşteriler'),
+            Tab(icon: Icon(Icons.trending_up), text: 'Satış'),
+            Tab(icon: Icon(Icons.analytics), text: 'Analitik'),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: _showAddSessionDialog,
-            tooltip: 'Yeni Süpervizyon Ekle',
+            onPressed: _showAddCustomerDialog,
+            tooltip: 'Yeni Müşteri Ekle',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadSupervisionData,
+            onPressed: _loadCRMData,
             tooltip: 'Yenile',
           ),
         ],
@@ -104,31 +104,28 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
                 // Tab 1: Genel Bakış
                 _buildOverviewTab(),
                 
-                // Tab 2: Süpervizyon
-                SupervisionListWidget(
-                  sessions: _sessions,
-                  onSessionUpdated: _loadSupervisionData,
+                // Tab 2: Müşteriler
+                CustomerListWidget(
+                  customers: _customers,
+                  onCustomerUpdated: _loadCRMData,
                 ),
                 
-                // Tab 3: Performans
-                PerformanceAnalyticsWidget(
-                  performances: _performances,
-                  onPerformanceUpdated: _loadSupervisionData,
+                // Tab 3: Satış
+                SalesPipelineWidget(
+                  opportunities: _opportunities,
+                  onOpportunityUpdated: _loadCRMData,
                 ),
                 
-                // Tab 4: Kalite Güvence
-                QualityAssuranceWidget(
-                  qualityMetrics: _qualityMetrics,
-                  onMetricsUpdated: _loadSupervisionData,
-                ),
+                // Tab 4: Analitik
+                AnalyticsDashboardWidget(analytics: _analytics),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddSessionDialog,
+        onPressed: _showAddOpportunityDialog,
         backgroundColor: AppTheme.accentColor,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Yeni Süpervizyon'),
+        icon: const Icon(Icons.add_business),
+        label: const Text('Yeni Fırsat'),
       ),
     );
   }
@@ -154,8 +151,8 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
           
           const SizedBox(height: 24),
           
-          // Kalite Metrikleri
-          _buildQualityMetrics(),
+          // Müşteri Segmentasyonu
+          _buildCustomerSegmentation(),
         ],
       ),
     );
@@ -171,28 +168,28 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
       childAspectRatio: 1.5,
       children: [
         _buildKPICard(
-          'Toplam Süpervizyon',
-          '${_sessions.length}',
-          Icons.supervisor_account,
-          AppTheme.secondaryColor,
-        ),
-        _buildKPICard(
-          'Aktif Terapistler',
-          '${_performances.where((p) => p.isActive).length}',
+          'Toplam Müşteri',
+          '${_customers.length}',
           Icons.people,
           AppTheme.primaryColor,
         ),
         _buildKPICard(
-          'Ortalama Skor',
-          '${_qualityMetrics.averageScore.toStringAsFixed(1)}/10',
-          Icons.star,
+          'Aktif Fırsatlar',
+          '${_opportunities.where((o) => o.status != SalesStatus.closed).length}',
+          Icons.trending_up,
           AppTheme.accentColor,
         ),
         _buildKPICard(
-          'Kalite Oranı',
-          '%${(_qualityMetrics.qualityRate * 100).toStringAsFixed(1)}',
-          Icons.verified,
+          'Bu Ay Satış',
+          '₺${_analytics.monthlyRevenue.toStringAsFixed(0)}',
+          Icons.attach_money,
           AppTheme.successColor,
+        ),
+        _buildKPICard(
+          'Ortalama Değer',
+          '₺${_analytics.averageDealValue.toStringAsFixed(0)}',
+          Icons.assessment,
+          AppTheme.infoColor,
         ),
       ],
     );
@@ -275,28 +272,28 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
             children: [
               Expanded(
                 child: _buildQuickActionButton(
-                  'Yeni Süpervizyon',
-                  Icons.add,
-                  AppTheme.secondaryColor,
-                  _showAddSessionDialog,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  'Performans Raporu',
-                  Icons.assessment,
+                  'Yeni Müşteri',
+                  Icons.person_add,
                   AppTheme.primaryColor,
-                  _generatePerformanceReport,
+                  _showAddCustomerDialog,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionButton(
-                  'Kalite Raporu',
-                  Icons.verified,
+                  'Yeni Fırsat',
+                  Icons.add_business,
                   AppTheme.accentColor,
-                  _generateQualityReport,
+                  _showAddOpportunityDialog,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
+                  'Rapor Oluştur',
+                  Icons.assessment,
+                  AppTheme.infoColor,
+                  _generateReport,
                 ),
               ),
             ],
@@ -338,7 +335,7 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
   }
 
   Widget _buildRecentActivities() {
-    final recentActivities = _supervisionService.getRecentActivities();
+    final recentActivities = _crmService.getRecentActivities();
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -363,7 +360,7 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     );
   }
 
-  Widget _buildActivityItem(SupervisionActivity activity) {
+  Widget _buildActivityItem(CRMActivity activity) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -404,7 +401,9 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     );
   }
 
-  Widget _buildQualityMetrics() {
+  Widget _buildCustomerSegmentation() {
+    final segments = _crmService.getCustomerSegments();
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -416,49 +415,43 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Kalite Metrikleri',
+            'Müşteri Segmentasyonu',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          
-          _buildQualityRow('Ortalama Skor', '${_qualityMetrics.averageScore.toStringAsFixed(1)}/10', AppTheme.accentColor),
-          _buildQualityRow('Kalite Oranı', '%${(_qualityMetrics.qualityRate * 100).toStringAsFixed(1)}', AppTheme.successColor),
-          _buildQualityRow('İyileştirme Alanları', '${_qualityMetrics.improvementAreas.length}', AppTheme.warningColor),
-          _buildQualityRow('Başarılı Seanslar', '${_qualityMetrics.successfulSessions}', AppTheme.primaryColor),
+          ...segments.map((segment) => _buildSegmentItem(segment)),
         ],
       ),
     );
   }
 
-  Widget _buildQualityRow(String label, String value, Color color) {
+  Widget _buildSegmentItem(CustomerSegment segment) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-              ),
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: segment.color,
+              shape: BoxShape.circle,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: color,
-                fontSize: 14,
-              ),
+              segment.name,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          Text(
+            '${segment.customerCount} müşteri',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
             ),
           ),
         ],
@@ -466,29 +459,29 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     );
   }
 
-  Color _getActivityColor(SupervisionActivityType type) {
+  Color _getActivityColor(ActivityType type) {
     switch (type) {
-      case SupervisionActivityType.sessionCreated:
+      case ActivityType.customerAdded:
         return AppTheme.successColor;
-      case SupervisionActivityType.sessionCompleted:
-        return AppTheme.primaryColor;
-      case SupervisionActivityType.feedbackGiven:
+      case ActivityType.opportunityCreated:
         return AppTheme.accentColor;
-      case SupervisionActivityType.performanceUpdated:
-        return AppTheme.infoColor;
+      case ActivityType.dealClosed:
+        return AppTheme.primaryColor;
+      case ActivityType.followUp:
+        return AppTheme.warningColor;
     }
   }
 
-  IconData _getActivityIcon(SupervisionActivityType type) {
+  IconData _getActivityIcon(ActivityType type) {
     switch (type) {
-      case SupervisionActivityType.sessionCreated:
-        return Icons.add;
-      case SupervisionActivityType.sessionCompleted:
+      case ActivityType.customerAdded:
+        return Icons.person_add;
+      case ActivityType.opportunityCreated:
+        return Icons.add_business;
+      case ActivityType.dealClosed:
         return Icons.check_circle;
-      case SupervisionActivityType.feedbackGiven:
-        return Icons.feedback;
-      case SupervisionActivityType.performanceUpdated:
-        return Icons.trending_up;
+      case ActivityType.followUp:
+        return Icons.schedule;
     }
   }
 
@@ -507,31 +500,31 @@ class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen>
     }
   }
 
-  void _showAddSessionDialog() {
-    // TODO: Süpervizyon ekleme dialog'u
+  void _showAddCustomerDialog() {
+    // TODO: Müşteri ekleme dialog'u
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Süpervizyon ekleme özelliği yakında eklenecek'),
+        content: Text('Müşteri ekleme özelliği yakında eklenecek'),
         backgroundColor: AppTheme.infoColor,
       ),
     );
   }
 
-  void _generatePerformanceReport() {
-    // TODO: Performans raporu oluşturma
+  void _showAddOpportunityDialog() {
+    // TODO: Fırsat ekleme dialog'u
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Performans raporu oluşturma özelliği yakında eklenecek'),
+        content: Text('Fırsat ekleme özelliği yakında eklenecek'),
         backgroundColor: AppTheme.infoColor,
       ),
     );
   }
 
-  void _generateQualityReport() {
-    // TODO: Kalite raporu oluşturma
+  void _generateReport() {
+    // TODO: Rapor oluşturma
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Kalite raporu oluşturma özelliği yakında eklenecek'),
+        content: Text('Rapor oluşturma özelliği yakında eklenecek'),
         backgroundColor: AppTheme.infoColor,
       ),
     );

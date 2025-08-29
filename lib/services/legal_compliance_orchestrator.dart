@@ -14,6 +14,11 @@ class LegalComplianceOrchestrator extends ChangeNotifier {
   })  : _policyService = policyService ?? LegalPolicyService(),
         _alertingService = alertingService ?? AlertingService();
 
+  /// Opsiyonel başlatma (uyumluluk için)
+  Future<void> initialize() async {
+    // Spesifik init yok; arayüz uyumluluğu için eklendi
+  }
+
   /// Karar üretir ve bildirimlerini gönderir (de-dup/cooldown ile)
   Future<LegalDecision> evaluateAndNotify(LegalEvaluationContext context) async {
     // Eyalet bilgisini facts'e ekle

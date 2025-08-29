@@ -1,615 +1,448 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../models/therapy_simulation_models.dart';
+import 'ai_service.dart';
 
 /// Terapi Simülasyonu Servisi
 /// AI destekli rol-play simülasyonları için
 class TherapySimulationService {
-  static const String _baseUrl = 'https://api.psyclinicai.com/therapy-simulation';
-  static const String _apiKey = 'your_api_key_here';
+  static final TherapySimulationService _instance = TherapySimulationService._internal();
+  factory TherapySimulationService() => _instance;
+  TherapySimulationService._internal();
+
+  final AIService _aiService = AIService();
+  final Random _random = Random();
+
+  // Senaryo veritabanı
+  final List<SimulationScenario> _scenarios = [];
   
-  // Caches
-  final Map<String, TherapySimulationSession> _sessionsCache = {};
-  final Map<String, List<SimulationTurn>> _turnsCache = {};
-  final Map<String, SimulationMetrics> _metricsCache = {};
-  final List<SimulationScenario> _scenariosCache = [];
-  
-  // Stream controllers
-  final StreamController<TherapySimulationSession> _sessionController = 
-      StreamController<TherapySimulationSession>.broadcast();
-  final StreamController<SimulationTurn> _turnController = 
-      StreamController<SimulationTurn>.broadcast();
-  final StreamController<SimulationMetrics> _metricsController = 
-      StreamController<SimulationMetrics>.broadcast();
-  
-  // Streams
-  Stream<TherapySimulationSession> get sessionStream => _sessionController.stream;
-  Stream<SimulationTurn> get turnStream => _turnController.stream;
-  Stream<SimulationMetrics> get metricsStream => _metricsController.stream;
-  
-  /// Servisi başlat
+  // Aktif simülasyonlar
+  final Map<String, SimulationSession> _activeSessions = {};
+
   Future<void> initialize() async {
-    try {
-      await _loadScenarios();
-      await _loadMockData();
-      print('TherapySimulationService initialized successfully');
-    } catch (e) {
-      print('Error initializing TherapySimulationService: $e');
-      // Mock data ile devam et
-      await _loadMockData();
-    }
+    await _loadScenarios();
+    print('TherapySimulationService initialized with ${_scenarios.length} scenarios');
   }
-  
-  /// Senaryoları yükle
+
   Future<void> _loadScenarios() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/scenarios'),
-        headers: {'Authorization': 'Bearer $_apiKey'},
-      );
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        _scenariosCache.clear();
-        _scenariosCache.addAll(
-          data.map((json) => SimulationScenario.fromJson(json))
-        );
-      }
-    } catch (e) {
-      print('Error loading scenarios: $e');
-    }
-  }
-  
-  /// Mock data yükle
-  Future<void> _loadMockData() async {
-    _scenariosCache.addAll(_generateMockScenarios());
-  }
-  
-  /// Yeni simülasyon seansı oluştur
-  Future<TherapySimulationSession> createSession({
-    required String title,
-    required String description,
-    required TherapyApproach approach,
-    required String createdBy,
-    String? patientProfile,
-    String? scenarioDescription,
-    List<String>? learningObjectives,
-    Map<String, dynamic>? settings,
-  }) async {
-    try {
-      final session = TherapySimulationSession(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: title,
-        description: description,
-        approach: approach,
-        status: SimulationStatus.notStarted,
-        createdAt: DateTime.now(),
-        maxDuration: 60,
-        currentDuration: 0,
-        createdBy: createdBy,
-        patientProfile: patientProfile,
-        scenarioDescription: scenarioDescription,
-        learningObjectives: learningObjectives ?? ['Temel terapi tekniklerini uygula'],
-        settings: settings ?? {},
-        metadata: {},
-      );
-      
-      // Cache'e ekle
-      _sessionsCache[session.id] = session;
-      
-      // Stream'e gönder
-      _sessionController.add(session);
-      
-      return session;
-    } catch (e) {
-      print('Error creating session: $e');
-      rethrow;
-    }
-  }
-  
-  /// Simülasyon seansını başlat
-  Future<void> startSession(String sessionId) async {
-    try {
-      final session = _sessionsCache[sessionId];
-      if (session != null) {
-        final updatedSession = TherapySimulationSession(
-          id: session.id,
-          title: session.title,
-          description: session.description,
-          approach: session.approach,
-          status: SimulationStatus.inProgress,
-          createdAt: session.createdAt,
-          startedAt: DateTime.now(),
-          completedAt: session.completedAt,
-          maxDuration: session.maxDuration,
-          currentDuration: session.currentDuration,
-          createdBy: session.createdBy,
-          patientProfile: session.patientProfile,
-          scenarioDescription: session.scenarioDescription,
-          learningObjectives: session.learningObjectives,
-          settings: session.settings,
-          metadata: session.metadata,
-        );
-        
-        _sessionsCache[sessionId] = updatedSession;
-        _sessionController.add(updatedSession);
-      }
-    } catch (e) {
-      print('Error starting session: $e');
-    }
-  }
-  
-  /// Simülasyon turu ekle
-  Future<SimulationTurn> addTurn({
-    required String sessionId,
-    required String content,
-    required RoleType role,
-    Map<String, dynamic>? context,
-  }) async {
-    try {
-      final session = _sessionsCache[sessionId];
-      if (session == null) {
-        throw Exception('Session not found');
-      }
-      
-      final turn = SimulationTurn(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sessionId: sessionId,
-        turnNumber: (_turnsCache[sessionId]?.length ?? 0) + 1,
-        role: role,
-        content: content,
-        timestamp: DateTime.now(),
-        context: context ?? {},
-        metadata: {},
-      );
-      
-      // Cache'e ekle
-      if (_turnsCache[sessionId] == null) {
-        _turnsCache[sessionId] = [];
-      }
-      _turnsCache[sessionId]!.add(turn);
-      
-      // Stream'e gönder
-      _turnController.add(turn);
-      
-      return turn;
-    } catch (e) {
-      print('Error adding turn: $e');
-      rethrow;
-    }
-  }
-  
-  /// AI yanıtı al
-  Future<AIResponse> getAIResponse({
-    required String turnId,
-    required String sessionId,
-    required RoleType role,
-    Map<String, dynamic>? context,
-  }) async {
-    try {
-      final session = _sessionsCache[sessionId];
-      if (session == null) {
-        throw Exception('Session not found');
-      }
-      
-      // AI prompt oluştur
-      final prompt = _generatePrompt(session, role, context);
-      
-      // AI API çağrısı (mock)
-      final aiContent = await _callAI(prompt, role);
-      
-      final aiResponse = AIResponse(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        turnId: turnId,
-        content: aiContent,
-        role: role,
-        reasoning: _generateReasoning(role, session.approach),
-        techniques: _extractTechniques(aiContent, session.approach),
-        emotions: _analyzeEmotions(aiContent),
-        metadata: context ?? {},
-        timestamp: DateTime.now(),
-      );
-      
-      // Turn'i güncelle
-      final turns = _turnsCache[sessionId];
-      if (turns != null) {
-        final turnIndex = turns.indexWhere((t) => t.id == turnId);
-        if (turnIndex != -1) {
-          final updatedTurn = SimulationTurn(
-            id: turns[turnIndex].id,
-            sessionId: turns[turnIndex].sessionId,
-            turnNumber: turns[turnIndex].turnNumber,
-            role: turns[turnIndex].role,
-            content: turns[turnIndex].content,
-            aiResponse: aiContent,
-            userResponse: turns[turnIndex].userResponse,
-            timestamp: turns[turnIndex].timestamp,
-            context: turns[turnIndex].context,
-            metadata: turns[turnIndex].metadata,
-          );
-          turns[turnIndex] = updatedTurn;
-          _turnController.add(updatedTurn);
-        }
-      }
-      
-      return aiResponse;
-    } catch (e) {
-      print('Error getting AI response: $e');
-      rethrow;
-    }
-  }
-  
-  /// Simülasyonu tamamla
-  Future<void> completeSession(String sessionId) async {
-    try {
-      final session = _sessionsCache[sessionId];
-      if (session != null) {
-        final updatedSession = TherapySimulationSession(
-          id: session.id,
-          title: session.title,
-          description: session.description,
-          approach: session.approach,
-          status: SimulationStatus.completed,
-          createdAt: session.createdAt,
-          startedAt: session.startedAt,
-          completedAt: DateTime.now(),
-          maxDuration: session.maxDuration,
-          currentDuration: DateTime.now().difference(session.startedAt ?? session.createdAt).inMinutes,
-          createdBy: session.createdBy,
-          patientProfile: session.patientProfile,
-          scenarioDescription: session.scenarioDescription,
-          learningObjectives: session.learningObjectives,
-          settings: session.settings,
-          metadata: session.metadata,
-        );
-        
-        _sessionsCache[sessionId] = updatedSession;
-        _sessionController.add(updatedSession);
-        
-        // Metrikleri hesapla
-        await _calculateMetrics(sessionId);
-      }
-    } catch (e) {
-      print('Error completing session: $e');
-    }
-  }
-  
-  /// Metrikleri hesapla
-  Future<SimulationMetrics> _calculateMetrics(String sessionId) async {
-    try {
-      final turns = _turnsCache[sessionId] ?? [];
-      final session = _sessionsCache[sessionId];
-      
-      if (session == null) return _generateMockMetrics(sessionId);
-      
-      final userTurns = turns.where((t) => t.role == RoleType.therapist).length;
-      final aiTurns = turns.where((t) => t.role == RoleType.patient).length;
-      
-      final metrics = SimulationMetrics(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sessionId: sessionId,
-        totalTurns: turns.length,
-        userTurns: userTurns,
-        aiTurns: aiTurns,
-        averageResponseTime: _calculateAverageResponseTime(turns),
-        engagementScore: _calculateEngagementScore(turns),
-        techniqueUsageScore: _calculateTechniqueScore(turns, session.approach),
-        empathyScore: _calculateEmpathyScore(turns),
-        strengths: _identifyStrengths(turns),
-        areasForImprovement: _identifyAreasForImprovement(turns),
-        detailedMetrics: _generateDetailedMetrics(turns),
-        calculatedAt: DateTime.now(),
-      );
-      
-      _metricsCache[sessionId] = metrics;
-      _metricsController.add(metrics);
-      
-      return metrics;
-    } catch (e) {
-      print('Error calculating metrics: $e');
-      return _generateMockMetrics(sessionId);
-    }
-  }
-  
-  /// AI prompt oluştur
-  String _generatePrompt(TherapySimulationSession session, RoleType role, Map<String, dynamic>? context) {
-    final approach = session.approach.toString().split('.').last;
-    final patientProfile = session.patientProfile ?? 'Genel hasta profili';
-    
-    if (role == RoleType.patient) {
-      return '''
-Sen bir $approach terapi seansında hasta rolündesin. 
-Hasta profili: $patientProfile
-Senaryo: ${session.scenarioDescription ?? 'Standart terapi seansı'}
-
-Lütfen hasta perspektifinden gerçekçi ve terapötik olarak uygun yanıtlar ver.
-''';
-    } else {
-      return '''
-Sen bir $approach terapistisin. 
-Hasta profili: $patientProfile
-Senaryo: ${session.scenarioDescription ?? 'Standart terapi seansı'}
-
-Lütfen terapötik teknikleri kullanarak uygun müdahaleler yap.
-''';
-    }
-  }
-  
-  /// AI API çağrısı (mock)
-  Future<String> _callAI(String prompt, RoleType role) async {
-    // Gerçek AI API çağrısı burada yapılacak
-    await Future.delayed(Duration(milliseconds: 500)); // Simüle edilmiş gecikme
-    
-    if (role == RoleType.patient) {
-      return _generateMockPatientResponse();
-    } else {
-      return _generateMockTherapistResponse();
-    }
-  }
-  
-  /// Mock hasta yanıtı
-  String _generateMockPatientResponse() {
-    final responses = [
-      'Evet, gerçekten de öyle hissediyorum...',
-      'Bu konuda çok endişeliyim.',
-      'Bazen kendimi çok yalnız hissediyorum.',
-      'Ailemle ilgili sorunlar yaşıyorum.',
-      'İş hayatımda çok stres var.',
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-  
-  /// Mock terapist yanıtı
-  String _generateMockTherapistResponse() {
-    final responses = [
-      'Bu duyguları nasıl deneyimliyorsun?',
-      'Bu durumla nasıl başa çıkıyorsun?',
-      'Bu konuda daha detaylı konuşmak ister misin?',
-      'Bu hissiyatın ne zaman başladığını hatırlıyor musun?',
-      'Bu durumla ilgili ne yapmak istiyorsun?',
-    ];
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-  
-  /// Akıl yürütme oluştur
-  String _generateReasoning(RoleType role, TherapyApproach approach) {
-    if (role == RoleType.therapist) {
-      return 'Terapötik müdahale: ${approach.toString().split('.').last} yaklaşımına uygun teknik kullanıldı.';
-    } else {
-      return 'Hasta perspektifi: Gerçekçi ve terapötik olarak uygun yanıt verildi.';
-    }
-  }
-  
-  /// Teknikleri çıkar
-  List<String> _extractTechniques(String content, TherapyApproach approach) {
-    final techniques = <String>[];
-    
-    switch (approach) {
-      case TherapyApproach.cbt:
-        if (content.contains('düşünce') || content.contains('bilişsel')) {
-          techniques.add('Bilişsel Yeniden Yapılandırma');
-        }
-        if (content.contains('davranış') || content.contains('aktivite')) {
-          techniques.add('Davranış Aktivasyonu');
-        }
-        break;
-      case TherapyApproach.dbt:
-        if (content.contains('farkındalık') || content.contains('mindfulness')) {
-          techniques.add('Farkındalık');
-        }
-        if (content.contains('düzenleme') || content.contains('regülasyon')) {
-          techniques.add('Duygu Düzenleme');
-        }
-        break;
-      default:
-        techniques.add('Genel Terapötik Teknik');
-    }
-    
-    return techniques;
-  }
-  
-  /// Duyguları analiz et
-  Map<String, dynamic> _analyzeEmotions(String content) {
-    final emotions = <String, double>{};
-    
-    if (content.contains('endişe') || content.contains('kaygı')) {
-      emotions['anxiety'] = 0.8;
-    }
-    if (content.contains('üzgün') || content.contains('depresif')) {
-      emotions['sadness'] = 0.7;
-    }
-    if (content.contains('öfke') || content.contains('kızgın')) {
-      emotions['anger'] = 0.6;
-    }
-    if (content.contains('mutlu') || content.contains('iyi')) {
-      emotions['happiness'] = 0.5;
-    }
-    
-    return emotions;
-  }
-  
-  /// Ortalama yanıt süresini hesapla
-  double _calculateAverageResponseTime(List<SimulationTurn> turns) {
-    if (turns.length < 2) return 0.0;
-    
-    double totalTime = 0;
-    for (int i = 1; i < turns.length; i++) {
-      totalTime += turns[i].timestamp.difference(turns[i - 1].timestamp).inMilliseconds;
-    }
-    
-    return totalTime / (turns.length - 1) / 1000; // saniye cinsinden
-  }
-  
-  /// Katılım skorunu hesapla
-  double _calculateEngagementScore(List<SimulationTurn> turns) {
-    if (turns.isEmpty) return 0.0;
-    
-    // Basit katılım hesaplaması
-    final avgTurnLength = turns.map((t) => t.content.length).reduce((a, b) => a + b) / turns.length;
-    final engagementScore = (avgTurnLength / 100).clamp(0.0, 1.0) * 100;
-    
-    return engagementScore;
-  }
-  
-  /// Teknik kullanım skorunu hesapla
-  double _calculateTechniqueScore(List<SimulationTurn> turns, TherapyApproach approach) {
-    if (turns.isEmpty) return 0.0;
-    
-    int techniqueCount = 0;
-    for (final turn in turns) {
-      if (turn.role == RoleType.therapist) {
-        final techniques = _extractTechniques(turn.content, approach);
-        techniqueCount += techniques.length;
-      }
-    }
-    
-    return (techniqueCount / turns.length * 20).clamp(0.0, 100.0);
-  }
-  
-  /// Empati skorunu hesapla
-  double _calculateEmpathyScore(List<SimulationTurn> turns) {
-    if (turns.isEmpty) return 0.0;
-    
-    int empathyIndicators = 0;
-    final empathyWords = ['anlıyorum', 'hissediyorum', 'zor', 'yardım', 'destek'];
-    
-    for (final turn in turns) {
-      if (turn.role == RoleType.therapist) {
-        for (final word in empathyWords) {
-          if (turn.content.toLowerCase().contains(word)) {
-            empathyIndicators++;
-            break;
-          }
-        }
-      }
-    }
-    
-    return (empathyIndicators / turns.length * 100).clamp(0.0, 100.0);
-  }
-  
-  /// Güçlü yanları belirle
-  List<String> _identifyStrengths(List<SimulationTurn> turns) {
-    final strengths = <String>[];
-    
-    if (turns.isNotEmpty) {
-      strengths.add('Aktif katılım');
-      strengths.add('Tutarlı iletişim');
-    }
-    
-    return strengths;
-  }
-  
-  /// Gelişim alanlarını belirle
-  List<String> _identifyAreasForImprovement(List<SimulationTurn> turns) {
-    final areas = <String>[];
-    
-    if (turns.isNotEmpty) {
-      areas.add('Teknik çeşitliliği artırılabilir');
-      areas.add('Daha detaylı sorular sorulabilir');
-    }
-    
-    return areas;
-  }
-  
-  /// Detaylı metrikler oluştur
-  Map<String, dynamic> _generateDetailedMetrics(List<SimulationTurn> turns) {
-    return {
-      'totalDuration': turns.isNotEmpty ? turns.last.timestamp.difference(turns.first.timestamp).inMinutes : 0,
-      'responseVariety': turns.map((t) => t.content.length).toSet().length,
-      'roleBalance': {
-        'therapist': turns.where((t) => t.role == RoleType.therapist).length,
-        'patient': turns.where((t) => t.role == RoleType.patient).length,
-      }
-    };
-  }
-  
-  /// Mock metrikler oluştur
-  SimulationMetrics _generateMockMetrics(String sessionId) {
-    return SimulationMetrics(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sessionId: sessionId,
-      totalTurns: 8,
-      userTurns: 4,
-      aiTurns: 4,
-      averageResponseTime: 15.5,
-      engagementScore: 85.0,
-      techniqueUsageScore: 78.0,
-      empathyScore: 82.0,
-      strengths: ['Aktif dinleme', 'Empatik yaklaşım'],
-      areasForImprovement: ['Teknik çeşitliliği', 'Müdahale zamanlaması'],
-      detailedMetrics: {'sessionQuality': 'high'},
-      calculatedAt: DateTime.now(),
-    );
-  }
-  
-  /// Mock senaryolar oluştur
-  List<SimulationScenario> _generateMockScenarios() {
-    return [
+    _scenarios.addAll([
       SimulationScenario(
         id: '1',
-        title: 'Depresyon ile Başa Çıkma',
-        description: 'Hafif depresyon belirtileri gösteren hasta ile CBT yaklaşımı',
-        approach: TherapyApproach.cbt,
-        difficulty: 'beginner',
-        patientProfile: '25 yaşında, üniversite öğrencisi, son zamanlarda motivasyon kaybı yaşayan',
-        scenarioDescription: 'Hasta ders çalışmaya odaklanamıyor ve sosyal aktivitelerden kaçınıyor',
-        learningObjectives: ['Bilişsel çarpıtmaları tanıma', 'Davranış aktivasyonu teknikleri'],
-        keyTechniques: ['Sokratik sorgulama', 'Günlük aktivite planlaması'],
-        commonPitfalls: ['Çok hızlı ilerleme', 'Duyguları görmezden gelme'],
-        initialContext: {'mood': 'low', 'energy': 'low'},
-        metadata: {},
-        createdAt: DateTime.now(),
-        isActive: true,
+        title: 'Depresyon Vakası: Ahmet',
+        description: '35 yaşında erkek, son 6 aydır depresif belirtiler gösteriyor. İş kaybı ve evlilik problemleri yaşıyor.',
+        difficulty: ScenarioDifficulty.intermediate,
+        category: 'Depresyon',
+        clientProfile: ClientProfile(
+          name: 'Ahmet',
+          age: 35,
+          gender: 'Erkek',
+          presentingProblem: 'Depresyon, iş kaybı, evlilik problemleri',
+          background: 'Mühendis, 2 çocuk babası, son 6 aydır işsiz',
+          symptoms: [
+            'Üzgün ruh hali',
+            'Uyku problemleri',
+            'İştah kaybı',
+            'Konsantrasyon güçlüğü',
+            'Yorgunluk',
+            'Değersizlik hissi'
+          ],
+          goals: 'Depresyonu yönetmek, iş bulmak, evliliği iyileştirmek',
+        ),
+        therapeuticApproach: 'CBT + Problem Solving Therapy',
+        estimatedDuration: 45,
+        tags: ['depresyon', 'iş kaybı', 'evlilik', 'CBT'],
       ),
       SimulationScenario(
         id: '2',
-        title: 'Anksiyete Yönetimi',
-        description: 'Sosyal anksiyete yaşayan hasta ile DBT yaklaşımı',
-        approach: TherapyApproach.dbt,
-        difficulty: 'intermediate',
-        patientProfile: '30 yaşında, iş hayatında sosyal durumlardan kaçınan',
-        scenarioDescription: 'Toplantılarda konuşma yaparken aşırı kaygı yaşayan hasta',
-        learningObjectives: ['Farkındalık teknikleri', 'Duygu düzenleme stratejileri'],
-        keyTechniques: ['Nefes egzersizleri', 'Radikal kabul'],
-        commonPitfalls: ['Kaçınma davranışını pekiştirme', 'Hızlı çözüm arama'],
-        initialContext: {'anxiety_level': 'high', 'avoidance': 'high'},
-        metadata: {},
-        createdAt: DateTime.now(),
-        isActive: true,
+        title: 'Anksiyete Vakası: Zeynep',
+        description: '28 yaşında kadın, sosyal anksiyete ve panik atak belirtileri. Topluluk önünde konuşma korkusu.',
+        difficulty: ScenarioDifficulty.beginner,
+        category: 'Anksiyete',
+        clientProfile: ClientProfile(
+          name: 'Zeynep',
+          age: 28,
+          gender: 'Kadın',
+          presentingProblem: 'Sosyal anksiyete, panik atak',
+          background: 'Öğretmen, bekar, sosyal ortamlarda kendini rahatsız hissediyor',
+          symptoms: [
+            'Sosyal ortamlarda kaygı',
+            'Panik atak',
+            'Kaçınma davranışları',
+            'Fiziksel belirtiler',
+            'Kendini yargılanmış hissetme'
+          ],
+          goals: 'Sosyal anksiyeteyi azaltmak, panik atakları yönetmek',
+        ),
+        therapeuticApproach: 'Exposure Therapy + Relaxation Techniques',
+        estimatedDuration: 40,
+        tags: ['anksiyete', 'sosyal fobi', 'panik atak', 'exposure'],
       ),
+      SimulationScenario(
+        id: '3',
+        title: 'Travma Vakası: Mehmet',
+        description: '42 yaşında erkek, trafik kazası sonrası TSSB belirtileri. Flashback\'ler ve uyku problemleri.',
+        difficulty: ScenarioDifficulty.advanced,
+        category: 'Travma',
+        clientProfile: ClientProfile(
+          name: 'Mehmet',
+          age: 42,
+          gender: 'Erkek',
+          presentingProblem: 'TSSB, trafik kazası sonrası',
+          background: 'Şoför, 3 ay önce ciddi trafik kazası geçirdi',
+          symptoms: [
+            'Flashback\'ler',
+            'Uyku problemleri',
+            'Kaçınma davranışları',
+            'Aşırı uyarılma',
+            'Duygusal uyuşma',
+            'Konsantrasyon güçlüğü'
+          ],
+          goals: 'Travma belirtilerini azaltmak, normal hayata dönmek',
+        ),
+        therapeuticApproach: 'EMDR + Trauma-Focused CBT',
+        estimatedDuration: 60,
+        tags: ['travma', 'TSSB', 'EMDR', 'flashback'],
+      ),
+      SimulationScenario(
+        id: '4',
+        title: 'İlişki Vakası: Ayşe & Ali',
+        description: 'Çift terapi: 5 yıllık evlilik, iletişim problemleri ve güven sorunları.',
+        difficulty: ScenarioDifficulty.intermediate,
+        category: 'İlişki',
+        clientProfile: ClientProfile(
+          name: 'Ayşe & Ali',
+          age: 32,
+          gender: 'Çift',
+          presentingProblem: 'İletişim problemleri, güven sorunları',
+          background: '5 yıllık evlilik, 1 çocuk, sürekli tartışmalar',
+          symptoms: [
+            'İletişim problemleri',
+            'Güven sorunları',
+            'Sürekli tartışmalar',
+            'Duygusal uzaklaşma',
+            'Çocuk üzerinde etki'
+          ],
+          goals: 'İletişimi iyileştirmek, güveni yeniden kurmak',
+        ),
+        therapeuticApproach: 'Couples Therapy + Communication Skills',
+        estimatedDuration: 50,
+        tags: ['ilişki', 'çift terapi', 'iletişim', 'güven'],
+      ),
+      SimulationScenario(
+        id: '5',
+        title: 'Bağımlılık Vakası: Can',
+        description: '25 yaşında erkek, alkol bağımlılığı ve aile problemleri. Detoks sonrası rehabilitasyon.',
+        difficulty: ScenarioDifficulty.advanced,
+        category: 'Bağımlılık',
+        clientProfile: ClientProfile(
+          name: 'Can',
+          age: 25,
+          gender: 'Erkek',
+          presentingProblem: 'Alkol bağımlılığı, aile problemleri',
+          background: 'Üniversite öğrencisi, aile içi şiddet geçmişi',
+          symptoms: [
+            'Alkol kullanımı',
+            'Kontrol kaybı',
+            'Aile problemleri',
+            'Akademik başarısızlık',
+            'Sosyal izolasyon'
+          ],
+          goals: 'Sobriyet sağlamak, aile ilişkilerini iyileştirmek',
+        ),
+        therapeuticApproach: 'Motivational Interviewing + Family Therapy',
+        estimatedDuration: 55,
+        tags: ['bağımlılık', 'alkol', 'aile', 'motivasyonel görüşme'],
+      ),
+    ]);
+  }
+
+  List<SimulationScenario> getScenarios() => List.unmodifiable(_scenarios);
+
+  SimulationScenario? getScenarioById(String id) {
+    try {
+      return _scenarios.firstWhere((scenario) => scenario.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<String> generateAIResponse(
+    String therapistMessage,
+    SimulationScenario scenario,
+    List<SessionMessage> conversationHistory,
+  ) async {
+    try {
+      // AI servisinden yanıt al
+      final prompt = _buildAIPrompt(therapistMessage, scenario, conversationHistory);
+      final response = await _aiService.generateResponse(
+        prompt: prompt,
+        maxTokens: 200,
+      );
+      
+      return response.isNotEmpty ? response : _getFallbackResponse(scenario);
+    } catch (e) {
+      print('AI response generation failed: $e');
+      return _getFallbackResponse(scenario);
+    }
+  }
+
+  String _buildAIPrompt(
+    String therapistMessage,
+    SimulationScenario scenario,
+    List<SessionMessage> conversationHistory,
+  ) {
+    final clientProfile = scenario.clientProfile;
+    final recentMessages = conversationHistory.takeLast(5).map((m) => 
+      '${m.sender == MessageSender.therapist ? "Terapist" : clientProfile.name}: ${m.content}'
+    ).join('\n');
+
+    return '''
+Sen ${clientProfile.name} adında ${clientProfile.age} yaşında bir danışansın. 
+${clientProfile.presentingProblem} problemi yaşıyorsun.
+
+Arka plan: ${clientProfile.background}
+Belirtiler: ${clientProfile.symptoms.join(', ')}
+Hedefler: ${clientProfile.goals}
+
+Son konuşma:
+$recentMessages
+
+Terapist: $therapistMessage
+
+Senin yanıtın (doğal, gerçekçi ve probleminize uygun olmalı):
+''';
+  }
+
+  String _getFallbackResponse(SimulationScenario scenario) {
+    final responses = {
+      '1': [ // Ahmet - Depresyon
+        'Kendimi çok boş hissediyorum... Sanki hiçbir şey beni mutlu edemiyor.',
+        'İş bulmaya çalışıyorum ama hiç umudum yok. Her mülakatta reddediliyorum.',
+        'Karım sürekli beni suçluyor. "Sen işsizsin, para kazanamıyorsun" diyor.',
+        'Bazen ölmek istediğimi bile düşünüyorum...',
+        'Hiçbir şey yapmak istemiyorum. Sadece yatıp uyumak istiyorum.',
+      ],
+      '2': [ // Zeynep - Anksiyete
+        'Kalp atışlarım hızlanıyor, nefes alamıyorum... Sanki öleceğim gibi hissediyorum.',
+        'İnsanların beni yargılayacağını düşünüyorum. "Ya yanlış bir şey söylersem?"',
+        'Topluluk önünde konuşmam gerektiğinde neredeyse bayılıyorum.',
+        'Bu durum beni çok yoruyor... Sürekli endişeli hissediyorum.',
+        'Sosyal ortamlarda kendimi çok rahatsız hissediyorum.',
+      ],
+      '3': [ // Mehmet - Travma
+        'O anı tekrar yaşıyorum... Cam kırıkları, sesler, acı... Uyuyamıyorum.',
+        'Arabaya binmek imkansız! Her seferinde o kazayı hatırlıyorum.',
+        'Sürekli tetikteyim, en ufak ses bile beni korkutuyor.',
+        'O geceyi sürekli rüyamda görüyorum... Uyuyamıyorum.',
+        'Her yerde tehlike arıyorum... Güvende hissetmiyorum.',
+      ],
+      '4': [ // Ayşe & Ali - İlişki
+        'Onu anlayamıyorum ve o da beni anlamıyor. Evliliğimiz çöküyor gibi.',
+        'Sürekli tartışıyoruz. Küçük şeyler bile büyük kavgalara dönüşüyor.',
+        'Güvenim kalmadı. Her hareketini şüpheyle karşılıyorum.',
+        'Çocuğumuz bu durumdan etkileniyor. Çok üzülüyorum.',
+        'Eskiden nasıl mutluyduk, şimdi nasıl bu hale geldik?',
+      ],
+      '5': [ // Can - Bağımlılık
+        'Alkol kullanımımı kontrol edemiyorum. Her gün içmeye başlıyorum.',
+        'Ailem beni terk etti. Artık kimse bana güvenmiyor.',
+        'Üniversiteyi bıraktım. Hiçbir şeyi başaramıyorum.',
+        'Bırakmaya çalışıyorum ama dayanamıyorum. Çok zor.',
+        'Kendimden nefret ediyorum. Neden bu hale geldim?',
+      ],
+    };
+
+    final scenarioResponses = responses[scenario.id] ?? [
+      'Anlıyorum... Bu konuda daha fazla konuşmak istiyorum.',
+      'Bilmiyorum... Bazen iyi hissediyorum ama çoğunlukla kötüyüm.',
+      'Size yardım etmenizi umuyorum...',
+      'Bu konuda düşünmem gerekiyor...',
+      'Teşekkür ederim doktor...',
     ];
+
+    return scenarioResponses[_random.nextInt(scenarioResponses.length)];
   }
-  
-  /// Senaryoları getir
-  List<SimulationScenario> getScenarios() {
-    return List.unmodifiable(_scenariosCache);
+
+  SimulationScore calculateScore(
+    List<SessionMessage> messages,
+    SimulationScenario scenario,
+  ) {
+    int empathyScore = 0;
+    int questioningScore = 0;
+    int activeListeningScore = 0;
+    int professionalLanguageScore = 0;
+
+    final therapistMessages = messages
+        .where((m) => m.sender == MessageSender.therapist)
+        .map((m) => m.content.toLowerCase())
+        .toList();
+
+    for (final message in therapistMessages) {
+      // Empati skoru
+      if (_containsEmpathyKeywords(message)) {
+        empathyScore += 10;
+      }
+      if (_containsValidation(message)) {
+        empathyScore += 5;
+      }
+
+      // Soru sorma skoru
+      if (_containsOpenQuestions(message)) {
+        questioningScore += 15;
+      }
+      if (_containsClarificationQuestions(message)) {
+        questioningScore += 10;
+      }
+
+      // Aktif dinleme skoru
+      if (_containsActiveListening(message)) {
+        activeListeningScore += 10;
+      }
+      if (_containsReflection(message)) {
+        activeListeningScore += 8;
+      }
+
+      // Profesyonel dil skoru
+      if (_containsProfessionalLanguage(message)) {
+        professionalLanguageScore += 5;
+      }
+      if (_containsTherapeuticTechniques(message)) {
+        professionalLanguageScore += 8;
+      }
+    }
+
+    final totalScore = empathyScore + questioningScore + activeListeningScore + professionalLanguageScore;
+
+    return SimulationScore(
+      empathyScore: empathyScore,
+      questioningScore: questioningScore,
+      activeListeningScore: activeListeningScore,
+      professionalLanguageScore: professionalLanguageScore,
+      totalScore: totalScore,
+    );
   }
-  
-  /// Seansı getir
-  TherapySimulationSession? getSession(String sessionId) {
-    return _sessionsCache[sessionId];
+
+  bool _containsEmpathyKeywords(String message) {
+    final empathyWords = [
+      'anlıyorum', 'hissediyorum', 'zor olmalı', 'üzgünüm',
+      'korkutucu', 'stresli', 'yorgun', 'endişeli', 'kaygılı'
+    ];
+    return empathyWords.any((word) => message.contains(word));
   }
-  
-  /// Seansları getir
-  List<TherapySimulationSession> getSessions() {
-    return List.unmodifiable(_sessionsCache.values);
+
+  bool _containsValidation(String message) {
+    final validationWords = [
+      'normal', 'doğal', 'anlaşılır', 'mantıklı', 'haklısın'
+    ];
+    return validationWords.any((word) => message.contains(word));
   }
-  
-  /// Turn'leri getir
-  List<SimulationTurn> getTurns(String sessionId) {
-    return List.unmodifiable(_turnsCache[sessionId] ?? []);
+
+  bool _containsOpenQuestions(String message) {
+    final openQuestionWords = [
+      'nasıl', 'ne zaman', 'nerede', 'neden', 'hangi',
+      'hangi şekilde', 'nasıl hissettin', 'ne düşündün'
+    ];
+    return openQuestionWords.any((word) => message.contains(word));
   }
-  
-  /// Metrikleri getir
-  SimulationMetrics? getMetrics(String sessionId) {
-    return _metricsCache[sessionId];
+
+  bool _containsClarificationQuestions(String message) {
+    final clarificationWords = [
+      'yani', 'demek ki', 'anladığım kadarıyla', 'tekrar edeyim'
+    ];
+    return clarificationWords.any((word) => message.contains(word));
   }
-  
-  /// Servisi temizle
-  void dispose() {
-    _sessionController.close();
-    _turnController.close();
-    _metricsController.close();
+
+  bool _containsActiveListening(String message) {
+    final activeListeningWords = [
+      'yani', 'demek ki', 'anladığım kadarıyla', 'tekrar edeyim',
+      'özetlersek', 'şunu mu demek istiyorsun'
+    ];
+    return activeListeningWords.any((word) => message.contains(word));
   }
+
+  bool _containsReflection(String message) {
+    final reflectionWords = [
+      'sanki', 'gibi', 'benzer', 'aynı', 'görünüyor'
+    ];
+    return reflectionWords.any((word) => message.contains(word));
+  }
+
+  bool _containsProfessionalLanguage(String message) {
+    final professionalWords = [
+      'terapi', 'tedavi', 'iyileşme', 'süreç', 'çalışma',
+      'hedef', 'strateji', 'teknik', 'yöntem'
+    ];
+    return professionalWords.any((word) => message.contains(word));
+  }
+
+  bool _containsTherapeuticTechniques(String message) {
+    final techniqueWords = [
+      'nefes', 'gevşeme', 'meditasyon', 'mindfulness', 'exposure',
+      'bilişsel', 'davranışsal', 'çözüm', 'plan'
+    ];
+    return techniqueWords.any((word) => message.contains(word));
+  }
+
+  String getScoreFeedback(SimulationScore score) {
+    if (score.totalScore >= 80) {
+      return 'Mükemmel! Çok iyi bir terapist olacaksınız! Empati, soru sorma ve aktif dinleme becerileriniz çok güçlü.';
+    } else if (score.totalScore >= 60) {
+      return 'İyi! Biraz daha pratik yapmanız gerekiyor. Empati göstermeye ve açık uçlu sorular sormaya odaklanın.';
+    } else if (score.totalScore >= 40) {
+      return 'Geliştirilmesi gereken alanlar var. Daha fazla empati gösterin ve danışanı dinlemeye odaklanın.';
+    } else {
+      return 'Temel becerileri geliştirmeniz gerekiyor. Empati, aktif dinleme ve profesyonel dil kullanımına odaklanın.';
+    }
+  }
+
+  List<String> getImprovementSuggestions(SimulationScore score) {
+    final suggestions = <String>[];
+
+    if (score.empathyScore < 20) {
+      suggestions.add('Empati becerilerinizi geliştirin: "Anlıyorum", "Zor olmalı" gibi ifadeler kullanın');
+    }
+
+    if (score.questioningScore < 25) {
+      suggestions.add('Daha fazla açık uçlu soru sorun: "Nasıl hissettin?", "Ne düşündün?" gibi');
+    }
+
+    if (score.activeListeningScore < 20) {
+      suggestions.add('Aktif dinleme tekniklerini kullanın: "Yani...", "Demek ki..." gibi');
+    }
+
+    if (score.professionalLanguageScore < 15) {
+      suggestions.add('Profesyonel terapi dilini kullanın ve teknik terimler ekleyin');
+    }
+
+    if (suggestions.isEmpty) {
+      suggestions.add('Tüm alanlarda iyi performans gösteriyorsunuz!');
+    }
+
+    return suggestions;
+  }
+}
+
+class SimulationSession {
+  final String id;
+  final SimulationScenario scenario;
+  final DateTime startTime;
+  final List<SessionMessage> messages;
+  String sessionNotes;
+  SimulationScore? score;
+
+  SimulationSession({
+    required this.id,
+    required this.scenario,
+    required this.startTime,
+    required this.messages,
+    this.sessionNotes = '',
+    this.score,
+  });
+
+  Duration get duration => DateTime.now().difference(startTime);
+  int get messageCount => messages.length;
+  int get therapistMessageCount => messages.where((m) => m.sender == MessageSender.therapist).length;
+  int get clientMessageCount => messages.where((m) => m.sender == MessageSender.client).length;
 }

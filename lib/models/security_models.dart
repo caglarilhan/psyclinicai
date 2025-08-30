@@ -518,3 +518,311 @@ enum SecurityEventType { intrusion, dataBreach, unauthorizedAccess, malware, gen
 
 // Güvenlik olayı şiddeti enum'u
 enum SecurityEventSeverity { low, medium, high, critical }
+
+// Yasal Uyumluluk Çerçeveleri
+enum ComplianceFramework {
+  hipaa,    // ABD
+  gdpr,     // Avrupa
+  kvkk,     // Türkiye
+  pipeda,   // Kanada
+  sox,      // ABD finansal
+  iso27001, // Uluslararası
+}
+
+// Veri Saklama Politikası
+class DataRetentionPolicy {
+  final String id;
+  final String name;
+  final String description;
+  final Duration retentionPeriod;
+  final List<String> dataTypes;
+  final bool autoDelete;
+  final DateTime? lastReview;
+  final String? reviewedBy;
+
+  const DataRetentionPolicy({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.retentionPeriod,
+    required this.dataTypes,
+    required this.autoDelete,
+    this.lastReview,
+    this.reviewedBy,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'retentionPeriod': retentionPeriod.inDays,
+      'dataTypes': dataTypes,
+      'autoDelete': autoDelete,
+      'lastReview': lastReview?.toIso8601String(),
+      'reviewedBy': reviewedBy,
+    };
+  }
+
+  factory DataRetentionPolicy.fromJson(Map<String, dynamic> json) {
+    return DataRetentionPolicy(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      retentionPeriod: Duration(days: json['retentionPeriod'] as int),
+      dataTypes: List<String>.from(json['dataTypes'] as List),
+      autoDelete: json['autoDelete'] as bool,
+      lastReview: json['lastReview'] != null 
+          ? DateTime.parse(json['lastReview'] as String) 
+          : null,
+      reviewedBy: json['reviewedBy'] as String?,
+    );
+  }
+}
+
+// Şifreleme Konfigürasyonu
+class EncryptionConfig {
+  final String algorithm;
+  final int keySize;
+  final String keyRotationPeriod;
+  final bool hardwareAcceleration;
+  final List<String> supportedAlgorithms;
+  final DateTime lastKeyRotation;
+  final DateTime nextKeyRotation;
+
+  const EncryptionConfig({
+    required this.algorithm,
+    required this.keySize,
+    required this.keyRotationPeriod,
+    required this.hardwareAcceleration,
+    required this.supportedAlgorithms,
+    required this.lastKeyRotation,
+    required this.nextKeyRotation,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'algorithm': algorithm,
+      'keySize': keySize,
+      'keyRotationPeriod': keyRotationPeriod,
+      'hardwareAcceleration': hardwareAcceleration,
+      'supportedAlgorithms': supportedAlgorithms,
+      'lastKeyRotation': lastKeyRotation.toIso8601String(),
+      'nextKeyRotation': nextKeyRotation.toIso8601String(),
+    };
+  }
+
+  factory EncryptionConfig.fromJson(Map<String, dynamic> json) {
+    return EncryptionConfig(
+      algorithm: json['algorithm'] as String,
+      keySize: json['keySize'] as int,
+      keyRotationPeriod: json['keyRotationPeriod'] as String,
+      hardwareAcceleration: json['hardwareAcceleration'] as bool,
+      supportedAlgorithms: List<String>.from(json['supportedAlgorithms'] as List),
+      lastKeyRotation: DateTime.parse(json['lastKeyRotation'] as String),
+      nextKeyRotation: DateTime.parse(json['nextKeyRotation'] as String),
+    );
+  }
+}
+
+// Erişim Kontrol Politikası
+class AccessControlPolicy {
+  final String id;
+  final String name;
+  final String description;
+  final List<String> roles;
+  final List<String> resources;
+  final List<String> permissions;
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime? lastModified;
+  final String? createdBy;
+
+  const AccessControlPolicy({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.roles,
+    required this.resources,
+    required this.permissions,
+    required this.isActive,
+    required this.createdAt,
+    this.lastModified,
+    this.createdBy,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'roles': roles,
+      'resources': resources,
+      'permissions': permissions,
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'lastModified': lastModified?.toIso8601String(),
+      'createdBy': createdBy,
+    };
+  }
+
+  factory AccessControlPolicy.fromJson(Map<String, dynamic> json) {
+    return AccessControlPolicy(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      roles: List<String>.from(json['roles'] as List),
+      resources: List<String>.from(json['resources'] as List),
+      permissions: List<String>.from(json['permissions'] as List),
+      isActive: json['isActive'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      lastModified: json['lastModified'] != null 
+          ? DateTime.parse(json['lastModified'] as String) 
+          : null,
+      createdBy: json['createdBy'] as String?,
+    );
+  }
+}
+
+// Veri Anonimleştirme
+class DataAnonymizationRule {
+  final String id;
+  final String fieldName;
+  final AnonymizationType type;
+  final String? replacementValue;
+  final bool isActive;
+  final DateTime createdAt;
+
+  const DataAnonymizationRule({
+    required this.id,
+    required this.fieldName,
+    required this.type,
+    this.replacementValue,
+    required this.isActive,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'fieldName': fieldName,
+      'type': type.name,
+      'replacementValue': replacementValue,
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory DataAnonymizationRule.fromJson(Map<String, dynamic> json) {
+    return DataAnonymizationRule(
+      id: json['id'] as String,
+      fieldName: json['fieldName'] as String,
+      type: AnonymizationType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => AnonymizationType.mask,
+      ),
+      replacementValue: json['replacementValue'] as String?,
+      isActive: json['isActive'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+}
+
+enum AnonymizationType {
+  mask,      // Son 4 karakteri göster
+  hash,      // Hash'le
+  replace,   // Belirli değerle değiştir
+  remove,    // Tamamen kaldır
+  randomize, // Rastgele değer ata
+}
+
+// Güvenlik Olayı
+class SecurityIncident {
+  final String id;
+  final String title;
+  final String description;
+  final SecurityIncidentType type;
+  final SecurityIncidentSeverity severity;
+  final DateTime detectedAt;
+  final DateTime? resolvedAt;
+  final String? resolvedBy;
+  final List<String> affectedUsers;
+  final List<String> affectedData;
+  final String? resolutionNotes;
+  final bool isResolved;
+
+  const SecurityIncident({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.type,
+    required this.severity,
+    required this.detectedAt,
+    this.resolvedAt,
+    this.resolvedBy,
+    required this.affectedUsers,
+    required this.affectedData,
+    this.resolutionNotes,
+    required this.isResolved,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'type': type.name,
+      'severity': severity.name,
+      'detectedAt': detectedAt.toIso8601String(),
+      'resolvedAt': resolvedAt?.toIso8601String(),
+      'resolvedBy': resolvedBy,
+      'affectedUsers': affectedUsers,
+      'affectedData': affectedData,
+      'resolutionNotes': resolutionNotes,
+      'isResolved': isResolved,
+    };
+  }
+
+  factory SecurityIncident.fromJson(Map<String, dynamic> json) {
+    return SecurityIncident(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      type: SecurityIncidentType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => SecurityIncidentType.unauthorizedAccess,
+      ),
+      severity: SecurityIncidentSeverity.values.firstWhere(
+        (e) => e.name == json['severity'],
+        orElse: () => SecurityIncidentSeverity.low,
+      ),
+      detectedAt: DateTime.parse(json['detectedAt'] as String),
+      resolvedAt: json['resolvedAt'] != null 
+          ? DateTime.parse(json['resolvedAt'] as String) 
+          : null,
+      resolvedBy: json['resolvedBy'] as String?,
+      affectedUsers: List<String>.from(json['affectedUsers'] as List),
+      affectedData: List<String>.from(json['affectedData'] as List),
+      resolutionNotes: json['resolutionNotes'] as String?,
+      isResolved: json['isResolved'] as bool,
+    );
+  }
+}
+
+enum SecurityIncidentType {
+  unauthorizedAccess,
+  dataBreach,
+  malware,
+  phishing,
+  socialEngineering,
+  physicalSecurity,
+  networkAttack,
+  other,
+}
+
+enum SecurityIncidentSeverity {
+  low,
+  medium,
+  high,
+  critical,
+}

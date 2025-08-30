@@ -9,6 +9,11 @@ import '../white_label/white_label_dashboard_screen.dart';
 import '../analytics/advanced_analytics_dashboard_screen.dart';
 import '../security/security_dashboard_screen.dart';
 import '../case/case_management_screen.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,8 +23,412 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
+
+  @override
+  void initState() {
+    super.initState();
+    _setupKeyboardShortcuts();
+  }
+
+  void _setupKeyboardShortcuts() {
+    // Dashboard için özel kısayollar
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      () => Navigator.pushNamed(context, '/session-management'),
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyC, LogicalKeyboardKey.control),
+      () => Navigator.pushNamed(context, '/appointment-calendar'),
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+      () => Navigator.pushNamed(context, '/finance'),
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      () => Navigator.pushNamed(context, '/security'),
+    );
+  }
+
+  @override
+  void dispose() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyC, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'PsyClinic AI Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Kısayollar',
+          onPressed: () => _showShortcutsDialog(context),
+          icon: Icons.keyboard,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: () {
+            // TODO: Ayarlar
+          },
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Klinik Yönetimi',
+          icon: Icons.medical_services,
+          children: [
+            DesktopSidebarItem(
+              title: 'Seans Yönetimi',
+              icon: Icons.medical_services,
+              onTap: () => Navigator.pushNamed(context, '/session-management'),
+            ),
+            DesktopSidebarItem(
+              title: 'Randevu Takvimi',
+              icon: Icons.calendar_today,
+              onTap: () => Navigator.pushNamed(context, '/appointment-calendar'),
+            ),
+            DesktopSidebarItem(
+              title: 'Vaka Yönetimi',
+              icon: Icons.folder,
+              onTap: () => Navigator.pushNamed(context, '/case-management'),
+            ),
+          ],
+        ),
+        DesktopSidebarItem(
+          title: 'AI Modülleri',
+          icon: Icons.psychology,
+          children: [
+            DesktopSidebarItem(
+              title: 'Terapi Simülasyonu',
+              icon: Icons.smart_toy,
+              onTap: () => Navigator.pushNamed(context, '/therapy-simulation'),
+            ),
+            DesktopSidebarItem(
+              title: 'Gelişmiş Analitik',
+              icon: Icons.analytics,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AdvancedAnalyticsDashboardScreen(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        DesktopSidebarItem(
+          title: 'Yönetim',
+          icon: Icons.admin_panel_settings,
+          children: [
+            DesktopSidebarItem(
+              title: 'CRM Dashboard',
+              icon: Icons.people,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CRMDashboardScreen(),
+                ),
+              ),
+            ),
+            DesktopSidebarItem(
+              title: 'Finans Dashboard',
+              icon: Icons.account_balance_wallet,
+              onTap: () => Navigator.pushNamed(context, '/finance'),
+            ),
+            DesktopSidebarItem(
+              title: 'Güvenlik',
+              icon: Icons.security,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SecurityDashboardScreen(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Üst bilgi paneli
+          DesktopTheme.desktopCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hoş Geldiniz, ${AppConstants.userRoles.first}',
+                        style: DesktopTheme.desktopTitleStyle,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'PsyClinic AI - AI Destekli Klinik Yönetim Sistemi',
+                        style: DesktopTheme.desktopSubtitleStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                const RegionSelectorWidget(showLabel: true),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+
+          // Klinik Yönetimi Grid
+          _buildSectionTitle('Klinik Yönetimi'),
+          const SizedBox(height: 16),
+          
+          DesktopGrid(
+            children: [
+              _buildDesktopModuleCard(
+                'Seans Yönetimi',
+                'Seans notları ve AI özetleri',
+                Icons.medical_services,
+                AppTheme.primaryColor,
+                () => Navigator.pushNamed(context, '/session-management'),
+              ),
+              _buildDesktopModuleCard(
+                'Randevu Takvimi',
+                'AI destekli randevu yönetimi',
+                Icons.calendar_today,
+                AppTheme.secondaryColor,
+                () => Navigator.pushNamed(context, '/appointment-calendar'),
+              ),
+              _buildDesktopModuleCard(
+                'Tanı Sistemi',
+                'ICD/DSM kodları ve AI önerileri',
+                Icons.search,
+                AppTheme.accentColor,
+                () {
+                  // TODO: Tanı sistemi
+                },
+              ),
+              _buildDesktopModuleCard(
+                'Reçete & İlaç',
+                'AI destekli ilaç önerileri',
+                Icons.medication,
+                AppTheme.successColor,
+                () {
+                  // TODO: Reçete sistemi
+                },
+              ),
+              _buildDesktopModuleCard(
+                'Flag Sistemi',
+                'Kriz ve risk tespiti',
+                Icons.warning,
+                AppTheme.warningColor,
+                () {
+                  // TODO: Flag sistemi
+                },
+              ),
+              _buildDesktopModuleCard(
+                'Vaka Yönetimi',
+                'Danışan gelişim takibi ve ilerleme',
+                Icons.folder,
+                AppTheme.infoColor,
+                () => Navigator.pushNamed(context, '/case-management'),
+              ),
+            ],
+            context: context,
+          ),
+          
+          const SizedBox(height: 32),
+
+          // Terapist Araçları
+          _buildSectionTitle('Terapist Araçları'),
+          const SizedBox(height: 16),
+          
+          DesktopTheme.desktopCard(
+            child: const TherapistToolsDashboardWidget(),
+          ),
+          
+          const SizedBox(height: 32),
+
+          // AI Destekli Modüller
+          _buildSectionTitle('AI Destekli Modüller'),
+          const SizedBox(height: 16),
+          
+          DesktopGrid(
+            children: [
+              _buildDesktopModuleCard(
+                'AI Case Manager',
+                'AI destekli vaka yönetimi',
+                Icons.psychology,
+                AppTheme.primaryColor,
+                () {
+                  // TODO: AI Case Manager
+                },
+              ),
+              _buildDesktopModuleCard(
+                'AI Diagnosis',
+                'AI destekli tanı önerileri',
+                Icons.auto_awesome,
+                AppTheme.accentColor,
+                () {
+                  // TODO: AI Diagnosis
+                },
+              ),
+              _buildDesktopModuleCard(
+                'Terapi Simülasyonu',
+                'AI ile seans provası',
+                Icons.smart_toy,
+                AppTheme.secondaryColor,
+                () => Navigator.pushNamed(context, '/therapy-simulation'),
+              ),
+              _buildDesktopModuleCard(
+                'Eğitim Kitaplığı',
+                'AI önerili eğitim içerikleri',
+                Icons.library_books,
+                AppTheme.successColor,
+                () {
+                  // TODO: Eğitim kitaplığı
+                },
+              ),
+            ],
+            context: context,
+          ),
+          
+          const SizedBox(height: 32),
+
+          // Yönetim Modülleri
+          _buildSectionTitle('Yönetim Modülleri'),
+          const SizedBox(height: 16),
+          
+          DesktopGrid(
+            children: [
+              _buildDesktopModuleCard(
+                'CRM Dashboard',
+                'Müşteri yönetimi ve satış takibi',
+                Icons.people,
+                AppTheme.primaryColor,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CRMDashboardScreen(),
+                  ),
+                ),
+              ),
+              _buildDesktopModuleCard(
+                'White-Label',
+                'Marka ve tema özelleştirme',
+                Icons.palette,
+                AppTheme.accentColor,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const WhiteLabelDashboardScreen(),
+                  ),
+                ),
+              ),
+              _buildDesktopModuleCard(
+                'Süpervizör Dashboard',
+                'Terapist performans takibi',
+                Icons.supervisor_account,
+                AppTheme.secondaryColor,
+                () => Navigator.pushNamed(context, '/supervisor'),
+              ),
+              _buildDesktopModuleCard(
+                'Finans Dashboard',
+                'Gelir-gider ve faturalama',
+                Icons.account_balance_wallet,
+                AppTheme.successColor,
+                () => Navigator.pushNamed(context, '/finance'),
+              ),
+              _buildDesktopModuleCard(
+                'Gelişmiş Analitik',
+                'AI destekli veri analizi ve tahminler',
+                Icons.analytics,
+                AppTheme.infoColor,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdvancedAnalyticsDashboardScreen(),
+                  ),
+                ),
+              ),
+              _buildDesktopModuleCard(
+                'Güvenlik & Uyumluluk',
+                'HIPAA, GDPR, KVKK uyumluluğu',
+                Icons.security,
+                AppTheme.warningColor,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SecurityDashboardScreen(),
+                  ),
+                ),
+              ),
+            ],
+            context: context,
+          ),
+          
+          const SizedBox(height: 32),
+
+          // Yardımcı Araçlar
+          _buildSectionTitle('Yardımcı Araçlar'),
+          const SizedBox(height: 16),
+          
+          DesktopGrid(
+            children: [
+              _buildDesktopModuleCard(
+                'PDF Çıktısı',
+                'Seans raporları ve belgeler',
+                Icons.picture_as_pdf,
+                AppTheme.accentColor,
+                () {
+                  // TODO: PDF çıktısı
+                },
+              ),
+              _buildDesktopModuleCard(
+                'Kurum Mesajlaşma',
+                'AI özetli iletişim sistemi',
+                Icons.chat,
+                AppTheme.infoColor,
+                () {
+                  // TODO: Kurum mesajlaşma
+                },
+              ),
+            ],
+            context: context,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: Text('Hoş Geldiniz, ${AppConstants.userRoles.first}'),
@@ -397,6 +806,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: DesktopTheme.isDesktop(context)
+          ? DesktopTheme.desktopSectionTitleStyle
+          : Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryColor,
+            ),
+    );
+  }
+
+  Widget _buildDesktopModuleCard(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return DesktopGridCard(
+      title: title,
+      subtitle: description,
+      icon: icon,
+      color: color,
+      onTap: onTap,
+    );
+  }
+
   Widget _buildModuleCard(
     BuildContext context,
     String title,
@@ -463,6 +900,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showShortcutsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Klavye Kısayolları'),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildShortcutRow('Ctrl + N', 'Yeni Seans'),
+              _buildShortcutRow('Ctrl + C', 'Randevu Takvimi'),
+              _buildShortcutRow('Ctrl + F', 'Finans Dashboard'),
+              _buildShortcutRow('Ctrl + S', 'Güvenlik Dashboard'),
+              _buildShortcutRow('F11', 'Tam Ekran'),
+              _buildShortcutRow('Ctrl + B', 'Sidebar Toggle'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShortcutRow(String shortcut, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              shortcut,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Text(description)),
+        ],
       ),
     );
   }

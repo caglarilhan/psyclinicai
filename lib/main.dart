@@ -63,6 +63,10 @@ import 'services/legal_compliance_orchestrator.dart';
 import 'services/crisis_communication_service.dart';
 // Alert Konsolu ekranı
 import 'screens/alert/alert_console_screen.dart';
+// Masaüstü optimizasyonu için import'lar
+import 'services/keyboard_shortcuts_service.dart';
+import 'utils/desktop_theme.dart';
+import 'widgets/desktop/desktop_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,6 +102,9 @@ Future<void> _initializeServices() async {
     
     // Initialize AI services
     await AIService().initialize();
+    
+    // Initialize desktop services
+    KeyboardShortcutsService().initialize();
           // await AIDiagnosisService().initialize();
     await AICaseManagementService().initialize();
     await AIOrchestrationService().initialize();
@@ -167,6 +174,8 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LegalPolicyService()),
         ChangeNotifierProvider(create: (_) => AlertingService()),
         ChangeNotifierProvider(create: (_) => LegalComplianceOrchestrator()),
+        // Masaüstü servisleri için provider'lar
+        ChangeNotifierProvider(create: (_) => KeyboardShortcutsService()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -175,7 +184,9 @@ class PsyClinicAIApp extends StatelessWidget {
               return MaterialApp(
                 title: 'PsyClinic AI',
                 debugShowCheckedModeBanner: false,
-                theme: whiteLabelProvider.currentTheme,
+                theme: DesktopTheme.isDesktop(context) 
+                    ? DesktopTheme.desktopTheme 
+                    : whiteLabelProvider.currentTheme,
                 darkTheme: themeService.getDarkTheme(),
                 themeMode: themeService.currentThemeMode,
                 home: const DashboardScreen(),

@@ -6,6 +6,11 @@ import '../../services/security_service.dart';
 import '../../widgets/security/compliance_widget.dart';
 import '../../widgets/security/audit_log_widget.dart';
 import '../../widgets/security/encryption_widget.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class SecurityDashboardScreen extends StatefulWidget {
   const SecurityDashboardScreen({super.key});
@@ -16,6 +21,7 @@ class SecurityDashboardScreen extends StatefulWidget {
 
 class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with TickerProviderStateMixin {
   final SecurityService _securityService = SecurityService();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   bool _isLoading = true;
   SecurityStatus? _securityStatus;
   List<AuditLog> _auditLogs = [];
@@ -33,11 +39,13 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
     _loadSecurityData();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -78,6 +86,89 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Güvenlik & Uyumluluk Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _loadSecurityData,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor Oluştur',
+          onPressed: _generateSecurityReport,
+          icon: Icons.assessment,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showSecuritySettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Genel Bakış',
+          icon: Icons.dashboard,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'Uyumluluk',
+          icon: Icons.verified,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Güvenlik Olayları',
+          icon: Icons.security,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Veri Politikaları',
+          icon: Icons.policy,
+          onTap: () => _tabController.animateTo(3),
+        ),
+        DesktopSidebarItem(
+          title: 'Erişim Kontrolü',
+          icon: Icons.lock,
+          onTap: () => _tabController.animateTo(4),
+        ),
+        DesktopSidebarItem(
+          title: 'Denetim Kayıtları',
+          icon: Icons.history,
+          onTap: () => _tabController.animateTo(5),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopOverviewTab(),
+        _buildDesktopComplianceTab(),
+        _buildDesktopIncidentsTab(),
+        _buildDesktopPoliciesTab(),
+        _buildDesktopAccessControlTab(),
+        _buildDesktopAuditTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Güvenlik & Uyumluluk Dashboard'),
@@ -1207,6 +1298,314 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _loadSecurityData,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+      _generateSecurityReport,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _showSecuritySettings,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopOverviewTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Güvenlik Genel Bakış',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_securityStatus != null) ...[
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Güvenlik Skoru: ${_securityStatus!.overallScore.toStringAsFixed(1)}/100',
+                      style: DesktopTheme.desktopTitleStyle,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSecurityMetricCard(
+                            'Şifreleme',
+                            _securityStatus!.encryptionScore,
+                            Icons.lock,
+                            Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildSecurityMetricCard(
+                            'Erişim Kontrolü',
+                            _securityStatus!.accessControlScore,
+                            Icons.security,
+                            Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildSecurityMetricCard(
+                            'Denetim',
+                            _securityStatus!.auditScore,
+                            Icons.history,
+                            Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+          Text(
+            'Son Güvenlik Olayları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Tarih', 'Olay', 'Şiddet', 'Durum'],
+            rows: _securityIncidents.take(10).map((incident) => [
+              _formatDate(incident.detectedAt),
+              incident.title,
+              incident.severity.name,
+              incident.isResolved ? 'Çözüldü' : 'Açık',
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Olay detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopComplianceTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Uyumluluk Durumu',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopGrid(
+            children: _complianceStatus.entries.map((entry) {
+              return DesktopGridCard(
+                title: _getComplianceFrameworkName(entry.key),
+                subtitle: entry.value ? 'Uyumlu' : 'Uyumsuz',
+                icon: entry.value ? Icons.check_circle : Icons.error,
+                color: entry.value ? Colors.green : Colors.red,
+                onTap: () {
+                  // TODO: Uyumluluk detayı
+                },
+              );
+            }).toList(),
+            context: context,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopIncidentsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Güvenlik Olayları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Tarih', 'Olay', 'Şiddet', 'Durum', 'Aksiyon'],
+            rows: _securityIncidents.map((incident) => [
+              _formatDate(incident.detectedAt),
+              incident.title,
+              incident.severity.name,
+              incident.isResolved ? 'Çözüldü' : 'Açık',
+              incident.actions.isNotEmpty ? incident.actions.first : 'Beklemede',
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Olay detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopPoliciesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Veri Politikaları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Politika', 'Tür', 'Süre', 'Durum'],
+            rows: _retentionPolicies.map((policy) => [
+              policy.name,
+              policy.dataType.name,
+              '${policy.retentionPeriod} gün',
+              policy.isActive ? 'Aktif' : 'Pasif',
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Politika detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAccessControlTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Erişim Kontrolü',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Politika', 'Kaynak', 'İzin', 'Durum'],
+            rows: _accessPolicies.map((policy) => [
+              policy.name,
+              policy.name,
+              policy.permission.name,
+              policy.isActive ? 'Aktif' : 'Pasif',
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Politika detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAuditTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Denetim Kayıtları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Tarih', 'Kullanıcı', 'Aksiyon', 'Kaynak', 'Tür'],
+            rows: _auditLogs.map((log) => [
+              _formatDate(log.timestamp),
+              log.userName,
+              log.action,
+              log.resourceType ?? 'N/A',
+              log.type.name,
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Log detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityMetricCard(String title, double score, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${score.toStringAsFixed(1)}/100',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getComplianceFrameworkName(ComplianceFramework framework) {
+    switch (framework) {
+      case ComplianceFramework.hipaa:
+        return 'HIPAA (ABD)';
+      case ComplianceFramework.gdpr:
+        return 'GDPR (Avrupa)';
+      case ComplianceFramework.kvkk:
+        return 'KVKK (Türkiye)';
+      case ComplianceFramework.pipeda:
+        return 'PIPEDA (Kanada)';
+      case ComplianceFramework.sox:
+        return 'SOX (ABD Finansal)';
+      case ComplianceFramework.iso27001:
+        return 'ISO 27001 (Uluslararası)';
+    }
+  }
+
+  void _generateSecurityReport() {
+    // TODO: Güvenlik raporu oluştur
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Güvenlik raporu oluşturuluyor...')),
+    );
   }
 
   // Dialog metodları

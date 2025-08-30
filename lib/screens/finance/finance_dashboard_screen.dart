@@ -10,6 +10,11 @@ import '../../widgets/finance/add_invoice_dialog.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/date_utils.dart';
 import '../../config/region_config.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class FinanceDashboardScreen extends StatefulWidget {
   const FinanceDashboardScreen({super.key});
@@ -23,6 +28,7 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
   late TabController _tabController;
   final FinanceService _financeService = FinanceService();
   final TextEditingController _searchController = TextEditingController();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   List<FinancialTransaction> _allTransactions = [];
   List<FinancialTransaction> _filteredTransactions = [];
@@ -40,12 +46,14 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
     _tabController = TabController(length: 4, vsync: this);
     _financeService.initialize();
     _loadData();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -100,6 +108,128 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Finans Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _refreshData,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Filtrele',
+          onPressed: _showFilterDialog,
+          icon: Icons.filter_list,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Yeni İşlem',
+          onPressed: _showAddTransactionDialog,
+          icon: Icons.add,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Yeni Fatura',
+          onPressed: _showAddInvoiceDialog,
+          icon: Icons.receipt,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Genel Bakış',
+          icon: Icons.dashboard,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'İşlemler',
+          icon: Icons.account_balance_wallet,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Faturalar',
+          icon: Icons.receipt,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Grafikler',
+          icon: Icons.analytics,
+          onTap: () => _tabController.animateTo(3),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return Column(
+      children: [
+        // Arama çubuğu
+        DesktopTheme.desktopCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: DesktopTheme.desktopInput(
+                    label: 'Arama',
+                    controller: _searchController,
+                    hintText: 'İşlem veya fatura ara...',
+                    prefixIcon: Icons.search,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                      _filterTransactions();
+                      _filterInvoices();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                if (_searchQuery.isNotEmpty)
+                  DesktopTheme.desktopButton(
+                    text: 'Temizle',
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      _filterTransactions();
+                      _filterInvoices();
+                    },
+                    icon: Icons.clear,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Tab içerikleri
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildDesktopOverviewTab(),
+              _buildDesktopTransactionsTab(),
+              _buildDesktopInvoicesTab(),
+              _buildDesktopChartsTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Finans Dashboard'),
@@ -557,6 +687,159 @@ class _FinanceDashboardScreenState extends State<FinanceDashboardScreen>
       case InvoiceStatus.cancelled:
         return 'İptal Edildi';
     }
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      _showAddTransactionDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+      _showAddInvoiceDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _refreshData,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+      _showFilterDialog,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopOverviewTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Finansal Genel Bakış',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          FinancialOverviewWidget(metrics: _metrics),
+          const SizedBox(height: 24),
+          Text(
+            'Son İşlemler',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Tarih', 'Açıklama', 'Kategori', 'Tutar', 'Durum'],
+            rows: _allTransactions.take(10).map((transaction) => [
+              DateUtils.formatDate(transaction.date),
+              transaction.description,
+              _getCategoryDisplayName(transaction.category),
+              '${transaction.amount.toStringAsFixed(2)} ${RegionConfig.activeRegion.currency}',
+              transaction.type == TransactionType.income ? 'Gelir' : 'Gider',
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: İşlem detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopTransactionsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'İşlemler',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'Yeni İşlem',
+                onPressed: _showAddTransactionDialog,
+                icon: Icons.add,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TransactionListWidget(
+            transactions: _filteredTransactions,
+            onTransactionAdded: _refreshData,
+            onTransactionUpdated: _refreshData,
+            onTransactionDeleted: _refreshData,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopInvoicesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Faturalar',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'Yeni Fatura',
+                onPressed: _showAddInvoiceDialog,
+                icon: Icons.add,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          InvoiceListWidget(
+            invoices: _filteredInvoices,
+            onInvoiceAdded: _refreshData,
+            onInvoiceUpdated: _refreshData,
+            onInvoiceDeleted: _refreshData,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopChartsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Finansal Grafikler',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          FinancialChartsWidget(metrics: _metrics),
+        ],
+      ),
+    );
   }
 
   void _showAddDialog() {

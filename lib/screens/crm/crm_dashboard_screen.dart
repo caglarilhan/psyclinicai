@@ -5,6 +5,11 @@ import '../../services/crm_service.dart';
 import '../../widgets/crm/customer_list_widget.dart';
 import '../../widgets/crm/sales_pipeline_widget.dart';
 import '../../widgets/crm/analytics_dashboard_widget.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class CRMDashboardScreen extends StatefulWidget {
   const CRMDashboardScreen({super.key});
@@ -17,6 +22,7 @@ class _CRMDashboardScreenState extends State<CRMDashboardScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late CRMService _crmService;
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   // CRM verileri
   List<Customer> _customers = [];
@@ -30,11 +36,13 @@ class _CRMDashboardScreenState extends State<CRMDashboardScreen>
     _tabController = TabController(length: 4, vsync: this);
     _crmService = CRMService();
     _loadCRMData();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -66,6 +74,83 @@ class _CRMDashboardScreenState extends State<CRMDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'CRM Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Müşteri',
+          onPressed: _showAddCustomerDialog,
+          icon: Icons.add,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _loadCRMData,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor Oluştur',
+          onPressed: _generateCRMReport,
+          icon: Icons.assessment,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showCRMSettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Genel Bakış',
+          icon: Icons.dashboard,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'Müşteriler',
+          icon: Icons.people,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Satış',
+          icon: Icons.trending_up,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Analitik',
+          icon: Icons.analytics,
+          onTap: () => _tabController.animateTo(3),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopOverviewTab(),
+        _buildDesktopCustomersTab(),
+        _buildDesktopSalesTab(),
+        _buildDesktopAnalyticsTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CRM Dashboard'),
@@ -527,6 +612,230 @@ class _CRMDashboardScreenState extends State<CRMDashboardScreen>
         content: Text('Rapor oluşturma özelliği yakında eklenecek'),
         backgroundColor: AppTheme.infoColor,
       ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      _showAddCustomerDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyO, LogicalKeyboardKey.control),
+      _showAddOpportunityDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _loadCRMData,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+      _generateCRMReport,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyO, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopOverviewTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CRM Genel Bakış',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopGrid(
+            children: [
+              _buildDesktopKPICard(
+                'Toplam Müşteri',
+                _analytics.totalCustomers.toString(),
+                Icons.people,
+                Colors.blue,
+              ),
+              _buildDesktopKPICard(
+                'Aktif Fırsatlar',
+                _analytics.activeOpportunities.toString(),
+                Icons.trending_up,
+                Colors.green,
+              ),
+              _buildDesktopKPICard(
+                'Bu Ay Satış',
+                '${_analytics.monthlyRevenue.toStringAsFixed(2)} ₺',
+                Icons.account_balance_wallet,
+                Colors.orange,
+              ),
+              _buildDesktopKPICard(
+                'Dönüşüm Oranı',
+                '${_analytics.conversionRate.toStringAsFixed(1)}%',
+                Icons.analytics,
+                Colors.purple,
+              ),
+            ],
+            context: context,
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Son Aktiviteler',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopDataTable(
+            headers: const ['Tarih', 'Aktivite', 'Müşteri', 'Durum'],
+            rows: _analytics.recentActivities.take(10).map((activity) => [
+              _formatTime(activity.timestamp),
+              _getActivityDescription(activity.type),
+              activity.customerName,
+              activity.status,
+            ]).toList(),
+            onRowTap: (index) {
+              // TODO: Aktivite detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopCustomersTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Müşteriler',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'Yeni Müşteri',
+                onPressed: _showAddCustomerDialog,
+                icon: Icons.add,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          CustomerListWidget(
+            customers: _customers,
+            onCustomerSelected: (customer) {
+              // TODO: Müşteri detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSalesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Satış Fırsatları',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'Yeni Fırsat',
+                onPressed: _showAddOpportunityDialog,
+                icon: Icons.add,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SalesPipelineWidget(
+            opportunities: _opportunities,
+            onOpportunitySelected: (opportunity) {
+              // TODO: Fırsat detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAnalyticsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CRM Analitik',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          AnalyticsDashboardWidget(
+            analytics: _analytics,
+            onSegmentSelected: (segment) {
+              // TODO: Segment detayı
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopKPICard(String title, String value, IconData icon, Color color) {
+    return DesktopGridCard(
+      title: title,
+      subtitle: value,
+      icon: icon,
+      color: color,
+      onTap: () {
+        // TODO: Detay görüntüleme
+      },
+    );
+  }
+
+  String _getActivityDescription(ActivityType type) {
+    switch (type) {
+      case ActivityType.customerAdded:
+        return 'Yeni müşteri eklendi';
+      case ActivityType.opportunityCreated:
+        return 'Yeni fırsat oluşturuldu';
+      case ActivityType.dealClosed:
+        return 'Anlaşma kapatıldı';
+      case ActivityType.followUp:
+        return 'Takip yapıldı';
+    }
+  }
+
+  void _generateCRMReport() {
+    // TODO: CRM raporu oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('CRM raporu oluşturuluyor...')),
+    );
+  }
+
+  void _showCRMSettings() {
+    // TODO: CRM ayarları
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('CRM ayarları açılıyor...')),
     );
   }
 }

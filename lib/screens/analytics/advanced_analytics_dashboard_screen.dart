@@ -6,6 +6,11 @@ import '../../widgets/analytics/chart_widgets.dart';
 import '../../widgets/analytics/metric_cards.dart';
 import '../../widgets/analytics/trend_analysis_widget.dart';
 import '../../services/finance_service.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class AdvancedAnalyticsDashboardScreen extends StatefulWidget {
   const AdvancedAnalyticsDashboardScreen({super.key});
@@ -16,6 +21,7 @@ class AdvancedAnalyticsDashboardScreen extends StatefulWidget {
 
 class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDashboardScreen> {
   final AnalyticsService _analyticsService = AnalyticsService();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   bool _isLoading = true;
   AnalyticsData? _analyticsData;
   String _selectedTimeRange = '30d';
@@ -26,6 +32,7 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
   void initState() {
     super.initState();
     _loadAnalyticsData();
+    _setupKeyboardShortcuts();
   }
 
   Future<void> _loadAnalyticsData() async {
@@ -52,7 +59,130 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
   }
 
   @override
+  void dispose() {
+    _removeKeyboardShortcuts();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Gelişmiş Analitik Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _loadAnalyticsData,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor İndir',
+          onPressed: _exportReport,
+          icon: Icons.download,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'AI Analiz',
+          onPressed: _runAIAnalysis,
+          icon: Icons.psychology,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showAnalyticsSettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Genel Bakış',
+          icon: Icons.dashboard,
+          onTap: () => _scrollToSection('overview'),
+        ),
+        DesktopSidebarItem(
+          title: 'KPI Metrikleri',
+          icon: Icons.analytics,
+          onTap: () => _scrollToSection('kpi'),
+        ),
+        DesktopSidebarItem(
+          title: 'Grafikler',
+          icon: Icons.show_chart,
+          onTap: () => _scrollToSection('charts'),
+        ),
+        DesktopSidebarItem(
+          title: 'AI Trend Analizi',
+          icon: Icons.trending_up,
+          onTap: () => _scrollToSection('trends'),
+        ),
+        DesktopSidebarItem(
+          title: 'Finansal Analiz',
+          icon: Icons.account_balance_wallet,
+          onTap: () => _scrollToSection('finance'),
+        ),
+        DesktopSidebarItem(
+          title: 'Raporlar',
+          icon: Icons.assessment,
+          onTap: () => _scrollToSection('reports'),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_analyticsData == null) {
+      return const Center(child: Text('Veri bulunamadı'));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Filtreler ve Kontroller
+          _buildDesktopFiltersSection(),
+          
+          const SizedBox(height: 32),
+          
+          // KPI Kartları
+          _buildDesktopKPISection(),
+          
+          const SizedBox(height: 32),
+          
+          // Ana Grafikler
+          _buildDesktopMainChartsSection(),
+          
+          const SizedBox(height: 32),
+          
+          // AI Trend Analizi
+          _buildDesktopTrendAnalysisSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Finansal Analiz
+          _buildDesktopFinancialAnalysisSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Detaylı Raporlar
+          _buildDesktopReportsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gelişmiş Analitik Dashboard'),
@@ -493,6 +623,330 @@ class _AdvancedAnalyticsDashboardScreenState extends State<AdvancedAnalyticsDash
         content: Text('Rapor export özelliği yakında eklenecek'),
         backgroundColor: AppTheme.infoColor,
       ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _loadAnalyticsData,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      _exportReport,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _runAIAnalysis,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _showAnalyticsSettings,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü bölüm metodları
+  Widget _buildDesktopFiltersSection() {
+    return DesktopTheme.desktopCard(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Filtreler ve Kontroller',
+              style: DesktopTheme.desktopSectionTitleStyle,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: DesktopTheme.desktopInput(
+                    label: 'Zaman Aralığı',
+                    controller: TextEditingController(text: _selectedTimeRange),
+                    hintText: '30d, 7d, 1m, 3m',
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTimeRange = value;
+                      });
+                      _loadAnalyticsData();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DesktopTheme.desktopInput(
+                    label: 'Metrik',
+                    controller: TextEditingController(text: _selectedMetric),
+                    hintText: 'all, clinical, financial',
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedMetric = value;
+                      });
+                      _loadAnalyticsData();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                DesktopTheme.desktopButton(
+                  text: 'Uygula',
+                  onPressed: _loadAnalyticsData,
+                  icon: Icons.filter_list,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopKPISection() {
+    if (_analyticsData == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'KPI Metrikleri',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopGrid(
+          children: [
+            _buildDesktopKPICard(
+              'Toplam Danışan',
+              _analyticsData!.totalClients.toString(),
+              Icons.people,
+              Colors.blue,
+            ),
+            _buildDesktopKPICard(
+              'Aktif Seanslar',
+              _analyticsData!.activeSessions.toString(),
+              Icons.medical_services,
+              Colors.green,
+            ),
+            _buildDesktopKPICard(
+              'Gelir',
+              '${_analyticsData!.totalRevenue.toStringAsFixed(2)} ₺',
+              Icons.account_balance_wallet,
+              Colors.orange,
+            ),
+            _buildDesktopKPICard(
+              'Memnuniyet',
+              '${_analyticsData!.satisfactionScore.toStringAsFixed(1)}%',
+              Icons.star,
+              Colors.purple,
+            ),
+          ],
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopMainChartsSection() {
+    if (_analyticsData == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ana Grafikler',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Danışan Trendi',
+                        style: DesktopTheme.desktopTitleStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 300,
+                        child: ClientTrendChart(data: _analyticsData!.clientTrends),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gelir Analizi',
+                        style: DesktopTheme.desktopTitleStyle,
+                        ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 300,
+                        child: RevenueChart(data: _analyticsData!.revenueData),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopTrendAnalysisSection() {
+    if (_analyticsData == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'AI Destekli Trend Analizi',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopTheme.desktopCard(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: TrendAnalysisWidget(
+              trends: _analyticsData!.aiTrends,
+              insights: _analyticsData!.aiInsights,
+              recommendations: _analyticsData!.aiRecommendations,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopFinancialAnalysisSection() {
+    if (_financeMetrics == null) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Finansal Analiz',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopGrid(
+          children: [
+            _buildDesktopKPICard(
+              'Toplam Gelir',
+              '${_financeMetrics!.totalIncome.toStringAsFixed(2)} ₺',
+              Icons.trending_up,
+              Colors.green,
+            ),
+            _buildDesktopKPICard(
+              'Toplam Gider',
+              '${_financeMetrics!.totalExpenses.toStringAsFixed(2)} ₺',
+              Icons.trending_down,
+              Colors.red,
+            ),
+            _buildDesktopKPICard(
+              'Net Kar',
+              '${_financeMetrics!.netProfit.toStringAsFixed(2)} ₺',
+              Icons.account_balance,
+              Colors.blue,
+            ),
+            _buildDesktopKPICard(
+              'Kar Marjı',
+              '${_financeMetrics!.profitMargin.toStringAsFixed(1)}%',
+              Icons.analytics,
+              Colors.orange,
+            ),
+          ],
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopReportsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detaylı Raporlar',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopDataTable(
+          headers: const ['Rapor Adı', 'Tarih', 'Durum', 'Aksiyon'],
+          rows: [
+            ['Aylık Performans Raporu', '2024-01-15', 'Hazır', 'İndir'],
+            ['Finansal Analiz Raporu', '2024-01-10', 'Hazır', 'İndir'],
+            ['Danışan Memnuniyet Raporu', '2024-01-05', 'Hazır', 'İndir'],
+            ['AI Trend Analiz Raporu', '2024-01-01', 'Hazır', 'İndir'],
+          ],
+          onRowTap: (index) {
+            // TODO: Rapor indirme
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopKPICard(String title, String value, IconData icon, Color color) {
+    return DesktopGridCard(
+      title: title,
+      subtitle: value,
+      icon: icon,
+      color: color,
+      onTap: () {
+        // TODO: Detay görüntüleme
+      },
+    );
+  }
+
+  void _scrollToSection(String section) {
+    // TODO: Bölüme kaydırma
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$section bölümüne kaydırılıyor...')),
+    );
+  }
+
+  void _runAIAnalysis() {
+    // TODO: AI analiz çalıştırma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI analiz çalıştırılıyor...')),
+    );
+  }
+
+  void _showAnalyticsSettings() {
+    // TODO: Analitik ayarları
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Analitik ayarları açılıyor...')),
     );
   }
 }

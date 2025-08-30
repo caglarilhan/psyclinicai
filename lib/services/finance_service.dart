@@ -331,7 +331,7 @@ class FinanceService {
     final monthlyTrends = <String, double>{};
     final months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'];
     for (final month in months) {
-      monthlyTrends[month] = random.nextDouble() * 5000 + 2000; // Demo veri
+      monthlyTrends[month] = 2000 + (months.indexOf(month) * 500); // Demo veri
     }
 
     _metrics = FinancialMetrics(

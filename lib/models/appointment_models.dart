@@ -1,6 +1,4 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'appointment_models.g.dart';
+// Manual appointment models (no codegen)
 
 enum AppointmentType {
   individual,
@@ -192,6 +190,26 @@ class AppointmentReminder {
       message: json['message'] as String?,
     );
   }
+
+  AppointmentReminder copyWith({
+    String? id,
+    String? appointmentId,
+    DateTime? reminderTime,
+    ReminderType? type,
+    bool? isSent,
+    DateTime? sentAt,
+    String? message,
+  }) {
+    return AppointmentReminder(
+      id: id ?? this.id,
+      appointmentId: appointmentId ?? this.appointmentId,
+      reminderTime: reminderTime ?? this.reminderTime,
+      type: type ?? this.type,
+      isSent: isSent ?? this.isSent,
+      sentAt: sentAt ?? this.sentAt,
+      message: message ?? this.message,
+    );
+  }
 }
 
 enum ReminderType {
@@ -244,6 +262,26 @@ class AppointmentConflict {
       description: json['description'] as String,
       detectedAt: DateTime.parse(json['detectedAt'] as String),
       isResolved: json['isResolved'] as bool? ?? false,
+    );
+  }
+
+  AppointmentConflict copyWith({
+    String? id,
+    String? appointmentId,
+    String? conflictingAppointmentId,
+    ConflictType? type,
+    String? description,
+    DateTime? detectedAt,
+    bool? isResolved,
+  }) {
+    return AppointmentConflict(
+      id: id ?? this.id,
+      appointmentId: appointmentId ?? this.appointmentId,
+      conflictingAppointmentId: conflictingAppointmentId ?? this.conflictingAppointmentId,
+      type: type ?? this.type,
+      description: description ?? this.description,
+      detectedAt: detectedAt ?? this.detectedAt,
+      isResolved: isResolved ?? this.isResolved,
     );
   }
 }

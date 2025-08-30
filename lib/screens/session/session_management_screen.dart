@@ -12,6 +12,11 @@ import '../../widgets/session/emotion_tracker.dart';
 import '../../widgets/session/goal_progress_tracker.dart';
 import '../../widgets/session/homework_assignment.dart';
 import '../../widgets/session/next_session_planner.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class SessionManagementScreen extends StatefulWidget {
   final String? sessionId;
@@ -32,6 +37,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen>
   late TabController _tabController;
   final SessionService _sessionService = SessionService();
   final AIService _aiService = AIService();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   bool _isLoading = true;
   Session? _currentSession;
@@ -54,6 +60,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen>
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
     _loadSessionData();
+    _setupKeyboardShortcuts();
   }
 
   Future<void> _loadSessionData() async {
@@ -97,11 +104,104 @@ class _SessionManagementScreenState extends State<SessionManagementScreen>
     _goalsController.dispose();
     _homeworkController.dispose();
     _nextSessionController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: _currentSession?.title ?? 'Yeni Seans',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Kaydet',
+          onPressed: _isSaving ? null : _saveSession,
+          icon: _isSaving ? Icons.hourglass_empty : Icons.save,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'AI Özet',
+          onPressed: _isGeneratingSummary ? null : _generateAISummary,
+          icon: _isGeneratingSummary ? Icons.hourglass_empty : Icons.summarize,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Daha Fazla',
+          onPressed: _showMoreOptions,
+          icon: Icons.more_vert,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Seans Notları',
+          icon: Icons.edit_note,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'AI Özet',
+          icon: Icons.auto_awesome,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Danışan Bilgileri',
+          icon: Icons.person,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Seans Geçmişi',
+          icon: Icons.timeline,
+          onTap: () => _tabController.animateTo(3),
+        ),
+        DesktopSidebarItem(
+          title: 'Duygu Takibi',
+          icon: Icons.emoji_emotions,
+          onTap: () => _tabController.animateTo(4),
+        ),
+        DesktopSidebarItem(
+          title: 'Hedef & Ödev',
+          icon: Icons.flag,
+          onTap: () => _tabController.animateTo(5),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Seans verileri yükleniyor...'),
+          ],
+        ),
+      );
+    }
+
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopSessionNotesTab(),
+        _buildDesktopAISummaryTab(),
+        _buildDesktopClientInfoTab(),
+        _buildDesktopSessionHistoryTab(),
+        _buildDesktopEmotionTrackingTab(),
+        _buildDesktopGoalsHomeworkTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: Text(_currentSession?.title ?? 'Yeni Seans'),
@@ -815,6 +915,302 @@ class _SessionManagementScreenState extends State<SessionManagementScreen>
               foregroundColor: Colors.white,
             ),
             child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _saveSession,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _generateAISummary,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      _exportToPDF,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyH, LogicalKeyboardKey.control),
+      () => _tabController.animateTo(4), // Duygu Takibi
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyH, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopSessionNotesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Seans Notları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DesktopTheme.desktopInput(
+                    label: 'Seans Başlığı',
+                    controller: _titleController,
+                    hintText: 'Seans başlığını girin...',
+                  ),
+                  const SizedBox(height: 16),
+                  DesktopTheme.desktopInput(
+                    label: 'Seans Notları',
+                    controller: _notesController,
+                    hintText: 'Seans notlarınızı buraya yazın...',
+                    maxLines: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAISummaryTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'AI Özet',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'AI Özet Oluştur',
+                onPressed: _isGeneratingSummary ? null : _generateAISummary,
+                icon: _isGeneratingSummary ? Icons.hourglass_empty : Icons.auto_awesome,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_aiSummary != null)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: AISummaryWidget(summary: _aiSummary!),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.auto_awesome, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'AI özet henüz oluşturulmadı',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopClientInfoTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Danışan Bilgileri',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_currentClient != null)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: ClientInfoPanel(client: _currentClient!),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.person, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Danışan bilgileri yüklenemedi',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSessionHistoryTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Seans Geçmişi',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_clientSessions.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: SessionTimeline(sessions: _clientSessions),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.timeline, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Seans geçmişi bulunamadı',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopEmotionTrackingTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Duygu Takibi',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: EmotionTracker(
+                sessionId: _currentSession?.id,
+                onEmotionTracked: (emotion) {
+                  // Duygu takibi güncellendi
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopGoalsHomeworkTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hedef & Ödev',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopGrid(
+            children: [
+              DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hedefler',
+                        style: DesktopTheme.desktopSectionTitleStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      DesktopTheme.desktopInput(
+                        label: 'Seans Hedefleri',
+                        controller: _goalsController,
+                        hintText: 'Seans hedeflerini girin...',
+                        maxLines: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ödev',
+                        style: DesktopTheme.desktopSectionTitleStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      DesktopTheme.desktopInput(
+                        label: 'Ödev Açıklaması',
+                        controller: _homeworkController,
+                        hintText: 'Ödev açıklamasını girin...',
+                        maxLines: 5,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

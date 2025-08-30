@@ -5,6 +5,11 @@ import '../../widgets/diagnosis/diagnosis_search_bar.dart';
 import '../../widgets/diagnosis/diagnosis_results.dart';
 import '../../widgets/diagnosis/ai_diagnosis_panel.dart';
 import '../../models/diagnosis_model.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class DiagnosisScreen extends StatefulWidget {
   const DiagnosisScreen({super.key});
@@ -17,6 +22,7 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   String _selectedCountry = AppConstants.targetCountries.first;
   List<DiagnosisModel> _searchResults = [];
   bool _isSearching = false;
@@ -27,12 +33,14 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadInitialData();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -173,6 +181,73 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Tanı Sistemi',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Arama',
+          onPressed: _clearSearch,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'AI Analiz',
+          onPressed: _generateAIAnalysis,
+          icon: Icons.auto_awesome,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor',
+          onPressed: _generateDiagnosisReport,
+          icon: Icons.assessment,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showDiagnosisSettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Tanı Arama',
+          icon: Icons.search,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'AI Öneriler',
+          icon: Icons.auto_awesome,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Geçmiş',
+          icon: Icons.history,
+          onTap: () => _tabController.animateTo(2),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopSearchTab(),
+        _buildDesktopAIRecommendationsTab(),
+        _buildDesktopHistoryTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tanı Arama Sistemi'),
@@ -498,6 +573,218 @@ Kesin tanı için klinik değerlendirme gerekir.
           Expanded(child: Text(value)),
         ],
       ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+      () => _searchController.requestFocus(),
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _clearSearch,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _generateAIAnalysis,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _showDiagnosisSettings,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopSearchTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tanı Arama',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ülke seçimi
+                  Row(
+                    children: [
+                      Icon(Icons.public, color: AppTheme.primaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tanı Standardı:',
+                        style: DesktopTheme.desktopSectionTitleStyle,
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.primaryColor),
+                        ),
+                        child: Text(
+                          '${_selectedCountry} (${AppConstants.diagnosisStandards[_selectedCountry]})',
+                          style: TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      DesktopTheme.desktopButton(
+                        text: 'Değiştir',
+                        onPressed: () => _showCountrySelectionDialog(context),
+                        icon: Icons.edit,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Arama çubuğu
+                  DiagnosisSearchBar(
+                    controller: _searchController,
+                    onSearch: _performSearch,
+                    isSearching: _isSearching,
+                    placeholder: 'ICD/DSM kodu veya tanı adı ile arayın...',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Arama sonuçları
+          if (_searchResults.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Arama Sonuçları (${_searchResults.length})',
+                      style: DesktopTheme.desktopSectionTitleStyle,
+                    ),
+                    const SizedBox(height: 16),
+                    DiagnosisResults(
+                      results: _searchResults,
+                      onDiagnosisSelected: _showDiagnosisDetails,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAIRecommendationsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AI Tanı Önerileri',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: AIDiagnosisPanel(
+                onGenerateSuggestion: _generateAISuggestion,
+                suggestion: _aiSuggestion,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopHistoryTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tanı Geçmişi',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: const Padding(
+              padding: EdgeInsets.all(48),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.history, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Tanı geçmişi yakında gelecek',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Yardımcı metodlar
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _searchResults.clear();
+    });
+  }
+
+  void _generateAIAnalysis() {
+    // TODO: AI analiz oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI analiz oluşturuluyor...')),
+    );
+  }
+
+  void _generateDiagnosisReport() {
+    // TODO: Tanı raporu oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tanı raporu oluşturuluyor...')),
+    );
+  }
+
+  void _showDiagnosisSettings() {
+    // TODO: Tanı ayarları
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tanı ayarları yakında gelecek')),
     );
   }
 }

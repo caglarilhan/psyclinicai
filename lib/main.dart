@@ -88,6 +88,14 @@ import 'widgets/realtime_dashboard_widgets.dart';
 import 'services/api_service.dart';
 // Team collaboration için import
 import 'services/team_collaboration_service.dart';
+import 'services/ai_chatbot_service.dart';
+import 'widgets/ai_chatbot_widgets.dart';
+import 'services/push_notification_service.dart';
+import 'widgets/push_notification_widgets.dart';
+import 'services/workflow_automation_service.dart';
+import 'widgets/workflow_automation_widgets.dart';
+import 'services/multi_language_service.dart';
+import 'widgets/multi_language_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,8 +147,16 @@ Future<void> _initializeServices() async {
     // API servisini başlat
     await ApiService().initialize();
     
-    // Team collaboration servisini başlat
-    await TeamCollaborationService().initialize();
+                    // Team collaboration servisini başlat
+                await TeamCollaborationService().initialize();
+                // AI Chatbot servisini başlat
+                await AIChatbotService().initialize();
+                // Push Notification servisini başlat
+                await PushNotificationService().initialize();
+                // Workflow Automation servisini başlat
+                await WorkflowAutomationService().initialize();
+                // Multi-language servisini başlat
+                await MultiLanguageService().initialize();
     await BiometricAuthService().initialize();
     
     // Initialize AI services

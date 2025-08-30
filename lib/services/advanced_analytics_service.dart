@@ -1,772 +1,579 @@
-import 'dart:async';
+import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
-import 'package:http/http.dart' as http;
-import '../models/advanced_analytics_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Advanced Analytics Service - Kullanıcı dostu analitik servisi
 class AdvancedAnalyticsService {
-  static const String _baseUrl = 'https://api.analytics.psyclinicai.com/v1';
-  static const String _apiKey = 'demo_key_12345';
+  static final AdvancedAnalyticsService _instance = AdvancedAnalyticsService._internal();
+  factory AdvancedAnalyticsService() => _instance;
+  AdvancedAnalyticsService._internal();
 
-  // Cache for analytics data
-  final Map<String, AnalyticsDashboard> _dashboardsCache = {};
-  final Map<String, FinancialAnalytics> _financialCache = {};
-  final Map<String, PatientAnalytics> _patientCache = {};
-  final Map<String, OperationalAnalytics> _operationalCache = {};
-  final Map<String, QualityAnalytics> _qualityCache = {};
-  final Map<String, StaffAnalytics> _staffCache = {};
+  // Analytics durumu
+  bool _isInitialized = false;
+  Map<String, dynamic> _analyticsData = {};
+  List<Map<String, dynamic>> _trends = [];
+  List<Map<String, dynamic>> _predictions = [];
+  List<Map<String, dynamic>> _customReports = [];
+  
+  // Analytics kategorileri
+  final Map<String, String> _analyticsCategories = {
+    'sessions': 'Seans Analizi',
+    'clients': 'Müşteri Analizi',
+    'revenue': 'Gelir Analizi',
+    'performance': 'Performans Analizi',
+    'trends': 'Trend Analizi',
+    'predictions': 'Tahmin Analizi',
+  };
+  
+  // Stream controllers
+  final StreamController<Map<String, dynamic>> _dataController = StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _trendController = StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _predictionController = StreamController<Map<String, dynamic>>.broadcast();
 
-  // Stream controllers for real-time updates
-  final StreamController<AnalyticsDashboard> _dashboardController =
-      StreamController<AnalyticsDashboard>.broadcast();
-  final StreamController<Map<String, dynamic>> _metricsController =
-      StreamController<Map<String, dynamic>>.broadcast();
-  final StreamController<String> _insightController =
-      StreamController<String>.broadcast();
+  // Streams
+  Stream<Map<String, dynamic>> get dataStream => _dataController.stream;
+  Stream<Map<String, dynamic>> get trendStream => _trendController.stream;
+  Stream<Map<String, dynamic>> get predictionStream => _predictionController.stream;
 
-  // Quick actions and smart filters
-  final List<QuickAction> _quickActions = [];
-  final List<SmartFilter> _smartFilters = [];
+  // Getter'lar
+  bool get isInitialized => _isInitialized;
+  Map<String, dynamic> get analyticsData => Map.unmodifiable(_analyticsData);
+  List<Map<String, dynamic>> get trends => List.unmodifiable(_trends);
+  List<Map<String, dynamic>> get predictions => List.unmodifiable(_predictions);
+  List<Map<String, dynamic>> get customReports => List.unmodifiable(_customReports);
+  Map<String, String> get analyticsCategories => Map.unmodifiable(_analyticsCategories);
 
-  /// Get stream for dashboard updates
-  Stream<AnalyticsDashboard> get dashboardStream => _dashboardController.stream;
-
-  /// Get stream for metrics updates
-  Stream<Map<String, dynamic>> get metricsStream => _metricsController.stream;
-
-  /// Get stream for insights
-  Stream<String> get insightStream => _insightController.stream;
-
-  /// Initialize analytics service
+  // Servisi başlat
   Future<void> initialize() async {
-    await _loadDefaultDashboards();
-    await _setupQuickActions();
-    await _setupSmartFilters();
-  }
-
-  /// Get overview dashboard - Tek tıkla genel bakış
-  Future<AnalyticsDashboard> getOverviewDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/overview'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load overview dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock overview dashboard for demo purposes
-      return _createMockOverviewDashboard();
-    }
-  }
-
-  /// Get financial dashboard - Tek tıkla finansal analiz
-  Future<AnalyticsDashboard> getFinancialDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/financial'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load financial dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock financial dashboard for demo purposes
-      return _createMockFinancialDashboard();
-    }
-  }
-
-  /// Get patient dashboard - Tek tıkla hasta analizi
-  Future<AnalyticsDashboard> getPatientDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/patients'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load patient dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock patient dashboard for demo purposes
-      return _createMockPatientDashboard();
-    }
-  }
-
-  /// Get operational dashboard - Tek tıkla operasyonel analiz
-  Future<AnalyticsDashboard> getOperationalDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/operations'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load operational dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock operational dashboard for demo purposes
-      return _createMockOperationalDashboard();
-    }
-  }
-
-  /// Get quality dashboard - Tek tıkla kalite analizi
-  Future<AnalyticsDashboard> getQualityDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/quality'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load quality dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock quality dashboard for demo purposes
-      return _createMockQualityDashboard();
-    }
-  }
-
-  /// Get staff dashboard - Tek tıkla personel analizi
-  Future<AnalyticsDashboard> getStaffDashboard() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/dashboards/staff'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final dashboard = AnalyticsDashboard.fromJson(data);
-        _dashboardsCache[dashboard.id] = dashboard;
-        return dashboard;
-      } else {
-        throw Exception('Failed to load staff dashboard: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock staff dashboard for demo purposes
-      return _createMockStaffDashboard();
-    }
-  }
-
-  /// Generate quick report - Tek tıkla rapor oluştur
-  Future<AnalyticsReport> generateQuickReport({
-    required DashboardType dashboardType,
-    required TimePeriod timePeriod,
-    String? customName,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/reports/generate'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'dashboard_type': dashboardType.name,
-          'time_period': timePeriod.name,
-          'custom_name': customName,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        return AnalyticsReport.fromJson(data);
-      } else {
-        throw Exception('Failed to generate report: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock report for demo purposes
-      return _createMockReport(dashboardType, timePeriod, customName);
-    }
-  }
-
-  /// Get quick actions - Hızlı işlemler
-  List<QuickAction> getQuickActions() {
-    return List.unmodifiable(_quickActions);
-  }
-
-  /// Get smart filters - Akıllı filtreler
-  List<SmartFilter> getSmartFilters() {
-    return List.unmodifiable(_smartFilters);
-  }
-
-  /// Apply smart filter - Akıllı filtre uygula
-  Future<List<Map<String, dynamic>>> applySmartFilter({
-    required String filterId,
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      final filter = _smartFilters.firstWhere((f) => f.id == filterId);
-      if (!filter.isActive) {
-        return [data];
-      }
-
-      // Apply filter logic
-      final filteredData = _applyFilterLogic(filter, data);
-      return filteredData;
-    } catch (e) {
-      return [data];
-    }
-  }
-
-  /// Get predictive insights - AI destekli öngörüler
-  Future<List<String>> getPredictiveInsights({
-    required DashboardType dashboardType,
-    required TimePeriod timePeriod,
-  }) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/insights/predictive').replace(queryParameters: {
-          'dashboard_type': dashboardType.name,
-          'time_period': timePeriod.name,
-        }),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return List<String>.from(data['insights']);
-      } else {
-        throw Exception('Failed to load predictive insights: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock insights for demo purposes
-      return _generateMockInsights(dashboardType, timePeriod);
-    }
-  }
-
-  /// Export data - Veri dışa aktar
-  Future<String> exportData({
-    required DashboardType dashboardType,
-    required TimePeriod timePeriod,
-    required String format, // 'pdf', 'excel', 'csv'
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/export'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'dashboard_type': dashboardType.name,
-          'time_period': timePeriod.name,
-          'format': format,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['download_url'];
-      } else {
-        throw Exception('Failed to export data: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock export URL for demo purposes
-      return 'https://export.psyclinicai.com/mock_export_${dashboardType.name}_${timePeriod.name}.$format';
-    }
-  }
-
-  /// Dispose resources
-  void dispose() {
-    if (!_dashboardController.isClosed) {
-      _dashboardController.close();
-    }
-    if (!_metricsController.isClosed) {
-      _metricsController.close();
-    }
-    if (!_insightController.isClosed) {
-      _insightController.close();
-    }
-  }
-
-  // Private helper methods
-  Future<void> _loadDefaultDashboards() async {
-    // Load default dashboards
-    final overviewDashboard = _createMockOverviewDashboard();
-    final financialDashboard = _createMockFinancialDashboard();
-    final patientDashboard = _createMockPatientDashboard();
-    final operationalDashboard = _createMockOperationalDashboard();
-    final qualityDashboard = _createMockQualityDashboard();
-    final staffDashboard = _createMockStaffDashboard();
-
-    _dashboardsCache[overviewDashboard.id] = overviewDashboard;
-    _dashboardsCache[financialDashboard.id] = financialDashboard;
-    _dashboardsCache[patientDashboard.id] = patientDashboard;
-    _dashboardsCache[operationalDashboard.id] = operationalDashboard;
-    _dashboardsCache[qualityDashboard.id] = qualityDashboard;
-    _dashboardsCache[staffDashboard.id] = staffDashboard;
-  }
-
-  Future<void> _setupQuickActions() async {
-    _quickActions.addAll([
-      QuickAction(
-        id: 'quick_overview',
-        name: 'Genel Bakış',
-        description: 'Tüm önemli metrikleri tek tıkla görüntüle',
-        icon: '📊',
-        action: 'show_overview',
-        parameters: {'dashboard_type': 'overview'},
-        isEnabled: true,
-        priority: PriorityLevel.high,
-        metadata: {},
-      ),
-      QuickAction(
-        id: 'quick_financial',
-        name: 'Finansal Durum',
-        description: 'Gelir, maliyet ve karlılık analizi',
-        icon: '💰',
-        action: 'show_financial',
-        parameters: {'dashboard_type': 'financial'},
-        isEnabled: true,
-        priority: PriorityLevel.high,
-        metadata: {},
-      ),
-      QuickAction(
-        id: 'quick_patients',
-        name: 'Hasta Analizi',
-        description: 'Hasta sayıları ve memnuniyet oranları',
-        icon: '👥',
-        action: 'show_patients',
-        parameters: {'dashboard_type': 'patients'},
-        isEnabled: true,
-        priority: PriorityLevel.medium,
-        metadata: {},
-      ),
-      QuickAction(
-        id: 'quick_report',
-        name: 'Hızlı Rapor',
-        description: 'Seçilen kategoride hızlı rapor oluştur',
-        icon: '📋',
-        action: 'generate_report',
-        parameters: {'time_period': 'month'},
-        isEnabled: true,
-        priority: PriorityLevel.medium,
-        metadata: {},
-      ),
-      QuickAction(
-        id: 'quick_export',
-        name: 'Veri Dışa Aktar',
-        description: 'Analitik verilerini PDF/Excel olarak indir',
-        icon: '📥',
-        action: 'export_data',
-        parameters: {'format': 'pdf'},
-        isEnabled: true,
-        priority: PriorityLevel.low,
-        metadata: {},
-      ),
-    ]);
-  }
-
-  Future<void> _setupSmartFilters() async {
-    _smartFilters.addAll([
-      SmartFilter(
-        id: 'filter_time',
-        name: 'Zaman Filtresi',
-        description: 'Tarih aralığına göre filtrele',
-        field: 'date',
-        operator: 'between',
-        value: 'last_30_days',
-        isActive: true,
-        priority: PriorityLevel.high,
-        metadata: {},
-      ),
-      SmartFilter(
-        id: 'filter_priority',
-        name: 'Öncelik Filtresi',
-        description: 'Öncelik seviyesine göre filtrele',
-        field: 'priority',
-        operator: 'equals',
-        value: 'high',
-        isActive: true,
-        priority: PriorityLevel.medium,
-        metadata: {},
-      ),
-      SmartFilter(
-        id: 'filter_category',
-        name: 'Kategori Filtresi',
-        description: 'Kategoriye göre filtrele',
-        field: 'category',
-        operator: 'in',
-        value: ['financial', 'operational'],
-        isActive: true,
-        priority: PriorityLevel.medium,
-        metadata: {},
-      ),
-    ]);
-  }
-
-  List<Map<String, dynamic>> _applyFilterLogic(
-    SmartFilter filter,
-    Map<String, dynamic> data,
-  ) {
-    // Simple filter logic for demo purposes
-    if (filter.field == 'priority' && filter.operator == 'equals') {
-      return [data];
-    }
-    return [data];
-  }
-
-  List<String> _generateMockInsights(
-    DashboardType dashboardType,
-    TimePeriod timePeriod,
-  ) {
-    final insights = <String>[];
+    if (_isInitialized) return;
     
-    switch (dashboardType) {
-      case DashboardType.financial:
-        insights.addAll([
-          '💰 Gelir bu ay %15 arttı',
-          '📈 Karlılık oranı hedefin üzerinde',
-          '⚠️ Operasyonel maliyetler kontrol altında',
-        ]);
-        break;
-      case DashboardType.patients:
-        insights.addAll([
-          '👥 Yeni hasta kayıtları %20 arttı',
-          '⭐ Hasta memnuniyeti %95 seviyesinde',
-          '📊 Tedavi başarı oranı yükseliyor',
-        ]);
-        break;
-      case DashboardType.operations:
-        insights.addAll([
-          '⚡ Operasyonel verimlilik %12 arttı',
-          '🕒 Ortalama seans süresi optimize edildi',
-          '📋 Kaynak kullanımı dengeli',
-        ]);
-        break;
-      default:
-        insights.addAll([
-          '📊 Genel performans iyi gidiyor',
-          '🎯 Hedeflere ulaşım yolunda',
-          '💡 İyileştirme alanları tespit edildi',
-        ]);
-    }
+    await _loadAnalyticsData();
+    await _loadTrends();
+    await _loadPredictions();
+    await _loadCustomReports();
     
-    return insights;
+    _isInitialized = true;
+    
+    // Demo data oluştur
+    await _createDemoData();
   }
 
-  AnalyticsReport _createMockReport(
-    DashboardType dashboardType,
-    TimePeriod timePeriod,
-    String? customName,
-  ) {
-    return AnalyticsReport(
-      id: 'report_${DateTime.now().millisecondsSinceEpoch}',
-      name: customName ?? '${dashboardType.name} Raporu',
-      description: '${dashboardType.name} kategorisinde ${timePeriod.name} raporu',
-      dashboardType: dashboardType,
-      timePeriod: timePeriod,
-      startDate: DateTime.now().subtract(const Duration(days: 30)),
-      endDate: DateTime.now(),
-      data: {'mock_data': true},
-      insights: _generateMockInsights(dashboardType, timePeriod),
-      recommendations: [
-        'Veri kalitesini artırın',
-        'Düzenli raporlama yapın',
-        'Trend analizlerini takip edin',
+  // Demo data oluştur
+  Future<void> _createDemoData() async {
+    if (_analyticsData.isEmpty) {
+      _analyticsData = {
+        'sessions': {
+          'total': 1250,
+          'growth': 15.5,
+          'averageDuration': 45,
+          'completionRate': 92.3,
+          'satisfactionScore': 4.6,
+        },
+        'clients': {
+          'total': 320,
+          'retentionRate': 87.2,
+          'newClients': 45,
+          'activeClients': 280,
+          'averageAge': 34,
+        },
+        'revenue': {
+          'total': 125000,
+          'growth': 22.8,
+          'averagePerSession': 100,
+          'monthlyRecurring': 85000,
+          'projectedAnnual': 1500000,
+        },
+        'performance': {
+          'responseTime': 2.3,
+          'uptime': 99.8,
+          'userSatisfaction': 4.7,
+          'errorRate': 0.2,
+          'systemLoad': 65.4,
+        },
+        'trends': {
+          'sessionsGrowth': [12, 15, 18, 22, 25, 28, 30, 32],
+          'revenueGrowth': [8, 12, 16, 20, 24, 28, 32, 35],
+          'clientGrowth': [5, 8, 12, 15, 18, 22, 25, 28],
+        },
+      };
+      
+      _saveAnalyticsData();
+      _dataController.add(_analyticsData);
+    }
+
+    if (_trends.isEmpty) {
+      await _generateTrendAnalysis();
+    }
+
+    if (_predictions.isEmpty) {
+      await _generatePredictions();
+    }
+
+    if (_customReports.isEmpty) {
+      await _createDemoReports();
+    }
+  }
+
+  // Trend analizi oluştur
+  Future<void> _generateTrendAnalysis() async {
+    final trend1 = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'metric': 'sessionsGrowth',
+      'trend': {
+        'direction': 'increasing',
+        'strength': 0.85,
+        'duration': '8 months',
+      },
+      'confidence': 0.92,
+      'insights': [
+        'Seans sayısı son 8 ayda sürekli artış gösteriyor',
+        'Aylık ortalama %15 büyüme hızı',
+        'En yüksek artış hafta sonları görülüyor',
+        'Online seansların payı %40\'a çıktı',
       ],
-      metadata: {},
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final trend2 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+      'metric': 'revenueGrowth',
+      'trend': {
+        'direction': 'increasing',
+        'strength': 0.78,
+        'duration': '6 months',
+      },
+      'confidence': 0.88,
+      'insights': [
+        'Gelir artışı seans artışından daha hızlı',
+        'Premium hizmetlerin payı %25\'e çıktı',
+        'Müşteri başına ortalama gelir artıyor',
+        'Yeni fiyatlandırma stratejisi başarılı',
+      ],
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final trend3 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+      'metric': 'clientGrowth',
+      'trend': {
+        'direction': 'increasing',
+        'strength': 0.72,
+        'duration': '4 months',
+      },
+      'confidence': 0.85,
+      'insights': [
+        'Yeni müşteri kazanımı hızlanıyor',
+        'Referans oranı %35\'e çıktı',
+        'Genç müşteri segmenti büyüyor',
+        'Online pazarlama etkili',
+      ],
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _trends.addAll([trend1, trend2, trend3]);
+    _saveTrends();
+    
+    for (final trend in [trend1, trend2, trend3]) {
+      _trendController.add(trend);
+    }
   }
 
-  // Mock dashboard creators
-  AnalyticsDashboard _createMockOverviewDashboard() {
-    return AnalyticsDashboard(
-      id: 'overview_dashboard',
-      name: 'Genel Bakış',
-      description: 'Tüm önemli metrikleri tek yerde görüntüle',
-      type: DashboardType.overview,
-      widgets: _createMockOverviewWidgets(),
-      settings: {'refresh_interval': 300, 'auto_refresh': true},
-      isDefault: true,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Tahminler oluştur
+  Future<void> _generatePredictions() async {
+    final prediction1 = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'metric': 'sessionsGrowth',
+      'forecast': [35, 38, 42, 45, 48, 52, 55, 58],
+      'confidence': 0.89,
+      'timeframe': '8 months',
+      'factors': [
+        'Mevcut büyüme trendi',
+        'Sezonsal etkiler',
+        'Pazarlama kampanyaları',
+        'Müşteri memnuniyeti',
+      ],
+      'recommendations': [
+        'Kapasite artırımı planlanmalı',
+        'Yeni terapist alımı gerekli',
+        'Online platform geliştirilmeli',
+        'Müşteri sadakat programı başlatılmalı',
+      ],
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final prediction2 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+      'metric': 'revenueGrowth',
+      'forecast': [38, 42, 46, 50, 54, 58, 62, 66],
+      'confidence': 0.85,
+      'timeframe': '8 months',
+      'factors': [
+        'Seans artışı',
+        'Fiyat optimizasyonu',
+        'Premium hizmetler',
+        'Müşteri segmentasyonu',
+      ],
+      'recommendations': [
+        'Fiyatlandırma stratejisi gözden geçirilmeli',
+        'Premium paketler genişletilmeli',
+        'Müşteri segmentasyonu iyileştirilmeli',
+        'Gelir optimizasyonu odaklanılmalı',
+      ],
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final prediction3 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+      'metric': 'clientGrowth',
+      'forecast': [30, 33, 36, 39, 42, 45, 48, 51],
+      'confidence': 0.82,
+      'timeframe': '8 months',
+      'factors': [
+        'Pazarlama etkinliği',
+        'Referans sistemi',
+        'Müşteri memnuniyeti',
+        'Rekabet durumu',
+      ],
+      'recommendations': [
+        'Pazarlama bütçesi artırılmalı',
+        'Referans programı güçlendirilmeli',
+        'Müşteri deneyimi iyileştirilmeli',
+        'Rekabet analizi yapılmalı',
+      ],
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _predictions.addAll([prediction1, prediction2, prediction3]);
+    _savePredictions();
+    
+    for (final prediction in [prediction1, prediction2, prediction3]) {
+      _predictionController.add(prediction);
+    }
   }
 
-  AnalyticsDashboard _createMockFinancialDashboard() {
-    return AnalyticsDashboard(
-      id: 'financial_dashboard',
-      name: 'Finansal Analiz',
-      description: 'Gelir, maliyet ve karlılık analizi',
-      type: DashboardType.financial,
-      widgets: _createMockFinancialWidgets(),
-      settings: {'refresh_interval': 600, 'auto_refresh': true},
-      isDefault: false,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Demo raporlar oluştur
+  Future<void> _createDemoReports() async {
+    final report1 = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'name': 'Aylık Performans Raporu',
+      'description': 'Seans, gelir ve müşteri performans analizi',
+      'category': 'performance',
+      'metrics': ['sessions', 'revenue', 'clients'],
+      'isActive': true,
+      'schedule': 'monthly',
+      'lastGenerated': DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final report2 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+      'name': 'Trend Analiz Raporu',
+      'description': 'Büyüme trendleri ve tahminler',
+      'category': 'trends',
+      'metrics': ['sessionsGrowth', 'revenueGrowth', 'clientGrowth'],
+      'isActive': true,
+      'schedule': 'weekly',
+      'lastGenerated': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    final report3 = {
+      'id': (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+      'name': 'Müşteri Segmentasyon Raporu',
+      'description': 'Müşteri demografisi ve davranış analizi',
+      'category': 'clients',
+      'metrics': ['clientDemographics', 'clientBehavior', 'retentionRate'],
+      'isActive': false,
+      'schedule': 'quarterly',
+      'lastGenerated': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _customReports.addAll([report1, report2, report3]);
+    _saveCustomReports();
   }
 
-  AnalyticsDashboard _createMockPatientDashboard() {
-    return AnalyticsDashboard(
-      id: 'patient_dashboard',
-      name: 'Hasta Analizi',
-      description: 'Hasta sayıları ve memnuniyet oranları',
-      type: DashboardType.patients,
-      widgets: _createMockPatientWidgets(),
-      settings: {'refresh_interval': 900, 'auto_refresh': true},
-      isDefault: false,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Analytics data güncelle
+  Future<void> updateAnalyticsData(Map<String, dynamic> data) async {
+    _analyticsData.addAll(data);
+    _saveAnalyticsData();
+    _dataController.add(_analyticsData);
   }
 
-  AnalyticsDashboard _createMockOperationalDashboard() {
-    return AnalyticsDashboard(
-      id: 'operational_dashboard',
-      name: 'Operasyonel Analiz',
-      description: 'Verimlilik ve kaynak kullanımı',
-      type: DashboardType.operations,
-      widgets: _createMockOperationalWidgets(),
-      settings: {'refresh_interval': 1200, 'auto_refresh': true},
-      isDefault: false,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Trend analizi başlat
+  Future<void> analyzeTrends({
+    required String metric,
+    required int timePeriod,
+    Map<String, dynamic>? filters,
+  }) async {
+    // Simulate AI analysis
+    await Future.delayed(Duration(milliseconds: 1000 + Random().nextInt(2000)));
+    
+    final trend = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'metric': metric,
+      'trend': {
+        'direction': _getRandomDirection(),
+        'strength': Random().nextDouble(),
+        'duration': '$timePeriod days',
+      },
+      'confidence': 0.7 + Random().nextDouble() * 0.3,
+      'insights': _generateInsights(metric),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _trends.add(trend);
+    _saveTrends();
+    _trendController.add(trend);
   }
 
-  AnalyticsDashboard _createMockQualityDashboard() {
-    return AnalyticsDashboard(
-      id: 'quality_dashboard',
-      name: 'Kalite Analizi',
-      description: 'Tedavi kalitesi ve hasta sonuçları',
-      type: DashboardType.quality,
-      widgets: _createMockQualityWidgets(),
-      settings: {'refresh_interval': 1800, 'auto_refresh': true},
-      isDefault: false,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Tahmin oluştur
+  Future<void> generatePrediction({
+    required String metric,
+    required int periods,
+    Map<String, dynamic>? parameters,
+  }) async {
+    // Simulate AI prediction
+    await Future.delayed(Duration(milliseconds: 1500 + Random().nextInt(2500)));
+    
+    final forecast = List.generate(periods, (index) {
+      final baseValue = 30 + Random().nextInt(40);
+      final growth = 1 + (index * 0.05);
+      return (baseValue * growth).roundToDouble();
+    });
+
+    final prediction = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'metric': metric,
+      'forecast': forecast,
+      'confidence': 0.75 + Random().nextDouble() * 0.2,
+      'timeframe': '$periods periods',
+      'factors': _generateFactors(metric),
+      'recommendations': _generateRecommendations(metric),
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _predictions.add(prediction);
+    _savePredictions();
+    _predictionController.add(prediction);
   }
 
-  AnalyticsDashboard _createMockStaffDashboard() {
-    return AnalyticsDashboard(
-      id: 'staff_dashboard',
-      name: 'Personel Analizi',
-      description: 'Personel performansı ve eğitim durumu',
-      type: DashboardType.staff,
-      widgets: _createMockStaffWidgets(),
-      settings: {'refresh_interval': 2400, 'auto_refresh': true},
-      isDefault: false,
-      isPublic: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+  // Özel rapor oluştur
+  Future<void> createCustomReport({
+    required String name,
+    required String description,
+    required String category,
+    required List<String> metrics,
+    String? schedule,
+  }) async {
+    final report = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'name': name,
+      'description': description,
+      'category': category,
+      'metrics': metrics,
+      'isActive': true,
+      'schedule': schedule ?? 'manual',
+      'lastGenerated': null,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _customReports.add(report);
+    _saveCustomReports();
   }
 
-  // Mock widget creators
-  List<DashboardWidget> _createMockOverviewWidgets() {
-    return [
-      DashboardWidget(
-        id: 'overview_revenue',
-        name: 'Toplam Gelir',
-        description: 'Bu ay toplam gelir',
-        visualizationType: VisualizationType.gauge,
-        data: {'value': 125000, 'target': 150000, 'unit': 'TL'},
-        configuration: {'color': 'green', 'size': 'large'},
-        positionX: 0,
-        positionY: 0,
-        width: 4,
-        height: 3,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 300,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      DashboardWidget(
-        id: 'overview_patients',
-        name: 'Aktif Hastalar',
-        description: 'Şu anda aktif hasta sayısı',
-        visualizationType: VisualizationType.trend,
-        data: {'value': 45, 'change': 5, 'trend': 'up'},
-        configuration: {'color': 'blue', 'size': 'medium'},
-        positionX: 4,
-        positionY: 0,
-        width: 4,
-        height: 3,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 300,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  // Rapor çalıştır
+  Future<List<Map<String, dynamic>>> runReport(String reportId) async {
+    final report = _customReports.firstWhere((r) => r['id'] == reportId);
+    
+    // Simulate report generation
+    await Future.delayed(Duration(milliseconds: 2000 + Random().nextInt(3000)));
+    
+    final results = <Map<String, dynamic>>[];
+    for (final metric in report['metrics']) {
+      results.add({
+        'metric': metric,
+        'value': _getMetricValue(metric),
+        'trend': _getRandomDirection(),
+        'change': Random().nextDouble() * 20 - 10,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
+
+    // Update last generated
+    final index = _customReports.indexWhere((r) => r['id'] == reportId);
+    if (index != -1) {
+      _customReports[index]['lastGenerated'] = DateTime.now().toIso8601String();
+      _saveCustomReports();
+    }
+
+    return results;
   }
 
-  List<DashboardWidget> _createMockFinancialWidgets() {
-    return [
-      DashboardWidget(
-        id: 'financial_profit',
-        name: 'Net Kar',
-        description: 'Bu ay net kar',
-        visualizationType: VisualizationType.bar,
-        data: {'value': 35000, 'previous': 28000, 'unit': 'TL'},
-        configuration: {'color': 'green', 'size': 'large'},
-        positionX: 0,
-        positionY: 0,
-        width: 6,
-        height: 4,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 600,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  // Analytics istatistikleri
+  Map<String, dynamic> getAnalyticsStats() {
+    return {
+      'totalTrends': _trends.length,
+      'totalPredictions': _predictions.length,
+      'totalReports': _customReports.length,
+      'activeReports': _customReports.where((r) => r['isActive'] == true).length,
+      'lastUpdated': DateTime.now().toIso8601String(),
+      'dataPoints': _analyticsData.length,
+    };
   }
 
-  List<DashboardWidget> _createMockPatientWidgets() {
-    return [
-      DashboardWidget(
-        id: 'patient_satisfaction',
-        name: 'Hasta Memnuniyeti',
-        description: 'Genel hasta memnuniyet oranı',
-        visualizationType: VisualizationType.pie,
-        data: {'satisfied': 85, 'neutral': 10, 'unsatisfied': 5},
-        configuration: {'color': 'blue', 'size': 'medium'},
-        positionX: 0,
-        positionY: 0,
-        width: 4,
-        height: 4,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 900,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  // Helper methods
+  String _getRandomDirection() {
+    final directions = ['increasing', 'decreasing', 'stable'];
+    return directions[Random().nextInt(directions.length)];
   }
 
-  List<DashboardWidget> _createMockOperationalWidgets() {
-    return [
-      DashboardWidget(
-        id: 'operational_efficiency',
-        name: 'Operasyonel Verimlilik',
-        description: 'Genel operasyonel verimlilik skoru',
-        visualizationType: VisualizationType.line,
-        data: {'value': 87.5, 'trend': 'up', 'unit': '%'},
-        configuration: {'color': 'orange', 'size': 'medium'},
-        positionX: 0,
-        positionY: 0,
-        width: 6,
-        height: 4,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 1200,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  List<String> _generateInsights(String metric) {
+    final insights = {
+      'sessionsGrowth': [
+        'Seans sayısı artış trendinde',
+        'Hafta sonları en yoğun dönem',
+        'Online seansların payı artıyor',
+        'Müşteri memnuniyeti yüksek',
+      ],
+      'revenueGrowth': [
+        'Gelir artışı seans artışından hızlı',
+        'Premium hizmetler popüler',
+        'Fiyat optimizasyonu başarılı',
+        'Müşteri başına gelir artıyor',
+      ],
+      'clientGrowth': [
+        'Yeni müşteri kazanımı hızlanıyor',
+        'Referans sistemi etkili',
+        'Genç segment büyüyor',
+        'Online pazarlama başarılı',
+      ],
+    };
+
+    return insights[metric] ?? ['Genel artış trendi', 'Pozitif performans'];
   }
 
-  List<DashboardWidget> _createMockQualityWidgets() {
-    return [
-      DashboardWidget(
-        id: 'quality_score',
-        name: 'Genel Kalite Skoru',
-        description: 'Tedavi kalitesi genel skoru',
-        visualizationType: VisualizationType.gauge,
-        data: {'value': 92.3, 'target': 90, 'unit': '%'},
-        configuration: {'color': 'green', 'size': 'large'},
-        positionX: 0,
-        positionY: 0,
-        width: 4,
-        height: 4,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 1800,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  List<String> _generateFactors(String metric) {
+    final factors = {
+      'sessionsGrowth': [
+        'Mevcut büyüme trendi',
+        'Sezonsal etkiler',
+        'Pazarlama kampanyaları',
+        'Müşteri memnuniyeti',
+      ],
+      'revenueGrowth': [
+        'Seans artışı',
+        'Fiyat optimizasyonu',
+        'Premium hizmetler',
+        'Müşteri segmentasyonu',
+      ],
+      'clientGrowth': [
+        'Pazarlama etkinliği',
+        'Referans sistemi',
+        'Müşteri memnuniyeti',
+        'Rekabet durumu',
+      ],
+    };
+
+    return factors[metric] ?? ['Genel faktörler', 'Pazar koşulları'];
   }
 
-  List<DashboardWidget> _createMockStaffWidgets() {
-    return [
-      DashboardWidget(
-        id: 'staff_performance',
-        name: 'Personel Performansı',
-        description: 'Ortalama personel performans skoru',
-        visualizationType: VisualizationType.bar,
-        data: {'value': 88.7, 'previous': 85.2, 'unit': '%'},
-        configuration: {'color': 'purple', 'size': 'medium'},
-        positionX: 0,
-        positionY: 0,
-        width: 6,
-        height: 4,
-        isVisible: true,
-        isRefreshable: true,
-        refreshInterval: 2400,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    ];
+  List<String> _generateRecommendations(String metric) {
+    final recommendations = {
+      'sessionsGrowth': [
+        'Kapasite artırımı planlanmalı',
+        'Yeni terapist alımı gerekli',
+        'Online platform geliştirilmeli',
+        'Müşteri sadakat programı başlatılmalı',
+      ],
+      'revenueGrowth': [
+        'Fiyatlandırma stratejisi gözden geçirilmeli',
+        'Premium paketler genişletilmeli',
+        'Müşteri segmentasyonu iyileştirilmeli',
+        'Gelir optimizasyonu odaklanılmalı',
+      ],
+      'clientGrowth': [
+        'Pazarlama bütçesi artırılmalı',
+        'Referans programı güçlendirilmeli',
+        'Müşteri deneyimi iyileştirilmeli',
+        'Rekabet analizi yapılmalı',
+      ],
+    };
+
+    return recommendations[metric] ?? ['Genel öneriler', 'Sürekli iyileştirme'];
+  }
+
+  dynamic _getMetricValue(String metric) {
+    final values = {
+      'sessions': _analyticsData['sessions']?['total'] ?? 0,
+      'revenue': _analyticsData['revenue']?['total'] ?? 0,
+      'clients': _analyticsData['clients']?['total'] ?? 0,
+      'sessionsGrowth': _analyticsData['trends']?['sessionsGrowth']?.last ?? 0,
+      'revenueGrowth': _analyticsData['trends']?['revenueGrowth']?.last ?? 0,
+      'clientGrowth': _analyticsData['trends']?['clientGrowth']?.last ?? 0,
+    };
+
+    return values[metric] ?? 0;
+  }
+
+  // Data persistence
+  Future<void> _saveAnalyticsData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('analytics_data', json.encode(_analyticsData));
+  }
+
+  Future<void> _loadAnalyticsData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('analytics_data');
+    if (data != null) {
+      _analyticsData = Map<String, dynamic>.from(json.decode(data));
+    }
+  }
+
+  Future<void> _saveTrends() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('analytics_trends', json.encode(_trends));
+  }
+
+  Future<void> _loadTrends() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('analytics_trends');
+    if (data != null) {
+      _trends = List<Map<String, dynamic>>.from(json.decode(data));
+    }
+  }
+
+  Future<void> _savePredictions() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('analytics_predictions', json.encode(_predictions));
+  }
+
+  Future<void> _loadPredictions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('analytics_predictions');
+    if (data != null) {
+      _predictions = List<Map<String, dynamic>>.from(json.decode(data));
+    }
+  }
+
+  Future<void> _saveCustomReports() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('analytics_reports', json.encode(_customReports));
+  }
+
+  Future<void> _loadCustomReports() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('analytics_reports');
+    if (data != null) {
+      _customReports = List<Map<String, dynamic>>.from(json.decode(data));
+    }
+  }
+
+  // Dispose
+  void dispose() {
+    _dataController.close();
+    _trendController.close();
+    _predictionController.close();
   }
 }

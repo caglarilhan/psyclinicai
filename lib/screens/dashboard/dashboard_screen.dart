@@ -3,6 +3,7 @@ import '../../utils/theme.dart';
 import '../../utils/app_constants.dart';
 import '../../widgets/therapist/therapist_tools_dashboard_widget.dart';
 import '../../widgets/region/region_selector_widget.dart';
+import '../../widgets/advanced_analytics_widgets.dart';
 import '../sprint3/sprint1_demo_screen.dart';
 import '../crm/crm_dashboard_screen.dart';
 import '../white_label/white_label_dashboard_screen.dart';
@@ -639,6 +640,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AppTheme.successColor,
                     () {
                       // TODO: Eğitim kitaplığı
+                    },
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'Gelişmiş Analitik',
+                    'AI destekli trend analizi ve tahminler',
+                    Icons.analytics,
+                    AppTheme.infoColor,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdvancedAnalyticsDashboardWidget(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'AI Chatbot',
+                    '24/7 müşteri desteği',
+                    Icons.chat_bubble,
+                    AppTheme.warningColor,
+                    () {
+                      // TODO: AI Chatbot
                     },
                   ),
                 ),

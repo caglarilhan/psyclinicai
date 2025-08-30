@@ -27,11 +27,15 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
   
   String _selectedCountry = CountryConfig.currentCountry;
   bool _showCountryInfo = false;
+  List<Map<String, dynamic>> _recentPrescriptions = [];
+  List<Map<String, dynamic>> _favoriteMedications = [];
+  String _selectedCategory = 'Tümü';
+  String _selectedSeverity = 'Tümü';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -41,6 +45,7 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
     );
     _fadeController.forward();
     _setupKeyboardShortcuts();
+    _loadInitialData();
   }
 
   @override
@@ -100,9 +105,15 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
         ),
         const SizedBox(width: 8),
         DesktopTheme.desktopButton(
-          text: 'Geçmiş',
-          onPressed: _showPrescriptionHistory,
-          icon: Icons.history,
+          text: 'İstatistikler',
+          onPressed: _showPrescriptionStatistics,
+          icon: Icons.analytics,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Export',
+          onPressed: _exportPrescriptionReport,
+          icon: Icons.download,
         ),
         const SizedBox(width: 8),
         DesktopTheme.desktopButton(
@@ -128,9 +139,14 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
           onTap: () => _tabController.animateTo(2),
         ),
         DesktopSidebarItem(
-          title: 'Reçete Geçmişi',
+          title: 'Son Reçeteler',
           icon: Icons.history,
           onTap: () => _tabController.animateTo(3),
+        ),
+        DesktopSidebarItem(
+          title: 'Favori İlaçlar',
+          icon: Icons.favorite,
+          onTap: () => _tabController.animateTo(4),
         ),
       ],
       child: _buildDesktopContent(),
@@ -144,7 +160,8 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
         _buildDesktopPrescriptionFormTab(),
         _buildDesktopAIRecommendationsTab(),
         _buildDesktopInteractionCheckerTab(),
-        _buildDesktopHistoryTab(),
+        _buildDesktopRecentTab(),
+        _buildDesktopFavoritesTab(),
       ],
     );
   }
@@ -764,33 +781,196 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
     );
   }
 
-  Widget _buildDesktopHistoryTab() {
+  Widget _buildDesktopRecentTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Reçete Geçmişi',
+            'Son Reçeteler',
             style: DesktopTheme.desktopSectionTitleStyle,
           ),
           const SizedBox(height: 16),
-          DesktopTheme.desktopCard(
-            child: const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(
+          if (_recentPrescriptions.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.history, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
                     Text(
-                      'Reçete geçmişi yakında gelecek',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      'Son ${_recentPrescriptions.length} Reçete',
+                      style: DesktopTheme.desktopSectionTitleStyle,
                     ),
+                    const SizedBox(height: 16),
+                    ..._recentPrescriptions.map((prescription) => _buildPrescriptionListItem(prescription)),
                   ],
                 ),
               ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.history, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Henüz reçete oluşturulmadı',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopFavoritesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Favori İlaçlar',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_favoriteMedications.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_favoriteMedications.length} Favori İlaç',
+                      style: DesktopTheme.desktopSectionTitleStyle,
+                    ),
+                    const SizedBox(height: 16),
+                    ..._favoriteMedications.map((medication) => _buildMedicationListItem(medication)),
+                  ],
+                ),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Henüz favori ilaç eklenmedi',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrescriptionListItem(Map<String, dynamic> prescription) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor,
+          child: Text(
+            prescription['id'],
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(prescription['patientName'], style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text('${prescription['medication']} - ${prescription['dosage']}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: prescription['status'] == 'Active' ? AppTheme.successColor : AppTheme.errorColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                prescription['status'],
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => _showPrescriptionDetails(prescription),
+            ),
+          ],
+        ),
+        onTap: () => _showPrescriptionDetails(prescription),
+      ),
+    );
+  }
+
+  Widget _buildMedicationListItem(Map<String, dynamic> medication) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.accentColor,
+          child: Icon(Icons.medical_services, color: Colors.white),
+        ),
+        title: Text(medication['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text('${medication['dosage']} - ${medication['category']}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.favorite, color: Colors.red),
+              onPressed: () => _removeFromFavorites(medication),
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => _showMedicationDetails(medication),
+            ),
+          ],
+        ),
+        onTap: () => _showMedicationDetails(medication),
+      ),
+    );
+  }
+
+  void _showPrescriptionDetails(Map<String, dynamic> prescription) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Reçete #${prescription['id']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Hasta', prescription['patientName']),
+            _buildDetailRow('İlaç', prescription['medication']),
+            _buildDetailRow('Dozaj', prescription['dosage']),
+            _buildDetailRow('Süre', prescription['duration']),
+            _buildDetailRow('Tarih', prescription['date']),
+            _buildDetailRow('Durum', prescription['status']),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
           ),
         ],
       ),
@@ -832,10 +1012,210 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
       const SnackBar(content: Text('Reçete ayarları yakında gelecek')),
     );
   }
-              ),
-            ],
-          ),
+
+  // Yeni özellikler için metodlar
+  void _loadInitialData() {
+    setState(() {
+      _recentPrescriptions = _getDemoPrescriptions();
+      _favoriteMedications = _getDemoFavoriteMedications();
+    });
+  }
+
+  List<Map<String, dynamic>> _getDemoPrescriptions() {
+    return [
+      {
+        'id': '1',
+        'patientName': 'Ahmet Yılmaz',
+        'medication': 'Sertraline 50mg',
+        'dosage': '1 tablet daily',
+        'duration': '30 days',
+        'date': '2024-01-15',
+        'status': 'Active',
+      },
+      {
+        'id': '2',
+        'patientName': 'Fatma Demir',
+        'medication': 'Escitalopram 10mg',
+        'dosage': '1 tablet daily',
+        'duration': '60 days',
+        'date': '2024-01-10',
+        'status': 'Active',
+      },
+    ];
+  }
+
+  List<Map<String, dynamic>> _getDemoFavoriteMedications() {
+    return [
+      {
+        'name': 'Sertraline',
+        'dosage': '50mg',
+        'category': 'Antidepressant',
+        'frequency': 'Daily',
+        'notes': 'SSRI - First line treatment for depression',
+      },
+      {
+        'name': 'Escitalopram',
+        'dosage': '10mg',
+        'category': 'Antidepressant',
+        'frequency': 'Daily',
+        'notes': 'SSRI - Well tolerated, low side effects',
+      },
+    ];
+  }
+
+  void _addToFavorites(Map<String, dynamic> medication) {
+    setState(() {
+      if (!_favoriteMedications.contains(medication)) {
+        _favoriteMedications.add(medication);
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${medication['name']} favorilere eklendi'),
+        backgroundColor: AppTheme.accentColor,
+      ),
+    );
+  }
+
+  void _removeFromFavorites(Map<String, dynamic> medication) {
+    setState(() {
+      _favoriteMedications.remove(medication);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${medication['name']} favorilerden çıkarıldı'),
+        backgroundColor: AppTheme.errorColor,
+      ),
+    );
+  }
+
+  void _addToRecent(Map<String, dynamic> prescription) {
+    setState(() {
+      _recentPrescriptions.remove(prescription); // Eğer varsa kaldır
+      _recentPrescriptions.insert(0, prescription); // Başa ekle
+      if (_recentPrescriptions.length > 10) {
+        _recentPrescriptions.removeLast(); // Son 10 reçeteyi tut
+      }
+    });
+  }
+
+  List<String> _getCategories() {
+    return ['Tümü', 'Antidepressant', 'Anxiolytic', 'Antipsychotic', 'Mood Stabilizer'];
+  }
+
+  List<String> _getSeverities() {
+    return ['Tümü', 'Mild', 'Moderate', 'Severe'];
+  }
+
+  void _filterByCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+      _applyFilters();
+    });
+  }
+
+  void _filterBySeverity(String severity) {
+    setState(() {
+      _selectedSeverity = severity;
+      _applyFilters();
+    });
+  }
+
+  void _applyFilters() {
+    // TODO: Filtreleme mantığı
+  }
+
+  void _exportPrescriptionReport() {
+    // TODO: Reçete raporu export
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reçete raporu PDF olarak export ediliyor...')),
+    );
+  }
+
+  void _showPrescriptionStatistics() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reçete İstatistikleri'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildStatisticItem('Toplam Reçete', '${_recentPrescriptions.length}'),
+            _buildStatisticItem('Aktif Reçeteler', '${_recentPrescriptions.where((p) => p['status'] == 'Active').length}'),
+            _buildStatisticItem('Favori İlaçlar', '${_favoriteMedications.length}'),
+            _buildStatisticItem('En Popüler Kategori', 'Antidepressant'),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  void _showMedicationDetails(Map<String, dynamic> medication) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(medication['name']),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Dozaj', medication['dosage']),
+            _buildDetailRow('Kategori', medication['category']),
+            _buildDetailRow('Frekans', medication['frequency']),
+            _buildDetailRow('Notlar', medication['notes']),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _addToFavorites(medication);
+            },
+            child: const Text('Favorilere Ekle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }

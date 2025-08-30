@@ -75,6 +75,9 @@ import 'services/global_search_service.dart';
 import 'services/data_export_service.dart';
 import 'services/performance_service.dart';
 import 'widgets/theme_switcher.dart';
+// 2FA için import
+import 'services/two_factor_auth_service.dart';
+import 'widgets/two_factor_auth_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,6 +116,9 @@ Future<void> _initializeServices() async {
     GlobalSearchService();
     DataExportService();
     PerformanceService();
+    
+    // 2FA servisini başlat
+    await TwoFactorAuthService().load2FASettings();
     await BiometricAuthService().initialize();
     
     // Initialize AI services

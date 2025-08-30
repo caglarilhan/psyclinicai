@@ -67,6 +67,14 @@ import 'screens/alert/alert_console_screen.dart';
 import 'services/keyboard_shortcuts_service.dart';
 import 'utils/desktop_theme.dart';
 import 'widgets/desktop/desktop_layout.dart';
+// Yeni iyileştirmeler için import'lar
+import 'utils/theme.dart';
+import 'services/animation_service.dart';
+import 'services/notification_service.dart';
+import 'services/global_search_service.dart';
+import 'services/data_export_service.dart';
+import 'services/performance_service.dart';
+import 'widgets/theme_switcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,9 +103,16 @@ Future<void> _initializeServices() async {
     // Initialize core services
     await ThemeService().initialize();
     await ThemeService().setPresetTheme('purple_blue');
-          await OfflineSyncService().initialize();
-      await PrescriptionAIService().initialize();
+    await OfflineSyncService().initialize();
+    await PrescriptionAIService().initialize();
     await PushNotificationService().initialize();
+    
+    // Yeni servisleri başlat
+    await AppTheme.loadThemeMode();
+    await NotificationService().initialize();
+    GlobalSearchService();
+    DataExportService();
+    PerformanceService();
     await BiometricAuthService().initialize();
     
     // Initialize AI services
@@ -184,11 +199,9 @@ class PsyClinicAIApp extends StatelessWidget {
               return MaterialApp(
                 title: 'PsyClinic AI',
                 debugShowCheckedModeBanner: false,
-                theme: DesktopTheme.isDesktop(context) 
-                    ? DesktopTheme.desktopTheme 
-                    : whiteLabelProvider.currentTheme,
-                darkTheme: themeService.getDarkTheme(),
-                themeMode: themeService.currentThemeMode,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: AppTheme.themeMode,
                 home: const DashboardScreen(),
                 routes: {
                   '/login': (context) => const LoginScreen(),

@@ -5,6 +5,11 @@ import '../../models/appointment_models.dart';
 import '../../services/appointment_service.dart';
 import '../../widgets/appointment/appointment_card_widget.dart';
 import '../../widgets/appointment/ai_scheduler_widget.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class AppointmentCalendarScreen extends StatefulWidget {
   const AppointmentCalendarScreen({super.key});
@@ -15,6 +20,7 @@ class AppointmentCalendarScreen extends StatefulWidget {
 
 class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
   final AppointmentService _appointmentService = AppointmentService();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
@@ -30,6 +36,7 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
   void initState() {
     super.initState();
     _loadAppointments();
+    _setupKeyboardShortcuts();
   }
 
   Future<void> _loadAppointments() async {
@@ -97,50 +104,146 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
   }
 
   @override
+  void dispose() {
+    _removeKeyboardShortcuts();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Destekli Randevu Takvimi'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadAppointments,
-            tooltip: 'Yenile',
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'AI Destekli Randevu Takvimi',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Randevu',
+          onPressed: _showAddAppointmentDialog,
+          icon: Icons.add,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _loadAppointments,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'AI Planlama',
+          onPressed: _showAISchedulerDialog,
+          icon: Icons.auto_awesome,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor',
+          onPressed: _generateAppointmentReport,
+          icon: Icons.assessment,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Takvim Görünümü',
+          icon: Icons.calendar_today,
+          onTap: () => _setCalendarView(),
+        ),
+        DesktopSidebarItem(
+          title: 'Günlük Görünüm',
+          icon: Icons.view_day,
+          onTap: () => _setDailyView(),
+        ),
+        DesktopSidebarItem(
+          title: 'Haftalık Görünüm',
+          icon: Icons.view_week,
+          onTap: () => _setWeeklyView(),
+        ),
+        DesktopSidebarItem(
+          title: 'Aylık Görünüm',
+          icon: Icons.view_month,
+          onTap: () => _setMonthlyView(),
+        ),
+        DesktopSidebarItem(
+          title: 'Randevu Listesi',
+          icon: Icons.list,
+          onTap: () => _setListView(),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Randevular yükleniyor...'),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // AI Scheduler Widget
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: AISchedulerWidget(),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddAppointmentDialog,
-            tooltip: 'Yeni Randevu',
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // AI Scheduler Widget
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  child: const AISchedulerWidget(),
-                ),
-                
-                // Takvim
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+          
+          const SizedBox(height: 24),
+          
+          // Takvim
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Randevu Takvimi',
+                        style: DesktopTheme.desktopSectionTitleStyle,
+                      ),
+                      Row(
+                        children: [
+                          DesktopTheme.desktopButton(
+                            text: 'Bugün',
+                            onPressed: () => _goToToday(),
+                            icon: Icons.today,
+                          ),
+                          const SizedBox(width: 8),
+                          DesktopTheme.desktopButton(
+                            text: 'Önceki',
+                            onPressed: () => _previousMonth(),
+                            icon: Icons.chevron_left,
+                          ),
+                          const SizedBox(width: 8),
+                          DesktopTheme.desktopButton(
+                            text: 'Sonraki',
+                            onPressed: () => _nextMonth(),
+                            icon: Icons.chevron_right,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  child: TableCalendar<Appointment>(
+                  const SizedBox(height: 16),
+                  TableCalendar<Appointment>(
                     firstDay: DateTime.utc(2024, 1, 1),
                     lastDay: DateTime.utc(2030, 12, 31),
                     focusedDay: _focusedDay,
@@ -190,31 +293,128 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
                       titleCentered: true,
                       formatButtonShowsNext: false,
                       formatButtonDecoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
+              body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  // AI Scheduler Widget
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    child: const AISchedulerWidget(),
+                  ),
+                  
+                  // Takvim
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TableCalendar<Appointment>(
+                      firstDay: DateTime.utc(2024, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      focusedDay: _focusedDay,
+                      calendarFormat: _calendarFormat,
+                      rangeStartDay: _rangeStart,
+                      rangeEndDay: _rangeEnd,
+                      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                      onDaySelected: _onDaySelected,
+                      onRangeSelected: _onRangeSelected,
+                      onFormatChanged: (format) {
+                        setState(() {
+                          _calendarFormat = format;
+                        });
+                      },
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
+                      },
+                      eventLoader: _getEventsForDay,
+                      calendarStyle: CalendarStyle(
+                        outsideDaysVisible: false,
+                        weekendTextStyle: const TextStyle(color: Colors.red),
+                        holidayTextStyle: const TextStyle(color: Colors.red),
+                        selectedDecoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        todayDecoration: BoxDecoration(
+                          color: AppTheme.accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                        markerDecoration: BoxDecoration(
+                          color: AppTheme.successColor,
+                          shape: BoxShape.circle,
+                        ),
+                        rangeHighlightColor: AppTheme.primaryColor.withOpacity(0.3),
+                        rangeStartDecoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        rangeEndDecoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                      formatButtonTextStyle: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      headerStyle: HeaderStyle(
+                        formatButtonVisible: true,
+                        titleCentered: true,
+                        formatButtonShowsNext: false,
+                        formatButtonDecoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        formatButtonTextStyle: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Seçili gün randevuları
-                Expanded(
-                  child: _buildSelectedDayEvents(),
-                ),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddAppointmentDialog,
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Seçili gün randevuları
+                  Expanded(
+                    child: _buildSelectedDayEvents(),
+                  ),
+                ],
+              ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _showAddAppointmentDialog,
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add),
+          label: const Text('Yeni Randevu'),
+        ),
+      );
+    }
+  }
+
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AI Destekli Randevu Takvimi'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Yeni Randevu'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadAppointments,
+            tooltip: 'Yenile',
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showAddAppointmentDialog,
+            tooltip: 'Yeni Randevu',
+          ),
+        ],
       ),
     );
   }
@@ -859,6 +1059,115 @@ class _EditAppointmentDialogState extends State<EditAppointmentDialog> {
     _descriptionController.dispose();
     _clientNameController.dispose();
     super.dispose();
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      _showAddAppointmentDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _loadAppointments,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _showAISchedulerDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyT, LogicalKeyboardKey.control),
+      _goToToday,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyT, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü görünüm metodları
+  void _setCalendarView() {
+    setState(() {
+      _calendarFormat = CalendarFormat.month;
+    });
+  }
+
+  void _setDailyView() {
+    setState(() {
+      _calendarFormat = CalendarFormat.day;
+    });
+  }
+
+  void _setWeeklyView() {
+    setState(() {
+      _calendarFormat = CalendarFormat.week;
+    });
+  }
+
+  void _setMonthlyView() {
+    setState(() {
+      _calendarFormat = CalendarFormat.month;
+    });
+  }
+
+  void _setListView() {
+    // TODO: Liste görünümü implementasyonu
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Liste görünümü yakında gelecek')),
+    );
+  }
+
+  void _goToToday() {
+    setState(() {
+      _focusedDay = DateTime.now();
+      _selectedDay = DateTime.now();
+    });
+  }
+
+  void _previousMonth() {
+    setState(() {
+      _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
+    });
+  }
+
+  void _showAISchedulerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('AI Planlama'),
+        content: const Text('AI destekli randevu planlama özelliği yakında gelecek'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _generateAppointmentReport() {
+    // TODO: Randevu raporu oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Randevu raporu oluşturuluyor...')),
+    );
   }
 }
 

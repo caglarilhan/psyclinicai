@@ -5,6 +5,11 @@ import '../../widgets/therapy_simulation/simulation_scenario_panel.dart';
 import '../../widgets/therapy_simulation/ai_client_panel.dart';
 import '../../widgets/therapy_simulation/session_notes_panel.dart';
 import '../../services/therapy_simulation_service.dart'; // Added import for TherapySimulationService
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class TherapySimulationScreen extends StatefulWidget {
   const TherapySimulationScreen({super.key});
@@ -17,6 +22,7 @@ class TherapySimulationScreen extends StatefulWidget {
 class _TherapySimulationScreenState extends State<TherapySimulationScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   List<SimulationScenario> _scenarios = [];
   SimulationScenario? _selectedScenario;
   bool _isSessionActive = false;
@@ -28,11 +34,13 @@ class _TherapySimulationScreenState extends State<TherapySimulationScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadDemoScenarios();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -586,6 +594,73 @@ class _TherapySimulationScreenState extends State<TherapySimulationScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Terapi Simülasyonu',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Simülasyon',
+          onPressed: _resetSimulation,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Analitik',
+          onPressed: _showSessionAnalytics,
+          icon: Icons.analytics,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor',
+          onPressed: _generateSimulationReport,
+          icon: Icons.assessment,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showSimulationSettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Senaryolar',
+          icon: Icons.theater_comedy,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'AI Danışan',
+          icon: Icons.chat,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Seans Notları',
+          icon: Icons.notes,
+          onTap: () => _tabController.animateTo(2),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopScenariosTab(),
+        _buildDesktopAIClientTab(),
+        _buildDesktopSessionNotesTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Terapi Simülasyonu'),
@@ -645,6 +720,245 @@ class _TherapySimulationScreenState extends State<TherapySimulationScreen>
           ),
         ],
       ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _resetSimulation,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _showSessionAnalytics,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _saveSessionNotes,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      _endSimulation,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopScenariosTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Simülasyon Senaryoları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopGrid(
+            children: _scenarios.map((scenario) => 
+              DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              scenario.title,
+                              style: DesktopTheme.desktopSectionTitleStyle,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getDifficultyColor(scenario.difficulty),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _getDifficultyText(scenario.difficulty),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        scenario.description,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${scenario.estimatedDuration} dakika',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(Icons.category, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            scenario.category,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      DesktopTheme.desktopButton(
+                        text: 'Başlat',
+                        onPressed: _isSessionActive ? null : () => _startSimulation(scenario),
+                        icon: Icons.play_arrow,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAIClientTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AI Danışan Simülasyonu',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_selectedScenario != null && _isSessionActive)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: AIClientPanel(
+                  scenario: _selectedScenario!,
+                  messages: _sessionMessages,
+                  onMessageSent: _addTherapistMessage,
+                  onEndSession: _endSimulation,
+                ),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.chat, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Simülasyon başlatmak için bir senaryo seçin',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopSessionNotesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Seans Notları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: SessionNotesPanel(
+                sessionNotes: _sessionNotes,
+                onNotesChanged: (notes) {
+                  setState(() {
+                    _sessionNotes = notes;
+                  });
+                },
+                onSaveNotes: _saveSessionNotes,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Yardımcı metodlar
+  Color _getDifficultyColor(ScenarioDifficulty difficulty) {
+    switch (difficulty) {
+      case ScenarioDifficulty.beginner:
+        return Colors.green;
+      case ScenarioDifficulty.intermediate:
+        return Colors.orange;
+      case ScenarioDifficulty.advanced:
+        return Colors.red;
+    }
+  }
+
+  void _saveSessionNotes() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Seans notları kaydedildi'),
+        backgroundColor: AppTheme.accentColor,
+      ),
+    );
+  }
+
+  void _showSessionAnalytics() {
+    // TODO: Seans analitikleri
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Seans analitikleri yakında gelecek')),
+    );
+  }
+
+  void _generateSimulationReport() {
+    // TODO: Simülasyon raporu oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Simülasyon raporu oluşturuluyor...')),
+    );
+  }
+
+  void _showSimulationSettings() {
+    // TODO: Simülasyon ayarları
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Simülasyon ayarları yakında gelecek')),
     );
   }
 }

@@ -25,13 +25,17 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
   final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   String _selectedCountry = AppConstants.targetCountries.first;
   List<DiagnosisModel> _searchResults = [];
+  List<DiagnosisModel> _recentDiagnoses = [];
+  List<DiagnosisModel> _favoriteDiagnoses = [];
   bool _isSearching = false;
   String _aiSuggestion = '';
+  String _selectedCategory = 'Tümü';
+  String _selectedSeverity = 'Tümü';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadInitialData();
     _setupKeyboardShortcuts();
   }
@@ -48,6 +52,8 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
     // Demo veriler
     setState(() {
       _searchResults = _getDemoDiagnoses();
+      _recentDiagnoses = _getRecentDiagnoses();
+      _favoriteDiagnoses = _getFavoriteDiagnoses();
     });
   }
 
@@ -204,9 +210,15 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
         ),
         const SizedBox(width: 8),
         DesktopTheme.desktopButton(
-          text: 'Rapor',
-          onPressed: _generateDiagnosisReport,
-          icon: Icons.assessment,
+          text: 'İstatistikler',
+          onPressed: _showDiagnosisStatistics,
+          icon: Icons.analytics,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Export',
+          onPressed: _exportDiagnosisReport,
+          icon: Icons.download,
         ),
         const SizedBox(width: 8),
         DesktopTheme.desktopButton(
@@ -227,9 +239,14 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
           onTap: () => _tabController.animateTo(1),
         ),
         DesktopSidebarItem(
-          title: 'Geçmiş',
+          title: 'Son Aramalar',
           icon: Icons.history,
           onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Favoriler',
+          icon: Icons.favorite,
+          onTap: () => _tabController.animateTo(3),
         ),
       ],
       child: _buildDesktopContent(),
@@ -242,7 +259,8 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
       children: [
         _buildDesktopSearchTab(),
         _buildDesktopAIRecommendationsTab(),
-        _buildDesktopHistoryTab(),
+        _buildDesktopRecentTab(),
+        _buildDesktopFavoritesTab(),
       ],
     );
   }
@@ -256,7 +274,8 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
           tabs: const [
             Tab(icon: Icon(Icons.search), text: 'Arama'),
             Tab(icon: Icon(Icons.auto_awesome), text: 'AI Öneri'),
-            Tab(icon: Icon(Icons.history), text: 'Geçmiş'),
+            Tab(icon: Icon(Icons.history), text: 'Son Aramalar'),
+            Tab(icon: Icon(Icons.favorite), text: 'Favoriler'),
           ],
         ),
       ),
@@ -269,8 +288,11 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
           // Tab 2: AI Öneri
           _buildAIRecommendationTab(),
 
-          // Tab 3: Geçmiş
-          _buildHistoryTab(),
+          // Tab 3: Son Aramalar
+          _buildRecentTab(),
+
+          // Tab 4: Favoriler
+          _buildFavoritesTab(),
         ],
       ),
     );
@@ -365,31 +387,63 @@ class _DiagnosisScreenState extends State<DiagnosisScreen>
     );
   }
 
-  Widget _buildHistoryTab() {
-    return Center(
+  Widget _buildRecentTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.history,
-            size: 64,
-            color: Colors.grey[400],
+          Text(
+            'Son Aramalar',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
+          if (_recentDiagnoses.isNotEmpty)
+            ..._recentDiagnoses.map((diagnosis) => _buildDiagnosisListItem(diagnosis, true))
+          else
+            const Center(
+              child: Column(
+                children: [
+                  Icon(Icons.history, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Henüz arama yapılmadı',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoritesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            'Arama Geçmişi',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            'Favori Tanılar',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Yakında arama geçmişiniz burada görünecek',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[500],
-                ),
-            textAlign: TextAlign.center,
-          ),
+          const SizedBox(height: 16),
+          if (_favoriteDiagnoses.isNotEmpty)
+            ..._favoriteDiagnoses.map((diagnosis) => _buildDiagnosisListItem(diagnosis, false))
+          else
+            const Center(
+              child: Column(
+                children: [
+                  Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Henüz favori tanı eklenmedi',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -726,35 +780,147 @@ Kesin tanı için klinik değerlendirme gerekir.
     );
   }
 
-  Widget _buildDesktopHistoryTab() {
+  Widget _buildDesktopRecentTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tanı Geçmişi',
+            'Son Aramalar',
             style: DesktopTheme.desktopSectionTitleStyle,
           ),
           const SizedBox(height: 16),
-          DesktopTheme.desktopCard(
-            child: const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(
+          if (_recentDiagnoses.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.history, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
                     Text(
-                      'Tanı geçmişi yakında gelecek',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      'Son ${_recentDiagnoses.length} Arama',
+                      style: DesktopTheme.desktopSectionTitleStyle,
                     ),
+                    const SizedBox(height: 16),
+                    ..._recentDiagnoses.map((diagnosis) => _buildDiagnosisListItem(diagnosis, true)),
                   ],
                 ),
               ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.history, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Henüz arama yapılmadı',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopFavoritesTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Favori Tanılar',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_favoriteDiagnoses.isNotEmpty)
+            DesktopTheme.desktopCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_favoriteDiagnoses.length} Favori Tanı',
+                      style: DesktopTheme.desktopSectionTitleStyle,
+                    ),
+                    const SizedBox(height: 16),
+                    ..._favoriteDiagnoses.map((diagnosis) => _buildDiagnosisListItem(diagnosis, false)),
+                  ],
+                ),
+              ),
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Henüz favori tanı eklenmedi',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosisListItem(DiagnosisModel diagnosis, bool isRecent) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor,
+          child: Text(
+            diagnosis.code.split('.').first,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(diagnosis.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(diagnosis.description),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(
+                _favoriteDiagnoses.contains(diagnosis) ? Icons.favorite : Icons.favorite_border,
+                color: _favoriteDiagnoses.contains(diagnosis) ? Colors.red : Colors.grey,
+              ),
+              onPressed: () {
+                if (_favoriteDiagnoses.contains(diagnosis)) {
+                  _removeFromFavorites(diagnosis);
+                } else {
+                  _addToFavorites(diagnosis);
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () => _showDiagnosisDetails(diagnosis),
+            ),
+          ],
+        ),
+        onTap: () {
+          _addToRecent(diagnosis);
+          _showDiagnosisDetails(diagnosis);
+        },
       ),
     );
   }
@@ -785,6 +951,161 @@ Kesin tanı için klinik değerlendirme gerekir.
     // TODO: Tanı ayarları
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Tanı ayarları yakında gelecek')),
+    );
+  }
+
+  // Yeni özellikler için metodlar
+  List<DiagnosisModel> _getRecentDiagnoses() {
+    return [
+      DiagnosisModel(
+        code: 'F32.1',
+        name: 'Orta Depresif Epizod',
+        description: 'Depresif duygudurum bozukluğu',
+        category: 'Mood Disorders',
+        severity: 'Moderate',
+        standard: 'ICD-10',
+        symptoms: ['Depresif duygudurum', 'İlgi kaybı', 'Kilo değişikliği'],
+        treatments: ['Psikoterapi', 'Antidepresan'],
+      ),
+      DiagnosisModel(
+        code: 'F41.1',
+        name: 'Anksiyete Bozukluğu',
+        description: 'Genelleşmiş anksiyete bozukluğu',
+        category: 'Anxiety Disorders',
+        severity: 'Mild',
+        standard: 'ICD-10',
+        symptoms: ['Aşırı endişe', 'Huzursuzluk', 'Konsantrasyon güçlüğü'],
+        treatments: ['Bilişsel Davranışçı Terapi', 'Anksiyolitik'],
+      ),
+    ];
+  }
+
+  List<DiagnosisModel> _getFavoriteDiagnoses() {
+    return [
+      DiagnosisModel(
+        code: 'F33.2',
+        name: 'Bipolar Bozukluk',
+        description: 'Manik depresif bozukluk',
+        category: 'Mood Disorders',
+        severity: 'Severe',
+        standard: 'ICD-10',
+        symptoms: ['Manik epizodlar', 'Depresif epizodlar', 'Duygudurum değişiklikleri'],
+        treatments: ['Mood Stabilizer', 'Psikoterapi'],
+      ),
+    ];
+  }
+
+  void _addToFavorites(DiagnosisModel diagnosis) {
+    setState(() {
+      if (!_favoriteDiagnoses.contains(diagnosis)) {
+        _favoriteDiagnoses.add(diagnosis);
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${diagnosis.name} favorilere eklendi'),
+        backgroundColor: AppTheme.accentColor,
+      ),
+    );
+  }
+
+  void _removeFromFavorites(DiagnosisModel diagnosis) {
+    setState(() {
+      _favoriteDiagnoses.remove(diagnosis);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${diagnosis.name} favorilerden çıkarıldı'),
+        backgroundColor: AppTheme.errorColor,
+      ),
+    );
+  }
+
+  void _addToRecent(DiagnosisModel diagnosis) {
+    setState(() {
+      _recentDiagnoses.remove(diagnosis); // Eğer varsa kaldır
+      _recentDiagnoses.insert(0, diagnosis); // Başa ekle
+      if (_recentDiagnoses.length > 10) {
+        _recentDiagnoses.removeLast(); // Son 10 tanıyı tut
+      }
+    });
+  }
+
+  List<String> _getCategories() {
+    return ['Tümü', 'Mood Disorders', 'Anxiety Disorders', 'Psychotic Disorders', 'Personality Disorders'];
+  }
+
+  List<String> _getSeverities() {
+    return ['Tümü', 'Mild', 'Moderate', 'Severe'];
+  }
+
+  void _filterByCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+      _applyFilters();
+    });
+  }
+
+  void _filterBySeverity(String severity) {
+    setState(() {
+      _selectedSeverity = severity;
+      _applyFilters();
+    });
+  }
+
+  void _applyFilters() {
+    if (_selectedCategory == 'Tümü' && _selectedSeverity == 'Tümü') {
+      _searchResults = _getDemoDiagnoses();
+    } else {
+      _searchResults = _getDemoDiagnoses().where((diagnosis) {
+        bool categoryMatch = _selectedCategory == 'Tümü' || diagnosis.category == _selectedCategory;
+        bool severityMatch = _selectedSeverity == 'Tümü' || diagnosis.severity == _selectedSeverity;
+        return categoryMatch && severityMatch;
+      }).toList();
+    }
+  }
+
+  void _exportDiagnosisReport() {
+    // TODO: Tanı raporu export
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tanı raporu PDF olarak export ediliyor...')),
+    );
+  }
+
+  void _showDiagnosisStatistics() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tanı İstatistikleri'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildStatisticItem('Toplam Tanı', '${_getDemoDiagnoses().length}'),
+            _buildStatisticItem('Son Aramalar', '${_recentDiagnoses.length}'),
+            _buildStatisticItem('Favoriler', '${_favoriteDiagnoses.length}'),
+            _buildStatisticItem('En Popüler Kategori', 'Mood Disorders'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

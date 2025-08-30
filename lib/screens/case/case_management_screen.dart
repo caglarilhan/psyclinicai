@@ -11,6 +11,11 @@ import '../../widgets/case/add_progress_dialog.dart';
 import '../../widgets/case/add_goal_dialog.dart';
 import '../../widgets/case/add_intervention_dialog.dart';
 import '../../utils/app_theme.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class CaseManagementScreen extends StatefulWidget {
   const CaseManagementScreen({super.key});
@@ -24,6 +29,7 @@ class _CaseManagementScreenState extends State<CaseManagementScreen>
   late TabController _tabController;
   final CaseService _caseService = CaseService();
   final TextEditingController _searchController = TextEditingController();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   List<Case> _allCases = [];
   List<Case> _filteredCases = [];
@@ -39,12 +45,14 @@ class _CaseManagementScreenState extends State<CaseManagementScreen>
     _tabController = TabController(length: 5, vsync: this);
     _caseService.initialize();
     _loadCases();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -86,6 +94,132 @@ class _CaseManagementScreenState extends State<CaseManagementScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'Vaka Yönetimi',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Vaka',
+          onPressed: _showAddCaseDialog,
+          icon: Icons.add,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Yenile',
+          onPressed: _refreshData,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Filtrele',
+          onPressed: _showFilterDialog,
+          icon: Icons.filter_list,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Rapor',
+          onPressed: _generateCaseReport,
+          icon: Icons.assessment,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Vaka Listesi',
+          icon: Icons.list,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'Vaka Detayları',
+          icon: Icons.description,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'İlerleme',
+          icon: Icons.trending_up,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Hedefler',
+          icon: Icons.flag,
+          onTap: () => _tabController.animateTo(3),
+        ),
+        DesktopSidebarItem(
+          title: 'Müdahaleler',
+          icon: Icons.medical_services,
+          onTap: () => _tabController.animateTo(4),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return Column(
+      children: [
+        // Arama çubuğu
+        DesktopTheme.desktopCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: DesktopTheme.desktopInput(
+                    label: 'Arama',
+                    controller: _searchController,
+                    hintText: 'Vaka ara...',
+                    prefixIcon: Icons.search,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                      _filterCases();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                if (_searchQuery.isNotEmpty)
+                  DesktopTheme.desktopButton(
+                    text: 'Temizle',
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      _filterCases();
+                    },
+                    icon: Icons.clear,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Tab içerikleri
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildDesktopCaseListTab(),
+              _buildDesktopCaseDetailsTab(),
+              _buildDesktopCaseProgressTab(),
+              _buildDesktopCaseGoalsTab(),
+              _buildDesktopCaseInterventionsTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Vaka Yönetimi'),
@@ -396,6 +530,237 @@ class _CaseManagementScreenState extends State<CaseManagementScreen>
           Navigator.of(context).pop();
         },
       ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      _showAddCaseDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _refreshData,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+      _showFilterDialog,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+      _generateCaseReport,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyF, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyP, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopCaseListTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Vaka Listesi',
+                style: DesktopTheme.desktopSectionTitleStyle,
+              ),
+              DesktopTheme.desktopButton(
+                text: 'Yeni Vaka',
+                onPressed: _showAddCaseDialog,
+                icon: Icons.add,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          CaseListWidget(
+            cases: _filteredCases,
+            onCaseSelected: _onCaseSelected,
+            selectedCase: _selectedCase,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopCaseDetailsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Vaka Detayları',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_selectedCase != null)
+            CaseDetailsWidget(
+              case_: _selectedCase!,
+              onCaseUpdated: _refreshData,
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.description, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Detayları görüntülemek için bir vaka seçin',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopCaseProgressTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Vaka İlerlemesi',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_selectedCase != null)
+            CaseProgressWidget(
+              case_: _selectedCase!,
+              onProgressAdded: _refreshData,
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.trending_up, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'İlerleme kayıtlarını görüntülemek için bir vaka seçin',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopCaseGoalsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Vaka Hedefleri',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_selectedCase != null)
+            CaseGoalsWidget(
+              case_: _selectedCase!,
+              onGoalAdded: _refreshData,
+              onGoalUpdated: _refreshData,
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.flag, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Hedefleri görüntülemek için bir vaka seçin',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopCaseInterventionsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Vaka Müdahaleleri',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          if (_selectedCase != null)
+            CaseInterventionsWidget(
+              case_: _selectedCase!,
+              onInterventionAdded: _refreshData,
+            )
+          else
+            DesktopTheme.desktopCard(
+              child: const Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.medical_services, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Müdahaleleri görüntülemek için bir vaka seçin',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _generateCaseReport() {
+    // TODO: Vaka raporu oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Vaka raporu oluşturuluyor...')),
     );
   }
 }

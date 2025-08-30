@@ -78,6 +78,16 @@ import 'widgets/theme_switcher.dart';
 // 2FA için import
 import 'services/two_factor_auth_service.dart';
 import 'widgets/two_factor_auth_widgets.dart';
+// Voice-to-text için import
+import 'services/voice_to_text_service.dart';
+import 'widgets/voice_to_text_widgets.dart';
+// Real-time dashboard için import
+import 'services/realtime_dashboard_service.dart';
+import 'widgets/realtime_dashboard_widgets.dart';
+// API & Integration için import
+import 'services/api_service.dart';
+// Team collaboration için import
+import 'services/team_collaboration_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -119,6 +129,18 @@ Future<void> _initializeServices() async {
     
     // 2FA servisini başlat
     await TwoFactorAuthService().load2FASettings();
+    
+    // Voice-to-text servisini başlat
+    await VoiceToTextService().loadRecordingSessions();
+    
+    // Real-time dashboard servisini başlat
+    await RealtimeDashboardService().initialize();
+    
+    // API servisini başlat
+    await ApiService().initialize();
+    
+    // Team collaboration servisini başlat
+    await TeamCollaborationService().initialize();
     await BiometricAuthService().initialize();
     
     // Initialize AI services

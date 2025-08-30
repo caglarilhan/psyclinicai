@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../config/white_label_config.dart';
 import '../../utils/theme.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class WhiteLabelDashboardScreen extends StatefulWidget {
   const WhiteLabelDashboardScreen({super.key});
@@ -12,6 +17,7 @@ class WhiteLabelDashboardScreen extends StatefulWidget {
 class _WhiteLabelDashboardScreenState extends State<WhiteLabelDashboardScreen> {
   final WhiteLabelConfig _config = WhiteLabelConfig();
   final WhiteLabelThemeProvider _themeProvider = WhiteLabelThemeProvider();
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   // Form controllers
   final TextEditingController _brandNameController = TextEditingController();
@@ -28,6 +34,7 @@ class _WhiteLabelDashboardScreenState extends State<WhiteLabelDashboardScreen> {
   void initState() {
     super.initState();
     _loadCurrentConfig();
+    _setupKeyboardShortcuts();
   }
 
   void _loadCurrentConfig() {
@@ -41,7 +48,122 @@ class _WhiteLabelDashboardScreenState extends State<WhiteLabelDashboardScreen> {
   }
 
   @override
+  void dispose() {
+    _removeKeyboardShortcuts();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    return DesktopLayout(
+      title: 'White-Label Dashboard',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Kaydet',
+          onPressed: _saveConfig,
+          icon: Icons.save,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Sıfırla',
+          onPressed: _resetConfig,
+          icon: Icons.refresh,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Export',
+          onPressed: _exportConfig,
+          icon: Icons.download,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Import',
+          onPressed: _importConfig,
+          icon: Icons.upload,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Genel Bakış',
+          icon: Icons.dashboard,
+          onTap: () => _scrollToSection('overview'),
+        ),
+        DesktopSidebarItem(
+          title: 'Marka Ayarları',
+          icon: Icons.branding_watermark,
+          onTap: () => _scrollToSection('brand'),
+        ),
+        DesktopSidebarItem(
+          title: 'Tema Özelleştirme',
+          icon: Icons.palette,
+          onTap: () => _scrollToSection('theme'),
+        ),
+        DesktopSidebarItem(
+          title: 'Önceden Tanımlı Temalar',
+          icon: Icons.style,
+          onTap: () => _scrollToSection('predefined'),
+        ),
+        DesktopSidebarItem(
+          title: 'Özelleştirilmiş Özellikler',
+          icon: Icons.settings,
+          onTap: () => _scrollToSection('features'),
+        ),
+        DesktopSidebarItem(
+          title: 'Konfigürasyon Yönetimi',
+          icon: Icons.manage_accounts,
+          onTap: () => _scrollToSection('config'),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Genel Bakış
+          _buildDesktopOverviewSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Marka Ayarları
+          _buildDesktopBrandSettingsSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Tema Özelleştirme
+          _buildDesktopThemeCustomizationSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Önceden Tanımlanmış Temalar
+          _buildDesktopPredefinedThemesSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Özelleştirilmiş Özellikler
+          _buildDesktopCustomFeaturesSection(),
+          
+          const SizedBox(height: 32),
+          
+          // Konfigürasyon Yönetimi
+          _buildDesktopConfigManagementSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('White-Label Dashboard'),
@@ -801,7 +923,445 @@ class _WhiteLabelDashboardScreenState extends State<WhiteLabelDashboardScreen> {
     _brandTaglineController.dispose();
     _supportEmailController.dispose();
     _websiteController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _saveConfig,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+      _resetConfig,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      _exportConfig,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+      _importConfig,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyR, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü bölüm metodları
+  Widget _buildDesktopOverviewSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'White-Label Genel Bakış',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopTheme.desktopCard(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mevcut Konfigürasyon',
+                  style: DesktopTheme.desktopTitleStyle,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDesktopConfigCard(
+                        'Marka Adı',
+                        _config.brandName,
+                        Icons.branding_watermark,
+                        Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildDesktopConfigCard(
+                        'Tema Durumu',
+                        _config.isCustomTheme ? 'Özel' : 'Varsayılan',
+                        Icons.palette,
+                        Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildDesktopConfigCard(
+                        'Destek E-posta',
+                        _config.supportEmail,
+                        Icons.email,
+                        Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopBrandSettingsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Marka Ayarları',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopTheme.desktopCard(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Marka Bilgileri',
+                  style: DesktopTheme.desktopTitleStyle,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DesktopTheme.desktopInput(
+                        label: 'Marka Adı',
+                        controller: _brandNameController,
+                        hintText: 'Marka adınızı girin',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DesktopTheme.desktopInput(
+                        label: 'Marka Sloganı',
+                        controller: _brandTaglineController,
+                        hintText: 'Marka sloganınızı girin',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DesktopTheme.desktopInput(
+                        label: 'Destek E-posta',
+                        controller: _supportEmailController,
+                        hintText: 'support@example.com',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DesktopTheme.desktopInput(
+                        label: 'Website',
+                        controller: _websiteController,
+                        hintText: 'https://example.com',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopThemeCustomizationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tema Özelleştirme',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Renk Paleti',
+                        style: DesktopTheme.desktopTitleStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDesktopColorPicker('Ana Renk', _selectedPrimaryColor, (color) {
+                        setState(() => _selectedPrimaryColor = color);
+                      }),
+                      const SizedBox(height: 16),
+                      _buildDesktopColorPicker('İkincil Renk', _selectedSecondaryColor, (color) {
+                        setState(() => _selectedSecondaryColor = color);
+                      }),
+                      const SizedBox(height: 16),
+                      _buildDesktopColorPicker('Vurgu Rengi', _selectedAccentColor, (color) {
+                        setState(() => _selectedAccentColor = color);
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: DesktopTheme.desktopCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tema Önizleme',
+                        style: DesktopTheme.desktopTitleStyle,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _selectedPrimaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              _brandNameController.text.isEmpty ? 'Marka Adı' : _brandNameController.text,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _brandTaglineController.text.isEmpty ? 'Marka Sloganı' : _brandTaglineController.text,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopPredefinedThemesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Önceden Tanımlanmış Temalar',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopGrid(
+          children: [
+            _buildDesktopThemeCard('Klasik Mavi', Colors.blue, Icons.business),
+            _buildDesktopThemeCard('Modern Yeşil', Colors.green, Icons.eco),
+            _buildDesktopThemeCard('Elegant Mor', Colors.purple, Icons.auto_awesome),
+            _buildDesktopThemeCard('Sıcak Turuncu', Colors.orange, Icons.whatshot),
+            _buildDesktopThemeCard('Profesyonel Gri', Colors.grey, Icons.work),
+            _buildDesktopThemeCard('Canlı Pembe', Colors.pink, Icons.favorite),
+          ],
+          context: context,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopCustomFeaturesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Özelleştirilmiş Özellikler',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        DesktopDataTable(
+          headers: const ['Özellik', 'Durum', 'Açıklama', 'Aksiyon'],
+          rows: [
+            ['Özel Logo', 'Aktif', 'Marka logosu gösterimi', 'Düzenle'],
+            ['Özel Renkler', 'Aktif', 'Marka renk paleti', 'Düzenle'],
+            ['Özel Font', 'Pasif', 'Marka tipografisi', 'Aktifleştir'],
+            ['Özel İkonlar', 'Pasif', 'Marka ikonları', 'Aktifleştir'],
+            ['Özel Animasyonlar', 'Pasif', 'Marka animasyonları', 'Aktifleştir'],
+          ],
+          onRowTap: (index) {
+            // TODO: Özellik düzenleme
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopConfigManagementSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Konfigürasyon Yönetimi',
+          style: DesktopTheme.desktopSectionTitleStyle,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: DesktopTheme.desktopButton(
+                text: 'Konfigürasyonu Kaydet',
+                onPressed: _saveConfig,
+                icon: Icons.save,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: DesktopTheme.desktopButton(
+                text: 'Varsayılana Sıfırla',
+                onPressed: _resetConfig,
+                icon: Icons.refresh,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: DesktopTheme.desktopButton(
+                text: 'Dışa Aktar',
+                onPressed: _exportConfig,
+                icon: Icons.download,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: DesktopTheme.desktopButton(
+                text: 'İçe Aktar',
+                onPressed: _importConfig,
+                icon: Icons.upload,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopConfigCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopColorPicker(String label, Color color, Function(Color) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ColorPicker(
+                pickerColor: color,
+                onColorChanged: onChanged,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopThemeCard(String name, Color color, IconData icon) {
+    return DesktopGridCard(
+      title: name,
+      subtitle: 'Tema',
+      icon: icon,
+      color: color,
+      onTap: () {
+        setState(() {
+          _selectedPrimaryColor = color;
+          _selectedSecondaryColor = color.withOpacity(0.7);
+          _selectedAccentColor = color.withOpacity(0.5);
+        });
+      },
+    );
+  }
+
+  void _scrollToSection(String section) {
+    // TODO: Bölüme kaydırma
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$section bölümüne kaydırılıyor...')),
+    );
   }
 }
 

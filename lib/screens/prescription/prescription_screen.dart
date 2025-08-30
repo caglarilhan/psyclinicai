@@ -5,6 +5,11 @@ import '../../widgets/common/country_selector_widget.dart';
 import '../../widgets/prescription/prescription_form.dart';
 import '../../widgets/prescription/interaction_checker.dart';
 import '../../widgets/prescription/ai_recommendation_panel.dart';
+// Masaüstü optimizasyonu için import'lar
+import '../../utils/desktop_theme.dart';
+import '../../widgets/desktop/desktop_layout.dart';
+import '../../widgets/desktop/desktop_grid.dart';
+import '../../services/keyboard_shortcuts_service.dart';
 
 class PrescriptionScreen extends StatefulWidget {
   const PrescriptionScreen({super.key});
@@ -18,6 +23,7 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
   late TabController _tabController;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   
   String _selectedCountry = CountryConfig.currentCountry;
   bool _showCountryInfo = false;
@@ -34,12 +40,14 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
     _fadeController.forward();
+    _setupKeyboardShortcuts();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _fadeController.dispose();
+    _removeKeyboardShortcuts();
     super.dispose();
   }
 
@@ -61,6 +69,87 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (DesktopTheme.isDesktop(context)) {
+      return _buildDesktopLayout();
+    }
+    return _buildMobileLayout();
+  }
+
+  Widget _buildDesktopLayout() {
+    final countryInfo = CountryConfig.supportedCountries[_selectedCountry]!;
+    
+    return DesktopLayout(
+      title: 'Reçete Sistemi',
+      actions: [
+        DesktopTheme.desktopButton(
+          text: 'Yeni Reçete',
+          onPressed: _createNewPrescription,
+          icon: Icons.add,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'AI Öneri',
+          onPressed: _generateAIRecommendation,
+          icon: Icons.auto_awesome,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Etkileşim Kontrolü',
+          onPressed: _checkInteractions,
+          icon: Icons.medical_services,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Geçmiş',
+          onPressed: _showPrescriptionHistory,
+          icon: Icons.history,
+        ),
+        const SizedBox(width: 8),
+        DesktopTheme.desktopButton(
+          text: 'Ayarlar',
+          onPressed: _showPrescriptionSettings,
+          icon: Icons.settings,
+        ),
+      ],
+      sidebarItems: [
+        DesktopSidebarItem(
+          title: 'Reçete Formu',
+          icon: Icons.medical_services,
+          onTap: () => _tabController.animateTo(0),
+        ),
+        DesktopSidebarItem(
+          title: 'AI Öneriler',
+          icon: Icons.auto_awesome,
+          onTap: () => _tabController.animateTo(1),
+        ),
+        DesktopSidebarItem(
+          title: 'Etkileşim Kontrolü',
+          icon: Icons.warning,
+          onTap: () => _tabController.animateTo(2),
+        ),
+        DesktopSidebarItem(
+          title: 'Reçete Geçmişi',
+          icon: Icons.history,
+          onTap: () => _tabController.animateTo(3),
+        ),
+      ],
+      child: _buildDesktopContent(),
+    );
+  }
+
+  Widget _buildDesktopContent() {
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildDesktopPrescriptionFormTab(),
+        _buildDesktopAIRecommendationsTab(),
+        _buildDesktopInteractionCheckerTab(),
+        _buildDesktopHistoryTab(),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
     final countryInfo = CountryConfig.supportedCountries[_selectedCountry]!;
     
     return Scaffold(
@@ -558,6 +647,191 @@ class _PrescriptionScreenState extends State<PrescriptionScreen>
                   fontSize: 12,
                   color: Colors.grey[600],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Masaüstü kısayol metodları
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      _createNewPrescription,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      _generateAIRecommendation,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+      _checkInteractions,
+    );
+    _shortcutsService.addShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      _showPrescriptionSettings,
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyI, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+    );
+  }
+
+  // Masaüstü tab metodları
+  Widget _buildDesktopPrescriptionFormTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Reçete Formu',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: PrescriptionForm(
+                selectedCountry: _selectedCountry,
+                onCountryChanged: _onCountryChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopAIRecommendationsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AI İlaç Önerileri',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: AIRecommendationPanel(
+                selectedCountry: _selectedCountry,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopInteractionCheckerTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'İlaç Etkileşim Kontrolü',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: InteractionChecker(
+                selectedCountry: _selectedCountry,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopHistoryTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Reçete Geçmişi',
+            style: DesktopTheme.desktopSectionTitleStyle,
+          ),
+          const SizedBox(height: 16),
+          DesktopTheme.desktopCard(
+            child: const Padding(
+              padding: EdgeInsets.all(48),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.history, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Reçete geçmişi yakında gelecek',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Yardımcı metodlar
+  void _createNewPrescription() {
+    // TODO: Yeni reçete oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Yeni reçete oluşturuluyor...')),
+    );
+  }
+
+  void _generateAIRecommendation() {
+    // TODO: AI öneri oluşturma
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI öneri oluşturuluyor...')),
+    );
+  }
+
+  void _checkInteractions() {
+    // TODO: Etkileşim kontrolü
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('İlaç etkileşimleri kontrol ediliyor...')),
+    );
+  }
+
+  void _showPrescriptionHistory() {
+    // TODO: Reçete geçmişi
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reçete geçmişi yakında gelecek')),
+    );
+  }
+
+  void _showPrescriptionSettings() {
+    // TODO: Reçete ayarları
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reçete ayarları yakında gelecek')),
+    );
+  }
               ),
             ],
           ),

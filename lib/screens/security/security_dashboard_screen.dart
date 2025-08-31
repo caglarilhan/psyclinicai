@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../utils/theme.dart';
 import '../../config/region_config.dart';
 import '../../models/security_models.dart';
@@ -23,7 +24,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
   final SecurityService _securityService = SecurityService();
   final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
   bool _isLoading = true;
-  SecurityStatus? _securityStatus;
+  SecurityStatusDetails? _securityStatus;
   List<AuditLog> _auditLogs = [];
   List<ComplianceReport> _complianceReports = [];
   List<SecurityIncident> _securityIncidents = [];

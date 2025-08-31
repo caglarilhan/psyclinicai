@@ -21,7 +21,7 @@ class SecurityService {
   late EncryptionConfig _encryptionConfig;
   
   // Güvenlik durumu
-  late SecurityStatus _securityStatus;
+  late SecurityStatusDetails _securityStatus;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -38,7 +38,7 @@ class SecurityService {
     );
 
     // Güvenlik durumu
-    _securityStatus = SecurityStatus(
+    _securityStatus = SecurityStatusDetails(
       overallScore: 85.0,
       encryptionScore: 90.0,
       accessControlScore: 80.0,

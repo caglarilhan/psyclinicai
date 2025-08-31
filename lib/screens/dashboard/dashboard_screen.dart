@@ -8,6 +8,7 @@ import '../../widgets/ai_chatbot_widgets.dart';
 import '../../widgets/push_notification_widgets.dart';
 import '../../widgets/workflow_automation_widgets.dart';
 import '../../widgets/multi_language_widgets.dart';
+import '../../widgets/enhanced_security_widgets.dart';
 import '../sprint3/sprint1_demo_screen.dart';
 import '../crm/crm_dashboard_screen.dart';
 import '../white_label/white_label_dashboard_screen.dart';
@@ -902,6 +903,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'Gelişmiş Güvenlik',
+                    'Uyumluluk, şifreleme, erişim kontrolü',
+                    Icons.security,
+                    Colors.red[700]!,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EnhancedSecurityDashboardWidget(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
                 Expanded(
                   child: _buildModuleCard(
                     context,

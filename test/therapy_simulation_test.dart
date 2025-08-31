@@ -15,7 +15,7 @@ void main() {
     });
 
     tearDown(() {
-      service.dispose();
+      // Service'i dispose etme, sadece test verilerini temizle
     });
 
     group('Initialization Tests', () {
@@ -37,403 +37,215 @@ void main() {
       });
     });
 
+    group('Scenario Management Tests', () {
+      test('should get scenarios', () async {
+        await service.initialize();
+        
+        final scenarios = service.getScenarios();
+        expect(scenarios, isNotEmpty);
+        expect(scenarios.first.title, isNotEmpty);
+        expect(scenarios.first.description, isNotEmpty);
+      });
+
+      test('should get scenario by id', () async {
+        await service.initialize();
+        
+        final scenarios = service.getScenarios();
+        final firstScenario = scenarios.first;
+        
+        final scenario = service.getScenario(firstScenario.id);
+        expect(scenario, isNotNull);
+        expect(scenario!.id, firstScenario.id);
+        expect(scenario.title, firstScenario.title);
+      });
+    });
+
     group('Session Management Tests', () {
       test('should create new session', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
+        
+        final session = await service.createSession(scenario);
         
         expect(session, isNotNull);
-        expect(session.title, 'Test Seansı');
-        expect(session.status, SimulationStatus.notStarted);
-        expect(session.approach, TherapyApproach.cbt);
+        expect(session.scenario.id, scenario.id);
+        expect(session.messages, isEmpty);
+        expect(session.score, isNull);
       });
 
-      test('should start session', () async {
+      test('should get session by id', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
+        
+        final session = await service.createSession(scenario);
+        final retrievedSession = service.getSession(session.id);
+        
+        expect(retrievedSession, isNotNull);
+        expect(retrievedSession!.id, session.id);
+      });
+
+      test('should add message to session', () async {
+        await service.initialize();
+        
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
+        
+        final session = await service.createSession(scenario);
+        
+        final message = SessionMessage(
+          id: 'msg1',
+          sessionId: session.id,
+          sender: MessageSender.therapist,
+          content: 'Merhaba, nasılsınız?',
+          timestamp: DateTime.now(),
+          metadata: {},
         );
         
-        await service.startSession(session.id);
+        await service.addMessage(session.id, message);
         
         final updatedSession = service.getSession(session.id);
-        expect(updatedSession?.status, SimulationStatus.inProgress);
-        expect(updatedSession?.startedAt, isNotNull);
+        expect(updatedSession!.messages.length, 1);
+        expect(updatedSession.messages.first.content, 'Merhaba, nasılsınız?');
       });
 
-      test('should complete session', () async {
+      test('should calculate score for session', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
         
-        await service.startSession(session.id);
-        await service.completeSession(session.id);
+        final session = await service.createSession(scenario);
         
-        final completedSession = service.getSession(session.id);
-        expect(completedSession?.status, SimulationStatus.completed);
-        expect(completedSession?.completedAt, isNotNull);
-      });
-
-      test('should get all sessions', () async {
-        await service.initialize();
-        
-        await service.createSession(
-          title: 'Seans 1',
-          description: 'Açıklama 1',
-          approach: TherapyApproach.cbt,
-          createdBy: 'user1',
-        );
-        
-        await service.createSession(
-          title: 'Seans 2',
-          description: 'Açıklama 2',
-          approach: TherapyApproach.dbt,
-          createdBy: 'user2',
-        );
-        
-        final sessions = service.getSessions();
-        expect(sessions.length, greaterThanOrEqualTo(1));
-      });
-    });
-
-    group('Turn Management Tests', () {
-      test('should add turn to session', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        final turn = await service.addTurn(
+        // Birkaç mesaj ekle
+        final message1 = SessionMessage(
+          id: 'msg1',
           sessionId: session.id,
+          sender: MessageSender.therapist,
           content: 'Merhaba, nasılsınız?',
-          role: RoleType.therapist,
+          timestamp: DateTime.now(),
+          metadata: {},
         );
         
-        expect(turn, isNotNull);
-        expect(turn.content, 'Merhaba, nasılsınız?');
-        expect(turn.role, RoleType.therapist);
-        expect(turn.turnNumber, 1);
-      });
-
-      test('should get turns for session', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        await service.addTurn(
+        final message2 = SessionMessage(
+          id: 'msg2',
           sessionId: session.id,
-          content: 'Terapist sorusu',
-          role: RoleType.therapist,
+          sender: MessageSender.client,
+          content: 'İyi değilim, çok stresliyim',
+          timestamp: DateTime.now(),
+          metadata: {},
         );
         
-        await service.addTurn(
-          sessionId: session.id,
-          content: 'Hasta yanıtı',
-          role: RoleType.patient,
-        );
+        await service.addMessage(session.id, message1);
+        await service.addMessage(session.id, message2);
         
-        final turns = service.getTurns(session.id);
-        expect(turns.length, 2);
-        expect(turns[0].role, RoleType.therapist);
-        expect(turns[1].role, RoleType.patient);
-      });
-
-      test('should handle multiple turns correctly', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        for (int i = 0; i < 5; i++) {
-          await service.addTurn(
-            sessionId: session.id,
-            content: 'Turn $i',
-            role: i % 2 == 0 ? RoleType.therapist : RoleType.patient,
-          );
-        }
-        
-        final turns = service.getTurns(session.id);
-        expect(turns.length, 5);
-        expect(turns[4].turnNumber, 5);
+        final score = service.calculateScore(session.id, 'therapist1');
+        expect(score, isNotNull);
+        expect(score!.sessionId, session.id);
+        expect(score.overallScore, greaterThanOrEqualTo(0.0));
+        expect(score.overallScore, lessThanOrEqualTo(100.0));
       });
     });
 
     group('AI Response Tests', () {
-      test('should get AI response for therapist role', () async {
+      test('should get AI response', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
         
-        final turn = await service.addTurn(
+        final session = await service.createSession(scenario);
+        
+        final message = SessionMessage(
+          id: 'msg1',
           sessionId: session.id,
-          content: 'Hasta sorusu',
-          role: RoleType.patient,
+          sender: MessageSender.client,
+          content: 'Çok endişeliyim',
+          timestamp: DateTime.now(),
+          metadata: {},
         );
         
-        final aiResponse = await service.getAIResponse(
-          turnId: turn.id,
-          sessionId: session.id,
-          role: RoleType.therapist,
-        );
+        await service.addMessage(session.id, message);
         
+        final aiResponse = await service.getAIResponse(session.id, message.id);
         expect(aiResponse, isNotNull);
-        expect(aiResponse.role, RoleType.therapist);
+        expect(aiResponse!.sender, MessageSender.therapist);
         expect(aiResponse.content, isNotEmpty);
-        expect(aiResponse.techniques, isNotNull);
-      });
-
-      test('should get AI response for patient role', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        final turn = await service.addTurn(
-          sessionId: session.id,
-          content: 'Terapist sorusu',
-          role: RoleType.therapist,
-        );
-        
-        final aiResponse = await service.getAIResponse(
-          turnId: turn.id,
-          sessionId: session.id,
-          role: RoleType.patient,
-        );
-        
-        expect(aiResponse, isNotNull);
-        expect(aiResponse.role, RoleType.patient);
-        expect(aiResponse.content, isNotEmpty);
-      });
-
-      test('should update turn with AI response', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        final turn = await service.addTurn(
-          sessionId: session.id,
-          content: 'Hasta sorusu',
-          role: RoleType.patient,
-        );
-        
-        await service.getAIResponse(
-          turnId: turn.id,
-          sessionId: session.id,
-          role: RoleType.therapist,
-        );
-        
-        final updatedTurns = service.getTurns(session.id);
-        final updatedTurn = updatedTurns.firstWhere((t) => t.id == turn.id);
-        expect(updatedTurn.aiResponse, isNotEmpty);
       });
     });
 
-    group('Metrics Calculation Tests', () {
-      test('should calculate metrics after session completion', () async {
+    group('Score Feedback Tests', () {
+      test('should provide score feedback', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
         
-        await service.startSession(session.id);
+        final session = await service.createSession(scenario);
         
-        // Birkaç turn ekle
-        await service.addTurn(
+        final score = SimulationScore(
+          id: 'score1',
           sessionId: session.id,
-          content: 'Terapist sorusu 1',
-          role: RoleType.therapist,
+          empathyScore: 85.0,
+          questioningScore: 75.0,
+          activeListeningScore: 80.0,
+          professionalLanguageScore: 90.0,
+          overallScore: 82.5,
+          strengths: ['Empati', 'Aktif dinleme'],
+          areasForImprovement: ['Soru sorma'],
+          detailedScores: {},
+          calculatedAt: DateTime.now(),
         );
         
-        await service.addTurn(
-          sessionId: session.id,
-          content: 'Hasta yanıtı 1',
-          role: RoleType.patient,
-        );
-        
-        await service.addTurn(
-          sessionId: session.id,
-          content: 'Terapist sorusu 2',
-          role: RoleType.therapist,
-        );
-        
-        await service.completeSession(session.id);
-        
-        final metrics = service.getMetrics(session.id);
-        expect(metrics, isNotNull);
-        expect(metrics!.totalTurns, 3);
-        expect(metrics.userTurns, 2); // therapist turns
-        expect(metrics.aiTurns, 1); // patient turns
-        expect(metrics.strengths, isNotEmpty);
-        expect(metrics.areasForImprovement, isNotEmpty);
+        final feedback = service.getScoreFeedback(score);
+        expect(feedback, isNotEmpty);
+        expect(feedback.contains('Mükemmel'), isTrue);
       });
 
-      test('should generate mock metrics for empty session', () async {
+      test('should provide improvement suggestions', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
         
-        await service.startSession(session.id);
-        await service.completeSession(session.id);
+        final session = await service.createSession(scenario);
         
-        final metrics = service.getMetrics(session.id);
-        expect(metrics, isNotNull);
-        expect(metrics!.totalTurns, greaterThanOrEqualTo(0)); // Mock data
-        expect(metrics.engagementScore, greaterThanOrEqualTo(0.0));
-        expect(metrics.techniqueUsageScore, greaterThanOrEqualTo(0.0));
-        expect(metrics.empathyScore, greaterThanOrEqualTo(0.0));
-      });
-    });
-
-    group('Stream Tests', () {
-      test('should emit session updates', () async {
-        await service.initialize();
-        
-        final sessionUpdates = <TherapySimulationSession>[];
-        service.sessionStream.listen(sessionUpdates.add);
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        await service.startSession(session.id);
-        
-        expect(sessionUpdates.length, 2); // create + start
-        expect(sessionUpdates[0].status, SimulationStatus.notStarted);
-        expect(sessionUpdates[1].status, SimulationStatus.inProgress);
-      });
-
-      test('should emit turn updates', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        final turnUpdates = <SimulationTurn>[];
-        service.turnStream.listen(turnUpdates.add);
-        
-        await service.addTurn(
+        final score = SimulationScore(
+          id: 'score1',
           sessionId: session.id,
-          content: 'Test turn',
-          role: RoleType.therapist,
+          empathyScore: 15.0,
+          questioningScore: 20.0,
+          activeListeningScore: 10.0,
+          professionalLanguageScore: 25.0,
+          overallScore: 17.5,
+          strengths: [],
+          areasForImprovement: ['Empati', 'Aktif dinleme'],
+          detailedScores: {},
+          calculatedAt: DateTime.now(),
         );
         
-        expect(turnUpdates.length, 1);
-        expect(turnUpdates[0].content, 'Test turn');
-      });
-
-      test('should emit metrics updates', () async {
-        await service.initialize();
-        
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
-        
-        final metricsUpdates = <SimulationMetrics>[];
-        service.metricsStream.listen(metricsUpdates.add);
-        
-        await service.startSession(session.id);
-        await service.completeSession(session.id);
-        
-        expect(metricsUpdates.length, 1);
-        expect(metricsUpdates[0].sessionId, session.id);
+        final suggestions = service.getImprovementSuggestions(score);
+        expect(suggestions, isNotEmpty);
+        expect(suggestions.length, greaterThan(1));
       });
     });
 
     group('Error Handling Tests', () {
-      test('should handle session not found error', () async {
+      test('should handle non-existent session', () async {
         await service.initialize();
         
-        expect(
-          () => service.startSession('non_existent_id'),
-          returnsNormally, // Service handles errors gracefully
-        );
+        final session = service.getSession('non_existent_id');
+        expect(session, isNull);
       });
 
-      test('should handle turn creation for non-existent session', () async {
+      test('should handle non-existent scenario', () async {
         await service.initialize();
         
-        expect(
-          () => service.addTurn(
-            sessionId: 'non_existent_id',
-            content: 'Test',
-            role: RoleType.therapist,
-          ),
-          throwsA(isA<Exception>()),
-        );
-      });
-
-      test('should handle AI response for non-existent session', () async {
-        await service.initialize();
-        
-        expect(
-          () => service.getAIResponse(
-            turnId: 'turn_id',
-            sessionId: 'non_existent_id',
-            role: RoleType.therapist,
-          ),
-          throwsA(isA<Exception>()),
-        );
+        final scenario = service.getScenario('non_existent_id');
+        expect(scenario, isNull);
       });
     });
 
@@ -441,73 +253,45 @@ void main() {
       test('should validate session data integrity', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-          learningObjectives: ['Hedef 1', 'Hedef 2'],
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
+        
+        final session = await service.createSession(scenario);
         
         expect(session.id, isNotEmpty);
-        expect(session.createdAt, isNotNull);
-        expect(session.learningObjectives.length, 2);
-        expect(session.metadata, isNotNull);
+        expect(session.scenario.id, scenario.id);
+        expect(session.messages, isEmpty);
+        expect(session.sessionNotes, isEmpty);
+        expect(session.score, isNull);
       });
 
-      test('should validate turn data integrity', () async {
+      test('should validate message data integrity', () async {
         await service.initialize();
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final scenarios = service.getScenarios();
+        final scenario = scenarios.first;
         
-        final turn = await service.addTurn(
+        final session = await service.createSession(scenario);
+        
+        final message = SessionMessage(
+          id: 'msg1',
           sessionId: session.id,
-          content: 'Test turn',
-          role: RoleType.therapist,
-          context: {'key': 'value'},
+          sender: MessageSender.therapist,
+          content: 'Test mesajı',
+          timestamp: DateTime.now(),
+          metadata: {'key': 'value'},
         );
         
-        expect(turn.id, isNotEmpty);
-        expect(turn.sessionId, session.id);
-        expect(turn.turnNumber, 1);
-        expect(turn.timestamp, isNotNull);
-        expect(turn.context['key'], 'value');
-      });
-
-      test('should validate AI response data integrity', () async {
-        await service.initialize();
+        await service.addMessage(session.id, message);
         
-        final session = await service.createSession(
-          title: 'Test Seansı',
-          description: 'Test açıklaması',
-          approach: TherapyApproach.cbt,
-          createdBy: 'test_user',
-        );
+        final updatedSession = service.getSession(session.id);
+        final addedMessage = updatedSession!.messages.first;
         
-        final turn = await service.addTurn(
-          sessionId: session.id,
-          content: 'Test turn',
-          role: RoleType.patient,
-        );
-        
-        final aiResponse = await service.getAIResponse(
-          turnId: turn.id,
-          sessionId: session.id,
-          role: RoleType.therapist,
-        );
-        
-        expect(aiResponse.id, isNotEmpty);
-        expect(aiResponse.turnId, turn.id);
-        expect(aiResponse.role, RoleType.therapist);
-        expect(aiResponse.content, isNotEmpty);
-        expect(aiResponse.techniques, isNotNull);
-        expect(aiResponse.emotions, isNotNull);
-        expect(aiResponse.timestamp, isNotNull);
+        expect(addedMessage.id, 'msg1');
+        expect(addedMessage.sessionId, session.id);
+        expect(addedMessage.sender, MessageSender.therapist);
+        expect(addedMessage.content, 'Test mesajı');
+        expect(addedMessage.metadata['key'], 'value');
       });
     });
   });

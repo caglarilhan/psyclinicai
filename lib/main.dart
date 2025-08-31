@@ -1,4 +1,3 @@
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -99,24 +98,15 @@ import 'widgets/multi_language_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final sentryDsn = const String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = sentryDsn;
-      options.tracesSampleRate = 1.0;
-    },
-    appRunner: () async {
-      SystemChrome.setSystemUIOverlayStyle(
-        const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-        ),
-      );
-      await _initializeServices();
-      runApp(const PsyClinicAIApp());
-    },
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
   );
+  await _initializeServices();
+  runApp(const PsyClinicAIApp());
 }
 
 Future<void> _initializeServices() async {

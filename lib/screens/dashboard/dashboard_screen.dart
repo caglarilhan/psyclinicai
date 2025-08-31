@@ -4,6 +4,10 @@ import '../../utils/app_constants.dart';
 import '../../widgets/therapist/therapist_tools_dashboard_widget.dart';
 import '../../widgets/region/region_selector_widget.dart';
 import '../../widgets/advanced_analytics_widgets.dart';
+import '../../widgets/ai_chatbot_widgets.dart';
+import '../../widgets/push_notification_widgets.dart';
+import '../../widgets/workflow_automation_widgets.dart';
+import '../../widgets/multi_language_widgets.dart';
 import '../sprint3/sprint1_demo_screen.dart';
 import '../crm/crm_dashboard_screen.dart';
 import '../white_label/white_label_dashboard_screen.dart';
@@ -673,9 +677,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     '24/7 müşteri desteği',
                     Icons.chat_bubble,
                     AppTheme.warningColor,
-                    () {
-                      // TODO: AI Chatbot
-                    },
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AIChatbotWidget(),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -831,6 +838,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     AppTheme.infoColor,
                     () {
                       // TODO: Kurum mesajlaşma
+                    },
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'Bildirimler',
+                    'Push notifications ve mesajlar',
+                    Icons.notifications,
+                    AppTheme.warningColor,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PushNotificationCenterWidget(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'İş Akışı Otomasyonu',
+                    'Otomatik görevler ve onaylar',
+                    Icons.workflow,
+                    AppTheme.successColor,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WorkflowManagementWidget(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'Çoklu Dil Desteği',
+                    'Türkçe, İngilizce, Almanca',
+                    Icons.language,
+                    AppTheme.infoColor,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LanguageSettingsWidget(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildModuleCard(
+                    context,
+                    'Tema Ayarları',
+                    'Açık/koyu tema ve renkler',
+                    Icons.palette,
+                    AppTheme.accentColor,
+                    () {
+                      // TODO: Tema ayarları
                     },
                   ),
                 ),

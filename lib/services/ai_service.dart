@@ -601,52 +601,6 @@ class AIService {
   static const String _modelVersion = 'GPT-4 v1.0';
   static const double _defaultConfidence = 0.85;
 
-  /// Seans özeti oluşturur
-  Future<AISummary?> generateSessionSummary({
-    required String sessionNotes,
-    required String clientGoals,
-    required List<Session> previousSessions,
-  }) async {
-    try {
-      // Simüle edilmiş AI işleme süresi
-      await Future.delayed(const Duration(seconds: 2));
-
-      // AI analizi simülasyonu
-      final analysis = _analyzeSessionContent(
-        sessionNotes: sessionNotes,
-        clientGoals: clientGoals,
-        previousSessions: previousSessions,
-      );
-
-      // AI özeti oluştur
-      final summary = AISummary(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sessionId: '', // Session ID daha sonra set edilecek
-        summary: analysis['summary'],
-        keyPoints: analysis['keyPoints'],
-        emotionalState: analysis['emotionalState'],
-        progressAssessment: analysis['progressAssessment'],
-        recommendations: analysis['recommendations'],
-        riskFactors: analysis['riskFactors'],
-        strengths: analysis['strengths'],
-        confidence: analysis['confidence'],
-        generatedAt: DateTime.now(),
-        modelVersion: _modelVersion,
-        metadata: {
-          'analysisType': 'session_summary',
-          'wordCount': sessionNotes.split(' ').length,
-          'hasPreviousSessions': previousSessions.isNotEmpty,
-          'goalsCount': clientGoals.split('\n').where((g) => g.isNotEmpty).length,
-        },
-      );
-
-      return summary;
-    } catch (e) {
-      print('AI özet oluşturulurken hata: $e');
-      return null;
-    }
-  }
-
   /// Seans içeriğini analiz eder
   Map<String, dynamic> _analyzeSessionContent({
     required String sessionNotes,

@@ -19,6 +19,10 @@ enum TherapyApproach {
   @JsonValue('humanistic') humanistic,
   @JsonValue('integrative') integrative,
   @JsonValue('mindfulness') mindfulness,
+  @JsonValue('exposure') exposure,
+  @JsonValue('emdr') emdr,
+  @JsonValue('couples') couples,
+  @JsonValue('motivational') motivational,
 }
 
 /// Role Type - Rol türü
@@ -35,6 +39,32 @@ enum FeedbackType {
   @JsonValue('constructive') constructive,
   @JsonValue('critical') critical,
   @JsonValue('suggestion') suggestion,
+}
+
+/// Message Sender - Mesaj gönderen
+enum MessageSender {
+  @JsonValue('therapist') therapist,
+  @JsonValue('client') client,
+  @JsonValue('ai') ai,
+}
+
+/// Session Message - Seans mesajı
+class SessionMessage {
+  final String id;
+  final String sessionId;
+  final MessageSender sender;
+  final String content;
+  final DateTime timestamp;
+  final Map<String, dynamic> metadata;
+
+  const SessionMessage({
+    required this.id,
+    required this.sessionId,
+    required this.sender,
+    required this.content,
+    required this.timestamp,
+    required this.metadata,
+  });
 }
 
 /// Therapy Simulation Session - Terapi simülasyon seansı
@@ -243,6 +273,30 @@ class SimulationMetrics {
   Map<String, dynamic> toJson() => _$SimulationMetricsToJson(this);
 }
 
+/// Simulation Session - Simülasyon seansı
+class SimulationSession {
+  final String id;
+  final SimulationScenario scenario;
+  final DateTime startTime;
+  final List<SessionMessage> messages;
+  String sessionNotes;
+  SimulationScore? score;
+
+  SimulationSession({
+    required this.id,
+    required this.scenario,
+    required this.startTime,
+    required this.messages,
+    this.sessionNotes = '',
+    this.score,
+  });
+
+  Duration get duration => DateTime.now().difference(startTime);
+  int get messageCount => messages.length;
+  int get therapistMessageCount => messages.where((m) => m.sender == MessageSender.therapist).length;
+  int get clientMessageCount => messages.where((m) => m.sender == MessageSender.client).length;
+}
+
 /// Simulation Scenario - Simülasyon senaryosu
 @JsonSerializable()
 class SimulationScenario {
@@ -282,4 +336,33 @@ class SimulationScenario {
       _$SimulationScenarioFromJson(json);
 
   Map<String, dynamic> toJson() => _$SimulationScenarioToJson(this);
+}
+
+/// Simulation Score - Simülasyon skoru
+class SimulationScore {
+  final String id;
+  final String sessionId;
+  final double empathyScore; // 0-100
+  final double questioningScore; // 0-100
+  final double activeListeningScore; // 0-100
+  final double professionalLanguageScore; // 0-100
+  final double overallScore; // 0-100
+  final List<String> strengths;
+  final List<String> areasForImprovement;
+  final Map<String, dynamic> detailedScores;
+  final DateTime calculatedAt;
+
+  const SimulationScore({
+    required this.id,
+    required this.sessionId,
+    required this.empathyScore,
+    required this.questioningScore,
+    required this.activeListeningScore,
+    required this.professionalLanguageScore,
+    required this.overallScore,
+    required this.strengths,
+    required this.areasForImprovement,
+    required this.detailedScores,
+    required this.calculatedAt,
+  });
 }

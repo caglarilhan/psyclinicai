@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../utils/theme.dart';
 import '../../models/supervision_models.dart';
 import '../../services/supervision_service.dart';
-import '../../widgets/supervisor/supervision_list_widget.dart';
-import '../../widgets/supervisor/performance_analytics_widget.dart';
-import '../../widgets/supervisor/quality_assurance_widget.dart';
+// import '../../widgets/supervisor/supervision_list_widget.dart';
+// import '../../widgets/supervisor/performance_analytics_widget.dart';
+// import '../../widgets/supervisor/quality_assurance_widget.dart';
 
 class SupervisorDashboardScreen extends StatefulWidget {
   const SupervisorDashboardScreen({super.key});

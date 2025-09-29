@@ -184,7 +184,7 @@ class SessionService {
         id: 'note_003',
         sessionId: 'session_002',
         content: 'Ev ödevleri başarıyla tamamlanmış. Nefes egzersizlerinde belirgin ilerleme.',
-        type: NoteType.progress,
+        type: NoteType.general,
         timestamp: DateTime.now().subtract(const Duration(days: 23)),
         authorId: 'therapist_001',
         authorName: 'Dr. Ahmet Yıldız',

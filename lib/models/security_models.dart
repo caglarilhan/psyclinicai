@@ -129,6 +129,8 @@ enum SecurityIncidentType {
   dataBreach,
   malware,
   phishing,
+  socialEngineering,
+  other,
   configurationError,
   networkAttack,
   insiderThreat,
@@ -269,6 +271,7 @@ class AccessControlPolicy {
   final bool isActive;
   final DateTime createdAt;
   final String createdBy;
+  final DateTime? lastModified;
 
   const AccessControlPolicy({
     required this.id,
@@ -280,6 +283,7 @@ class AccessControlPolicy {
     required this.isActive,
     required this.createdAt,
     required this.createdBy,
+    this.lastModified,
   });
 
   Map<String, dynamic> toJson() {
@@ -293,6 +297,7 @@ class AccessControlPolicy {
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
       'createdBy': createdBy,
+      'lastModified': lastModified?.toIso8601String(),
     };
   }
 
@@ -307,6 +312,7 @@ class AccessControlPolicy {
       isActive: json['isActive'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
       createdBy: json['createdBy'] as String,
+      lastModified: json['lastModified'] != null ? DateTime.parse(json['lastModified'] as String) : null,
     );
   }
 }
@@ -318,6 +324,7 @@ class DataAnonymizationRule {
   final AnonymizationType type;
   final bool isActive;
   final DateTime createdAt;
+  final String? replacementValue;
 
   const DataAnonymizationRule({
     required this.id,
@@ -325,6 +332,7 @@ class DataAnonymizationRule {
     required this.type,
     required this.isActive,
     required this.createdAt,
+    this.replacementValue,
   });
 
   Map<String, dynamic> toJson() {
@@ -334,6 +342,7 @@ class DataAnonymizationRule {
       'type': type.name,
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
+      'replacementValue': replacementValue,
     };
   }
 
@@ -344,6 +353,7 @@ class DataAnonymizationRule {
       type: AnonymizationType.values.firstWhere((e) => e.name == json['type']),
       isActive: json['isActive'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      replacementValue: json['replacementValue'] as String?,
     );
   }
 }
@@ -359,6 +369,7 @@ class SecurityIncident {
   final bool isResolved;
   final DateTime? resolvedAt;
   final String? resolutionNotes;
+  final List<String> affectedUsers;
 
   const SecurityIncident({
     required this.id,
@@ -370,6 +381,7 @@ class SecurityIncident {
     required this.isResolved,
     this.resolvedAt,
     this.resolutionNotes,
+    this.affectedUsers = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -383,6 +395,7 @@ class SecurityIncident {
       'isResolved': isResolved,
       'resolvedAt': resolvedAt?.toIso8601String(),
       'resolutionNotes': resolutionNotes,
+      'affectedUsers': affectedUsers,
     };
   }
 
@@ -399,6 +412,7 @@ class SecurityIncident {
           ? DateTime.parse(json['resolvedAt'] as String) 
           : null,
       resolutionNotes: json['resolutionNotes'] as String?,
+      affectedUsers: (json['affectedUsers'] as List?)?.map((e) => e.toString()).toList() ?? const [],
     );
   }
 }

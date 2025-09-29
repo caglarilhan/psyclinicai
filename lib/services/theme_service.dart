@@ -56,7 +56,7 @@ class ThemeService extends ChangeNotifier {
   // White-label tema desteği
   final WhiteLabelConfig _whiteLabelConfig = WhiteLabelConfig();
 
-  ThemeMode get currentWhiteLabelTheme => _whiteLabelConfig.createCustomTheme();
+  ThemeData get currentWhiteLabelTheme => _whiteLabelConfig.createCustomTheme();
 
   Future<void> initialize() async {
     try {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/material.dart';
 import '../models/crm_models.dart';
 
 class CRMService {
@@ -377,8 +378,7 @@ class CRMService {
     return CRMAnalytics(
       totalCustomers: _customers.length,
       activeCustomers: _customers.where((c) => 
-        c.lastContact.isAfter(DateTime.now().subtract(const Duration(days: 30)))
-        .length,
+        c.lastContact.isAfter(DateTime.now().subtract(const Duration(days: 30)))).length,
       newCustomersThisMonth: _customers.where((c) => 
         c.createdAt.month == thisMonth && c.createdAt.year == thisYear)
         .length,

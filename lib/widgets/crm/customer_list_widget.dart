@@ -109,8 +109,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
         IconButton(
           onPressed: _showAddCustomerDialog,
           icon: const Icon(Icons.add),
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
+          style: IconButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
           tooltip: 'Yeni Müşteri Ekle',
         ),
       ],
@@ -216,7 +215,7 @@ class _CustomerListWidgetState extends State<CustomerListWidget> {
                 icon: Icon(
                   _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                 ),
-                backgroundColor: AppTheme.infoColor.withOpacity(0.1),
+                style: IconButton.styleFrom(backgroundColor: AppTheme.infoColor.withOpacity(0.1)),
                 tooltip: _sortAscending ? 'Azalan' : 'Artan',
               ),
             ],

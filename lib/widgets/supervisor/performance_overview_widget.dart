@@ -651,6 +651,8 @@ class PerformanceOverviewWidget extends StatelessWidget {
         return 'Vaka İncelemesi';
       case SupervisionType.skillAssessment:
         return 'Beceri Değerlendirmesi';
+      case SupervisionType.crisis:
+        return 'Kriz';
       case SupervisionType.supervision:
         return 'Genel Süpervizyon';
       case SupervisionType.crisisManagement:

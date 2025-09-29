@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/case_models.dart';
 import '../../services/case_service.dart';
 import '../../widgets/case/case_list_widget.dart';
-import '../../widgets/case/case_details_widget.dart';
-import '../../widgets/case/case_progress_widget.dart';
-import '../../widgets/case/case_goals_widget.dart';
-import '../../widgets/case/case_interventions_widget.dart';
-import '../../widgets/case/add_case_dialog.dart';
-import '../../widgets/case/add_progress_dialog.dart';
-import '../../widgets/case/add_goal_dialog.dart';
-import '../../widgets/case/add_intervention_dialog.dart';
-import '../../utils/app_theme.dart';
+// import '../../widgets/case/case_details_widget.dart';
+// import '../../widgets/case/case_progress_widget.dart';
+// import '../../widgets/case/case_goals_widget.dart';
+// import '../../widgets/case/case_interventions_widget.dart';
+// import '../../widgets/case/add_case_dialog.dart';
+// import '../../widgets/case/add_progress_dialog.dart';
+// import '../../widgets/case/add_goal_dialog.dart';
+// import '../../widgets/case/add_intervention_dialog.dart';
+import '../../utils/theme.dart';
 // Masaüstü optimizasyonu için import'lar
 import '../../utils/desktop_theme.dart';
 import '../../widgets/desktop/desktop_layout.dart';

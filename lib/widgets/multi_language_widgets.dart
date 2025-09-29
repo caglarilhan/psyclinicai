@@ -237,7 +237,7 @@ class _LanguageSettingsWidgetState extends State<LanguageSettingsWidget> {
             _buildStatItem(
               'Metin Yönü',
               _stats['textDirection'] == 'rtl' ? 'Sağdan Sola' : 'Soldan Sağa',
-              Icons.format_textdirection_ltr,
+              Icons.arrow_right_alt,
               Colors.purple,
             ),
           ],

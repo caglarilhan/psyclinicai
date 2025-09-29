@@ -240,7 +240,7 @@ class _PerformanceWidgetState extends State<PerformanceWidget> {
               children: [
                 Icon(
                   Icons.speed,
-                  color: AppTheme.primaryColor,
+                  color: Colors.blue,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -262,7 +262,7 @@ class _PerformanceWidgetState extends State<PerformanceWidget> {
             _buildStatItem(
               'Lazy Loaded',
               '${_stats['lazyLoadedItems'] ?? 0} öğe',
-              Icons.lazy_load,
+              Icons.download,
               Colors.green,
             ),
             
@@ -367,7 +367,7 @@ class _PerformanceWidgetState extends State<PerformanceWidget> {
 
 // Lazy loading widget'ı
 class LazyLoadingWidget<T> extends StatefulWidget {
-  final String key;
+  final String loadingKey;
   final Future<List<T>> Function() loader;
   final Widget Function(List<T>) builder;
   final Widget? loadingWidget;
@@ -375,7 +375,7 @@ class LazyLoadingWidget<T> extends StatefulWidget {
 
   const LazyLoadingWidget({
     super.key,
-    required this.key,
+    required this.loadingKey,
     required this.loader,
     required this.builder,
     this.loadingWidget,
@@ -406,7 +406,7 @@ class _LazyLoadingWidgetState<T> extends State<LazyLoadingWidget<T>> {
 
     try {
       final data = await _performanceService.lazyLoadData(
-        widget.key,
+        widget.loadingKey,
         widget.loader,
       );
       

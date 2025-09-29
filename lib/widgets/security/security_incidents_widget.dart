@@ -174,13 +174,17 @@ class SecurityIncidentsWidget extends StatelessWidget {
       case SecurityIncidentType.malware:
         return Icons.bug_report;
       case SecurityIncidentType.phishing:
-        return Icons.fishing;
+        return Icons.security;
       case SecurityIncidentType.socialEngineering:
         return Icons.psychology;
+      case SecurityIncidentType.configurationError:
+        return Icons.settings_suggest;
       case SecurityIncidentType.physicalSecurity:
         return Icons.security;
       case SecurityIncidentType.networkAttack:
         return Icons.wifi_off;
+      case SecurityIncidentType.insiderThreat:
+        return Icons.admin_panel_settings;
       case SecurityIncidentType.other:
         return Icons.warning;
     }

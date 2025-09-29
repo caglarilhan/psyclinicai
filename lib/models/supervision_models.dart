@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 part 'supervision_models.g.dart';
 
 // Enums
-enum SupervisionType { individual, group, caseReview, skillAssessment, crisis }
-enum SupervisionStatus { pending, inProgress, completed, cancelled }
+enum SupervisionType { individual, group, caseReview, skillAssessment, crisis, supervision, crisisManagement, documentationReview }
+enum SupervisionStatus { pending, inProgress, completed, cancelled, requiresFollowUp, scheduled }
 enum PerformanceRating { poor, fair, good, veryGood, excellent }
 enum SupervisionActivityType { sessionCreated, sessionCompleted, feedbackGiven, performanceUpdated }
 
@@ -128,6 +128,10 @@ class SupervisionSession {
         return 'Tamamlandı';
       case SupervisionStatus.cancelled:
         return 'İptal Edildi';
+      case SupervisionStatus.requiresFollowUp:
+        return 'Takip Gerekiyor';
+      case SupervisionStatus.scheduled:
+        return 'Planlandı';
     }
   }
 
@@ -143,6 +147,12 @@ class SupervisionSession {
         return 'Beceri Değerlendirmesi';
       case SupervisionType.crisis:
         return 'Kriz';
+      case SupervisionType.supervision:
+        return 'Süpervizyon';
+      case SupervisionType.crisisManagement:
+        return 'Kriz Yönetimi';
+      case SupervisionType.documentationReview:
+        return 'Dokümantasyon İncelemesi';
     }
   }
 
@@ -383,6 +393,30 @@ class QualityMetrics {
     if (qualityRate >= 0.6) return Colors.deepOrange;
     return Colors.red;
   }
+}
+
+class QualityMetric {
+  final String id;
+  final String metricName;
+  final String description;
+  final String category;
+  final double score; // 0.0 - 1.0
+  final String trend; // e.g., ↑%5, ↓%3, stabil
+  final double? targetValue; // 0.0 - 1.0
+  final double? weight; // 0.0 - 1.0
+  final String? notes;
+
+  QualityMetric({
+    required this.id,
+    required this.metricName,
+    required this.description,
+    required this.category,
+    required this.score,
+    required this.trend,
+    this.targetValue,
+    this.weight,
+    this.notes,
+  });
 }
 
 class SupervisionActivity {

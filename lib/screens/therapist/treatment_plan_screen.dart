@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../models/treatment_plan_models.dart';
@@ -563,6 +565,8 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen>
     switch (status) {
       case GoalStatus.active:
         return AppTheme.primaryColor;
+      case GoalStatus.onHold:
+        return AppTheme.warningColor;
       case GoalStatus.completed:
         return AppTheme.successColor;
       case GoalStatus.paused:

@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
+// Export formatları
+enum ExportFormat {
+  json,
+  csv,
+  pdf,
+  excel,
+}
+
+// Export türleri
+enum ExportType {
+  clients,
+  sessions,
+  diagnoses,
+  medications,
+  notes,
+  appointments,
+  all,
+}
+
 class DataExportService {
   static final DataExportService _instance = DataExportService._internal();
   factory DataExportService() => _instance;
   DataExportService._internal();
-
-  // Export formatları
-  enum ExportFormat {
-    json,
-    csv,
-    pdf,
-    excel,
-  }
-
-  // Export türleri
-  enum ExportType {
-    clients,
-    sessions,
-    diagnoses,
-    medications,
-    notes,
-    appointments,
-    all,
-  }
 
   // Export yap
   Future<String> exportData({
@@ -333,8 +333,8 @@ class DataExportWidget extends StatefulWidget {
 
 class _DataExportWidgetState extends State<DataExportWidget> {
   final DataExportService _exportService = DataExportService();
-  DataExportService.ExportType _selectedType = DataExportService.ExportType.all;
-  DataExportService.ExportFormat _selectedFormat = DataExportService.ExportFormat.json;
+  ExportType _selectedType = ExportType.all;
+  ExportFormat _selectedFormat = ExportFormat.json;
   bool _isExporting = false;
 
   @override
@@ -352,13 +352,13 @@ class _DataExportWidgetState extends State<DataExportWidget> {
             const SizedBox(height: 16),
             
             // Export türü seçimi
-            DropdownButtonFormField<DataExportService.ExportType>(
+            DropdownButtonFormField<ExportType>(
               value: _selectedType,
               decoration: const InputDecoration(
                 labelText: 'Export Türü',
                 border: OutlineInputBorder(),
               ),
-              items: DataExportService.ExportType.values.map((type) {
+              items: ExportType.values.map((type) {
                 return DropdownMenuItem(
                   value: type,
                   child: Text(_getExportTypeName(type)),
@@ -374,13 +374,13 @@ class _DataExportWidgetState extends State<DataExportWidget> {
             const SizedBox(height: 16),
             
             // Export format seçimi
-            DropdownButtonFormField<DataExportService.ExportFormat>(
+            DropdownButtonFormField<ExportFormat>(
               value: _selectedFormat,
               decoration: const InputDecoration(
                 labelText: 'Export Formatı',
                 border: OutlineInputBorder(),
               ),
-              items: DataExportService.ExportFormat.values.map((format) {
+              items: ExportFormat.values.map((format) {
                 return DropdownMenuItem(
                   value: format,
                   child: Text(_getExportFormatName(format)),
@@ -439,34 +439,34 @@ class _DataExportWidgetState extends State<DataExportWidget> {
     );
   }
 
-  String _getExportTypeName(DataExportService.ExportType type) {
+  String _getExportTypeName(ExportType type) {
     switch (type) {
-      case DataExportService.ExportType.clients:
+      case ExportType.clients:
         return 'Danışanlar';
-      case DataExportService.ExportType.sessions:
+      case ExportType.sessions:
         return 'Seanslar';
-      case DataExportService.ExportType.diagnoses:
+      case ExportType.diagnoses:
         return 'Tanılar';
-      case DataExportService.ExportType.medications:
+      case ExportType.medications:
         return 'İlaçlar';
-      case DataExportService.ExportType.notes:
+      case ExportType.notes:
         return 'Notlar';
-      case DataExportService.ExportType.appointments:
+      case ExportType.appointments:
         return 'Randevular';
-      case DataExportService.ExportType.all:
+      case ExportType.all:
         return 'Tüm Veriler';
     }
   }
 
-  String _getExportFormatName(DataExportService.ExportFormat format) {
+  String _getExportFormatName(ExportFormat format) {
     switch (format) {
-      case DataExportService.ExportFormat.json:
+      case ExportFormat.json:
         return 'JSON';
-      case DataExportService.ExportFormat.csv:
+      case ExportFormat.csv:
         return 'CSV';
-      case DataExportService.ExportFormat.pdf:
+      case ExportFormat.pdf:
         return 'PDF';
-      case DataExportService.ExportFormat.excel:
+      case ExportFormat.excel:
         return 'Excel';
     }
   }

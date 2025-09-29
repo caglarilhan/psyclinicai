@@ -172,7 +172,7 @@ class _SessionNotesEditorState extends State<SessionNotesEditor> {
           
           // Templates button
           _buildFormatButton(
-            icon: Icons.template,
+            icon: Icons.description,
             isActive: false,
             onPressed: _showTemplates,
             tooltip: 'Hızlı şablonlar',
@@ -414,7 +414,7 @@ class _SessionNotesEditorState extends State<SessionNotesEditor> {
             Row(
               children: [
                 Icon(
-                  Icons.template,
+                  Icons.description,
                   color: AppTheme.primaryColor,
                   size: 24,
                 ),

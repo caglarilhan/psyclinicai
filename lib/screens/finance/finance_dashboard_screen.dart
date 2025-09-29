@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/finance_models.dart';
 import '../../services/finance_service.dart';
 import '../../widgets/finance/financial_overview_widget.dart';
@@ -7,7 +8,7 @@ import '../../widgets/finance/invoice_list_widget.dart';
 import '../../widgets/finance/financial_charts_widget.dart';
 import '../../widgets/finance/add_transaction_dialog.dart';
 import '../../widgets/finance/add_invoice_dialog.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/theme.dart';
 import '../../utils/date_utils.dart';
 import '../../config/region_config.dart';
 // Masaüstü optimizasyonu için import'lar

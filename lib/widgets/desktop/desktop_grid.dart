@@ -3,6 +3,8 @@ import '../../utils/desktop_theme.dart';
 
 class DesktopGrid extends StatelessWidget {
   final List<DesktopGridItem> items;
+  // Geri uyumluluk: bazı ekranlar 'children' parametresi bekliyor
+  final List<Widget>? children;
   final int? crossAxisCount;
   final double? childAspectRatio;
   final double? crossAxisSpacing;
@@ -14,6 +16,7 @@ class DesktopGrid extends StatelessWidget {
   const DesktopGrid({
     super.key,
     required this.items,
+    this.children,
     this.crossAxisCount,
     this.childAspectRatio,
     this.crossAxisSpacing,
@@ -25,6 +28,32 @@ class DesktopGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (children != null) {
+      // children verildiyse doğrudan grid’e dök
+      final width = MediaQuery.of(context).size.width;
+      final sidebarWidth = DesktopTheme.getSidebarWidth(context);
+      final availableWidth = width - sidebarWidth - 32;
+
+      int columns = crossAxisCount ?? 2;
+      if (availableWidth >= 2000) columns = 4;
+      else if (availableWidth >= 1600) columns = 3;
+      else if (availableWidth >= 1200) columns = 2;
+      else columns = 1;
+
+      return GridView.builder(
+        shrinkWrap: shrinkWrap,
+        physics: physics,
+        padding: padding ?? const EdgeInsets.all(16),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          childAspectRatio: childAspectRatio ?? 1.5,
+          crossAxisSpacing: crossAxisSpacing ?? 16,
+          mainAxisSpacing: mainAxisSpacing ?? 16,
+        ),
+        itemCount: children!.length,
+        itemBuilder: (context, index) => children![index],
+      );
+    }
     final width = MediaQuery.of(context).size.width;
     final sidebarWidth = DesktopTheme.getSidebarWidth(context);
     final availableWidth = width - sidebarWidth - 32;
@@ -189,6 +218,8 @@ class DesktopGridCard extends StatelessWidget {
 class DesktopDataTable extends StatelessWidget {
   final List<DataColumn> columns;
   final List<DataRow> rows;
+  // Geri uyumluluk: bazı ekranlar headers gönderiyor
+  final List<String>? headers;
   final bool sortAscending;
   final int? sortColumnIndex;
   final Function(int, bool)? onSort;
@@ -202,6 +233,7 @@ class DesktopDataTable extends StatelessWidget {
     super.key,
     required this.columns,
     required this.rows,
+    this.headers,
     this.sortAscending = true,
     this.sortColumnIndex,
     this.onSort,
@@ -214,9 +246,12 @@ class DesktopDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColumns = columns.isNotEmpty
+        ? columns
+        : (headers ?? []).map((h) => DataColumn(label: Text(h))).toList();
     return DesktopTheme.desktopCard(
       child: DataTable(
-        columns: columns,
+        columns: effectiveColumns,
         rows: rows,
         sortAscending: sortAscending,
         sortColumnIndex: sortColumnIndex,

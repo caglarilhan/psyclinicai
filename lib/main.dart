@@ -27,6 +27,7 @@ import 'screens/case/case_management_screen.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/offline_sync_service.dart';
+import 'config/white_label_config.dart';
 import 'services/push_notification_service.dart';
 import 'services/biometric_auth_service.dart';
 import 'services/ai_service.dart';
@@ -95,6 +96,7 @@ import 'services/workflow_automation_service.dart';
 import 'widgets/workflow_automation_widgets.dart';
 import 'services/multi_language_service.dart';
 import 'widgets/multi_language_widgets.dart';
+import 'screens/landing/landing_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -202,17 +204,17 @@ class PsyClinicAIApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: ThemeService()),
-                  ChangeNotifierProvider(create: (_) => OfflineSyncService()),
-          ChangeNotifierProvider(create: (_) => PrescriptionAIService()),
+        // ChangeNotifierProvider(create: (_) => OfflineSyncService()),
+        ChangeNotifierProvider(create: (_) => PrescriptionAIService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
         ChangeNotifierProvider(create: (_) => ConsentService()),
-                  // ChangeNotifierProvider(create: (_) => DiagnosisService()),
+        // ChangeNotifierProvider(create: (_) => DiagnosisService()),
         ChangeNotifierProvider(create: (_) => MedicationService()),
-                     ChangeNotifierProvider(create: (_) => TelehealthService()),
-             ChangeNotifierProvider(create: (_) => AdvancedAIService()),
-                            // ChangeNotifierProvider(create: (_) => ClinicalDecisionSupportService()),
-             ChangeNotifierProvider(create: (_) => PerformanceOptimizationService()),
-             ChangeNotifierProvider(create: (_) => DocumentationService()),
+        ChangeNotifierProvider(create: (_) => TelehealthService()),
+        ChangeNotifierProvider(create: (_) => AdvancedAIService()),
+        // ChangeNotifierProvider(create: (_) => ClinicalDecisionSupportService()),
+        ChangeNotifierProvider(create: (_) => PerformanceOptimizationService()),
+        ChangeNotifierProvider(create: (_) => DocumentationService()),
         ChangeNotifierProvider(create: (_) => TherapyNoteService()),
         ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
         ChangeNotifierProvider(create: (_) => HomeworkService()),
@@ -225,6 +227,7 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LegalComplianceOrchestrator()),
         // Masaüstü servisleri için provider'lar
         ChangeNotifierProvider(create: (_) => KeyboardShortcutsService()),
+        ChangeNotifierProvider(create: (_) => WhiteLabelThemeProvider()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -236,8 +239,9 @@ class PsyClinicAIApp extends StatelessWidget {
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: AppTheme.themeMode,
-                home: const DashboardScreen(),
+                home: const LandingScreen(),
                 routes: {
+                  '/landing': (context) => const LandingScreen(),
                   '/login': (context) => const LoginScreen(),
                   '/dashboard': (context) => const DashboardScreen(),
                   '/session': (context) => const SessionScreen(
@@ -275,6 +279,8 @@ class PsyClinicAIApp extends StatelessWidget {
                   '/appointment-calendar': (context) => const AppointmentCalendarScreen(),
                   '/session-management': (context) => const SessionManagementScreen(),
                   '/case-management': (context) => const CaseManagementScreen(),
+                },
+              );
             },
           );
         },

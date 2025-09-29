@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import '../../utils/desktop_theme.dart';
 import '../../services/keyboard_shortcuts_service.dart';
 
@@ -11,6 +12,8 @@ class DesktopLayout extends StatefulWidget {
   final Widget? rightPanel;
   final bool showStatusBar;
   final bool showShortcuts;
+  // Geri uyumluluk: bazı ekranlarda doğrudan sidebarItems geçiliyor
+  final List<DesktopSidebarItem>? sidebarItems;
 
   const DesktopLayout({
     super.key,
@@ -21,6 +24,7 @@ class DesktopLayout extends StatefulWidget {
     this.rightPanel,
     this.showStatusBar = true,
     this.showShortcuts = true,
+    this.sidebarItems,
   });
 
   @override
@@ -103,7 +107,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               child: Row(
                 children: [
                   // Sidebar
-                  if (widget.sidebar != null && !_isSidebarCollapsed)
+                  if ((widget.sidebar != null || (widget.sidebarItems != null && widget.sidebarItems!.isNotEmpty)) && !_isSidebarCollapsed)
                     _buildSidebar(),
                   
                   // Main Content
@@ -179,7 +183,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           // Right Panel Toggle
           if (widget.rightPanel != null)
             IconButton(
-              icon: Icon(_isRightPanelCollapsed ? Icons.panel_right : Icons.panel_right_close),
+              icon: Icon(_isRightPanelCollapsed ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right),
               tooltip: 'Panel ${_isRightPanelCollapsed ? 'Aç' : 'Kapat'} (Ctrl+P)',
               onPressed: _toggleRightPanel,
             ),
@@ -243,10 +247,22 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           
           // Sidebar Content
           Expanded(
-            child: widget.sidebar!,
+            child: widget.sidebar ?? _buildSidebarFromItems(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSidebarFromItems() {
+    final items = widget.sidebarItems ?? const <DesktopSidebarItem>[];
+    return DesktopSidebar(
+      items: items,
+      selectedIndex: 0,
+      onItemSelected: (i) {
+        final cb = items[i].onTap;
+        if (cb != null) cb();
+      },
     );
   }
 
@@ -424,11 +440,14 @@ class DesktopSidebarItem {
   final String title;
   final IconData icon;
   final String? route;
+  // Geri uyumluluk: bazı ekranlar onTap bekliyor
+  final VoidCallback? onTap;
 
   const DesktopSidebarItem({
     required this.title,
     required this.icon,
     this.route,
+    this.onTap,
   });
 }
 

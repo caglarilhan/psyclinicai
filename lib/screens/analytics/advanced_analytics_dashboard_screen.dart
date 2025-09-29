@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../utils/theme.dart';
 import '../../models/analytics_models.dart';
 import '../../services/analytics_service.dart';
-import '../../widgets/analytics/chart_widgets.dart';
-import '../../widgets/analytics/metric_cards.dart';
+// import '../../widgets/analytics/chart_widgets.dart';
+// import '../../widgets/analytics/metric_cards.dart';
 import '../../widgets/analytics/trend_analysis_widget.dart';
 import '../../services/finance_service.dart';
 // Masaüstü optimizasyonu için import'lar

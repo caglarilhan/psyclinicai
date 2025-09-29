@@ -23,9 +23,15 @@ class PDFExportService {
   }) async {
     final pdf = pw.Document();
 
-    // Font yükleme
-    final fontData = await rootBundle.load("assets/fonts/Roboto-Regular.ttf");
-    final ttf = pw.Font.ttf(fontData);
+    // Font yükleme - Sistem fontlarını kullan
+    pw.Font? ttf;
+    try {
+      final fontData = await rootBundle.load("assets/fonts/Roboto-Regular.ttf");
+      ttf = pw.Font.ttf(fontData);
+    } catch (e) {
+      // Font bulunamazsa default font kullan
+      print('Font yüklenemedi, default font kullanılıyor: $e');
+    }
 
     pdf.addPage(
       pw.MultiPage(
@@ -70,7 +76,7 @@ class PDFExportService {
     required String sessionId,
     required DateTime sessionDate,
     required String therapistName,
-    required pw.Font ttf,
+    pw.Font? ttf,
   }) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
@@ -177,7 +183,7 @@ class PDFExportService {
   pw.Widget _buildSessionNotesPage({
     required String sessionNotes,
     required Duration sessionDuration,
-    required pw.Font ttf,
+    pw.Font? ttf,
   }) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
@@ -274,7 +280,7 @@ class PDFExportService {
   /// AI özeti sayfası
   pw.Widget _buildAISummaryPage({
     required String aiSummary,
-    required pw.Font ttf,
+    pw.Font? ttf,
   }) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),

@@ -41,8 +41,8 @@ class InvoiceListWidget extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: i.statusColor.withOpacity(0.1),
-              child: Icon(Icons.receipt, color: i.statusColor),
+              backgroundColor: _invoiceStatusColor(i.status).withOpacity(0.1),
+              child: Icon(Icons.receipt, color: _invoiceStatusColor(i.status)),
             ),
             title: Text(i.invoiceNumber),
             subtitle: Text('Müşteri: ${i.clientId} • Vade: ${AppDateUtils.formatDate(i.dueDate)}'),
@@ -57,14 +57,14 @@ class InvoiceListWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: i.statusColor.withOpacity(0.1),
+                    color: _invoiceStatusColor(i.status).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    i.statusText,
+                    _invoiceStatusText(i.status),
                     style: TextStyle(
                       fontSize: 12,
-                      color: i.statusColor,
+                      color: _invoiceStatusColor(i.status),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -72,7 +72,8 @@ class InvoiceListWidget extends StatelessWidget {
               ],
             ),
             onTap: () {},
-            trailing: Row(
+            // Actions: PDF/Share
+            subtitle: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
@@ -98,5 +99,35 @@ class InvoiceListWidget extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+Color _invoiceStatusColor(InvoiceStatus status) {
+  switch (status) {
+    case InvoiceStatus.paid:
+      return const Color(0xFF10B981);
+    case InvoiceStatus.overdue:
+      return const Color(0xFFEF4444);
+    case InvoiceStatus.sent:
+      return const Color(0xFF3B82F6);
+    case InvoiceStatus.cancelled:
+      return const Color(0xFF9CA3AF);
+    case InvoiceStatus.draft:
+      return const Color(0xFFF59E0B);
+  }
+}
+
+String _invoiceStatusText(InvoiceStatus status) {
+  switch (status) {
+    case InvoiceStatus.paid:
+      return 'Ödendi';
+    case InvoiceStatus.overdue:
+      return 'Gecikmiş';
+    case InvoiceStatus.sent:
+      return 'Gönderildi';
+    case InvoiceStatus.cancelled:
+      return 'İptal Edildi';
+    case InvoiceStatus.draft:
+      return 'Taslak';
   }
 }

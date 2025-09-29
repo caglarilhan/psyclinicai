@@ -211,7 +211,7 @@ class EncryptionWidget extends StatelessWidget {
           _buildRotationInfo(
             'Sonraki Rotasyon',
             _formatDate(config.nextKeyRotation),
-            Icons.future,
+            Icons.schedule,
             isOverdue ? Colors.red : (isSoon ? Colors.orange : Colors.green),
           ),
           

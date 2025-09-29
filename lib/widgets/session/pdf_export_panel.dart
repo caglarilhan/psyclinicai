@@ -28,7 +28,7 @@ class PDFExportPanel extends StatefulWidget {
 }
 
 class _PDFExportPanelState extends State<PDFExportPanel> {
-  final PdfExportService _pdfService = PdfExportService();
+  final PDFExportService _pdfService = PDFExportService();
   bool _isGeneratingPDF = false;
   bool _isOpeningPDF = false;
   bool _isSharingPDF = false;
@@ -415,7 +415,7 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     );
   }
 
-  // Generate Session Report (stub using simple text-only report via interaction report layout)
+  // Generate Session Report
   Future<void> _generateSessionReport() async {
     setState(() {
       _isGeneratingPDF = true;
@@ -423,13 +423,32 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
-      // Geçici: Etkileşim raporu şablonunu notlarla doldurup PDF üretmiyoruz.
-      // Bu panel için özel şablon uyarlaması planlandı.
-      await Future.delayed(const Duration(milliseconds: 600));
+      // PDF oluştur
+      final pdfBytes = await _pdfService.generateSessionPDF(
+        clientName: widget.clientName ?? 'Bilinmeyen Danışan',
+        sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
+        sessionNotes: widget.sessionNotes,
+        aiSummary: widget.aiSummary?.recommendedIntervention ?? '',
+        sessionDate: DateTime.now(),
+        sessionDuration: const Duration(minutes: 50),
+        therapistName: widget.therapistName ?? 'Terapist',
+      );
+
+      // PDF'i dosyaya kaydet
+      final fileName = 'seans_raporu_${DateTime.now().millisecondsSinceEpoch}';
+      final filePath = await _pdfService.savePDFToFile(pdfBytes, fileName);
+      
       setState(() {
+        _generatedPDF = File(filePath);
         _isGeneratingPDF = false;
-        _error = 'Bu panel yeni PDF motoruna uyarlanacak (yakında). Lütfen ilaç etkileşim/prescription panelinden PDF deneyin.';
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF başarıyla oluşturuldu: ${fileName}.pdf'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -454,7 +473,7 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     );
   }
 
-  // Open PDF (stub)
+  // Open PDF
   Future<void> _openPDF() async {
     if (_generatedPDF == null) return;
 
@@ -463,10 +482,12 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
-      // Uygun bir PDF viewer entegrasyonu planlanacak.
+      // PDF'i açmak için printing paketi kullan
+      await _pdfService.printPDF(await _generatedPDF!.readAsBytes());
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Dosya hazır: ${_generatedPDF!.path}'),
+          content: Text('PDF açılıyor...'),
           backgroundColor: AppTheme.successColor,
         ),
       );

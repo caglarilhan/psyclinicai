@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  # Static Web (Flutter build/web) via Caddy (auto HTTPS)
+  psyclinicai-web:
+    image: caddy:alpine
+    container_name: psyclinicai-web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../build/web:/usr/share/caddy:ro
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - psyclinicai-network
   # Main PsyClinicAI Application
   psyclinicai-app:
     build:
@@ -56,22 +71,7 @@ services:
     networks:
       - psyclinicai-network
 
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: psyclinicai-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - psyclinicai-app
-    restart: unless-stopped
-    networks:
-      - psyclinicai-network
+  # (Opsiyonel) Backend ve ters vekil yapı burada tanımlı. Web için gerekmeden çalışır.
 
   # Monitoring - Prometheus
   prometheus:
@@ -183,6 +183,10 @@ volumes:
   grafana_data:
     driver: local
   elasticsearch_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
     driver: local
 
 networks:

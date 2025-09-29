@@ -214,7 +214,7 @@ class RadarChartData {
   factory RadarChartData.fromJson(Map<String, dynamic> json) {
     return RadarChartData(
       label: json['label'] ?? '',
-      values: (json['values'] as List?)?.map((e) => (e ?? 0.0).toDouble()).toList() ?? [],
+      values: (json['values'] as List?)?.map<double>((e) => (e ?? 0.0).toDouble()).toList() ?? [],
       color: Color(json['color'] ?? 0xFF000000),
     );
   }

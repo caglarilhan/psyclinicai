@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import '../../utils/theme.dart';
 import '../../config/region_config.dart';
 import '../../models/security_models.dart';
@@ -728,13 +731,17 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
       case SecurityIncidentType.malware:
         return Icons.bug_report;
       case SecurityIncidentType.phishing:
-        return Icons.fishing;
+        return Icons.security;
       case SecurityIncidentType.socialEngineering:
         return Icons.psychology;
+      case SecurityIncidentType.configurationError:
+        return Icons.settings_suggest;
       case SecurityIncidentType.physicalSecurity:
         return Icons.security;
       case SecurityIncidentType.networkAttack:
         return Icons.wifi_off;
+      case SecurityIncidentType.insiderThreat:
+        return Icons.admin_panel_settings;
       case SecurityIncidentType.other:
         return Icons.warning;
     }
@@ -1275,8 +1282,8 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
         return Icons.edit;
       case AuditLogType.security:
         return Icons.security;
-      case AuditLogType.system:
-        return Icons.settings;
+      case AuditLogType.compliance:
+        return Icons.rule_folder;
     }
   }
 
@@ -1292,8 +1299,8 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> with 
         return Colors.purple;
       case AuditLogType.security:
         return Colors.red;
-      case AuditLogType.system:
-        return Colors.grey;
+      case AuditLogType.compliance:
+        return Colors.teal;
     }
   }
 

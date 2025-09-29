@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../utils/theme.dart';
-import '../../utils/app_constants.dart';
+// import '../../utils/app_constants.dart';
 import '../../widgets/therapist/therapist_tools_dashboard_widget.dart';
 import '../../widgets/region/region_selector_widget.dart';
 import '../../widgets/advanced_analytics_widgets.dart';
@@ -870,7 +871,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     context,
                     'İş Akışı Otomasyonu',
                     'Otomatik görevler ve onaylar',
-                    Icons.workflow,
+                    Icons.schema,
                     AppTheme.successColor,
                     () => Navigator.push(
                       context,

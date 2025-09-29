@@ -88,8 +88,7 @@ class _SalesPipelineWidgetState extends State<SalesPipelineWidget> {
         IconButton(
           onPressed: _showAddOpportunityDialog,
           icon: const Icon(Icons.add),
-          backgroundColor: AppTheme.accentColor,
-          foregroundColor: Colors.white,
+          style: IconButton.styleFrom(backgroundColor: AppTheme.accentColor, foregroundColor: Colors.white),
           tooltip: 'Yeni Fırsat Ekle',
         ),
       ],

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../models/case_models.dart';
-import '../../utils/app_theme.dart';
+import '../../utils/theme.dart';
 import '../../utils/date_utils.dart';
 
 class CaseListWidget extends StatelessWidget {
   final List<Case> cases;
   final Function(Case) onCaseSelected;
   final Case? selectedCase;
-  final VoidCallback onRefresh;
+  final VoidCallback? onRefresh;
 
   const CaseListWidget({
     super.key,
     required this.cases,
     required this.onCaseSelected,
     this.selectedCase,
-    required this.onRefresh,
+    this.onRefresh,
   });
 
   @override
@@ -51,7 +51,9 @@ class CaseListWidget extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async => onRefresh(),
+      onRefresh: () async {
+        if (onRefresh != null) onRefresh!();
+      },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: cases.length,

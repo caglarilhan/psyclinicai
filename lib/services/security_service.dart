@@ -137,8 +137,8 @@ class SecurityService {
       AuditLog(
         id: '1',
         userId: 'user1',
-        userName: 'Dr. Ahmet Yılmaz',
         action: 'Sisteme giriş yapıldı',
+        resource: 'system',
         type: AuditLogType.login,
         timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
         ipAddress: '192.168.1.100',
@@ -147,30 +147,26 @@ class SecurityService {
       AuditLog(
         id: '2',
         userId: 'user1',
-        userName: 'Dr. Ahmet Yılmaz',
         action: 'Danışan verisi görüntülendi',
+        resource: 'client123',
         type: AuditLogType.dataAccess,
         timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-        resourceId: 'client123',
-        resourceType: 'client',
         ipAddress: '192.168.1.100',
       ),
       AuditLog(
         id: '3',
         userId: 'user1',
-        userName: 'Dr. Ahmet Yılmaz',
         action: 'Seans notu güncellendi',
+        resource: 'session_notes',
         type: AuditLogType.dataModification,
         timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-        resourceId: 'session456',
-        resourceType: 'session',
         ipAddress: '192.168.1.100',
       ),
       AuditLog(
         id: '4',
         userId: 'user2',
-        userName: 'Dr. Ayşe Demir',
         action: 'Sisteme giriş yapıldı',
+        resource: 'system',
         type: AuditLogType.login,
         timestamp: DateTime.now().subtract(const Duration(minutes: 10)),
         ipAddress: '192.168.1.101',
@@ -179,8 +175,8 @@ class SecurityService {
       AuditLog(
         id: '5',
         userId: 'user2',
-        userName: 'Dr. Ayşe Demir',
         action: 'Güvenlik ayarları değiştirildi',
+        resource: 'security_settings',
         type: AuditLogType.security,
         timestamp: DateTime.now().subtract(const Duration(minutes: 8)),
         ipAddress: '192.168.1.101',
@@ -191,55 +187,60 @@ class SecurityService {
     _complianceReports.addAll([
       ComplianceReport(
         id: '1',
-        complianceType: 'KVKK Uyumluluğu',
+        title: 'KVKK Uyumluluğu',
+        framework: ComplianceFramework.kvkk,
         status: ComplianceStatus.compliant,
-        lastChecked: DateTime.now().subtract(const Duration(days: 1)),
-        nextCheck: DateTime.now().add(const Duration(days: 29)),
+        reportDate: DateTime.now().subtract(const Duration(days: 1)),
         notes: 'Tüm KVKK gereksinimleri karşılanıyor',
         requirements: [
           ComplianceRequirement(
             id: 'kvkk1',
             title: 'Açık Rıza',
             description: 'Kullanıcı açık rıza veriyor',
-            isCompliant: true,
+            framework: ComplianceFramework.kvkk,
+            status: ComplianceStatus.compliant,
             lastChecked: DateTime.now().subtract(const Duration(days: 1)),
           ),
           ComplianceRequirement(
             id: 'kvkk2',
             title: 'Veri Güvenliği',
             description: 'AES-256 şifreleme aktif',
-            isCompliant: true,
+            framework: ComplianceFramework.kvkk,
+            status: ComplianceStatus.compliant,
             lastChecked: DateTime.now().subtract(const Duration(days: 1)),
           ),
           ComplianceRequirement(
             id: 'kvkk3',
             title: 'Veri Silme Hakkı',
             description: 'Kullanıcı verilerini silebiliyor',
-            isCompliant: true,
+            framework: ComplianceFramework.kvkk,
+            status: ComplianceStatus.compliant,
             lastChecked: DateTime.now().subtract(const Duration(days: 1)),
           ),
         ],
       ),
       ComplianceReport(
         id: '2',
-        complianceType: 'HIPAA Uyumluluğu',
+        title: 'HIPAA Uyumluluğu',
+        framework: ComplianceFramework.hipaa,
         status: ComplianceStatus.compliant,
-        lastChecked: DateTime.now().subtract(const Duration(days: 5)),
-        nextCheck: DateTime.now().add(const Duration(days: 25)),
+        reportDate: DateTime.now().subtract(const Duration(days: 5)),
         notes: 'HIPAA gereksinimleri karşılanıyor',
         requirements: [
           ComplianceRequirement(
             id: 'hipaa1',
             title: 'PHI Koruması',
             description: 'Sağlık bilgileri korunuyor',
-            isCompliant: true,
+            framework: ComplianceFramework.hipaa,
+            status: ComplianceStatus.compliant,
             lastChecked: DateTime.now().subtract(const Duration(days: 5)),
           ),
           ComplianceRequirement(
             id: 'hipaa2',
             title: 'Audit Trail',
             description: 'Tüm erişimler loglanıyor',
-            isCompliant: true,
+            framework: ComplianceFramework.hipaa,
+            status: ComplianceStatus.compliant,
             lastChecked: DateTime.now().subtract(const Duration(days: 5)),
           ),
         ],
@@ -255,12 +256,10 @@ class SecurityService {
         type: SecurityIncidentType.unauthorizedAccess,
         severity: SecurityIncidentSeverity.low,
         detectedAt: DateTime.now().subtract(const Duration(hours: 2)),
-        affectedUsers: ['user1'],
-        affectedData: [],
         isResolved: true,
         resolvedAt: DateTime.now().subtract(const Duration(hours: 1)),
-        resolvedBy: 'system',
         resolutionNotes: 'IP adresi engellendi',
+        affectedUsers: ['user1'],
       ),
       SecurityIncident(
         id: '2',
@@ -269,9 +268,8 @@ class SecurityService {
         type: SecurityIncidentType.unauthorizedAccess,
         severity: SecurityIncidentSeverity.medium,
         detectedAt: DateTime.now().subtract(const Duration(days: 1)),
-        affectedUsers: ['user2'],
-        affectedData: ['client_data'],
         isResolved: false,
+        affectedUsers: ['user2'],
       ),
     ]);
 
@@ -334,6 +332,7 @@ class SecurityService {
         permissions: [],
         isActive: false,
         createdAt: DateTime.now(),
+        createdBy: 'system',
       ),
     );
     
@@ -354,7 +353,6 @@ class SecurityService {
     required SecurityIncidentType type,
     required SecurityIncidentSeverity severity,
     required List<String> affectedUsers,
-    required List<String> affectedData,
   }) {
     final incident = SecurityIncident(
       id: 'incident_${DateTime.now().millisecondsSinceEpoch}',
@@ -363,9 +361,8 @@ class SecurityService {
       type: type,
       severity: severity,
       detectedAt: DateTime.now(),
-      affectedUsers: affectedUsers,
-      affectedData: affectedData,
       isResolved: false,
+      affectedUsers: affectedUsers,
     );
     
     _securityIncidents.add(incident);
@@ -390,12 +387,10 @@ class SecurityService {
         type: incident.type,
         severity: incident.severity,
         detectedAt: incident.detectedAt,
-        resolvedAt: DateTime.now(),
-        resolvedBy: resolvedBy,
-        affectedUsers: incident.affectedUsers,
-        affectedData: incident.affectedData,
-        resolutionNotes: notes,
         isResolved: true,
+        resolvedAt: DateTime.now(),
+        resolutionNotes: notes,
+        affectedUsers: incident.affectedUsers,
       );
       
       _addAuditLog(
@@ -512,9 +507,9 @@ class SecurityService {
   }
 
   // Güvenlik durumu
-  SecurityStatus getSecurityStatus() => _securityStatus;
+  SecurityStatusDetails getSecurityStatus() => _securityStatus;
   
-  void updateSecurityStatus(SecurityStatus status) {
+  void updateSecurityStatus(SecurityStatusDetails status) {
     _securityStatus = status;
     _addAuditLog(
       userId: 'system',
@@ -626,11 +621,11 @@ class SecurityService {
   // Mevcut metodlar
   void addAuditLog(AuditLog log) => _addAuditLog(
     userId: log.userId,
-    userName: log.userName,
+    userName: 'user',
     action: log.action,
     type: log.type,
-    resourceId: log.resourceId,
-    resourceType: log.resourceType,
+    resourceId: log.resource,
+    resourceType: 'resource',
     ipAddress: log.ipAddress,
     userAgent: log.userAgent,
   );
@@ -648,12 +643,10 @@ class SecurityService {
     final log = AuditLog(
       id: 'log_${DateTime.now().millisecondsSinceEpoch}',
       userId: userId,
-      userName: userName,
       action: action,
+      resource: resourceId ?? 'system',
       type: type,
       timestamp: DateTime.now(),
-      resourceId: resourceId,
-      resourceType: resourceType,
       ipAddress: ipAddress ?? 'unknown',
       userAgent: userAgent,
     );

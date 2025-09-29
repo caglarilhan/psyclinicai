@@ -19,6 +19,12 @@ class DesktopTheme {
   static const double topBarHeight = 64.0;
   static const double panelMinWidth = 400.0;
   static const double panelMaxWidth = 600.0;
+  // Spacing ölçekleri
+  static const double spacingXs = 6.0;
+  static const double spacingSm = 10.0;
+  static const double spacingMd = 16.0;
+  static const double spacingLg = 24.0;
+  static const double spacingXl = 32.0;
 
   // Masaüstü tema
   static ThemeData get desktopTheme {
@@ -49,12 +55,13 @@ class DesktopTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        elevation: 1,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: desktopBorder),
         ),
         color: Colors.white,
-        shadowColor: desktopShadow.withOpacity(0.08),
+        shadowColor: Colors.transparent,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -147,6 +154,19 @@ class DesktopTheme {
     );
   }
 
+  // Eski ekranların kullandığı stil kısayolları (geri uyumluluk)
+  static const TextStyle desktopSectionTitleStyle = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF1E293B),
+  );
+
+  static const TextStyle desktopTitleStyle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: Color(0xFF1E293B),
+  );
+
   // Masaüstü boyutları için yardımcı metodlar
   static bool isDesktop(BuildContext context) {
     return MediaQuery.of(context).size.width >= desktopMinWidth;
@@ -231,6 +251,7 @@ class DesktopTheme {
     required String label,
     required TextEditingController controller,
     String? hint,
+    String? hintText,
     TextInputType? keyboardType,
     bool isMultiline = false,
     int? maxLines,
@@ -252,7 +273,7 @@ class DesktopTheme {
           keyboardType: keyboardType,
           maxLines: isMultiline ? (maxLines ?? 4) : 1,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: hint ?? hintText,
             filled: true,
             fillColor: desktopSurfaceVariant,
             border: OutlineInputBorder(

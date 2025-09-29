@@ -40,10 +40,10 @@ class TransactionListWidget extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: t.typeColor.withOpacity(0.1),
+              backgroundColor: _typeColor(t).withOpacity(0.1),
               child: Icon(
                 t.isIncome ? Icons.trending_up : Icons.trending_down,
-                color: t.typeColor,
+                color: _typeColor(t),
               ),
             ),
             title: Text(t.description),
@@ -55,14 +55,14 @@ class TransactionListWidget extends StatelessWidget {
                 Text(
                   '${t.isIncome ? '+' : '-'}₺${t.amount.toStringAsFixed(2)}',
                   style: TextStyle(
-                    color: t.typeColor,
+                    color: _typeColor(t),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   t.paymentStatusText,
                   style: TextStyle(
-                    color: t.paymentStatusColor,
+                    color: _paymentStatusColor(t.paymentStatus),
                     fontSize: 12,
                   ),
                 ),
@@ -73,5 +73,24 @@ class TransactionListWidget extends StatelessWidget {
         );
       },
     );
+  }
+
+  Color _typeColor(FinancialTransaction t) {
+    return t.isIncome ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+  }
+
+  Color _paymentStatusColor(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.paid:
+        return const Color(0xFF10B981);
+      case PaymentStatus.pending:
+        return const Color(0xFFF59E0B);
+      case PaymentStatus.overdue:
+        return const Color(0xFFEF4444);
+      case PaymentStatus.cancelled:
+        return const Color(0xFF9CA3AF);
+      case PaymentStatus.refunded:
+        return const Color(0xFF3B82F6);
+    }
   }
 }

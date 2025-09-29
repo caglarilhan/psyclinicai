@@ -18,7 +18,7 @@ class ApiService {
   };
 
   // API endpoints
-  static const String _endpoints = {
+  static const Map<String, String> _endpoints = {
     'auth': '/auth',
     'clients': '/clients',
     'sessions': '/sessions',
@@ -140,7 +140,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getClient(String id) async {
-    return await _getData('${_endpoints['clients']}/$id');
+    return await _getDataMap('${_endpoints['clients']}/$id');
   }
 
   Future<Map<String, dynamic>> createClient(Map<String, dynamic> data) async {
@@ -183,7 +183,7 @@ class ApiService {
 
   // Analytics
   Future<Map<String, dynamic>> getAnalytics({Map<String, dynamic>? filters}) async {
-    return await _getData(_endpoints['analytics']!, filters);
+    return await _getDataMap(_endpoints['analytics']!, filters);
   }
 
   // Export
@@ -235,6 +235,27 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return List<Map<String, dynamic>>.from(data);
+      } else {
+        throw Exception('GET failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('GET error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _getDataMap(String endpoint, [Map<String, dynamic>? filters]) async {
+    try {
+      final uri = Uri.parse('$_baseUrl$endpoint');
+      final queryParams = filters?.map((key, value) => MapEntry(key, value.toString())) ?? {};
+
+      final response = await http.get(
+        uri.replace(queryParameters: queryParams),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Map<String, dynamic>.from(data);
       } else {
         throw Exception('GET failed: ${response.statusCode}');
       }

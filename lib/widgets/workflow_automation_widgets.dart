@@ -41,7 +41,7 @@ class _WorkflowManagementWidgetState extends State<WorkflowManagementWidget> {
           title: Row(
             children: [
               Icon(
-                Icons.workflow,
+                Icons.schema,
                 color: AppTheme.primaryColor,
               ),
               const SizedBox(width: 8),
@@ -495,7 +495,7 @@ class _WorkflowManagementWidgetState extends State<WorkflowManagementWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.workflow,
+            Icons.schema,
             size: 80,
             color: Colors.grey[400],
           ),
@@ -786,7 +786,7 @@ class _WorkflowStatsWidgetState extends State<WorkflowStatsWidget> {
             Row(
               children: [
                 Icon(
-                  Icons.workflow,
+                  Icons.schema,
                   color: AppTheme.primaryColor,
                 ),
                 const SizedBox(width: 8),
@@ -801,7 +801,7 @@ class _WorkflowStatsWidgetState extends State<WorkflowStatsWidget> {
             _buildStatItem(
               'Toplam İş Akışı',
               '${_stats['totalWorkflows'] ?? 0}',
-              Icons.workflow,
+              Icons.schema,
               Colors.blue,
             ),
             

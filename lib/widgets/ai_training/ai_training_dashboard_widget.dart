@@ -149,7 +149,7 @@ class _AIModelTrainingDashboardWidgetState extends State<AIModelTrainingDashboar
             children: [
               Expanded(child: _buildStatCard('Datasets', totalDatasets.toString(), Icons.storage, Colors.orange)),
               const SizedBox(width: 16),
-              Expanded(child: _buildStatCard('Templates', _templates.length.toString(), Icons.template, Colors.teal)),
+              Expanded(child: _buildStatCard('Templates', _templates.length.toString(), Icons.description, Colors.teal)),
             ],
           ),
           

@@ -70,7 +70,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildComplianceTab() {
-    return StreamBuilder<List<ComplianceFramework>>(
+    return StreamBuilder<List<EnhancedComplianceFramework>>(
       stream: _securityService.complianceStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -146,7 +146,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildRetentionTab() {
-    return StreamBuilder<List<DataRetentionPolicy>>(
+    return StreamBuilder<List<EnhancedDataRetentionPolicy>>(
       stream: _securityService.retentionStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -223,7 +223,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildEncryptionTab() {
-    return StreamBuilder<List<EncryptionConfig>>(
+    return StreamBuilder<List<EnhancedEncryptionConfig>>(
       stream: _securityService.encryptionStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -299,7 +299,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildAccessControlTab() {
-    return StreamBuilder<List<AccessControlPolicy>>(
+    return StreamBuilder<List<EnhancedAccessControlPolicy>>(
       stream: _securityService.accessStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -377,7 +377,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildAnonymizationTab() {
-    return StreamBuilder<List<DataAnonymizationRule>>(
+    return StreamBuilder<List<EnhancedDataAnonymizationRule>>(
       stream: _securityService.anonymizationStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -454,7 +454,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
   }
 
   Widget _buildIncidentsTab() {
-    return StreamBuilder<List<SecurityIncident>>(
+    return StreamBuilder<List<EnhancedSecurityIncident>>(
       stream: _securityService.incidentStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
@@ -636,7 +636,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo compliance framework
-              final framework = ComplianceFramework(
+              final framework = EnhancedComplianceFramework(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 name: 'Demo Framework',
                 region: 'Demo',
@@ -669,7 +669,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo retention policy
-              final policy = DataRetentionPolicy(
+              final policy = EnhancedDataRetentionPolicy(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 name: 'Demo Policy',
                 description: 'Demo retention policy',
@@ -702,7 +702,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo encryption config
-              final config = EncryptionConfig(
+              final config = EnhancedEncryptionConfig(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 name: 'Demo Config',
                 algorithm: 'AES-256',
@@ -735,7 +735,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo access policy
-              final policy = AccessControlPolicy(
+              final policy = EnhancedAccessControlPolicy(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 name: 'Demo Policy',
                 description: 'Demo access policy',
@@ -769,7 +769,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo anonymization rule
-              final rule = DataAnonymizationRule(
+              final rule = EnhancedDataAnonymizationRule(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 name: 'Demo Rule',
                 description: 'Demo anonymization rule',
@@ -802,7 +802,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
           ElevatedButton(
             onPressed: () {
               // Demo security incident
-              final incident = SecurityIncident(
+              final incident = EnhancedSecurityIncident(
                 id: 'demo-${DateTime.now().millisecondsSinceEpoch}',
                 title: 'Demo Incident',
                 description: 'Demo security incident',
@@ -824,13 +824,13 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     );
   }
 
-  void _handleComplianceAction(String action, ComplianceFramework framework) {
+  void _handleComplianceAction(String action, EnhancedComplianceFramework framework) {
     switch (action) {
       case 'edit':
         // Edit functionality
         break;
       case 'toggle':
-        final updated = ComplianceFramework(
+        final updated = EnhancedComplianceFramework(
           id: framework.id,
           name: framework.name,
           region: framework.region,
@@ -849,13 +849,13 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     }
   }
 
-  void _handleRetentionAction(String action, DataRetentionPolicy policy) {
+  void _handleRetentionAction(String action, EnhancedDataRetentionPolicy policy) {
     switch (action) {
       case 'edit':
         // Edit functionality
         break;
       case 'toggle':
-        final updated = DataRetentionPolicy(
+        final updated = EnhancedDataRetentionPolicy(
           id: policy.id,
           name: policy.name,
           description: policy.description,
@@ -876,13 +876,13 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     }
   }
 
-  void _handleEncryptionAction(String action, EncryptionConfig config) {
+  void _handleEncryptionAction(String action, EnhancedEncryptionConfig config) {
     switch (action) {
       case 'edit':
         // Edit functionality
         break;
       case 'toggle':
-        final updated = EncryptionConfig(
+        final updated = EnhancedEncryptionConfig(
           id: config.id,
           name: config.name,
           algorithm: config.algorithm,
@@ -902,13 +902,13 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     }
   }
 
-  void _handleAccessAction(String action, AccessControlPolicy policy) {
+  void _handleAccessAction(String action, EnhancedAccessControlPolicy policy) {
     switch (action) {
       case 'edit':
         // Edit functionality
         break;
       case 'toggle':
-        final updated = AccessControlPolicy(
+        final updated = EnhancedAccessControlPolicy(
           id: policy.id,
           name: policy.name,
           description: policy.description,
@@ -931,13 +931,13 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     }
   }
 
-  void _handleAnonymizationAction(String action, DataAnonymizationRule rule) {
+  void _handleAnonymizationAction(String action, EnhancedDataAnonymizationRule rule) {
     switch (action) {
       case 'edit':
         // Edit functionality
         break;
       case 'toggle':
-        final updated = DataAnonymizationRule(
+        final updated = EnhancedDataAnonymizationRule(
           id: rule.id,
           name: rule.name,
           description: rule.description,
@@ -958,7 +958,7 @@ class _EnhancedSecurityDashboardWidgetState extends State<EnhancedSecurityDashbo
     }
   }
 
-  void _handleIncidentAction(String action, SecurityIncident incident) {
+  void _handleIncidentAction(String action, EnhancedSecurityIncident incident) {
     switch (action) {
       case 'view':
         // View functionality

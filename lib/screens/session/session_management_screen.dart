@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import '../../utils/theme.dart';
 import '../../models/session_models.dart';
 import '../../services/session_service.dart';
 import '../../services/ai_service.dart';
 import '../../widgets/session/session_notes_editor.dart';
 import '../../widgets/session/ai_summary_widget.dart';
-import '../../widgets/session/client_info_panel.dart';
-import '../../widgets/session/session_timeline.dart';
-import '../../widgets/session/emotion_tracker.dart';
-import '../../widgets/session/goal_progress_tracker.dart';
-import '../../widgets/session/homework_assignment.dart';
-import '../../widgets/session/next_session_planner.dart';
+// import '../../widgets/session/client_info_panel.dart';
+// import '../../widgets/session/session_timeline.dart';
+// import '../../widgets/session/emotion_tracker.dart';
+// import '../../widgets/session/goal_progress_tracker.dart';
+// import '../../widgets/session/homework_assignment.dart';
+// import '../../widgets/session/next_session_planner.dart';
 // Masaüstü optimizasyonu için import'lar
 import '../../utils/desktop_theme.dart';
 import '../../widgets/desktop/desktop_layout.dart';

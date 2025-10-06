@@ -20,6 +20,7 @@ class PDFExportService {
     required DateTime sessionDate,
     required Duration sessionDuration,
     required String therapistName,
+    List<Uint8List>? attachments,
   }) async {
     final pdf = pw.Document();
 
@@ -61,6 +62,10 @@ class PDFExportService {
               ttf: ttf,
             ),
           
+          // Ekler sayfası (varsa)
+          if ((attachments ?? []).isNotEmpty)
+            _buildAttachmentsPage(attachments!, ttf),
+
           // Footer sayfası
           _buildFooterPage(ttf: ttf),
         ],
@@ -360,7 +365,7 @@ class PDFExportService {
   }
 
   /// Footer sayfası
-  pw.Widget _buildFooterPage({required pw.Font ttf}) {
+  pw.Widget _buildFooterPage({pw.Font? ttf}) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
       child: pw.Column(
@@ -455,7 +460,7 @@ class PDFExportService {
   }
 
   /// Bilgi satırı oluştur
-  pw.Widget _buildInfoRow(String label, String value, pw.Font ttf) {
+  pw.Widget _buildInfoRow(String label, String value, pw.Font? ttf) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 5),
       child: pw.Row(
@@ -480,6 +485,54 @@ class PDFExportService {
               color: PdfColors.black,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Ekler sayfası (görseller)
+  pw.Widget _buildAttachmentsPage(List<Uint8List> attachments, pw.Font? ttf) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(20),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            padding: const pw.EdgeInsets.all(15),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.purple50,
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+            ),
+            child: pw.Row(
+              children: [
+                pw.Icon(pw.IconData(0xe3b6), color: PdfColors.purple), // attachment icon
+                pw.SizedBox(width: 10),
+                pw.Text(
+                  'EKLER',
+                  style: pw.TextStyle(
+                    font: ttf,
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.purple,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          pw.SizedBox(height: 16),
+
+          ...attachments.map((bytes) => pw.Container(
+                margin: const pw.EdgeInsets.only(bottom: 12),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+                ),
+                child: pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain, height: 300),
+                ),
+              )),
         ],
       ),
     );

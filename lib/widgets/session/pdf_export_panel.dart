@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import '../../services/pdf_export_service.dart';
 import '../../utils/theme.dart';
 import '../../models/ai_response_models.dart';
@@ -34,6 +36,9 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
   bool _isSharingPDF = false;
   File? _generatedPDF;
   String? _error;
+
+  late final TextEditingController _notesController;
+  final List<Uint8List> _attachments = [];
 
   @override
   Widget build(BuildContext context) {
@@ -105,13 +110,69 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
         ),
         
         const SizedBox(height: 20),
+
+        // Manual notes editor
+        Text(
+          'Seans Notları',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _notesController,
+          maxLines: 6,
+          decoration: InputDecoration(
+            hintText: 'Notlarınızı buraya yazın veya yapıştırın...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Quick templates
+        Text(
+          'Hazır Şablonlar',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _presetChip('SOAP', _soapTemplate()),
+            _presetChip('CBT', _cbtTemplate()),
+            _presetChip('EMDR', _emdrTemplate()),
+            _presetChip('Aile Seansı', _familyTemplate()),
+            _presetChip('Kriz Müdahalesi', _crisisTemplate()),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Attachments row
+        Row(
+          children: [
+            ElevatedButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.add_a_photo),
+              label: const Text('Fotoğraf / Görsel Ekle'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (_attachments.isNotEmpty)
+              Text('${_attachments.length} görsel eklendi',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
         
         // Export Options
         _buildExportOption(
           context,
           icon: Icons.description,
           title: 'Seans Raporu',
-          description: 'Seans notları ve AI analizi ile birlikte',
+          description: 'Seans notları, AI özeti ve ekler ile birlikte',
           onTap: _generateSessionReport,
         ),
         
@@ -167,6 +228,52 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
       ],
     );
   }
+
+  Widget _presetChip(String label, String content) {
+    return ActionChip(
+      label: Text(label),
+      avatar: const Icon(Icons.note_add, size: 18),
+      backgroundColor: AppTheme.infoColor.withValues(alpha: 0.08),
+      onPressed: () {
+        setState(() {
+          _notesController.text = content;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"$label" şablonu uygulandı'),
+            backgroundColor: AppTheme.infoColor,
+          ),
+        );
+      },
+    );
+  }
+
+  String _soapTemplate() =>
+      'S: Danışan son hafta yoğun kaygı ve uyku sorunları bildirdi.\n'
+      'O: Seans boyunca huzursuzluk, nefes egzersizleri ile kısmi rahatlama.\n'
+      'A: Yaygın anksiyete belirtileri, bilişsel çarpıtmalar gözlendi.\n'
+      'P: Günlük 2x nefes egzersizi, düşünce kaydı, bir hafta sonra kontrol.';
+
+  String _cbtTemplate() =>
+      'Hedef: Kaygı yönetimi ve işlevsel düşünceleri artırma.\n'
+      'Teknik: Düşünce-duygu-davranış zinciri, bilişsel yeniden yapılandırma.\n'
+      'Ev Ödevi: Düşünce kaydı formu (en az 3 kayıt), 4-7-8 nefes.';
+
+  String _emdrTemplate() =>
+      'Hedef Anı: Son trafik kazası anısı (SUD: 7).\n'
+      'Olumsuz İnanç: “Kontrolde değilim”.\n'
+      'Pozitif İnanç: “Güvendeyim ve yönetebilirim”.\n'
+      'Prosedür: BLS ile 6 set, SUD 7→3, VoC 3→5.';
+
+  String _familyTemplate() =>
+      'Katılımcılar: Danışan + ebeveynler.\n'
+      'Odak: İletişim kalıpları, sınır koyma, rol çatışmaları.\n'
+      'Müdahale: Yansıtıcı dinleme, ben dili, hafta içi 2 aile rutini.';
+
+  String _crisisTemplate() =>
+      'Durum: Akut panik atağı sonrası başvuru.\n'
+      'Risk: İntihar düşüncesi yok, zarar verme yok.\n'
+      'Plan: Güvenlik planı, tetikleyici yönetimi, kısa nefes egzersizleri.';
 
   Widget _buildGeneratingState(BuildContext context) {
     return Center(
@@ -427,11 +534,12 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
       final pdfBytes = await _pdfService.generateSessionPDF(
         clientName: widget.clientName ?? 'Bilinmeyen Danışan',
         sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
-        sessionNotes: widget.sessionNotes,
+        sessionNotes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : widget.sessionNotes,
         aiSummary: widget.aiSummary?.recommendedIntervention ?? '',
         sessionDate: DateTime.now(),
         sessionDuration: const Duration(minutes: 50),
         therapistName: widget.therapistName ?? 'Terapist',
+        attachments: _attachments,
       );
 
       // PDF'i dosyaya kaydet
@@ -537,6 +645,51 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
       _isGeneratingPDF = false;
       _isOpeningPDF = false;
       _isSharingPDF = false;
+      _attachments.clear();
+      _notesController.text = widget.sessionNotes;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController(text: widget.sessionNotes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.image,
+        withData: true,
+      );
+      if (result == null) return;
+      final added = <Uint8List>[];
+      for (final f in result.files) {
+        if (f.bytes != null) {
+          added.add(f.bytes!);
+        } else if (f.path != null) {
+          added.add(await File(f.path!).readAsBytes());
+        }
+      }
+      if (added.isNotEmpty) {
+        setState(() {
+          _attachments.addAll(added);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Görsel seçilemedi: ${e.toString()}'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 }

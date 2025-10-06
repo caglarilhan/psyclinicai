@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import '../../services/pdf_export_service.dart';
 import '../../services/audit_log_service.dart';
+import '../../utils/access_control.dart';
 import '../../utils/theme.dart';
 import '../../models/ai_response_models.dart';
 
@@ -639,6 +640,17 @@ class _PDFExportPanelState extends State<PDFExportPanel> {
     });
 
     try {
+      // Role check: varsayılan rol therapist, gerçek kimlik yönetimine bağlanabilir
+      const currentRole = AccessControl.roleTherapist;
+      if (!AccessControl.isAllowed(currentRole, AccessControl.actPdfShare)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bu eylem için yetkiniz yok'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+        return;
+      }
       await Share.shareXFiles([XFile(_generatedPDF!.path)], text: 'PsyClinicAI PDF');
       // audit: share
       final actor = widget.therapistName ?? 'unknown';

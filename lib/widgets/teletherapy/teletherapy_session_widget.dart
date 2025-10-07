@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import '../../services/teletherapy_service.dart';
 import '../../utils/theme.dart';
+import '../../utils/identity_validation.dart';
 
 class TeletherapySessionWidget extends StatefulWidget {
   final String clientName;
@@ -20,6 +21,10 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   Timer? _timer;
   Duration _elapsed = Duration.zero;
   final TextEditingController _passController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController(text: 'TR');
+  final TextEditingController _idController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +89,17 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Kimlik doğrulama alanları
+                    TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Ad Soyad')),
+                    const SizedBox(height: 8),
+                    TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'E-posta')),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(child: TextField(controller: _countryController, decoration: const InputDecoration(labelText: 'Ülke (TR/US/UK/DE/FR)'))),
+                      const SizedBox(width: 8),
+                      Expanded(child: TextField(controller: _idController, decoration: const InputDecoration(labelText: 'Kimlik/SSN/NHS'))),
+                    ]),
+                    const SizedBox(height: 8),
                     if (_session!.locked) ...[
                       TextField(
                         controller: _passController,
@@ -131,6 +147,39 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
 
   Future<void> _join() async {
     final s = _session; if (s == null) return;
+    // Kimlik doğrulama
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final country = _countryController.text.trim().toUpperCase();
+    final idVal = _idController.text.trim();
+    if (name.isEmpty || !IdentityValidation.isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ad ve geçerli e-posta zorunlu')));
+      return;
+    }
+    bool idOk = true;
+    switch (country) {
+      case 'TR':
+        idOk = IdentityValidation.isValidTCKN(idVal);
+        break;
+      case 'US':
+        idOk = IdentityValidation.isValidUSSSN(idVal);
+        break;
+      case 'UK':
+        idOk = IdentityValidation.isValidUKNHS(idVal);
+        break;
+      case 'DE':
+        idOk = IdentityValidation.isValidDEInsurance(idVal);
+        break;
+      case 'FR':
+        idOk = IdentityValidation.isValidFRNIR(idVal);
+        break;
+      default:
+        idOk = idVal.isNotEmpty; // diğer ülkeler için temel zorunluluk
+    }
+    if (!idOk) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kimlik numarası geçerli değil')));
+      return;
+    }
     if (s.locked && _passController.text.trim() != s.passcode) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifre hatalı')));
       return;
@@ -175,6 +224,10 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   void dispose() {
     _stopTimer();
     _passController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
+    _countryController.dispose();
+    _idController.dispose();
     super.dispose();
   }
 }

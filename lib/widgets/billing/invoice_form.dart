@@ -3,6 +3,7 @@ import '../../models/billing_models.dart';
 import '../../services/billing_service.dart';
 import '../../services/invoice_pdf_service.dart';
 import 'package:printing/printing.dart';
+import '../../services/payment_providers/mock_payment_provider.dart';
 import '../../utils/theme.dart';
 
 class InvoiceForm extends StatefulWidget {
@@ -30,6 +31,8 @@ class _InvoiceFormState extends State<InvoiceForm> {
   final List<InvoiceItem> _items = [];
   bool _saving = false;
   final _pdfService = InvoicePDFService();
+  final _mockProvider = MockPaymentProvider();
+  PaymentIntent? _lastIntent;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +43,7 @@ class _InvoiceFormState extends State<InvoiceForm> {
           Text('Fatura Oluştur', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Row(children: [
-            Expanded(child: TextField(controller: _country, decoration: const InputDecoration(labelText: 'Ülke (TR/US/EU)'))),
+            Expanded(child: TextField(controller: _country, decoration: const InputDecoration(labelText: 'Ülke (TR/US/EU)'), onChanged: _onCountryChanged)),
             const SizedBox(width: 8),
             Expanded(child: TextField(controller: _currency, decoration: const InputDecoration(labelText: 'Para Birimi (TRY/USD/EUR)'))),
           ]),
@@ -98,6 +101,16 @@ class _InvoiceFormState extends State<InvoiceForm> {
             label: const Text('Fatura PDF Önizleme'),
           ),
         )
+        ,
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: (_lastIntent == null || _saving) ? null : () => _openCheckout(_lastIntent!),
+            icon: const Icon(Icons.open_in_browser),
+            label: const Text('Checkout’u Aç'),
+          ),
+        )
         ],
       ),
     );
@@ -130,6 +143,7 @@ class _InvoiceFormState extends State<InvoiceForm> {
       );
       await _service.saveInvoice(inv);
       final intent = await _service.createPaymentIntent(invoice: inv, provider: inv.country == 'TR' ? 'iyzico' : 'stripe');
+      _lastIntent = intent;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fatura kaydedildi. Ödeme intent: ${intent.id} (${intent.provider})')));
       }
@@ -153,5 +167,23 @@ class _InvoiceFormState extends State<InvoiceForm> {
     );
     final bytes = await _pdfService.generate(inv);
     await Printing.layoutPdf(onLayout: (_) async => bytes);
+  }
+
+  Future<void> _openCheckout(PaymentIntent intent) async {
+    await _mockProvider.openCheckout(intent);
+  }
+
+  void _onCountryChanged(String v) {
+    final c = v.trim().toUpperCase();
+    // Basit ön tanımlar: TR %20, EU %20, US %0
+    if (c == 'TR' || c == 'EU' || c == 'DE' || c == 'FR') {
+      _tax.text = '0.20';
+      if (c == 'TR') _currency.text = 'TRY';
+      if (c == 'EU') _currency.text = 'EUR';
+    } else if (c == 'US') {
+      _tax.text = '0.00';
+      _currency.text = 'USD';
+    }
+    setState(() {});
   }
 }

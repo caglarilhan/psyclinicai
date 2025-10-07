@@ -1,3 +1,124 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+import '../models/consent_models.dart';
+import 'audit_log_service.dart';
+
+class ConsentService {
+  static final ConsentService _instance = ConsentService._internal();
+  factory ConsentService() => _instance;
+  ConsentService._internal();
+
+  Database? _db;
+  final _init = Completer<void>();
+
+  Future<void> _ensureInit() async {
+    if (_db != null) return;
+    if (!_init.isCompleted) {
+      try {
+        final dir = await getDatabasesPath();
+        final path = p.join(dir, 'psyclinic_consent.db');
+        _db = await openDatabase(path, version: 1, onCreate: (db, v) async {
+          await db.execute('''
+            CREATE TABLE consent_texts (
+              id TEXT PRIMARY KEY,
+              locale TEXT NOT NULL,
+              title TEXT NOT NULL,
+              body TEXT NOT NULL,
+              effective_at TEXT NOT NULL
+            );
+          ''');
+          await db.execute('''
+            CREATE TABLE consent_records (
+              consent_id TEXT PRIMARY KEY,
+              version_text_id TEXT NOT NULL,
+              client_name TEXT NOT NULL,
+              client_identifier TEXT NOT NULL,
+              therapist_name TEXT NOT NULL,
+              signed_at TEXT NOT NULL,
+              signature_data TEXT NOT NULL,
+              ip_address TEXT NOT NULL,
+              user_agent TEXT NOT NULL
+            );
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_consent_client ON consent_records(client_name);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_consent_version ON consent_records(version_text_id);');
+        });
+      } finally {
+        if (!_init.isCompleted) _init.complete();
+      }
+    }
+    return _init.future;
+  }
+
+  Future<void> upsertConsentText(ConsentVersionedText t) async {
+    await _ensureInit();
+    await _db!.insert(
+      'consent_texts',
+      {
+        'id': t.id,
+        'locale': t.locale,
+        'title': t.title,
+        'body': t.body,
+        'effective_at': t.effectiveAt.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<ConsentVersionedText?> getConsentText(String id) async {
+    await _ensureInit();
+    final rows = await _db!.query('consent_texts', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (rows.isEmpty) return null;
+    final m = rows.first;
+    return ConsentVersionedText(
+      id: m['id'] as String,
+      locale: m['locale'] as String,
+      title: m['title'] as String,
+      body: m['body'] as String,
+      effectiveAt: DateTime.parse(m['effective_at'] as String),
+    );
+  }
+
+  Future<void> saveConsent(ConsentRecord r) async {
+    await _ensureInit();
+    await _db!.insert('consent_records', {
+      'consent_id': r.consentId,
+      'version_text_id': r.versionTextId,
+      'client_name': r.clientName,
+      'client_identifier': r.clientIdentifier,
+      'therapist_name': r.therapistName,
+      'signed_at': r.signedAt.toIso8601String(),
+      'signature_data': r.signatureData,
+      'ip_address': r.ipAddress,
+      'user_agent': r.userAgent,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await AuditLogService().insertLog(
+      action: 'consent.save',
+      actor: r.therapistName,
+      target: r.clientName + '|' + r.consentId,
+      metadataJson: jsonEncode({'version': r.versionTextId}),
+    );
+  }
+
+  Future<List<ConsentRecord>> listConsentsForClient(String clientName, {int limit = 50}) async {
+    await _ensureInit();
+    final rows = await _db!.query('consent_records', where: 'client_name = ?', whereArgs: [clientName], orderBy: 'signed_at DESC', limit: limit);
+    return rows.map((m) => ConsentRecord(
+      consentId: m['consent_id'] as String,
+      versionTextId: m['version_text_id'] as String,
+      clientName: m['client_name'] as String,
+      clientIdentifier: m['client_identifier'] as String,
+      therapistName: m['therapist_name'] as String,
+      signedAt: DateTime.parse(m['signed_at'] as String),
+      signatureData: m['signature_data'] as String,
+      ipAddress: m['ip_address'] as String,
+      userAgent: m['user_agent'] as String,
+    )).toList();
+  }
+}
+
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';

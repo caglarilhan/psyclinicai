@@ -1,3 +1,43 @@
+class ConsentVersionedText {
+  final String id; // e.g. CONSENT_V1_EN
+  final String locale; // en_US, tr_TR, de_DE
+  final String title;
+  final String body; // full consent text
+  final DateTime effectiveAt;
+
+  ConsentVersionedText({
+    required this.id,
+    required this.locale,
+    required this.title,
+    required this.body,
+    required this.effectiveAt,
+  });
+}
+
+class ConsentRecord {
+  final String consentId; // uuid
+  final String versionTextId;
+  final String clientName;
+  final String clientIdentifier; // optional external identifier
+  final String therapistName;
+  final DateTime signedAt;
+  final String signatureData; // base64 png / vector strokes
+  final String ipAddress;
+  final String userAgent;
+
+  ConsentRecord({
+    required this.consentId,
+    required this.versionTextId,
+    required this.clientName,
+    required this.clientIdentifier,
+    required this.therapistName,
+    required this.signedAt,
+    required this.signatureData,
+    required this.ipAddress,
+    required this.userAgent,
+  });
+}
+
 import 'package:json_annotation/json_annotation.dart';
 
 part 'consent_models.g.dart';

@@ -451,6 +451,16 @@ class PDFExportService {
                   ),
                   textAlign: pw.TextAlign.center,
                 ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  'Onam: Bu raporun oluşturulmasına ilişkin bilgilendirilmiş onam alınmıştır.',
+                  style: pw.TextStyle(
+                    font: ttf,
+                    fontSize: 9,
+                    color: PdfColors.grey600,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
               ],
             ),
           ),

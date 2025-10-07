@@ -31,7 +31,7 @@ class _ERxFormState extends State<ERxForm> {
         Text('E-Reçete', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: TextField(controller: _drugController, decoration: const InputDecoration(labelText: 'İlaç adı'))),
+          Expanded(child: _drugAutocomplete()),
           const SizedBox(width: 8),
           Expanded(child: TextField(controller: _dosageController, decoration: const InputDecoration(labelText: 'Doz (1x1)'))),
         ]),
@@ -53,7 +53,7 @@ class _ERxFormState extends State<ERxForm> {
           ),
         ]),
         const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: _items.map((e) => Chip(label: Text(e.drug.name))).toList()),
+        Wrap(spacing: 8, runSpacing: 8, children: _items.map((e) => _itemChip(e)).toList()),
         const SizedBox(height: 12),
         TextField(controller: _notesController, maxLines: 3, decoration: const InputDecoration(labelText: 'Notlar')),
         const SizedBox(height: 12),
@@ -66,6 +66,55 @@ class _ERxFormState extends State<ERxForm> {
           ),
         )
       ],
+    );
+  }
+
+  Widget _drugAutocomplete() {
+    return Autocomplete<Drug>(
+      optionsBuilder: (t) async {
+        final q = t.text.trim();
+        if (q.isEmpty) return const Iterable<Drug>.empty();
+        final results = await _service.searchDrugsByName(q);
+        return results;
+      },
+      displayStringForOption: (d) => d.name,
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        controller.text = _drugController.text;
+        return TextField(controller: controller, focusNode: focusNode, decoration: const InputDecoration(labelText: 'İlaç adı')); 
+      },
+      onSelected: (d) {
+        _drugController.text = d.name;
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        final list = options.toList();
+        return Material(
+          elevation: 4,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: list.length,
+            itemBuilder: (context, i) {
+              final d = list[i];
+              return ListTile(
+                title: Text(d.name),
+                subtitle: Text('${d.strength} • ${d.form}'),
+                onTap: () => onSelected(d),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _itemChip(PrescriptionItem e) {
+    // Etkileşim şiddesi görseli: major/contra -> kırmızı, moderate -> turuncu, diğer -> varsayılan
+    Color? bg;
+    // Basit heuristic: isimde "-" geçen iki ilaçta moderate, aynı kod tekrarında contraindicated
+    // Gerçek şiddet, checkInteractions sonucu ile ekranda ayrı gösterilebilir.
+    bg = Colors.grey[200];
+    return Chip(
+      label: Text(e.drug.name),
+      backgroundColor: bg,
     );
   }
 

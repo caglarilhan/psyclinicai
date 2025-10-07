@@ -60,6 +60,22 @@ class ERxService {
     await _db!.insert('drugs', {'code': d.code, 'name': d.name, 'strength': d.strength, 'form': d.form}, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<List<Drug>> searchDrugsByName(String query, {int limit = 20}) async {
+    await _ensureInit();
+    final rows = await _db!.query(
+      'drugs',
+      where: 'name LIKE ? OR code LIKE ?',
+      whereArgs: ['%'+query+'%','%'+query+'%'],
+      limit: limit,
+    );
+    return rows.map((m) => Drug(
+      code: m['code'] as String,
+      name: m['name'] as String,
+      strength: m['strength'] as String,
+      form: m['form'] as String,
+    )).toList();
+  }
+
   Future<void> upsertInteraction(DrugInteraction i) async {
     await _ensureInit();
     await _db!.insert('interactions', {'a_code': i.aCode, 'b_code': i.bCode, 'severity': i.severity, 'note': i.note}, conflictAlgorithm: ConflictAlgorithm.replace);

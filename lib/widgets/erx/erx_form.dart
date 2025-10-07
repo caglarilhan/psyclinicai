@@ -22,6 +22,7 @@ class _ERxFormState extends State<ERxForm> {
   final _notesController = TextEditingController();
   final List<PrescriptionItem> _items = [];
   bool _saving = false;
+  List<DrugInteraction> _interactions = const [];
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +55,8 @@ class _ERxFormState extends State<ERxForm> {
         ]),
         const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: _items.map((e) => _itemChip(e)).toList()),
+        const SizedBox(height: 12),
+        if (_interactions.isNotEmpty) _interactionWarnings(),
         const SizedBox(height: 12),
         TextField(controller: _notesController, maxLines: 3, decoration: const InputDecoration(labelText: 'Notlar')),
         const SizedBox(height: 12),
@@ -126,6 +129,7 @@ class _ERxFormState extends State<ERxForm> {
     setState(() {
       _items.add(PrescriptionItem(drug: drug, dosage: _dosageController.text.trim(), route: _routeController.text.trim(), frequency: _freqController.text.trim(), durationDays: duration));
     });
+    _refreshInteractions();
     _drugController.clear();
   }
 
@@ -152,6 +156,71 @@ class _ERxFormState extends State<ERxForm> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _refreshInteractions() async {
+    final res = await _service.checkInteractions(_items);
+    if (mounted) setState(() => _interactions = res);
+  }
+
+  Widget _interactionWarnings() {
+    Color colorFor(String sev) {
+      switch (sev) {
+        case 'contraindicated':
+        case 'major':
+          return Colors.red.shade100;
+        case 'moderate':
+          return Colors.orange.shade100;
+        default:
+          return Colors.yellow.shade100;
+      }
+    }
+    Color textColorFor(String sev) {
+      switch (sev) {
+        case 'contraindicated':
+        case 'major':
+          return Colors.red.shade800;
+        case 'moderate':
+          return Colors.orange.shade800;
+        default:
+          return Colors.brown;
+      }
+    }
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('İlaç Etkileşimleri', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          ..._interactions.map((i) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorFor(i.severity),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: textColorFor(i.severity)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${i.aCode} + ${i.bCode} → ${i.severity.toUpperCase()}${i.note.isNotEmpty ? ' • ' + i.note : ''}',
+                        style: TextStyle(color: textColorFor(i.severity)),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
   }
 }
 

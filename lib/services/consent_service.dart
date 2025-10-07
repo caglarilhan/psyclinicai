@@ -117,6 +117,16 @@ class ConsentService {
       userAgent: m['user_agent'] as String,
     )).toList();
   }
+
+  Future<int> purgeClient(String clientName) async {
+    await _ensureInit();
+    return await _db!.delete('consent_records', where: 'client_name = ?', whereArgs: [clientName]);
+  }
+
+  Future<int> anonymizeClient(String clientName, String anonymizedName) async {
+    await _ensureInit();
+    return await _db!.update('consent_records', {'client_name': anonymizedName, 'client_identifier': 'ANON'}, where: 'client_name = ?', whereArgs: [clientName]);
+  }
 }
 
 import 'dart:convert';

@@ -95,6 +95,16 @@ class AssessmentService {
       );
     }).toList();
   }
+
+  Future<int> purgeClient(String clientName) async {
+    await _ensureInitialized();
+    return await _db!.delete('assessments', where: 'client_name = ?', whereArgs: [clientName]);
+  }
+
+  Future<int> anonymizeClient(String clientName, String anonymizedName) async {
+    await _ensureInitialized();
+    return await _db!.update('assessments', {'client_name': anonymizedName}, where: 'client_name = ?', whereArgs: [clientName]);
+  }
 }
 
 

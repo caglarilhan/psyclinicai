@@ -9,6 +9,8 @@ class TeletherapySession {
   final DateTime createdAt;
   final String clientName;
   final String therapistName;
+  final bool locked;
+  final String passcode;
 
   TeletherapySession({
     required this.sessionId,
@@ -16,6 +18,8 @@ class TeletherapySession {
     required this.createdAt,
     required this.clientName,
     required this.therapistName,
+    required this.locked,
+    required this.passcode,
   });
 }
 
@@ -27,24 +31,28 @@ class TeletherapyService {
   Future<TeletherapySession> createSession({
     required String clientName,
     required String therapistName,
+    bool locked = true,
   }) async {
     final rnd = Random.secure().nextInt(1 << 32).toString();
     final slug = clientName.toLowerCase().replaceAll(' ', '-') + '-' + rnd;
     // Basit demo: Jitsi public
     final url = 'https://meet.jit.si/PsyClinicAI-' + slug;
+    final pass = (100000 + Random.secure().nextInt(900000)).toString();
     final session = TeletherapySession(
       sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
       meetingUrl: url,
       createdAt: DateTime.now(),
       clientName: clientName,
       therapistName: therapistName,
+      locked: locked,
+      passcode: pass,
     );
     // audit
     await AuditLogService().insertLog(
       action: 'tele.create',
       actor: therapistName,
       target: clientName + '|' + session.sessionId,
-      metadataJson: jsonEncode({'meetingUrl': url}),
+      metadataJson: jsonEncode({'meetingUrl': url, 'locked': locked}),
     );
     return session;
   }
@@ -68,6 +76,24 @@ class TeletherapyService {
       actor: session.therapistName,
       target: session.clientName + '|' + session.sessionId,
       metadataJson: '{}',
+    );
+  }
+
+  Future<TeletherapySession> toggleLock(TeletherapySession session, {required bool lock}) async {
+    await AuditLogService().insertLog(
+      action: lock ? 'tele.lock' : 'tele.unlock',
+      actor: session.therapistName,
+      target: session.clientName + '|' + session.sessionId,
+      metadataJson: jsonEncode({'locked': lock}),
+    );
+    return TeletherapySession(
+      sessionId: session.sessionId,
+      meetingUrl: session.meetingUrl,
+      createdAt: session.createdAt,
+      clientName: session.clientName,
+      therapistName: session.therapistName,
+      locked: lock,
+      passcode: session.passcode,
     );
   }
 }

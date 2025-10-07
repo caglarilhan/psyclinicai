@@ -19,6 +19,7 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   bool _busy = false;
   Timer? _timer;
   Duration _elapsed = Duration.zero;
+  final TextEditingController _passController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -69,13 +70,34 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
                 Chip(label: Text('Süre: ' + _format(_elapsed))),
               ],
             ),
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(_session!.locked ? Icons.lock : Icons.lock_open, color: _session!.locked ? Colors.red : Colors.green),
+              const SizedBox(width: 6),
+              Text(_session!.locked ? 'Oda kilitli' : 'Oda açık'),
+              const Spacer(),
+              Text('Şifre: ${_session!.passcode}', style: Theme.of(context).textTheme.bodySmall),
+            ]),
             const SizedBox(height: 12),
             Row(children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _join,
-                  icon: const Icon(Icons.open_in_new),
-                  label: const Text('Bağlantıyı Aç'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_session!.locked) ...[
+                      TextField(
+                        controller: _passController,
+                        decoration: const InputDecoration(labelText: 'Oda şifresi'),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _join,
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Bağlantıyı Aç'),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
@@ -97,7 +119,7 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   Future<void> _create() async {
     setState(() => _busy = true);
     try {
-      final s = await _service.createSession(clientName: widget.clientName, therapistName: widget.therapistName);
+      final s = await _service.createSession(clientName: widget.clientName, therapistName: widget.therapistName, locked: true);
       if (mounted) {
         setState(() => _session = s);
         _startTimer();
@@ -109,6 +131,10 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
 
   Future<void> _join() async {
     final s = _session; if (s == null) return;
+    if (s.locked && _passController.text.trim() != s.passcode) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifre hatalı')));
+      return;
+    }
     setState(() => _busy = true);
     try {
       await _service.openMeetingUrl(s.meetingUrl, clientName: s.clientName, therapistName: s.therapistName);
@@ -148,6 +174,7 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   @override
   void dispose() {
     _stopTimer();
+    _passController.dispose();
     super.dispose();
   }
 }

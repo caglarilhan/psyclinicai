@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/billing_models.dart';
 import '../../services/billing_service.dart';
+import '../../services/invoice_pdf_service.dart';
+import 'package:printing/printing.dart';
 import '../../utils/theme.dart';
 
 class InvoiceForm extends StatefulWidget {
@@ -27,6 +29,7 @@ class _InvoiceFormState extends State<InvoiceForm> {
 
   final List<InvoiceItem> _items = [];
   bool _saving = false;
+  final _pdfService = InvoicePDFService();
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +88,16 @@ class _InvoiceFormState extends State<InvoiceForm> {
               label: Text(_saving ? 'Kaydediliyor...' : 'Fatura Kaydet + Ödeme Başlat'),
             ),
           )
+        ,
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _items.isEmpty || _saving ? null : _previewPdf,
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Fatura PDF Önizleme'),
+          ),
+        )
         ],
       ),
     );
@@ -123,5 +136,22 @@ class _InvoiceFormState extends State<InvoiceForm> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _previewPdf() async {
+    final inv = Invoice(
+      id: 'preview',
+      country: _country.text.trim().toUpperCase(),
+      clientName: _clientName.text.trim(),
+      clientEmail: _clientEmail.text.trim(),
+      issueDate: DateTime.now(),
+      items: _items,
+      currency: _currency.text.trim().toUpperCase(),
+      note: _note.text.trim(),
+      trTaxId: _country.text.trim().toUpperCase() == 'TR' ? _trTaxId.text.trim() : null,
+      trEArsivType: _country.text.trim().toUpperCase() == 'TR' ? _trType.text.trim() : null,
+    );
+    final bytes = await _pdfService.generate(inv);
+    await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
 }

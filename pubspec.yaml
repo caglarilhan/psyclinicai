@@ -47,6 +47,8 @@ dependencies:
   anthropic_dart: ^1.0.1
   # Calendar
   table_calendar: ^3.0.9
+  # Teletherapy link açma
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

@@ -1,14 +1,22 @@
-import 'dart:async';
+import 'dart:math';
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+import 'audit_log_service.dart';
 
-enum TeleCallStatus { idle, waiting, connecting, inCall, ended }
+class TeletherapySession {
+  final String sessionId;
+  final String meetingUrl;
+  final DateTime createdAt;
+  final String clientName;
+  final String therapistName;
 
-class TeletherapyEvent {
-  final String type; // e.g. join, leave, mute, unmute
-  final DateTime at;
-  final Map<String, Object?> data;
-  TeletherapyEvent(this.type, {Map<String, Object?>? data})
-      : at = DateTime.now(),
-        data = data ?? const {};
+  TeletherapySession({
+    required this.sessionId,
+    required this.meetingUrl,
+    required this.createdAt,
+    required this.clientName,
+    required this.therapistName,
+  });
 }
 
 class TeletherapyService {
@@ -16,86 +24,51 @@ class TeletherapyService {
   factory TeletherapyService() => _instance;
   TeletherapyService._internal();
 
-  final _statusCtrl = StreamController<TeleCallStatus>.broadcast();
-  final _eventCtrl = StreamController<TeletherapyEvent>.broadcast();
-  final _transcriptCtrl = StreamController<String>.broadcast();
-
-  TeleCallStatus _status = TeleCallStatus.idle;
-  bool _micOn = true;
-  bool _camOn = true;
-  Timer? _fakeConnectTimer;
-  Timer? _fakeTranscriptTimer;
-
-  Stream<TeleCallStatus> get statusStream => _statusCtrl.stream;
-  Stream<TeletherapyEvent> get eventStream => _eventCtrl.stream;
-  Stream<String> get transcriptStream => _transcriptCtrl.stream;
-
-  TeleCallStatus get status => _status;
-  bool get micOn => _micOn;
-  bool get camOn => _camOn;
-
-  void enterWaitingRoom() {
-    _setStatus(TeleCallStatus.waiting);
-    _eventCtrl.add(TeletherapyEvent('waiting.enter'));
+  Future<TeletherapySession> createSession({
+    required String clientName,
+    required String therapistName,
+  }) async {
+    final rnd = Random.secure().nextInt(1 << 32).toString();
+    final slug = clientName.toLowerCase().replaceAll(' ', '-') + '-' + rnd;
+    // Basit demo: Jitsi public
+    final url = 'https://meet.jit.si/PsyClinicAI-' + slug;
+    final session = TeletherapySession(
+      sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
+      meetingUrl: url,
+      createdAt: DateTime.now(),
+      clientName: clientName,
+      therapistName: therapistName,
+    );
+    // audit
+    await AuditLogService().insertLog(
+      action: 'tele.create',
+      actor: therapistName,
+      target: clientName + '|' + session.sessionId,
+      metadataJson: jsonEncode({'meetingUrl': url}),
+    );
+    return session;
   }
 
-  void startConnecting() {
-    _setStatus(TeleCallStatus.connecting);
-    _eventCtrl.add(TeletherapyEvent('call.connecting'));
-    _fakeConnectTimer?.cancel();
-    _fakeConnectTimer = Timer(const Duration(seconds: 2), () {
-      _setStatus(TeleCallStatus.inCall);
-      _eventCtrl.add(TeletherapyEvent('call.started'));
-      _beginFakeTranscript();
-    });
+  Future<void> openMeetingUrl(String meetingUrl, {String? clientName, String? therapistName}) async {
+    final uri = Uri.parse(meetingUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('URL açılamadı: ' + meetingUrl);
+    }
+    await AuditLogService().insertLog(
+      action: 'tele.join',
+      actor: therapistName ?? 'unknown',
+      target: (clientName ?? 'unknown') + '|' + meetingUrl,
+      metadataJson: '{}',
+    );
   }
 
-  void endCall() {
-    _fakeConnectTimer?.cancel();
-    _stopFakeTranscript();
-    _setStatus(TeleCallStatus.ended);
-    _eventCtrl.add(TeletherapyEvent('call.ended'));
-  }
-
-  void toggleMic() {
-    _micOn = !_micOn;
-    _eventCtrl.add(TeletherapyEvent(_micOn ? 'mic.on' : 'mic.off'));
-  }
-
-  void toggleCam() {
-    _camOn = !_camOn;
-    _eventCtrl.add(TeletherapyEvent(_camOn ? 'cam.on' : 'cam.off'));
-  }
-
-  void dispose() {
-    _statusCtrl.close();
-    _eventCtrl.close();
-    _transcriptCtrl.close();
-    _fakeConnectTimer?.cancel();
-    _stopFakeTranscript();
-  }
-
-  void _setStatus(TeleCallStatus s) {
-    _status = s;
-    _statusCtrl.add(s);
-  }
-
-  void _beginFakeTranscript() {
-    int counter = 1;
-    _fakeTranscriptTimer?.cancel();
-    _fakeTranscriptTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _transcriptCtrl.add('Konuşma kesiti $counter: danışan-kısmi metin...');
-      counter += 1;
-      if (counter > 10) {
-        // otomatik durdur
-        _stopFakeTranscript();
-      }
-    });
-  }
-
-  void _stopFakeTranscript() {
-    _fakeTranscriptTimer?.cancel();
-    _fakeTranscriptTimer = null;
+  Future<void> endSession(TeletherapySession session) async {
+    await AuditLogService().insertLog(
+      action: 'tele.end',
+      actor: session.therapistName,
+      target: session.clientName + '|' + session.sessionId,
+      metadataJson: '{}',
+    );
   }
 }
 

@@ -254,7 +254,7 @@ class _VoiceSessionsBrowserWidgetState extends State<VoiceSessionsBrowserWidget>
   void _loadSessions() {
     setState(() {
       _sessions = _voiceService.recordedSessions.map((session) {
-        return json.decode(session);
+        return json.decode(session) as Map<String, dynamic>;
       }).toList();
     });
   }

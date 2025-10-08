@@ -14,7 +14,7 @@ class ConsentVersionedText {
   });
 }
 
-class ConsentRecord {
+class ConsentDbRecord {
   final String consentId; // uuid
   final String versionTextId;
   final String clientName;
@@ -25,7 +25,7 @@ class ConsentRecord {
   final String ipAddress;
   final String userAgent;
 
-  ConsentRecord({
+  ConsentDbRecord({
     required this.consentId,
     required this.versionTextId,
     required this.clientName,
@@ -38,117 +38,7 @@ class ConsentRecord {
   });
 }
 
-import 'package:json_annotation/json_annotation.dart';
-
-part 'consent_models.g.dart';
-
-@JsonSerializable()
-class ConsentRecord {
-  final String id;
-  final String patientId;
-  final String consentType;
-  final String region;
-  final String versionId;
-  final DateTime consentDate;
-  final DateTime? expiryDate;
-  final bool isActive;
-  final String consentText;
-  final Map<String, dynamic> consentData;
-  final List<String> purposes;
-  final ConsentMethod method;
-  final String recordedBy;
-  final DateTime? revokedAt;
-  final String? revokedBy;
-  final String? revocationReason;
-  final DateTime? lastModified;
-  final String? lastModifiedBy;
-  final List<ConsentModification> modificationHistory;
-  final String? notes;
-  final Map<String, dynamic> metadata;
-
-  const ConsentRecord({
-    required this.id,
-    required this.patientId,
-    required this.consentType,
-    required this.region,
-    required this.versionId,
-    required this.consentDate,
-    this.expiryDate,
-    required this.isActive,
-    required this.consentText,
-    required this.consentData,
-    required this.purposes,
-    required this.method,
-    required this.recordedBy,
-    this.revokedAt,
-    this.revokedBy,
-    this.revocationReason,
-    this.lastModified,
-    this.lastModifiedBy,
-    this.modificationHistory = const [],
-    this.notes,
-    this.metadata = const {},
-  });
-
-  factory ConsentRecord.fromJson(Map<String, dynamic> json) =>
-      _$ConsentRecordFromJson(json);
-
-  Map<String, dynamic> toJson() => _$ConsentRecordToJson(this);
-
-  bool get isExpired => expiryDate != null && expiryDate!.isBefore(DateTime.now());
-  bool get isRevoked => revokedAt != null;
-  bool get isValid => isActive && !isExpired && !isRevoked;
-
-  ConsentRecord copyWith({
-    String? id,
-    String? patientId,
-    String? consentType,
-    String? region,
-    String? versionId,
-    DateTime? consentDate,
-    DateTime? expiryDate,
-    bool? isActive,
-    String? consentText,
-    Map<String, dynamic>? consentData,
-    List<String>? purposes,
-    ConsentMethod? method,
-    String? recordedBy,
-    DateTime? revokedAt,
-    String? revokedBy,
-    String? revocationReason,
-    DateTime? lastModified,
-    String? lastModifiedBy,
-    List<ConsentModification>? modificationHistory,
-    String? notes,
-    Map<String, dynamic>? metadata,
-  }) {
-    return ConsentRecord(
-      id: id ?? this.id,
-      patientId: patientId ?? this.patientId,
-      consentType: consentType ?? this.consentType,
-      region: region ?? this.region,
-      versionId: versionId ?? this.versionId,
-      consentDate: consentDate ?? this.consentDate,
-      expiryDate: expiryDate ?? this.expiryDate,
-      isActive: isActive ?? this.isActive,
-      consentText: consentText ?? this.consentText,
-      consentData: consentData ?? this.consentData,
-      purposes: purposes ?? this.purposes,
-      method: method ?? this.method,
-      recordedBy: recordedBy ?? this.recordedBy,
-      revokedAt: revokedAt ?? this.revokedAt,
-      revokedBy: revokedBy ?? this.revokedBy,
-      revocationReason: revocationReason ?? this.revocationReason,
-      lastModified: lastModified ?? this.lastModified,
-      lastModifiedBy: lastModifiedBy ?? this.lastModifiedBy,
-      modificationHistory: modificationHistory ?? this.modificationHistory,
-      notes: notes ?? this.notes,
-      metadata: metadata ?? this.metadata,
-    );
-  }
-}
-
-@JsonSerializable()
+/*
 class ConsentVersion {
   final String id;
   final String templateId;
@@ -329,3 +219,4 @@ enum RetentionPeriod {
   indefinite,
   custom,
 }
+*/

@@ -13,3 +13,6 @@ docker compose up -d psyclinicai-web
 
 echo "Deploy completed."
 
+
+
+

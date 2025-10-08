@@ -1,0 +1,51 @@
+{
+  "disorders": [
+    {
+      "id": "bipolar",
+      "name": "Bipolar Spektrum (Manik/Hipomanik/Depresif)",
+      "keywords": ["manik", "hipomani", "uykusuzluk", "taşkınlık", "grandiyöz", "enerji artışı"],
+      "red_flags": ["intihar", "psikoz", "aşırı risk alma"],
+      "psychoeducation": [
+        {"title": "Hastalık döngüsü", "detail": "Evrelerin tanınması, tetikleyiciler ve uyku hijyeni."}
+      ],
+      "psychotherapy": [
+        {"title": "CBT", "detail": "Duygu-düşünce-davranış döngüsü, günlük yapılandırma."},
+        {"title": "Aile Odaklı Terapi", "detail": "Aile iletişimi ve kriz planı."}
+      ],
+      "monitoring": [
+        {"title": "Uyku ve aktivite", "detail": "Günlük takibi ve düzenleme."}
+      ],
+      "pharmacology": {
+        "TR": [
+          {"title": "Duygudurum dengeleyiciler (bilgilendirme)", "detail": "Reçete kararı hekime aittir; kontrendikasyonlar kontrol edilmelidir."}
+        ],
+        "US": [
+          {"title": "Mood stabilizers (informational)", "detail": "Physician decision; check contraindications and interactions."}
+        ]
+      }
+    },
+    {
+      "id": "gad",
+      "name": "Genel Anksiyete Bozukluğu",
+      "keywords": ["kaygı", "endişe", "gerginlik", "kas gerilimi", "odaklanma güçlüğü"],
+      "red_flags": ["intihar"],
+      "psychoeducation": [
+        {"title": "Kaygı döngüsü", "detail": "Tetikleyiciler ve beden belirtileri üzerine eğitim."}
+      ],
+      "psychotherapy": [
+        {"title": "CBT", "detail": "Bilişsel yeniden yapılandırma, maruz bırakma, gevşeme çalışmaları."}
+      ],
+      "monitoring": [
+        {"title": "GAD-7 takibi", "detail": "Haftalık ölçek ile ilerleme takibi."}
+      ],
+      "pharmacology": {
+        "TR": [],
+        "US": []
+      }
+    }
+  ]
+}
+
+
+
+

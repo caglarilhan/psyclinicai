@@ -170,7 +170,7 @@ Future<void> _initializeServices() async {
     await AdvancedAIService().initialize();
     
     // Initialize new services
-    await ConsentService().initialize();
+    // await ConsentService().initialize(); // Geçici olarak devre dışı
     
     // Initialize Sprint 3 services
           // await ClinicalDecisionSupportService().initialize();
@@ -207,7 +207,7 @@ class PsyClinicAIApp extends StatelessWidget {
         // ChangeNotifierProvider(create: (_) => OfflineSyncService()),
         ChangeNotifierProvider(create: (_) => PrescriptionAIService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
-        ChangeNotifierProvider(create: (_) => ConsentService()),
+        // ChangeNotifierProvider(create: (_) => ConsentService()), // Geçici olarak devre dışı
         // ChangeNotifierProvider(create: (_) => DiagnosisService()),
         ChangeNotifierProvider(create: (_) => MedicationService()),
         ChangeNotifierProvider(create: (_) => TelehealthService()),

@@ -1,14 +1,7 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:flutter/material.dart';
 
-part 'diagnosis_models.g.dart';
-
 /// Diagnosis System - Tanı sistemi
-enum DiagnosisSystem {
-  @JsonValue('dsm_5_tr') dsm_5_tr,
-  @JsonValue('icd_11') icd_11,
-  @JsonValue('icd_10') icd_10,
-}
+enum DiagnosisSystem { dsm_5_tr, icd_11, icd_10 }
 
 /// Diagnosis Severity - Tanı şiddeti
 enum DiagnosisSeverity {
@@ -19,7 +12,6 @@ enum DiagnosisSeverity {
 }
 
 /// Diagnosis Entry - Tanı girişi
-@JsonSerializable()
 class DiagnosisEntry {
   final String id;
   final DiagnosisSystem system;
@@ -47,13 +39,46 @@ class DiagnosisEntry {
     required this.metadata,
   });
 
-  factory DiagnosisEntry.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisEntryFromJson(json);
-  Map<String, dynamic> toJson() => _$DiagnosisEntryToJson(this);
+  factory DiagnosisEntry.fromJson(Map<String, dynamic> json) {
+    return DiagnosisEntry(
+      id: json['id'] as String,
+      system: DiagnosisSystem.values.firstWhere(
+        (e) => e.name == (json['system'] as String? ?? 'dsm_5_tr'),
+        orElse: () => DiagnosisSystem.dsm_5_tr,
+      ),
+      code: json['code'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      synonyms: List<String>.from(json['synonyms'] ?? const <String>[]),
+      specifiers: List<String>.from(json['specifiers'] ?? const <String>[]),
+      comorbidities: List<String>.from(json['comorbidities'] ?? const <String>[]),
+      typicalSeverity: DiagnosisSeverity.values.firstWhere(
+        (e) => e.name == (json['typicalSeverity'] as String? ?? 'mild'),
+        orElse: () => DiagnosisSeverity.mild,
+      ),
+      commonTreatments: List<String>.from(json['commonTreatments'] ?? const <String>[]),
+      metadata: Map<String, dynamic>.from(json['metadata'] ?? const <String, dynamic>{}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'system': system.name,
+      'code': code,
+      'title': title,
+      'description': description,
+      'synonyms': synonyms,
+      'specifiers': specifiers,
+      'comorbidities': comorbidities,
+      'typicalSeverity': typicalSeverity.name,
+      'commonTreatments': commonTreatments,
+      'metadata': metadata,
+    };
+  }
 }
 
 /// Diagnosis Search Filters - Tanı arama filtreleri
-@JsonSerializable()
 class DiagnosisSearchFilters {
   final DiagnosisSystem system;
   final String? query;
@@ -69,13 +94,36 @@ class DiagnosisSearchFilters {
     this.limit = 20,
   });
 
-  factory DiagnosisSearchFilters.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisSearchFiltersFromJson(json);
-  Map<String, dynamic> toJson() => _$DiagnosisSearchFiltersToJson(this);
+  factory DiagnosisSearchFilters.fromJson(Map<String, dynamic> json) {
+    return DiagnosisSearchFilters(
+      system: DiagnosisSystem.values.firstWhere(
+        (e) => e.name == (json['system'] as String? ?? 'dsm_5_tr'),
+        orElse: () => DiagnosisSystem.dsm_5_tr,
+      ),
+      query: json['query'] as String?,
+      minSeverity: (json['minSeverity'] as String?) != null
+          ? DiagnosisSeverity.values.firstWhere(
+              (e) => e.name == json['minSeverity'],
+              orElse: () => DiagnosisSeverity.mild,
+            )
+          : null,
+      includeSynonyms: json['includeSynonyms'] as bool? ?? true,
+      limit: json['limit'] as int? ?? 20,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'system': system.name,
+      'query': query,
+      'minSeverity': minSeverity?.name,
+      'includeSynonyms': includeSynonyms,
+      'limit': limit,
+    };
+  }
 }
 
 /// Diagnosis Suggestion - Tanı önerisi
-@JsonSerializable()
 class DiagnosisSuggestion {
   final String id;
   final String diagnosis;
@@ -97,13 +145,37 @@ class DiagnosisSuggestion {
     this.notes,
   });
 
-  factory DiagnosisSuggestion.fromJson(Map<String, dynamic> json) =>
-      _$DiagnosisSuggestionFromJson(json);
-  Map<String, dynamic> toJson() => _$DiagnosisSuggestionToJson(this);
+  factory DiagnosisSuggestion.fromJson(Map<String, dynamic> json) {
+    return DiagnosisSuggestion(
+      id: json['id'] as String,
+      diagnosis: json['diagnosis'] as String,
+      confidence: (json['confidence'] as num).toDouble(),
+      evidence: List<String>.from(json['evidence'] ?? const <String>[]),
+      differentialDiagnoses: List<String>.from(json['differentialDiagnoses'] ?? const <String>[]),
+      icd10Code: json['icd10Code'] as String,
+      severity: DiagnosisSeverity.values.firstWhere(
+        (e) => e.name == (json['severity'] as String? ?? 'mild'),
+        orElse: () => DiagnosisSeverity.mild,
+      ),
+      notes: json['notes'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'diagnosis': diagnosis,
+      'confidence': confidence,
+      'evidence': evidence,
+      'differentialDiagnoses': differentialDiagnoses,
+      'icd10Code': icd10Code,
+      'severity': severity.name,
+      'notes': notes,
+    };
+  }
 }
 
 /// Regional Diagnosis Config - Bölgesel tanı konfigürasyonu
-@JsonSerializable()
 class RegionalDiagnosisConfig {
   final String region;
   final DiagnosisSystem defaultSystem;
@@ -119,13 +191,31 @@ class RegionalDiagnosisConfig {
     required this.metadata,
   });
 
-  factory RegionalDiagnosisConfig.fromJson(Map<String, dynamic> json) =>
-      _$RegionalDiagnosisConfigFromJson(json);
-  Map<String, dynamic> toJson() => _$RegionalDiagnosisConfigToJson(this);
+  factory RegionalDiagnosisConfig.fromJson(Map<String, dynamic> json) {
+    return RegionalDiagnosisConfig(
+      region: json['region'] as String,
+      defaultSystem: DiagnosisSystem.values.firstWhere(
+        (e) => e.name == (json['defaultSystem'] as String? ?? 'dsm_5_tr'),
+        orElse: () => DiagnosisSystem.dsm_5_tr,
+      ),
+      language: json['language'] as String,
+      codeMappings: Map<String, String>.from(json['codeMappings'] ?? const <String, String>{}),
+      metadata: Map<String, dynamic>.from(json['metadata'] ?? const <String, dynamic>{}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'region': region,
+      'defaultSystem': defaultSystem.name,
+      'language': language,
+      'codeMappings': codeMappings,
+      'metadata': metadata,
+    };
+  }
 }
 
 /// Diagnosis Category - Tanı kategorisi
-@JsonSerializable()
 class DiagnosisCategory {
   final String id;
   final String name;

@@ -227,7 +227,7 @@ class AppTheme {
   }
 
   // Koyu tema
-  static ThemeData get darkTheme {
+  static ThemeData get darkThemeV2 {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -505,6 +505,6 @@ class AppTheme {
   static Color getTextPrimary() => _isDarkMode ? darkTextPrimary : textPrimary;
   static Color getTextSecondary() => _isDarkMode ? darkTextSecondary : textSecondary;
   static Color getTextTertiary() => _isDarkMode ? darkTextTertiary : textTertiary;
-  static Color getBackground() => _isDarkMode ? darkBackground : background;
-  static Color getSurface() => _isDarkMode ? darkSurface : surface;
+  static Color getBackground() => _isDarkMode ? darkBackground : const Color(0xFFFAFAFA);
+  static Color getSurface() => _isDarkMode ? darkSurface : const Color(0xFFFFFFFF);
 }

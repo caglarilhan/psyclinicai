@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:async';
+import 'package:provider/provider.dart';
 import '../../services/pdf_export_service.dart';
+import '../../services/therapy_note_service.dart';
 
 class SessionScreen extends StatefulWidget {
   final String sessionId;
@@ -92,9 +95,9 @@ class _SessionScreenState extends State<SessionScreen> {
             child: const Text('İptal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              _saveSessionNotes();
+              await _saveSessionNotes();
             },
             child: const Text('Kaydet'),
           ),
@@ -111,11 +114,41 @@ class _SessionScreenState extends State<SessionScreen> {
     return '$hours:$minutes:$seconds';
   }
 
-  void _saveSessionNotes() {
-    // TODO: Firestore'a kaydet
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Seans notu kaydedildi')),
-    );
+  Future<void> _saveSessionNotes() async {
+    final noteText = _notesController.text.trim();
+    if (noteText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kaydedilecek bir seans notu bulunamadı')),
+      );
+      return;
+    }
+
+    try {
+      final therapyNoteService = context.read<TherapyNoteService>();
+      await therapyNoteService.createEntry(
+        sessionId: widget.sessionId,
+        clinicianId: 'demo_clinician',
+        clientId: widget.clientId,
+        templateId: 'session_note',
+        values: {
+          'notes': noteText,
+          'aiSummary': _aiSummary,
+          'aiPrompt': _aiPromptController.text.trim(),
+          'sessionDuration': _sessionDuration.inSeconds,
+          'savedAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seans notu kaydedildi')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Not kaydedilemedi: $e')),
+      );
+    }
   }
 
   Future<void> _generateAISummary() async {
@@ -435,7 +468,9 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: _saveSessionNotes,
+                  onPressed: () {
+                    _saveSessionNotes();
+                  },
                   icon: const Icon(Icons.save),
                   label: const Text('Kaydet'),
                   style: TextButton.styleFrom(

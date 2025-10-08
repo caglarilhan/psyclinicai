@@ -433,35 +433,35 @@ class _ClientManagementScreenState extends State<ClientManagementScreen>
   // Masaüstü kısayol metodları
   void _setupKeyboardShortcuts() {
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
       _addNewClient,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
       _generateAIAnalysis,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
       _showClientStatistics,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
       _exportClientReport,
     );
   }
 
   void _removeKeyboardShortcuts() {
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
     );
   }
 

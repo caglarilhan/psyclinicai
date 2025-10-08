@@ -1,7 +1,4 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:flutter/material.dart';
-
-part 'supervision_models.g.dart';
 
 // Enums
 enum SupervisionType { individual, group, caseReview, skillAssessment, crisis, supervision, crisisManagement, documentationReview }

@@ -46,4 +46,28 @@ class TherapyNoteEntry {
     required this.values,
     required this.createdAt,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sessionId': sessionId,
+      'clinicianId': clinicianId,
+      'clientId': clientId,
+      'templateId': templateId,
+      'values': values,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory TherapyNoteEntry.fromJson(Map<String, dynamic> json) {
+    return TherapyNoteEntry(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      clinicianId: json['clinicianId'] as String,
+      clientId: json['clientId'] as String,
+      templateId: json['templateId'] as String,
+      values: Map<String, dynamic>.from(json['values'] as Map),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
 }

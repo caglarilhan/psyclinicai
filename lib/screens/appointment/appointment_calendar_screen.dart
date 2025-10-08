@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../utils/theme.dart';
-import '../../widgets/common/loading_widget.dart';
 
 class AppointmentCalendarScreen extends StatefulWidget {
   const AppointmentCalendarScreen({super.key});
@@ -142,21 +140,23 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
                       });
                     }
                   },
-                  selectedDayPredictTimeBuilder: (context, day) {
-                    return Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
+                  calendarBuilders: CalendarBuilders(
+                    selectedBuilder: (context, day, focusedDay) {
+                      return Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
                           color: AppTheme.primaryColor,
                           shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${day.day}',
-                          style: const TextStyle(color: Colors.white),
                         ),
-                      ),
-                    );
-                  },
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                   const SizedBox(height: 16),
                 // Selected day appointments

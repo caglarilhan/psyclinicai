@@ -183,35 +183,35 @@ class _AssessmentsScreenState extends State<AssessmentsScreen>
   // Masaüstü kısayol metodları
   void _setupKeyboardShortcuts() {
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
       _createNewAssessment,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
       _generateAIAnalysis,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
       _showAssessmentStatistics,
     );
     _shortcutsService.addShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
       _exportAssessmentReport,
     );
   }
 
   void _removeKeyboardShortcuts() {
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyA, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyS, LogicalKeyboardKey.control),
     );
     _shortcutsService.removeShortcut(
-      const LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
+      LogicalKeySet(LogicalKeyboardKey.keyE, LogicalKeyboardKey.control),
     );
   }
 

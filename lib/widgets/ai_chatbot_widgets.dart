@@ -138,9 +138,9 @@ class _AIChatbotWidgetState extends State<AIChatbotWidget> {
       runSpacing: 8,
       children: quickActions.map((action) => 
         ActionChip(
-          avatar: Icon(action['icon'], size: 16),
-          label: Text(action['text']),
-          onPressed: () => _sendMessage(action['action']),
+          avatar: Icon(action['icon'] as IconData, size: 16),
+          label: Text(action['text'] as String),
+          onPressed: () => _sendMessage(action['action'] as String),
         ),
       ).toList(),
     );

@@ -47,3 +47,6 @@ jobs:
             cd ~/psyclinicai/deployment
             docker compose up -d psyclinicai-web
 
+
+
+

@@ -216,7 +216,7 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PerformanceOptimizationService()),
         ChangeNotifierProvider(create: (_) => DocumentationService()),
         ChangeNotifierProvider(create: (_) => TherapyNoteService()),
-        ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
+        // ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
         ChangeNotifierProvider(create: (_) => HomeworkService()),
         ChangeNotifierProvider(create: (_) => AssessmentScoringService()),
         // Legal/Alert sistemleri için provider'lar

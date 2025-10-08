@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import '../models/session_ai_models.dart';
+import '../models/session_ai_models.dart' as session_ai;
 import '../models/treatment_plan_models.dart';
 import '../services/ai_orchestration_service.dart';
 import '../utils/ai_logger.dart';
@@ -15,14 +15,14 @@ class RealTimeSessionAIService extends ChangeNotifier {
   final AIOrchestrationService _aiService = AIOrchestrationService();
   
   // Real-time analysis streams
-  final StreamController<RealTimeSessionAnalysis> _analysisController = 
-      StreamController<RealTimeSessionAnalysis>.broadcast();
-  final StreamController<Alert> _alertController = 
-      StreamController<Alert>.broadcast();
-  final StreamController<InterventionSuggestion> _interventionController = 
-      StreamController<InterventionSuggestion>.broadcast();
-  final StreamController<RealTimeSessionAnalysis> _crisisController = 
-      StreamController<RealTimeSessionAnalysis>.broadcast();
+  final StreamController<session_ai.RealTimeSessionAnalysis> _analysisController =
+      StreamController<session_ai.RealTimeSessionAnalysis>.broadcast();
+  final StreamController<session_ai.Alert> _alertController = 
+      StreamController<session_ai.Alert>.broadcast();
+  final StreamController<session_ai.InterventionSuggestion> _interventionController = 
+      StreamController<session_ai.InterventionSuggestion>.broadcast();
+  final StreamController<session_ai.RealTimeSessionAnalysis> _crisisController = 
+      StreamController<session_ai.RealTimeSessionAnalysis>.broadcast();
 
   // Active sessions
   final Map<String, SessionAnalysisSession> _activeSessions = {};
@@ -34,10 +34,10 @@ class RealTimeSessionAIService extends ChangeNotifier {
   double _interventionThreshold = 0.7;
 
   // Streams
-  Stream<RealTimeSessionAnalysis> get analysisStream => _analysisController.stream;
-  Stream<Alert> get alertStream => _alertController.stream;
-  Stream<InterventionSuggestion> get interventionStream => _interventionController.stream;
-  Stream<RealTimeSessionAnalysis> get crisisStream => _crisisController.stream;
+  Stream<session_ai.RealTimeSessionAnalysis> get analysisStream => _analysisController.stream;
+  Stream<session_ai.Alert> get alertStream => _alertController.stream;
+  Stream<session_ai.InterventionSuggestion> get interventionStream => _interventionController.stream;
+  Stream<session_ai.RealTimeSessionAnalysis> get crisisStream => _crisisController.stream;
 
   // Getters
   bool get isEnabled => _isEnabled;
@@ -263,15 +263,15 @@ class RealTimeSessionAIService extends ChangeNotifier {
     };
   }
 
-  SessionPhase _determineSessionPhase(SessionAnalysisSession session) {
+  String _determineSessionPhase(SessionAnalysisSession session) {
     final duration = DateTime.now().difference(session.startTime).inMinutes;
     
-    if (duration < 5) return SessionPhase.introduction;
-    if (duration < 20) return SessionPhase.exploration;
-    if (duration < 40) return SessionPhase.intervention;
-    if (duration < 50) return SessionPhase.integration;
-    if (duration < 55) return SessionPhase.closure;
-    return SessionPhase.followUp;
+    if (duration < 5) return 'introduction';
+    if (duration < 20) return 'exploration';
+    if (duration < 40) return 'intervention';
+    if (duration < 50) return 'integration';
+    if (duration < 55) return 'closure';
+    return 'followUp';
   }
 
   List<String> _extractEmotionalIndicators(SessionAnalysisSession session) {
@@ -310,7 +310,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
     return indicators;
   }
 
-  RealTimeSessionAnalysis _processAIResponse(Map<String, dynamic> response, SessionAnalysisSession session) {
+  session_ai.RealTimeSessionAnalysis _processAIResponse(Map<String, dynamic> response, SessionAnalysisSession session) {
     // Process AI response and create analysis object
     // This is a simplified version - in real implementation, you'd parse the AI response more carefully
     
@@ -321,13 +321,13 @@ class RealTimeSessionAIService extends ChangeNotifier {
     final progress = _parseSessionProgress(response['progress'] ?? {});
     final alerts = _parseAlerts(response['alerts'] ?? []);
 
-    return RealTimeSessionAnalysis(
+    return session_ai.RealTimeSessionAnalysis(
       id: 'analysis_${DateTime.now().millisecondsSinceEpoch}',
       sessionId: session.sessionId,
       clientId: session.clientId,
       therapistId: session.therapistId,
       timestamp: DateTime.now(),
-      phase: _determineSessionPhase(session),
+      phase: _parseSessionPhase(_determineSessionPhase(session)),
       emotionalStates: emotionalStates,
       riskIndicators: riskIndicators,
       interventionSuggestions: interventionSuggestions,
@@ -338,8 +338,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     );
   }
 
-  List<EmotionalState> _parseEmotionalStates(List<dynamic> data) {
-    return data.map((item) => EmotionalState(
+  List<session_ai.EmotionalState> _parseEmotionalStates(List<dynamic> data) {
+    return data.map((item) => session_ai.EmotionalState(
       id: item['id'] ?? '',
       emotion: _parseEmotionType(item['emotion'] ?? ''),
       intensity: (item['intensity'] ?? 0.0).toDouble(),
@@ -352,8 +352,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  List<RiskIndicator> _parseRiskIndicators(List<dynamic> data) {
-    return data.map((item) => RiskIndicator(
+  List<session_ai.RiskIndicator> _parseRiskIndicators(List<dynamic> data) {
+    return data.map((item) => session_ai.RiskIndicator(
       id: item['id'] ?? '',
       type: _parseRiskType(item['type'] ?? ''),
       severity: _parseRiskSeverity(item['severity'] ?? ''),
@@ -366,8 +366,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  List<InterventionSuggestion> _parseInterventionSuggestions(List<dynamic> data) {
-    return data.map((item) => InterventionSuggestion(
+  List<session_ai.InterventionSuggestion> _parseInterventionSuggestions(List<dynamic> data) {
+    return data.map((item) => session_ai.InterventionSuggestion(
       id: item['id'] ?? '',
       type: _parseInterventionType(item['type'] ?? ''),
       title: item['title'] ?? '',
@@ -382,8 +382,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  List<SessionInsight> _parseSessionInsights(List<dynamic> data) {
-    return data.map((item) => SessionInsight(
+  List<session_ai.SessionInsight> _parseSessionInsights(List<dynamic> data) {
+    return data.map((item) => session_ai.SessionInsight(
       id: item['id'] ?? '',
       type: _parseInsightType(item['type'] ?? ''),
       title: item['title'] ?? '',
@@ -397,8 +397,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  SessionProgress _parseSessionProgress(Map<String, dynamic> data) {
-    return SessionProgress(
+  session_ai.SessionProgress _parseSessionProgress(Map<String, dynamic> data) {
+    return session_ai.SessionProgress(
       id: data['id'] ?? '',
       overallProgress: (data['overallProgress'] ?? 0.0).toDouble(),
       goalProgress: _parseGoalProgress(data['goalProgress'] ?? []),
@@ -410,8 +410,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     );
   }
 
-  List<GoalProgress> _parseGoalProgress(List<dynamic> data) {
-    return data.map((item) => GoalProgress(
+  List<session_ai.GoalProgress> _parseGoalProgress(List<dynamic> data) {
+    return data.map((item) => session_ai.GoalProgress(
       id: item['id'] ?? '',
       goalId: item['goalId'] ?? '',
       goalTitle: item['goalTitle'] ?? '',
@@ -423,8 +423,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  List<Milestone> _parseMilestones(List<dynamic> data) {
-    return data.map((item) => Milestone(
+  List<session_ai.Milestone> _parseMilestones(List<dynamic> data) {
+    return data.map((item) => session_ai.Milestone(
       id: item['id'] ?? '',
       title: item['title'] ?? '',
       description: item['description'] ?? '',
@@ -435,23 +435,23 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  GoalStatus _parseGoalStatus(String status) {
+  String _parseGoalStatus(String status) {
     switch (status.toLowerCase()) {
       case 'active':
-        return GoalStatus.active;
+        return 'active';
       case 'on_hold':
-        return GoalStatus.onHold;
+        return 'onHold';
       case 'completed':
-        return GoalStatus.completed;
+        return 'completed';
       default:
-        return GoalStatus.active;
+        return 'active';
     }
   }
 
 
 
-  List<Challenge> _parseChallenges(List<dynamic> data) {
-    return data.map((item) => Challenge(
+  List<session_ai.Challenge> _parseChallenges(List<dynamic> data) {
+    return data.map((item) => session_ai.Challenge(
       id: item['id'] ?? '',
       title: item['title'] ?? '',
       description: item['description'] ?? '',
@@ -463,8 +463,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  List<Breakthrough> _parseBreakthroughs(List<dynamic> data) {
-    return data.map((item) => Breakthrough(
+  List<session_ai.Breakthrough> _parseBreakthroughs(List<dynamic> data) {
+    return data.map((item) => session_ai.Breakthrough(
       id: item['id'] ?? '',
       title: item['title'] ?? '',
       description: item['description'] ?? '',
@@ -476,18 +476,18 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  ChallengeType _parseChallengeType(String type) {
+  session_ai.ChallengeType _parseChallengeType(String type) {
     switch (type.toLowerCase()) {
       case 'emotional':
-        return ChallengeType.emotional;
+        return session_ai.ChallengeType.emotional;
       case 'cognitive':
-        return ChallengeType.cognitive;
+        return session_ai.ChallengeType.cognitive;
       case 'behavioral':
-        return ChallengeType.behavioral;
+        return session_ai.ChallengeType.behavioral;
       case 'interpersonal':
-        return ChallengeType.interpersonal;
+        return session_ai.ChallengeType.interpersonal;
       default:
-        return ChallengeType.emotional;
+        return session_ai.ChallengeType.emotional;
     }
   }
 
@@ -508,8 +508,8 @@ class RealTimeSessionAIService extends ChangeNotifier {
 
 
 
-  List<Alert> _parseAlerts(List<dynamic> data) {
-    return data.map((item) => Alert(
+  List<session_ai.Alert> _parseAlerts(List<dynamic> data) {
+    return data.map((item) => session_ai.Alert(
       id: item['id'] ?? '',
       type: _parseAlertType(item['type'] ?? ''),
       priority: _parseAlertPriority(item['priority'] ?? ''),
@@ -522,9 +522,9 @@ class RealTimeSessionAIService extends ChangeNotifier {
     )).toList();
   }
 
-  void _checkForAlerts(RealTimeSessionAnalysis analysis) {
+  void _checkForAlerts(session_ai.RealTimeSessionAnalysis analysis) {
     for (final alert in analysis.alerts) {
-      if (alert.priority == AlertPriority.critical || alert.priority == AlertPriority.high) {
+      if (alert.priority == session_ai.AlertPriority.critical || alert.priority == session_ai.AlertPriority.high) {
         _alertController.add(alert);
         
         _logger.warning('High priority alert triggered', context: 'RealTimeSessionAIService', data: {
@@ -537,7 +537,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
     }
   }
 
-  void _checkForInterventions(RealTimeSessionAnalysis analysis) {
+  void _checkForInterventions(session_ai.RealTimeSessionAnalysis analysis) {
     for (final intervention in analysis.interventionSuggestions) {
       if (intervention.confidence >= _interventionThreshold) {
         _interventionController.add(intervention);
@@ -573,22 +573,22 @@ class RealTimeSessionAIService extends ChangeNotifier {
     }
   }
 
-  Future<RealTimeSessionAnalysis> _generateComprehensiveAnalysis(SessionAnalysisSession session) async {
+  Future<session_ai.RealTimeSessionAnalysis> _generateComprehensiveAnalysis(SessionAnalysisSession session) async {
     // This would generate a comprehensive analysis of the entire session
     // Implementation would be similar to real-time analysis but with full session data
     
-    return RealTimeSessionAnalysis(
+    return session_ai.RealTimeSessionAnalysis(
       id: 'final_analysis_${session.sessionId}',
       sessionId: session.sessionId,
       clientId: session.clientId,
       therapistId: session.therapistId,
       timestamp: DateTime.now(),
-      phase: SessionPhase.followUp,
+      phase: _parseSessionPhase('followUp'),
       emotionalStates: [],
       riskIndicators: [],
       interventionSuggestions: [],
       insights: [],
-      progress: SessionProgress(
+      progress: session_ai.SessionProgress(
         id: '',
         overallProgress: 0.0,
         goalProgress: [],
@@ -733,7 +733,7 @@ class RealTimeSessionAIService extends ChangeNotifier {
     return session.clientHistory['interventions']?.cast<String>() ?? [];
   }
 
-  void _handleCrisisEscalation(RealTimeSessionAnalysis analysis, SessionAnalysisSession session) {
+  void _handleCrisisEscalation(session_ai.RealTimeSessionAnalysis analysis, SessionAnalysisSession session) {
     // Handle crisis escalation
     _logger.warning('Crisis escalation detected', context: 'RealTimeSessionAIService', data: {
       'sessionId': session.sessionId,
@@ -747,68 +747,87 @@ class RealTimeSessionAIService extends ChangeNotifier {
 
 
 
+  session_ai.SessionPhase _parseSessionPhase(String phase) {
+    switch (phase) {
+      case 'introduction':
+        return session_ai.SessionPhase.introduction;
+      case 'exploration':
+        return session_ai.SessionPhase.exploration;
+      case 'intervention':
+        return session_ai.SessionPhase.intervention;
+      case 'integration':
+        return session_ai.SessionPhase.integration;
+      case 'closure':
+        return session_ai.SessionPhase.closure;
+      case 'followUp':
+        return session_ai.SessionPhase.followUp;
+      default:
+        return session_ai.SessionPhase.exploration;
+    }
+  }
+
   // Helper methods for parsing enums
-  EmotionType _parseEmotionType(String value) {
+  session_ai.EmotionType _parseEmotionType(String value) {
     try {
-      return EmotionType.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.EmotionType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return EmotionType.calm; // Default
+      return session_ai.EmotionType.calm; // Default
     }
   }
 
-  RiskType _parseRiskType(String value) {
+  session_ai.RiskType _parseRiskType(String value) {
     try {
-      return RiskType.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.RiskType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return RiskType.values.first; // Default to first value
+      return session_ai.RiskType.values.first; // Default to first value
     }
   }
 
-  RiskSeverity _parseRiskSeverity(String value) {
+  session_ai.RiskSeverity _parseRiskSeverity(String value) {
     try {
-      return RiskSeverity.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.RiskSeverity.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return RiskSeverity.low; // Default
+      return session_ai.RiskSeverity.low; // Default
     }
   }
 
-  InterventionType _parseInterventionType(String value) {
+  session_ai.InterventionType _parseInterventionType(String value) {
     try {
-      return InterventionType.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.InterventionType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return InterventionType.psychoeducation; // Default
+      return session_ai.InterventionType.psychoeducation; // Default
     }
   }
 
-  InterventionTiming _parseInterventionTiming(String value) {
+  session_ai.InterventionTiming _parseInterventionTiming(String value) {
     try {
-      return InterventionTiming.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.InterventionTiming.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return InterventionTiming.duringSession; // Default
+      return session_ai.InterventionTiming.duringSession; // Default
     }
   }
 
-  InsightType _parseInsightType(String value) {
+  session_ai.InsightType _parseInsightType(String value) {
     try {
-      return InsightType.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.InsightType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return InsightType.pattern; // Default
+      return session_ai.InsightType.pattern; // Default
     }
   }
 
-  AlertType _parseAlertType(String value) {
+  session_ai.AlertType _parseAlertType(String value) {
     try {
-      return AlertType.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.AlertType.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return AlertType.information; // Default
+      return session_ai.AlertType.information; // Default
     }
   }
 
-  AlertPriority _parseAlertPriority(String value) {
+  session_ai.AlertPriority _parseAlertPriority(String value) {
     try {
-      return AlertPriority.values.firstWhere((e) => e.toString().split('.').last == value);
+      return session_ai.AlertPriority.values.firstWhere((e) => e.toString().split('.').last == value);
     } catch (e) {
-      return AlertPriority.medium; // Default
+      return session_ai.AlertPriority.medium; // Default
     }
   }
 
@@ -858,10 +877,10 @@ class SessionAnalysisSession {
   DateTime startTime;
   DateTime? endTime;
   bool isActive;
-  RealTimeSessionAnalysis? lastAnalysis;
-  RealTimeSessionAnalysis? finalAnalysis;
+  session_ai.RealTimeSessionAnalysis? lastAnalysis;
+  session_ai.RealTimeSessionAnalysis? finalAnalysis;
   List<SessionData> sessionData;
-  List<RealTimeSessionAnalysis> analysisHistory;
+  List<session_ai.RealTimeSessionAnalysis> analysisHistory;
 
   SessionAnalysisSession({
     required this.sessionId,
@@ -875,7 +894,7 @@ class SessionAnalysisSession {
     this.lastAnalysis,
     this.finalAnalysis,
     List<SessionData>? sessionData,
-    List<RealTimeSessionAnalysis>? analysisHistory,
+    List<session_ai.RealTimeSessionAnalysis>? analysisHistory,
   }) : sessionData = sessionData ?? [],
        analysisHistory = analysisHistory ?? [];
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../utils/theme.dart';
+import '../../services/keyboard_shortcuts_service.dart';
+import '../../services/appointment_service.dart';
+import '../../models/appointment_model.dart';
+import 'appointment_form_screen.dart';
 
 class AppointmentCalendarScreen extends StatefulWidget {
   const AppointmentCalendarScreen({super.key});
@@ -10,23 +15,102 @@ class AppointmentCalendarScreen extends StatefulWidget {
 }
 
 class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
+  final KeyboardShortcutsService _shortcutsService = KeyboardShortcutsService();
+  final AppointmentService _appointmentService = AppointmentService();
+  
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   
-  // Demo appointments
-  final Map<DateTime, List<String>> _appointments = {};
-  
+  List<Appointment> _appointments = [];
+  List<Appointment> _selectedDayAppointments = [];
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _initializeDemoAppointments();
+    _setupKeyboardShortcuts();
+    _loadAppointments();
   }
 
-  void _initializeDemoAppointments() {
-    final today = DateTime.now();
-    _appointments[today] = ['09:00 - Dr. Ahmet ile Seans', '14:00 - Grup Terapisi'];
-    _selectedDay = today;
+  @override
+  void dispose() {
+    _removeKeyboardShortcuts();
+    super.dispose();
+  }
+
+  void _setupKeyboardShortcuts() {
+    _shortcutsService.addShortcut(
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+      () => _addNewAppointment(),
+    );
+    _shortcutsService.addShortcut(
+      LogicalKeySet(LogicalKeyboardKey.keyT, LogicalKeyboardKey.control),
+      () => _goToToday(),
+    );
+  }
+
+  void _removeKeyboardShortcuts() {
+    _shortcutsService.removeShortcut(
+      LogicalKeySet(LogicalKeyboardKey.keyN, LogicalKeyboardKey.control),
+    );
+    _shortcutsService.removeShortcut(
+      LogicalKeySet(LogicalKeyboardKey.keyT, LogicalKeyboardKey.control),
+    );
+  }
+
+  Future<void> _loadAppointments() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      await _appointmentService.initialize();
+      await _appointmentService.generateDemoData();
+      
+      final appointments = _appointmentService.getAllAppointments();
+      setState(() {
+        _appointments = appointments;
+        _isLoading = false;
+      });
+      
+      _updateSelectedDayAppointments();
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Randevular yüklenirken hata oluştu: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _updateSelectedDayAppointments() {
+    if (_selectedDay != null) {
+      _selectedDayAppointments = _appointmentService.getAppointmentsForDate(_selectedDay!);
+    } else {
+      _selectedDayAppointments = [];
+    }
+  }
+
+  void _addNewAppointment() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AppointmentFormScreen(
+          selectedDate: _selectedDay ?? DateTime.now(),
+        ),
+      ),
+    ).then((_) => _loadAppointments());
+  }
+
+  void _goToToday() {
+    setState(() {
+      _focusedDay = DateTime.now();
+      _selectedDay = DateTime.now();
+    });
+    _updateSelectedDayAppointments();
   }
 
   @override
@@ -36,292 +120,316 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
         title: const Text('Randevu Takvimi'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-      actions: [
+        actions: [
           IconButton(
             icon: const Icon(Icons.today),
-            onPressed: () {
-              setState(() {
-                _focusedDay =DateTime.now();
-                _selectedDay = DateTime.now();
-              });
-            },
+            onPressed: _goToToday,
+            tooltip: 'Bugüne Git',
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addNewAppointment,
+            tooltip: 'Yeni Randevu',
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Calendar header
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Randevu Takvimi',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                      ),
-                      Row(
-                        children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () {
-                        setState(() {
-                          _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () {
-                        setState(() {
-                          _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
-                        });
-                      },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-          ),
-          // Calendar view
-          Expanded(
-            child: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                TableCalendar<String>(
+                // Calendar
+                TableCalendar<Appointment>(
                   firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    calendarFormat: _calendarFormat,
-                    eventLoader: _getEventsForDay,
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  eventLoader: (day) {
+                    return _appointmentService.getAppointmentsForDate(day);
+                  },
                   startingDayOfWeek: StartingDayOfWeek.monday,
-                    calendarStyle: CalendarStyle(
-                      outsideDaysVisible: false,
-                    defaultTextStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    weekendTextStyle: TextStyle(
+                  calendarStyle: CalendarStyle(
+                    outsideDaysVisible: false,
+                    selectedDecoration: BoxDecoration(
                       color: AppTheme.primaryColor,
-                      fontSize: 14,
+                      shape: BoxShape.circle,
                     ),
-                      selectedDecoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      todayDecoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
+                    todayDecoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
                     ),
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: true,
-                      titleCentered: true,
-                      formatButtonShowsNext: false,
-                      formatButtonDecoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(8),
+                    markerDecoration: BoxDecoration(
+                      color: AppTheme.accentColor,
+                      shape: BoxShape.circle,
                     ),
-                    formatButtonTextStyle: const TextStyle(
-                      color: Colors.white,
-                    ),
-                    titleTextStyle: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: true,
+                    titleCentered: true,
                   ),
                   onDaySelected: (selectedDay, focusedDay) {
-                    if (!isSameDay(_selectedDay, selectedDay)) {
-                        setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    }
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                    _updateSelectedDayAppointments();
                   },
-                  calendarBuilders: CalendarBuilders(
-                    selectedBuilder: (context, day, focusedDay) {
-                      return Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                  onPageChanged: (focusedDay) {
+                    _focusedDay = focusedDay;
+                  },
                 ),
-                  const SizedBox(height: 16),
-                // Selected day appointments
-                if (_selectedDay != null) ...[
-                  Expanded(
-                    child: _buildAppointmentsList(),
-                  ),
-                ],
+                
+                const Divider(),
+                
+                // Selected Day Appointments
+                Expanded(
+                  child: _buildSelectedDayAppointments(),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddAppointmentDialog(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addNewAppointment,
         backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Yeni Randevu'),
       ),
     );
   }
 
-  Widget _buildAppointmentsList() {
-    final dayKey = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
-    final appointments = _appointments[dayKey] ?? [];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year} Randevuları',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (appointments.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(32),
-              child: Center(
-                child: Text(
-                  'Bu tarihte randevu yok',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-              ),
-            )
-          else
-          Expanded(
-            child: ListView.builder(
-                itemCount: appointments.length,
-              itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.event,
-                        color: AppTheme.primaryColor,
-                      ),
-                      title: Text(appointments[index]),
-                      subtitle: Text('Detaylar için tıklayın'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _removeAppointment(appointments[index]),
-                      ),
-                    ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<String> _getEventsForDay(DateTime day) {
-    final dayKey = DateTime(day.year, day.month, day.day);
-    return _appointments[dayKey] ?? [];
-  }
-
-  void _showAddAppointmentDialog() {
-    final timeController = TextEditingController();
-    final notesController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Yeni Randevu Ekle'),
-        content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            TextField(
-              controller: timeController,
-                decoration: const InputDecoration(
-                labelText: 'Saat',
-                hintText: 'örn: 14:00',
-              ),
-              ),
-              const SizedBox(height: 16),
-            TextField(
-              controller: notesController,
-                decoration: const InputDecoration(
-                labelText: 'Notlar',
-                hintText: 'Randevu detayları...',
-              ),
-              maxLines: 3,
-            ),
-          ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('İptal'),
-        ),
-        ElevatedButton(
-            onPressed: () {
-              if (timeController.text.isNotEmpty && notesController.text.isNotEmpty) {
-                _addAppointment(timeController.text, notesController.text);
-          Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            child: const Text('Ekle', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addAppointment(String time, String notes) {
-    if (_selectedDay != null) {
-      final dayKey = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
-      final appointment = '$time - $notes';
-      
-      setState(() {
-        _appointments[dayKey] = [...(_appointments[dayKey] ?? []), appointment];
-      });
-      
-                ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Randevu eklendi: $appointment'),
-          backgroundColor: AppTheme.successColor,
+  Widget _buildSelectedDayAppointments() {
+    if (_selectedDay == null) {
+      return const Center(
+        child: Text(
+          'Bir tarih seçin',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
       );
     }
+
+    if (_selectedDayAppointments.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_available,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Bu tarihte randevu yok',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Yeni randevu eklemek için + butonuna tıklayın',
+              style: TextStyle(
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            '${_selectedDay!.day} ${_getMonthName(_selectedDay!.month)} ${_selectedDay!.year} - Randevular',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _selectedDayAppointments.length,
+            itemBuilder: (context, index) {
+              final appointment = _selectedDayAppointments[index];
+              return _buildAppointmentCard(appointment);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
-  void _removeAppointment(String appointment) {
-    final dayKey = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
-    
-    setState(() {
-      _appointments[dayKey]?.remove(appointment);
-      if (_appointments[dayKey]?.isEmpty == true) {
-        _appointments.remove(dayKey);
-      }
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Randevu silindi'),
-        backgroundColor: AppTheme.infoColor,
+  Widget _buildAppointmentCard(Appointment appointment) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: _getStatusColor(appointment.status).withValues(alpha: 0.1),
+          child: Icon(
+            _getStatusIcon(appointment.status),
+            color: _getStatusColor(appointment.status),
+          ),
+        ),
+        title: Text(
+          appointment.clientName,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${_formatTime(appointment.startTime)} - ${_formatTime(appointment.endTime)}'),
+            Text(appointment.type),
+            if (appointment.notes.isNotEmpty)
+              Text(
+                appointment.notes,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
+        trailing: PopupMenuButton(
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit),
+                  SizedBox(width: 8),
+                  Text('Düzenle'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Sil', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
+          onSelected: (value) {
+            switch (value) {
+              case 'edit':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AppointmentFormScreen(appointment: appointment),
+                  ),
+                ).then((_) => _loadAppointments());
+                break;
+              case 'delete':
+                _deleteAppointment(appointment);
+                break;
+            }
+          },
+        ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return Colors.blue;
+      case 'confirmed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      case 'completed':
+        return Colors.grey;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return Icons.schedule;
+      case 'confirmed':
+        return Icons.check_circle;
+      case 'cancelled':
+        return Icons.cancel;
+      case 'completed':
+        return Icons.done;
+      default:
+        return Icons.help;
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+    return months[month];
+  }
+
+  Future<void> _deleteAppointment(Appointment appointment) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Randevuyu Sil'),
+        content: Text('${appointment.clientName} adlı hastanın randevusunu silmek istediğinizden emin misiniz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await _appointmentService.deleteAppointment(appointment.id);
+      if (success) {
+        _loadAppointments();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Randevu başarıyla silindi'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Randevu silinirken hata oluştu'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

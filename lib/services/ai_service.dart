@@ -1,1068 +1,763 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import '../config/ai_config.dart';
-import '../config/env_config.dart';
-import '../models/ai_response_models.dart';
-import '../models/session_models.dart';
-import 'ai_logger.dart';
-import 'ai_performance_monitor.dart';
+import 'dart:math';
+import '../models/ai_models.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
   AIService._internal();
 
-  final AILogger _logger = AILogger();
-  final AIPerformanceMonitor _performanceMonitor = AIPerformanceMonitor();
-  
-  SharedPreferences? _prefs;
-  int _requestCount = 0;
-  DateTime _lastRequestTime = DateTime.now();
+  // Dal bazlı AI prompt şablonları
+  final Map<ProfessionalType, Map<AIServiceType, String>> _promptTemplates = {
+    ProfessionalType.psychologist: {
+      AIServiceType.sessionSummary: '''
+Sen bir psikologsun. Aşağıdaki seans notlarını analiz et ve profesyonel bir özet hazırla:
 
-  // Singleton pattern ve SharedPreferences başlatma
-  Future<void> _initialize() async {
-    if (_prefs == null) {
-      _prefs = await SharedPreferences.getInstance();
-    }
-  }
+Seans Notları: {inputText}
 
-  // Public initialize metodu
-  Future<void> initialize() async {
-    await _initialize();
-    _logger.info('AIService initialized successfully');
-  }
+Lütfen şunları içeren bir özet hazırla:
+1. Ana konular ve temalar
+2. Danışanın duygusal durumu
+3. Kullanılan terapi teknikleri
+4. İlerleme ve değişimler
+5. Sonraki seans için öneriler
+6. Ev ödevi veya uygulama önerileri
 
-  // Rate limiting kontrolü
-  bool _checkRateLimit() {
-    final now = DateTime.now();
-    if (now.difference(_lastRequestTime).inMinutes >= 1) {
-      _requestCount = 0;
-      _lastRequestTime = now;
-    }
-    
-    final maxRequests = EnvConfig.maxRequestsPerMinute;
-    if (_requestCount >= maxRequests) {
-      _logger.warning(
-        'Rate limit exceeded: $_requestCount requests in current minute',
-        context: 'rate_limiting',
-        data: {'current_requests': _requestCount, 'max_requests': maxRequests},
-      );
-      return false;
-    }
-    
-    _requestCount++;
-    return true;
-  }
+Psikolog perspektifinden, terapötik süreç odaklı bir yaklaşım benimse.
+''',
+      AIServiceType.diagnostic: '''
+Sen bir psikologsun. Aşağıdaki değerlendirme sonuçlarını analiz et:
 
-  // API anahtarı kontrolü
-  String? _getApiKey() {
-    // Önce SharedPreferences'tan al
-    String? apiKey = _prefs?.getString('openai_api_key');
-    
-    // Yoksa environment'dan al
-    if (apiKey == null || apiKey.isEmpty) {
-      apiKey = EnvConfig.openaiApiKey;
-    }
-    
-    // Hala yoksa null döndür
-    if (apiKey == 'YOUR_OPENAI_API_KEY' || apiKey.isEmpty) {
-      _logger.warning(
-        'No valid API key found',
-        context: 'api_key_validation',
-        data: {'has_shared_prefs_key': _prefs?.getString('openai_api_key') != null},
-      );
-      return null;
-    }
-    
-    return apiKey;
-  }
+Değerlendirme: {inputText}
+Puan: {score}
 
-  // Generate response method
-  Future<String> generateResponse(String prompt) async {
-    try {
-      final response = await _callOpenAI(prompt);
-      return response['choices'][0]['message']['content'] ?? 'No response generated';
-    } catch (e) {
-      _logger.error('Error generating response: $e');
-      return 'Error: Unable to generate response';
-    }
-  }
+Psikolog olarak şunları değerlendir:
+1. Puanın klinik anlamı
+2. Olası psikolojik tanılar (DSM-5)
+3. Terapötik müdahale önerileri
+4. Risk faktörleri
+5. Koruyucu faktörler
+6. Sonraki değerlendirme önerileri
 
-  // OpenAI API çağrısı
-  Future<Map<String, dynamic>> _callOpenAI(String prompt) async {
-    await _initialize();
-    
-    if (!_checkRateLimit()) {
-      final error = AIConfig.errorMessages['rate_limit_exceeded'];
-      _logger.error(
-        'Rate limit exceeded',
-        context: 'openai_api',
-        data: {'prompt_length': prompt.length},
-      );
-      throw Exception(error);
-    }
+İlaç önerisi YAPMA, sadece psikolojik müdahaleler öner.
+''',
+      AIServiceType.riskAssessment: '''
+Sen bir psikologsun. Aşağıdaki seans notlarında risk faktörlerini değerlendir:
 
-    final apiKey = _getApiKey();
-    if (apiKey == null) {
-      final error = AIConfig.errorMessages['api_key_missing'];
-      _logger.error(
-        'API key missing',
-        context: 'openai_api',
-        data: {'prompt_length': prompt.length},
-      );
-      throw Exception(error);
-    }
+Seans Notları: {inputText}
 
-    // Performance monitoring başlat
-    _performanceMonitor.startOperation(
-      'openai_api_call',
-      context: 'ai_service',
-      metadata: {
-        'prompt_length': prompt.length,
-        'model': EnvConfig.openaiModel,
-        'max_tokens': EnvConfig.openaiMaxTokens,
-      },
-    );
+Psikolog perspektifinden şunları değerlendir:
+1. İntihar riski
+2. Kendine zarar verme riski
+3. Başkalarına zarar verme riski
+4. İhmal/istismar riski
+5. Madde kullanımı riski
+6. Acil müdahale gerekliliği
 
-    try {
-      _logger.info(
-        'Making OpenAI API request',
-        context: 'openai_api',
-        data: {
-          'model': EnvConfig.openaiModel,
-          'prompt_length': prompt.length,
-          'max_tokens': EnvConfig.openaiMaxTokens,
-        },
-      );
+Her risk için:
+- Risk seviyesi (Düşük/Orta/Yüksek/Kritik)
+- Risk faktörleri
+- Koruyucu faktörler
+- Acil eylemler
+- Takip önerileri
+''',
+      AIServiceType.treatmentSuggestion: '''
+Sen bir psikologsun. Aşağıdaki durum için tedavi önerileri hazırla:
 
-      final response = await http.post(
-        Uri.parse('${AIConfig.openaiBaseUrl}/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-        },
-        body: jsonEncode({
-          'model': EnvConfig.openaiModel,
-          'messages': [
-            {
-              'role': 'system',
-              'content': 'Sen deneyimli bir klinik psikologsun. Lütfen sadece JSON formatında yanıt ver.',
-            },
-            {
-              'role': 'user',
-              'content': prompt,
-            },
-          ],
-          'max_tokens': EnvConfig.openaiMaxTokens,
-          'temperature': EnvConfig.openaiTemperature,
-        }),
-      ).timeout(Duration(seconds: EnvConfig.timeoutSeconds));
+Tanı: {diagnosis}
+Seans Notları: {inputText}
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final content = data['choices'][0]['message']['content'];
-        
-        _logger.info(
-          'OpenAI API response received',
-          context: 'openai_api',
-          data: {
-            'status_code': response.statusCode,
-            'response_length': content.length,
-            'usage': data['usage'],
-          },
-        );
+Psikolog olarak şunları öner:
+1. Uygun terapi yaklaşımları (CBT, EMDR, vb.)
+2. Terapötik teknikler
+3. Seans hedefleri
+4. Ev ödevleri
+5. İlerleme ölçümleri
+6. Süre tahmini
 
-        try {
-          // JSON parse etmeye çalış
-          final parsedResponse = jsonDecode(content);
-          
-          // Performance monitoring bitir
-          _performanceMonitor.endOperation(
-            'openai_api_call',
-            context: 'ai_service',
-            resultMetadata: {
-              'success': true,
-              'response_length': content.length,
-              'parsed_successfully': true,
-            },
-          );
+İlaç önerisi YAPMA, sadece psikolojik müdahaleler öner.
+''',
+    },
+    ProfessionalType.psychiatrist: {
+      AIServiceType.sessionSummary: '''
+Sen bir psikiyatristsin. Aşağıdaki seans notlarını analiz et ve tıbbi özet hazırla:
 
-          return parsedResponse;
-        } catch (e) {
-          _logger.warning(
-            'Failed to parse OpenAI response as JSON, using fallback',
-            context: 'openai_api',
-            data: {'error': e.toString(), 'content_preview': content.substring(0, 100)},
-          );
+Seans Notları: {inputText}
 
-          // Performance monitoring bitir (hata ile)
-          _performanceMonitor.endOperation(
-            'openai_api_call',
-            context: 'ai_service',
-            resultMetadata: {
-              'success': false,
-              'error': 'json_parse_failed',
-              'response_length': content.length,
-            },
-          );
+Psikiyatrist perspektifinden şunları içeren özet hazırla:
+1. Mevcut semptomlar ve şiddeti
+2. İlaç yan etkileri ve tolerans
+3. Tedavi yanıtı
+4. Yaşam kalitesi değişimleri
+5. İlaç ayarlama önerileri
+6. Laboratuvar takibi gerekliliği
+7. Sonraki randevu planı
+''',
+      AIServiceType.diagnostic: '''
+Sen bir psikiyatristsin. Aşağıdaki değerlendirme sonuçlarını analiz et:
 
-          // Fallback olarak mock data döndür
-          return _getFallbackResponse(prompt);
-        }
-      } else {
-        final error = 'HTTP ${response.statusCode}: ${response.body}';
-        _logger.error(
-          'OpenAI API error',
-          context: 'openai_api',
-          data: {
-            'status_code': response.statusCode,
-            'response_body': response.body,
-            'prompt_length': prompt.length,
-          },
-        );
+Değerlendirme: {inputText}
+Puan: {score}
 
-        // Performance monitoring bitir (hata ile)
-        _performanceMonitor.endOperation(
-          'openai_api_call',
-          context: 'ai_service',
-          resultMetadata: {
-            'success': false,
-            'error': 'http_error',
-            'status_code': response.statusCode,
-          },
-        );
+Psikiyatrist olarak şunları değerlendir:
+1. Puanın tıbbi anlamı
+2. Olası psikiyatrik tanılar (DSM-5/ICD-11)
+3. İlaç tedavisi önerileri
+4. Dozaj önerileri
+5. Yan etki takibi
+6. Laboratuvar testleri
+7. Konsültasyon gerekliliği
+''',
+      AIServiceType.riskAssessment: '''
+Sen bir psikiyatristsin. Aşağıdaki seans notlarında risk faktörlerini değerlendir:
 
-        throw Exception(error);
-      }
-    } catch (e) {
-      _logger.error(
-        'OpenAI API call failed',
-        context: 'openai_api',
-        data: {
-          'error': e.toString(),
-          'prompt_length': prompt.length,
-        },
-        error: e,
-      );
+Seans Notları: {inputText}
 
-      // Performance monitoring bitir (hata ile)
-      _performanceMonitor.endOperation(
-        'openai_api_call',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': false,
-          'error': 'exception',
-          'error_message': e.toString(),
-        },
-      );
+Psikiyatrist perspektifinden şunları değerlendir:
+1. İntihar riski (tıbbi acil)
+2. Agresyon riski
+3. İlaç yan etkileri
+4. Madde etkileşimleri
+5. Tıbbi komplikasyonlar
+6. Acil müdahale gerekliliği
 
-      // Hata durumunda fallback data döndür
-      return _getFallbackResponse(prompt);
-    }
-  }
+Her risk için:
+- Risk seviyesi (Düşük/Orta/Yüksek/Kritik)
+- Tıbbi müdahale önerileri
+- İlaç ayarlamaları
+- Acil servis gerekliliği
+- Konsültasyon önerileri
+''',
+      AIServiceType.treatmentSuggestion: '''
+Sen bir psikiyatristsin. Aşağıdaki durum için tedavi önerileri hazırla:
 
-  // Fallback response (API hatası durumunda)
-  Map<String, dynamic> _getFallbackResponse(String prompt) {
-    _logger.info(
-      'Using fallback response',
-      context: 'fallback',
-      data: {'prompt_length': prompt.length, 'fallback_reason': 'api_error'},
-    );
+Tanı: {diagnosis}
+Seans Notları: {inputText}
 
-    if (prompt.contains('seans notu')) {
-      return {
-        'affect': 'Üzgün ve umutsuz',
-        'theme': 'Değersizlik hissi ve sosyal izolasyon',
-        'icdSuggestion': '6B00.0',
-        'riskLevel': 'Orta',
-        'recommendedIntervention': 'CBT + Sosyal destek grupları',
-        'confidence': 0.75,
-      };
-    } else if (prompt.contains('ilaç önerisi')) {
-      return {
-        'suggestions': [
-          {
-            'medication': 'Escitalopram 10mg',
-            'dosage': 'Günde 1 kez',
-            'rationale': 'SSRI, depresyon için birinci basamak',
-            'contraindications': 'Gebelik, manik epizod'
-          }
-        ],
-        'interactions': 'MAOI ile kullanılmamalı'
-      };
-    }
-    
-    return {'error': 'Fallback response'};
-  }
+Psikiyatrist olarak şunları öner:
+1. İlaç tedavisi önerileri
+2. Dozaj protokolleri
+3. Yan etki takibi
+4. Laboratuvar testleri
+5. Terapi kombinasyonları
+6. Takip sıklığı
+7. Acil durum protokolleri
+''',
+    },
+    ProfessionalType.therapist: {
+      AIServiceType.sessionSummary: '''
+Sen bir terapistsin. Aşağıdaki seans notlarını analiz et ve terapötik özet hazırla:
 
-  // Seans özeti oluşturma
-  Future<SessionSummaryResponse> generateSessionSummary(String sessionNotes) async {
-    _performanceMonitor.startOperation(
-      'generate_session_summary',
-      context: 'ai_service',
-      metadata: {'notes_length': sessionNotes.length},
-    );
+Seans Notları: {inputText}
 
-    try {
-      final prompt = AIConfig.sessionSummaryPrompt.replaceAll('{sessionNotes}', sessionNotes);
-      final response = await _callOpenAI(prompt);
-      
-      final result = SessionSummaryResponse.fromJson(response);
-      
-      _performanceMonitor.endOperation(
-        'generate_session_summary',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': true,
-          'response_affect': result.affect,
-          'response_confidence': result.confidence,
-        },
-      );
+Terapist perspektifinden şunları içeren özet hazırla:
+1. Terapötik ilişki durumu
+2. Danışanın motivasyonu
+3. Kullanılan teknikler
+4. Direnç noktaları
+5. İlerleme göstergeleri
+6. Sonraki seans planı
+7. Ev ödevleri
+''',
+      AIServiceType.diagnostic: '''
+Sen bir terapistsin. Aşağıdaki değerlendirme sonuçlarını analiz et:
 
-      return result;
-    } catch (e) {
-      _logger.error(
-        'Failed to generate session summary',
-        context: 'session_summary',
-        data: {'notes_length': sessionNotes.length},
-        error: e,
-      );
+Değerlendirme: {inputText}
+Puan: {score}
 
-      // Performance monitoring bitir (hata ile)
-      _performanceMonitor.endOperation(
-        'generate_session_summary',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
+Terapist olarak şunları değerlendir:
+1. Terapötik hedefler
+2. Müdahale stratejileri
+3. Danışan hazırlığı
+4. Terapötik teknikler
+5. İlerleme ölçümleri
+6. Süre tahmini
+''',
+    },
+  };
 
-      // Hata durumunda fallback response
-      final fallback = _getFallbackResponse('seans notu');
-      return SessionSummaryResponse.fromJson(fallback);
-    }
-  }
+  // Dal bazlı billing kodları
+  final Map<ProfessionalType, Map<String, List<String>>> _billingCodes = {
+    ProfessionalType.psychologist: {
+      'TR': ['90834', '90837', '90847'], // Psikolog CPT kodları
+      'US': ['90834', '90837', '90847'],
+      'EU': ['F32.1', 'F33.1', 'F41.1'], // ICD-10 kodları
+    },
+    ProfessionalType.psychiatrist: {
+      'TR': ['90834', '90837', '90847', '90862'], // Psikiyatrist + ilaç yönetimi
+      'US': ['90834', '90837', '90847', '90862'],
+      'EU': ['F32.1', 'F33.1', 'F41.1', 'Z51.1'], // ICD-10 + ilaç yönetimi
+    },
+    ProfessionalType.therapist: {
+      'TR': ['90834', '90837', '90847'],
+      'US': ['90834', '90837', '90847'],
+      'EU': ['F32.1', 'F33.1', 'F41.1'],
+    },
+  };
 
-  // İlaç önerisi
-  Future<MedicationSuggestionResponse> suggestMedications(
-      String diagnosis, List<String> currentMeds) async {
-    _performanceMonitor.startOperation(
-      'suggest_medications',
-      context: 'ai_service',
-      metadata: {
-        'diagnosis': diagnosis,
-        'current_meds_count': currentMeds.length,
-      },
-    );
-
-    try {
-      final prompt = AIConfig.medicationSuggestionPrompt
-          .replaceAll('{diagnosis}', diagnosis)
-          .replaceAll('{currentMeds}', currentMeds.join(', '));
-      
-      final response = await _callOpenAI(prompt);
-      final result = MedicationSuggestionResponse.fromJson(response);
-      
-      _performanceMonitor.endOperation(
-        'suggest_medications',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': true,
-          'suggestions_count': result.suggestions.length,
-        },
-      );
-
-      return result;
-    } catch (e) {
-      _logger.error(
-        'Failed to suggest medications',
-        context: 'medication_suggestion',
-        data: {'diagnosis': diagnosis, 'current_meds': currentMeds},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'suggest_medications',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      // Hata durumunda fallback response
-      final fallback = _getFallbackResponse('ilaç önerisi');
-      return MedicationSuggestionResponse.fromJson(fallback);
-    }
-  }
-
-  // Eğitim içerik önerisi
-  Future<EducationalContentResponse> suggestEducationalContent(
-      String specialty, int experienceYears) async {
-    _performanceMonitor.startOperation(
-      'suggest_educational_content',
-      context: 'ai_service',
-      metadata: {
-        'specialty': specialty,
-        'experience_years': experienceYears,
-      },
-    );
-
-    try {
-      final prompt = AIConfig.educationalContentPrompt
-          .replaceAll('{specialty}', specialty)
-          .replaceAll('{experienceYears}', experienceYears.toString());
-      
-      final response = await _callOpenAI(prompt);
-      final result = EducationalContentResponse.fromJson(response);
-      
-      _performanceMonitor.endOperation(
-        'suggest_educational_content',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': true,
-          'recommendations_count': result.recommendations.length,
-        },
-      );
-
-      return result;
-    } catch (e) {
-      _logger.error(
-        'Failed to suggest educational content',
-        context: 'educational_content',
-        data: {'specialty': specialty, 'experience_years': experienceYears},
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'suggest_educational_content',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      // Hata durumunda fallback response
-      return EducationalContentResponse(
-        recommendations: [
-          EducationalContentRecommendation(
-            title: 'Depresyon için CBT Protokolleri',
-            type: 'Kurs',
-            duration: '8 hafta',
-            level: 'Orta',
-            description: 'Depresyon tedavisinde kanıta dayalı CBT teknikleri',
-          ),
-          EducationalContentRecommendation(
-            title: 'Anksiyete Bozuklukları Eğitimi',
-            type: 'Seminer',
-            duration: '2 gün',
-            level: 'İleri',
-            description: 'Anksiyete bozukluklarının tanı ve tedavisi',
-          ),
-        ],
-        priority: 'Yüksek',
-      );
-    }
-  }
-
-  // Terapi simülasyonu
-  Future<String> simulateTherapySession(
-      String clientGoal, String therapistMessage) async {
-    _performanceMonitor.startOperation(
-      'simulate_therapy_session',
-      context: 'ai_service',
-      metadata: {
-        'client_goal_length': clientGoal.length,
-        'therapist_message_length': therapistMessage.length,
-      },
-    );
-
-    try {
-      final prompt = AIConfig.therapySimulationPrompt
-          .replaceAll('{clientGoal}', clientGoal)
-          .replaceAll('{therapistMessage}', therapistMessage);
-      
-      final response = await _callOpenAI(prompt);
-      
-      // OpenAI'dan gelen yanıtı parse et
-      String result;
-      if (response.containsKey('choices')) {
-        result = response['choices'][0]['message']['content'];
-      } else {
-        result = response.toString();
-      }
-      
-      _performanceMonitor.endOperation(
-        'simulate_therapy_session',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': true,
-          'response_length': result.length,
-        },
-      );
-
-      return result;
-    } catch (e) {
-      _logger.error(
-        'Failed to simulate therapy session',
-        context: 'therapy_simulation',
-        data: {
-          'client_goal': clientGoal,
-          'therapist_message': therapistMessage,
-        },
-        error: e,
-      );
-
-      _performanceMonitor.endOperation(
-        'simulate_therapy_session',
-        context: 'ai_service',
-        resultMetadata: {
-          'success': false,
-          'error': e.toString(),
-        },
-      );
-
-      // Hata durumunda fallback response
-      return 'Danışan: "Evet, haklısınız. Bu yaklaşımı denemek istiyorum."';
-    }
-  }
-
-  // API anahtarı kaydetme
-  Future<void> saveApiKey(String apiKey) async {
-    await _initialize();
-    await _prefs?.setString('openai_api_key', apiKey);
-    
-    _logger.info(
-      'API key saved',
-      context: 'api_key_management',
-      data: {'key_length': apiKey.length, 'key_preview': '${apiKey.substring(0, 8)}...'},
-    );
-  }
-
-  // API anahtarı silme
-  Future<void> clearApiKey() async {
-    await _initialize();
-    await _prefs?.remove('openai_api_key');
-    
-    _logger.info(
-      'API key cleared',
-      context: 'api_key_management',
-    );
-  }
-
-  // API anahtarı kontrolü
-  Future<bool> hasValidApiKey() async {
-    await _initialize();
-    final apiKey = _getApiKey();
-    return apiKey != null && apiKey.isNotEmpty;
-  }
-
-  // Rate limit durumu
-  Map<String, dynamic> getRateLimitStatus() {
-    final now = DateTime.now();
-    final timeUntilReset = 60 - now.difference(_lastRequestTime).inSeconds;
-    
-    return {
-      'requestsUsed': _requestCount,
-      'requestsRemaining': EnvConfig.maxRequestsPerMinute - _requestCount,
-      'timeUntilReset': timeUntilReset > 0 ? timeUntilReset : 0,
-      'isLimited': !_checkRateLimit(),
-    };
-  }
-
-  // Performance monitoring getter'ları
-  AIPerformanceMonitor get performanceMonitor => _performanceMonitor;
-  AILogger get logger => _logger;
-
-  // Performance statistics
-  Map<String, dynamic> getPerformanceStatistics({String? context}) {
-    return _performanceMonitor.getPerformanceStatistics(context: context);
-  }
-
-  // Performance alerts
-  List<dynamic> getPerformanceAlerts() {
-    return _performanceMonitor.getPerformanceAlerts().map((a) => a.toJson()).toList();
-  }
-
-  // Export logs
-  String exportLogs() {
-    return _logger.exportLogs();
-  }
-
-  // Export performance data
-  Map<String, dynamic> exportPerformanceData() {
-    return _performanceMonitor.exportPerformanceData();
-  }
-
-  // AI model konfigürasyonu
-  static const String _modelVersion = 'GPT-4 v1.0';
-  static const double _defaultConfidence = 0.85;
-
-  /// Seans içeriğini analiz eder
-  Map<String, dynamic> _analyzeSessionContent({
+  Future<SessionSummaryResponse> generateSessionSummary({
     required String sessionNotes,
-    required String clientGoals,
-    required List<Session> previousSessions,
-  }) {
-    // Basit NLP analizi simülasyonu
-    final words = sessionNotes.toLowerCase().split(' ');
-    final sentences = sessionNotes.split('.');
+    required ProfessionalType professionalType,
+    required String clientId,
+    required String sessionId,
+    Map<String, dynamic> assessmentScores = const {},
+  }) async {
+    // Mock AI response - gerçek uygulamada OpenAI/Anthropic API kullanılır
+    await Future.delayed(const Duration(seconds: 2));
+
+    final prompt = _promptTemplates[professionalType]?[AIServiceType.sessionSummary] ?? '';
     
-    // Duygu analizi
-    final emotionalState = _analyzeEmotionalState(words);
-    
-    // Anahtar noktalar
-    final keyPoints = _extractKeyPoints(sentences);
-    
-    // Risk faktörleri
-    final riskFactors = _identifyRiskFactors(words);
-    
-    // Güçlü yanlar
-    final strengths = _identifyStrengths(words);
-    
-    // İlerleme değerlendirmesi
-    final progressAssessment = _assessProgress(
-      sessionNotes: sessionNotes,
-      previousSessions: previousSessions,
+    // Dal bazlı özet üretimi
+    final summary = _generateProfessionalSummary(sessionNotes, professionalType);
+    final keyFindings = _extractKeyFindings(sessionNotes, professionalType);
+    final actionItems = _generateActionItems(sessionNotes, professionalType);
+    final followUpTasks = _generateFollowUpTasks(sessionNotes, professionalType);
+
+    return SessionSummaryResponse(
+      summary: summary,
+      keyFindings: keyFindings,
+      actionItems: actionItems,
+      followUpTasks: followUpTasks,
+      insights: {
+        'professionalType': professionalType.name,
+        'sessionId': sessionId,
+        'clientId': clientId,
+      },
+      confidence: 0.85 + (Random().nextDouble() * 0.1),
     );
-    
-    // Öneriler
-    final recommendations = _generateRecommendations(
-      emotionalState: emotionalState,
+  }
+
+  Future<DiagnosticSuggestion> generateDiagnosticSuggestion({
+    required String assessmentType,
+    required int score,
+    required ProfessionalType professionalType,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    final severity = _calculateSeverity(assessmentType, score);
+    final possibleDiagnoses = _getPossibleDiagnoses(assessmentType, score, professionalType);
+    final recommendations = _getRecommendations(assessmentType, score, professionalType);
+    final warningSigns = _getWarningSigns(assessmentType, score);
+
+    return DiagnosticSuggestion(
+      assessmentType: assessmentType,
+      score: score,
+      severity: severity,
+      possibleDiagnoses: possibleDiagnoses,
+      recommendations: recommendations,
+      warningSigns: warningSigns,
+      clinicalNotes: {
+        'professionalType': professionalType.name,
+        'assessmentDate': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  Future<RiskAssessment> assessRisk({
+    required String sessionNotes,
+    required ProfessionalType professionalType,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    final riskFactors = _identifyRiskFactors(sessionNotes, professionalType);
+    final protectiveFactors = _identifyProtectiveFactors(sessionNotes);
+    final riskLevel = _calculateRiskLevel(riskFactors, protectiveFactors);
+    final immediateActions = _getImmediateActions(riskLevel, professionalType);
+    final followUpActions = _getFollowUpActions(riskLevel, professionalType);
+
+    return RiskAssessment(
+      riskType: 'Genel Risk Değerlendirmesi',
+      riskLevel: riskLevel,
+      riskScore: _calculateRiskScore(riskFactors, protectiveFactors),
       riskFactors: riskFactors,
-      strengths: strengths,
-      progressAssessment: progressAssessment,
+      protectiveFactors: protectiveFactors,
+      immediateActions: immediateActions,
+      followUpActions: followUpActions,
+      requiresImmediateAttention: riskLevel == 'Kritik' || riskLevel == 'Yüksek',
     );
-    
-    // Özet
-    final summary = _generateSummary(
-      keyPoints: keyPoints,
-      emotionalState: emotionalState,
-      progressAssessment: progressAssessment,
-    );
-
-    return {
-      'summary': summary,
-      'keyPoints': keyPoints.join(', '),
-      'emotionalState': emotionalState,
-      'progressAssessment': progressAssessment,
-      'recommendations': recommendations,
-      'riskFactors': riskFactors,
-      'strengths': strengths,
-      'confidence': _calculateConfidence(sessionNotes, previousSessions),
-    };
   }
 
-  /// Duygu durumu analizi
-  String _analyzeEmotionalState(List<String> words) {
-    final positiveWords = [
-      'iyi', 'güzel', 'mutlu', 'umutlu', 'güvenli', 'sakin', 'rahat',
-      'başarılı', 'ilerleme', 'gelişme', 'iyileşme', 'destek', 'yardım'
-    ];
-    
-    final negativeWords = [
-      'kötü', 'üzgün', 'endişeli', 'korkulu', 'stresli', 'gergin',
-      'yorgun', 'umutsuz', 'çaresiz', 'yalnız', 'kızgın', 'sinirli'
-    ];
-    
-    final anxietyWords = [
-      'anksiyete', 'panik', 'endişe', 'korku', 'gerginlik', 'stres',
-      'uykusuzluk', 'kalp çarpıntısı', 'nefes darlığı', 'titreme'
-    ];
-    
-    final depressionWords = [
-      'depresyon', 'mutsuz', 'umutsuz', 'yorgun', 'enerjisiz',
-      'uyku', 'iştah', 'konsantrasyon', 'değersiz', 'suçlu'
-    ];
+  Future<TreatmentSuggestion> generateTreatmentSuggestion({
+    required String primaryDiagnosis,
+    required String sessionNotes,
+    required ProfessionalType professionalType,
+  }) async {
+    await Future.delayed(const Duration(seconds: 2));
 
-    int positiveCount = 0;
-    int negativeCount = 0;
-    int anxietyCount = 0;
-    int depressionCount = 0;
+    final recommendedInterventions = _getRecommendedInterventions(primaryDiagnosis, professionalType);
+    final therapeuticTechniques = _getTherapeuticTechniques(primaryDiagnosis, professionalType);
+    final medicationConsiderations = _getMedicationConsiderations(primaryDiagnosis, professionalType);
+    final sessionGoals = _getSessionGoals(primaryDiagnosis, professionalType);
 
-    for (final word in words) {
-      if (positiveWords.contains(word)) positiveCount++;
-      if (negativeWords.contains(word)) negativeCount++;
-      if (anxietyWords.contains(word)) anxietyCount++;
-      if (depressionWords.contains(word)) depressionCount++;
-    }
+    return TreatmentSuggestion(
+      professionalType: professionalType,
+      primaryDiagnosis: primaryDiagnosis,
+      recommendedInterventions: recommendedInterventions,
+      therapeuticTechniques: therapeuticTechniques,
+      medicationConsiderations: medicationConsiderations,
+      sessionGoals: sessionGoals,
+      treatmentPlan: {
+        'duration': _estimateTreatmentDuration(primaryDiagnosis),
+        'frequency': _getSessionFrequency(primaryDiagnosis),
+        'modalities': _getTreatmentModalities(primaryDiagnosis, professionalType),
+      },
+    );
+  }
 
-    // Duygu durumu belirleme
-    if (anxietyCount > 3) {
-      return 'Yüksek anksiyete, endişeli ve gergin';
-    } else if (depressionCount > 3) {
-      return 'Depresif belirtiler mevcut, düşük motivasyon';
-    } else if (positiveCount > negativeCount) {
-      return 'Pozitif duygu durumu, umutlu ve motive';
-    } else if (negativeCount > positiveCount) {
-      return 'Negatif duygu durumu, zorlanma yaşıyor';
-    } else {
-      return 'Karma duygu durumu, karışık duygular';
+  Future<BillingCodeSuggestion> generateBillingCodeSuggestion({
+    required String sessionType,
+    required String primaryDiagnosis,
+    required int sessionDuration,
+    required ProfessionalType professionalType,
+    required String region,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final recommendedCPTCodes = _getCPTCodes(sessionType, sessionDuration, professionalType, region);
+    final recommendedICDCodes = _getICDCodes(primaryDiagnosis, region);
+
+    return BillingCodeSuggestion(
+      professionalType: professionalType,
+      sessionType: sessionType,
+      primaryDiagnosis: primaryDiagnosis,
+      sessionDuration: sessionDuration,
+      recommendedCPTCodes: recommendedCPTCodes,
+      recommendedICDCodes: recommendedICDCodes,
+      region: region,
+      billingNotes: {
+        'sessionDuration': sessionDuration,
+        'professionalType': professionalType.name,
+        'region': region,
+      },
+    );
+  }
+
+  // Helper methods
+  String _generateProfessionalSummary(String notes, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return '''
+Psikolog Perspektifi:
+Seans sırasında danışanın duygusal durumu ve davranışsal değişimler gözlemlendi. Terapötik süreçte ilerleme kaydedildi. Bilişsel davranışçı teknikler uygulandı ve danışanın farkındalığı artırıldı. Sonraki seans için ev ödevi verildi.
+''';
+      case ProfessionalType.psychiatrist:
+        return '''
+Psikiyatrist Perspektifi:
+Hastanın mevcut semptomları değerlendirildi. İlaç tedavisinin etkinliği gözden geçirildi. Yan etkiler kontrol edildi. Gerekli laboratuvar testleri planlandı. İlaç dozajı ayarlandı.
+''';
+      case ProfessionalType.therapist:
+        return '''
+Terapist Perspektifi:
+Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanılan teknikler etkili oldu. Direnç noktaları belirlendi. İlerleme kaydedildi.
+''';
+      default:
+        return 'Seans özeti hazırlandı.';
     }
   }
 
-  /// Anahtar noktaları çıkarır
-  List<String> _extractKeyPoints(List<String> sentences) {
-    final keyPoints = <String>[];
-    
-    for (final sentence in sentences) {
-      final trimmed = sentence.trim();
-      if (trimmed.length > 20 && trimmed.length < 200) {
-        // Önemli anahtar kelimeleri içeren cümleleri seç
-        final importantKeywords = [
-          'hedef', 'amaç', 'plan', 'strateji', 'teknik', 'egzersiz',
-          'ilerleme', 'gelişme', 'değişiklik', 'sonuç', 'etki',
-          'aile', 'destek', 'ilişki', 'sosyal', 'iş', 'okul'
+  List<String> _extractKeyFindings(String notes, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          'Danışanın duygusal farkındalığı artmış',
+          'Bilişsel çarpıtmalar tespit edildi',
+          'Terapötik ilişki güçlü',
+          'Ev ödevlerine uyum iyi',
         ];
-        
-        bool hasImportantKeyword = false;
-        for (final keyword in importantKeywords) {
-          if (trimmed.toLowerCase().contains(keyword)) {
-            hasImportantKeyword = true;
-            break;
+      case ProfessionalType.psychiatrist:
+        return [
+          'Semptom şiddeti azalmış',
+          'İlaç toleransı iyi',
+          'Yan etkiler minimal',
+          'Yaşam kalitesi artmış',
+        ];
+      case ProfessionalType.therapist:
+        return [
+          'Terapötik hedeflere ulaşıldı',
+          'Danışan motivasyonu yüksek',
+          'Teknikler etkili',
+          'İlerleme kaydedildi',
+        ];
+      default:
+        return ['Temel bulgular tespit edildi'];
+    }
+  }
+
+  List<String> _generateActionItems(String notes, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          'Bilişsel yeniden yapılandırma teknikleri uygula',
+          'Ev ödevi: Düşünce kayıtları tut',
+          'Sonraki seans: Duygu düzenleme teknikleri',
+          'Aile terapisi değerlendir',
+        ];
+      case ProfessionalType.psychiatrist:
+        return [
+          'İlaç dozajını ayarla',
+          'Laboratuvar testleri iste',
+          'Yan etki takibi yap',
+          'Konsültasyon gerekli mi değerlendir',
+        ];
+      case ProfessionalType.therapist:
+        return [
+          'Terapötik teknikleri çeşitlendir',
+          'Danışanın hazırlığını değerlendir',
+          'Hedefleri gözden geçir',
+          'İlerleme ölçümleri yap',
+        ];
+      default:
+        return ['Genel aksiyon öğeleri'];
+    }
+  }
+
+  List<String> _generateFollowUpTasks(String notes, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          '2 hafta sonra kontrol randevusu',
+          'Aile görüşmesi planla',
+          'Grup terapisi değerlendir',
+          'Psikiyatrist konsültasyonu',
+        ];
+      case ProfessionalType.psychiatrist:
+        return [
+          '1 hafta sonra ilaç kontrolü',
+          'Laboratuvar sonuçları takibi',
+          'Yan etki değerlendirmesi',
+          'Tedavi yanıtı değerlendirmesi',
+        ];
+      case ProfessionalType.therapist:
+        return [
+          'Sonraki seans planı',
+          'Ev ödevleri takibi',
+          'İlerleme değerlendirmesi',
+          'Hedef gözden geçirmesi',
+        ];
+      default:
+        return ['Genel takip görevleri'];
+    }
+  }
+
+  String _calculateSeverity(String assessmentType, int score) {
+    switch (assessmentType) {
+      case 'PHQ-9':
+        if (score >= 20) return 'Ağır';
+        if (score >= 15) return 'Orta-Ağır';
+        if (score >= 10) return 'Orta';
+        if (score >= 5) return 'Hafif';
+        return 'Minimal';
+      case 'GAD-7':
+        if (score >= 15) return 'Ağır';
+        if (score >= 10) return 'Orta';
+        if (score >= 5) return 'Hafif';
+        return 'Minimal';
+      default:
+        return 'Değerlendirilecek';
+    }
+  }
+
+  List<String> _getPossibleDiagnoses(String assessmentType, int score, ProfessionalType type) {
+    final diagnoses = <String>[];
+    
+    switch (assessmentType) {
+      case 'PHQ-9':
+        if (score >= 10) {
+          diagnoses.add('Major Depressive Disorder');
+          if (type == ProfessionalType.psychiatrist) {
+            diagnoses.add('Persistent Depressive Disorder');
+            diagnoses.add('Adjustment Disorder with Depressed Mood');
           }
         }
-        
-        if (hasImportantKeyword) {
-          keyPoints.add(trimmed);
+        break;
+      case 'GAD-7':
+        if (score >= 10) {
+          diagnoses.add('Generalized Anxiety Disorder');
+          if (type == ProfessionalType.psychiatrist) {
+            diagnoses.add('Panic Disorder');
+            diagnoses.add('Social Anxiety Disorder');
+          }
         }
-      }
+        break;
     }
     
-    // En fazla 5 anahtar nokta
-    return keyPoints.take(5).toList();
+    return diagnoses;
   }
 
-  /// Risk faktörlerini belirler
-  List<String> _identifyRiskFactors(List<String> words) {
+  List<String> _getRecommendations(String assessmentType, int score, ProfessionalType type) {
+    final recommendations = <String>[];
+    
+    switch (type) {
+      case ProfessionalType.psychologist:
+        recommendations.addAll([
+          'Bilişsel Davranışçı Terapi',
+          'Duygu düzenleme teknikleri',
+          'Stres yönetimi eğitimi',
+          'Ev ödevleri ve uygulamalar',
+        ]);
+        break;
+      case ProfessionalType.psychiatrist:
+        recommendations.addAll([
+          'İlaç tedavisi değerlendirmesi',
+          'SSRI/SNRI başlangıcı',
+          'Yan etki takibi',
+          'Laboratuvar testleri',
+        ]);
+        if (score >= 15) {
+          recommendations.add('Acil psikiyatrik değerlendirme');
+        }
+        break;
+      case ProfessionalType.therapist:
+        recommendations.addAll([
+          'Terapötik müdahale',
+          'Danışan eğitimi',
+          'Destek grupları',
+          'Yaşam tarzı değişiklikleri',
+        ]);
+        break;
+    }
+    
+    return recommendations;
+  }
+
+  List<String> _getWarningSigns(String assessmentType, int score) {
+    final warnings = <String>[];
+    
+    if (score >= 15) {
+      warnings.add('Yüksek risk - Acil değerlendirme gerekli');
+    }
+    if (score >= 20) {
+      warnings.add('Kritik seviye - Hemen müdahale gerekli');
+    }
+    
+    return warnings;
+  }
+
+  List<String> _identifyRiskFactors(String notes, ProfessionalType type) {
     final riskFactors = <String>[];
     
-    final riskKeywords = {
-      'intihar': 'İntihar düşünceleri',
-      'kendine zarar': 'Kendine zarar verme riski',
-      'şiddet': 'Şiddet eğilimi',
-      'madde': 'Madde kullanımı',
-      'alkol': 'Alkol kullanımı',
-      'uykusuzluk': 'Uyku problemleri',
-      'iştahsızlık': 'İştah problemleri',
-      'izolasyon': 'Sosyal izolasyon',
-      'paranoya': 'Paranoid düşünceler',
-      'halüsinasyon': 'Halüsinasyonlar',
-    };
+    // Basit keyword tabanlı risk faktörü tespiti
+    final lowerNotes = notes.toLowerCase();
     
-    for (final entry in riskKeywords.entries) {
-      if (words.contains(entry.key)) {
-        riskFactors.add(entry.value);
-      }
+    if (lowerNotes.contains('intihar') || lowerNotes.contains('ölüm')) {
+      riskFactors.add('İntihar düşünceleri');
     }
-    
-    if (riskFactors.isEmpty) {
-      riskFactors.add('Acil risk faktörü tespit edilmedi');
+    if (lowerNotes.contains('zarar') || lowerNotes.contains('kesme')) {
+      riskFactors.add('Kendine zarar verme');
+    }
+    if (lowerNotes.contains('alkol') || lowerNotes.contains('madde')) {
+      riskFactors.add('Madde kullanımı');
+    }
+    if (lowerNotes.contains('yalnız') || lowerNotes.contains('izole')) {
+      riskFactors.add('Sosyal izolasyon');
     }
     
     return riskFactors;
   }
 
-  /// Güçlü yanları belirler
-  List<String> _identifyStrengths(List<String> words) {
-    final strengths = <String>[];
+  List<String> _identifyProtectiveFactors(String notes) {
+    final protectiveFactors = <String>[];
     
-    final strengthKeywords = {
-      'motivasyon': 'Yüksek motivasyon',
-      'açıklık': 'Terapötik sürece açıklık',
-      'içgörü': 'İyi içgörü',
-      'destek': 'Aile/çevre desteği',
-      'uyum': 'Ev ödevlerine uyum',
-      'düzenli': 'Düzenli katılım',
-      'sabır': 'Sabırlı yaklaşım',
-      'cesaret': 'Cesur davranış',
-      'empati': 'Empatik yaklaşım',
-      'problem çözme': 'Problem çözme becerisi',
-    };
+    final lowerNotes = notes.toLowerCase();
     
-    for (final entry in strengthKeywords.entries) {
-      if (words.contains(entry.key)) {
-        strengths.add(entry.value);
-      }
+    if (lowerNotes.contains('aile') || lowerNotes.contains('destek')) {
+      protectiveFactors.add('Aile desteği');
+    }
+    if (lowerNotes.contains('iş') || lowerNotes.contains('çalış')) {
+      protectiveFactors.add('İş/okul bağlantısı');
+    }
+    if (lowerNotes.contains('hobi') || lowerNotes.contains('aktivite')) {
+      protectiveFactors.add('Pozitif aktiviteler');
     }
     
-    if (strengths.isEmpty) {
-      strengths.add('Güçlü yanlar tespit edildi');
-    }
-    
-    return strengths;
+    return protectiveFactors;
   }
 
-  /// İlerleme değerlendirmesi
-  String _assessProgress({
-    required String sessionNotes,
-    required List<Session> previousSessions,
-  }) {
-    if (previousSessions.isEmpty) {
-      return 'İlk seans olduğu için henüz ilerleme değerlendirilemedi';
-    }
-    
-    // Basit ilerleme analizi
-    final progressKeywords = [
-      'ilerleme', 'gelişme', 'iyileşme', 'azaldı', 'arttı',
-      'başarılı', 'tamamlandı', 'öğrendi', 'uyguladı'
-    ];
-    
-    int progressCount = 0;
-    for (final keyword in progressKeywords) {
-      if (sessionNotes.toLowerCase().contains(keyword)) {
-        progressCount++;
-      }
-    }
-    
-    if (progressCount > 3) {
-      return 'Belirgin ilerleme kaydedildi, hedefler doğrultusunda gelişme var';
-    } else if (progressCount > 1) {
-      return 'Orta düzeyde ilerleme, bazı alanlarda gelişme gözleniyor';
-    } else {
-      return 'Sınırlı ilerleme, daha fazla çaba ve destek gerekebilir';
+  String _calculateRiskLevel(List<String> riskFactors, List<String> protectiveFactors) {
+    if (riskFactors.contains('İntihar düşünceleri')) return 'Kritik';
+    if (riskFactors.length >= 3) return 'Yüksek';
+    if (riskFactors.length >= 2) return 'Orta';
+    if (riskFactors.length >= 1) return 'Düşük';
+    return 'Minimal';
+  }
+
+  double _calculateRiskScore(List<String> riskFactors, List<String> protectiveFactors) {
+    double score = riskFactors.length * 0.3;
+    score -= protectiveFactors.length * 0.1;
+    return score.clamp(0.0, 1.0);
+  }
+
+  List<String> _getImmediateActions(String riskLevel, ProfessionalType type) {
+    switch (riskLevel) {
+      case 'Kritik':
+        return [
+          'Acil servise yönlendir',
+          'Güvenlik planı oluştur',
+          'Aile bilgilendir',
+          '24 saat takip planla',
+        ];
+      case 'Yüksek':
+        return [
+          'Acil değerlendirme yap',
+          'Güvenlik önlemleri al',
+          'Sık takip planla',
+          'Konsültasyon iste',
+        ];
+      default:
+        return ['Rutin takip planla'];
     }
   }
 
-  /// Öneriler oluşturur
-  String _generateRecommendations({
-    required String emotionalState,
-    required List<String> riskFactors,
-    required List<String> strengths,
-    required String progressAssessment,
-  }) {
-    final recommendations = <String>[];
-    
-    // Duygu durumuna göre öneriler
-    if (emotionalState.contains('anksiyete')) {
-      recommendations.add('Nefes egzersizleri ve gevşeme teknikleri');
-      recommendations.add('Günlük rutin oluşturma');
+  List<String> _getFollowUpActions(String riskLevel, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychiatrist:
+        return [
+          'İlaç ayarlaması yap',
+          'Laboratuvar takibi',
+          'Yan etki değerlendirmesi',
+        ];
+      case ProfessionalType.psychologist:
+        return [
+          'Terapi sıklığını artır',
+          'Kriz müdahale planı',
+          'Aile terapisi değerlendir',
+        ];
+      default:
+        return ['Genel takip önerileri'];
     }
-    
-    if (emotionalState.contains('depresif')) {
-      recommendations.add('Günlük aktivite planlaması');
-      recommendations.add('Sosyal destek ağını güçlendirme');
-    }
-    
-    // Risk faktörlerine göre öneriler
-    if (riskFactors.any((f) => f.contains('intihar') || f.contains('kendine zarar'))) {
-      recommendations.add('Acil psikiyatrik değerlendirme');
-      recommendations.add('24/7 kriz desteği');
-    }
-    
-    // Güçlü yanlara göre öneriler
-    if (strengths.any((s) => s.contains('motivasyon'))) {
-      recommendations.add('Motivasyonu sürdürme stratejileri');
-    }
-    
-    if (strengths.any((s) => s.contains('destek'))) {
-      recommendations.add('Aile desteğini terapötik sürece dahil etme');
-    }
-    
-    // Genel öneriler
-    recommendations.add('Düzenli seans takibi');
-    recommendations.add('Ev ödevlerinin sürekli uygulanması');
-    recommendations.add('İlerleme günlüğü tutulması');
-    
-    return recommendations.join('. ');
   }
 
-  /// Özet oluşturur
-  String _generateSummary({
-    required List<String> keyPoints,
-    required String emotionalState,
-    required String progressAssessment,
-  }) {
-    final summaryParts = <String>[];
-    
-    summaryParts.add('Seans başarıyla tamamlandı.');
-    
-    if (keyPoints.isNotEmpty) {
-      summaryParts.add('Ana konular: ${keyPoints.take(3).join(', ')}.');
+  List<String> _getRecommendedInterventions(String diagnosis, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          'Bilişsel Davranışçı Terapi',
+          'Duygu düzenleme teknikleri',
+          'Stres yönetimi',
+          'Sosyal beceri eğitimi',
+        ];
+      case ProfessionalType.psychiatrist:
+        return [
+          'İlaç tedavisi',
+          'Psikoeğitim',
+          'Yaşam tarzı değişiklikleri',
+          'Destek grupları',
+        ];
+      default:
+        return ['Genel müdahale önerileri'];
     }
-    
-    summaryParts.add('Duygu durumu: $emotionalState.');
-    summaryParts.add('İlerleme: $progressAssessment.');
-    
-    return summaryParts.join(' ');
   }
 
-  /// Güven skoru hesaplar
-  double _calculateConfidence(String sessionNotes, List<Session> previousSessions) {
-    double confidence = _defaultConfidence;
-    
-    // Not uzunluğuna göre ayarlama
-    final wordCount = sessionNotes.split(' ').length;
-    if (wordCount > 100) {
-      confidence += 0.05;
-    } else if (wordCount < 50) {
-      confidence -= 0.1;
+  List<String> _getTherapeuticTechniques(String diagnosis, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          'Bilişsel yeniden yapılandırma',
+          'Davranış aktivasyonu',
+          'Duygu düzenleme',
+          'Mindfulness teknikleri',
+        ];
+      case ProfessionalType.psychiatrist:
+        return [
+          'İlaç yönetimi',
+          'Psikoeğitim',
+          'Motivasyonel görüşme',
+          'Kriz müdahalesi',
+        ];
+      default:
+        return ['Genel teknikler'];
     }
-    
-    // Önceki seanslara göre ayarlama
-    if (previousSessions.isNotEmpty) {
-      confidence += 0.03;
-    }
-    
-    // Güven skorunu sınırla
-    return confidence.clamp(0.0, 1.0);
   }
 
-  /// Duygu analizi raporu oluşturur
-  Future<Map<String, dynamic>> generateEmotionAnalysis(String text) async {
-    await Future.delayed(const Duration(seconds: 1));
+  List<String> _getMedicationConsiderations(String diagnosis, ProfessionalType type) {
+    if (type != ProfessionalType.psychiatrist) return [];
     
-    final words = text.toLowerCase().split(' ');
-    
-    return {
-      'primaryEmotion': _analyzeEmotionalState(words),
-      'emotionIntensity': _calculateEmotionIntensity(words),
-      'emotionalTrends': _identifyEmotionalTrends(words),
-      'recommendations': _generateEmotionRecommendations(words),
-      'confidence': 0.88,
-    };
+    switch (diagnosis) {
+      case 'Major Depressive Disorder':
+        return [
+          'SSRI (Sertralin, Fluoksetin)',
+          'SNRI (Venlafaksin, Duloksetin)',
+          'Yan etki takibi gerekli',
+          '4-6 hafta yanıt bekle',
+        ];
+      case 'Generalized Anxiety Disorder':
+        return [
+          'SSRI (Sertralin, Paroksetin)',
+          'Benzodiazepin (kısa süreli)',
+          'Yan etki takibi',
+          'Bağımlılık riski değerlendir',
+        ];
+      default:
+        return ['İlaç değerlendirmesi gerekli'];
+    }
   }
 
-  /// Duygu yoğunluğu hesaplar
-  double _calculateEmotionIntensity(List<String> words) {
-    final emotionWords = words.where((word) => 
-      word.contains('çok') || word.contains('aşırı') || 
-      word.contains('yoğun') || word.contains('şiddetli')
-    ).length;
-    
-    if (emotionWords > 5) return 0.9;
-    if (emotionWords > 3) return 0.7;
-    if (emotionWords > 1) return 0.5;
-    return 0.3;
+  List<String> _getSessionGoals(String diagnosis, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return [
+          'Semptom azaltma',
+          'İşlevsellik artırma',
+          'Yaşam kalitesi iyileştirme',
+          'Relaps önleme',
+        ];
+      case ProfessionalType.psychiatrist:
+        return [
+          'İlaç optimizasyonu',
+          'Yan etki minimizasyonu',
+          'Tedavi uyumu artırma',
+          'Kriz önleme',
+        ];
+      default:
+        return ['Genel hedefler'];
+    }
   }
 
-  /// Duygu trendlerini belirler
-  List<String> _identifyEmotionalTrends(List<String> words) {
-    final trends = <String>[];
-    
-    if (words.contains('azaldı') || words.contains('iyileşti')) {
-      trends.add('Pozitif trend: Belirtilerde azalma');
+  int _estimateTreatmentDuration(String diagnosis) {
+    switch (diagnosis) {
+      case 'Major Depressive Disorder':
+        return 12; // hafta
+      case 'Generalized Anxiety Disorder':
+        return 16; // hafta
+      default:
+        return 8; // hafta
     }
-    
-    if (words.contains('arttı') || words.contains('kötüleşti')) {
-      trends.add('Negatif trend: Belirtilerde artış');
-    }
-    
-    if (words.contains('stabil') || words.contains('değişmedi')) {
-      trends.add('Stabil trend: Belirtilerde değişiklik yok');
-    }
-    
-    return trends;
   }
 
-  /// Duygu önerileri oluşturur
-  String _generateEmotionRecommendations(List<String> words) {
-    final recommendations = <String>[];
-    
-    if (words.contains('anksiyete') || words.contains('panik')) {
-      recommendations.add('Anksiyete yönetimi teknikleri');
-      recommendations.add('Nefes egzersizleri');
+  String _getSessionFrequency(String diagnosis) {
+    switch (diagnosis) {
+      case 'Major Depressive Disorder':
+        return 'Haftalık';
+      case 'Generalized Anxiety Disorder':
+        return 'Haftalık';
+      default:
+        return 'İki haftada bir';
     }
-    
-    if (words.contains('depresyon') || words.contains('mutsuz')) {
-      recommendations.add('Aktivite planlaması');
-      recommendations.add('Sosyal destek arama');
-    }
-    
-    if (words.contains('öfke') || words.contains('kızgın')) {
-      recommendations.add('Öfke yönetimi teknikleri');
-      recommendations.add('Gevşeme egzersizleri');
-    }
-    
-    return recommendations.join(', ');
   }
 
-  /// Hedef analizi oluşturur
-  Future<Map<String, dynamic>> analyzeGoals(String goals) async {
-    await Future.delayed(const Duration(seconds: 1));
-    
-    final goalList = goals.split('\n').where((g) => g.isNotEmpty).toList();
-    
-    return {
-      'totalGoals': goalList.length,
-      'goalTypes': _categorizeGoals(goalList),
-      'achievementLikelihood': _calculateAchievementLikelihood(goals),
-      'goalRecommendations': _generateGoalRecommendations(goals),
-      'timeline': _estimateGoalTimeline(goals),
-    };
+  List<String> _getTreatmentModalities(String diagnosis, ProfessionalType type) {
+    switch (type) {
+      case ProfessionalType.psychologist:
+        return ['Bireysel terapi', 'Grup terapisi', 'Aile terapisi'];
+      case ProfessionalType.psychiatrist:
+        return ['İlaç yönetimi', 'Psikoeğitim', 'Konsültasyon'];
+      default:
+        return ['Genel modaliteler'];
+    }
   }
 
-  /// Hedefleri kategorize eder
-  Map<String, int> _categorizeGoals(List<String> goals) {
-    final categories = <String, int>{};
-    
-    for (final goal in goals) {
-      if (goal.toLowerCase().contains('anksiyete') || goal.toLowerCase().contains('korku')) {
-        categories['Anksiyete Yönetimi'] = (categories['Anksiyete Yönetimi'] ?? 0) + 1;
-      } else if (goal.toLowerCase().contains('depresyon') || goal.toLowerCase().contains('mutsuz')) {
-        categories['Depresyon Yönetimi'] = (categories['Depresyon Yönetimi'] ?? 0) + 1;
-      } else if (goal.toLowerCase().contains('ilişki') || goal.toLowerCase().contains('sosyal')) {
-        categories['Sosyal İlişkiler'] = (categories['Sosyal İlişkiler'] ?? 0) + 1;
-      } else if (goal.toLowerCase().contains('iş') || goal.toLowerCase().contains('kariyer')) {
-        categories['İş/Kariyer'] = (categories['İş/Kariyer'] ?? 0) + 1;
-      } else {
-        categories['Diğer'] = (categories['Diğer'] ?? 0) + 1;
-      }
-    }
-    
-    return categories;
+  List<String> _getCPTCodes(String sessionType, int duration, ProfessionalType type, String region) {
+    return _billingCodes[type]?[region] ?? ['90834'];
   }
 
-  /// Başarı olasılığını hesaplar
-  double _calculateAchievementLikelihood(String goals) {
-    final positiveKeywords = [
-      'azaltmak', 'artırmak', 'geliştirmek', 'öğrenmek', 'uygulamak'
-    ];
-    
-    int positiveCount = 0;
-    for (final keyword in positiveKeywords) {
-      if (goals.toLowerCase().contains(keyword)) {
-        positiveCount++;
-      }
+  List<String> _getICDCodes(String diagnosis, String region) {
+    switch (diagnosis) {
+      case 'Major Depressive Disorder':
+        return ['F32.9', 'F33.9'];
+      case 'Generalized Anxiety Disorder':
+        return ['F41.1'];
+      default:
+        return ['Z00.00'];
     }
-    
-    if (positiveCount > 3) return 0.8;
-    if (positiveCount > 1) return 0.6;
-    return 0.4;
-  }
-
-  /// Hedef önerileri oluşturur
-  String _generateGoalRecommendations(String goals) {
-    final recommendations = <String>[];
-    
-    if (goals.toLowerCase().contains('anksiyete')) {
-      recommendations.add('Kademeli maruz bırakma teknikleri');
-      recommendations.add('Bilişsel yeniden yapılandırma');
-    }
-    
-    if (goals.toLowerCase().contains('depresyon')) {
-      recommendations.add('Davranış aktivasyonu');
-      recommendations.add('Düşünce kayıtları');
-    }
-    
-    if (goals.toLowerCase().contains('ilişki')) {
-      recommendations.add('İletişim becerileri');
-      recommendations.add('Sınır koyma teknikleri');
-    }
-    
-    return recommendations.join(', ');
-  }
-
-  /// Hedef zaman çizelgesi tahmini
-  String _estimateGoalTimeline(String goals) {
-    final goalCount = goals.split('\n').where((g) => g.isNotEmpty).length;
-    
-    if (goalCount <= 2) return '2-4 hafta';
-    if (goalCount <= 4) return '4-8 hafta';
-    if (goalCount <= 6) return '8-12 hafta';
-    return '12+ hafta';
   }
 }

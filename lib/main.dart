@@ -25,6 +25,7 @@ import 'screens/white_label/white_label_dashboard_screen.dart';
 import 'screens/appointment/appointment_calendar_screen.dart';
 import 'screens/appointment/pending_appointments_screen.dart';
 import 'services/notification_service.dart';
+import 'widgets/teletherapy/webrtc_session_widget.dart';
 import 'screens/session/session_management_screen.dart';
 import 'screens/case/case_management_screen.dart';
 import 'services/auth_service.dart';
@@ -284,6 +285,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   '/session-management': (context) => const SessionManagementScreen(),
                   '/case-management': (context) => const CaseManagementScreen(),
                   '/pending-appointments': (context) => const PendingAppointmentsScreen(),
+                  '/webrtc-demo': (context) => const WebRTCSimpleSession(),
                 },
                 builder: (context, child) {
                   // Bildirim servisini erken başlat

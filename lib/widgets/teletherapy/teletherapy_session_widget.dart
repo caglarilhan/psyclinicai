@@ -25,6 +25,12 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _countryController = TextEditingController(text: 'TR');
   final TextEditingController _idController = TextEditingController();
+  
+  // Gelişmiş özellikler
+  List<Map<String, dynamic>> _waitingParticipants = [];
+  bool _isHost = false;
+  bool _isWaitingRoom = true;
+  bool _isSessionActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -48,20 +54,67 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
             Text('Danışan: ${widget.clientName}'),
             Text('Terapist: ${widget.therapistName}'),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _busy ? null : _create,
-                icon: _busy ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.play_circle),
-                label: Text(_busy ? 'Oluşturuluyor...' : 'Oturumu Başlat'),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _busy ? null : _createAsHost,
+                    icon: _busy ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.play_circle),
+                    label: Text(_busy ? 'Oluşturuluyor...' : 'Host Olarak Başlat'),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _joinAsParticipant,
+                    icon: const Icon(Icons.login),
+                    label: const Text('Katılımcı Olarak Katıl'),
+                  ),
+                ),
+              ],
             )
           ] else ...[
+            // Host/Participant kontrolü
+            if (_isHost) ...[
+              Text('Host: ${widget.therapistName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+            ] else ...[
+              Text('Katılımcı: ${widget.clientName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+            ],
+            
             Text('Oturum ID: ${_session!.sessionId}'),
             const SizedBox(height: 4),
             SelectableText(_session!.meetingUrl, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
+            
+            // Bekleme odası durumu
+            if (_isWaitingRoom) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.hourglass_empty, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Text('Bekleme Odasında'),
+                    const Spacer(),
+                    if (_isHost)
+                      ElevatedButton(
+                        onPressed: _admitParticipants,
+                        child: const Text('Katılımcıları Kabul Et'),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            
             Row(
               children: [
                 OutlinedButton.icon(
@@ -82,6 +135,14 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
               Text(_session!.locked ? 'Oda kilitli' : 'Oda açık'),
               const Spacer(),
               Text('Şifre: ${_session!.passcode}', style: Theme.of(context).textTheme.bodySmall),
+              if (_isHost) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _toggleRoomLock,
+                  icon: Icon(_session!.locked ? Icons.lock_open : Icons.lock),
+                  tooltip: _session!.locked ? 'Kilidi Aç' : 'Kilitle',
+                ),
+              ],
             ]),
             const SizedBox(height: 12),
             Row(children: [
@@ -132,12 +193,17 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
     );
   }
 
-  Future<void> _create() async {
+  Future<void> _createAsHost() async {
     setState(() => _busy = true);
     try {
       final s = await _service.createSession(clientName: widget.clientName, therapistName: widget.therapistName, locked: true);
       if (mounted) {
-        setState(() => _session = s);
+        setState(() {
+          _session = s;
+          _isHost = true;
+          _isWaitingRoom = true;
+          _isSessionActive = false;
+        });
         _startTimer();
       }
     } finally {
@@ -145,17 +211,116 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
     }
   }
 
+  Future<void> _joinAsParticipant() async {
+    // Session ID girişi için dialog göster
+    final sessionId = await _showSessionIdDialog();
+    if (sessionId == null) return;
+    
+    setState(() => _busy = true);
+    try {
+      // Mock session oluştur (gerçek uygulamada API'den alınır)
+      final s = TeletherapySession(
+        sessionId: sessionId,
+        clientName: widget.clientName,
+        therapistName: widget.therapistName,
+        meetingUrl: 'https://meet.example.com/$sessionId',
+        passcode: '123456',
+        locked: true,
+        createdAt: DateTime.now(),
+      );
+      
+      if (mounted) {
+        setState(() {
+          _session = s;
+          _isHost = false;
+          _isWaitingRoom = true;
+          _isSessionActive = false;
+        });
+        _startTimer();
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<String?> _showSessionIdDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Oturum ID Gir'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Oturum ID',
+            hintText: 'Oturum ID\'sini girin',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Katıl'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _admitParticipants() async {
+    setState(() {
+      _isWaitingRoom = false;
+      _isSessionActive = true;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Katılımcılar kabul edildi')),
+    );
+  }
+
+  Future<void> _toggleRoomLock() async {
+    if (_session == null) return;
+    
+    setState(() => _busy = true);
+    try {
+      // Mock lock toggle (gerçek uygulamada API çağrısı yapılır)
+      final updatedSession = TeletherapySession(
+        sessionId: _session!.sessionId,
+        clientName: _session!.clientName,
+        therapistName: _session!.therapistName,
+        meetingUrl: _session!.meetingUrl,
+        passcode: _session!.passcode,
+        locked: !_session!.locked,
+        createdAt: _session!.createdAt,
+      );
+      
+      setState(() => _session = updatedSession);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(updatedSession.locked ? 'Oda kilitlendi' : 'Oda kilidi açıldı')),
+      );
+    } finally {
+      setState(() => _busy = false);
+    }
+  }
+
   Future<void> _join() async {
     final s = _session; if (s == null) return;
+    
     // Kimlik doğrulama
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final country = _countryController.text.trim().toUpperCase();
     final idVal = _idController.text.trim();
+    
     if (name.isEmpty || !IdentityValidation.isValidEmail(email)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ad ve geçerli e-posta zorunlu')));
       return;
     }
+    
     bool idOk = true;
     switch (country) {
       case 'TR':
@@ -176,17 +341,44 @@ class _TeletherapySessionWidgetState extends State<TeletherapySessionWidget> {
       default:
         idOk = idVal.isNotEmpty; // diğer ülkeler için temel zorunluluk
     }
+    
     if (!idOk) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kimlik numarası geçerli değil')));
       return;
     }
+    
     if (s.locked && _passController.text.trim() != s.passcode) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifre hatalı')));
       return;
     }
+    
     setState(() => _busy = true);
     try {
+      // Katılımcı bilgilerini kaydet
+      final participant = {
+        'name': name,
+        'email': email,
+        'country': country,
+        'id': idVal,
+        'joinedAt': DateTime.now().toIso8601String(),
+        'isHost': _isHost,
+      };
+      
+      _waitingParticipants.add(participant);
+      
+      // Bekleme odasından çık
+      if (_isWaitingRoom) {
+        setState(() {
+          _isWaitingRoom = false;
+          _isSessionActive = true;
+        });
+      }
+      
       await _service.openMeetingUrl(s.meetingUrl, clientName: s.clientName, therapistName: s.therapistName);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Oturuma başarıyla katıldınız')),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }

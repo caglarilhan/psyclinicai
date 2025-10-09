@@ -1,730 +1,491 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-import 'package:http/http.dart' as http;
+import 'package:sqflite_sqlcipher/sqflite.dart';
+import 'package:path/path.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/session_note_models.dart';
+import 'audit_log_service.dart';
 
-/// Session Note Service - Seans notu ve AI özet servisi
 class SessionNoteService {
-  static const String _baseUrl = 'https://api.sessions.psyclinicai.com/v1';
-  static const String _apiKey = 'session_key_12345';
+  static final SessionNoteService _instance = SessionNoteService._internal();
+  factory SessionNoteService() => _instance;
+  SessionNoteService._internal();
 
-  // Cache for session data
-  final Map<String, SessionNote> _sessionNotesCache = {};
-  final Map<String, AISessionAnalysis> _analysisCache = {};
-  final Map<String, SessionTemplate> _templatesCache = {};
-  final Map<String, SessionSummary> _summariesCache = {};
-  final Map<String, SessionFlag> _flagsCache = {};
-  final Map<String, SessionProgress> _progressCache = {};
-  final Map<String, RegionalConfig> _regionalConfigCache = {};
+  static const _secureStorage = FlutterSecureStorage();
+  Database? _database;
 
-  // Stream controllers for real-time updates
-  final StreamController<SessionNote> _sessionNoteController =
-      StreamController<SessionNote>.broadcast();
-  final StreamController<AISessionAnalysis> _analysisController =
-      StreamController<AISessionAnalysis>.broadcast();
-  final StreamController<SessionFlag> _flagController =
-      StreamController<SessionFlag>.broadcast();
-  final StreamController<String> _statusController =
-      StreamController<String>.broadcast();
-
-  // Current regional configuration
-  RegionalConfig? _currentRegion;
-
-  /// Get stream for session note updates
-  Stream<SessionNote> get sessionNoteStream => _sessionNoteController.stream;
-
-  /// Get stream for AI analysis updates
-  Stream<AISessionAnalysis> get analysisStream => _analysisController.stream;
-
-  /// Get stream for flag updates
-  Stream<SessionFlag> get flagStream => _flagController.stream;
-
-  /// Get stream for status updates
-  Stream<String> get statusStream => _statusController.stream;
-
-  /// Initialize session note service
-  Future<void> initialize() async {
-    await _loadRegionalConfigurations();
-    await _loadDefaultTemplates();
-    await _setupRegionalSettings();
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
   }
 
-  /// Load regional configurations
-  Future<void> _loadRegionalConfigurations() async {
-    final configs = [
-      _createRegionalConfig(
-        'US',
-        DiagnosisStandard.dsm_5_tr,
-        'en',
-        ['HIPAA'],
-        'DSM-5-TR formatında öner.',
-        'us-central1',
-      ),
-      _createRegionalConfig(
-        'EU',
-        DiagnosisStandard.icd_11,
-        'en',
-        ['GDPR'],
-        'ICD-11 kodu ile özetle.',
-        'europe-west1',
-      ),
-      _createRegionalConfig(
-        'TR',
-        DiagnosisStandard.icd_10,
-        'tr',
-        ['KVKK'],
-        'Türkçe ICD kodu ile özetle.',
-        'europe-west2',
-      ),
-      _createRegionalConfig(
-        'CA',
-        DiagnosisStandard.mixed,
-        'en-fr',
-        ['PIPEDA'],
-        'ICD kodu ve Fransızca açıklama dahil.',
-        'northamerica-northeast1',
-      ),
-    ];
+  Future<Database> _initDatabase() async {
+    String path = join(await getDatabasesPath(), 'psyclinicai.enc.db');
+    String? encryptionKey = await _getEncryptionKey();
+    
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      password: encryptionKey,
+    );
+  }
 
-    for (final config in configs) {
-      _regionalConfigCache[config.region] = config;
+  Future<String> _getEncryptionKey() async {
+    String? key = await _secureStorage.read(key: 'db_encryption_key');
+    if (key == null) {
+      key = _generateRandomKey();
+      await _secureStorage.write(key: 'db_encryption_key', value: key);
     }
-
-    // Set default region to US
-    _currentRegion = _regionalConfigCache['US'];
+    return key;
   }
 
-  /// Load default session templates
-  Future<void> _loadDefaultTemplates() async {
+  String _generateRandomKey() {
+    return 'session-note-key-${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  Future<void> _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE session_notes (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        client_id TEXT NOT NULL,
+        therapist_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        locked_at TEXT,
+        locked_by TEXT,
+        attachments TEXT,
+        metadata TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE session_note_versions (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        change_description TEXT NOT NULL,
+        FOREIGN KEY (note_id) REFERENCES session_notes (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE session_note_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        is_default INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    await _createDefaultTemplates(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Handle database upgrades here
+  }
+
+  Future<void> _createDefaultTemplates(Database db) async {
     final templates = [
-      _createSessionTemplate(
-        'initial_session',
-        'İlk Seans Şablonu',
-        'İlk seans için standart şablon',
-        SessionNoteType.initial,
-        'İlk seans notları:\n\n1. Danışanın şikayetleri:\n2. Mevcut durum:\n3. Hedefler:\n4. Plan:',
-        ['notes', 'goals', 'plan'],
-        ['location', 'modality', 'additionalData'],
+      SessionNoteTemplate(
+        id: 'soap-template',
+        name: 'SOAP Notu',
+        type: SessionNoteType.soap,
+        content: '''**Subjective (Öznel):**
+Hastanın belirttiği şikayetler ve duygular:
+
+**Objective (Objektif):**
+Gözlemlenen davranışlar ve fiziksel durum:
+
+**Assessment (Değerlendirme):**
+Klinik değerlendirme ve tanısal düşünceler:
+
+**Plan (Plan):**
+Tedavi planı ve sonraki adımlar:''',
+        isDefault: true,
+        createdAt: DateTime.now(),
       ),
-      _createSessionTemplate(
-        'follow_up_session',
-        'Takip Seansı Şablonu',
-        'Takip seansları için şablon',
-        SessionNoteType.follow_up,
-        'Takip seansı notları:\n\n1. Önceki seansın değerlendirmesi:\n2. Güncel durum:\n3. İlerleme:\n4. Sonraki adımlar:',
-        ['notes', 'progress', 'nextSteps'],
-        ['location', 'modality', 'additionalData'],
+      SessionNoteTemplate(
+        id: 'dap-template',
+        name: 'DAP Notu',
+        type: SessionNoteType.dap,
+        content: '''**Data (Veri):**
+Toplanan bilgiler ve gözlemler:
+
+**Assessment (Değerlendirme):**
+Klinik değerlendirme:
+
+**Plan (Plan):**
+Tedavi planı:''',
+        isDefault: true,
+        createdAt: DateTime.now(),
       ),
-      _createSessionTemplate(
-        'crisis_session',
-        'Kriz Seansı Şablonu',
-        'Kriz durumları için şablon',
-        SessionNoteType.crisis,
-        'Kriz seansı notları:\n\n1. Kriz durumu:\n2. Risk değerlendirmesi:\n3. Müdahale:\n4. Takip planı:',
-        ['notes', 'riskAssessment', 'intervention', 'followUp'],
-        ['location', 'modality', 'additionalData'],
+      SessionNoteTemplate(
+        id: 'emdr-template',
+        name: 'EMDR Notu',
+        type: SessionNoteType.emdr,
+        content: '''**EMDR Seans Notu**
+
+**Hedef Anı:**
+- Anı: 
+- Duygu: 
+- Vücut hissi: 
+- Negatif inanç: 
+- Pozitif inanç: 
+- VOC: 
+- SUD: 
+
+**İşleme:**
+- Bilateral stimülasyon: 
+- Değişimler: 
+
+**Sonuç:**
+- Final SUD: 
+- Final VOC: 
+- Beden taraması: 
+- Gelecek şablon: ''',
+        isDefault: true,
+        createdAt: DateTime.now(),
       ),
     ];
 
     for (final template in templates) {
-      _templatesCache[template.id] = template;
+      await db.insert('session_note_templates', template.toJson());
     }
   }
 
-  /// Setup regional settings
-  Future<void> _setupRegionalSettings() async {
-    if (_currentRegion != null) {
-      _statusController.add('Regional configuration loaded: ${_currentRegion!.region}');
-    }
-  }
-
-  /// Set current region
-  Future<void> setRegion(String region) async {
-    _currentRegion = _regionalConfigCache[region];
-    if (_currentRegion != null) {
-      _statusController.add('Region changed to: ${_currentRegion!.region}');
-    }
-  }
-
-  /// Get current region
-  RegionalConfig? getCurrentRegion() => _currentRegion;
-
-  /// Create session note
-  Future<SessionNote> createSessionNote({
-    required String clientId,
-    required String therapistId,
+  Future<String> createSessionNote({
     required String sessionId,
+    required String clientId,
+    required String therapistId,
     required SessionNoteType type,
-    required String notes,
-    required DateTime sessionDate,
-    required int duration,
-    String? location,
-    String? modality,
-    Map<String, dynamic>? additionalData,
+    String? templateId,
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/session-notes'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'client_id': clientId,
-          'therapist_id': therapistId,
-          'session_id': sessionId,
-          'type': type.name,
-          'notes': notes,
-          'session_date': sessionDate.toIso8601String(),
-          'duration': duration,
-          'location': location,
-          'modality': modality,
-          'additional_data': additionalData,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        final sessionNote = SessionNote.fromJson(data);
-        _sessionNotesCache[sessionNote.id] = sessionNote;
-        _sessionNoteController.add(sessionNote);
-        return sessionNote;
-      } else {
-        throw Exception('Failed to create session note: ${response.statusCode}');
+    final db = await database;
+    final noteId = 'note_${DateTime.now().millisecondsSinceEpoch}';
+    
+    String content = '';
+    if (templateId != null) {
+      final template = await getTemplate(templateId);
+      if (template != null) {
+        content = template.content;
       }
-    } catch (e) {
-      // Return mock session note for demo purposes
-      return _createMockSessionNote(
-        clientId,
-        therapistId,
-        sessionId,
-        type,
-        notes,
-        sessionDate,
-        duration,
-        location,
-        modality,
-        additionalData,
-      );
     }
-  }
 
-  /// Generate AI analysis for session note
-  Future<AISessionAnalysis> generateAIAnalysis(String sessionNoteId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/session-notes/$sessionNoteId/analyze'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'region': _currentRegion?.region ?? 'US',
-          'diagnosis_standard': _currentRegion?.diagnosisStandard.name ?? 'dsm_5_tr',
-          'ai_prompt_suffix': _currentRegion?.aiPromptSuffix ?? 'DSM-5-TR formatında öner.',
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final analysis = AISessionAnalysis.fromJson(data);
-        _analysisCache[analysis.id] = analysis;
-        _analysisController.add(analysis);
-        return analysis;
-      } else {
-        throw Exception('Failed to generate AI analysis: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock AI analysis for demo purposes
-      return _createMockAIAnalysis(sessionNoteId);
-    }
-  }
-
-  /// Create session summary
-  Future<SessionSummary> createSessionSummary({
-    required String sessionNoteId,
-    required String clientId,
-    required String therapistId,
-    required String summaryText,
-    String? affect,
-    String? theme,
-    String? diagnosisSuggestion,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/session-summaries'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'session_note_id': sessionNoteId,
-          'client_id': clientId,
-          'therapist_id': therapistId,
-          'summary_text': summaryText,
-          'affect': affect,
-          'theme': theme,
-          'diagnosis_suggestion': diagnosisSuggestion,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        final summary = SessionSummary.fromJson(data);
-        _summariesCache[summary.id] = summary;
-        return summary;
-      } else {
-        throw Exception('Failed to create session summary: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock session summary for demo purposes
-      return _createMockSessionSummary(
-        sessionNoteId,
-        clientId,
-        therapistId,
-        summaryText,
-        affect,
-        theme,
-        diagnosisSuggestion,
-      );
-    }
-  }
-
-  /// Create session flag
-  Future<SessionFlag> createSessionFlag({
-    required String sessionNoteId,
-    required String clientId,
-    required String therapistId,
-    required String flagType,
-    required String severity,
-    required String description,
-    String? recommendation,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/session-flags'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'session_note_id': sessionNoteId,
-          'client_id': clientId,
-          'therapist_id': therapistId,
-          'flag_type': flagType,
-          'severity': severity,
-          'description': description,
-          'recommendation': recommendation,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        final flag = SessionFlag.fromJson(data);
-        _flagsCache[flag.id] = flag;
-        _flagController.add(flag);
-        return flag;
-      } else {
-        throw Exception('Failed to create session flag: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock session flag for demo purposes
-      return _createMockSessionFlag(
-        sessionNoteId,
-        clientId,
-        therapistId,
-        flagType,
-        severity,
-        description,
-        recommendation,
-      );
-    }
-  }
-
-  /// Get session notes by client
-  Future<List<SessionNote>> getSessionNotesByClient(String clientId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/session-notes/client/$clientId'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => SessionNote.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load session notes: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return cached session notes for demo purposes
-      return _sessionNotesCache.values
-          .where((note) => note.clientId == clientId)
-          .toList();
-    }
-  }
-
-  /// Get session templates
-  Future<List<SessionTemplate>> getSessionTemplates() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/session-templates'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => SessionTemplate.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load session templates: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return cached templates for demo purposes
-      return _templatesCache.values.toList();
-    }
-  }
-
-  /// Export session note to PDF
-  Future<SessionExport> exportSessionNoteToPDF({
-    required String sessionNoteId,
-    required String clientId,
-    required String therapistId,
-    Map<String, dynamic>? exportOptions,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/session-notes/$sessionNoteId/export'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'export_type': 'pdf',
-          'export_format': 'professional',
-          'export_options': exportOptions ?? {},
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return SessionExport.fromJson(data);
-      } else {
-        throw Exception('Failed to export session note: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock export for demo purposes
-      return _createMockSessionExport(
-        sessionNoteId,
-        clientId,
-        therapistId,
-        'pdf',
-        'professional',
-        exportOptions,
-      );
-    }
-  }
-
-  /// Get session progress
-  Future<List<SessionProgress>> getSessionProgress(String clientId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/session-progress/client/$clientId'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => SessionProgress.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load session progress: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Return mock progress for demo purposes
-      return _generateMockSessionProgress(clientId);
-    }
-  }
-
-  /// Dispose resources
-  void dispose() {
-    if (!_sessionNoteController.isClosed) {
-      _sessionNoteController.close();
-    }
-    if (!_analysisController.isClosed) {
-      _analysisController.close();
-    }
-    if (!_flagController.isClosed) {
-      _flagController.close();
-    }
-    if (!_statusController.isClosed) {
-      _statusController.close();
-    }
-  }
-
-  // Private helper methods for creating mock data
-  SessionNote _createMockSessionNote(
-    String clientId,
-    String therapistId,
-    String sessionId,
-    SessionNoteType type,
-    String notes,
-    DateTime sessionDate,
-    int duration,
-    String? location,
-    String? modality,
-    Map<String, dynamic>? additionalData,
-  ) {
-    final sessionNote = SessionNote(
-      id: 'session_note_${DateTime.now().millisecondsSinceEpoch}',
-      clientId: clientId,
-      therapistId: therapistId,
+    final note = SessionNote(
+      id: noteId,
       sessionId: sessionId,
+      clientId: clientId,
+      therapistId: therapistId,
       type: type,
-      status: SessionStatus.completed,
-      notes: notes,
-      aiStatus: AIAnalysisStatus.pending,
-      sessionDate: sessionDate,
-      duration: duration,
-      location: location ?? 'Office',
-      modality: modality ?? 'in-person',
-      additionalData: additionalData,
-      createdBy: therapistId,
+      content: content,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
-      metadata: {},
     );
 
-    _sessionNotesCache[sessionNote.id] = sessionNote;
-    _sessionNoteController.add(sessionNote);
-    return sessionNote;
-  }
-
-  AISessionAnalysis _createMockAIAnalysis(String sessionNoteId) {
-    final sessionNote = _sessionNotesCache.values
-        .firstWhere((note) => note.id == sessionNoteId);
-
-    final random = Random();
-    final affects = ['üzgün', 'kaygılı', 'öfkeli', 'sakin', 'motiveli', 'karışık'];
-    final themes = ['değersizlik', 'kaygı', 'ilişki sorunları', 'iş stresi', 'aile', 'geçmiş travma'];
-    final diagnoses = ['6B00.0', '6B01.0', '6B02.0', '6B03.0', '6B04.0'];
-
-    final analysis = AISessionAnalysis(
-      id: 'analysis_${DateTime.now().millisecondsSinceEpoch}',
-      sessionNoteId: sessionNoteId,
-      clientId: sessionNote.clientId,
-      therapistId: sessionNote.therapistId,
-      status: AIAnalysisStatus.completed,
-      affect: affects[random.nextInt(affects.length)],
-      theme: themes[random.nextInt(themes.length)],
-      diagnosisSuggestion: diagnoses[random.nextInt(diagnoses.length)],
-      diagnosisStandard: _currentRegion?.diagnosisStandard ?? DiagnosisStandard.dsm_5_tr,
-      confidenceScore: 0.85 + (random.nextDouble() * 0.1),
-      keyTopics: themes.take(3).toList(),
-      riskFactors: ['düşük risk', 'orta risk', 'yüksek risk'].take(2).toList(),
-      strengths: ['motivasyon', 'sosyal destek', 'farkındalık'].take(2).toList(),
-      recommendations: ['CBT teknikleri', 'mindfulness', 'nefes egzersizleri'].take(2).toList(),
-      emotionalAnalysis: {
-        'dominant_emotion': affects[random.nextInt(affects.length)],
-        'emotional_intensity': random.nextInt(10) + 1,
-        'emotional_stability': random.nextDouble(),
-      },
-      behavioralPatterns: {
-        'avoidance_behaviors': random.nextBool(),
-        'coping_strategies': ['problem çözme', 'sosyal destek'],
-        'behavioral_changes': random.nextBool(),
-      },
-      therapeuticProgress: {
-        'progress_level': random.nextInt(5) + 1,
-        'engagement_level': random.nextInt(10) + 1,
-        'homework_completion': random.nextDouble(),
-      },
-      rawAnalysis: 'AI tarafından oluşturulan detaylı analiz...',
-      analyzedAt: DateTime.now(),
-      analyzedBy: 'ai_system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      metadata: {},
+    await db.insert('session_notes', note.toJson());
+    
+    await AuditLogService().insertLog(
+      action: 'session_note.create',
+      details: 'Session note created: $noteId',
+      userId: therapistId,
+      resourceId: noteId,
     );
 
-    _analysisCache[analysis.id] = analysis;
-    _analysisController.add(analysis);
-    return analysis;
+    return noteId;
   }
 
-  SessionSummary _createMockSessionSummary(
-    String sessionNoteId,
-    String clientId,
-    String therapistId,
-    String summaryText,
-    String? affect,
-    String? theme,
-    String? diagnosisSuggestion,
-  ) {
-    return SessionSummary(
-      id: 'summary_${DateTime.now().millisecondsSinceEpoch}',
-      sessionNoteId: sessionNoteId,
-      clientId: clientId,
-      therapistId: therapistId,
-      summaryText: summaryText,
-      affect: affect,
-      theme: theme,
-      diagnosisSuggestion: diagnosisSuggestion,
-      keyPoints: ['Ana nokta 1', 'Ana nokta 2', 'Ana nokta 3'],
-      actionItems: ['Eylem 1', 'Eylem 2'],
-      followUpTasks: ['Takip 1', 'Takip 2'],
-      progressNotes: {'progress': 'İyi ilerleme kaydedildi'},
-      isReviewed: false,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      metadata: {},
-    );
-  }
-
-  SessionFlag _createMockSessionFlag(
-    String sessionNoteId,
-    String clientId,
-    String therapistId,
-    String flagType,
-    String severity,
-    String description,
-    String? recommendation,
-  ) {
-    return SessionFlag(
-      id: 'flag_${DateTime.now().millisecondsSinceEpoch}',
-      sessionNoteId: sessionNoteId,
-      clientId: clientId,
-      therapistId: therapistId,
-      flagType: flagType,
-      severity: severity,
-      description: description,
-      recommendation: recommendation,
-      isAcknowledged: false,
-      requiresFollowUp: severity == 'high' || severity == 'critical',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      metadata: {},
-    );
-  }
-
-  SessionExport _createMockSessionExport(
-    String sessionNoteId,
-    String clientId,
-    String therapistId,
-    String exportType,
-    String exportFormat,
-    Map<String, dynamic>? exportOptions,
-  ) {
-    return SessionExport(
-      id: 'export_${DateTime.now().millisecondsSinceEpoch}',
-      sessionNoteId: sessionNoteId,
-      clientId: clientId,
-      therapistId: therapistId,
-      exportType: exportType,
-      exportFormat: exportFormat,
-      filePath: '/exports/session_${sessionNoteId}.pdf',
-      downloadUrl: 'https://api.psyclinicai.com/exports/session_${sessionNoteId}.pdf',
-      exportOptions: exportOptions ?? {},
-      isGenerated: true,
-      generatedAt: DateTime.now(),
-      generatedBy: 'system',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      metadata: {},
-    );
-  }
-
-  List<SessionProgress> _generateMockSessionProgress(String clientId) {
-    final progress = <SessionProgress>[];
-    final random = Random();
-
-    for (int i = 1; i <= 5; i++) {
-      progress.add(SessionProgress(
-        id: 'progress_${i}_${DateTime.now().millisecondsSinceEpoch}',
-        clientId: clientId,
-        therapistId: 'therapist_123',
-        sessionNoteId: 'session_note_$i',
-        sessionNumber: i,
-        progressType: ['improvement', 'stable', 'decline'][random.nextInt(3)],
-        progressDescription: 'Seans $i ilerleme notları',
-        metrics: {
-          'anxiety_level': random.nextInt(10) + 1,
-          'mood_level': random.nextInt(10) + 1,
-          'functioning_level': random.nextInt(10) + 1,
-        },
-        goals: ['Hedef 1', 'Hedef 2'],
-        achievedGoals: i > 2 ? ['Hedef 1'] : [],
-        nextGoals: ['Sonraki hedef 1', 'Sonraki hedef 2'],
-        sessionDate: DateTime.now().subtract(Duration(days: (5 - i) * 7)),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        metadata: {},
-      ));
+  Future<bool> updateSessionNote(String noteId, String content, String therapistId) async {
+    final db = await database;
+    
+    // Get current note
+    final currentNote = await getSessionNote(noteId);
+    if (currentNote == null) return false;
+    
+    // Check if note is locked
+    if (currentNote.status == SessionNoteStatus.locked) {
+      return false;
     }
 
-    return progress;
+    // Create version backup
+    await _createVersionBackup(currentNote, therapistId, 'Content updated');
+
+    // Update note
+    final updatedNote = currentNote.copyWith(
+      content: content,
+      updatedAt: DateTime.now(),
+      version: currentNote.version + 1,
+    );
+
+    await db.update(
+      'session_notes',
+      updatedNote.toJson(),
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    await AuditLogService().insertLog(
+      action: 'session_note.update',
+      details: 'Session note updated: $noteId',
+      userId: therapistId,
+      resourceId: noteId,
+    );
+
+    return true;
   }
 
-  RegionalConfig _createRegionalConfig(
-    String region,
-    DiagnosisStandard diagnosisStandard,
-    String language,
-    List<String> legalCompliance,
-    String aiPromptSuffix,
-    String hosting,
-  ) {
-    return RegionalConfig(
-      region: region,
-      diagnosisStandard: diagnosisStandard,
-      language: language,
-      legalCompliance: legalCompliance,
-      aiPromptSuffix: aiPromptSuffix,
-      hosting: hosting,
-      customSettings: {
-        'timezone': region == 'US' ? 'America/New_York' : 'Europe/Istanbul',
-        'currency': region == 'US' ? 'USD' : 'EUR',
-        'date_format': region == 'US' ? 'MM/dd/yyyy' : 'dd/MM/yyyy',
-      },
-      createdAt: DateTime.now(),
+  Future<bool> lockSessionNote(String noteId, String therapistId) async {
+    final db = await database;
+    
+    final currentNote = await getSessionNote(noteId);
+    if (currentNote == null) return false;
+
+    final lockedNote = currentNote.copyWith(
+      status: SessionNoteStatus.locked,
+      lockedAt: DateTime.now(),
+      lockedBy: therapistId,
       updatedAt: DateTime.now(),
-      metadata: {},
     );
+
+    await db.update(
+      'session_notes',
+      lockedNote.toJson(),
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    await AuditLogService().insertLog(
+      action: 'session_note.lock',
+      details: 'Session note locked: $noteId',
+      userId: therapistId,
+      resourceId: noteId,
+    );
+
+    return true;
   }
 
-  SessionTemplate _createSessionTemplate(
-    String id,
-    String name,
-    String description,
-    SessionNoteType type,
-    String templateContent,
-    List<String> requiredFields,
-    List<String> optionalFields,
-  ) {
-    return SessionTemplate(
-      id: id,
-      name: name,
-      description: description,
-      type: type,
-      templateContent: templateContent,
-      requiredFields: requiredFields,
-      optionalFields: optionalFields,
-      defaultValues: {
-        'location': 'Office',
-        'modality': 'in-person',
-        'duration': 50,
-      },
-      isActive: true,
-      createdBy: 'system',
-      createdAt: DateTime.now(),
+  Future<bool> unlockSessionNote(String noteId, String therapistId) async {
+    final db = await database;
+    
+    final currentNote = await getSessionNote(noteId);
+    if (currentNote == null) return false;
+
+    final unlockedNote = currentNote.copyWith(
+      status: SessionNoteStatus.draft,
+      lockedAt: null,
+      lockedBy: null,
       updatedAt: DateTime.now(),
-      metadata: {},
     );
+
+    await db.update(
+      'session_notes',
+      unlockedNote.toJson(),
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    await AuditLogService().insertLog(
+      action: 'session_note.unlock',
+      details: 'Session note unlocked: $noteId',
+      userId: therapistId,
+      resourceId: noteId,
+    );
+
+    return true;
+  }
+
+  Future<SessionNote?> getSessionNote(String noteId) async {
+    final db = await database;
+    final result = await db.query(
+      'session_notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    if (result.isEmpty) return null;
+    return SessionNote.fromJson(result.first);
+  }
+
+  Future<List<SessionNote>> getSessionNotesForClient(String clientId) async {
+    final db = await database;
+    final result = await db.query(
+      'session_notes',
+      where: 'client_id = ?',
+      whereArgs: [clientId],
+      orderBy: 'created_at DESC',
+    );
+
+    return result.map((json) => SessionNote.fromJson(json)).toList();
+  }
+
+  Future<List<SessionNote>> getSessionNotesForSession(String sessionId) async {
+    final db = await database;
+    final result = await db.query(
+      'session_notes',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'created_at DESC',
+    );
+
+    return result.map((json) => SessionNote.fromJson(json)).toList();
+  }
+
+  Future<List<SessionNoteTemplate>> getTemplates() async {
+    final db = await database;
+    final result = await db.query(
+      'session_note_templates',
+      orderBy: 'name ASC',
+    );
+
+    return result.map((json) => SessionNoteTemplate.fromJson(json)).toList();
+  }
+
+  Future<SessionNoteTemplate?> getTemplate(String templateId) async {
+    final db = await database;
+    final result = await db.query(
+      'session_note_templates',
+      where: 'id = ?',
+      whereArgs: [templateId],
+    );
+
+    if (result.isEmpty) return null;
+    return SessionNoteTemplate.fromJson(result.first);
+  }
+
+  Future<List<SessionNoteVersion>> getNoteVersions(String noteId) async {
+    final db = await database;
+    final result = await db.query(
+      'session_note_versions',
+      where: 'note_id = ?',
+      whereArgs: [noteId],
+      orderBy: 'version DESC',
+    );
+
+    return result.map((json) => SessionNoteVersion.fromJson(json)).toList();
+  }
+
+  Future<bool> restoreVersion(String noteId, int version, String therapistId) async {
+    final db = await database;
+    
+    // Get version to restore
+    final versionResult = await db.query(
+      'session_note_versions',
+      where: 'note_id = ? AND version = ?',
+      whereArgs: [noteId, version],
+    );
+
+    if (versionResult.isEmpty) return false;
+
+    final versionData = SessionNoteVersion.fromJson(versionResult.first);
+    
+    // Get current note
+    final currentNote = await getSessionNote(noteId);
+    if (currentNote == null) return false;
+
+    // Create version backup of current state
+    await _createVersionBackup(currentNote, therapistId, 'Restored from version $version');
+
+    // Restore content
+    final restoredNote = currentNote.copyWith(
+      content: versionData.content,
+      updatedAt: DateTime.now(),
+      version: currentNote.version + 1,
+    );
+
+    await db.update(
+      'session_notes',
+      restoredNote.toJson(),
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    await AuditLogService().insertLog(
+      action: 'session_note.restore_version',
+      details: 'Session note version restored: $noteId to version $version',
+      userId: therapistId,
+      resourceId: noteId,
+    );
+
+    return true;
+  }
+
+  Future<void> _createVersionBackup(SessionNote note, String therapistId, String description) async {
+    final db = await database;
+    
+    final version = SessionNoteVersion(
+      id: 'version_${note.id}_${note.version}_${DateTime.now().millisecondsSinceEpoch}',
+      noteId: note.id,
+      version: note.version,
+      content: note.content,
+      createdAt: DateTime.now(),
+      createdBy: therapistId,
+      changeDescription: description,
+    );
+
+    await db.insert('session_note_versions', version.toJson());
+  }
+
+  Future<bool> deleteSessionNote(String noteId, String therapistId) async {
+    final db = await database;
+    
+    final currentNote = await getSessionNote(noteId);
+    if (currentNote == null) return false;
+
+    // Check if note is locked
+    if (currentNote.status == SessionNoteStatus.locked) {
+      return false;
+    }
+
+    await db.delete(
+      'session_notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+
+    await AuditLogService().insertLog(
+      action: 'session_note.delete',
+      details: 'Session note deleted: $noteId',
+      userId: therapistId,
+      resourceId: noteId,
+    );
+
+    return true;
+  }
+
+  Future<List<SessionNote>> searchSessionNotes(String query) async {
+    final db = await database;
+    final result = await db.query(
+      'session_notes',
+      where: 'content LIKE ? OR id LIKE ?',
+      whereArgs: ['%$query%', '%$query%'],
+      orderBy: 'updated_at DESC',
+    );
+
+    return result.map((json) => SessionNote.fromJson(json)).toList();
+  }
+
+  Future<Map<String, int>> getSessionNoteStatistics() async {
+    final db = await database;
+    
+    final totalResult = await db.rawQuery('SELECT COUNT(*) as count FROM session_notes');
+    final draftResult = await db.rawQuery('SELECT COUNT(*) as count FROM session_notes WHERE status = ?', ['draft']);
+    final lockedResult = await db.rawQuery('SELECT COUNT(*) as count FROM session_notes WHERE status = ?', ['locked']);
+    
+    return {
+      'total': totalResult.first['count'] as int,
+      'draft': draftResult.first['count'] as int,
+      'locked': lockedResult.first['count'] as int,
+    };
   }
 }

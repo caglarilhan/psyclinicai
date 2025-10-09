@@ -46,7 +46,7 @@ def _build_default_prompt() -> str:
         "2. Randevu modülü (psikolog seçimi, tarih, saat)\n"
         "3. Seans ekranı (AI destekli not alma)\n"
         "4. PDF çıktısı (terapi notları)\n"
-        "5. Firestore backend bağlantısı\n\n"
+        "5. Firestore backend bağlantısı\n\n "
         "🔧 Bu sprint için en uygun görev planlamasını çıkar ve her görev için adım adım yapılacakları yaz."
     )
 

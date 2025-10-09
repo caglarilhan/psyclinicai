@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
+import 'notification_service.dart';
 
 class AppointmentService {
   static final AppointmentService _instance = AppointmentService._internal();
@@ -100,6 +101,13 @@ class AppointmentService {
     
     _appointments.add(appointment);
       await _saveAppointments();
+      // Bildirim planla
+      await NotificationService().scheduleAppointmentReminders(
+        appointmentId: appointment.id,
+        title: 'Yaklaşan Randevu',
+        body: '${appointment.clientName} - ${appointment.type}',
+        startTime: appointment.startTime,
+      );
       return true;
     } catch (e) {
       print('Error adding appointment: $e');
@@ -120,8 +128,17 @@ class AppointmentService {
         throw Exception('Bu saatte başka bir randevu var');
     }
     
+    // Eski hatırlatmaları iptal et
+    await NotificationService().cancelAppointmentReminders(_appointments[index].id);
     _appointments[index] = updatedAppointment;
       await _saveAppointments();
+      // Yeni hatırlatmaları planla
+      await NotificationService().scheduleAppointmentReminders(
+        appointmentId: updatedAppointment.id,
+        title: 'Güncellenen Randevu',
+        body: '${updatedAppointment.clientName} - ${updatedAppointment.type}',
+        startTime: updatedAppointment.startTime,
+      );
       return true;
     } catch (e) {
       print('Error updating appointment: $e');
@@ -137,6 +154,7 @@ class AppointmentService {
       throw Exception('Randevu bulunamadı');
     }
     
+      await NotificationService().cancelAppointmentReminders(_appointments[index].id);
       _appointments.removeAt(index);
       await _saveAppointments();
       return true;

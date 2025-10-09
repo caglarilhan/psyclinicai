@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../utils/theme.dart';
+import '../../services/signaling_service.dart';
 
 class WebRTCSimpleSession extends StatefulWidget {
   const WebRTCSimpleSession({super.key});
@@ -14,6 +15,9 @@ class _WebRTCSimpleSessionState extends State<WebRTCSimpleSession> {
   final _remoteRenderer = RTCVideoRenderer();
   RTCPeerConnection? _pc;
   MediaStream? _localStream;
+  final _signaling = SignalingService();
+  String _roomId = 'demo_room';
+  String _userId = 'therapist_001';
 
   @override
   void initState() {
@@ -39,6 +43,17 @@ class _WebRTCSimpleSessionState extends State<WebRTCSimpleSession> {
     };
     _pc = await createPeerConnection(config);
     _pc!.addStream(_localStream!);
+
+    // Basit signaling entegrasyonu
+    await _signaling.connect(url: Uri.parse('ws://localhost:8080'), roomId: _roomId, userId: _userId);
+    _signaling.events.listen((e) async {
+      if (e['type'] == 'offer') {
+        await _pc!.setRemoteDescription(RTCSessionDescription(e['sdp'], 'offer'));
+        final answer = await _pc!.createAnswer();
+        await _pc!.setLocalDescription(answer);
+        _signaling.send({'type': 'answer', 'sdp': answer.sdp, 'roomId': _roomId});
+      }
+    });
   }
 
   @override

@@ -21,6 +21,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
   
   List<Client> _clients = [];
   List<Client> _filteredClients = [];
+  String _sortKey = 'createdAt_desc';
   bool _isLoading = true;
 
   @override
@@ -66,8 +67,8 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
       
       final clients = _clientService.getActiveClients();
       setState(() {
-        _clients = clients;
-        _filteredClients = clients;
+        _clients = _applySort(clients);
+        _filteredClients = _clients;
         _isLoading = false;
       });
     } catch (e) {
@@ -95,7 +96,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
     if (query.isNotEmpty) {
       final results = await _clientService.searchClients(query);
       setState(() {
-        _filteredClients = results;
+        _filteredClients = _applySort(results);
       });
     }
   }
@@ -121,6 +122,22 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort),
+            onSelected: (v){
+              setState((){
+                _sortKey = v;
+                _filteredClients = _applySort(_filteredClients);
+                _clients = _applySort(_clients);
+              });
+            },
+            itemBuilder: (context)=> const [
+              PopupMenuItem(value: 'createdAt_desc', child: Text('Kayıt tarihi (Yeni → Eski)')),
+              PopupMenuItem(value: 'createdAt_asc', child: Text('Kayıt tarihi (Eski → Yeni)')),
+              PopupMenuItem(value: 'name_asc', child: Text('İsme göre (A→Z)')),
+              PopupMenuItem(value: 'name_desc', child: Text('İsme göre (Z→A)')),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadClients,
@@ -213,6 +230,26 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
         label: const Text('Yeni Hasta'),
       ),
     );
+  }
+
+  List<Client> _applySort(List<Client> list){
+    final copy = [...list];
+    switch(_sortKey){
+      case 'createdAt_asc':
+        copy.sort((a,b)=> a.dateOfBirth.compareTo(b.dateOfBirth));
+        break;
+      case 'name_asc':
+        copy.sort((a,b)=> a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
+        break;
+      case 'name_desc':
+        copy.sort((a,b)=> b.fullName.toLowerCase().compareTo(a.fullName.toLowerCase()));
+        break;
+      case 'createdAt_desc':
+      default:
+        copy.sort((a,b)=> b.dateOfBirth.compareTo(a.dateOfBirth));
+        break;
+    }
+    return copy;
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {

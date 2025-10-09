@@ -136,6 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '24',
                   Icons.people,
                   AppTheme.primaryColor,
+                  onTap: () => Navigator.pushNamed(context, '/client-management'),
                 ),
                 _buildStatCard(
                   'Bu Ay Seans',
@@ -148,6 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '7',
                   Icons.schedule,
                   Colors.orange,
+                  onTap: () => Navigator.pushNamed(context, '/pending-appointments'),
                 ),
                 _buildStatCard(
                   'AI Tanı',
@@ -255,9 +257,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, {VoidCallback? onTap}) {
     return Card(
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 import '../../utils/theme.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,11 +30,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Auth service entegrasyonu
-      await Future.delayed(const Duration(seconds: 2)); // Simülasyon
-
+      final challenge = await AuthService().loginWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacementNamed(context, '/2fa');
+        debugPrint('2FA demo code: ${challenge.code}');
       }
     } catch (e) {
       if (mounted) {

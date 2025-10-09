@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_sqlcipher/sqflite.dart' as sqlcipher;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart';
 import '../models/client_model.dart';
 import '../models/appointment_model.dart';
@@ -18,13 +20,27 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'psyclinicai.db');
-    return await openDatabase(
+    final storage = const FlutterSecureStorage();
+    const keyName = 'db_key_v1';
+    var key = await storage.read(keyName: keyName);
+    key ??= _generateKey();
+    await storage.write(keyName: keyName, value: key);
+
+    final path = join(await getDatabasesPath(), 'psyclinicai.enc.db');
+    return await sqlcipher.openDatabase(
       path,
+      password: key,
       version: 1,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      onCreate: (db, version) => _onCreate(db, version),
+      onUpgrade: (db, oldV, newV) => _onUpgrade(db, oldV, newV),
     );
+  }
+
+  String _generateKey() {
+    // 32 byte key (base64) – demo amaçlı basit; prod’da KDF kullanılmalı
+    return List.generate(32, (i) => (i * 7 + 13) % 256)
+        .map((e) => e.toRadixString(16).padLeft(2, '0'))
+        .join();
   }
 
   Future<void> _onCreate(Database db, int version) async {

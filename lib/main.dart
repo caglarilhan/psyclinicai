@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/two_factor_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/session/session_screen.dart';
 import 'screens/diagnosis/diagnosis_screen.dart';
@@ -22,6 +23,7 @@ import 'screens/client_management/client_management_screen.dart';
 import 'screens/crm/crm_dashboard_screen.dart';
 import 'screens/white_label/white_label_dashboard_screen.dart';
 import 'screens/appointment/appointment_calendar_screen.dart';
+import 'screens/appointment/pending_appointments_screen.dart';
 import 'screens/session/session_management_screen.dart';
 import 'screens/case/case_management_screen.dart';
 import 'services/auth_service.dart';
@@ -243,6 +245,7 @@ class PsyClinicAIApp extends StatelessWidget {
                 routes: {
                   '/landing': (context) => const LandingScreen(),
                   '/login': (context) => const LoginScreen(),
+                  '/2fa': (context) => const TwoFactorScreen(),
                   '/dashboard': (context) => const DashboardScreen(),
                   '/session': (context) => const SessionScreen(
                     sessionId: 'demo_session_001',
@@ -279,6 +282,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   '/appointment-calendar': (context) => const AppointmentCalendarScreen(),
                   '/session-management': (context) => const SessionManagementScreen(),
                   '/case-management': (context) => const CaseManagementScreen(),
+                  '/pending-appointments': (context) => const PendingAppointmentsScreen(),
                 },
               );
             },

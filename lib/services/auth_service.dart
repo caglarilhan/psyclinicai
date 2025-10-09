@@ -106,7 +106,7 @@ class AuthService {
     // TODO: Firebase Auth sign in
     await Future.delayed(const Duration(seconds: 2)); // Simülasyon
 
-    if (email == 'admin@psyclinic.ai' && password == '123456') {
+    if (email == 'admin' && password == 'admin') {
       _isAuthenticated = true;
       return true;
     }
@@ -122,6 +122,6 @@ class AuthService {
 
   String? getCurrentUser() {
     // TODO: Firebase Auth current user
-    return _isAuthenticated ? 'admin@psyclinic.ai' : null;
+    return _isAuthenticated ? 'admin' : null;
   }
 }

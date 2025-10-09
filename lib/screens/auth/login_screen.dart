@@ -136,16 +136,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           decoration: const InputDecoration(
-                            labelText: 'E-posta',
-                            prefixIcon: Icon(Icons.email),
+                            labelText: 'Kullanıcı Adı',
+                            prefixIcon: Icon(Icons.person),
                           ),
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.text,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'E-posta gerekli';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Geçerli e-posta girin';
+                              return 'Kullanıcı adı gerekli';
                             }
                             return null;
                           },
@@ -193,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Demo bilgisi
                         Text(
-                          'Demo: admin@psyclinic.ai / 123456',
+                          'Demo: admin / admin',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[500],

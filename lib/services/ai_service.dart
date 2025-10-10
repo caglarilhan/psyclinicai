@@ -7,6 +7,10 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
+  Future<void> initialize() async {
+    // No-op initialization for now; reserved for API keys/session setup
+  }
+
   // Dal bazlı AI prompt şablonları
   final Map<ProfessionalType, Map<AIServiceType, String>> _promptTemplates = {
     ProfessionalType.psychologist: {

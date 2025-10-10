@@ -362,6 +362,11 @@ Hastanın mevcut semptomları değerlendirildi. İlaç tedavisinin etkinliği g�
 Terapist Perspektifi:
 Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanılan teknikler etkili oldu. Direnç noktaları belirlendi. İlerleme kaydedildi.
 ''';
+      case ProfessionalType.counselor:
+        return '''
+Danışman Perspektifi:
+Danışanın hedefleri netleştirildi, pratik eylem planı çıkarıldı ve kaynaklara yönlendirme yapıldı.
+''';
       default:
         return 'Seans özeti hazırlandı.';
     }
@@ -389,6 +394,13 @@ Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanıla
           'Danışan motivasyonu yüksek',
           'Teknikler etkili',
           'İlerleme kaydedildi',
+        ];
+      case ProfessionalType.counselor:
+        return [
+          'Hedefler netleştirildi',
+          'Kısa vadeli aksiyonlar belirlendi',
+          'Kaynaklara erişim planlandı',
+          'Destek ağı güçlendirildi',
         ];
       default:
         return ['Temel bulgular tespit edildi'];
@@ -418,6 +430,13 @@ Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanıla
           'Hedefleri gözden geçir',
           'İlerleme ölçümleri yap',
         ];
+      case ProfessionalType.counselor:
+        return [
+          'Kısa vadeli hedefler oluştur',
+          'Eylem planını yazılı hale getir',
+          'Uygun kaynaklara yönlendir',
+          'Takip randevusunu planla',
+        ];
       default:
         return ['Genel aksiyon öğeleri'];
     }
@@ -445,6 +464,13 @@ Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanıla
           'Ev ödevleri takibi',
           'İlerleme değerlendirmesi',
           'Hedef gözden geçirmesi',
+        ];
+      case ProfessionalType.counselor:
+        return [
+          'Bir hafta sonra takip görüşmesi',
+          'Kaynaklardan geri bildirim al',
+          'Eylem planı revizyonu',
+          'Gerekirse yönlendirme güncelle',
         ];
       default:
         return ['Genel takip görevleri'];

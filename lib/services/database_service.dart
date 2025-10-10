@@ -22,9 +22,9 @@ class DatabaseService {
   Future<Database> _initDatabase() async {
     final storage = const FlutterSecureStorage();
     const keyName = 'db_key_v1';
-    var key = await storage.read(keyName: keyName);
+    var key = await storage.read(key: keyName);
     key ??= _generateKey();
-    await storage.write(keyName: keyName, value: key);
+    await storage.write(key: keyName, value: key);
 
     final path = join(await getDatabasesPath(), 'psyclinicai.enc.db');
     return await sqlcipher.openDatabase(

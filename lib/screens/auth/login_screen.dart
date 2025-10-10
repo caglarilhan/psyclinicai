@@ -30,13 +30,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final challenge = await AuthService().loginWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+      final success = await AuthService().signIn(
+        _emailController.text.trim(),
+        _passwordController.text,
       );
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/2fa');
-        debugPrint('2FA demo code: ${challenge.code}');
+      if (!mounted) return;
+      if (success) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Geçersiz kullanıcı adı veya şifre'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

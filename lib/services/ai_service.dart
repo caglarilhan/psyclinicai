@@ -11,6 +11,14 @@ class AIService {
     // No-op initialization for now; reserved for API keys/session setup
   }
 
+  Future<String> generateResponse(String prompt) async {
+    // Minimal mock LLM response for orchestration flows
+    await Future.delayed(const Duration(milliseconds: 300));
+    final preview = prompt.trim();
+    final snippet = preview.length > 240 ? preview.substring(0, 240) + '...' : preview;
+    return 'AI Response (mock) based on prompt:\n$snippet\n\nInsights:\n- Coherent\n- Safe\n- Role-aware';
+  }
+
   // Dal bazlı AI prompt şablonları
   final Map<ProfessionalType, Map<AIServiceType, String>> _promptTemplates = {
     ProfessionalType.psychologist: {

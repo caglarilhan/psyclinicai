@@ -553,6 +553,14 @@ Danışanın hedefleri netleştirildi, pratik eylem planı çıkarıldı ve kayn
           'Yaşam tarzı değişiklikleri',
         ]);
         break;
+      case ProfessionalType.counselor:
+        recommendations.addAll([
+          'Kısa vadeli danışmanlık planı',
+          'Hedef belirleme ve takip',
+          'Kaynak ve yönlendirme önerileri',
+          'Pratik başa çıkma stratejileri',
+        ]);
+        break;
     }
     
     return recommendations;

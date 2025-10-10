@@ -58,11 +58,23 @@ class AppColors {
   static const Color surfaceVariant = Color(0xFFF9FAFB); // Very light gray
   static const Color surfaceContainer = Color(0xFFF3F4F6); // Light gray
 
+  // Aliases for light/dark usages in UI
+  static const Color backgroundLight = background;
+  static const Color backgroundDark = Color(0xFF121212);
+  static const Color surfaceLight = surface;
+  static const Color surfaceDark = Color(0xFF1E1E1E);
+
   // Text Colors
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF475569);
   static const Color textTertiary = Color(0xFF64748B);
   static const Color textDisabled = Color(0xFF94A3B8);
+
+  // Aliases for text light/dark
+  static const Color textPrimaryLight = textPrimary;
+  static const Color textSecondaryLight = textSecondary;
+  static const Color textPrimaryDark = Color(0xFFE0E0E0);
+  static const Color textSecondaryDark = Color(0xFFB0B0B0);
 
   // Border Colors
   static const Color border = Color(0xFFE2E8F0);

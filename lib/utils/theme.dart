@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppColors {
-  // Ana renkler
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryColor = Color(0xFF4CAF50); // Yeşil - Flag AI için
-  static const Color secondary = Color(0xFF7C3AED);
-  static const Color accent = Color(0xFF10B981);
+  // Ana renkler - Mor-Beyaz Tema
+  static const Color primary = Color(0xFF6B46C1); // Deep purple
+  static const Color primaryColor = Color(0xFF6B46C1); // Deep purple
+  static const Color secondary = Color(0xFFEC4899); // Pink
+  static const Color accent = Color(0xFF8B5CF6); // Violet
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color success = Color(0xFF10B981);
@@ -26,28 +26,28 @@ class AppColors {
 }
 
 class AppTheme {
-  // Ana renkler - PRD'deki profesyonel klinik görünüm
-  static const Color primaryColor = Color(0xFF2563EB); // Mavi - güven
-  static const Color secondaryColor = Color(0xFF7C3AED); // Mor - bilgelik
-  static const Color accentColor = Color(0xFF10B981); // Yeşil - sağlık
+  // Ana renkler - Mor-Beyaz Profesyonel Tema
+  static const Color primaryColor = Color(0xFF6B46C1); // Deep purple - güven
+  static const Color secondaryColor = Color(0xFFEC4899); // Pink - şefkat
+  static const Color accentColor = Color(0xFF8B5CF6); // Violet - bilgelik
   static const Color warningColor = Color(0xFFF59E0B); // Turuncu - uyarı
   static const Color errorColor = Color(0xFFEF4444); // Kırmızı - tehlike
   static const Color successColor = Color(0xFF10B981); // Yeşil - başarı
-  static const Color infoColor = Color(0xFF3B82F6); // Mavi - bilgi
+  static const Color infoColor = Color(0xFF8B5CF6); // Violet - bilgi
 
   // Metin renkleri
   static const Color textPrimary = Color(0xFF1F2937);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textTertiary = Color(0xFF9CA3AF);
 
-  // Dark mode renkleri
-  static const Color darkPrimaryColor = Color(0xFF60A5FA); // Açık mavi
-  static const Color darkSecondaryColor = Color(0xFFA78BFA); // Açık mor
-  static const Color darkAccentColor = Color(0xFF34D399); // Açık yeşil
+  // Dark mode renkleri - Mor Tema
+  static const Color darkPrimaryColor = Color(0xFF9F7AEA); // Light purple
+  static const Color darkSecondaryColor = Color(0xFFF472B6); // Light pink
+  static const Color darkAccentColor = Color(0xFFA78BFA); // Light violet
   static const Color darkWarningColor = Color(0xFFFBBF24); // Açık turuncu
   static const Color darkErrorColor = Color(0xFFF87171); // Açık kırmızı
   static const Color darkSuccessColor = Color(0xFF34D399); // Açık yeşil
-  static const Color darkInfoColor = Color(0xFF60A5FA); // Açık mavi
+  static const Color darkInfoColor = Color(0xFFA78BFA); // Light violet
 
   // Dark mode metin renkleri
   static const Color darkTextPrimary = Color(0xFFF9FAFB);

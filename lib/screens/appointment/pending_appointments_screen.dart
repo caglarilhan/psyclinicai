@@ -71,7 +71,7 @@ class _PendingAppointmentsScreenState extends State<PendingAppointmentsScreen> {
                           a.status,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: a.status.toLowerCase() == 'scheduled' ? Colors.orange : Colors.grey[700],
+                            color: a.status.toLowerCase() == 'scheduled' ? AppTheme.warningColor : Colors.grey[700],
                           ),
                         ),
                       ),

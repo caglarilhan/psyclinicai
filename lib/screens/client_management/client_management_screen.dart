@@ -77,7 +77,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hastalar yüklenirken hata oluştu: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -196,7 +196,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
                     'Aktif Hasta',
                     '${_filteredClients.length}',
                     Icons.person,
-                    Colors.green,
+                    AppTheme.successColor,
                   ),
                 ),
               ],
@@ -331,9 +331,9 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
               value: 'delete',
               child: Row(
                 children: [
-                  Icon(Icons.delete, color: Colors.red),
+                  Icon(Icons.delete, color: AppTheme.errorColor),
                   SizedBox(width: 8),
-                  Text('Sil', style: TextStyle(color: Colors.red)),
+                  Text('Sil', style: TextStyle(color: AppTheme.errorColor)),
                 ],
               ),
             ),
@@ -417,7 +417,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
             child: const Text('Sil'),
           ),
         ],
@@ -432,7 +432,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Hasta başarıyla silindi'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
             ),
           );
         }
@@ -441,7 +441,7 @@ class _ClientManagementScreenState extends State<ClientManagementScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Hasta silinirken hata oluştu'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }

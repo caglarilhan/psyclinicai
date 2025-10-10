@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Colors
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryLight = Color(0xFF3B82F6);
-  static const Color primaryDark = Color(0xFF1D4ED8);
-  static const Color primaryContainer = Color(0xFFEFF6FF);
+  // Primary Colors - Professional Purple
+  static const Color primary = Color(0xFF6B46C1); // Deep purple
+  static const Color primaryLight = Color(0xFF9F7AEA); // Light purple
+  static const Color primaryDark = Color(0xFF553C9A); // Dark purple
+  static const Color primaryContainer = Color(0xFFF3F0FF); // Very light purple
 
-  // Secondary Colors
-  static const Color secondary = Color(0xFF10B981);
-  static const Color secondaryLight = Color(0xFF34D399);
-  static const Color secondaryDark = Color(0xFF059669);
-  static const Color secondaryContainer = Color(0xFFECFDF5);
+  // Secondary Colors - Elegant Pink
+  static const Color secondary = Color(0xFFEC4899); // Pink
+  static const Color secondaryLight = Color(0xFFF472B6); // Light pink
+  static const Color secondaryDark = Color(0xFFDB2777); // Dark pink
+  static const Color secondaryContainer = Color(0xFFFDF2F8); // Very light pink
 
-  // Accent Colors
-  static const Color accent = Color(0xFFF59E0B);
-  static const Color accentLight = Color(0xFFFBBF24);
-  static const Color accentDark = Color(0xFFD97706);
-  static const Color accentContainer = Color(0xFFFEF3C7);
+  // Accent Colors - Violet
+  static const Color accent = Color(0xFF8B5CF6); // Violet
+  static const Color accentLight = Color(0xFFA78BFA); // Light violet
+  static const Color accentDark = Color(0xFF7C3AED); // Dark violet
+  static const Color accentContainer = Color(0xFFF5F3FF); // Very light violet
 
   // Neutral Colors
   static const Color neutral50 = Color(0xFFFAFAFA);
@@ -52,11 +52,11 @@ class AppColors {
   static const Color infoDark = Color(0xFF2563EB);
   static const Color infoContainer = Color(0xFFEFF6FF);
 
-  // Background Colors
-  static const Color background = Color(0xFFFAFAFA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF8FAFC);
-  static const Color surfaceContainer = Color(0xFFF1F5F9);
+  // Background Colors - Clean White Theme
+  static const Color background = Color(0xFFFAFAFA); // Off-white
+  static const Color surface = Color(0xFFFFFFFF); // Pure white
+  static const Color surfaceVariant = Color(0xFFF9FAFB); // Very light gray
+  static const Color surfaceContainer = Color(0xFFF3F4F6); // Light gray
 
   // Text Colors
   static const Color textPrimary = Color(0xFF0F172A);
@@ -106,24 +106,24 @@ class AppColors {
   static const Color statusCompleted = primary;
   static const Color statusCancelled = error;
 
-  // Chart Colors
+  // Chart Colors - Purple & Pink Palette
   static const List<Color> chartColors = [
-    primary,
-    secondary,
-    accent,
-    Color(0xFF8B5CF6),
-    Color(0xFF06B6D4),
-    Color(0xFF84CC16),
-    Color(0xFFF97316),
-    Color(0xFFEC4899),
+    primary, // Deep purple
+    secondary, // Pink
+    accent, // Violet
+    Color(0xFF7C3AED), // Dark violet
+    Color(0xFFA855F7), // Medium purple
+    Color(0xFFC084FC), // Light purple
+    Color(0xFFF472B6), // Light pink
+    Color(0xFFEC4899), // Pink
   ];
 
-  // Department Colors
-  static const Color psychiatry = Color(0xFF8B5CF6);
-  static const Color psychology = Color(0xFF06B6D4);
-  static const Color therapy = Color(0xFF84CC16);
-  static const Color administration = Color(0xFFF97316);
-  static const Color support = Color(0xFFEC4899);
+  // Department Colors - Purple Theme
+  static const Color psychiatry = Color(0xFF6B46C1); // Deep purple
+  static const Color psychology = Color(0xFF8B5CF6); // Violet
+  static const Color therapy = Color(0xFFA855F7); // Medium purple
+  static const Color administration = Color(0xFFEC4899); // Pink
+  static const Color support = Color(0xFFF472B6); // Light pink
 
   // Priority Colors
   static const Color priorityHigh = error;

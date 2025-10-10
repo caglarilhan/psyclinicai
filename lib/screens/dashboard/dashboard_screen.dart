@@ -100,7 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
         child: SlideTransition(
           position: _slideAnimation,
           child: SingleChildScrollView(
-            padding: AppSpacing.paddingAllLG,
+            padding: AppSpacing.paddingAll(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

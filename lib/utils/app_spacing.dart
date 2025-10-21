@@ -135,16 +135,16 @@ class AppSpacing {
   }) => EdgeInsets.only(left: left, top: top, right: right, bottom: bottom);
 
   // Common Padding Combinations
-  static EdgeInsets get pagePadding => paddingAll(pagePadding);
-  static EdgeInsets get cardPadding => paddingAll(cardPadding);
-  static EdgeInsets get componentPadding => paddingAll(componentPadding);
-  static EdgeInsets get formPadding => paddingAll(md);
-  static EdgeInsets get listPadding => paddingAll(listPadding);
+  static EdgeInsets get pagePaddingEdgeInsets => paddingAll(pagePadding);
+  static EdgeInsets get cardPaddingEdgeInsets => paddingAll(cardPadding);
+  static EdgeInsets get componentPaddingEdgeInsets => paddingAll(componentPadding);
+  static EdgeInsets get formPaddingEdgeInsets => paddingAll(md);
+  static EdgeInsets get listPaddingEdgeInsets => paddingAll(listPadding);
 
   // Common Margin Combinations
-  static EdgeInsets get cardMargin => marginAll(cardMargin);
-  static EdgeInsets get componentMargin => marginAll(componentMargin);
-  static EdgeInsets get sectionMargin => marginAll(sectionSpacing);
+  static EdgeInsets get cardMarginEdgeInsets => marginAll(cardMargin);
+  static EdgeInsets get componentMarginEdgeInsets => marginAll(componentMargin);
+  static EdgeInsets get sectionMarginEdgeInsets => marginAll(sectionSpacing);
 
   // Responsive Spacing
   static double responsive({

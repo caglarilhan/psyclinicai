@@ -1,0 +1,132 @@
+[
+  {
+    "id": "us_acetaminophen",
+    "genericName": "Acetaminophen",
+    "brandName": "Tylenol",
+    "activeIngredient": "Acetaminophen",
+    "dosages": ["325mg", "500mg", "650mg"],
+    "forms": ["Tablet", "Liquid"],
+    "category": "Analgesic",
+    "indication": "Fever and pain relief",
+    "contraindications": ["Liver disease", "Alcoholism"],
+    "sideEffects": ["Nausea", "Liver damage"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/acetaminophen.jpg",
+    "countrySpecific": {
+      "ndcCode": "50580-123-01",
+      "price": "$8.99",
+      "prescriptionRequired": false
+    },
+    "atcCode": "N02BE01",
+    "reimbursementCode": "FDA001",
+    "warnings": {
+      "TR": "Günde 4 gramı aşmayın. Alkol ile birlikte almayın.",
+      "EU": "Do not exceed 4g daily. Avoid with alcohol.",
+      "US": "Do not exceed 4g daily. Avoid with alcohol."
+    }
+  },
+  {
+    "id": "us_fluoxetine",
+    "genericName": "Fluoxetine",
+    "brandName": "Prozac",
+    "activeIngredient": "Fluoxetine",
+    "dosages": ["10mg", "20mg", "40mg"],
+    "forms": ["Capsule"],
+    "category": "Antidepressant",
+    "indication": "Depression, anxiety disorder",
+    "contraindications": ["MAO inhibitor use"],
+    "sideEffects": ["Insomnia", "Headache", "Nausea"],
+    "pregnancyCategory": "C",
+    "imageUrl": "assets/drug_images/fluoxetine.jpg",
+    "countrySpecific": {
+      "ndcCode": "0777-3105-02",
+      "price": "$45.99",
+      "prescriptionRequired": true
+    },
+    "atcCode": "N06AB03",
+    "reimbursementCode": "FDA002",
+    "warnings": {
+      "TR": "İlk 2 hafta intihar düşünceleri artabilir.",
+      "EU": "Suicidal thoughts may increase in first 2 weeks.",
+      "US": "Suicidal thoughts may increase in first 2 weeks."
+    }
+  },
+  {
+    "id": "us_omeprazole",
+    "genericName": "Omeprazole",
+    "brandName": "Prilosec",
+    "activeIngredient": "Omeprazole",
+    "dosages": ["10mg", "20mg", "40mg"],
+    "forms": ["Capsule", "Tablet"],
+    "category": "Proton Pump Inhibitor",
+    "indication": "Gastric ulcer, GERD",
+    "contraindications": ["Omeprazole allergy"],
+    "sideEffects": ["Headache", "Diarrhea", "Abdominal pain"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/omeprazole.jpg",
+    "countrySpecific": {
+      "ndcCode": "0186-5010-01",
+      "price": "$32.50",
+      "prescriptionRequired": false
+    },
+    "atcCode": "A02BC01",
+    "reimbursementCode": "FDA003",
+    "warnings": {
+      "TR": "Yemeklerden 30 dakika önce alın.",
+      "EU": "Take 30 minutes before meals.",
+      "US": "Take 30 minutes before meals."
+    }
+  },
+  {
+    "id": "us_metformin",
+    "genericName": "Metformin",
+    "brandName": "Glucophage",
+    "activeIngredient": "Metformin",
+    "dosages": ["500mg", "750mg", "1000mg"],
+    "forms": ["Tablet", "Extended Release"],
+    "category": "Antidiabetic",
+    "indication": "Type 2 diabetes treatment",
+    "contraindications": ["Kidney failure", "Liver failure"],
+    "sideEffects": ["Nausea", "Diarrhea", "Metallic taste"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/metformin.jpg",
+    "countrySpecific": {
+      "ndcCode": "0002-8501-01",
+      "price": "$28.75",
+      "prescriptionRequired": true
+    },
+    "atcCode": "A10BA02",
+    "reimbursementCode": "FDA004",
+    "warnings": {
+      "TR": "Yemeklerle birlikte alın. Böbrek fonksiyonlarını takip edin.",
+      "EU": "Take with meals. Monitor kidney function.",
+      "US": "Take with meals. Monitor kidney function."
+    }
+  },
+  {
+    "id": "us_amoxicillin",
+    "genericName": "Amoxicillin",
+    "brandName": "Amoxil",
+    "activeIngredient": "Amoxicillin",
+    "dosages": ["250mg", "500mg", "875mg"],
+    "forms": ["Capsule", "Suspension"],
+    "category": "Antibiotic",
+    "indication": "Bacterial infections",
+    "contraindications": ["Penicillin allergy"],
+    "sideEffects": ["Diarrhea", "Nausea", "Skin rash"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/amoxicillin.jpg",
+    "countrySpecific": {
+      "ndcCode": "0093-2261-01",
+      "price": "$15.25",
+      "prescriptionRequired": true
+    },
+    "atcCode": "J01CA04",
+    "reimbursementCode": "FDA005",
+    "warnings": {
+      "TR": "Tam dozda ve sürede alın. Alerji durumunda doktora başvurun.",
+      "EU": "Take full course. Consult doctor if allergic reaction occurs.",
+      "US": "Take full course. Consult doctor if allergic reaction occurs."
+    }
+  }
+]

@@ -401,7 +401,7 @@ class _PsychiatristDashboardWidgetState extends State<PsychiatristDashboardWidge
             children: [
               Text('Tanı: ${prescription.diagnosis}'),
               Text('Tarih: ${_formatDate(prescription.prescribedAt)}'),
-              Text('Geçerlilik: ${_formatDate(prescription.validUntil)}'),
+              Text('Geçerlilik: ${prescription.validUntil != null ? _formatDate(prescription.validUntil!) : 'Belirtilmemiş'}'),
               Text('İlaçlar:'),
               ...prescription.medications.map((med) => 
                 Padding(

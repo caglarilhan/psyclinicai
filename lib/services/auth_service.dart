@@ -40,4 +40,16 @@ class AuthService {
     // TODO: Firebase Auth current user
     return _isAuthenticated ? 'admin' : null;
   }
+
+  Future<bool> verify2FA(String code) async {
+    // TODO: Firebase Auth 2FA verification
+    await Future.delayed(const Duration(seconds: 1)); // Simülasyon
+    
+    // Demo: Herhangi bir 6 haneli kod kabul edilir
+    if (code.length == 6 && RegExp(r'^\d+$').hasMatch(code)) {
+      return true;
+    }
+    
+    return false;
+  }
 }

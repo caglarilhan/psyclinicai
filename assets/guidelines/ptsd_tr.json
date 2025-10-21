@@ -1,0 +1,27 @@
+{
+  "disorder": "ptsd",
+  "region": "TR",
+  "recommendations": [
+    {
+      "title": "Travma odaklı terapi",
+      "text": "TF-CBT/EMDR; güvenlik, regülasyon ve tetikleyici yönetimi.",
+      "evidence": "A",
+      "sources": ["VA-DoD 2023"]
+    },
+    {
+      "title": "Farmakoterapi",
+      "text": "SSRI birinci basamak; kabuslar için prazosin değerlendirilebilir (klinik karara bağlı).",
+      "evidence": "B",
+      "sources": ["APA 2020"]
+    },
+    {
+      "title": "İzlem",
+      "text": "Komorbid SUD, depresyon ve intihar riski için yakın takip.",
+      "evidence": "B",
+      "sources": ["Klinik Uygulama Notu"]
+    }
+  ]
+}
+
+
+

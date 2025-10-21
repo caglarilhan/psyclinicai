@@ -1,0 +1,27 @@
+{
+  "disorder": "depression",
+  "region": "TR",
+  "recommendations": [
+    {
+      "title": "CBT (ilk basamak)",
+      "text": "8-12 seans; bilişsel yeniden yapılandırma, davranışsal aktivasyon, ödevler.",
+      "evidence": "A",
+      "sources": ["NICE 2022", "APA 2020"]
+    },
+    {
+      "title": "Farmakoterapi (SSRI)",
+      "text": "Yan etki izlemi: GI semptomlar, ajitasyon; 4-6 hf yanıt değerlendirme.",
+      "evidence": "A",
+      "sources": ["CANMAT 2023"]
+    },
+    {
+      "title": "İzlem",
+      "text": "İntihar riski için güvenlik planı, gerekirse TSH/B12; haftalık-iki haftada bir kontrol.",
+      "evidence": "B",
+      "sources": ["Klinik Uygulama Notu"]
+    }
+  ]
+}
+
+
+

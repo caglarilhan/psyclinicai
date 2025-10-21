@@ -161,9 +161,9 @@ class _HomeworkScreenState extends State<HomeworkScreen>
                   final a = service.assignments[i];
                   return Card(
                     child: ListTile(
-                      title: Text(a.templateId),
+                      title: Text(a.title),
                       subtitle: Text('Son tarih: ${a.dueDate?.toIso8601String() ?? '-'}'),
-                      trailing: a.completed
+                      trailing: a.isCompleted
                           ? const Icon(Icons.check_circle, color: Colors.green)
                           : IconButton(
                               icon: const Icon(Icons.done),
@@ -439,15 +439,15 @@ class _HomeworkScreenState extends State<HomeworkScreen>
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: assignment.completed ? AppTheme.successColor : AppTheme.primaryColor,
+          backgroundColor: assignment.isCompleted ? AppTheme.successColor : AppTheme.primaryColor,
           child: Icon(
-            assignment.completed ? Icons.check : Icons.assignment,
+            assignment.isCompleted ? Icons.check : Icons.assignment,
             color: Colors.white,
           ),
         ),
-        title: Text(assignment.templateId, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(assignment.title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('Son tarih: ${assignment.dueDate?.toIso8601String() ?? '-'}'),
-        trailing: assignment.completed
+        trailing: assignment.isCompleted
             ? const Icon(Icons.check_circle, color: Colors.green)
             : IconButton(
                 icon: const Icon(Icons.done),
@@ -684,9 +684,9 @@ class _HomeworkScreenState extends State<HomeworkScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Şablon', assignment.templateId),
+            _buildDetailRow('Şablon', assignment.title),
             _buildDetailRow('Son Tarih', assignment.dueDate?.toIso8601String() ?? '-'),
-            _buildDetailRow('Durum', assignment.completed ? 'Tamamlandı' : 'Bekliyor'),
+            _buildDetailRow('Durum', assignment.isCompleted ? 'Tamamlandı' : 'Bekliyor'),
           ],
         ),
         actions: [

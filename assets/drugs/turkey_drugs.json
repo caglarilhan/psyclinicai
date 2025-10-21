@@ -1,0 +1,132 @@
+[
+  {
+    "id": "tr_paracetamol",
+    "genericName": "Parasetamol",
+    "brandName": "Parol",
+    "activeIngredient": "Paracetamol",
+    "dosages": ["500mg", "1000mg"],
+    "forms": ["Tablet", "Şurup"],
+    "category": "Analjezik",
+    "indication": "Ateş ve ağrı tedavisi",
+    "contraindications": ["Karaciğer yetmezliği", "Alkolizm"],
+    "sideEffects": ["Mide bulantısı", "Karaciğer hasarı"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/paracetamol.jpg",
+    "countrySpecific": {
+      "sgkCode": "A01AA01",
+      "price": "12.50 TL",
+      "prescriptionRequired": true
+    },
+    "atcCode": "N02BE01",
+    "reimbursementCode": "SGK001",
+    "warnings": {
+      "TR": "Günde 4 gramı aşmayın. Alkol ile birlikte almayın.",
+      "EU": "Do not exceed 4g daily. Avoid with alcohol.",
+      "US": "Do not exceed 4g daily. Avoid with alcohol."
+    }
+  },
+  {
+    "id": "tr_fluoxetine",
+    "genericName": "Fluoksetin",
+    "brandName": "Prozac",
+    "activeIngredient": "Fluoxetine",
+    "dosages": ["20mg", "40mg"],
+    "forms": ["Kapsül"],
+    "category": "Antidepresan",
+    "indication": "Depresyon, anksiyete bozukluğu",
+    "contraindications": ["MAO inhibitörü kullanımı"],
+    "sideEffects": ["Uykusuzluk", "Baş ağrısı", "Mide bulantısı"],
+    "pregnancyCategory": "C",
+    "imageUrl": "assets/drug_images/fluoxetine.jpg",
+    "countrySpecific": {
+      "sgkCode": "N06AB03",
+      "price": "45.80 TL",
+      "prescriptionRequired": true
+    },
+    "atcCode": "N06AB03",
+    "reimbursementCode": "SGK002",
+    "warnings": {
+      "TR": "İlk 2 hafta intihar düşünceleri artabilir.",
+      "EU": "Suicidal thoughts may increase in first 2 weeks.",
+      "US": "Suicidal thoughts may increase in first 2 weeks."
+    }
+  },
+  {
+    "id": "tr_omeprazole",
+    "genericName": "Omeprazol",
+    "brandName": "Losec",
+    "activeIngredient": "Omeprazole",
+    "dosages": ["20mg", "40mg"],
+    "forms": ["Kapsül"],
+    "category": "Proton Pompa İnhibitörü",
+    "indication": "Mide ülseri, reflü",
+    "contraindications": ["Omeprazol alerjisi"],
+    "sideEffects": ["Baş ağrısı", "İshal", "Karın ağrısı"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/omeprazole.jpg",
+    "countrySpecific": {
+      "sgkCode": "A02BC01",
+      "price": "28.90 TL",
+      "prescriptionRequired": true
+    },
+    "atcCode": "A02BC01",
+    "reimbursementCode": "SGK003",
+    "warnings": {
+      "TR": "Yemeklerden 30 dakika önce alın.",
+      "EU": "Take 30 minutes before meals.",
+      "US": "Take 30 minutes before meals."
+    }
+  },
+  {
+    "id": "tr_metformin",
+    "genericName": "Metformin",
+    "brandName": "Glucophage",
+    "activeIngredient": "Metformin",
+    "dosages": ["500mg", "850mg", "1000mg"],
+    "forms": ["Tablet"],
+    "category": "Antidiyabetik",
+    "indication": "Tip 2 diyabet tedavisi",
+    "contraindications": ["Böbrek yetmezliği", "Karaciğer yetmezliği"],
+    "sideEffects": ["Mide bulantısı", "İshal", "Metalik tat"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/metformin.jpg",
+    "countrySpecific": {
+      "sgkCode": "A10BA02",
+      "price": "35.20 TL",
+      "prescriptionRequired": true
+    },
+    "atcCode": "A10BA02",
+    "reimbursementCode": "SGK004",
+    "warnings": {
+      "TR": "Yemeklerle birlikte alın. Böbrek fonksiyonlarını takip edin.",
+      "EU": "Take with meals. Monitor kidney function.",
+      "US": "Take with meals. Monitor kidney function."
+    }
+  },
+  {
+    "id": "tr_amoxicillin",
+    "genericName": "Amoksisilin",
+    "brandName": "Amoksil",
+    "activeIngredient": "Amoxicillin",
+    "dosages": ["250mg", "500mg", "875mg"],
+    "forms": ["Kapsül", "Şurup"],
+    "category": "Antibiyotik",
+    "indication": "Bakteriyel enfeksiyonlar",
+    "contraindications": ["Penisilin alerjisi"],
+    "sideEffects": ["İshal", "Mide bulantısı", "Deri döküntüsü"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/amoxicillin.jpg",
+    "countrySpecific": {
+      "sgkCode": "J01CA04",
+      "price": "18.75 TL",
+      "prescriptionRequired": true
+    },
+    "atcCode": "J01CA04",
+    "reimbursementCode": "SGK005",
+    "warnings": {
+      "TR": "Tam dozda ve sürede alın. Alerji durumunda doktora başvurun.",
+      "EU": "Take full course. Consult doctor if allergic reaction occurs.",
+      "US": "Take full course. Consult doctor if allergic reaction occurs."
+    }
+  }
+]

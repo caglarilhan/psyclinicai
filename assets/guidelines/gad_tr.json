@@ -1,0 +1,27 @@
+{
+  "disorder": "gad",
+  "region": "TR",
+  "recommendations": [
+    {
+      "title": "CBT (GAB odaklı)",
+      "text": "Maruz bırakma, gevşeme eğitimi, bilişsel yeniden yapılandırma.",
+      "evidence": "A",
+      "sources": ["NICE 2022"]
+    },
+    {
+      "title": "Farmakoterapi",
+      "text": "SSRI/SNRI birinci basamak; 4-6 haftada yanıt değerlendirmesi.",
+      "evidence": "A",
+      "sources": ["CANMAT 2023"]
+    },
+    {
+      "title": "İzlem",
+      "text": "Fonksiyonellik, somatik belirtiler ve kaçınma davranışlarının takibi.",
+      "evidence": "B",
+      "sources": ["Klinik Uygulama Notu"]
+    }
+  ]
+}
+
+
+

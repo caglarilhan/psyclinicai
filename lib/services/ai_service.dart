@@ -367,6 +367,11 @@ Terapötik ilişki güçlendirildi. Danışanın motivasyonu yüksek. Kullanıla
 Danışman Perspektifi:
 Danışanın hedefleri netleştirildi, pratik eylem planı çıkarıldı ve kaynaklara yönlendirme yapıldı.
 ''';
+      case ProfessionalType.socialWorker:
+        return '''
+Sosyal Hizmet Uzmanı Perspektifi:
+Danışanın sosyal çevresi, kaynakları ve hizmet erişimi değerlendirildi; vaka yönetimi planlandı.
+''';
       default:
         return 'Seans özeti hazırlandı.';
     }
@@ -401,6 +406,13 @@ Danışanın hedefleri netleştirildi, pratik eylem planı çıkarıldı ve kayn
           'Kısa vadeli aksiyonlar belirlendi',
           'Kaynaklara erişim planlandı',
           'Destek ağı güçlendirildi',
+        ];
+      case ProfessionalType.socialWorker:
+        return [
+          'Sosyal destek kaynakları haritalandı',
+          'Vaka yönetimi adımları belirlendi',
+          'Topluluk hizmetlerine bağlantı kuruldu',
+          'Aile destek planı oluşturuldu',
         ];
       default:
         return ['Temel bulgular tespit edildi'];
@@ -559,6 +571,14 @@ Danışanın hedefleri netleştirildi, pratik eylem planı çıkarıldı ve kayn
           'Hedef belirleme ve takip',
           'Kaynak ve yönlendirme önerileri',
           'Pratik başa çıkma stratejileri',
+        ]);
+        break;
+      case ProfessionalType.socialWorker:
+        recommendations.addAll([
+          'Vaka yönetimi ve koordinasyon',
+          'Topluluk ve sosyal kaynaklara yönlendirme',
+          'Aile ve çevresel destek planı',
+          'Hak ve hizmetlere erişim desteği',
         ]);
         break;
     }

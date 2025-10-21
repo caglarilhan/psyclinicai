@@ -198,12 +198,13 @@ class RealtimeDashboardService {
 
   // Session types data oluştur
   List<Map<String, dynamic>> _generateSessionTypesData() {
+    // Renkleri JSON serileştirme için int (ARGB) olarak saklıyoruz
     return [
-      {'type': 'Bireysel Terapi', 'count': _generateRandomNumber(30, 60), 'color': Colors.blue},
-      {'type': 'Çift Terapisi', 'count': _generateRandomNumber(10, 25), 'color': Colors.green},
-      {'type': 'Aile Terapisi', 'count': _generateRandomNumber(5, 15), 'color': Colors.orange},
-      {'type': 'Grup Terapisi', 'count': _generateRandomNumber(3, 10), 'color': Colors.purple},
-      {'type': 'Online Terapi', 'count': _generateRandomNumber(15, 35), 'color': Colors.red},
+      {'type': 'Bireysel Terapi', 'count': _generateRandomNumber(30, 60), 'color': Colors.blue.value},
+      {'type': 'Çift Terapisi', 'count': _generateRandomNumber(10, 25), 'color': Colors.green.value},
+      {'type': 'Aile Terapisi', 'count': _generateRandomNumber(5, 15), 'color': Colors.orange.value},
+      {'type': 'Grup Terapisi', 'count': _generateRandomNumber(3, 10), 'color': Colors.purple.value},
+      {'type': 'Online Terapi', 'count': _generateRandomNumber(15, 35), 'color': Colors.red.value},
     ];
   }
 

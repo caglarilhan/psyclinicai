@@ -1,753 +1,581 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:math';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
-class OfflineService {
-  static const String _offlineDataKey = 'offline_data';
-  static const String _syncQueueKey = 'sync_queue';
-  static const String _offlineConfigKey = 'offline_config';
-  
-  // Singleton pattern
+class OfflineService extends ChangeNotifier {
   static final OfflineService _instance = OfflineService._internal();
   factory OfflineService() => _instance;
   OfflineService._internal();
 
-  // Stream controllers
-  final StreamController<OfflineStatus> _statusStreamController = 
-      StreamController<OfflineStatus>.broadcast();
-  
-  final StreamController<SyncProgress> _syncProgressStreamController = 
-      StreamController<SyncProgress>.broadcast();
+  bool _isOnline = true;
+  bool _isInitialized = false;
+  Database? _database;
+  final List<Map<String, dynamic>> _pendingSync = [];
+  final List<Map<String, dynamic>> _offlineData = [];
 
-  // Get streams
-  Stream<OfflineStatus> get statusStream => _statusStreamController.stream;
-  Stream<SyncProgress> get syncProgressStream => _syncProgressStreamController.stream;
+  bool get isOnline => _isOnline;
+  bool get isInitialized => _isInitialized;
+  List<Map<String, dynamic>> get pendingSync => List.unmodifiable(_pendingSync);
+  List<Map<String, dynamic>> get offlineData => List.unmodifiable(_offlineData);
 
-  // Offline status
-  bool _isOffline = false;
-  bool _isSyncing = false;
-  DateTime? _lastSyncTime;
-  int _pendingSyncCount = 0;
-
-  // Getters
-  bool get isOffline => _isOffline;
-  bool get isSyncing => _isSyncing;
-  DateTime? get lastSyncTime => _lastSyncTime;
-  int get pendingSyncCount => _pendingSyncCount;
-
-  // Initialize offline service
   Future<void> initialize() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Load offline configuration
-      final configJson = prefs.getString(_offlineConfigKey);
-      if (configJson != null) {
-        final config = OfflineConfig.fromJson(json.decode(configJson));
-        _isOffline = config.enabled;
-      }
-      
-      // Load pending sync count
-      final syncQueue = await _getSyncQueue();
-      _pendingSyncCount = syncQueue.length;
-      
-      // Check network status
-      await _checkNetworkStatus();
-      
-      print('✅ Offline service initialized');
-      
-    } catch (e) {
-      print('Error initializing offline service: $e');
-    }
-  }
+    if (_isInitialized) return;
 
-  // Check network status
-  Future<void> _checkNetworkStatus() async {
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      final wasOffline = _isOffline;
-      _isOffline = result.isEmpty;
-      
-      if (wasOffline != _isOffline) {
-        _statusStreamController.add(OfflineStatus(
-          isOffline: _isOffline,
-          timestamp: DateTime.now(),
-          reason: _isOffline ? 'Network unavailable' : 'Network restored',
-        ));
-        
-        if (!_isOffline && _pendingSyncCount > 0) {
-          _triggerAutoSync();
-        }
-      }
-      
-    } catch (e) {
-      final wasOffline = _isOffline;
-      _isOffline = true;
-      
-      if (wasOffline != _isOffline) {
-        _statusStreamController.add(OfflineStatus(
-          isOffline: _isOffline,
-          timestamp: DateTime.now(),
-          reason: 'Network error: $e',
-        ));
-      }
-    }
-  }
-
-  // Enable offline mode
-  Future<void> enableOfflineMode() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      final config = OfflineConfig(
-        enabled: true,
-        autoSync: true,
-        syncInterval: 300, // 5 minutes
-        maxOfflineDataSize: 100 * 1024 * 1024, // 100 MB
-        compressionEnabled: true,
-      );
-      
-      await prefs.setString(_offlineConfigKey, json.encode(config.toJson()));
-      _isOffline = true;
-      
-      _statusStreamController.add(OfflineStatus(
-        isOffline: _isOffline,
-        timestamp: DateTime.now(),
-        reason: 'Offline mode enabled manually',
-      ));
-      
-      print('✅ Offline mode enabled');
-      
-    } catch (e) {
-      print('Error enabling offline mode: $e');
-    }
-  }
-
-  // Disable offline mode
-  Future<void> disableOfflineMode() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      final config = OfflineConfig(
-        enabled: false,
-        autoSync: false,
-        syncInterval: 0,
-        maxOfflineDataSize: 0,
-        compressionEnabled: false,
-      );
-      
-      await prefs.setString(_offlineConfigKey, json.encode(config.toJson()));
-      _isOffline = false;
-      
-      _statusStreamController.add(OfflineStatus(
-        isOffline: _isOffline,
-        timestamp: DateTime.now(),
-        reason: 'Offline mode disabled',
-      ));
-      
-      print('✅ Offline mode disabled');
-      
-    } catch (e) {
-      print('Error disabling offline mode: $e');
-    }
-  }
-
-  // Save data offline
-  Future<bool> saveOfflineData({
-    required String key,
-    required Map<String, dynamic> data,
-    required String dataType,
-    String? userId,
-  }) async {
-    try {
-      if (!_isOffline) {
-        print('Not in offline mode, saving to cloud instead');
-        return false;
-      }
-
-      final prefs = await SharedPreferences.getInstance();
-      final offlineData = await _getOfflineData();
-      
-      final offlineEntry = OfflineDataEntry(
-        id: _generateSecureId(),
-        key: key,
-        data: data,
-        dataType: dataType,
-        userId: userId,
-        timestamp: DateTime.now(),
-        priority: _getDataPriority(dataType),
-        size: json.encode(data).length,
-      );
-      
-      offlineData[key] = offlineEntry.toJson();
-      
-      // Check storage limit
-      final totalSize = offlineData.values.fold<int>(0, (sum, entry) => 
-        sum + (entry['size'] as int)
-      );
-      
-      final config = await _getOfflineConfig();
-      if (totalSize > config.maxOfflineDataSize) {
-        await _cleanupOldData(offlineData);
-      }
-      
-      await prefs.setString(_offlineDataKey, json.encode(offlineData));
-      
-      // Add to sync queue
-      await _addToSyncQueue(offlineEntry);
-      
-      print('✅ Data saved offline: $key');
-      return true;
-      
-    } catch (e) {
-      print('Error saving offline data: $e');
-      return false;
-    }
-  }
-
-  // Get offline data
-  Future<Map<String, dynamic>?> getOfflineDataByKey(String key) async {
-    try {
-      final offlineData = await _getOfflineData();
-      final entry = offlineData[key];
-      
-      if (entry != null) {
-        return entry['data'] as Map<String, dynamic>;
-      }
-      
-      return null;
-      
-    } catch (e) {
-      print('Error getting offline data: $e');
-      return null;
-    }
-  }
-
-  // Get all offline data by type
-  Future<List<Map<String, dynamic>>> getOfflineDataByType(String dataType) async {
-    try {
-      final offlineData = await _getOfflineData();
-      final filteredData = <Map<String, dynamic>>[];
-      
-      for (final entry in offlineData.values) {
-        if (entry['dataType'] == dataType) {
-          filteredData.add(entry['data'] as Map<String, dynamic>);
-        }
-      }
-      
-      return filteredData;
-      
-    } catch (e) {
-      print('Error getting offline data by type: $e');
-      return [];
-    }
-  }
-
-  // Get offline data
-  Future<Map<String, Map<String, dynamic>>> _getOfflineData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final dataJson = prefs.getString(_offlineDataKey);
-      
-      if (dataJson != null) {
-        final data = json.decode(dataJson) as Map<String, dynamic>;
-        return Map<String, Map<String, dynamic>>.from(data);
-      }
-      
-      return {};
-      
-    } catch (e) {
-      print('Error getting offline data: $e');
-      return {};
-    }
-  }
-
-  // Add to sync queue
-  Future<void> _addToSyncQueue(OfflineDataEntry entry) async {
-    try {
-      final syncQueue = await _getSyncQueue();
-      
-      final syncItem = SyncQueueItem(
-        id: entry.id,
-        key: entry.key,
-        dataType: entry.dataType,
-        userId: entry.userId,
-        timestamp: entry.timestamp,
-        priority: entry.priority,
-        retryCount: 0,
-        status: 'pending',
-      );
-      
-      syncQueue.add(syncItem.toJson());
-      await _saveSyncQueue(syncQueue);
-      
-      _pendingSyncCount = syncQueue.length;
-      
-    } catch (e) {
-      print('Error adding to sync queue: $e');
-    }
-  }
-
-  // Get sync queue
-  Future<List<Map<String, dynamic>>> _getSyncQueue() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final queueJson = prefs.getString(_syncQueueKey);
-      
-      if (queueJson != null) {
-        final queue = json.decode(queueJson) as List<dynamic>;
-        return queue.cast<Map<String, dynamic>>();
-      }
-      
-      return [];
-      
-    } catch (e) {
-      print('Error getting sync queue: $e');
-      return [];
-    }
-  }
-
-  // Save sync queue
-  Future<void> _saveSyncQueue(List<Map<String, dynamic>> queue) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_syncQueueKey, json.encode(queue));
-    } catch (e) {
-      print('Error saving sync queue: $e');
-    }
-  }
-
-  // Trigger auto sync
-  Future<void> _triggerAutoSync() async {
-    if (_isOffline || _isSyncing || _pendingSyncCount == 0) return;
+    await _initDatabase();
+    await _checkConnectivity();
+    await _loadOfflineData();
     
-    final config = await _getOfflineConfig();
-    if (!config.autoSync) return;
-    
-    Timer(const Duration(seconds: 5), () {
-      _startSync();
+    // Connectivity listener
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      _updateConnectivityStatus(result);
     });
+
+    _isInitialized = true;
+    notifyListeners();
   }
 
-  // Start sync process
-  Future<void> _startSync() async {
-    if (_isSyncing) return;
-    
-    setState(() => _isSyncing = true);
-    
-    try {
-      final syncQueue = await _getSyncQueue();
-      if (syncQueue.isEmpty) {
-        setState(() => _isSyncing = false);
-        return;
-      }
-      
-      // Sort by priority and timestamp
-      syncQueue.sort((a, b) {
-        final priorityA = a['priority'] as int;
-        final priorityB = b['priority'] as int;
-        
-        if (priorityA != priorityB) {
-          return priorityB.compareTo(priorityA); // Higher priority first
-        }
-        
-        final timestampA = DateTime.parse(a['timestamp']);
-        final timestampB = DateTime.parse(b['timestamp']);
-        return timestampA.compareTo(timestampB); // Older first
-      });
-      
-      int processedCount = 0;
-      int successCount = 0;
-      int failedCount = 0;
-      
-      for (final item in syncQueue) {
-        try {
-          _syncProgressStreamController.add(SyncProgress(
-            current: processedCount + 1,
-            total: syncQueue.length,
-            currentItem: item['key'],
-            status: 'Processing ${item['key']}...',
-          ));
-          
-          final success = await _syncItem(item);
-          
-          if (success) {
-            successCount++;
-            // Remove from queue
-            syncQueue.removeAt(processedCount);
-          } else {
-            failedCount++;
-            // Update retry count
-            item['retryCount'] = (item['retryCount'] as int) + 1;
-            
-            if (item['retryCount'] >= 3) {
-              // Mark as failed permanently
-              item['status'] = 'failed';
-              syncQueue.removeAt(processedCount);
-            } else {
-              processedCount++;
-            }
-          }
-          
-          await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-          
-        } catch (e) {
-          print('Error syncing item: $e');
-          failedCount++;
-          processedCount++;
-        }
-      }
-      
-      // Save updated queue
-      await _saveSyncQueue(syncQueue);
-      
-      // Update counts
-      _pendingSyncCount = syncQueue.length;
-      _lastSyncTime = DateTime.now();
-      
-      // Send final progress
-      _syncProgressStreamController.add(SyncProgress(
-        current: syncQueue.length,
-        total: syncQueue.length,
-        currentItem: 'Sync completed',
-        status: 'Sync completed: $successCount successful, $failedCount failed',
-      ));
-      
-      print('✅ Sync completed: $successCount successful, $failedCount failed');
-      
-    } catch (e) {
-      print('Error during sync: $e');
-    } finally {
-      setState(() => _isSyncing = false);
-    }
-  }
+  Future<void> _initDatabase() async {
+    final databasesPath = await getDatabasesPath();
+    final path = join(databasesPath, 'psyclinic_offline.db');
 
-  // Sync individual item
-  Future<bool> _syncItem(Map<String, dynamic> item) async {
-    try {
-      // Simulate cloud sync
-      await Future.delayed(const Duration(milliseconds: 200));
-      
-      // Simulate 90% success rate
-      final random = Random();
-      return random.nextDouble() > 0.1;
-      
-    } catch (e) {
-      print('Error syncing item: $e');
-      return false;
-    }
-  }
+    _database = await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        // Patients table
+        await db.execute('''
+          CREATE TABLE patients (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            diagnosis TEXT,
+            last_session TEXT,
+            status TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
 
-  // Cleanup old data
-  Future<void> _cleanupOldData(Map<String, Map<String, dynamic>> offlineData) async {
-    try {
-      // Sort by timestamp (oldest first)
-      final sortedEntries = offlineData.entries.toList()
-        ..sort((a, b) => DateTime.parse(a.value['timestamp'])
-            .compareTo(DateTime.parse(b.value['timestamp'])));
-      
-      // Remove oldest entries until under limit
-      final config = await _getOfflineConfig();
-      int currentSize = offlineData.values.fold<int>(0, (sum, entry) => 
-        sum + (entry['size'] as int)
-      );
-      
-      for (final entry in sortedEntries) {
-        if (currentSize <= config.maxOfflineDataSize) break;
-        
-        currentSize -= entry.value['size'] as int;
-        offlineData.remove(entry.key);
-        
-        print('🗑️ Cleaned up old offline data: ${entry.key}');
-      }
-      
-    } catch (e) {
-      print('Error cleaning up old data: $e');
-    }
-  }
+        // Appointments table
+        await db.execute('''
+          CREATE TABLE appointments (
+            id TEXT PRIMARY KEY,
+            patient_id TEXT,
+            doctor_id TEXT,
+            date TEXT,
+            time TEXT,
+            type TEXT,
+            status TEXT,
+            notes TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
 
-  // Get data priority
-  int _getDataPriority(String dataType) {
-    switch (dataType) {
-      case 'patient_emergency':
-        return 100; // Highest priority
-      case 'patient_critical':
-        return 90;
-      case 'patient_update':
-        return 70;
-      case 'appointment':
-        return 60;
-      case 'medication':
-        return 50;
-      case 'note':
-        return 30;
-      case 'log':
-        return 10; // Lowest priority
-      default:
-        return 50;
-    }
-  }
+        // Prescriptions table
+        await db.execute('''
+          CREATE TABLE prescriptions (
+            id TEXT PRIMARY KEY,
+            patient_id TEXT,
+            medication_name TEXT,
+            dosage TEXT,
+            frequency TEXT,
+            duration TEXT,
+            instructions TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
 
-  // Get offline config
-  Future<OfflineConfig> _getOfflineConfig() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final configJson = prefs.getString(_offlineConfigKey);
-      
-      if (configJson != null) {
-        return OfflineConfig.fromJson(json.decode(configJson));
-      }
-      
-      // Return default config
-      return const OfflineConfig(
-        enabled: false,
-        autoSync: true,
-        syncInterval: 300,
-        maxOfflineDataSize: 100 * 1024 * 1024,
-        compressionEnabled: true,
-      );
-      
-    } catch (e) {
-      print('Error getting offline config: $e');
-      return const OfflineConfig(
-        enabled: false,
-        autoSync: true,
-        syncInterval: 300,
-        maxOfflineDataSize: 100 * 1024 * 1024,
-        compressionEnabled: true,
-      );
-    }
-  }
+        // Voice notes table
+        await db.execute('''
+          CREATE TABLE voice_notes (
+            id TEXT PRIMARY KEY,
+            patient_id TEXT,
+            title TEXT,
+            duration TEXT,
+            transcription TEXT,
+            tags TEXT,
+            file_path TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
 
-  // Generate secure ID
-  String _generateSecureId() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(16, (i) => random.nextInt(256));
-    return base64.encode(bytes);
-  }
+        // Mood entries table
+        await db.execute('''
+          CREATE TABLE mood_entries (
+            id TEXT PRIMARY KEY,
+            patient_id TEXT,
+            mood_score INTEGER,
+            anxiety_level INTEGER,
+            energy_level INTEGER,
+            sleep_quality INTEGER,
+            notes TEXT,
+            tags TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
 
-  // Set state
-  void setState(Function fn) {
-    fn();
-    // Notify listeners if needed
-  }
-
-  // Manual sync
-  Future<void> manualSync() async {
-    if (_isOffline) {
-      print('Cannot sync while offline');
-      return;
-    }
-    
-    await _startSync();
-  }
-
-  // Get offline statistics
-  Future<OfflineStatistics> getOfflineStatistics() async {
-    try {
-      final offlineData = await _getOfflineData();
-      final syncQueue = await _getSyncQueue();
-      
-      int totalSize = 0;
-      final dataTypeCounts = <String, int>{};
-      
-      for (final entry in offlineData.values) {
-        totalSize += entry['size'] as int;
-        final dataType = entry['dataType'] as String;
-        dataTypeCounts[dataType] = (dataTypeCounts[dataType] ?? 0) + 1;
-      }
-      
-      return OfflineStatistics(
-        totalEntries: offlineData.length,
-        totalSize: totalSize,
-        pendingSync: syncQueue.length,
-        lastSyncTime: _lastSyncTime,
-        dataTypeCounts: dataTypeCounts,
-        isOffline: _isOffline,
-        isSyncing: _isSyncing,
-      );
-      
-    } catch (e) {
-      print('Error getting offline statistics: $e');
-      return OfflineStatistics(
-        totalEntries: 0,
-        totalSize: 0,
-        pendingSync: 0,
-        lastSyncTime: null,
-        dataTypeCounts: {},
-        isOffline: _isOffline,
-        isSyncing: _isSyncing,
-      );
-    }
-  }
-
-  // Dispose resources
-  void dispose() {
-    _statusStreamController.close();
-    _syncProgressStreamController.close();
-  }
-}
-
-// Data classes
-class OfflineConfig {
-  final bool enabled;
-  final bool autoSync;
-  final int syncInterval; // seconds
-  final int maxOfflineDataSize; // bytes
-  final bool compressionEnabled;
-
-  const OfflineConfig({
-    required this.enabled,
-    required this.autoSync,
-    required this.syncInterval,
-    required this.maxOfflineDataSize,
-    required this.compressionEnabled,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'enabled': enabled,
-      'autoSync': autoSync,
-      'syncInterval': syncInterval,
-      'maxOfflineDataSize': maxOfflineDataSize,
-      'compressionEnabled': compressionEnabled,
-    };
-  }
-
-  factory OfflineConfig.fromJson(Map<String, dynamic> json) {
-    return OfflineConfig(
-      enabled: json['enabled'] ?? false,
-      autoSync: json['autoSync'] ?? true,
-      syncInterval: json['syncInterval'] ?? 300,
-      maxOfflineDataSize: json['maxOfflineDataSize'] ?? 100 * 1024 * 1024,
-      compressionEnabled: json['compressionEnabled'] ?? true,
+        // Sync queue table
+        await db.execute('''
+          CREATE TABLE sync_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            table_name TEXT NOT NULL,
+            record_id TEXT NOT NULL,
+            operation TEXT NOT NULL,
+            data TEXT NOT NULL,
+            created_at TEXT,
+            retry_count INTEGER DEFAULT 0
+          )
+        ''');
+      },
     );
   }
-}
 
-class OfflineDataEntry {
-  final String id;
-  final String key;
-  final Map<String, dynamic> data;
-  final String dataType;
-  final String? userId;
-  final DateTime timestamp;
-  final int priority;
-  final int size;
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      _updateConnectivityStatus(result);
+    } catch (e) {
+      debugPrint('Connectivity check error: $e');
+      _isOnline = false;
+    }
+  }
 
-  const OfflineDataEntry({
-    required this.id,
-    required this.key,
-    required this.data,
-    required this.dataType,
-    this.userId,
-    required this.timestamp,
-    required this.priority,
-    required this.size,
-  });
+  void _updateConnectivityStatus(ConnectivityResult result) {
+    final wasOnline = _isOnline;
+    _isOnline = result != ConnectivityResult.none;
+    
+    if (wasOnline != _isOnline) {
+      notifyListeners();
+      
+      if (_isOnline) {
+        _syncPendingData();
+      }
+    }
+  }
 
-  Map<String, dynamic> toJson() {
-    return {
+  Future<void> _loadOfflineData() async {
+    if (_database == null) return;
+
+    try {
+      // Load patients
+      final patients = await _database!.query('patients');
+      _offlineData.addAll(patients.map((p) => {...p, 'table': 'patients'}));
+
+      // Load appointments
+      final appointments = await _database!.query('appointments');
+      _offlineData.addAll(appointments.map((a) => {...a, 'table': 'appointments'}));
+
+      // Load prescriptions
+      final prescriptions = await _database!.query('prescriptions');
+      _offlineData.addAll(prescriptions.map((p) => {...p, 'table': 'prescriptions'}));
+
+      // Load voice notes
+      final voiceNotes = await _database!.query('voice_notes');
+      _offlineData.addAll(voiceNotes.map((v) => {...v, 'table': 'voice_notes'}));
+
+      // Load mood entries
+      final moodEntries = await _database!.query('mood_entries');
+      _offlineData.addAll(moodEntries.map((m) => {...m, 'table': 'mood_entries'}));
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading offline data: $e');
+    }
+  }
+
+  // Patient operations
+  Future<String> addPatient(Map<String, dynamic> patient) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final now = DateTime.now().toIso8601String();
+    
+    final patientData = {
       'id': id,
-      'key': key,
+      'name': patient['name'],
+      'diagnosis': patient['diagnosis'],
+      'last_session': patient['last_session'],
+      'status': patient['status'] ?? 'active',
+      'created_at': now,
+      'updated_at': now,
+      'sync_status': _isOnline ? 'synced' : 'pending',
+    };
+
+    if (_isOnline) {
+      // Try to sync immediately
+      try {
+        await _syncPatient(patientData);
+        patientData['sync_status'] = 'synced';
+    } catch (e) {
+        patientData['sync_status'] = 'pending';
+        await _addToSyncQueue('patients', id, 'create', patientData);
+      }
+    } else {
+      await _addToSyncQueue('patients', id, 'create', patientData);
+    }
+
+    await _database!.insert('patients', patientData);
+    _offlineData.add({...patientData, 'table': 'patients'});
+    notifyListeners();
+
+    return id;
+  }
+
+  Future<void> updatePatient(String id, Map<String, dynamic> updates) async {
+    final now = DateTime.now().toIso8601String();
+    final updateData = {
+      ...updates,
+      'updated_at': now,
+      'sync_status': _isOnline ? 'synced' : 'pending',
+    };
+
+    if (_isOnline) {
+      try {
+        await _syncPatientUpdate(id, updateData);
+        updateData['sync_status'] = 'synced';
+      } catch (e) {
+        updateData['sync_status'] = 'pending';
+        await _addToSyncQueue('patients', id, 'update', updateData);
+      }
+    } else {
+      await _addToSyncQueue('patients', id, 'update', updateData);
+    }
+
+    await _database!.update(
+      'patients',
+      updateData,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    // Update offline data
+    final index = _offlineData.indexWhere((item) => item['id'] == id && item['table'] == 'patients');
+    if (index != -1) {
+      _offlineData[index] = {..._offlineData[index], ...updateData};
+    }
+    notifyListeners();
+  }
+
+  Future<void> deletePatient(String id) async {
+    if (_isOnline) {
+      try {
+        await _syncPatientDelete(id);
+      } catch (e) {
+        await _addToSyncQueue('patients', id, 'delete', {'id': id});
+      }
+    } else {
+      await _addToSyncQueue('patients', id, 'delete', {'id': id});
+    }
+
+    await _database!.delete(
+      'patients',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    _offlineData.removeWhere((item) => item['id'] == id && item['table'] == 'patients');
+    notifyListeners();
+  }
+
+  // Appointment operations
+  Future<String> addAppointment(Map<String, dynamic> appointment) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final now = DateTime.now().toIso8601String();
+    
+    final appointmentData = {
+      'id': id,
+      'patient_id': appointment['patient_id'],
+      'doctor_id': appointment['doctor_id'],
+      'date': appointment['date'],
+      'time': appointment['time'],
+      'type': appointment['type'],
+      'status': appointment['status'] ?? 'scheduled',
+      'notes': appointment['notes'],
+      'created_at': now,
+      'updated_at': now,
+      'sync_status': _isOnline ? 'synced' : 'pending',
+    };
+
+    if (_isOnline) {
+      try {
+        await _syncAppointment(appointmentData);
+        appointmentData['sync_status'] = 'synced';
+    } catch (e) {
+        appointmentData['sync_status'] = 'pending';
+        await _addToSyncQueue('appointments', id, 'create', appointmentData);
+      }
+    } else {
+      await _addToSyncQueue('appointments', id, 'create', appointmentData);
+    }
+
+    await _database!.insert('appointments', appointmentData);
+    _offlineData.add({...appointmentData, 'table': 'appointments'});
+    notifyListeners();
+
+    return id;
+  }
+
+  // Voice note operations
+  Future<String> addVoiceNote(Map<String, dynamic> voiceNote) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final now = DateTime.now().toIso8601String();
+    
+    final voiceNoteData = {
+      'id': id,
+      'patient_id': voiceNote['patient_id'],
+      'title': voiceNote['title'],
+      'duration': voiceNote['duration'],
+      'transcription': voiceNote['transcription'],
+      'tags': voiceNote['tags']?.join(',') ?? '',
+      'file_path': voiceNote['file_path'],
+      'created_at': now,
+      'updated_at': now,
+      'sync_status': _isOnline ? 'synced' : 'pending',
+    };
+
+    if (_isOnline) {
+      try {
+        await _syncVoiceNote(voiceNoteData);
+        voiceNoteData['sync_status'] = 'synced';
+      } catch (e) {
+        voiceNoteData['sync_status'] = 'pending';
+        await _addToSyncQueue('voice_notes', id, 'create', voiceNoteData);
+      }
+    } else {
+      await _addToSyncQueue('voice_notes', id, 'create', voiceNoteData);
+    }
+
+    await _database!.insert('voice_notes', voiceNoteData);
+    _offlineData.add({...voiceNoteData, 'table': 'voice_notes'});
+    notifyListeners();
+
+    return id;
+  }
+
+  // Mood entry operations
+  Future<String> addMoodEntry(Map<String, dynamic> moodEntry) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final now = DateTime.now().toIso8601String();
+    
+    final moodEntryData = {
+      'id': id,
+      'patient_id': moodEntry['patient_id'],
+      'mood_score': moodEntry['mood_score'],
+      'anxiety_level': moodEntry['anxiety_level'],
+      'energy_level': moodEntry['energy_level'],
+      'sleep_quality': moodEntry['sleep_quality'],
+      'notes': moodEntry['notes'],
+      'tags': moodEntry['tags']?.join(',') ?? '',
+      'created_at': now,
+      'updated_at': now,
+      'sync_status': _isOnline ? 'synced' : 'pending',
+    };
+
+    if (_isOnline) {
+      try {
+        await _syncMoodEntry(moodEntryData);
+        moodEntryData['sync_status'] = 'synced';
+    } catch (e) {
+        moodEntryData['sync_status'] = 'pending';
+        await _addToSyncQueue('mood_entries', id, 'create', moodEntryData);
+      }
+    } else {
+      await _addToSyncQueue('mood_entries', id, 'create', moodEntryData);
+    }
+
+    await _database!.insert('mood_entries', moodEntryData);
+    _offlineData.add({...moodEntryData, 'table': 'mood_entries'});
+    notifyListeners();
+
+    return id;
+  }
+
+  // Sync queue operations
+  Future<void> _addToSyncQueue(String tableName, String recordId, String operation, Map<String, dynamic> data) async {
+    await _database!.insert('sync_queue', {
+      'table_name': tableName,
+      'record_id': recordId,
+      'operation': operation,
+      'data': jsonEncode(data),
+      'created_at': DateTime.now().toIso8601String(),
+      'retry_count': 0,
+    });
+
+    _pendingSync.add({
+      'table_name': tableName,
+      'record_id': recordId,
+      'operation': operation,
       'data': data,
-      'dataType': dataType,
-      'userId': userId,
-      'timestamp': timestamp.toIso8601String(),
-      'priority': priority,
-      'size': size,
-    };
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    notifyListeners();
   }
-}
 
-class SyncQueueItem {
-  final String id;
-  final String key;
-  final String dataType;
-  final String? userId;
-  final DateTime timestamp;
-  final int priority;
-  final int retryCount;
-  final String status;
+  Future<void> _syncPendingData() async {
+    if (_database == null) return;
 
-  const SyncQueueItem({
-    required this.id,
-    required this.key,
-    required this.dataType,
-    this.userId,
-    required this.timestamp,
-    required this.priority,
-    required this.retryCount,
-    required this.status,
-  });
+    try {
+      final pendingItems = await _database!.query('sync_queue');
+      
+      for (final item in pendingItems) {
+        try {
+          final data = jsonDecode(item['data'] as String) as Map<String, dynamic>;
+          
+          switch (item['table_name']) {
+            case 'patients':
+              if (item['operation'] == 'create') {
+                await _syncPatient(data);
+              } else if (item['operation'] == 'update') {
+                await _syncPatientUpdate(item['record_id'] as String, data);
+              } else if (item['operation'] == 'delete') {
+                await _syncPatientDelete(item['record_id'] as String);
+              }
+              break;
+            case 'appointments':
+              if (item['operation'] == 'create') {
+                await _syncAppointment(data);
+              }
+              break;
+            case 'voice_notes':
+              if (item['operation'] == 'create') {
+                await _syncVoiceNote(data);
+              }
+              break;
+            case 'mood_entries':
+              if (item['operation'] == 'create') {
+                await _syncMoodEntry(data);
+              }
+              break;
+          }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'key': key,
-      'dataType': dataType,
-      'userId': userId,
-      'timestamp': timestamp.toIso8601String(),
-      'priority': priority,
-      'retryCount': retryCount,
-      'status': status,
-    };
+          // Remove from sync queue
+          await _database!.delete(
+            'sync_queue',
+            where: 'id = ?',
+            whereArgs: [item['id']],
+          );
+
+          // Update sync status
+          await _database!.update(
+            item['table_name'] as String,
+            {'sync_status': 'synced'},
+            where: 'id = ?',
+            whereArgs: [item['record_id']],
+          );
+
+          // Remove from pending sync
+          _pendingSync.removeWhere((p) => 
+            p['table_name'] == item['table_name'] && 
+            p['record_id'] == item['record_id']
+          );
+          
+        } catch (e) {
+          debugPrint('Sync error for ${item['table_name']}: $e');
+          
+          // Increment retry count
+          await _database!.update(
+            'sync_queue',
+            {'retry_count': (item['retry_count'] as int) + 1},
+            where: 'id = ?',
+            whereArgs: [item['id']],
+          );
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error syncing pending data: $e');
+    }
   }
-}
 
-class OfflineStatus {
-  final bool isOffline;
-  final DateTime timestamp;
-  final String reason;
+  // Public wrapper to trigger sync from UI safely
+  Future<void> syncPendingData() async {
+    await _syncPendingData();
+  }
 
-  const OfflineStatus({
-    required this.isOffline,
-    required this.timestamp,
-    required this.reason,
-  });
-}
+  // Mock sync methods (replace with actual API calls)
+  Future<void> _syncPatient(Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+    if (data['name'] == 'error') {
+      throw Exception('Sync failed');
+    }
+  }
 
-class SyncProgress {
-  final int current;
-  final int total;
-  final String currentItem;
-  final String status;
+  Future<void> _syncPatientUpdate(String id, Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+  }
 
-  const SyncProgress({
-    required this.current,
-    required this.total,
-    required this.currentItem,
-    required this.status,
-  });
-}
+  Future<void> _syncPatientDelete(String id) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+  }
 
-class OfflineStatistics {
-  final int totalEntries;
-  final int totalSize;
-  final int pendingSync;
-  final DateTime? lastSyncTime;
-  final Map<String, int> dataTypeCounts;
-  final bool isOffline;
-  final bool isSyncing;
+  Future<void> _syncAppointment(Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+  }
 
-  const OfflineStatistics({
-    required this.totalEntries,
-    required this.totalSize,
-    required this.pendingSync,
-    this.lastSyncTime,
-    required this.dataTypeCounts,
-    required this.isOffline,
-    required this.isSyncing,
-  });
-}
+  Future<void> _syncVoiceNote(Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+  }
 
-enum SyncStatus {
-  pending,
-  processing,
-  completed,
-  failed,
-  retrying,
+  Future<void> _syncMoodEntry(Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate API call
+  }
+
+  // Utility methods
+  List<Map<String, dynamic>> getPatients() {
+    return _offlineData.where((item) => item['table'] == 'patients').toList();
+  }
+
+  List<Map<String, dynamic>> getAppointments() {
+    return _offlineData.where((item) => item['table'] == 'appointments').toList();
+  }
+
+  List<Map<String, dynamic>> getVoiceNotes() {
+    return _offlineData.where((item) => item['table'] == 'voice_notes').toList();
+  }
+
+  List<Map<String, dynamic>> getMoodEntries() {
+    return _offlineData.where((item) => item['table'] == 'mood_entries').toList();
+  }
+
+  int getPendingSyncCount() {
+    return _pendingSync.length;
+  }
+
+  Future<void> clearOfflineData() async {
+    if (_database == null) return;
+
+    await _database!.delete('patients');
+    await _database!.delete('appointments');
+    await _database!.delete('prescriptions');
+    await _database!.delete('voice_notes');
+    await _database!.delete('mood_entries');
+    await _database!.delete('sync_queue');
+
+    _offlineData.clear();
+    _pendingSync.clear();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _database?.close();
+    super.dispose();
+  }
 }

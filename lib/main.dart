@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/two_factor_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/session/session_screen.dart';
 import 'screens/diagnosis/diagnosis_screen.dart';
 import 'screens/prescription/prescription_screen.dart';
+import 'screens/prescription/smart_prescription_screen.dart';
 import 'screens/flag/flag_screen.dart';
 import 'screens/appointment/appointment_screen.dart';
 import 'screens/profile/profile_screen.dart';
@@ -54,6 +57,17 @@ import 'screens/consent/consent_compliance_screen.dart';
 import 'services/therapy_note_service.dart';
 import 'services/treatment_plan_service.dart';
 import 'services/homework_service.dart';
+import 'services/homework_template_service.dart';
+import 'services/ai_homework_generator.dart';
+import 'services/drug_database_service.dart';
+import 'services/drug_image_recognition_service.dart';
+import 'services/ai_drug_interaction_service.dart';
+import 'services/pdf_analysis_service.dart';
+import 'services/real_pdf_reader_service.dart';
+import 'services/llm_analysis_service.dart';
+import 'services/titck_service.dart';
+import 'services/ema_service.dart';
+import 'services/fda_service.dart';
 import 'services/assessment_scoring_service.dart';
 import 'screens/therapist/therapy_note_editor_screen.dart';
 import 'screens/therapist/treatment_plan_screen.dart';
@@ -101,6 +115,9 @@ import 'widgets/workflow_automation_widgets.dart';
 import 'services/multi_language_service.dart';
 import 'widgets/multi_language_widgets.dart';
 import 'screens/landing/landing_screen.dart';
+import 'screens/auth/specialty_select_screen.dart';
+import 'services/role_service.dart';
+import 'services/patient_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -117,6 +134,9 @@ void main() async {
 
 Future<void> _initializeServices() async {
   try {
+    // Locale/Intl
+    await initializeDateFormatting('tr_TR', null);
+    await initializeDateFormatting('tr', null);
     // Initialize core services
     await ThemeService().initialize();
     await ThemeService().setPresetTheme('purple_blue');
@@ -154,6 +174,22 @@ Future<void> _initializeServices() async {
                 // Multi-language servisini başlat
                 await MultiLanguageService().initialize();
     await BiometricAuthService().initialize();
+    await PatientService().seedDemoDocs();
+    
+    // Initialize homework services
+    HomeworkTemplateService().initialize();
+    AIHomeworkGenerator().initialize();
+    
+    // Initialize drug services
+    DrugDatabaseService().initialize();
+    DrugImageRecognitionService().initialize();
+    AIDrugInteractionService().initialize();
+    PDFAnalysisService().initialize();
+    RealPDFReaderService().initialize();
+    LLMAnalysisService().initialize();
+    TITCKService().initialize();
+    EMAService().initialize();
+    FDAService().initialize();
     
     // Initialize AI services
     await AIService().initialize();
@@ -208,6 +244,8 @@ class PsyClinicAIApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: ThemeService()),
+        ChangeNotifierProvider(create: (_) => RoleService()),
+        ChangeNotifierProvider(create: (_) => PatientService()),
         // ChangeNotifierProvider(create: (_) => OfflineSyncService()),
         ChangeNotifierProvider(create: (_) => PrescriptionAIService()),
         ChangeNotifierProvider(create: (_) => RegionalConfigService.instance),
@@ -222,6 +260,17 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TherapyNoteService()),
         // ChangeNotifierProvider(create: (_) => TreatmentPlanService()),
         ChangeNotifierProvider(create: (_) => HomeworkService()),
+        ChangeNotifierProvider(create: (_) => HomeworkTemplateService()),
+        ChangeNotifierProvider(create: (_) => AIHomeworkGenerator()),
+        ChangeNotifierProvider(create: (_) => DrugDatabaseService()),
+        ChangeNotifierProvider(create: (_) => DrugImageRecognitionService()),
+        ChangeNotifierProvider(create: (_) => AIDrugInteractionService()),
+        ChangeNotifierProvider(create: (_) => PDFAnalysisService()),
+        ChangeNotifierProvider(create: (_) => RealPDFReaderService()),
+        ChangeNotifierProvider(create: (_) => LLMAnalysisService()),
+        ChangeNotifierProvider(create: (_) => TITCKService()),
+        ChangeNotifierProvider(create: (_) => EMAService()),
+        ChangeNotifierProvider(create: (_) => FDAService()),
         ChangeNotifierProvider(create: (_) => AssessmentScoringService()),
         // Legal/Alert sistemleri için provider'lar
         ChangeNotifierProvider(create: (_) => FlagSystemService()),
@@ -243,10 +292,11 @@ class PsyClinicAIApp extends StatelessWidget {
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: AppTheme.themeMode,
-                home: const LandingScreen(),
+                home: const AuthWrapper(),
                 routes: {
-                  '/landing': (context) => const LandingScreen(),
+                  '/landing': (context) => const LoginScreen(),
                   '/login': (context) => const LoginScreen(),
+                  '/specialty-select': (context) => const SpecialtySelectScreen(),
                   '/2fa': (context) => const TwoFactorScreen(),
                   '/dashboard': (context) => const DashboardScreen(),
                   '/session': (context) => const SessionScreen(
@@ -256,6 +306,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   ),
                   '/diagnosis': (context) => const DiagnosisScreen(),
                   '/prescription': (context) => const PrescriptionScreen(),
+                  '/smart-prescription': (context) => const SmartPrescriptionScreen(),
                   '/flag': (context) => const FlagScreen(),
                   '/appointment': (context) => const AppointmentScreen(),
                   '/profile': (context) => const ProfileScreen(),
@@ -306,21 +357,35 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: AuthService().isAuthenticated(),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _loadInitialState(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SplashScreen();
         }
 
-        if (snapshot.data == true) {
+        final isAuthed = snapshot.data?['authed'] as bool? ?? false;
+        final seenLanding = snapshot.data?['seenLanding'] as bool? ?? false;
+
+        if (isAuthed) {
           return const DashboardScreen();
+        }
+
+        if (!seenLanding) {
+          return const LandingScreen();
         }
 
         return const LoginScreen();
       },
     );
   }
+}
+
+Future<Map<String, dynamic>> _loadInitialState() async {
+  final authed = await AuthService().isAuthenticated();
+  final prefs = await SharedPreferences.getInstance();
+  final seenLanding = prefs.getBool('seen_landing') ?? false;
+  return {'authed': authed, 'seenLanding': seenLanding};
 }
 
 class SplashScreen extends StatelessWidget {

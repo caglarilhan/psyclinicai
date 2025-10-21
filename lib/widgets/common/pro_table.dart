@@ -67,7 +67,7 @@ class ProTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final tablePadding = padding ?? AppSpacing.paddingAllLG;
+    final tablePadding = padding ?? AppSpacing.paddingAll(AppSpacing.lg);
     final tableBorderRadius = borderRadius ?? AppSpacing.cardRadius;
     final tableBackgroundColor = backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
     final tableBorderColor = borderColor ?? (isDark ? AppColors.dividerDark : AppColors.dividerLight);
@@ -112,7 +112,7 @@ class ProTable extends StatelessWidget {
                           ),
                         ),
                       if (subtitle != null) ...[
-                        AppSpacing.heightXS,
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           subtitle!,
                           style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -126,7 +126,7 @@ class ProTable extends StatelessWidget {
                 if (action != null) action!,
               ],
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           if (loading)
             loadingWidget ?? _buildLoadingWidget(isDark)
@@ -180,7 +180,7 @@ class ProTable extends StatelessWidget {
           return Expanded(
             flex: column.flex,
             child: Container(
-              padding: AppSpacing.paddingHorizontalMD,
+              padding: AppSpacing.paddingHorizontal(AppSpacing.md),
               decoration: BoxDecoration(
                 border: Border(
                   right: BorderSide(
@@ -265,7 +265,7 @@ class ProTable extends StatelessWidget {
               return Expanded(
                 flex: column.flex,
                 child: Container(
-                  padding: AppSpacing.paddingHorizontalMD,
+                  padding: AppSpacing.paddingHorizontal(AppSpacing.md),
                   decoration: BoxDecoration(
                     border: Border(
                       right: BorderSide(
@@ -302,7 +302,7 @@ class ProTable extends StatelessWidget {
             CircularProgressIndicator(
               color: AppColors.primary,
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
             Text(
               'Yükleniyor...',
               style: AppTypography.bodyMedium.copyWith(
@@ -327,7 +327,7 @@ class ProTable extends StatelessWidget {
               size: AppSpacing.iconXl,
               color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
             Text(
               'Veri bulunamadı',
               style: AppTypography.bodyMedium.copyWith(
@@ -401,7 +401,7 @@ class ProDataTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final tablePadding = padding ?? AppSpacing.paddingAllLG;
+    final tablePadding = padding ?? AppSpacing.paddingAll(AppSpacing.lg);
     final tableBorderRadius = borderRadius ?? AppSpacing.cardRadius;
     final tableBackgroundColor = backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
     final tableBorderColor = borderColor ?? (isDark ? AppColors.dividerDark : AppColors.dividerLight);
@@ -442,7 +442,7 @@ class ProDataTable extends StatelessWidget {
                           ),
                         ),
                       if (subtitle != null) ...[
-                        AppSpacing.heightXS,
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           subtitle!,
                           style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -456,7 +456,7 @@ class ProDataTable extends StatelessWidget {
                 if (action != null) action!,
               ],
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           DataTable(
             columns: columns,

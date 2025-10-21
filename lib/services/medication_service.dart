@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/medication_models.dart';
-import '../models/laboratory_models.dart';
+import '../models/laboratory_models.dart' as lab_models;
 import '../services/ai_orchestration_service.dart';
 import '../utils/ai_logger.dart';
 
@@ -25,7 +25,7 @@ class MedicationService extends ChangeNotifier {
   List<MedicationHistory> _medicationHistory = [];
   
   // Laboratory data
-  List<LaboratoryTest> _labTests = [];
+  List<lab_models.LaboratoryTest> _labTests = [];
   List<LaboratoryResult> _labResults = [];
   List<MedicationMonitoring> _monitoringRecords = [];
   
@@ -38,7 +38,7 @@ class MedicationService extends ChangeNotifier {
   List<SideEffectReport> get sideEffectReports => List.unmodifiable(_sideEffectReports);
   List<MedicationReminder> get reminders => List.unmodifiable(_reminders);
   List<MedicationHistory> get medicationHistory => List.unmodifiable(_medicationHistory);
-  List<LaboratoryTest> get labTests => List.unmodifiable(_labTests);
+  List<lab_models.LaboratoryTest> get labTests => List.unmodifiable(_labTests);
   List<LaboratoryResult> get labResults => List.unmodifiable(_labResults);
   List<MedicationMonitoring> get monitoringRecords => List.unmodifiable(_monitoringRecords);
 
@@ -87,7 +87,7 @@ class MedicationService extends ChangeNotifier {
       rxNormCode: '89478',
       dinCode: '02245678',
       barcode: '1234567890123',
-      medicationClass: MedicationClass.antidepressants,
+      medicationClass: MedicationClass.antidepressant,
       activeIngredients: ['Sertraline'],
       inactiveIngredients: ['Microcrystalline cellulose', 'Calcium phosphate'],
       dosageForm: 'tablet',
@@ -126,7 +126,7 @@ class MedicationService extends ChangeNotifier {
       rxNormCode: '99367',
       dinCode: '02245679',
       barcode: '1234567890124',
-      medicationClass: MedicationClass.antidepressants,
+      medicationClass: MedicationClass.antidepressant,
       activeIngredients: ['Venlafaxine'],
       inactiveIngredients: ['Microcrystalline cellulose', 'Lactose'],
       dosageForm: 'tablet',
@@ -165,7 +165,7 @@ class MedicationService extends ChangeNotifier {
       rxNormCode: '10631',
       dinCode: '02245680',
       barcode: '1234567890125',
-      medicationClass: MedicationClass.antipsychotics,
+      medicationClass: MedicationClass.antipsychotic,
       activeIngredients: ['Risperidone'],
       inactiveIngredients: ['Microcrystalline cellulose', 'Lactose'],
       dosageForm: 'tablet',
@@ -205,7 +205,7 @@ class MedicationService extends ChangeNotifier {
       medication1Name: 'Sertraline',
       medication2Id: 'maoi',
       medication2Name: 'MAOIs',
-      severity: "contraindicated",
+      severity: InteractionSeverity.contraindicated,
       type: InteractionType.pharmacodynamic,
       mechanism: 'Serotonin syndrome risk due to increased serotonin levels',
       description: 'Combination of SSRIs with MAOIs can lead to serotonin syndrome',
@@ -216,6 +216,7 @@ class MedicationService extends ChangeNotifier {
       monitoring: ['Vital signs', 'Mental status', 'Neurological examination'],
       evidence: 'Multiple case reports and clinical studies',
       source: 'FDA, Clinical Pharmacology',
+      detectedAt: DateTime.now(),
     );
 
     // Lithium + SSRI interaction
@@ -225,7 +226,7 @@ class MedicationService extends ChangeNotifier {
       medication1Name: 'Lithium',
       medication2Id: 'sertraline',
       medication2Name: 'Sertraline',
-      severity: "moderate",
+      severity: InteractionSeverity.moderate,
       type: InteractionType.pharmacodynamic,
       mechanism: 'Increased risk of serotonin syndrome and lithium toxicity',
       description: 'SSRIs may increase lithium levels and serotonin syndrome risk',
@@ -236,65 +237,24 @@ class MedicationService extends ChangeNotifier {
       monitoring: ['Lithium levels', 'Serum creatinine', 'Thyroid function', 'Mental status'],
       evidence: 'Clinical studies and case reports',
       source: 'Clinical Pharmacology, Drug Interactions',
+      detectedAt: DateTime.now(),
     );
 
     _drugInteractions.addAll([ssriMaoiInteraction, lithiumSsriInteraction]);
   }
 
   Future<void> _loadDosageTitrations() async {
-    // Sertraline titration
+    // Sertraline titration (MVP minimal fields)
     final sertralineTitration = DosageTitration(
       id: 'sertraline_titration',
       medicationId: 'sertraline',
-      medicationName: 'Sertraline',
-      indication: 'Major Depressive Disorder',
-      steps: [
-        TitrationStep(
-          id: 'sertraline_step1',
-          stepNumber: 1,
-          dosage: '25mg',
-          frequency: 'Once daily',
-          duration: '1 week',
-          instructions: 'Start with 25mg daily in the morning',
-          monitoring: ['Side effects', 'Mood changes', 'Suicidal thoughts'],
-          sideEffects: ['Nausea', 'Insomnia', 'Headache'],
-          warnings: ['Monitor for worsening depression'],
-          requiresAdjustment: true,
-          adjustmentCriteria: 'If well tolerated, increase to 50mg',
-        ),
-        TitrationStep(
-          id: 'sertraline_step2',
-          stepNumber: 2,
-          dosage: '50mg',
-          frequency: 'Once daily',
-          duration: '2 weeks',
-          instructions: 'Increase to 50mg daily if 25mg well tolerated',
-          monitoring: ['Side effects', 'Mood improvement', 'Liver function'],
-          sideEffects: ['Nausea', 'Sexual dysfunction', 'Weight changes'],
-          warnings: ['Monitor for serotonin syndrome'],
-          requiresAdjustment: true,
-          adjustmentCriteria: 'If response inadequate, increase to 100mg',
-        ),
-        TitrationStep(
-          id: 'sertraline_step3',
-          stepNumber: 3,
-          dosage: '100mg',
-          frequency: 'Once daily',
-          duration: 'Maintenance',
-          instructions: 'Target dose for most patients',
-          monitoring: ['Therapeutic response', 'Side effects', 'Liver function'],
-          sideEffects: ['Sexual dysfunction', 'Weight gain', 'Fatigue'],
-          warnings: ['Monitor for long-term side effects'],
-          requiresAdjustment: false,
-          adjustmentCriteria: 'Maintain unless side effects occur',
-        ),
-      ],
       strategy: TitrationStrategy.startLowGoSlow,
-      rationale: 'Gradual titration reduces side effects and improves tolerability',
-      monitoringParameters: ['Side effects', 'Mood improvement', 'Liver function', 'Suicidal thoughts'],
-      adverseEffects: ['Serotonin syndrome', 'Suicidal thoughts', 'Liver toxicity'],
-      contraindications: ['Bipolar disorder', 'Pregnancy', 'MAOI use'],
-      duration: '6-8 weeks for full effect',
+      startingDose: 25.0,
+      targetDose: 100.0,
+      currentDose: 25.0,
+      titrationDays: 21,
+      startDate: DateTime.now(),
+      notes: 'MVP titration plan',
     );
 
     _dosageTitrations.add(sertralineTitration);
@@ -316,60 +276,20 @@ class MedicationService extends ChangeNotifier {
   }
 
   Future<void> _loadPsychiatricLabTests() async {
-    // Lithium level test
-    final lithiumTest = LaboratoryTest(
+    // Lithium level test (MVP minimal fields)
+    final lithiumTest = lab_models.LaboratoryTest(
       id: 'lithium_test',
       name: 'Lithium Level',
-      code: 'LITH',
       category: 'Therapeutic Drug Monitoring',
       description: 'Measurement of lithium concentration in blood for therapeutic monitoring',
-      specimenType: 'Serum',
-      preparationInstructions: ['Draw 12 hours after last dose', 'Avoid hemolysis'],
-      turnaroundTime: '4 hours',
-      normalRanges: ['0.6-1.2 mEq/L'],
-      criticalValues: ['<0.4 mEq/L', '>2.0 mEq/L'],
-      units: ['mEq/L'],
-      methodologies: ['Ion-selective electrode', 'Atomic absorption'],
-      relatedTests: ['Creatinine', 'TSH', 'CBC'],
-      clinicalIndications: ['Lithium therapy monitoring', 'Toxicity assessment'],
-      contraindications: ['None'],
-      interferingFactors: ['Hemolysis', 'Lipemia', 'Recent dose'],
-      medications: ['Lithium'],
-      requiresFasting: false,
-      requiresSpecialHandling: false,
-      cost: '\$25',
-      insuranceCode: '80170',
-      metadata: {'criticalLow': '0.4', 'criticalHigh': '2.0'},
-      isActive: true,
-      lastUpdated: DateTime.now(),
     );
 
-    // Valproate level test
-    final valproateTest = LaboratoryTest(
+    // Valproate level test (MVP minimal fields)
+    final valproateTest = lab_models.LaboratoryTest(
       id: 'valproate_test',
       name: 'Valproate Level',
-      code: 'VALP',
       category: 'Therapeutic Drug Monitoring',
       description: 'Measurement of valproic acid concentration in blood',
-      specimenType: 'Serum',
-      preparationInstructions: ['Draw 12 hours after last dose', 'Avoid hemolysis'],
-      turnaroundTime: '4 hours',
-      normalRanges: ['50-100 mcg/mL'],
-      criticalValues: ['<20 mcg/mL', '>150 mcg/mL'],
-      units: ['mcg/mL'],
-      methodologies: ['Immunoassay', 'HPLC'],
-      relatedTests: ['Liver function tests', 'CBC', 'Ammonia'],
-      clinicalIndications: ['Valproate therapy monitoring', 'Toxicity assessment'],
-      contraindications: ['None'],
-      interferingFactors: ['Hemolysis', 'Lipemia', 'Recent dose'],
-      medications: ['Valproate', 'Divalproex'],
-      requiresFasting: false,
-      requiresSpecialHandling: false,
-      cost: '\$30',
-      insuranceCode: '80164',
-      metadata: {'criticalLow': '20', 'criticalHigh': '150'},
-      isActive: true,
-      lastUpdated: DateTime.now(),
     );
 
     _labTests.addAll([lithiumTest, valproateTest]);
@@ -381,16 +301,10 @@ class MedicationService extends ChangeNotifier {
       id: 'lithium_monitoring',
       patientId: 'patient_001',
       medicationId: 'lithium',
-      medicationName: 'Lithium',
-      requiredTests: ['lithium_test', 'creatinine', 'tsh', 'cbc'],
-      tests: _labTests.where((t) => ['lithium_test'].contains(t.id)).toList(),
-      monitoringFrequency: 'Weekly initially, then monthly',
-      baselineRequired: 'Yes',
-      criticalValues: ['Lithium >2.0 mEq/L', 'Creatinine >2.0 mg/dL', 'TSH >10 mIU/L'],
-      actionRequired: ['Discontinue if toxic', 'Reduce dose if elevated', 'Monitor thyroid function'],
-      monitoringParameters: ['Lithium level', 'Renal function', 'Thyroid function', 'Side effects'],
-      duration: 'Lifelong while on lithium',
-      notes: 'Monitor for signs of toxicity and renal impairment',
+      monitoringType: 'level',
+      value: 'baseline',
+      monitoredAt: DateTime.now(),
+      notes: 'MVP minimal monitoring record',
     );
 
     _monitoringRecords.add(lithiumMonitoring);
@@ -442,11 +356,13 @@ class MedicationService extends ChangeNotifier {
 
       // Filter by query
       if (query != null && query.isNotEmpty) {
+        final q = query.toLowerCase();
         results = results.where((medication) =>
-          medication.name.toLowerCase().contains(query.toLowerCase()) ||
-          medication.genericName.toLowerCase().contains(query.toLowerCase()) ||
-          medication.brandName.toLowerCase().contains(query.toLowerCase()) ||
-          medication.indications.any((ind) => ind.toLowerCase().contains(query.toLowerCase()))
+          (medication.name).toLowerCase().contains(q) ||
+          (medication.genericName).toLowerCase().contains(q) ||
+          (medication.brandName ?? '').toLowerCase().contains(q) ||
+          ((medication.indications ?? const <String>[])
+            .any((ind) => (ind).toLowerCase().contains(q)))
         ).toList();
       }
 
@@ -456,9 +372,11 @@ class MedicationService extends ChangeNotifier {
       }
 
       // Filter by indication
-      if (indication != null) {
+      if (indication != null && indication.isNotEmpty) {
+        final q = indication.toLowerCase();
         results = results.where((medication) =>
-          medication.indications.any((ind) => ind.toLowerCase().contains(indication.toLowerCase()))
+          ((medication.indications ?? const <String>[])
+            .any((ind) => (ind).toLowerCase().contains(q)))
         ).toList();
       }
 
@@ -503,28 +421,25 @@ class MedicationService extends ChangeNotifier {
           final med1Id = medicationIds[i];
           final med2Id = medicationIds[j];
 
+          // Fetch medication metadata once per pair (used in static fallback)
+          final medA = await getMedication(med1Id);
+          final medB = await getMedication(med2Id);
+
           // 1) Static catalog lookup
           final staticInteraction = _drugInteractions.firstWhere(
             (interaction) =>
               (interaction.medication1Id == med1Id && interaction.medication2Id == med2Id) ||
               (interaction.medication1Id == med2Id && interaction.medication2Id == med1Id),
-            orElse: () => const DrugInteraction(
+            orElse: () => DrugInteraction(
               id: 'no_interaction',
-              medication1Id: '',
-              medication1Name: '',
-              medication2Id: '',
-              medication2Name: '',
-              severity: "minor",
-              type: InteractionType.other,
-              mechanism: 'No known interaction',
+              medication1Id: med1Id,
+              medication1Name: medA?.name ?? '',
+              medication2Id: med2Id,
+              medication2Name: medB?.name ?? '',
+              severity: InteractionSeverity.minor,
+              type: InteractionType.pharmacodynamic,
               description: 'No significant interaction found',
-              clinicalSignificance: 'Safe to use together',
-              symptoms: [],
-              recommendations: ['Monitor for unexpected effects'],
-              alternatives: [],
-              monitoring: ['General monitoring'],
-              evidence: 'No evidence of interaction',
-              source: 'Clinical experience',
+              detectedAt: DateTime.now(),
             ),
           );
 
@@ -534,8 +449,6 @@ class MedicationService extends ChangeNotifier {
           }
 
           // 2) Rule-based evaluation using available metadata
-          final medA = await getMedication(med1Id);
-          final medB = await getMedication(med2Id);
           final ruleResult = _evaluatePairwiseRules(med1Id, med2Id, medA, medB);
           if (ruleResult != null) {
             interactions.add(ruleResult);
@@ -545,13 +458,17 @@ class MedicationService extends ChangeNotifier {
 
       // Sort by severity (most severe first)
       interactions.sort((a, b) {
-        final severityOrder = {
-          "contraindicated": 4,
-          "major": 3,
-          "moderate": 2,
-          "minor": 1,
-        };
-        return severityOrder[b.severity]!.compareTo(severityOrder[a.severity]!);
+        int map(InteractionSeverity s) {
+          switch (s) {
+            case InteractionSeverity.contraindicated: return 4;
+            case InteractionSeverity.major: return 3;
+            case InteractionSeverity.moderate: return 2;
+            case InteractionSeverity.mild: return 1;
+            case InteractionSeverity.minor: return 1;
+            case InteractionSeverity.none: return 0;
+          }
+        }
+        return map(b.severity).compareTo(map(a.severity));
       });
 
       return interactions;
@@ -574,8 +491,8 @@ class MedicationService extends ChangeNotifier {
     String nameB = medB?.name ?? med2Id;
 
     // SSRI + MAOI (generic) safeguard - if we ever lack static entry
-    final isSsri = (medA?.medicationClass == MedicationClass.antidepressants &&
-                    (medA?.metadata['class']?.toString().toLowerCase().contains('ssri') ?? false)) ||
+    final isSsri = (medA?.medicationClass == MedicationClass.antidepressant &&
+                    ((medA?.metadata?['class']?.toString() ?? '').toLowerCase().contains('ssri'))) ||
                    nameA.toLowerCase().contains('sertraline');
     final isMaoi = idA.contains('maoi') || idB.contains('maoi') ||
                    nameA.toLowerCase().contains('maoi') || nameB.toLowerCase().contains('maoi');
@@ -588,7 +505,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Serotonin artışı nedeniyle serotonin sendromu riski',
         description: 'SSRI ve MAOI kombinasyonu ciddi serotonin sendromuna yol açabilir',
@@ -599,6 +516,7 @@ class MedicationService extends ChangeNotifier {
         monitoring: ['Hayati bulgular', 'Nörolojik muayene'],
         evidence: 'Kılavuzlar ve olgu bildirimleri',
         source: 'Clinical guidelines',
+        detectedAt: DateTime.now(),
       );
     }
 
@@ -611,7 +529,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "moderate",
+        severity: InteractionSeverity.moderate,
         type: InteractionType.pharmacodynamic,
         mechanism: 'SSRI ile birlikte lityum düzeyleri ve serotonin sendromu riski artabilir',
         description: 'Yakın izlem ve gerekirse doz ayarlaması önerilir',
@@ -622,6 +540,7 @@ class MedicationService extends ChangeNotifier {
         monitoring: ['Lityum düzeyi', 'Böbrek fonksiyonları', 'Mental durum'],
         evidence: 'Klinik çalışmalar ve olgu bildirimleri',
         source: 'Clinical guidelines',
+        detectedAt: DateTime.now(),
       );
     }
 
@@ -634,7 +553,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "moderate",
+        severity: InteractionSeverity.moderate,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Her iki ilaç da QT aralığını uzatma potansiyeline sahiptir',
         description: 'Birlikte kullanımda QT uzaması ve aritmi riski artabilir',
@@ -657,7 +576,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "moderate",
+        severity: InteractionSeverity.moderate,
         type: InteractionType.pharmacokinetic,
         mechanism: 'CYP2D6 inhibisyonu: Fluoxetine codeine\'in morfine dönüşümünü azaltır',
         description: 'Azalmış analjezik etki ve tedavi başarısızlığı riski',
@@ -668,6 +587,7 @@ class MedicationService extends ChangeNotifier {
         monitoring: ['Ağrı skorları', 'Ek kurtarıcı ilaç ihtiyacı'],
         evidence: 'Farmakokinetik veriler ve kılavuzlar',
         source: 'Clinical guidelines',
+        detectedAt: DateTime.now(),
       );
     }
 
@@ -680,7 +600,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "moderate",
+        severity: InteractionSeverity.moderate,
         type: InteractionType.pharmacokinetic,
         mechanism: 'CYP3A4 indüksiyonu: Carbamazepine quetiapine düzeylerini düşürür',
         description: 'Etkililik azalması; doz ayarlaması gerekebilir',
@@ -691,6 +611,7 @@ class MedicationService extends ChangeNotifier {
         monitoring: ['Semptom ölçekleri', 'Gerekirse terapötik izlem'],
         evidence: 'İlaç etkileşim veritabanları',
         source: 'Clinical references',
+        detectedAt: DateTime.now(),
       );
     }
 
@@ -703,7 +624,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacokinetic,
         mechanism: 'CYP3A4 inhibisyonu: Greyfurt simvastatin düzeylerini yükseltir',
         description: 'Miyopati/rabdomiyoliz riski artar',
@@ -714,6 +635,7 @@ class MedicationService extends ChangeNotifier {
         monitoring: ['CK düzeyi', 'Kas semptomları'],
         evidence: 'Kılavuzlar ve farmakokinetik çalışmalar',
         source: 'Clinical guidelines',
+        detectedAt: DateTime.now(),
       );
     }
 
@@ -730,7 +652,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Güçlü teratojenite; nöral tüp defekti riski',
         description: 'Hamilelikte valproate kullanımı kontrendikedir',
@@ -751,7 +673,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Güçlü teratojenite; nöral tüp defekti riski',
         description: 'Hamilelikte valproate kullanımı kontrendikedir',
@@ -774,7 +696,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Yüksek teratojenite',
         description: 'Hamilelikte isotretinoin kesinlikle kontrendikedir',
@@ -795,7 +717,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Yüksek teratojenite',
         description: 'Hamilelikte isotretinoin kesinlikle kontrendikedir',
@@ -818,7 +740,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Anne sütüne geçiş ve bebekte toksisite riski',
         description: 'Emzirme döneminde lityum genellikle önerilmez',
@@ -839,7 +761,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Anne sütüne geçiş ve bebekte toksisite riski',
         description: 'Emzirme döneminde lityum genellikle önerilmez',
@@ -863,7 +785,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Böbrek yetmezliğinde metformin eliminasyonu azalır, laktik asidoz riski',
         description: 'eGFR <30 ml/dk/1.73m²\'de kontrendike',
@@ -884,7 +806,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "contraindicated",
+        severity: InteractionSeverity.contraindicated,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Böbrek yetmezliğinde metformin eliminasyonu azalır, laktik asidoz riski',
         description: 'eGFR <30 ml/dk/1.73m²\'de kontrendike',
@@ -907,7 +829,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Karaciğer hastalığında statin metabolizması bozulur',
         description: 'Aktif karaciğer hastalığında kontrendike',
@@ -928,7 +850,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Karaciğer hastalığında statin metabolizması bozulur',
         description: 'Aktif karaciğer hastalığında kontrendike',
@@ -951,7 +873,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Böbrek yetmezliğinde digoxin eliminasyonu azalır',
         description: 'Doz azaltımı gerekir, toksisite riski artar',
@@ -972,7 +894,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacokinetic,
         mechanism: 'Böbrek yetmezliğinde digoxin eliminasyonu azalır',
         description: 'Doz azaltımı gerekir, toksisite riski artar',
@@ -997,7 +919,7 @@ class MedicationService extends ChangeNotifier {
         medication1Name: nameA,
         medication2Id: med2Id,
         medication2Name: nameB,
-        severity: "major",
+        severity: InteractionSeverity.major,
         type: InteractionType.pharmacodynamic,
         mechanism: 'Merkezi sinir sistemi baskılanması potansiyeli artar',
         description: 'Yaşlılarda düşme, sedasyon ve solunum depresyonu riski',
@@ -1026,15 +948,13 @@ class MedicationService extends ChangeNotifier {
         orElse: () => DosageTitration(
           id: 'default_titration',
           medicationId: medicationId,
-          medicationName: 'Unknown',
-          indication: indication ?? 'General use',
-          steps: [],
           strategy: TitrationStrategy.startLowGoSlow,
-          rationale: 'Standard titration approach',
-          monitoringParameters: ['Side effects', 'Therapeutic response'],
-          adverseEffects: ['Monitor for side effects'],
-          contraindications: ['Known hypersensitivity'],
-          duration: 'Individualized',
+          startingDose: 25.0,
+          targetDose: 100.0,
+          currentDose: 25.0,
+          titrationDays: 14,
+          startDate: DateTime.now(),
+          notes: 'Default titration plan',
         ),
       );
     } catch (e) {
@@ -1063,21 +983,10 @@ class MedicationService extends ChangeNotifier {
         id: _generateId(),
         patientId: patientId,
         clinicianId: clinicianId,
-        prescriptionDate: DateTime.now(),
+        prescribedDate: DateTime.now(),
         status: PrescriptionStatus.pending,
         medications: medications,
-        diagnosis: diagnosis,
-        clinicalNotes: clinicalNotes,
-        allergies: allergies ?? [],
-        contraindications: contraindications ?? [],
-        warnings: warnings ?? [],
-        instructions: instructions ?? [],
-        refillsAllowed: refillsAllowed,
-        refillsUsed: 0,
-        pharmacy: pharmacy ?? 'Default Pharmacy',
-        prescriberSignature: 'Digital Signature',
-        isElectronic: true,
-        prescriptionNumber: _generatePrescriptionNumber(),
+        notes: clinicalNotes,
       );
 
       _prescriptions.add(prescription);
@@ -1148,9 +1057,7 @@ class MedicationService extends ChangeNotifier {
         id: _generateId(),
         timestamp: DateTime.now(),
         type: eventType,
-        description: _getAdherenceEventDescription(eventType),
-        reason: reason ?? 'Not specified',
-        action: action ?? 'None',
+        notes: reason ?? 'Not specified',
       );
 
       // Find existing adherence record or create new one
@@ -1160,15 +1067,10 @@ class MedicationService extends ChangeNotifier {
           id: _generateId(),
           patientId: patientId,
           medicationId: medicationId,
-          medicationName: medicationName,
-          startDate: DateTime.now(),
           status: AdherenceStatus.good,
           adherenceRate: 100.0,
           events: [],
-          barriers: [],
-          facilitators: [],
-          interventions: [],
-          notes: 'New adherence record',
+          lastUpdated: DateTime.now(),
         ),
       );
 
@@ -1207,7 +1109,7 @@ class MedicationService extends ChangeNotifier {
 
   // ===== LABORATORY FUNCTIONS =====
 
-  Future<List<LaboratoryTest>> getRequiredTests({
+  Future<List<lab_models.LaboratoryTest>> getRequiredTests({
     required String medicationId,
     String? patientId,
   }) async {
@@ -1216,7 +1118,11 @@ class MedicationService extends ChangeNotifier {
       if (medication == null) return [];
 
       return _labTests.where((test) =>
-        test.medications.contains(medicationId)
+        test.category.toLowerCase().contains('psychiatric') ||
+        test.category.toLowerCase().contains('medication') ||
+        test.name.toLowerCase().contains('lithium') ||
+        test.name.toLowerCase().contains('valproate') ||
+        test.name.toLowerCase().contains('carbamazepine')
       ).toList();
     } catch (e) {
       _logger.error('Failed to get required tests', context: 'MedicationService', error: e);

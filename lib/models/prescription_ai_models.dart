@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'medication_models.dart';
 
 part 'prescription_ai_models.g.dart';
 
@@ -267,14 +268,7 @@ class AdvancedDrugInteraction {
 }
 
 /// Etkileşim Şiddeti - İlaç etkileşimlerinin ciddiyet seviyeleri
-/// En düşükten en yükseğe doğru sıralanmış risk seviyeleri
-enum InteractionSeverity {
-  @JsonValue('none') none, // Etkileşim yok
-  @JsonValue('mild') mild, // Hafif etkileşim
-  @JsonValue('moderate') moderate, // Orta şiddette etkileşim
-  @JsonValue('major') major, // Majör etkileşim
-  @JsonValue('contraindicated') contraindicated, // Kontrendike
-}
+// InteractionSeverity enum'u medication_models.dart'tan import edilecek
 
 /// AI Reçete Durumu - AI önerilerinin inceleme ve onay süreci
 /// Reçete önerilerinin klinisyen tarafından değerlendirilme durumları

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../models/billing_models.dart';
+import '../services/pseudonym_service.dart';
 
 class InvoicePDFService {
   Future<Uint8List> generate(Invoice inv) async {
@@ -19,6 +20,7 @@ class InvoicePDFService {
             pw.SizedBox(height: 16),
             pw.Text('Bill To:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
             pw.Text(inv.clientName),
+            pw.Text('Takma Ad: ${PseudonymService.generate(inv.clientId ?? inv.clientName)}'),
             pw.Text(inv.clientEmail),
             if (inv.trTaxId != null) pw.Text('Tax ID: ${inv.trTaxId}'),
             pw.SizedBox(height: 16),

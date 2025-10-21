@@ -1,551 +1,397 @@
-// Tedavi Planı Modelleri - Psikolog/Psikiyatrist Odaklı
-
 class TreatmentPlan {
   final String id;
-  final String clientId;
-  final String therapistId;
-  final String title;
-  final String description;
-  final TreatmentType type;
-  final TreatmentModality modality;
-  final DateTime startDate;
-  final DateTime? endDate;
-  final int estimatedSessions;
-  final int completedSessions;
-  final TreatmentStatus status;
+  final String patientId;
+  final String clinicianId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String primaryDiagnosis;
+  final List<String> secondaryDiagnoses;
+  final String clinicalFormulation;
   final List<TreatmentGoal> goals;
   final List<TreatmentIntervention> interventions;
-  final List<TreatmentProgress> progress;
-  final String notes;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? prognosis;
+  final String? notes;
+  final TreatmentPlanStatus status;
+  final DateTime? reviewDate;
+  final String? reviewNotes;
 
-  TreatmentPlan({
+  const TreatmentPlan({
     required this.id,
-    required this.clientId,
-    required this.therapistId,
-    required this.title,
-    required this.description,
-    required this.type,
-    required this.modality,
-    required this.startDate,
-    this.endDate,
-    required this.estimatedSessions,
-    this.completedSessions = 0,
-    this.status = TreatmentStatus.active,
-    required this.goals,
-    required this.interventions,
-    this.progress = const [],
-    this.notes = '',
+    required this.patientId,
+    required this.clinicianId,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
+    required this.primaryDiagnosis,
+    this.secondaryDiagnoses = const [],
+    required this.clinicalFormulation,
+    this.goals = const [],
+    this.interventions = const [],
+    this.prognosis,
+    this.notes,
+    this.status = TreatmentPlanStatus.active,
+    this.reviewDate,
+    this.reviewNotes,
   });
 
-  double get progressPercentage {
-    if (estimatedSessions == 0) return 0.0;
-    return (completedSessions / estimatedSessions * 100).clamp(0.0, 100.0);
+  factory TreatmentPlan.fromJson(Map<String, dynamic> json) {
+    return TreatmentPlan(
+      id: json['id'] as String,
+      patientId: json['patientId'] as String,
+      clinicianId: json['clinicianId'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt'] as String) 
+          : null,
+      primaryDiagnosis: json['primaryDiagnosis'] as String,
+      secondaryDiagnoses: List<String>.from(json['secondaryDiagnoses'] as List? ?? []),
+      clinicalFormulation: json['clinicalFormulation'] as String,
+      goals: (json['goals'] as List<dynamic>?)
+          ?.map((goal) => TreatmentGoal.fromJson(goal as Map<String, dynamic>))
+          .toList() ?? [],
+      interventions: (json['interventions'] as List<dynamic>?)
+          ?.map((intervention) => TreatmentIntervention.fromJson(intervention as Map<String, dynamic>))
+          .toList() ?? [],
+      prognosis: json['prognosis'] as String?,
+      notes: json['notes'] as String?,
+      status: TreatmentPlanStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => TreatmentPlanStatus.active,
+      ),
+      reviewDate: json['reviewDate'] != null 
+          ? DateTime.parse(json['reviewDate'] as String) 
+          : null,
+      reviewNotes: json['reviewNotes'] as String?,
+    );
   }
-
-  bool get isCompleted => status == TreatmentStatus.completed;
-  bool get isActive => status == TreatmentStatus.active;
-  bool get isPaused => status == TreatmentStatus.paused;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'clientId': clientId,
-      'therapistId': therapistId,
-      'title': title,
-      'description': description,
-      'type': type.name,
-      'modality': modality.name,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate?.toIso8601String(),
-      'estimatedSessions': estimatedSessions,
-      'completedSessions': completedSessions,
-      'status': status.name,
+      'patientId': patientId,
+      'clinicianId': clinicianId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'primaryDiagnosis': primaryDiagnosis,
+      'secondaryDiagnoses': secondaryDiagnoses,
+      'clinicalFormulation': clinicalFormulation,
       'goals': goals.map((goal) => goal.toJson()).toList(),
       'interventions': interventions.map((intervention) => intervention.toJson()).toList(),
-      'progress': progress.map((p) => p.toJson()).toList(),
+      'prognosis': prognosis,
       'notes': notes,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'status': status.name,
+      'reviewDate': reviewDate?.toIso8601String(),
+      'reviewNotes': reviewNotes,
     };
   }
 
-  factory TreatmentPlan.fromJson(Map<String, dynamic> json) {
-    return TreatmentPlan(
-      id: json['id'],
-      clientId: json['clientId'],
-      therapistId: json['therapistId'],
-      title: json['title'],
-      description: json['description'],
-      type: TreatmentType.values.firstWhere((e) => e.name == json['type']),
-      modality: TreatmentModality.values.firstWhere((e) => e.name == json['modality']),
-      startDate: DateTime.parse(json['startDate']),
-      endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
-      estimatedSessions: json['estimatedSessions'],
-      completedSessions: json['completedSessions'] ?? 0,
-      status: TreatmentStatus.values.firstWhere((e) => e.name == json['status']),
-      goals: (json['goals'] as List).map((g) => TreatmentGoal.fromJson(g)).toList(),
-      interventions: (json['interventions'] as List).map((i) => TreatmentIntervention.fromJson(i)).toList(),
-      progress: (json['progress'] as List).map((p) => TreatmentProgress.fromJson(p)).toList(),
-      notes: json['notes'] ?? '',
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-    );
+  // Calculate overall progress
+  double get overallProgress {
+    if (goals.isEmpty) return 0.0;
+    final totalProgress = goals.map((goal) => goal.progress).reduce((a, b) => a + b);
+    return totalProgress / goals.length;
   }
-}
 
-enum TreatmentType {
-  individual,     // Bireysel terapi
-  group,          // Grup terapisi
-  family,         // Aile terapisi
-  couple,         // Çift terapisi
-  cognitive,      // Bilişsel terapi
-  behavioral,     // Davranışçı terapi
-  psychodynamic,  // Psikodinamik terapi
-  humanistic,     // Hümanistik terapi
-  integrative,    // Entegratif terapi
-  medication,     // İlaç tedavisi
-  combined,       // Kombine tedavi
-}
+  // Get active goals
+  List<TreatmentGoal> get activeGoals {
+    return goals.where((goal) => goal.status == GoalStatus.active).toList();
+  }
 
-enum TreatmentModality {
-  inPerson,       // Yüz yüze
-  telehealth,     // Uzaktan
-  hybrid,         // Hibrit
-  intensive,      // Yoğun
-  maintenance,    // Sürdürme
-}
-
-enum TreatmentStatus {
-  active,         // Aktif
-  paused,         // Duraklatıldı
-  completed,      // Tamamlandı
-  cancelled,      // İptal edildi
-  onHold,         // Beklemede
+  // Get completed goals
+  List<TreatmentGoal> get completedGoals {
+    return goals.where((goal) => goal.status == GoalStatus.completed).toList();
+  }
 }
 
 class TreatmentGoal {
   final String id;
-  final String title;
   final String description;
-  final GoalType type;
+  final GoalCategory category;
   final GoalPriority priority;
   final DateTime targetDate;
-  final bool isAchieved;
-  final DateTime? achievedDate;
-  final String notes;
+  final GoalStatus status;
+  final int progress; // 0-100
+  final String? notes;
+  final DateTime createdAt;
+  final DateTime? completedAt;
+  final List<String> milestones;
+  final String? measurementMethod;
 
-  TreatmentGoal({
+  const TreatmentGoal({
     required this.id,
-    required this.title,
     required this.description,
-    required this.type,
+    required this.category,
     required this.priority,
     required this.targetDate,
-    this.isAchieved = false,
-    this.achievedDate,
-    this.notes = '',
+    this.status = GoalStatus.active,
+    this.progress = 0,
+    this.notes,
+    required this.createdAt,
+    this.completedAt,
+    this.milestones = const [],
+    this.measurementMethod,
   });
+
+  factory TreatmentGoal.fromJson(Map<String, dynamic> json) {
+    return TreatmentGoal(
+      id: json['id'] as String,
+      description: json['description'] as String,
+      category: GoalCategory.values.firstWhere(
+        (e) => e.name == json['category'],
+        orElse: () => GoalCategory.symptomReduction,
+      ),
+      priority: GoalPriority.values.firstWhere(
+        (e) => e.name == json['priority'],
+        orElse: () => GoalPriority.medium,
+      ),
+      targetDate: DateTime.parse(json['targetDate'] as String),
+      status: GoalStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => GoalStatus.active,
+      ),
+      progress: json['progress'] as int? ?? 0,
+      notes: json['notes'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      completedAt: json['completedAt'] != null 
+          ? DateTime.parse(json['completedAt'] as String) 
+          : null,
+      milestones: List<String>.from(json['milestones'] as List? ?? []),
+      measurementMethod: json['measurementMethod'] as String?,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'title': title,
       'description': description,
-      'type': type.name,
+      'category': category.name,
       'priority': priority.name,
       'targetDate': targetDate.toIso8601String(),
-      'isAchieved': isAchieved,
-      'achievedDate': achievedDate?.toIso8601String(),
+      'status': status.name,
+      'progress': progress,
       'notes': notes,
+      'createdAt': createdAt.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+      'milestones': milestones,
+      'measurementMethod': measurementMethod,
     };
   }
 
-  factory TreatmentGoal.fromJson(Map<String, dynamic> json) {
-    return TreatmentGoal(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      type: GoalType.values.firstWhere((e) => e.name == json['type']),
-      priority: GoalPriority.values.firstWhere((e) => e.name == json['priority']),
-      targetDate: DateTime.parse(json['targetDate']),
-      isAchieved: json['isAchieved'] ?? false,
-      achievedDate: json['achievedDate'] != null ? DateTime.parse(json['achievedDate']) : null,
-      notes: json['notes'] ?? '',
-    );
+  // Check if goal is overdue
+  bool get isOverdue {
+    return status == GoalStatus.active && targetDate.isBefore(DateTime.now());
   }
-}
 
-enum GoalType {
-  symptom,        // Belirti azaltma
-  functional,     // İşlevsellik
-  behavioral,     // Davranışsal
-  cognitive,      // Bilişsel
-  emotional,      // Duygusal
-  social,         // Sosyal
-  occupational,   // Mesleki
-  educational,    // Eğitimsel
-}
-
-enum GoalPriority {
-  low,            // Düşük
-  medium,         // Orta
-  high,           // Yüksek
-  critical,       // Kritik
+  // Check if goal is due soon (within 7 days)
+  bool get isDueSoon {
+    final sevenDaysFromNow = DateTime.now().add(const Duration(days: 7));
+    return status == GoalStatus.active && 
+           targetDate.isAfter(DateTime.now()) && 
+           targetDate.isBefore(sevenDaysFromNow);
+  }
 }
 
 class TreatmentIntervention {
   final String id;
-  final String title;
-  final String description;
+  final String name;
   final InterventionType type;
-  final InterventionCategory category;
-  final DateTime scheduledDate;
-  final bool isCompleted;
-  final DateTime? completedDate;
-  final String notes;
-  final Map<String, dynamic> outcomes;
+  final String description;
+  final InterventionFrequency frequency;
+  final Duration duration;
+  final String? instructions;
+  final String? expectedOutcome;
+  final InterventionStatus status;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final String? notes;
+  final List<String> contraindications;
 
-  TreatmentIntervention({
+  const TreatmentIntervention({
     required this.id,
-    required this.title,
-    required this.description,
+    required this.name,
     required this.type,
-    required this.category,
-    required this.scheduledDate,
-    this.isCompleted = false,
-    this.completedDate,
-    this.notes = '',
-    this.outcomes = const {},
+    required this.description,
+    required this.frequency,
+    required this.duration,
+    this.instructions,
+    this.expectedOutcome,
+    this.status = InterventionStatus.active,
+    required this.startDate,
+    this.endDate,
+    this.notes,
+    this.contraindications = const [],
   });
+
+  factory TreatmentIntervention.fromJson(Map<String, dynamic> json) {
+    return TreatmentIntervention(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: InterventionType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => InterventionType.psychotherapy,
+      ),
+      description: json['description'] as String,
+      frequency: InterventionFrequency.values.firstWhere(
+        (e) => e.name == json['frequency'],
+        orElse: () => InterventionFrequency.weekly,
+      ),
+      duration: Duration(minutes: json['duration'] as int),
+      instructions: json['instructions'] as String?,
+      expectedOutcome: json['expectedOutcome'] as String?,
+      status: InterventionStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => InterventionStatus.active,
+      ),
+      startDate: DateTime.parse(json['startDate'] as String),
+      endDate: json['endDate'] != null 
+          ? DateTime.parse(json['endDate'] as String) 
+          : null,
+      notes: json['notes'] as String?,
+      contraindications: List<String>.from(json['contraindications'] as List? ?? []),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'title': title,
-      'description': description,
+      'name': name,
       'type': type.name,
-      'category': category.name,
-      'scheduledDate': scheduledDate.toIso8601String(),
-      'isCompleted': isCompleted,
-      'completedDate': completedDate?.toIso8601String(),
+      'description': description,
+      'frequency': frequency.name,
+      'duration': duration.inMinutes,
+      'instructions': instructions,
+      'expectedOutcome': expectedOutcome,
+      'status': status.name,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate?.toIso8601String(),
       'notes': notes,
-      'outcomes': outcomes,
+      'contraindications': contraindications,
     };
   }
 
-  factory TreatmentIntervention.fromJson(Map<String, dynamic> json) {
-    return TreatmentIntervention(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      type: InterventionType.values.firstWhere((e) => e.name == json['type']),
-      category: InterventionCategory.values.firstWhere((e) => e.name == json['category']),
-      scheduledDate: DateTime.parse(json['scheduledDate']),
-      isCompleted: json['isCompleted'] ?? false,
-      completedDate: json['completedDate'] != null ? DateTime.parse(json['completedDate']) : null,
-      notes: json['notes'] ?? '',
-      outcomes: Map<String, dynamic>.from(json['outcomes'] ?? {}),
-    );
+  // Check if intervention is active
+  bool get isActive {
+    return status == InterventionStatus.active && 
+           (endDate == null || endDate!.isAfter(DateTime.now()));
   }
-}
-
-enum InterventionType {
-  session,        // Seans
-  homework,       // Ev ödevi
-  exercise,       // Egzersiz
-  psychoeducation, // Psikoeğitim
-  relaxation,     // Gevşeme
-  exposure,       // Maruz bırakma
-  cognitive,      // Bilişsel
-  behavioral,     // Davranışsal
-  medication,     // İlaç
-  assessment,     // Değerlendirme
-}
-
-enum InterventionCategory {
-  therapeutic,    // Terapötik
-  educational,    // Eğitimsel
-  behavioral,     // Davranışsal
-  cognitive,      // Bilişsel
-  emotional,      // Duygusal
-  social,         // Sosyal
-  physical,       // Fiziksel
-  medication,     // İlaç
 }
 
 class TreatmentProgress {
   final String id;
-  final DateTime date;
-  final String sessionId;
-  final ProgressType type;
-  final String description;
-  final Map<String, dynamic> metrics;
-  final String notes;
-  final String therapistId;
+  final String treatmentPlanId;
+  final DateTime assessmentDate;
+  final String assessedBy;
+  final Map<String, dynamic> goalProgress;
+  final Map<String, dynamic> interventionEffectiveness;
+  final String overallAssessment;
+  final String? recommendations;
+  final String? notes;
+  final DateTime nextReviewDate;
 
-  TreatmentProgress({
+  const TreatmentProgress({
     required this.id,
-    required this.date,
-    required this.sessionId,
-    required this.type,
-    required this.description,
-    required this.metrics,
-    this.notes = '',
-    required this.therapistId,
+    required this.treatmentPlanId,
+    required this.assessmentDate,
+    required this.assessedBy,
+    required this.goalProgress,
+    required this.interventionEffectiveness,
+    required this.overallAssessment,
+    this.recommendations,
+    this.notes,
+    required this.nextReviewDate,
   });
+
+  factory TreatmentProgress.fromJson(Map<String, dynamic> json) {
+    return TreatmentProgress(
+      id: json['id'] as String,
+      treatmentPlanId: json['treatmentPlanId'] as String,
+      assessmentDate: DateTime.parse(json['assessmentDate'] as String),
+      assessedBy: json['assessedBy'] as String,
+      goalProgress: Map<String, dynamic>.from(json['goalProgress'] as Map),
+      interventionEffectiveness: Map<String, dynamic>.from(json['interventionEffectiveness'] as Map),
+      overallAssessment: json['overallAssessment'] as String,
+      recommendations: json['recommendations'] as String?,
+      notes: json['notes'] as String?,
+      nextReviewDate: DateTime.parse(json['nextReviewDate'] as String),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'date': date.toIso8601String(),
-      'sessionId': sessionId,
-      'type': type.name,
-      'description': description,
-      'metrics': metrics,
+      'treatmentPlanId': treatmentPlanId,
+      'assessmentDate': assessmentDate.toIso8601String(),
+      'assessedBy': assessedBy,
+      'goalProgress': goalProgress,
+      'interventionEffectiveness': interventionEffectiveness,
+      'overallAssessment': overallAssessment,
+      'recommendations': recommendations,
       'notes': notes,
-      'therapistId': therapistId,
+      'nextReviewDate': nextReviewDate.toIso8601String(),
     };
   }
-
-  factory TreatmentProgress.fromJson(Map<String, dynamic> json) {
-    return TreatmentProgress(
-      id: json['id'],
-      date: DateTime.parse(json['date']),
-      sessionId: json['sessionId'],
-      type: ProgressType.values.firstWhere((e) => e.name == json['type']),
-      description: json['description'],
-      metrics: Map<String, dynamic>.from(json['metrics']),
-      notes: json['notes'] ?? '',
-      therapistId: json['therapistId'],
-    );
-  }
 }
 
-enum ProgressType {
-  improvement,    // İyileşme
-  regression,     // Gerileme
-  stable,         // Stabil
-  breakthrough,   // Atılım
-  challenge,      // Zorluk
-  milestone,      // Kilometre taşı
+enum TreatmentPlanStatus {
+  draft,
+  active,
+  completed,
+  suspended,
+  discontinued,
 }
 
-// Tedavi Planı Şablonları
-class TreatmentPlanTemplates {
-  static TreatmentPlan createDepressionPlan({
-    required String clientId,
-    required String therapistId,
-  }) {
-    return TreatmentPlan(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      clientId: clientId,
-      therapistId: therapistId,
-      title: 'Depresyon Tedavi Planı',
-      description: 'Major depresif bozukluk için bilişsel davranışçı terapi planı',
-      type: TreatmentType.cognitive,
-      modality: TreatmentModality.inPerson,
-      startDate: DateTime.now(),
-      estimatedSessions: 16,
-      goals: [
-        TreatmentGoal(
-          id: 'goal_1',
-          title: 'Depresif belirtileri azaltma',
-          description: 'PHQ-9 skorunu 10\'dan 5\'in altına düşürme',
-          type: GoalType.symptom,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 56)),
-        ),
-        TreatmentGoal(
-          id: 'goal_2',
-          title: 'Günlük aktivitelere katılım',
-          description: 'Haftalık aktivite sayısını 3\'e çıkarma',
-          type: GoalType.functional,
-          priority: GoalPriority.medium,
-          targetDate: DateTime.now().add(const Duration(days: 42)),
-        ),
-        TreatmentGoal(
-          id: 'goal_3',
-          title: 'Olumsuz düşünce kalıplarını değiştirme',
-          description: 'Bilişsel çarpıtmaları tanıma ve düzeltme',
-          type: GoalType.cognitive,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 70)),
-        ),
-      ],
-      interventions: [
-        TreatmentIntervention(
-          id: 'intervention_1',
-          title: 'Psikoeğitim',
-          description: 'Depresyon hakkında bilgilendirme',
-          type: InterventionType.psychoeducation,
-          category: InterventionCategory.educational,
-          scheduledDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_2',
-          title: 'Bilişsel yeniden yapılandırma',
-          description: 'Olumsuz düşünce kalıplarını değiştirme',
-          type: InterventionType.cognitive,
-          category: InterventionCategory.cognitive,
-          scheduledDate: DateTime.now().add(const Duration(days: 7)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_3',
-          title: 'Davranış aktivasyonu',
-          description: 'Günlük aktiviteleri artırma',
-          type: InterventionType.behavioral,
-          category: InterventionCategory.behavioral,
-          scheduledDate: DateTime.now().add(const Duration(days: 14)),
-        ),
-      ],
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
+enum GoalCategory {
+  symptomReduction,
+  functionalImprovement,
+  skillDevelopment,
+  relationshipImprovement,
+  medicationCompliance,
+  lifestyleChange,
+  crisisPrevention,
+  other,
+}
 
-  static TreatmentPlan createAnxietyPlan({
-    required String clientId,
-    required String therapistId,
-  }) {
-    return TreatmentPlan(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      clientId: clientId,
-      therapistId: therapistId,
-      title: 'Anksiyete Tedavi Planı',
-      description: 'Yaygın anksiyete bozukluğu için bilişsel davranışçı terapi planı',
-      type: TreatmentType.cognitive,
-      modality: TreatmentModality.inPerson,
-      startDate: DateTime.now(),
-      estimatedSessions: 12,
-      goals: [
-        TreatmentGoal(
-          id: 'goal_1',
-          title: 'Anksiyete belirtilerini azaltma',
-          description: 'GAD-7 skorunu 8\'den 4\'ün altına düşürme',
-          type: GoalType.symptom,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 42)),
-        ),
-        TreatmentGoal(
-          id: 'goal_2',
-          title: 'Endişe kontrolü',
-          description: 'Endişe döngülerini kırma tekniklerini öğrenme',
-          type: GoalType.cognitive,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 56)),
-        ),
-        TreatmentGoal(
-          id: 'goal_3',
-          title: 'Gevşeme teknikleri',
-          description: 'Günlük gevşeme pratiği yapma',
-          type: GoalType.behavioral,
-          priority: GoalPriority.medium,
-          targetDate: DateTime.now().add(const Duration(days: 28)),
-        ),
-      ],
-      interventions: [
-        TreatmentIntervention(
-          id: 'intervention_1',
-          title: 'Anksiyete psikoeğitimi',
-          description: 'Anksiyete hakkında bilgilendirme',
-          type: InterventionType.psychoeducation,
-          category: InterventionCategory.educational,
-          scheduledDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_2',
-          title: 'Gevşeme eğitimi',
-          description: 'Derin nefes ve progresif kas gevşemesi',
-          type: InterventionType.relaxation,
-          category: InterventionCategory.therapeutic,
-          scheduledDate: DateTime.now().add(const Duration(days: 7)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_3',
-          title: 'Endişe yönetimi',
-          description: 'Endişe döngülerini kırma teknikleri',
-          type: InterventionType.cognitive,
-          category: InterventionCategory.cognitive,
-          scheduledDate: DateTime.now().add(const Duration(days: 14)),
-        ),
-      ],
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
+enum GoalPriority {
+  low,
+  medium,
+  high,
+  critical,
+}
 
-  static TreatmentPlan createTraumaPlan({
-    required String clientId,
-    required String therapistId,
-  }) {
-    return TreatmentPlan(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      clientId: clientId,
-      therapistId: therapistId,
-      title: 'Travma Tedavi Planı',
-      description: 'Travma sonrası stres bozukluğu için EMDR ve CBT kombinasyonu',
-      type: TreatmentType.integrative,
-      modality: TreatmentModality.inPerson,
-      startDate: DateTime.now(),
-      estimatedSessions: 20,
-      goals: [
-        TreatmentGoal(
-          id: 'goal_1',
-          title: 'Travma belirtilerini azaltma',
-          description: 'PCL-5 skorunu 15\'ten 5\'in altına düşürme',
-          type: GoalType.symptom,
-          priority: GoalPriority.critical,
-          targetDate: DateTime.now().add(const Duration(days: 112)),
-        ),
-        TreatmentGoal(
-          id: 'goal_2',
-          title: 'Travma işleme',
-          description: 'Travmatik anıları işleme ve entegre etme',
-          type: GoalType.emotional,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 84)),
-        ),
-        TreatmentGoal(
-          id: 'goal_3',
-          title: 'Güvenlik hissi',
-          description: 'Güvenlik ve kontrol hissini geri kazanma',
-          type: GoalType.emotional,
-          priority: GoalPriority.high,
-          targetDate: DateTime.now().add(const Duration(days: 56)),
-        ),
-      ],
-      interventions: [
-        TreatmentIntervention(
-          id: 'intervention_1',
-          title: 'Travma psikoeğitimi',
-          description: 'Travma ve PTSD hakkında bilgilendirme',
-          type: InterventionType.psychoeducation,
-          category: InterventionCategory.educational,
-          scheduledDate: DateTime.now().add(const Duration(days: 1)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_2',
-          title: 'Güvenlik planı',
-          description: 'Güvenlik ve başa çıkma stratejileri',
-          type: InterventionType.cognitive,
-          category: InterventionCategory.therapeutic,
-          scheduledDate: DateTime.now().add(const Duration(days: 7)),
-        ),
-        TreatmentIntervention(
-          id: 'intervention_3',
-          title: 'EMDR terapi',
-          description: 'Göz hareketleri ile duyarsızlaştırma',
-          type: InterventionType.session,
-          category: InterventionCategory.therapeutic,
-          scheduledDate: DateTime.now().add(const Duration(days: 14)),
-        ),
-      ],
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
+enum GoalStatus {
+  active,
+  completed,
+  suspended,
+  discontinued,
+  modified,
+}
+
+enum InterventionType {
+  psychotherapy,
+  medication,
+  psychoeducation,
+  familyTherapy,
+  groupTherapy,
+  behavioralIntervention,
+  cognitiveIntervention,
+  mindfulness,
+  relaxation,
+  other,
+}
+
+enum InterventionFrequency {
+  daily,
+  twiceDaily,
+  weekly,
+  biweekly,
+  monthly,
+  asNeeded,
+  continuous,
+}
+
+enum InterventionStatus {
+  active,
+  completed,
+  suspended,
+  discontinued,
+  modified,
 }

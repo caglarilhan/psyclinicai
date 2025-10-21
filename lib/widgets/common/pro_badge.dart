@@ -116,24 +116,24 @@ class ProBadge extends StatelessWidget {
     switch (size) {
       case ProBadgeSize.small:
         return ProBadgeSizeConfig(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.xs),
           textStyle: AppTypography.caption,
-          borderRadius: AppSpacing.badgeRadiusSm,
-          minSize: AppSpacing.badgeMinSizeSm,
+          borderRadius: AppSpacing.radiusSm,
+          minSize: AppSpacing.xs,
         );
       case ProBadgeSize.medium:
         return ProBadgeSizeConfig(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           textStyle: AppTypography.labelSmall,
-          borderRadius: AppSpacing.badgeRadiusMd,
-          minSize: AppSpacing.badgeMinSizeMd,
+          borderRadius: AppSpacing.radiusMd,
+          minSize: AppSpacing.sm,
         );
       case ProBadgeSize.large:
         return ProBadgeSizeConfig(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           textStyle: AppTypography.labelMedium,
-          borderRadius: AppSpacing.badgeRadiusLg,
-          minSize: AppSpacing.badgeMinSizeLg,
+          borderRadius: AppSpacing.radiusLg,
+          minSize: AppSpacing.md,
         );
     }
   }
@@ -183,44 +183,44 @@ class ProBadge extends StatelessWidget {
     }
   }
 
-  double _getTopOffset(ProBadgePosition position) {
+  double? _getTopOffset(ProBadgePosition position) {
     switch (position) {
       case ProBadgePosition.topStart:
       case ProBadgePosition.topEnd:
-        return -AppSpacing.badgeOffset;
+        return -AppSpacing.sm;
       case ProBadgePosition.bottomStart:
       case ProBadgePosition.bottomEnd:
         return null;
     }
   }
 
-  double _getRightOffset(ProBadgePosition position) {
+  double? _getRightOffset(ProBadgePosition position) {
     switch (position) {
       case ProBadgePosition.topEnd:
       case ProBadgePosition.bottomEnd:
-        return -AppSpacing.badgeOffset;
+        return -AppSpacing.sm;
       case ProBadgePosition.topStart:
       case ProBadgePosition.bottomStart:
         return null;
     }
   }
 
-  double _getBottomOffset(ProBadgePosition position) {
+  double? _getBottomOffset(ProBadgePosition position) {
     switch (position) {
       case ProBadgePosition.topStart:
       case ProBadgePosition.topEnd:
         return null;
       case ProBadgePosition.bottomStart:
       case ProBadgePosition.bottomEnd:
-        return -AppSpacing.badgeOffset;
+        return -AppSpacing.sm;
     }
   }
 
-  double _getLeftOffset(ProBadgePosition position) {
+  double? _getLeftOffset(ProBadgePosition position) {
     switch (position) {
       case ProBadgePosition.topStart:
       case ProBadgePosition.bottomStart:
-        return -AppSpacing.badgeOffset;
+        return -AppSpacing.sm;
       case ProBadgePosition.topEnd:
       case ProBadgePosition.bottomEnd:
         return null;

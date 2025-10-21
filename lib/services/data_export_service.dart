@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/pseudonym_service.dart';
 import 'dart:convert';
 
 // Export formatları
@@ -33,6 +34,10 @@ class DataExportService {
   }) async {
     try {
       final data = await _getDataForExport(type, filters);
+      final bool adminView = (filters?['admin'] as bool?) ?? false;
+      if (!adminView) {
+        _maskSensitive(data);
+      }
       
       switch (format) {
         case ExportFormat.json:
@@ -49,12 +54,33 @@ class DataExportService {
     }
   }
 
+  void _maskSensitive(Map<String, dynamic> data){
+    String maskEmail(String v){
+      final parts = v.split('@'); if (parts.length!=2) return v;
+      final n = parts[0]; final d = parts[1];
+      final m = n.length<=2? n[0] + '*' : n.substring(0,2) + '*' * (n.length-2);
+      return m + '@' + d;
+    }
+    String maskPhone(String v){
+      return v.length < 4 ? '***' : v.substring(0, v.length-4).replaceAll(RegExp(r'\d'), '*') + v.substring(v.length-4);
+    }
+    if (data['clients'] is List){
+      for (final c in (data['clients'] as List)){
+        if (c['email'] is String) c['email'] = maskEmail(c['email']);
+        if (c['phone'] is String) c['phone'] = maskPhone(c['phone']);
+      }
+    }
+  }
+
   // Export için veri al
   Future<Map<String, dynamic>> _getDataForExport(ExportType type, Map<String, dynamic>? filters) async {
     final data = <String, dynamic>{
+      'reportId': DateTime.now().microsecondsSinceEpoch.toString(),
       'exportDate': DateTime.now().toIso8601String(),
       'exportType': type.name,
       'filters': filters ?? {},
+      'app': 'PsyClinicAI Web',
+      'version': '1.0.0',
     };
 
     switch (type) {
@@ -147,6 +173,7 @@ class DataExportService {
         'id': '1',
         'firstName': 'Ahmet',
         'lastName': 'Yılmaz',
+        'pseudonym': PseudonymService.generate('1'),
         'email': 'ahmet.yilmaz@email.com',
         'phone': '+90 555 123 4567',
         'primaryDiagnosis': 'Depresyon',
@@ -159,6 +186,7 @@ class DataExportService {
         'id': '2',
         'firstName': 'Ayşe',
         'lastName': 'Demir',
+        'pseudonym': PseudonymService.generate('2'),
         'email': 'ayse.demir@email.com',
         'phone': '+90 555 987 6543',
         'primaryDiagnosis': 'Anksiyete Bozukluğu',
@@ -176,6 +204,7 @@ class DataExportService {
         'id': '1',
         'clientId': '1',
         'clientName': 'Ahmet Yılmaz',
+        'clientPseudonym': PseudonymService.generate('1'),
         'date': '2024-01-15',
         'duration': 60,
         'type': 'Terapi',
@@ -186,6 +215,7 @@ class DataExportService {
         'id': '2',
         'clientId': '2',
         'clientName': 'Ayşe Demir',
+        'clientPseudonym': PseudonymService.generate('2'),
         'date': '2024-01-10',
         'duration': 45,
         'type': 'Konsültasyon',
@@ -245,6 +275,7 @@ class DataExportService {
         'id': '1',
         'clientId': '1',
         'clientName': 'Ahmet Yılmaz',
+        'clientPseudonym': PseudonymService.generate('1'),
         'type': 'DAP',
         'date': '2024-01-15',
         'content': 'Data: Danışan depresif belirtiler gösteriyor...',
@@ -254,6 +285,7 @@ class DataExportService {
         'id': '2',
         'clientId': '2',
         'clientName': 'Ayşe Demir',
+        'clientPseudonym': PseudonymService.generate('2'),
         'type': 'SOAP',
         'date': '2024-01-10',
         'content': 'Subjective: Danışan anksiyete belirtileri yaşıyor...',
@@ -268,6 +300,7 @@ class DataExportService {
         'id': '1',
         'clientId': '1',
         'clientName': 'Ahmet Yılmaz',
+        'clientPseudonym': PseudonymService.generate('1'),
         'date': '2024-01-20',
         'time': '14:00',
         'duration': 60,
@@ -278,6 +311,7 @@ class DataExportService {
         'id': '2',
         'clientId': '2',
         'clientName': 'Ayşe Demir',
+        'clientPseudonym': PseudonymService.generate('2'),
         'date': '2024-01-22',
         'time': '16:00',
         'duration': 45,

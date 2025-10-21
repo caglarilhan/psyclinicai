@@ -1,0 +1,132 @@
+[
+  {
+    "id": "eu_paracetamol",
+    "genericName": "Paracetamol",
+    "brandName": "Panadol",
+    "activeIngredient": "Paracetamol",
+    "dosages": ["500mg", "1000mg"],
+    "forms": ["Tablet", "Syrup"],
+    "category": "Analgesic",
+    "indication": "Fever and pain relief",
+    "contraindications": ["Liver failure", "Alcoholism"],
+    "sideEffects": ["Nausea", "Liver damage"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/paracetamol.jpg",
+    "countrySpecific": {
+      "emaCode": "EMEA/H/C/000123",
+      "price": "€12.50",
+      "prescriptionRequired": false
+    },
+    "atcCode": "N02BE01",
+    "reimbursementCode": "EMA001",
+    "warnings": {
+      "TR": "Günde 4 gramı aşmayın. Alkol ile birlikte almayın.",
+      "EU": "Do not exceed 4g daily. Avoid with alcohol.",
+      "US": "Do not exceed 4g daily. Avoid with alcohol."
+    }
+  },
+  {
+    "id": "eu_fluoxetine",
+    "genericName": "Fluoxetine",
+    "brandName": "Prozac",
+    "activeIngredient": "Fluoxetine",
+    "dosages": ["20mg", "40mg"],
+    "forms": ["Capsule"],
+    "category": "Antidepressant",
+    "indication": "Depression, anxiety disorder",
+    "contraindications": ["MAO inhibitor use"],
+    "sideEffects": ["Insomnia", "Headache", "Nausea"],
+    "pregnancyCategory": "C",
+    "imageUrl": "assets/drug_images/fluoxetine.jpg",
+    "countrySpecific": {
+      "emaCode": "EMEA/H/C/000456",
+      "price": "€42.80",
+      "prescriptionRequired": true
+    },
+    "atcCode": "N06AB03",
+    "reimbursementCode": "EMA002",
+    "warnings": {
+      "TR": "İlk 2 hafta intihar düşünceleri artabilir.",
+      "EU": "Suicidal thoughts may increase in first 2 weeks.",
+      "US": "Suicidal thoughts may increase in first 2 weeks."
+    }
+  },
+  {
+    "id": "eu_omeprazole",
+    "genericName": "Omeprazole",
+    "brandName": "Losec",
+    "activeIngredient": "Omeprazole",
+    "dosages": ["10mg", "20mg", "40mg"],
+    "forms": ["Capsule", "Tablet"],
+    "category": "Proton Pump Inhibitor",
+    "indication": "Gastric ulcer, GERD",
+    "contraindications": ["Omeprazole allergy"],
+    "sideEffects": ["Headache", "Diarrhea", "Abdominal pain"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/omeprazole.jpg",
+    "countrySpecific": {
+      "emaCode": "EMEA/H/C/000789",
+      "price": "€25.90",
+      "prescriptionRequired": true
+    },
+    "atcCode": "A02BC01",
+    "reimbursementCode": "EMA003",
+    "warnings": {
+      "TR": "Yemeklerden 30 dakika önce alın.",
+      "EU": "Take 30 minutes before meals.",
+      "US": "Take 30 minutes before meals."
+    }
+  },
+  {
+    "id": "eu_metformin",
+    "genericName": "Metformin",
+    "brandName": "Glucophage",
+    "activeIngredient": "Metformin",
+    "dosages": ["500mg", "850mg", "1000mg"],
+    "forms": ["Tablet"],
+    "category": "Antidiabetic",
+    "indication": "Type 2 diabetes treatment",
+    "contraindications": ["Kidney failure", "Liver failure"],
+    "sideEffects": ["Nausea", "Diarrhea", "Metallic taste"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/metformin.jpg",
+    "countrySpecific": {
+      "emaCode": "EMEA/H/C/001234",
+      "price": "€32.50",
+      "prescriptionRequired": true
+    },
+    "atcCode": "A10BA02",
+    "reimbursementCode": "EMA004",
+    "warnings": {
+      "TR": "Yemeklerle birlikte alın. Böbrek fonksiyonlarını takip edin.",
+      "EU": "Take with meals. Monitor kidney function.",
+      "US": "Take with meals. Monitor kidney function."
+    }
+  },
+  {
+    "id": "eu_amoxicillin",
+    "genericName": "Amoxicillin",
+    "brandName": "Amoxil",
+    "activeIngredient": "Amoxicillin",
+    "dosages": ["250mg", "500mg", "875mg"],
+    "forms": ["Capsule", "Suspension"],
+    "category": "Antibiotic",
+    "indication": "Bacterial infections",
+    "contraindications": ["Penicillin allergy"],
+    "sideEffects": ["Diarrhea", "Nausea", "Skin rash"],
+    "pregnancyCategory": "B",
+    "imageUrl": "assets/drug_images/amoxicillin.jpg",
+    "countrySpecific": {
+      "emaCode": "EMEA/H/C/001567",
+      "price": "€16.75",
+      "prescriptionRequired": true
+    },
+    "atcCode": "J01CA04",
+    "reimbursementCode": "EMA005",
+    "warnings": {
+      "TR": "Tam dozda ve sürede alın. Alerji durumunda doktora başvurun.",
+      "EU": "Take full course. Consult doctor if allergic reaction occurs.",
+      "US": "Take full course. Consult doctor if allergic reaction occurs."
+    }
+  }
+]

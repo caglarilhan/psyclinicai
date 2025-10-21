@@ -2,6 +2,9 @@ PODS:
   - connectivity_plus (0.0.1):
     - Flutter
     - ReachabilitySwift
+  - CwlCatchException (2.2.1):
+    - CwlCatchExceptionSupport (~> 2.2.1)
+  - CwlCatchExceptionSupport (2.2.1)
   - DKImagePickerController/Core (4.3.9):
     - DKImagePickerController/ImageDataManager
     - DKImagePickerController/Resource
@@ -39,11 +42,78 @@ PODS:
   - Flutter (1.0.0)
   - flutter_local_notifications (0.0.1):
     - Flutter
+  - flutter_secure_storage (6.0.0):
+    - Flutter
+  - flutter_webrtc (0.11.3):
+    - Flutter
+    - WebRTC-SDK (= 125.6422.04)
+  - FMDB/Core (2.7.12)
+  - FMDB/SQLCipher (2.7.12):
+    - FMDB/Core
+    - SQLCipher (~> 4.6)
+  - google_mlkit_commons (0.11.0):
+    - Flutter
+    - MLKitVision
+  - google_mlkit_text_recognition (0.15.0):
+    - Flutter
+    - google_mlkit_commons
+    - GoogleMLKit/TextRecognition (~> 7.0.0)
+  - GoogleDataTransport (10.1.0):
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
+  - GoogleMLKit/MLKitCore (7.0.0):
+    - MLKitCommon (~> 12.0.0)
+  - GoogleMLKit/TextRecognition (7.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognition (~> 5.0.0)
+  - GoogleToolboxForMac/Defines (4.2.1)
+  - GoogleToolboxForMac/Logger (4.2.1):
+    - GoogleToolboxForMac/Defines (= 4.2.1)
+  - "GoogleToolboxForMac/NSData+zlib (4.2.1)":
+    - GoogleToolboxForMac/Defines (= 4.2.1)
+  - GoogleUtilities/Environment (8.1.0):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.1.0):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.1.0)
+  - GoogleUtilities/UserDefaults (8.1.0):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - GTMSessionFetcher/Core (3.5.0)
+  - image_picker_ios (0.0.1):
+    - Flutter
   - integration_test (0.0.1):
     - Flutter
   - local_auth_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
+  - MLImage (1.0.0-beta6)
+  - MLKitCommon (12.0.0):
+    - GoogleDataTransport (~> 10.0)
+    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
+    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
+    - GoogleUtilities/Logger (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
+  - MLKitTextRecognition (5.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitTextRecognitionCommon (= 4.0.0)
+    - MLKitVision (~> 8.0)
+  - MLKitTextRecognitionCommon (4.0.0):
+    - MLKitCommon (~> 12.0)
+    - MLKitVision (~> 8.0)
+  - MLKitVision (8.0.0):
+    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
+    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
+    - MLImage (= 1.0.0-beta6)
+    - MLKitCommon (~> 12.0)
+  - nanopb (3.30910.0):
+    - nanopb/decode (= 3.30910.0)
+    - nanopb/encode (= 3.30910.0)
+  - nanopb/decode (3.30910.0)
+  - nanopb/encode (3.30910.0)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -51,27 +121,102 @@ PODS:
     - Flutter
   - printing (1.0.0):
     - Flutter
+  - PromisesObjC (2.4.0)
   - ReachabilitySwift (5.2.4)
-  - SDWebImage (5.21.2):
-    - SDWebImage/Core (= 5.21.2)
-  - SDWebImage/Core (5.21.2)
+  - SDWebImage (5.21.3):
+    - SDWebImage/Core (= 5.21.3)
+  - SDWebImage/Core (5.21.3)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - speech_to_text (7.2.0):
+    - CwlCatchException
+    - Flutter
+    - FlutterMacOS
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
+  - sqflite_sqlcipher (0.0.1):
+    - Flutter
+    - FMDB/SQLCipher (~> 2.7.5)
+    - SQLCipher (= 4.10.0)
+  - SQLCipher (4.10.0):
+    - SQLCipher/standard (= 4.10.0)
+  - SQLCipher/common (4.10.0)
+  - SQLCipher/standard (4.10.0):
+    - SQLCipher/common
+  - Stripe (24.16.2):
+    - StripeApplePay (= 24.16.2)
+    - StripeCore (= 24.16.2)
+    - StripePayments (= 24.16.2)
+    - StripePaymentsUI (= 24.16.2)
+    - StripeUICore (= 24.16.2)
+  - stripe_ios (0.0.1):
+    - Flutter
+    - Stripe (~> 24.16.1)
+    - stripe_ios/stripe_ios (= 0.0.1)
+    - stripe_ios/stripe_objc (= 0.0.1)
+    - StripeApplePay (~> 24.16.1)
+    - StripeFinancialConnections (~> 24.16.1)
+    - StripePayments (~> 24.16.1)
+    - StripePaymentSheet (~> 24.16.1)
+    - StripePaymentsUI (~> 24.16.1)
+  - stripe_ios/stripe_ios (0.0.1):
+    - Flutter
+    - Stripe (~> 24.16.1)
+    - stripe_ios/stripe_objc
+    - StripeApplePay (~> 24.16.1)
+    - StripeFinancialConnections (~> 24.16.1)
+    - StripePayments (~> 24.16.1)
+    - StripePaymentSheet (~> 24.16.1)
+    - StripePaymentsUI (~> 24.16.1)
+  - stripe_ios/stripe_objc (0.0.1):
+    - Flutter
+    - Stripe (~> 24.16.1)
+    - StripeApplePay (~> 24.16.1)
+    - StripeFinancialConnections (~> 24.16.1)
+    - StripePayments (~> 24.16.1)
+    - StripePaymentSheet (~> 24.16.1)
+    - StripePaymentsUI (~> 24.16.1)
+  - StripeApplePay (24.16.2):
+    - StripeCore (= 24.16.2)
+  - StripeCore (24.16.2)
+  - StripeFinancialConnections (24.16.2):
+    - StripeCore (= 24.16.2)
+    - StripeUICore (= 24.16.2)
+  - StripePayments (24.16.2):
+    - StripeCore (= 24.16.2)
+    - StripePayments/Stripe3DS2 (= 24.16.2)
+  - StripePayments/Stripe3DS2 (24.16.2):
+    - StripeCore (= 24.16.2)
+  - StripePaymentSheet (24.16.2):
+    - StripeApplePay (= 24.16.2)
+    - StripeCore (= 24.16.2)
+    - StripePayments (= 24.16.2)
+    - StripePaymentsUI (= 24.16.2)
+  - StripePaymentsUI (24.16.2):
+    - StripeCore (= 24.16.2)
+    - StripePayments (= 24.16.2)
+    - StripeUICore (= 24.16.2)
+  - StripeUICore (24.16.2):
+    - StripeCore (= 24.16.2)
   - SwiftyGif (5.4.5)
   - url_launcher_ios (0.0.1):
     - Flutter
+  - WebRTC-SDK (125.6422.04)
 
 DEPENDENCIES:
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
+  - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
+  - google_mlkit_commons (from `.symlinks/plugins/google_mlkit_commons/ios`)
+  - google_mlkit_text_recognition (from `.symlinks/plugins/google_mlkit_text_recognition/ios`)
+  - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -79,16 +224,44 @@ DEPENDENCIES:
   - printing (from `.symlinks/plugins/printing/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - speech_to_text (from `.symlinks/plugins/speech_to_text/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
+  - sqflite_sqlcipher (from `.symlinks/plugins/sqflite_sqlcipher/ios`)
+  - stripe_ios (from `.symlinks/plugins/stripe_ios/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
 SPEC REPOS:
   trunk:
+    - CwlCatchException
+    - CwlCatchExceptionSupport
     - DKImagePickerController
     - DKPhotoGallery
+    - FMDB
+    - GoogleDataTransport
+    - GoogleMLKit
+    - GoogleToolboxForMac
+    - GoogleUtilities
+    - GTMSessionFetcher
+    - MLImage
+    - MLKitCommon
+    - MLKitTextRecognition
+    - MLKitTextRecognitionCommon
+    - MLKitVision
+    - nanopb
+    - PromisesObjC
     - ReachabilitySwift
     - SDWebImage
+    - SQLCipher
+    - Stripe
+    - StripeApplePay
+    - StripeCore
+    - StripeFinancialConnections
+    - StripePayments
+    - StripePaymentSheet
+    - StripePaymentsUI
+    - StripeUICore
     - SwiftyGif
+    - WebRTC-SDK
 
 EXTERNAL SOURCES:
   connectivity_plus:
@@ -99,6 +272,16 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_secure_storage:
+    :path: ".symlinks/plugins/flutter_secure_storage/ios"
+  flutter_webrtc:
+    :path: ".symlinks/plugins/flutter_webrtc/ios"
+  google_mlkit_commons:
+    :path: ".symlinks/plugins/google_mlkit_commons/ios"
+  google_mlkit_text_recognition:
+    :path: ".symlinks/plugins/google_mlkit_text_recognition/ios"
+  image_picker_ios:
+    :path: ".symlinks/plugins/image_picker_ios/ios"
   integration_test:
     :path: ".symlinks/plugins/integration_test/ios"
   local_auth_darwin:
@@ -113,30 +296,69 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+  speech_to_text:
+    :path: ".symlinks/plugins/speech_to_text/darwin"
   sqflite_darwin:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
+  sqflite_sqlcipher:
+    :path: ".symlinks/plugins/sqflite_sqlcipher/ios"
+  stripe_ios:
+    :path: ".symlinks/plugins/stripe_ios/ios"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
   connectivity_plus: 481668c94744c30c53b8895afb39159d1e619bdf
+  CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
+  CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: 9b3292d7c8bc68c8a7bf8eb78f730e49c8efc517
+  file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_local_notifications: ad39620c743ea4c15127860f4b5641649a988100
+  flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
+  flutter_webrtc: 89f078a5050779eaa4a6a4f472954737bb91f39f
+  FMDB: 728731dd336af3936ce00f91d9d8495f5718a0e6
+  google_mlkit_commons: 2abe6a70e1824e431d16a51085cb475b672c8aab
+  google_mlkit_text_recognition: ec2122ec89bfe0d7200763336a6e4ef44810674c
+  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
+  GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318
+  GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
+  GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
+  GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
+  image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   local_auth_darwin: d2e8c53ef0c4f43c646462e3415432c4dab3ae19
+  MLImage: 0ad1c5f50edd027672d8b26b0fee78a8b4a0fc56
+  MLKitCommon: 07c2c33ae5640e5380beaaa6e4b9c249a205542d
+  MLKitTextRecognition: 3b41f3ff084a79afb214408d25d2068d77ab322c
+  MLKitTextRecognitionCommon: cd44577a8c506fc6bba065096de03bec0d01a213
+  MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
+  nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
+  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   ReachabilitySwift: 32793e867593cfc1177f5d16491e3a197d2fccda
-  SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
+  SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
   share_plus: de6030e33b4e106470e09322d87cf2a4258d2d1d
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
+  speech_to_text: 3b313d98516d3d0406cea424782ec25470c59d19
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
+  sqflite_sqlcipher: 8e5bdaae6b2c254f8a277a564f07bc4e2a8642a3
+  SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
+  Stripe: ae1b368097280ad027c1ec4a817a0a78bb74a6ee
+  stripe_ios: 4d9a7e2f67c5edacc634a0d0565603e081856b4f
+  StripeApplePay: 66dc43ec1284904a2cf4c5a0906f86296d23afbd
+  StripeCore: f3a62397cecaf4da1827bcf07de7312ec1f3b96e
+  StripeFinancialConnections: ca4584ba0e08649787d7672b9ca4bb3c972e3d43
+  StripePayments: b3e7817d821ceedd469008d17d94a1494ff1b624
+  StripePaymentSheet: f4f5b71cef665f05a185c29b2d4b59e7dd8c117d
+  StripePaymentsUI: d489e73bf790da1c74e642021475b1a09a4a4500
+  StripeUICore: 723e5024c83acb5ba5e71335e110a471b182a74d
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  WebRTC-SDK: c3d69a87e7185fad3568f6f3cff7c9ac5890acf3
 
 PODFILE CHECKSUM: fe2d3f4cdadcf3f589d2e1b0fea44443eec8fc34
 

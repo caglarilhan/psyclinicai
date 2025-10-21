@@ -37,7 +37,7 @@ class ProLineChart extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final chartHeight = height ?? 200.0;
-    final chartPadding = padding ?? AppSpacing.paddingAllMD;
+    final chartPadding = padding ?? AppSpacing.paddingAll(AppSpacing.md);
 
     return Container(
       padding: chartPadding,
@@ -54,7 +54,7 @@ class ProLineChart extends StatelessWidget {
                 ),
               ),
             if (subtitle != null) ...[
-              AppSpacing.heightXS,
+              SizedBox(height: AppSpacing.xs),
               Text(
                 subtitle!,
                 style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -62,7 +62,7 @@ class ProLineChart extends StatelessWidget {
                 ),
               ),
             ],
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           SizedBox(
             height: chartHeight,
@@ -215,7 +215,7 @@ class ProBarChart extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final chartHeight = height ?? 200.0;
-    final chartPadding = padding ?? AppSpacing.paddingAllMD;
+    final chartPadding = padding ?? AppSpacing.paddingAll(AppSpacing.md);
 
     return Container(
       padding: chartPadding,
@@ -232,7 +232,7 @@ class ProBarChart extends StatelessWidget {
                 ),
               ),
             if (subtitle != null) ...[
-              AppSpacing.heightXS,
+              SizedBox(height: AppSpacing.xs),
               Text(
                 subtitle!,
                 style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -240,7 +240,7 @@ class ProBarChart extends StatelessWidget {
                 ),
               ),
             ],
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           SizedBox(
             height: chartHeight,
@@ -376,7 +376,7 @@ class ProPieChart extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final chartRadius = radius ?? 100.0;
-    final chartPadding = padding ?? AppSpacing.paddingAllMD;
+    final chartPadding = padding ?? AppSpacing.paddingAll(AppSpacing.md);
 
     final colors = [
       AppColors.primary,
@@ -403,7 +403,7 @@ class ProPieChart extends StatelessWidget {
                 ),
               ),
             if (subtitle != null) ...[
-              AppSpacing.heightXS,
+              SizedBox(height: AppSpacing.xs),
               Text(
                 subtitle!,
                 style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -411,7 +411,7 @@ class ProPieChart extends StatelessWidget {
                 ),
               ),
             ],
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           Row(
             children: [
@@ -444,7 +444,7 @@ class ProPieChart extends StatelessWidget {
                   ),
                 ),
               ),
-              AppSpacing.widthLG,
+              SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,7 +461,7 @@ class ProPieChart extends StatelessWidget {
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                          AppSpacing.widthSM,
+                          SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               e.value.label,
@@ -531,7 +531,7 @@ class ProChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardPadding = padding ?? AppSpacing.paddingAllLG;
+    final cardPadding = padding ?? AppSpacing.paddingAll(AppSpacing.lg);
     final cardBorderRadius = borderRadius ?? AppSpacing.cardRadius;
     final cardBackgroundColor = backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
 
@@ -573,7 +573,7 @@ class ProChartCard extends StatelessWidget {
                           ),
                         ),
                       if (subtitle != null) ...[
-                        AppSpacing.heightXS,
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           subtitle!,
                           style: AppTypography.bodySmall.copyWith(
@@ -587,7 +587,7 @@ class ProChartCard extends StatelessWidget {
                 if (action != null) action!,
               ],
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
           ],
           child,
         ],

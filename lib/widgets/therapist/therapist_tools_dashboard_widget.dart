@@ -44,8 +44,7 @@ class TherapistToolsDashboardWidget extends StatelessWidget {
                   title: 'Hedef/Plan',
                   subtitle: 'SMART',
                   onTap: () {
-                    final plan = context.read<TreatmentPlanService>().getOrCreatePlan(
-                          clientId: 'demo_client_001', clinicianId: 'demo_therapist_001');
+                    final plan = context.read<TreatmentPlanService>().getPlan('demo_client_001');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Hedef sayısı: ${plan.goals.length}')),
                     );

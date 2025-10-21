@@ -1,84 +1,372 @@
-import 'package:flutter/material.dart';
-
-// Enums
-enum SupervisionType { individual, group, caseReview, skillAssessment, crisis, supervision, crisisManagement, documentationReview }
-enum SupervisionStatus { pending, inProgress, completed, cancelled, requiresFollowUp, scheduled }
-enum PerformanceRating { poor, fair, good, veryGood, excellent }
-enum SupervisionActivityType { sessionCreated, sessionCompleted, feedbackGiven, performanceUpdated }
-
-// Main Models
 class SupervisionSession {
   final String id;
-  final String title;
   final String supervisorId;
-  final String therapistId;
-  final String therapistName;
-  final String? clientId;
+  final String superviseeId;
+  final DateTime scheduledAt;
+  final Duration duration;
   final SupervisionType type;
   final SupervisionStatus status;
-  final DateTime scheduledDate;
-  final DateTime? actualDate;
-  final Duration duration;
-  final String notes;
-  final List<String> topics;
-  final List<String> actionItems;
-  final Map<String, dynamic> aiSummary;
-  final PerformanceRating? performanceRating;
+  final String? agenda;
+  final String? notes;
   final String? feedback;
+  final String? actionItems;
+  final DateTime? startedAt;
+  final DateTime? endedAt;
+  final List<String> attendees;
+  final String? location;
+  final bool isTelehealth;
+  final String? telehealthLink;
   final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
-  SupervisionSession({
+  const SupervisionSession({
     required this.id,
-    required this.title,
     required this.supervisorId,
-    required this.therapistId,
-    required this.therapistName,
-    this.clientId,
-    required this.type,
-    required this.status,
-    required this.scheduledDate,
-    this.actualDate,
+    required this.superviseeId,
+    required this.scheduledAt,
     required this.duration,
-    required this.notes,
-    required this.topics,
-    required this.actionItems,
-    required this.aiSummary,
-    this.performanceRating,
+    required this.type,
+    this.status = SupervisionStatus.scheduled,
+    this.agenda,
+    this.notes,
     this.feedback,
+    this.actionItems,
+    this.startedAt,
+    this.endedAt,
+    this.attendees = const [],
+    this.location,
+    this.isTelehealth = false,
+    this.telehealthLink,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
   });
 
   factory SupervisionSession.fromJson(Map<String, dynamic> json) {
     return SupervisionSession(
-      id: json['id'],
-      title: json['title'],
-      supervisorId: json['supervisorId'],
-      therapistId: json['therapistId'],
-      therapistName: json['therapistName'],
-      clientId: json['clientId'],
+      id: json['id'] as String,
+      supervisorId: json['supervisorId'] as String,
+      superviseeId: json['superviseeId'] as String,
+      scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+      duration: Duration(minutes: json['duration'] as int),
       type: SupervisionType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
+        (e) => e.name == json['type'],
+        orElse: () => SupervisionType.individual,
       ),
       status: SupervisionStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
+        (e) => e.name == json['status'],
+        orElse: () => SupervisionStatus.scheduled,
       ),
-      scheduledDate: DateTime.parse(json['scheduledDate']),
-      actualDate: json['actualDate'] != null ? DateTime.parse(json['actualDate']) : null,
-      duration: Duration(minutes: json['durationMinutes'] ?? 60),
-      notes: json['notes'] ?? '',
-      topics: List<String>.from(json['topics'] ?? []),
-      actionItems: List<String>.from(json['actionItems'] ?? []),
-      aiSummary: Map<String, dynamic>.from(json['aiSummary'] ?? {}),
-      performanceRating: json['performanceRating'] != null
-          ? PerformanceRating.values.firstWhere(
-              (e) => e.toString().split('.').last == json['performanceRating'],
-            )
+      agenda: json['agenda'] as String?,
+      notes: json['notes'] as String?,
+      feedback: json['feedback'] as String?,
+      actionItems: json['actionItems'] as String?,
+      startedAt: json['startedAt'] != null 
+          ? DateTime.parse(json['startedAt'] as String) 
           : null,
-      feedback: json['feedback'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      endedAt: json['endedAt'] != null 
+          ? DateTime.parse(json['endedAt'] as String) 
+          : null,
+      attendees: List<String>.from(json['attendees'] as List? ?? []),
+      location: json['location'] as String?,
+      isTelehealth: json['isTelehealth'] as bool? ?? false,
+      telehealthLink: json['telehealthLink'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt'] as String) 
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'supervisorId': supervisorId,
+      'superviseeId': superviseeId,
+      'scheduledAt': scheduledAt.toIso8601String(),
+      'duration': duration.inMinutes,
+      'type': type.name,
+      'status': status.name,
+      'agenda': agenda,
+      'notes': notes,
+      'feedback': feedback,
+      'actionItems': actionItems,
+      'startedAt': startedAt?.toIso8601String(),
+      'endedAt': endedAt?.toIso8601String(),
+      'attendees': attendees,
+      'location': location,
+      'isTelehealth': isTelehealth,
+      'telehealthLink': telehealthLink,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+
+  // Session duration calculation
+  Duration? get actualDuration {
+    if (startedAt == null || endedAt == null) return null;
+    return endedAt!.difference(startedAt!);
+  }
+
+  // Check if session is overdue
+  bool get isOverdue {
+    return status == SupervisionStatus.scheduled && 
+           scheduledAt.isBefore(DateTime.now());
+  }
+}
+
+class SupervisionNote {
+  final String id;
+  final String sessionId;
+  final String supervisorId;
+  final DateTime createdAt;
+  final String content;
+  final NoteType type;
+  final List<String> tags;
+  final bool isConfidential;
+  final String? followUpAction;
+
+  const SupervisionNote({
+    required this.id,
+    required this.sessionId,
+    required this.supervisorId,
+    required this.createdAt,
+    required this.content,
+    required this.type,
+    this.tags = const [],
+    this.isConfidential = false,
+    this.followUpAction,
+  });
+
+  factory SupervisionNote.fromJson(Map<String, dynamic> json) {
+    return SupervisionNote(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      supervisorId: json['supervisorId'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      content: json['content'] as String,
+      type: NoteType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => NoteType.general,
+      ),
+      tags: List<String>.from(json['tags'] as List? ?? []),
+      isConfidential: json['isConfidential'] as bool? ?? false,
+      followUpAction: json['followUpAction'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sessionId': sessionId,
+      'supervisorId': supervisorId,
+      'createdAt': createdAt.toIso8601String(),
+      'content': content,
+      'type': type.name,
+      'tags': tags,
+      'isConfidential': isConfidential,
+      'followUpAction': followUpAction,
+    };
+  }
+}
+
+class SupervisionGoal {
+  final String id;
+  final String sessionId;
+  final String description;
+  final GoalStatus status;
+  final DateTime createdAt;
+  final DateTime? achievedAt;
+  final String? notes;
+
+  const SupervisionGoal({
+    required this.id,
+    required this.sessionId,
+    required this.description,
+    this.status = GoalStatus.pending,
+    required this.createdAt,
+    this.achievedAt,
+    this.notes,
+  });
+
+  factory SupervisionGoal.fromJson(Map<String, dynamic> json) {
+    return SupervisionGoal(
+      id: json['id'] as String,
+      sessionId: json['sessionId'] as String,
+      description: json['description'] as String,
+      status: GoalStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => GoalStatus.pending,
+      ),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      achievedAt: json['achievedAt'] != null 
+          ? DateTime.parse(json['achievedAt'] as String) 
+          : null,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sessionId': sessionId,
+      'description': description,
+      'status': status.name,
+      'createdAt': createdAt.toIso8601String(),
+      'achievedAt': achievedAt?.toIso8601String(),
+      'notes': notes,
+    };
+  }
+}
+
+class TeamMember {
+  final String id;
+  final String name;
+  final String email;
+  final String phone;
+  final TeamRole role;
+  final List<String> specialties;
+  final String? licenseNumber;
+  final DateTime? licenseExpiry;
+  final List<String> certifications;
+  final DateTime joinedAt;
+  final bool isActive;
+  final String? supervisorId;
+  final Map<String, dynamic> metadata;
+
+  const TeamMember({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.role,
+    this.specialties = const [],
+    this.licenseNumber,
+    this.licenseExpiry,
+    this.certifications = const [],
+    required this.joinedAt,
+    this.isActive = true,
+    this.supervisorId,
+    this.metadata = const {},
+  });
+
+  factory TeamMember.fromJson(Map<String, dynamic> json) {
+    return TeamMember(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String,
+      role: TeamRole.values.firstWhere(
+        (e) => e.name == json['role'],
+        orElse: () => TeamRole.psychologist,
+      ),
+      specialties: List<String>.from(json['specialties'] as List? ?? []),
+      licenseNumber: json['licenseNumber'] as String?,
+      licenseExpiry: json['licenseExpiry'] != null 
+          ? DateTime.parse(json['licenseExpiry'] as String) 
+          : null,
+      certifications: List<String>.from(json['certifications'] as List? ?? []),
+      joinedAt: DateTime.parse(json['joinedAt'] as String),
+      isActive: json['isActive'] as bool? ?? true,
+      supervisorId: json['supervisorId'] as String?,
+      metadata: Map<String, dynamic>.from(json['metadata'] as Map? ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'role': role.name,
+      'specialties': specialties,
+      'licenseNumber': licenseNumber,
+      'licenseExpiry': licenseExpiry?.toIso8601String(),
+      'certifications': certifications,
+      'joinedAt': joinedAt.toIso8601String(),
+      'isActive': isActive,
+      'supervisorId': supervisorId,
+      'metadata': metadata,
+    };
+  }
+
+  // Check if license is expired
+  bool get isLicenseExpired {
+    if (licenseExpiry == null) return false;
+    return licenseExpiry!.isBefore(DateTime.now());
+  }
+
+  // Check if license expires soon (within 30 days)
+  bool get isLicenseExpiringSoon {
+    if (licenseExpiry == null) return false;
+    final thirtyDaysFromNow = DateTime.now().add(const Duration(days: 30));
+    return licenseExpiry!.isAfter(DateTime.now()) && 
+           licenseExpiry!.isBefore(thirtyDaysFromNow);
+  }
+}
+
+class TeamMeeting {
+  final String id;
+  final String title;
+  final String description;
+  final DateTime scheduledAt;
+  final Duration duration;
+  final String location;
+  final List<String> attendees;
+  final String organizedBy;
+  final MeetingType type;
+  final MeetingStatus status;
+  final String? agenda;
+  final String? notes;
+  final List<String> actionItems;
+  final DateTime? startedAt;
+  final DateTime? endedAt;
+
+  const TeamMeeting({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.scheduledAt,
+    required this.duration,
+    required this.location,
+    required this.attendees,
+    required this.organizedBy,
+    required this.type,
+    this.status = MeetingStatus.scheduled,
+    this.agenda,
+    this.notes,
+    this.actionItems = const [],
+    this.startedAt,
+    this.endedAt,
+  });
+
+  factory TeamMeeting.fromJson(Map<String, dynamic> json) {
+    return TeamMeeting(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+      duration: Duration(minutes: json['duration'] as int),
+      location: json['location'] as String,
+      attendees: List<String>.from(json['attendees'] as List),
+      organizedBy: json['organizedBy'] as String,
+      type: MeetingType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => MeetingType.team,
+      ),
+      status: MeetingStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => MeetingStatus.scheduled,
+      ),
+      agenda: json['agenda'] as String?,
+      notes: json['notes'] as String?,
+      actionItems: List<String>.from(json['actionItems'] as List? ?? []),
+      startedAt: json['startedAt'] != null 
+          ? DateTime.parse(json['startedAt'] as String) 
+          : null,
+      endedAt: json['endedAt'] != null 
+          ? DateTime.parse(json['endedAt'] as String) 
+          : null,
     );
   }
 
@@ -86,386 +374,80 @@ class SupervisionSession {
     return {
       'id': id,
       'title': title,
-      'supervisorId': supervisorId,
-      'therapistId': therapistId,
-      'therapistName': therapistName,
-      'clientId': clientId,
-      'type': type.toString().split('.').last,
-      'status': status.toString().split('.').last,
-      'scheduledDate': scheduledDate.toIso8601String(),
-      'actualDate': actualDate?.toIso8601String(),
-      'durationMinutes': duration.inMinutes,
-      'notes': notes,
-      'topics': topics,
-      'actionItems': actionItems,
-      'aiSummary': aiSummary,
-      'performanceRating': performanceRating?.toString().split('.').last,
-      'feedback': feedback,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
-  bool get isOverdue => 
-      status == SupervisionStatus.pending && 
-      scheduledDate.isBefore(DateTime.now());
-
-  bool get isToday => 
-      scheduledDate.year == DateTime.now().year &&
-      scheduledDate.month == DateTime.now().month &&
-      scheduledDate.day == DateTime.now().day;
-
-  String get statusText {
-    switch (status) {
-      case SupervisionStatus.pending:
-        return 'Bekliyor';
-      case SupervisionStatus.inProgress:
-        return 'Devam Ediyor';
-      case SupervisionStatus.completed:
-        return 'Tamamlandı';
-      case SupervisionStatus.cancelled:
-        return 'İptal Edildi';
-      case SupervisionStatus.requiresFollowUp:
-        return 'Takip Gerekiyor';
-      case SupervisionStatus.scheduled:
-        return 'Planlandı';
-    }
-  }
-
-  String get typeText {
-    switch (type) {
-      case SupervisionType.individual:
-        return 'Bireysel';
-      case SupervisionType.group:
-        return 'Grup';
-      case SupervisionType.caseReview:
-        return 'Vaka İncelemesi';
-      case SupervisionType.skillAssessment:
-        return 'Beceri Değerlendirmesi';
-      case SupervisionType.crisis:
-        return 'Kriz';
-      case SupervisionType.supervision:
-        return 'Süpervizyon';
-      case SupervisionType.crisisManagement:
-        return 'Kriz Yönetimi';
-      case SupervisionType.documentationReview:
-        return 'Dokümantasyon İncelemesi';
-    }
-  }
-
-  SupervisionSession copyWith({
-    String? id,
-    String? title,
-    String? supervisorId,
-    String? therapistId,
-    String? therapistName,
-    String? clientId,
-    SupervisionType? type,
-    SupervisionStatus? status,
-    DateTime? scheduledDate,
-    DateTime? actualDate,
-    Duration? duration,
-    String? notes,
-    List<String>? topics,
-    List<String>? actionItems,
-    Map<String, dynamic>? aiSummary,
-    PerformanceRating? performanceRating,
-    String? feedback,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return SupervisionSession(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      supervisorId: supervisorId ?? this.supervisorId,
-      therapistId: therapistId ?? this.therapistId,
-      therapistName: therapistName ?? this.therapistName,
-      clientId: clientId ?? this.clientId,
-      type: type ?? this.type,
-      status: status ?? this.status,
-      scheduledDate: scheduledDate ?? this.scheduledDate,
-      actualDate: actualDate ?? this.actualDate,
-      duration: duration ?? this.duration,
-      notes: notes ?? this.notes,
-      topics: topics ?? this.topics,
-      actionItems: actionItems ?? this.actionItems,
-      aiSummary: aiSummary ?? this.aiSummary,
-      performanceRating: performanceRating ?? this.performanceRating,
-      feedback: feedback ?? this.feedback,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-}
-
-class TherapistPerformance {
-  final String id;
-  final String therapistId;
-  final String therapistName;
-  final String specialization;
-  final double successRate;
-  final int caseCount;
-  final double averageRating;
-  final double improvementRate;
-  final String notes;
-  final DateTime lastUpdated;
-  final bool isActive;
-  final List<String> strengths;
-  final List<String> improvementAreas;
-  final Map<String, double> skillScores;
-
-  TherapistPerformance({
-    required this.id,
-    required this.therapistId,
-    required this.therapistName,
-    required this.specialization,
-    required this.successRate,
-    required this.caseCount,
-    required this.averageRating,
-    required this.improvementRate,
-    required this.notes,
-    required this.lastUpdated,
-    required this.isActive,
-    required this.strengths,
-    required this.improvementAreas,
-    required this.skillScores,
-  });
-
-  factory TherapistPerformance.fromJson(Map<String, dynamic> json) {
-    return TherapistPerformance(
-      id: json['id'],
-      therapistId: json['therapistId'],
-      therapistName: json['therapistName'],
-      specialization: json['specialization'] ?? '',
-      successRate: json['successRate']?.toDouble() ?? 0.0,
-      caseCount: json['caseCount'] ?? 0,
-      averageRating: json['averageRating']?.toDouble() ?? 0.0,
-      improvementRate: json['improvementRate']?.toDouble() ?? 0.0,
-      notes: json['notes'] ?? '',
-      lastUpdated: DateTime.parse(json['lastUpdated']),
-      isActive: json['isActive'] ?? true,
-      strengths: List<String>.from(json['strengths'] ?? []),
-      improvementAreas: List<String>.from(json['improvementAreas'] ?? []),
-      skillScores: Map<String, double>.from(json['skillScores'] ?? {}),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'therapistId': therapistId,
-      'therapistName': therapistName,
-      'specialization': specialization,
-      'successRate': successRate,
-      'caseCount': caseCount,
-      'averageRating': averageRating,
-      'improvementRate': improvementRate,
-      'notes': notes,
-      'lastUpdated': lastUpdated.toIso8601String(),
-      'isActive': isActive,
-      'strengths': strengths,
-      'improvementAreas': improvementAreas,
-      'skillScores': skillScores,
-    };
-  }
-
-  String get performanceLevel {
-    if (successRate >= 0.9) return 'Mükemmel';
-    if (successRate >= 0.8) return 'Çok İyi';
-    if (successRate >= 0.7) return 'İyi';
-    if (successRate >= 0.6) return 'Orta';
-    return 'Geliştirilmeli';
-  }
-
-  Color get performanceColor {
-    if (successRate >= 0.9) return Colors.green;
-    if (successRate >= 0.8) return Colors.lightGreen;
-    if (successRate >= 0.7) return Colors.orange;
-    if (successRate >= 0.6) return Colors.deepOrange;
-    return Colors.red;
-  }
-
-  TherapistPerformance copyWith({
-    String? id,
-    String? therapistId,
-    String? therapistName,
-    String? specialization,
-    double? successRate,
-    int? caseCount,
-    double? averageRating,
-    double? improvementRate,
-    String? notes,
-    DateTime? lastUpdated,
-    bool? isActive,
-    List<String>? strengths,
-    List<String>? improvementAreas,
-    Map<String, double>? skillScores,
-  }) {
-    return TherapistPerformance(
-      id: id ?? this.id,
-      therapistId: therapistId ?? this.therapistId,
-      therapistName: therapistName ?? this.therapistName,
-      specialization: specialization ?? this.specialization,
-      successRate: successRate ?? this.successRate,
-      caseCount: caseCount ?? this.caseCount,
-      averageRating: averageRating ?? this.averageRating,
-      improvementRate: improvementRate ?? this.improvementRate,
-      notes: notes ?? this.notes,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
-      isActive: isActive ?? this.isActive,
-      strengths: strengths ?? this.strengths,
-      improvementAreas: improvementAreas ?? this.improvementAreas,
-      skillScores: skillScores ?? this.skillScores,
-    );
-  }
-}
-
-class QualityMetrics {
-  final double averageScore;
-  final double qualityRate;
-  final int totalSessions;
-  final int successfulSessions;
-  final List<String> improvementAreas;
-  final Map<String, double> metricScores;
-  final DateTime lastUpdated;
-
-  QualityMetrics({
-    required this.averageScore,
-    required this.qualityRate,
-    required this.totalSessions,
-    required this.successfulSessions,
-    required this.improvementAreas,
-    required this.metricScores,
-    required this.lastUpdated,
-  });
-
-  factory QualityMetrics.empty() {
-    return QualityMetrics(
-      averageScore: 0.0,
-      qualityRate: 0.0,
-      totalSessions: 0,
-      successfulSessions: 0,
-      improvementAreas: [],
-      metricScores: {},
-      lastUpdated: DateTime.now(),
-    );
-  }
-
-  factory QualityMetrics.fromJson(Map<String, dynamic> json) {
-    return QualityMetrics(
-      averageScore: json['averageScore']?.toDouble() ?? 0.0,
-      qualityRate: json['qualityRate']?.toDouble() ?? 0.0,
-      totalSessions: json['totalSessions'] ?? 0,
-      successfulSessions: json['successfulSessions'] ?? 0,
-      improvementAreas: List<String>.from(json['improvementAreas'] ?? []),
-      metricScores: Map<String, double>.from(json['metricScores'] ?? {}),
-      lastUpdated: DateTime.parse(json['lastUpdated']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'averageScore': averageScore,
-      'qualityRate': qualityRate,
-      'totalSessions': totalSessions,
-      'successfulSessions': successfulSessions,
-      'improvementAreas': improvementAreas,
-      'metricScores': metricScores,
-      'lastUpdated': lastUpdated.toIso8601String(),
-    };
-  }
-
-  String get qualityLevel {
-    if (qualityRate >= 0.9) return 'Mükemmel';
-    if (qualityRate >= 0.8) return 'Çok İyi';
-    if (qualityRate >= 0.7) return 'İyi';
-    if (qualityRate >= 0.6) return 'Orta';
-    return 'Geliştirilmeli';
-  }
-
-  Color get qualityColor {
-    if (qualityRate >= 0.9) return Colors.green;
-    if (qualityRate >= 0.8) return Colors.lightGreen;
-    if (qualityRate >= 0.7) return Colors.orange;
-    if (qualityRate >= 0.6) return Colors.deepOrange;
-    return Colors.red;
-  }
-}
-
-class QualityMetric {
-  final String id;
-  final String metricName;
-  final String description;
-  final String category;
-  final double score; // 0.0 - 1.0
-  final String trend; // e.g., ↑%5, ↓%3, stabil
-  final double? targetValue; // 0.0 - 1.0
-  final double? weight; // 0.0 - 1.0
-  final String? notes;
-
-  QualityMetric({
-    required this.id,
-    required this.metricName,
-    required this.description,
-    required this.category,
-    required this.score,
-    required this.trend,
-    this.targetValue,
-    this.weight,
-    this.notes,
-  });
-}
-
-class SupervisionActivity {
-  final String id;
-  final SupervisionActivityType type;
-  final String description;
-  final DateTime timestamp;
-  final String userId;
-  final String userName;
-  final String? sessionId;
-  final String? therapistId;
-  final Map<String, dynamic> metadata;
-
-  SupervisionActivity({
-    required this.id,
-    required this.type,
-    required this.description,
-    required this.timestamp,
-    required this.userId,
-    required this.userName,
-    this.sessionId,
-    this.therapistId,
-    this.metadata = const {},
-  });
-
-  factory SupervisionActivity.fromJson(Map<String, dynamic> json) {
-    return SupervisionActivity(
-      id: json['id'],
-      type: SupervisionActivityType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
-      ),
-      description: json['description'],
-      timestamp: DateTime.parse(json['timestamp']),
-      userId: json['userId'],
-      userName: json['userName'],
-      sessionId: json['sessionId'],
-      therapistId: json['therapistId'],
-      metadata: Map<String, dynamic>.from(json['metadata'] ?? {}),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type.toString().split('.').last,
       'description': description,
-      'timestamp': timestamp.toIso8601String(),
-      'userId': userId,
-      'userName': userName,
-      'sessionId': sessionId,
-      'therapistId': therapistId,
-      'metadata': metadata,
+      'scheduledAt': scheduledAt.toIso8601String(),
+      'duration': duration.inMinutes,
+      'location': location,
+      'attendees': attendees,
+      'organizedBy': organizedBy,
+      'type': type.name,
+      'status': status.name,
+      'agenda': agenda,
+      'notes': notes,
+      'actionItems': actionItems,
+      'startedAt': startedAt?.toIso8601String(),
+      'endedAt': endedAt?.toIso8601String(),
     };
   }
+}
+
+enum SupervisionType {
+  individual,
+  group,
+  peer,
+  caseReview,
+  training,
+}
+
+enum SupervisionStatus {
+  scheduled,
+  inProgress,
+  completed,
+  cancelled,
+  rescheduled,
+}
+
+enum NoteType {
+  general,
+  clinical,
+  progress,
+  crisis,
+  supervision,
+  administrative,
+}
+
+enum GoalStatus {
+  pending,
+  inProgress,
+  achieved,
+  modified,
+  discontinued,
+}
+
+enum TeamRole {
+  psychiatrist,
+  psychologist,
+  therapist,
+  counselor,
+  socialWorker,
+  nurse,
+  administrator,
+  intern,
+  trainee,
+}
+
+enum MeetingType {
+  team,
+  caseReview,
+  training,
+  administrative,
+  crisis,
+}
+
+enum MeetingStatus {
+  scheduled,
+  inProgress,
+  completed,
+  cancelled,
+  rescheduled,
 }

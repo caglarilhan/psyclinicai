@@ -1,334 +1,418 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/treatment_plan_models.dart';
-import 'database_service.dart';
 
 class TreatmentPlanService {
   static final TreatmentPlanService _instance = TreatmentPlanService._internal();
   factory TreatmentPlanService() => _instance;
   TreatmentPlanService._internal();
 
-  final DatabaseService _databaseService = DatabaseService();
-  List<TreatmentPlan> _treatmentPlans = [];
+  final List<TreatmentPlan> _treatmentPlans = [];
+  final List<TreatmentProgress> _progressRecords = [];
 
   // Initialize service
   Future<void> initialize() async {
     await _loadTreatmentPlans();
+    await _loadProgressRecords();
   }
 
-  // Load treatment plans from database
+  // Load treatment plans from storage
   Future<void> _loadTreatmentPlans() async {
     try {
-      // TODO: Implement database loading
-      _treatmentPlans = [];
+      final prefs = await SharedPreferences.getInstance();
+      final plansJson = prefs.getStringList('treatment_plans') ?? [];
+      _treatmentPlans.clear();
+      
+      for (final planJson in plansJson) {
+        final plan = TreatmentPlan.fromJson(jsonDecode(planJson));
+        _treatmentPlans.add(plan);
+      }
     } catch (e) {
       print('Error loading treatment plans: $e');
-      _treatmentPlans = [];
+      _treatmentPlans.clear();
     }
   }
 
-  // Save treatment plan to database
-  Future<void> _saveTreatmentPlan(TreatmentPlan plan) async {
+  // Save treatment plans to storage
+  Future<void> _saveTreatmentPlans() async {
     try {
-      // TODO: Implement database saving
-      _treatmentPlans.add(plan);
+      final prefs = await SharedPreferences.getInstance();
+      final plansJson = _treatmentPlans
+          .map((plan) => jsonEncode(plan.toJson()))
+          .toList();
+      await prefs.setStringList('treatment_plans', plansJson);
     } catch (e) {
-      print('Error saving treatment plan: $e');
+      print('Error saving treatment plans: $e');
     }
   }
 
-  // Get all treatment plans
-  List<TreatmentPlan> getAllTreatmentPlans() {
-    return List.unmodifiable(_treatmentPlans);
-  }
-
-  // Get treatment plans by client
-  List<TreatmentPlan> getTreatmentPlansByClient(String clientId) {
-    return _treatmentPlans.where((plan) => plan.clientId == clientId).toList();
-  }
-
-  // Get treatment plans by therapist
-  List<TreatmentPlan> getTreatmentPlansByTherapist(String therapistId) {
-    return _treatmentPlans.where((plan) => plan.therapistId == therapistId).toList();
-  }
-
-  // Get treatment plan by ID
-  TreatmentPlan? getTreatmentPlanById(String id) {
+  // Load progress records from storage
+  Future<void> _loadProgressRecords() async {
     try {
-      return _treatmentPlans.firstWhere((plan) => plan.id == id);
+      final prefs = await SharedPreferences.getInstance();
+      final progressJson = prefs.getStringList('treatment_progress') ?? [];
+      _progressRecords.clear();
+      
+      for (final progress in progressJson) {
+        final progressRecord = TreatmentProgress.fromJson(jsonDecode(progress));
+        _progressRecords.add(progressRecord);
+      }
     } catch (e) {
-      return null;
+      print('Error loading treatment progress: $e');
+      _progressRecords.clear();
+    }
+  }
+
+  // Save progress records to storage
+  Future<void> _saveProgressRecords() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final progressJson = _progressRecords
+          .map((progress) => jsonEncode(progress.toJson()))
+          .toList();
+      await prefs.setStringList('treatment_progress', progressJson);
+    } catch (e) {
+      print('Error saving treatment progress: $e');
     }
   }
 
   // Create new treatment plan
-  Future<TreatmentPlan> createTreatmentPlan(TreatmentPlan plan) async {
-    await _saveTreatmentPlan(plan);
+  Future<TreatmentPlan> createTreatmentPlan({
+    required String patientId,
+    required String clinicianId,
+    required String primaryDiagnosis,
+    List<String>? secondaryDiagnoses,
+    required String clinicalFormulation,
+    String? prognosis,
+    String? notes,
+  }) async {
+    final plan = TreatmentPlan(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      patientId: patientId,
+      clinicianId: clinicianId,
+      createdAt: DateTime.now(),
+      primaryDiagnosis: primaryDiagnosis,
+      secondaryDiagnoses: secondaryDiagnoses ?? [],
+      clinicalFormulation: clinicalFormulation,
+      prognosis: prognosis,
+      notes: notes,
+      status: TreatmentPlanStatus.active,
+    );
+
+    _treatmentPlans.add(plan);
+    await _saveTreatmentPlans();
+
     return plan;
   }
 
-  // Update treatment plan
-  Future<bool> updateTreatmentPlan(TreatmentPlan updatedPlan) async {
-    try {
-      final index = _treatmentPlans.indexWhere((plan) => plan.id == updatedPlan.id);
-      if (index == -1) {
-        return false;
-      }
-
-      _treatmentPlans[index] = updatedPlan;
-      await _saveTreatmentPlan(updatedPlan);
-      return true;
-    } catch (e) {
-      print('Error updating treatment plan: $e');
-      return false;
-    }
+  // Get treatment plan for patient
+  TreatmentPlan? getTreatmentPlanForPatient(String patientId) {
+    return _treatmentPlans
+        .where((plan) => plan.patientId == patientId && plan.status == TreatmentPlanStatus.active)
+        .firstOrNull;
   }
 
-  // Delete treatment plan
-  Future<bool> deleteTreatmentPlan(String id) async {
-    try {
-      final index = _treatmentPlans.indexWhere((plan) => plan.id == id);
-      if (index == -1) {
-        return false;
-      }
-
-      _treatmentPlans.removeAt(index);
-      return true;
-    } catch (e) {
-      print('Error deleting treatment plan: $e');
-      return false;
-    }
+  // Get all treatment plans for patient
+  List<TreatmentPlan> getAllTreatmentPlansForPatient(String patientId) {
+    return _treatmentPlans
+        .where((plan) => plan.patientId == patientId)
+        .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  // Add progress to treatment plan
-  Future<bool> addProgress(String planId, TreatmentProgress progress) async {
-    try {
-      final plan = getTreatmentPlanById(planId);
-      if (plan == null) return false;
+  // Add treatment goal
+  Future<TreatmentGoal> addTreatmentGoal({
+    required String treatmentPlanId,
+    required String description,
+    required GoalCategory category,
+    required GoalPriority priority,
+    required DateTime targetDate,
+    String? notes,
+    List<String>? milestones,
+    String? measurementMethod,
+  }) async {
+    final goal = TreatmentGoal(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      description: description,
+      category: category,
+      priority: priority,
+      targetDate: targetDate,
+      createdAt: DateTime.now(),
+      notes: notes,
+      milestones: milestones ?? [],
+      measurementMethod: measurementMethod,
+    );
 
+    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    if (planIndex != -1) {
+      final plan = _treatmentPlans[planIndex];
+      final updatedGoals = [...plan.goals, goal];
       final updatedPlan = TreatmentPlan(
         id: plan.id,
-        clientId: plan.clientId,
-        therapistId: plan.therapistId,
-        title: plan.title,
-        description: plan.description,
-        type: plan.type,
-        modality: plan.modality,
-        startDate: plan.startDate,
-        endDate: plan.endDate,
-        estimatedSessions: plan.estimatedSessions,
-        completedSessions: plan.completedSessions + 1,
-        status: plan.status,
-        goals: plan.goals,
-        interventions: plan.interventions,
-        progress: [...plan.progress, progress],
-        notes: plan.notes,
+        patientId: plan.patientId,
+        clinicianId: plan.clinicianId,
         createdAt: plan.createdAt,
         updatedAt: DateTime.now(),
-      );
-
-      return await updateTreatmentPlan(updatedPlan);
-    } catch (e) {
-      print('Error adding progress: $e');
-      return false;
-    }
-  }
-
-  // Update treatment goal
-  Future<bool> updateGoal(String planId, TreatmentGoal updatedGoal) async {
-    try {
-      final plan = getTreatmentPlanById(planId);
-      if (plan == null) return false;
-
-      final updatedGoals = plan.goals.map((goal) {
-        return goal.id == updatedGoal.id ? updatedGoal : goal;
-      }).toList();
-
-      final updatedPlan = TreatmentPlan(
-        id: plan.id,
-        clientId: plan.clientId,
-        therapistId: plan.therapistId,
-        title: plan.title,
-        description: plan.description,
-        type: plan.type,
-        modality: plan.modality,
-        startDate: plan.startDate,
-        endDate: plan.endDate,
-        estimatedSessions: plan.estimatedSessions,
-        completedSessions: plan.completedSessions,
-        status: plan.status,
+        primaryDiagnosis: plan.primaryDiagnosis,
+        secondaryDiagnoses: plan.secondaryDiagnoses,
+        clinicalFormulation: plan.clinicalFormulation,
         goals: updatedGoals,
         interventions: plan.interventions,
-        progress: plan.progress,
+        prognosis: plan.prognosis,
         notes: plan.notes,
-        createdAt: plan.createdAt,
-        updatedAt: DateTime.now(),
+        status: plan.status,
+        reviewDate: plan.reviewDate,
+        reviewNotes: plan.reviewNotes,
       );
 
-      return await updateTreatmentPlan(updatedPlan);
+      _treatmentPlans[planIndex] = updatedPlan;
+      await _saveTreatmentPlans();
+    }
+
+    return goal;
+  }
+
+  // Update goal progress
+  Future<bool> updateGoalProgress({
+    required String treatmentPlanId,
+    required String goalId,
+    required int progress,
+    String? notes,
+  }) async {
+    try {
+      final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+      if (planIndex == -1) return false;
+
+      final plan = _treatmentPlans[planIndex];
+      final goalIndex = plan.goals.indexWhere((goal) => goal.id == goalId);
+      if (goalIndex == -1) return false;
+
+      final goal = plan.goals[goalIndex];
+      final updatedGoal = TreatmentGoal(
+        id: goal.id,
+        description: goal.description,
+        category: goal.category,
+        priority: goal.priority,
+        targetDate: goal.targetDate,
+        status: progress >= 100 ? GoalStatus.completed : goal.status,
+        progress: progress.clamp(0, 100),
+        notes: notes ?? goal.notes,
+        createdAt: goal.createdAt,
+        completedAt: progress >= 100 ? DateTime.now() : goal.completedAt,
+        milestones: goal.milestones,
+        measurementMethod: goal.measurementMethod,
+      );
+
+      final updatedGoals = List<TreatmentGoal>.from(plan.goals);
+      updatedGoals[goalIndex] = updatedGoal;
+
+      final updatedPlan = TreatmentPlan(
+        id: plan.id,
+        patientId: plan.patientId,
+        clinicianId: plan.clinicianId,
+        createdAt: plan.createdAt,
+        updatedAt: DateTime.now(),
+        primaryDiagnosis: plan.primaryDiagnosis,
+        secondaryDiagnoses: plan.secondaryDiagnoses,
+        clinicalFormulation: plan.clinicalFormulation,
+        goals: updatedGoals,
+        interventions: plan.interventions,
+        prognosis: plan.prognosis,
+        notes: plan.notes,
+        status: plan.status,
+        reviewDate: plan.reviewDate,
+        reviewNotes: plan.reviewNotes,
+      );
+
+      _treatmentPlans[planIndex] = updatedPlan;
+      await _saveTreatmentPlans();
+      return true;
     } catch (e) {
-      print('Error updating goal: $e');
+      print('Error updating goal progress: $e');
       return false;
     }
   }
 
-  // Complete intervention
-  Future<bool> completeIntervention(String planId, String interventionId, String notes) async {
-    try {
-      final plan = getTreatmentPlanById(planId);
-      if (plan == null) return false;
+  // Add treatment intervention
+  Future<TreatmentIntervention> addTreatmentIntervention({
+    required String treatmentPlanId,
+    required String name,
+    required InterventionType type,
+    required String description,
+    required InterventionFrequency frequency,
+    required Duration duration,
+    String? instructions,
+    String? expectedOutcome,
+    String? notes,
+    List<String>? contraindications,
+  }) async {
+    final intervention = TreatmentIntervention(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      type: type,
+      description: description,
+      frequency: frequency,
+      duration: duration,
+      instructions: instructions,
+      expectedOutcome: expectedOutcome,
+      startDate: DateTime.now(),
+      notes: notes,
+      contraindications: contraindications ?? [],
+    );
 
-      final updatedInterventions = plan.interventions.map((intervention) {
-        if (intervention.id == interventionId) {
-          return TreatmentIntervention(
-            id: intervention.id,
-            title: intervention.title,
-            description: intervention.description,
-            type: intervention.type,
-            category: intervention.category,
-            scheduledDate: intervention.scheduledDate,
-            isCompleted: true,
-            completedDate: DateTime.now(),
-            notes: notes,
-            outcomes: intervention.outcomes,
-          );
-        }
-        return intervention;
-      }).toList();
-
+    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    if (planIndex != -1) {
+      final plan = _treatmentPlans[planIndex];
+      final updatedInterventions = [...plan.interventions, intervention];
       final updatedPlan = TreatmentPlan(
         id: plan.id,
-        clientId: plan.clientId,
-        therapistId: plan.therapistId,
-        title: plan.title,
-        description: plan.description,
-        type: plan.type,
-        modality: plan.modality,
-        startDate: plan.startDate,
-        endDate: plan.endDate,
-        estimatedSessions: plan.estimatedSessions,
-        completedSessions: plan.completedSessions,
-        status: plan.status,
-        goals: plan.goals,
-        interventions: updatedInterventions,
-        progress: plan.progress,
-        notes: plan.notes,
+        patientId: plan.patientId,
+        clinicianId: plan.clinicianId,
         createdAt: plan.createdAt,
         updatedAt: DateTime.now(),
+        primaryDiagnosis: plan.primaryDiagnosis,
+        secondaryDiagnoses: plan.secondaryDiagnoses,
+        clinicalFormulation: plan.clinicalFormulation,
+        goals: plan.goals,
+        interventions: updatedInterventions,
+        prognosis: plan.prognosis,
+        notes: plan.notes,
+        status: plan.status,
+        reviewDate: plan.reviewDate,
+        reviewNotes: plan.reviewNotes,
       );
 
-      return await updateTreatmentPlan(updatedPlan);
-    } catch (e) {
-      print('Error completing intervention: $e');
-      return false;
+      _treatmentPlans[planIndex] = updatedPlan;
+      await _saveTreatmentPlans();
     }
+
+    return intervention;
+  }
+
+  // Record treatment progress
+  Future<TreatmentProgress> recordTreatmentProgress({
+    required String treatmentPlanId,
+    required String assessedBy,
+    required Map<String, dynamic> goalProgress,
+    required Map<String, dynamic> interventionEffectiveness,
+    required String overallAssessment,
+    String? recommendations,
+    String? notes,
+    DateTime? nextReviewDate,
+  }) async {
+    final progress = TreatmentProgress(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      treatmentPlanId: treatmentPlanId,
+      assessmentDate: DateTime.now(),
+      assessedBy: assessedBy,
+      goalProgress: goalProgress,
+      interventionEffectiveness: interventionEffectiveness,
+      overallAssessment: overallAssessment,
+      recommendations: recommendations,
+      notes: notes,
+      nextReviewDate: nextReviewDate ?? DateTime.now().add(const Duration(days: 30)),
+    );
+
+    _progressRecords.add(progress);
+    await _saveProgressRecords();
+
+    // Update treatment plan review date
+    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    if (planIndex != -1) {
+      final plan = _treatmentPlans[planIndex];
+      final updatedPlan = TreatmentPlan(
+        id: plan.id,
+        patientId: plan.patientId,
+        clinicianId: plan.clinicianId,
+        createdAt: plan.createdAt,
+        updatedAt: DateTime.now(),
+        primaryDiagnosis: plan.primaryDiagnosis,
+        secondaryDiagnoses: plan.secondaryDiagnoses,
+        clinicalFormulation: plan.clinicalFormulation,
+        goals: plan.goals,
+        interventions: plan.interventions,
+        prognosis: plan.prognosis,
+        notes: plan.notes,
+        status: plan.status,
+        reviewDate: progress.nextReviewDate,
+        reviewNotes: progress.notes,
+      );
+
+      _treatmentPlans[planIndex] = updatedPlan;
+      await _saveTreatmentPlans();
+    }
+
+    return progress;
+  }
+
+  // Get progress records for treatment plan
+  List<TreatmentProgress> getProgressRecordsForPlan(String treatmentPlanId) {
+    return _progressRecords
+        .where((progress) => progress.treatmentPlanId == treatmentPlanId)
+        .toList()
+        ..sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
+  }
+
+  // Get overdue goals
+  List<TreatmentGoal> getOverdueGoals() {
+    final allGoals = _treatmentPlans
+        .expand((plan) => plan.goals)
+        .where((goal) => goal.isOverdue)
+        .toList();
+    return allGoals;
+  }
+
+  // Get goals due soon
+  List<TreatmentGoal> getGoalsDueSoon() {
+    final allGoals = _treatmentPlans
+        .expand((plan) => plan.goals)
+        .where((goal) => goal.isDueSoon)
+        .toList();
+    return allGoals;
   }
 
   // Get treatment plan statistics
   Map<String, dynamic> getTreatmentPlanStatistics() {
     final totalPlans = _treatmentPlans.length;
-    final activePlans = _treatmentPlans.where((plan) => plan.isActive).length;
-    final completedPlans = _treatmentPlans.where((plan) => plan.isCompleted).length;
-    final pausedPlans = _treatmentPlans.where((plan) => plan.isPaused).length;
+    final activePlans = _treatmentPlans
+        .where((plan) => plan.status == TreatmentPlanStatus.active)
+        .length;
+    final completedPlans = _treatmentPlans
+        .where((plan) => plan.status == TreatmentPlanStatus.completed)
+        .length;
 
-    final typeCounts = <String, int>{};
-    for (final plan in _treatmentPlans) {
-      final type = plan.type.name;
-      typeCounts[type] = (typeCounts[type] ?? 0) + 1;
-    }
+    final allGoals = _treatmentPlans.expand((plan) => plan.goals).toList();
+    final totalGoals = allGoals.length;
+    final activeGoals = allGoals
+        .where((goal) => goal.status == GoalStatus.active)
+        .length;
+    final completedGoals = allGoals
+        .where((goal) => goal.status == GoalStatus.completed)
+        .length;
+    final overdueGoals = allGoals
+        .where((goal) => goal.isOverdue)
+        .length;
 
-    final modalityCounts = <String, int>{};
-    for (final plan in _treatmentPlans) {
-      final modality = plan.modality.name;
-      modalityCounts[modality] = (modalityCounts[modality] ?? 0) + 1;
-    }
+    final allInterventions = _treatmentPlans.expand((plan) => plan.interventions).toList();
+    final totalInterventions = allInterventions.length;
+    final activeInterventions = allInterventions
+        .where((intervention) => intervention.isActive)
+        .length;
+
+    final totalProgressRecords = _progressRecords.length;
 
     return {
       'totalPlans': totalPlans,
       'activePlans': activePlans,
       'completedPlans': completedPlans,
-      'pausedPlans': pausedPlans,
-      'typeCounts': typeCounts,
-      'modalityCounts': modalityCounts,
+      'totalGoals': totalGoals,
+      'activeGoals': activeGoals,
+      'completedGoals': completedGoals,
+      'overdueGoals': overdueGoals,
+      'totalInterventions': totalInterventions,
+      'activeInterventions': activeInterventions,
+      'totalProgressRecords': totalProgressRecords,
     };
-  }
-
-  // Get client treatment history
-  List<Map<String, dynamic>> getClientTreatmentHistory(String clientId) {
-    final clientPlans = getTreatmentPlansByClient(clientId);
-    
-    return clientPlans.map((plan) => {
-      'id': plan.id,
-      'title': plan.title,
-      'type': plan.type.name,
-      'status': plan.status.name,
-      'startDate': plan.startDate.toIso8601String(),
-      'endDate': plan.endDate?.toIso8601String(),
-      'progressPercentage': plan.progressPercentage,
-      'completedSessions': plan.completedSessions,
-      'estimatedSessions': plan.estimatedSessions,
-      'goals': plan.goals.map((goal) => {
-        'title': goal.title,
-        'isAchieved': goal.isAchieved,
-        'priority': goal.priority.name,
-      }).toList(),
-    }).toList();
-  }
-
-  // Generate treatment plan report
-  Map<String, dynamic> generateTreatmentPlanReport(String planId) {
-    final plan = getTreatmentPlanById(planId);
-    
-    if (plan == null) {
-      return {
-        'error': 'Treatment plan not found',
-      };
-    }
-
-    final report = {
-      'planId': plan.id,
-      'title': plan.title,
-      'description': plan.description,
-      'type': plan.type.name,
-      'modality': plan.modality.name,
-      'status': plan.status.name,
-      'startDate': plan.startDate.toIso8601String(),
-      'endDate': plan.endDate?.toIso8601String(),
-      'progressPercentage': plan.progressPercentage,
-      'completedSessions': plan.completedSessions,
-      'estimatedSessions': plan.estimatedSessions,
-      'goals': plan.goals.map((goal) => {
-        'title': goal.title,
-        'description': goal.description,
-        'type': goal.type.name,
-        'priority': goal.priority.name,
-        'isAchieved': goal.isAchieved,
-        'targetDate': goal.targetDate.toIso8601String(),
-        'achievedDate': goal.achievedDate?.toIso8601String(),
-        'notes': goal.notes,
-      }).toList(),
-      'interventions': plan.interventions.map((intervention) => {
-        'title': intervention.title,
-        'description': intervention.description,
-        'type': intervention.type.name,
-        'category': intervention.category.name,
-        'isCompleted': intervention.isCompleted,
-        'scheduledDate': intervention.scheduledDate.toIso8601String(),
-        'completedDate': intervention.completedDate?.toIso8601String(),
-        'notes': intervention.notes,
-        'outcomes': intervention.outcomes,
-      }).toList(),
-      'progress': plan.progress.map((p) => {
-        'date': p.date.toIso8601String(),
-        'type': p.type.name,
-        'description': p.description,
-        'metrics': p.metrics,
-        'notes': p.notes,
-      }).toList(),
-      'notes': plan.notes,
-    };
-
-    return report;
   }
 
   // Generate demo data
@@ -336,24 +420,104 @@ class TreatmentPlanService {
     if (_treatmentPlans.isNotEmpty) return;
 
     final demoPlans = [
-      TreatmentPlanTemplates.createDepressionPlan(
-        clientId: '1',
-        therapistId: 'therapist_001',
-      ),
-      TreatmentPlanTemplates.createAnxietyPlan(
-        clientId: '2',
-        therapistId: 'therapist_001',
-      ),
-      TreatmentPlanTemplates.createTraumaPlan(
-        clientId: '3',
-        therapistId: 'therapist_001',
+      TreatmentPlan(
+        id: 'plan_001',
+        patientId: '1',
+        clinicianId: 'psychiatrist_001',
+        createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        primaryDiagnosis: 'Major Depresif Bozukluk',
+        secondaryDiagnoses: ['Uyku Bozukluğu'],
+        clinicalFormulation: 'Stres faktörleri ile tetiklenen depresif epizod. Hasta iş stresi ve aile sorunları yaşıyor.',
+        prognosis: 'İyi. Uygun tedavi ile 6-12 ay içinde düzelme bekleniyor.',
+        notes: 'Hasta tedaviye uyumlu, motivasyonu yüksek.',
+        status: TreatmentPlanStatus.active,
+        reviewDate: DateTime.now().add(const Duration(days: 30)),
+        goals: [
+          TreatmentGoal(
+            id: 'goal_001',
+            description: 'Depresif belirtilerde %50 azalma',
+            category: GoalCategory.symptomReduction,
+            priority: GoalPriority.high,
+            targetDate: DateTime.now().add(const Duration(days: 90)),
+            createdAt: DateTime.now().subtract(const Duration(days: 30)),
+            progress: 30,
+            milestones: ['İlk 4 hafta: %20 azalma', '8. hafta: %40 azalma', '12. hafta: %50 azalma'],
+            measurementMethod: 'BDI-II ölçeği',
+          ),
+          TreatmentGoal(
+            id: 'goal_002',
+            description: 'Uyku kalitesinde iyileşme',
+            category: GoalCategory.functionalImprovement,
+            priority: GoalPriority.medium,
+            targetDate: DateTime.now().add(const Duration(days: 60)),
+            createdAt: DateTime.now().subtract(const Duration(days: 30)),
+            progress: 50,
+            milestones: ['Uyku hijyeni eğitimi', 'Düzenli uyku saatleri', 'Uyku günlüğü tutma'],
+            measurementMethod: 'Uyku günlüğü ve Pittsburgh Uyku Kalitesi İndeksi',
+          ),
+        ],
+        interventions: [
+          TreatmentIntervention(
+            id: 'intervention_001',
+            name: 'SSRI Antidepresan',
+            type: InterventionType.medication,
+            description: 'Escitalopram 10mg/gün',
+            frequency: InterventionFrequency.daily,
+            duration: const Duration(minutes: 0),
+            instructions: 'Sabah kahvaltıdan sonra alınacak',
+            expectedOutcome: 'Depresif belirtilerde azalma',
+            startDate: DateTime.now().subtract(const Duration(days: 30)),
+            contraindications: ['MAO inhibitörleri', 'Gebelik'],
+          ),
+          TreatmentIntervention(
+            id: 'intervention_002',
+            name: 'Bilişsel Davranışçı Terapi',
+            type: InterventionType.psychotherapy,
+            description: 'Haftalık CBT seansları',
+            frequency: InterventionFrequency.weekly,
+            duration: const Duration(minutes: 50),
+            instructions: 'Düşünce kayıtları ve davranış aktivasyonu',
+            expectedOutcome: 'Olumsuz düşünce kalıplarının değişimi',
+            startDate: DateTime.now().subtract(const Duration(days: 25)),
+          ),
+        ],
       ),
     ];
 
     for (final plan in demoPlans) {
-      await createTreatmentPlan(plan);
+      _treatmentPlans.add(plan);
     }
 
+    await _saveTreatmentPlans();
+
+    // Add demo progress records
+    final demoProgress = [
+      TreatmentProgress(
+        id: 'progress_001',
+        treatmentPlanId: 'plan_001',
+        assessmentDate: DateTime.now().subtract(const Duration(days: 15)),
+        assessedBy: 'psychiatrist_001',
+        goalProgress: {
+          'goal_001': {'progress': 20, 'notes': 'Hafif iyileşme görülüyor'},
+          'goal_002': {'progress': 30, 'notes': 'Uyku hijyeni eğitimi tamamlandı'},
+        },
+        interventionEffectiveness: {
+          'intervention_001': {'effectiveness': 'Orta', 'sideEffects': 'Minimal'},
+          'intervention_002': {'effectiveness': 'İyi', 'compliance': 'Yüksek'},
+        },
+        overallAssessment: 'Tedavi planı başarılı şekilde ilerliyor. Hasta uyumlu.',
+        recommendations: 'İlaç dozunu artırmayı düşünülebilir.',
+        nextReviewDate: DateTime.now().add(const Duration(days: 15)),
+      ),
+    ];
+
+    for (final progress in demoProgress) {
+      _progressRecords.add(progress);
+    }
+
+    await _saveProgressRecords();
+
     print('✅ Demo treatment plans created: ${demoPlans.length}');
+    print('✅ Demo progress records created: ${demoProgress.length}');
   }
 }

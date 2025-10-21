@@ -351,8 +351,8 @@ class ProShimmerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardMargin = margin ?? AppSpacing.paddingAllMD;
-    final cardPadding = padding ?? AppSpacing.paddingAllLG;
+    final cardMargin = margin ?? AppSpacing.paddingAll(AppSpacing.md);
+    final cardPadding = padding ?? AppSpacing.paddingAll(AppSpacing.lg);
 
     return Container(
       width: width,
@@ -382,7 +382,7 @@ class ProShimmerCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            AppSpacing.heightMD,
+            SizedBox(height: AppSpacing.md),
             Container(
               height: 16,
               width: 200,
@@ -391,7 +391,7 @@ class ProShimmerCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            AppSpacing.heightSM,
+            SizedBox(height: AppSpacing.sm),
             Container(
               height: 16,
               width: 150,

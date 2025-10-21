@@ -57,13 +57,13 @@ class ProCard extends StatelessWidget {
       case ProCardVariant.default_:
         cardBackground = backgroundColor ?? (isDark ? AppColors.neutral800 : AppColors.surface);
         cardBorder = borderColor ?? (isDark ? AppColors.neutral700 : AppColors.border);
-        cardElevation = elevation ?? (showShadow ? AppColors.elevationSm : 0);
+        cardElevation = elevation ?? (showShadow ? AppSpacing.elevationSm : 0);
         cardBorderRadius = borderRadius ?? AppSpacing.cardRadius;
         break;
       case ProCardVariant.elevated:
         cardBackground = backgroundColor ?? (isDark ? AppColors.neutral800 : AppColors.surface);
         cardBorder = borderColor ?? Colors.transparent;
-        cardElevation = elevation ?? AppColors.elevationMd;
+        cardElevation = elevation ?? AppSpacing.elevationMd;
         cardBorderRadius = borderRadius ?? AppSpacing.cardRadius;
         break;
       case ProCardVariant.outlined:
@@ -81,7 +81,7 @@ class ProCard extends StatelessWidget {
     }
 
     Widget cardContent = Container(
-      padding: padding ?? AppSpacing.cardPadding,
+      padding: padding ?? AppSpacing.paddingAll(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(cardBorderRadius),
@@ -135,7 +135,7 @@ class ProCard extends StatelessWidget {
     }
 
     Widget card = Container(
-      margin: margin ?? AppSpacing.cardMargin,
+      margin: margin ?? AppSpacing.marginAll(AppSpacing.cardMargin),
       child: cardContent,
     );
 

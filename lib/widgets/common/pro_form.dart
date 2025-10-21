@@ -113,7 +113,7 @@ class _ProFormState extends State<ProForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final formPadding = widget.padding ?? AppSpacing.paddingAllLG;
+    final formPadding = widget.padding ?? AppSpacing.paddingAll(AppSpacing.lg);
     final formBorderRadius = widget.borderRadius ?? AppSpacing.cardRadius;
     final formBackgroundColor = widget.backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
     final formBorderColor = widget.borderColor ?? (isDark ? AppColors.dividerDark : AppColors.dividerLight);
@@ -158,7 +158,7 @@ class _ProFormState extends State<ProForm> {
                             ),
                           ),
                         if (widget.subtitle != null) ...[
-                          AppSpacing.heightXS,
+                          SizedBox(height: AppSpacing.xs),
                           Text(
                             widget.subtitle!,
                             style: widget.subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -172,11 +172,11 @@ class _ProFormState extends State<ProForm> {
                   if (widget.headerAction != null) widget.headerAction!,
                 ],
               ),
-              AppSpacing.heightLG,
+              SizedBox(height: AppSpacing.lg),
             ],
             ...widget.fields.map((field) => _buildFormField(field, isDark)).toList(),
             if (widget.submitButton != null || (widget.actions != null && widget.actions!.isNotEmpty)) ...[
-              AppSpacing.heightLG,
+              SizedBox(height: AppSpacing.lg),
               _buildFormActions(isDark),
             ],
           ],
@@ -280,7 +280,7 @@ class _ProFormState extends State<ProForm> {
           ),
         ],
         if (widget.actions != null && widget.actions!.isNotEmpty) ...[
-          AppSpacing.widthMD,
+          SizedBox(width: AppSpacing.md),
           ...widget.actions!.map((action) => Padding(
                 padding: EdgeInsets.only(right: AppSpacing.md),
                 child: ProButton(
@@ -436,7 +436,7 @@ class ProFormSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sectionPadding = padding ?? AppSpacing.paddingAllLG;
+    final sectionPadding = padding ?? AppSpacing.paddingAll(AppSpacing.lg);
     final sectionBorderRadius = borderRadius ?? AppSpacing.cardRadius;
     final sectionBackgroundColor = backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
     final sectionBorderColor = borderColor ?? (isDark ? AppColors.dividerDark : AppColors.dividerLight);
@@ -477,7 +477,7 @@ class ProFormSection extends StatelessWidget {
                       ),
                     ),
                     if (subtitle != null) ...[
-                      AppSpacing.heightXS,
+                      SizedBox(height: AppSpacing.xs),
                       Text(
                         subtitle!,
                         style: subtitleStyle ?? AppTypography.bodySmall.copyWith(
@@ -491,7 +491,7 @@ class ProFormSection extends StatelessWidget {
               if (headerAction != null) headerAction!,
             ],
           ),
-          AppSpacing.heightLG,
+          SizedBox(height: AppSpacing.lg),
           ...fields.map((field) => _buildFormField(field, isDark)).toList(),
         ],
       ),
@@ -517,7 +517,7 @@ class ProFormSection extends StatelessWidget {
         initiallyExpanded: initiallyExpanded,
         children: [
           Padding(
-            padding: AppSpacing.paddingAllLG,
+            padding: AppSpacing.paddingAll(AppSpacing.lg),
             child: Column(
               children: fields.map((field) => _buildFormField(field, isDark)).toList(),
             ),

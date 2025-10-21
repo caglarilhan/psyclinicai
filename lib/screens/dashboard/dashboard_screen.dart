@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:gap/gap.dart';
 import '../../services/role_service.dart';
 import '../../services/homework_service.dart';
+import '../../utils/material3_animations.dart';
+import '../../utils/material3_responsive.dart';
 import 'package:intl/intl.dart';
 import '../patients/patient_list_screen.dart';
 import '../appointments/appointment_screen.dart';
@@ -158,109 +161,250 @@ class DashboardScreen extends StatefulWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-           final role = context.watch<RoleService>().currentRole;
-           final screens = _screensForRole(role);
-           final allItems = _navItemsForRole(role);
-           if (_selectedIndex >= screens.length) _selectedIndex = 0;
+    final role = context.watch<RoleService>().currentRole;
+    final screens = _screensForRole(role);
+    final allItems = _navItemsForRole(role);
+    if (_selectedIndex >= screens.length) _selectedIndex = 0;
 
-           // Bottom nav: max 6, sonuncu "Daha Fazla"
-           final bool hasMore = allItems.length > 6;
-           final int primaryCount = hasMore ? 5 : allItems.length;
-           final List<BottomNavigationBarItem> visibleItems = [
-             ...allItems.take(primaryCount),
-             if (hasMore)
-               const BottomNavigationBarItem(
-                 icon: Icon(Icons.settings),
-                 label: 'Ayarlar',
-               ),
-           ];
+    // Material 3 NavigationBar için destinations
+    final bool hasMore = allItems.length > 5;
+    final int primaryCount = hasMore ? 4 : allItems.length;
+    
+    final List<NavigationDestination> destinations = [
+      ...allItems.take(primaryCount).map((item) => NavigationDestination(
+        icon: item.icon,
+        label: item.label ?? '',
+      )),
+      if (hasMore)
+        const NavigationDestination(
+          icon: Icon(Icons.more_horiz),
+          label: 'Daha Fazla',
+        ),
+    ];
 
-           final int currentNavIndex = hasMore
-               ? (_selectedIndex < primaryCount ? _selectedIndex : primaryCount)
-               : _selectedIndex;
+    final int currentNavIndex = hasMore
+        ? (_selectedIndex < primaryCount ? _selectedIndex : primaryCount)
+        : _selectedIndex;
 
-           return Scaffold(
-      appBar: AppBar(
-        title: const Text('PsyClinic AI - Dashboard'),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
-      actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/landing');
-            },
-            icon: const Icon(Icons.logout),
+    return ResponsiveLayoutBuilder(
+      builder: (context, breakpoint) {
+        final isMobile = breakpoint == Breakpoint.mobile;
+        final isTablet = breakpoint == Breakpoint.tablet;
+        final isDesktop = breakpoint == Breakpoint.desktop || breakpoint == Breakpoint.largeDesktop;
+        
+        if (isDesktop) {
+          // Desktop layout with NavigationRail
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                'PsyClinic AI Dashboard',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/landing');
+                  },
+                  icon: Icon(
+                    Icons.logout,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  tooltip: 'Çıkış Yap',
+                ),
+              ],
+            ),
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: currentNavIndex,
+                  onDestinationSelected: (index) {
+                    if (hasMore && index == primaryCount) {
+                      _showMoreMenu(context, allItems, primaryCount);
+                    } else {
+                      setState(() => _selectedIndex = index);
+                    }
+                  },
+                  destinations: destinations.map((dest) => NavigationRailDestination(
+                    icon: dest.icon,
+                    label: Text(dest.label),
+                  )).toList(),
+                  extended: true,
+                  minExtendedWidth: 200,
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child: screens[_selectedIndex],
+                ),
+              ],
+            ),
+          );
+        } else if (isTablet) {
+          // Tablet layout with NavigationRail
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                'PsyClinic AI Dashboard',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/landing');
+                  },
+                  icon: Icon(
+                    Icons.logout,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  tooltip: 'Çıkış Yap',
+                ),
+              ],
+            ),
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: currentNavIndex,
+                  onDestinationSelected: (index) {
+                    if (hasMore && index == primaryCount) {
+                      _showMoreMenu(context, allItems, primaryCount);
+                    } else {
+                      setState(() => _selectedIndex = index);
+                    }
+                  },
+                  destinations: destinations.map((dest) => NavigationRailDestination(
+                    icon: dest.icon,
+                    label: Text(dest.label),
+                  )).toList(),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child: screens[_selectedIndex],
+                ),
+              ],
+            ),
+          );
+        } else {
+          // Mobile layout with NavigationBar
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                'PsyClinic AI Dashboard',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/landing');
+                  },
+                  icon: Icon(
+                    Icons.logout,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  tooltip: 'Çıkış Yap',
+                ),
+              ],
+            ),
+            body: screens[_selectedIndex],
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: currentNavIndex,
+              onDestinationSelected: (index) {
+                if (hasMore && index == primaryCount) {
+                  _showMoreMenu(context, allItems, primaryCount);
+                } else {
+                  setState(() => _selectedIndex = index);
+                }
+              },
+              destinations: destinations,
+            ),
+          );
+        }
+      },
+    );
+  }
+  
+  void _showMoreMenu(BuildContext context, List<BottomNavigationBarItem> allItems, int primaryCount) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    Material3Animations.showMaterial3BottomSheet(
+      context: context,
+      child: SafeArea(
+        child: Padding(
+          padding: Material3Responsive.responsivePadding(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Ayarlar ve Diğerleri',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              Gap(Material3Responsive.responsiveGap(context)),
+              Flexible(
+                child: ResponsiveGrid(
+                  children: allItems.skip(primaryCount).map((item) {
+                    final targetIndex = primaryCount + allItems.skip(primaryCount).toList().indexOf(item);
+                    return InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() => _selectedIndex = targetIndex);
+                      },
+                      borderRadius: BorderRadius.circular(Material3Responsive.responsiveBorderRadius(context)),
+                      child: ResponsiveCard(
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.icon.icon,
+                              color: colorScheme.primary,
+                              size: Material3Responsive.responsiveIconSize(context) * 0.8,
+                            ),
+                            Gap(Material3Responsive.responsiveGap(context)),
+                            Expanded(
+                              child: ResponsiveText(
+                                item.label ?? '',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: colorScheme.onSurfaceVariant,
+                              size: Material3Responsive.responsiveIconSize(context) * 0.8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-             body: screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-               currentIndex: currentNavIndex,
-               onTap: (index) {
-                 if (hasMore && index == primaryCount) {
-                   // Açılır menü: kalan öğeler
-                   showModalBottomSheet(
-                     context: context,
-                     builder: (ctx) {
-                       final remaining = allItems.skip(primaryCount).toList();
-                       return SafeArea(
-                         child: Padding(
-                           padding: const EdgeInsets.all(16),
-                           child: Column(
-                             crossAxisAlignment: CrossAxisAlignment.start,
-                             children: [
-                               Text(
-                                 'Ayarlar ve Diğerleri',
-                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                               ),
-                               const SizedBox(height: 12),
-                               Expanded(
-                                 child: GridView.builder(
-                                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                     crossAxisCount: 2,
-                                     mainAxisSpacing: 12,
-                                     crossAxisSpacing: 12,
-                                     childAspectRatio: 3,
-                                   ),
-                                   itemCount: remaining.length,
-                                   itemBuilder: (c, i) {
-                                     final item = remaining[i];
-                                     final targetIndex = primaryCount + i;
-                                     return InkWell(
-                                       onTap: () {
-                                         Navigator.pop(c);
-                                         setState(() => _selectedIndex = targetIndex);
-                                       },
-                                       child: Card(
-                                         child: Padding(
-                                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                                           child: Row(
-                                             children: [
-                                               item.icon,
-                                               const SizedBox(width: 12),
-                                               Expanded(child: Text(item.label ?? '')),
-                                               const Icon(Icons.chevron_right),
-                                             ],
-                                           ),
-                                         ),
-                                       ),
-                                     );
-                                   },
-                                 ),
-                               ),
-                             ],
-                           ),
-                         ),
-                       );
-                     },
-                   );
-                 } else {
-                   setState(() => _selectedIndex = index);
-                 }
-               },
-        selectedItemColor: colorScheme.primary,
-               items: visibleItems,
+        ),
       ),
     );
   }
@@ -356,123 +500,166 @@ class HomeTab extends StatelessWidget {
     }();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-          // Welcome Card
-          Card(
-            color: Colors.purple[700],
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-                      Icon(Icons.psychology_alt, color: Colors.white, size: 32),
-                      const SizedBox(width: 12),
-            Text(
-                        'Hoş Geldiniz!',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+      padding: Material3Responsive.responsivePadding(context),
+      child: Material3Animations.staggeredList(
+        children: [
+          // Welcome Card - Material 3
+          ResponsiveCard(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Material3Responsive.responsiveBorderRadius(context)),
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.primary,
+                    colorScheme.primary.withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-          ],
-        ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'AI destekli klinik yönetim sisteminize hoş geldiniz. Bugün 5 randevunuz ve 3 yeni hasta kaydınız var.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white70,
-          ),
-        ),
-      ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Quick Stats
-          Text(
-            'Hızlı İstatistikler',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.purple[800],
-            ),
-          ),
-          const SizedBox(height: 12),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.5,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            children: roleStats
-                .map((s) => _buildStatCard(
-                      s['t'] as String,
-                      s['v'].toString(),
-                      s['i'] as IconData,
-                      s['c'] as Color,
-                      onTap: _routeForStat(context, s['t'] as String),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 20),
-
-          // Hızlı İşlemler
-          if (quickActions.isNotEmpty) ...[
-            Text(
-              'Hızlı İşlemler',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.purple[800],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              color: Colors.purple[600],
               child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: quickActions
-                      .map((a) => ElevatedButton.icon(
-                            onPressed: a['on'] as VoidCallback,
-                            icon: Icon(a['i'] as IconData, size: 18),
-                            label: Text(a['t'] as String),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.purple[800],
+                padding: Material3Responsive.responsivePadding(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Material3Animations.animatedIcon(
+                          icon: Icons.psychology,
+                          color: colorScheme.onPrimary,
+                          size: Material3Responsive.responsiveIconSize(context),
+                        ),
+                        Gap(Material3Responsive.responsiveGap(context)),
+                        Expanded(
+                          child: ResponsiveText(
+                            'Hoş Geldiniz, $currentRole',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ))
-                      .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Gap(Material3Responsive.responsiveGap(context) * 0.5),
+                    ResponsiveText(
+                      'PsyClinic AI ile gününüze başlayın',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onPrimary.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-          ],
+          ),
           
-          // Son Aktiviteler
-          Text(
-            'Son Aktiviteler',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.purple[800],
+          Gap(Material3Responsive.responsiveGap(context) * 1.5),
+          
+          // Stats Grid - Material 3
+          ResponsiveText(
+            'Özet İstatistikler',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
-            color: Colors.purple[500],
+          Gap(Material3Responsive.responsiveGap(context)),
+          ResponsiveGrid(
+            children: roleStats.map((stat) {
+              return Material3Animations.animatedCard(
+                onTap: _routeForStat(context, stat['t'] as String),
+                child: ResponsiveCard(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Material3Animations.animatedIcon(
+                        icon: stat['i'] as IconData,
+                        color: colorScheme.primary,
+                        size: Material3Responsive.responsiveIconSize(context),
+                      ),
+                      Gap(Material3Responsive.responsiveGap(context) * 0.5),
+                      Material3Animations.animatedCounter(
+                        value: int.tryParse(stat['v'].toString()) ?? 0,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Gap(Material3Responsive.responsiveGap(context) * 0.25),
+                      ResponsiveText(
+                        stat['t'] as String,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          
+          Gap(Material3Responsive.responsiveGap(context) * 1.5),
+          
+          // Quick Actions - Material 3
+          if (quickActions.isNotEmpty) ...[
+            ResponsiveText(
+              'Hızlı İşlemler',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            Gap(Material3Responsive.responsiveGap(context)),
+            ResponsiveGrid(
+              children: quickActions.map((action) {
+                return Material3Animations.scaleIn(
+                  child: FilledButton.icon(
+                    onPressed: action['on'] as VoidCallback,
+                    icon: Icon(
+                      action['i'] as IconData,
+                      size: Material3Responsive.responsiveIconSize(context) * 0.8,
+                    ),
+                    label: ResponsiveText(
+                      action['t'] as String,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: Material3Responsive.responsiveGap(context),
+                        vertical: Material3Responsive.responsiveGap(context) * 0.75,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(Material3Responsive.responsiveBorderRadius(context) * 0.6),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            Gap(Material3Responsive.responsiveGap(context) * 1.5),
+          ],
+          
+          // Recent Activities - Material 3
+          ResponsiveText(
+            'Son Aktiviteler',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          Gap(Material3Responsive.responsiveGap(context)),
+          ResponsiveCard(
             child: Column(
               children: [
                 _buildActivityItem('Yeni hasta kaydı', 'Ahmet Yılmaz', '10:30'),
-                const Divider(color: Colors.white30),
+                Divider(color: colorScheme.outlineVariant),
                 _buildActivityItem('Randevu tamamlandı', 'Ayşe Demir', '09:15'),
-                const Divider(color: Colors.white30),
+                Divider(color: colorScheme.outlineVariant),
                 _buildActivityItem('Tedavi planı güncellendi', 'Mehmet Kaya', '08:45'),
               ],
             ),
@@ -520,16 +707,35 @@ class HomeTab extends StatelessWidget {
   }
 
   Widget _buildActivityItem(String action, String patient, String time) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.white,
-        child: Icon(Icons.person, color: Colors.purple[800]),
+        backgroundColor: colorScheme.primaryContainer,
+        child: Icon(
+          Icons.person,
+          color: colorScheme.onPrimaryContainer,
+        ),
       ),
-      title: Text(action, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(patient, style: const TextStyle(color: Colors.white70)),
+      title: Text(
+        action,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onSurface,
+        ),
+      ),
+      subtitle: Text(
+        patient,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
       trailing: Text(
         time,
-        style: const TextStyle(color: Colors.white70),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

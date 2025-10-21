@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../config/white_label_config.dart';
 
 class ThemeService extends ChangeNotifier {
@@ -304,164 +305,494 @@ class ThemeService extends ChangeNotifier {
     }
   }
 
-  // Theme data oluşturma
+  // Theme data oluşturma - Material 3
   ThemeData getLightTheme() {
+    // PsyClinic AI mor gradient teması
+    const seedColor = Color(0xFF6B46C1);
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: Brightness.light,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.light(
-        primary: _primaryColor,
-        secondary: _secondaryColor,
-        tertiary: _accentColor,
-        error: _errorColor,
-        surface: Colors.white,
-        background: const Color(0xFFFAFAFA),
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.black87,
-        onBackground: Colors.black87,
-      ),
+      colorScheme: colorScheme,
+      textTheme: GoogleFonts.interTextTheme(),
+      scaffoldBackgroundColor: colorScheme.surface,
+      
+      // AppBar Material 3
       appBarTheme: AppBarTheme(
-        backgroundColor: _primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
         centerTitle: true,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
         ),
+        surfaceTintColor: Colors.transparent,
       ),
+      
+      // Card Material 3
+      cardTheme: CardTheme(
+        elevation: 1,
+        shadowColor: colorScheme.shadow.withOpacity(0.1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.primary.withOpacity(0.05),
+      ),
+      
+      // Elevated Button Material 3
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 2,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 1,
+          shadowColor: colorScheme.shadow,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
+      
+      // Filled Button Material 3
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      
+      // Outlined Button Material 3
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      
+      // Input Decoration Material 3
       inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        labelStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
         ),
       ),
+      
+      // Floating Action Button Material 3
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: _accentColor,
-        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
-        selectedItemColor: _primaryColor,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
+      
+      // Navigation Bar Material 3
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: colorScheme.onSurfaceVariant,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              color: colorScheme.onSurface,
+              size: 24,
+            );
+          }
+          return IconThemeData(
+            color: colorScheme.onSurfaceVariant,
+            size: 24,
+          );
+        }),
+        elevation: 3,
+        height: 80,
       ),
-      tabBarTheme: TabBarThemeData(
-        labelColor: _primaryColor,
-        unselectedLabelColor: Colors.grey,
-        indicatorColor: _primaryColor,
+      
+      // Tab Bar Material 3
+      tabBarTheme: TabBarTheme(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        labelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+        ),
+        unselectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w400,
+        ),
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: 2,
+          ),
+        ),
       ),
+      
+      // Chip Material 3
       chipTheme: ChipThemeData(
-        backgroundColor: _primaryColor.withOpacity(0.1),
-        selectedColor: _primaryColor,
-        labelStyle: TextStyle(color: _primaryColor),
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        selectedColor: colorScheme.secondaryContainer,
+        labelStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        side: BorderSide(color: colorScheme.outline),
       ),
+      
+      // Divider Material 3
       dividerTheme: DividerThemeData(
-        color: Colors.grey.shade300,
+        color: colorScheme.outlineVariant,
         thickness: 1,
+        space: 1,
       ),
+      
+      // Icon Theme Material 3
       iconTheme: IconThemeData(
-        color: _primaryColor,
+        color: colorScheme.onSurfaceVariant,
+        size: 24,
+      ),
+      
+      // List Tile Material 3
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        tileColor: colorScheme.surface,
+        textColor: colorScheme.onSurface,
+        iconColor: colorScheme.onSurfaceVariant,
+        titleTextStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onSurface,
+        ),
+        subtitleTextStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      
+      // Bottom Sheet Material 3
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surface,
+        elevation: 1,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
+      
+      // Dialog Material 3
+      dialogTheme: DialogTheme(
+        backgroundColor: colorScheme.surface,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w400,
+          color: colorScheme.onSurface,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
 
   ThemeData getDarkTheme() {
+    // PsyClinic AI mor gradient teması - Dark
+    const seedColor = Color(0xFF6B46C1);
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: Brightness.dark,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark(
-        primary: _primaryColor,
-        secondary: _secondaryColor,
-        tertiary: _accentColor,
-        error: _errorColor,
-        surface: const Color(0xFF1E1E1E),
-        background: const Color(0xFF121212),
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.white,
-        onBackground: Colors.white,
-      ),
+      colorScheme: colorScheme,
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      scaffoldBackgroundColor: colorScheme.surface,
+      
+      // AppBar Material 3 Dark
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
         centerTitle: true,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 4,
-        color: const Color(0xFF2D2D2D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
         ),
+        surfaceTintColor: Colors.transparent,
       ),
+      
+      // Card Material 3 Dark
+      cardTheme: CardTheme(
+        elevation: 1,
+        shadowColor: colorScheme.shadow.withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.primary.withOpacity(0.1),
+      ),
+      
+      // Elevated Button Material 3 Dark
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 2,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 1,
+          shadowColor: colorScheme.shadow,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
+      
+      // Filled Button Material 3 Dark
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      
+      // Outlined Button Material 3 Dark
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      
+      // Input Decoration Material 3 Dark
       inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
-        filled: true,
-        fillColor: const Color(0xFF2D2D2D),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        labelStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
+      
+      // Floating Action Button Material 3 Dark
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: _accentColor,
-        foregroundColor: Colors.white,
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: const Color(0xFF1E1E1E),
-        selectedItemColor: _primaryColor,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
+      
+      // Navigation Bar Material 3 Dark
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondaryContainer,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: colorScheme.onSurfaceVariant,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              color: colorScheme.onSurface,
+              size: 24,
+            );
+          }
+          return IconThemeData(
+            color: colorScheme.onSurfaceVariant,
+            size: 24,
+          );
+        }),
+        elevation: 3,
+        height: 80,
       ),
-      tabBarTheme: TabBarThemeData(
-        labelColor: _primaryColor,
-        unselectedLabelColor: Colors.grey,
-        indicatorColor: _primaryColor,
+      
+      // Tab Bar Material 3 Dark
+      tabBarTheme: TabBarTheme(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        labelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+        ),
+        unselectedLabelStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w400,
+        ),
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: 2,
+          ),
+        ),
       ),
+      
+      // Chip Material 3 Dark
       chipTheme: ChipThemeData(
-        backgroundColor: _primaryColor.withOpacity(0.2),
-        selectedColor: _primaryColor,
-        labelStyle: TextStyle(color: _primaryColor),
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        selectedColor: colorScheme.secondaryContainer,
+        labelStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        side: BorderSide(color: colorScheme.outline),
       ),
+      
+      // Divider Material 3 Dark
       dividerTheme: DividerThemeData(
-        color: Colors.grey.shade700,
+        color: colorScheme.outlineVariant,
         thickness: 1,
+        space: 1,
       ),
+      
+      // Icon Theme Material 3 Dark
       iconTheme: IconThemeData(
-        color: _primaryColor,
+        color: colorScheme.onSurfaceVariant,
+        size: 24,
       ),
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      
+      // List Tile Material 3 Dark
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        tileColor: colorScheme.surface,
+        textColor: colorScheme.onSurface,
+        iconColor: colorScheme.onSurfaceVariant,
+        titleTextStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onSurface,
+        ),
+        subtitleTextStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      
+      // Bottom Sheet Material 3 Dark
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surface,
+        elevation: 1,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+      ),
+      
+      // Dialog Material 3 Dark
+      dialogTheme: DialogTheme(
+        backgroundColor: colorScheme.surface,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w400,
+          color: colorScheme.onSurface,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 

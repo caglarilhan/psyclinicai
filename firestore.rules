@@ -52,6 +52,18 @@ service cloud.firestore {
       }
     }
 
+    // Marketing waitlist — anyone can submit an email; nobody can read
+    // or modify the list from the client. Cloud Function exports to
+    // founders@ separately.
+    match /landing_waitlist/{doc} {
+      allow read, update, delete: if false;
+      allow create: if request.resource.data.email is string
+          && request.resource.data.email.size() <= 320
+          && request.resource.data.email.matches('.*@.*[.].*')
+          && request.resource.data.keys().hasOnly(
+              ['email', 'createdAt', 'source']);
+    }
+
     // Hard fail — anything else is denied.
     match /{document=**} {
       allow read, write: if false;

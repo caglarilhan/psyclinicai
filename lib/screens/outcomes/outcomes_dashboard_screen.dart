@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/patient_repository.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -11,16 +12,33 @@ import '../../widgets/ds/psy_card.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/outcomes` — PHQ-9 + GAD-7 trend dashboard.
-class OutcomesDashboardScreen extends StatelessWidget {
+class OutcomesDashboardScreen extends StatefulWidget {
   const OutcomesDashboardScreen({super.key, this.args});
 
   final PatientDetailArgs? args;
 
   @override
+  State<OutcomesDashboardScreen> createState() =>
+      _OutcomesDashboardScreenState();
+}
+
+class _OutcomesDashboardScreenState
+    extends State<OutcomesDashboardScreen> {
+  PatientDetailArgs? _picked;
+
+  @override
+  void initState() {
+    super.initState();
+    _picked = widget.args;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final patientName = args?.name ?? 'All patients';
+    final args = _picked;
+    final patientName = args?.name ?? 'Select a patient';
+    final canPickLive = PsyFirebase.isReady;
 
     return Scaffold(
       appBar: AppBar(title: Text('Outcomes · $patientName')),
@@ -29,16 +47,104 @@ class OutcomesDashboardScreen extends StatelessWidget {
             PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
         children: [
           _Lede(theme: theme, cs: cs, patientName: patientName),
-          const SizedBox(height: PsySpacing.xxl),
-          if (!PsyFirebase.isReady || args == null)
+          const SizedBox(height: PsySpacing.xl),
+          if (canPickLive)
+            _PatientPicker(
+              picked: args,
+              onPick: (p) => setState(() => _picked = p),
+              theme: theme,
+              cs: cs,
+            ),
+          const SizedBox(height: PsySpacing.lg),
+          if (!canPickLive || args == null)
             _DemoChartCard(theme: theme, cs: cs)
           else
             _LiveChartCard(
-                theme: theme, cs: cs, patientId: args!.id),
+                theme: theme, cs: cs, patientId: args.id),
           const SizedBox(height: PsySpacing.xxl),
           _LegendCard(theme: theme, cs: cs),
         ],
       ),
+    );
+  }
+}
+
+class _PatientPicker extends StatelessWidget {
+  const _PatientPicker({
+    required this.picked,
+    required this.onPick,
+    required this.theme,
+    required this.cs,
+  });
+  final PatientDetailArgs? picked;
+  final ValueChanged<PatientDetailArgs?> onPick;
+  final ThemeData theme;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = FirebaseAuthService.instance.profile;
+    if (profile == null) {
+      return PsyCard(
+        child: Text('Sign in to load your patient roster.',
+            style: theme.textTheme.bodyMedium),
+      );
+    }
+    return StreamBuilder<List<PatientDoc>>(
+      stream: PatientRepository.instance.watch(profile.clinicId),
+      builder: (ctx, snap) {
+        final patients = snap.data ?? const <PatientDoc>[];
+        if (patients.isEmpty) {
+          return PsyCard(
+            child: Row(
+              children: [
+                Icon(Icons.group_outlined, color: cs.primary, size: 20),
+                const SizedBox(width: PsySpacing.md),
+                Expanded(
+                  child: Text(
+                    'No patients yet. Add one from /patients to see live outcomes.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/patients'),
+                  child: const Text('Open patients'),
+                ),
+              ],
+            ),
+          );
+        }
+        return PsyCard(
+          padding: const EdgeInsets.symmetric(
+              horizontal: PsySpacing.xl, vertical: PsySpacing.md),
+          child: Row(
+            children: [
+              Icon(Icons.person_outline, color: cs.primary, size: 20),
+              const SizedBox(width: PsySpacing.md),
+              Expanded(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  underline: const SizedBox.shrink(),
+                  value: picked?.id,
+                  hint: const Text('Select a patient'),
+                  items: patients
+                      .map((p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(p.fullName),
+                          ))
+                      .toList(),
+                  onChanged: (id) {
+                    if (id == null) return;
+                    final p = patients.firstWhere((x) => x.id == id);
+                    onPick(PatientDetailArgs(id: p.id, name: p.fullName));
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

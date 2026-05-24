@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/data/firebase_bootstrap.dart';
+import '../../widgets/landing/cookie_consent.dart';
 import '../../widgets/landing/demo_modal.dart';
 import '../../widgets/landing/exit_intent_modal.dart';
 import '../../widgets/landing/sticky_cta_bar.dart';
@@ -176,6 +177,16 @@ class _LandingScreenState extends State<LandingScreen> {
         onScrollTo: _scrollTo,
         onSecurity: () => Navigator.of(context).pushNamed('/security'),
       ),
+      drawer: _LandingDrawer(
+        onScrollTo: (a) {
+          Navigator.of(context).pop();
+          _scrollTo(a);
+        },
+        onRoute: (r) {
+          Navigator.of(context).pop();
+          Navigator.of(context).pushNamed(r);
+        },
+      ),
       body: MouseRegion(
         onHover: _onMouseHover,
         child: Stack(
@@ -223,6 +234,12 @@ class _LandingScreenState extends State<LandingScreen> {
             child: StickyCtaBar(
               visible: _stickyVisible,
               onPrimary: () => _gotoSignup(context),
+            ),
+          ),
+          const Positioned.fill(
+            child: IgnorePointer(
+              ignoring: false,
+              child: CookieConsent(),
             ),
           ),
         ],
@@ -320,6 +337,81 @@ class _NavLink extends StatelessWidget {
             fontSize: 14, fontWeight: FontWeight.w600),
       ),
       child: Text(label),
+    );
+  }
+}
+
+class _LandingDrawer extends StatelessWidget {
+  const _LandingDrawer(
+      {required this.onScrollTo, required this.onRoute});
+
+  final void Function(String anchor) onScrollTo;
+  final void Function(String route) onRoute;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    Widget tile(IconData icon, String label, VoidCallback onTap) {
+      return ListTile(
+        leading: Icon(icon, color: cs.primary),
+        title: Text(label,
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600)),
+        onTap: onTap,
+      );
+    }
+
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Row(
+                children: [
+                  Icon(Icons.psychology, color: cs.primary, size: 28),
+                  const SizedBox(width: 8),
+                  Text('PsyClinicAI',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      )),
+                ],
+              ),
+            ),
+            const Divider(),
+            tile(Icons.attach_money, 'Pricing',
+                () => onScrollTo('pricing')),
+            tile(Icons.compare_arrows, 'Compare',
+                () => onScrollTo('comparison')),
+            tile(Icons.help_outline, 'FAQ', () => onScrollTo('faq')),
+            const Divider(),
+            tile(Icons.verified_user_outlined, 'Security',
+                () => onRoute('/security')),
+            tile(Icons.info_outline, 'About', () => onRoute('/about')),
+            tile(Icons.email_outlined, 'Contact',
+                () => onRoute('/contact')),
+            tile(Icons.gavel_outlined, 'Privacy',
+                () => onRoute('/privacy')),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: FilledButton.icon(
+                onPressed: () => onRoute('/login'),
+                icon: const Icon(Icons.rocket_launch),
+                label: const Text('Start free'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size.fromHeight(0),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

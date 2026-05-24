@@ -4,6 +4,7 @@ import '../../services/copilot/api_key_storage.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
+import '../../services/data/seed_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -60,6 +61,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final key = _byokCtrl.text.trim();
     if (key.isNotEmpty) {
       await ApiKeyStorage.instance.setAnthropicKey(key);
+    }
+
+    if (_seedDemo) {
+      // Best-effort — silent no-op in demo mode (Firebase off).
+      await SeedService.instance.seedDemoChart();
     }
 
     if (uid != null) {

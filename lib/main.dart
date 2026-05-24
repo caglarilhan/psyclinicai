@@ -29,6 +29,7 @@ import 'package:psyclinicai/screens/static/privacy_page.dart';
 import 'package:psyclinicai/screens/static/tos_page.dart';
 import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
+import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
@@ -126,6 +127,9 @@ class PsyClinicAIApp extends StatelessWidget {
               },
               '/onboarding': (context) => const OnboardingScreen(),
             },
+            onUnknownRoute: (settings) => MaterialPageRoute(
+              builder: (_) => NotFoundPage(path: settings.name),
+            ),
           );
         },
       ),

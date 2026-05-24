@@ -1,0 +1,9 @@
+# PsyClinicAI security disclosure (RFC 9116)
+# https://datatracker.ietf.org/doc/html/rfc9116
+
+Contact: mailto:security@psyclinicai.com
+Expires: 2027-05-23T00:00:00.000Z
+Preferred-Languages: en, tr, de
+Canonical: https://psyclinicai.com/.well-known/security.txt
+Policy: https://psyclinicai.com/#/security
+Acknowledgments: https://psyclinicai.com/#/security

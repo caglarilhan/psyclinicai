@@ -160,22 +160,85 @@ class _DemoBanner extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(
           PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, 0),
-      padding: const EdgeInsets.all(PsySpacing.lg),
+      padding: const EdgeInsets.all(PsySpacing.xl),
       decoration: BoxDecoration(
         color: Colors.amber.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(PsyRadius.md),
         border: Border.all(color: Colors.amber.withValues(alpha: 0.45)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.cloud_off, color: Colors.amber, size: 20),
-          const SizedBox(width: PsySpacing.md),
+          const Icon(Icons.cloud_off, color: Colors.amber, size: 22),
+          const SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "You're in demo mode — Firebase isn't configured yet.",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: PsySpacing.sm),
+                _bullet(cs, theme,
+                    'Sign-ups, patients and superbills are stored in memory only.'),
+                _bullet(cs, theme,
+                    'Counts and trends show placeholders ("—") until a real backend is online.'),
+                _bullet(cs, theme,
+                    'Run flutterfire configure with your Firebase project and refresh.'),
+                const SizedBox(height: PsySpacing.md),
+                Wrap(
+                  spacing: PsySpacing.md,
+                  runSpacing: PsySpacing.sm,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context)
+                          .pushNamed('/security'),
+                      icon: const Icon(Icons.menu_book_outlined,
+                          size: 16),
+                      label: const Text('Setup guide'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/contact'),
+                      icon: const Icon(Icons.support_agent, size: 16),
+                      label: const Text('Need help'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bullet(ColorScheme cs, ThemeData theme, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 7, right: 8),
+            child: Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.onSurface.withValues(alpha: 0.7),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
           Expanded(
             child: Text(
-              'Demo mode — Firebase is not configured. Sign-up, persistence '
-              'and counts will go live once you run flutterfire configure.',
+              text,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: cs.onSurface.withValues(alpha: 0.8),
+                height: 1.5,
               ),
             ),
           ),

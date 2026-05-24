@@ -1,0 +1,165 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import 'api_key_storage.dart';
+
+/// Real Anthropic Claude chat — replaces the previous 12-pattern
+/// hard-coded stub. Multi-turn (we send the rolling conversation history
+/// each call). BYOK: clinician's own key, no data ever passes through
+/// PsyClinicAI servers.
+class ChatService {
+  ChatService({ApiKeyStorage? keyStorage, http.Client? client})
+      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+        _client = client ?? http.Client();
+
+  final ApiKeyStorage _keyStorage;
+  final http.Client _client;
+
+  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
+  static const String _model = 'claude-haiku-4-5-20251001';
+  static const String _anthropicVersion = '2023-06-01';
+
+  static const String _systemPrompt = '''
+You are PsyClinicAI Copilot, a clinical assistant for licensed therapists
+and psychiatrists. You help with:
+- Summarising patient notes ("summarise the last session for John Demo")
+- DSM-5 differential discussion (NOT diagnosis — the clinician decides)
+- PHQ-9 / GAD-7 score interpretation + clinical action suggestions
+- CPT / ICD-10 lookup
+- Evidence-based intervention reminders (CBT, DBT, motivational interviewing)
+
+Rules:
+- Speak in clear, concise English unless the clinician switches language.
+- Cite the source when you reference a guideline (DSM-5, APA, NICE).
+- Never give the clinician a final diagnosis — only offer a differential
+  and the criteria they should reconfirm.
+- If the clinician asks anything outside clinical scope, politely decline
+  and remind them this assistant is for clinical workflow only.
+- Never invent patient data. If you need information, ask the clinician.
+- Format with short paragraphs and bullet points; max ~250 words per
+  reply unless the clinician explicitly asks for more detail.
+''';
+
+  /// Send the rolling [history] (oldest first, alternating user/assistant)
+  /// and return the assistant's reply text.
+  Future<String> send(List<ChatTurn> history) async {
+    final key = await _keyStorage.getAnthropicKey();
+    if (key == null || key.isEmpty) {
+      throw const ChatException(
+        ChatErrorCode.noApiKey,
+        'No Anthropic API key configured. Add one under Settings → API keys.',
+      );
+    }
+
+    final messages = history
+        .map((t) => {
+              'role': t.role == ChatRole.user ? 'user' : 'assistant',
+              'content': t.text,
+            })
+        .toList();
+
+    final body = jsonEncode({
+      'model': _model,
+      'max_tokens': 800,
+      'temperature': 0.4,
+      'system': _systemPrompt,
+      'messages': messages,
+    });
+
+    http.Response resp;
+    try {
+      resp = await _client
+          .post(
+            Uri.parse(_apiUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': key,
+              'anthropic-version': _anthropicVersion,
+              'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: body,
+          )
+          .timeout(const Duration(seconds: 45));
+    } catch (e) {
+      throw ChatException(
+        ChatErrorCode.network,
+        'Network error reaching Anthropic. $e',
+      );
+    }
+
+    if (resp.statusCode == 401 || resp.statusCode == 403) {
+      throw const ChatException(
+        ChatErrorCode.unauthorized,
+        'Anthropic rejected the API key. Verify it in Settings → API keys.',
+      );
+    }
+    if (resp.statusCode == 429) {
+      throw const ChatException(
+        ChatErrorCode.rateLimit,
+        'Rate limit hit. Wait a moment and retry.',
+      );
+    }
+    if (resp.statusCode >= 500) {
+      throw ChatException(
+        ChatErrorCode.server,
+        'Anthropic server error ${resp.statusCode}.',
+      );
+    }
+    if (resp.statusCode != 200) {
+      throw ChatException(
+        ChatErrorCode.unknown,
+        'Unexpected response ${resp.statusCode}: ${resp.body}',
+      );
+    }
+
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final content = data['content'] as List<dynamic>?;
+    if (content == null || content.isEmpty) {
+      throw const ChatException(
+        ChatErrorCode.parse,
+        'Anthropic returned an empty response.',
+      );
+    }
+    final first = content.first as Map<String, dynamic>;
+    final text = first['text'] as String?;
+    if (text == null || text.isEmpty) {
+      throw const ChatException(
+        ChatErrorCode.parse,
+        'Anthropic response had no text content.',
+      );
+    }
+    return text;
+  }
+
+  void dispose() => _client.close();
+}
+
+enum ChatRole { user, assistant }
+
+class ChatTurn {
+  ChatTurn({required this.role, required this.text, DateTime? at})
+      : at = at ?? DateTime.now();
+
+  final ChatRole role;
+  final String text;
+  final DateTime at;
+}
+
+enum ChatErrorCode {
+  noApiKey,
+  unauthorized,
+  rateLimit,
+  server,
+  network,
+  parse,
+  unknown,
+}
+
+class ChatException implements Exception {
+  const ChatException(this.code, this.message);
+  final ChatErrorCode code;
+  final String message;
+  @override
+  String toString() => 'ChatException($code): $message';
+}

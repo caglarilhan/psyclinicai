@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
+import '../../services/copilot/chat_service.dart';
+import '../../theme/tokens.dart';
+import '../../widgets/ds/psy_badge.dart';
+import '../../widgets/ds/psy_button.dart';
+
+/// `/ai_chatbot` — real Anthropic Claude conversation. BYOK: nothing
+/// goes through PsyClinicAI servers. Replaces the prior 12-pattern
+/// hardcoded dummy.
 class AIChatbotScreen extends StatefulWidget {
   const AIChatbotScreen({super.key});
 
@@ -8,405 +15,147 @@ class AIChatbotScreen extends StatefulWidget {
   State<AIChatbotScreen> createState() => _AIChatbotScreenState();
 }
 
-class _AIChatbotScreenState extends State<AIChatbotScreen> with TickerProviderStateMixin {
-  final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
-  bool _isTyping = false;
-  late AnimationController _typingAnimationController;
-  late Animation<double> _typingAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _typingAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    _typingAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _typingAnimationController,
-      curve: Curves.easeInOut,
-    ));
-    
-    // Welcome message
-    _addMessage(
-      'AI Assistant',
-      'Hi! I\'m your PsyClinic AI assistant. How can I help you today?',
-      false,
-      DateTime.now(),
-    );
-  }
+class _AIChatbotScreenState extends State<AIChatbotScreen> {
+  final _chat = ChatService();
+  final _input = TextEditingController();
+  final _scroll = ScrollController();
+  final List<ChatTurn> _history = [];
+  bool _sending = false;
+  String? _error;
 
   @override
   void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    _typingAnimationController.dispose();
+    _input.dispose();
+    _scroll.dispose();
+    _chat.dispose();
     super.dispose();
   }
 
-  void _addMessage(String sender, String text, bool isUser, DateTime timestamp) {
+  Future<void> _send() async {
+    final text = _input.text.trim();
+    if (text.isEmpty || _sending) return;
     setState(() {
-      _messages.add(ChatMessage(
-        sender: sender,
-        text: text,
-        isUser: isUser,
-        timestamp: timestamp,
-      ));
+      _history.add(ChatTurn(role: ChatRole.user, text: text));
+      _input.clear();
+      _sending = true;
+      _error = null;
     });
     _scrollToBottom();
+    try {
+      final reply = await _chat.send(_history);
+      if (!mounted) return;
+      setState(() {
+        _history.add(ChatTurn(role: ChatRole.assistant, text: reply));
+        _sending = false;
+      });
+      _scrollToBottom();
+    } on ChatException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _sending = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Unexpected error: $e';
+        _sending = false;
+      });
+    }
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+      );
     });
   }
 
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    _addMessage('Siz', text, true, DateTime.now());
-    _messageController.clear();
-
+  void _newConversation() {
     setState(() {
-      _isTyping = true;
-    });
-    _typingAnimationController.repeat();
-
-    // Simulate AI response
-    Future.delayed(const Duration(seconds: 2), () {
-      _typingAnimationController.stop();
-      setState(() {
-        _isTyping = false;
-      });
-      _generateAIResponse(text);
+      _history.clear();
+      _error = null;
     });
   }
 
-  void _generateAIResponse(String userMessage) {
-    String response = '';
-    
-    final lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.contains('patient') || lowerMessage.contains('hasta')) {
-      response = 'I can help you with patient management. Which patient would you like information about?';
-    } else if (lowerMessage.contains('appointment') || lowerMessage.contains('randevu')) {
-      response = 'I can help with the appointment system. Would you like to schedule a new appointment?';
-    } else if (lowerMessage.contains('prescription') || lowerMessage.contains('reçete')) {
-      response = 'I can answer questions about the e-prescription system. Which medication would you like info on?';
-    } else if (lowerMessage.contains('billing') || lowerMessage.contains('invoice')) {
-      response = 'I can help with billing. Which invoice or billing question do you have?';
-    } else if (lowerMessage.contains('insurance')) {
-      response = 'I can help with insurance integration. Which insurance provider are you asking about?';
-    } else if (lowerMessage.contains('mood')) {
-      response = 'I can help with mood tracking. Which patient\'s mood data would you like to review?';
-    } else if (lowerMessage.contains('voice note') || lowerMessage.contains('voice')) {
-      response = 'I can help with the voice notes system. Would you like to record a new voice note?';
-    } else if (lowerMessage.contains('telemedicine') || lowerMessage.contains('telehealth') || lowerMessage.contains('video call')) {
-      response = 'I can help with telehealth. Would you like to start a video session?';
-    } else if (lowerMessage.contains('security')) {
-      response = 'I can help with security settings. Which security feature do you have a question about?';
-    } else if (lowerMessage.contains('analytics') || lowerMessage.contains('reporting')) {
-      response = 'I can help with analytics and reporting. Which report would you like to generate?';
-    } else if (lowerMessage.contains('hello') || lowerMessage.contains('hi ') || lowerMessage.contains('hey')) {
-      response = 'Hi! How can I help you? Ask me about patient management, appointments, prescriptions, or anything else.';
-    } else if (lowerMessage.contains('help')) {
-      response = 'Here\'s what I can help you with in PsyClinic AI:\n\n'
-          '• Patient management & tracking\n'
-          '• Appointment scheduling\n'
-          '• E-prescription system\n'
-          '• Billing & invoicing\n'
-          '• Insurance integration\n'
-          '• Mood tracking\n'
-          '• Voice notes\n'
-          '• Telehealth video sessions\n'
-          '• Security settings\n'
-          '• Analytics & reporting\n\n'
-          'Which topic would you like to know more about?';
-    } else {
-      response = 'Got it. Could you ask a more specific question so I can help better? '
-          'I can answer about patient management, appointments, prescriptions, billing, or other system features.';
-    }
-
-    _addMessage('AI Asistan', response, false, DateTime.now());
+  void _useSuggestion(String text) {
+    _input.text = text;
+    _send();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final cs = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Asistan'),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
+        title: Row(
+          children: [
+            Icon(Icons.smart_toy_outlined, color: cs.primary, size: 22),
+            const SizedBox(width: PsySpacing.sm),
+            const Text('AI Copilot'),
+            const SizedBox(width: PsySpacing.md),
+            const PsyBadge(
+                label: 'Claude Haiku 3.5', tone: PsyBadgeTone.brand),
+          ],
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: _clearChat,
+          TextButton.icon(
+            onPressed: _history.isEmpty ? null : _newConversation,
+            icon: const Icon(Icons.add_comment_outlined, size: 18),
+            label: const Text('New chat'),
           ),
-          IconButton(
-            icon: const Icon(Icons.help),
-            onPressed: _showHelp,
-          ),
+          const SizedBox(width: PsySpacing.md),
         ],
       ),
       body: Column(
         children: [
-          // Chat messages
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + (_isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && _isTyping) {
-                  return _buildTypingIndicator();
-                }
-                return _buildMessageBubble(_messages[index]);
-              },
-            ),
-          ),
-          
-          // Message input
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              border: Border(
-                top: BorderSide(
-                  color: colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Mesajınızı yazın...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    maxLines: null,
-                    textCapitalization: TextCapitalization.sentences,
-                    onSubmitted: (_) => _sendMessage(),
+            child: _history.isEmpty
+                ? _EmptyState(
+                    cs: cs, theme: theme, onSuggest: _useSuggestion)
+                : ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: PsySpacing.xxl,
+                        vertical: PsySpacing.xl),
+                    itemCount: _history.length + (_sending ? 1 : 0),
+                    itemBuilder: (_, i) {
+                      if (_sending && i == _history.length) {
+                        return _TypingBubble(cs: cs);
+                      }
+                      return _Bubble(
+                          turn: _history[i], cs: cs, theme: theme);
+                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                FloatingActionButton(
-                  onPressed: _sendMessage,
-                  backgroundColor: colorScheme.primary,
-                  child: const Icon(Icons.send, color: Colors.white),
-                ),
-              ],
-            ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(ChatMessage message) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          if (!message.isUser) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: colorScheme.primary,
-              child: const Icon(
-                Icons.smart_toy,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: message.isUser 
-                    ? colorScheme.primary 
-                    : colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          if (_error != null)
+            Container(
+              color: cs.error.withValues(alpha: 0.08),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: PsySpacing.xxl, vertical: PsySpacing.md),
+              child: Row(
                 children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser 
-                          ? colorScheme.onPrimary 
-                          : colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('HH:mm').format(message.timestamp),
-                    style: TextStyle(
-                      color: message.isUser 
-                          ? colorScheme.onPrimary.withOpacity(0.7)
-                          : colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
+                  Icon(Icons.error_outline, color: cs.error, size: 18),
+                  const SizedBox(width: PsySpacing.sm),
+                  Expanded(
+                    child: Text(_error!,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: cs.error)),
                   ),
                 ],
               ),
             ),
-          ),
-          if (message.isUser) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: colorScheme.secondary,
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypingIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            child: const Icon(
-              Icons.smart_toy,
-              color: Colors.white,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: AnimatedBuilder(
-              animation: _typingAnimation,
-              builder: (context, child) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildTypingDot(0),
-                    const SizedBox(width: 4),
-                    _buildTypingDot(1),
-                    const SizedBox(width: 4),
-                    _buildTypingDot(2),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypingDot(int index) {
-    final delay = index * 0.2;
-    final animationValue = (_typingAnimation.value - delay).clamp(0.0, 1.0);
-    
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(animationValue),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  void _clearChat() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sohbeti Temizle'),
-        content: const Text('Tüm mesajları silmek istediğinizden emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _messages.clear();
-              });
-              _addMessage(
-                'AI Asistan',
-                'Merhaba! Ben PsyClinic AI asistanınızım. Size nasıl yardımcı olabilirim?',
-                false,
-                DateTime.now(),
-              );
-            },
-            child: const Text('Temizle'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showHelp() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('AI Asistan Yardım'),
-        content: const Text(
-          'AI Asistan size şu konularda yardımcı olabilir:\n\n'
-          '• Hasta yönetimi ve takibi\n'
-          '• Randevu planlama ve yönetimi\n'
-          '• E-reçete sistemi\n'
-          '• Faturalandırma\n'
-          '• Sigorta entegrasyonu\n'
-          '• Mood tracking\n'
-          '• Sesli notlar\n'
-          '• Telemedicine\n'
-          '• Güvenlik ayarları\n'
-          '• Analitik ve raporlama\n\n'
-          'Sorularınızı doğal dilde sorabilirsiniz.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tamam'),
+          _Composer(
+            input: _input,
+            cs: cs,
+            sending: _sending,
+            onSend: _send,
           ),
         ],
       ),
@@ -414,16 +163,261 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> with TickerProviderSt
   }
 }
 
-class ChatMessage {
-  final String sender;
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-
-  ChatMessage({
-    required this.sender,
-    required this.text,
-    required this.isUser,
-    required this.timestamp,
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.cs,
+    required this.theme,
+    required this.onSuggest,
   });
+  final ColorScheme cs;
+  final ThemeData theme;
+  final ValueChanged<String> onSuggest;
+
+  static const _suggestions = <String>[
+    'Summarise PHQ-9 severity bands and the clinical action for each.',
+    'Compare DSM-5 criteria for MDD and persistent depressive disorder.',
+    'List 5 CBT homework assignments for moderate anxiety.',
+    'When should I escalate a patient with PHQ-9 item 9 endorsed?',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: Padding(
+          padding: const EdgeInsets.all(PsySpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.psychology_outlined, color: cs.primary, size: 36),
+              const SizedBox(height: PsySpacing.lg),
+              Text(
+                'Ask me anything clinical.',
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: PsySpacing.sm),
+              Text(
+                'I run on your own Anthropic key. Nothing is sent to '
+                'PsyClinicAI servers. Replies cite DSM-5 / APA / NICE '
+                'where relevant.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                  height: 1.55,
+                ),
+              ),
+              const SizedBox(height: PsySpacing.xxl),
+              Text('Try one of these:',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: PsySpacing.md),
+              ..._suggestions.map(
+                (s) => Padding(
+                  padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+                  child: InkWell(
+                    onTap: () => onSuggest(s),
+                    borderRadius: BorderRadius.circular(PsyRadius.md),
+                    child: Container(
+                      padding: const EdgeInsets.all(PsySpacing.lg),
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(PsyRadius.md),
+                        border: Border.all(color: cs.outlineVariant),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bolt_outlined,
+                              size: 16, color: cs.primary),
+                          const SizedBox(width: PsySpacing.sm),
+                          Expanded(
+                            child: Text(s,
+                                style: theme.textTheme.bodyMedium),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 12),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble(
+      {required this.turn, required this.cs, required this.theme});
+  final ChatTurn turn;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUser = turn.role == ChatRole.user;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: PsySpacing.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: cs.primary,
+              child: Icon(Icons.smart_toy_outlined,
+                  color: cs.onPrimary, size: 16),
+            ),
+            const SizedBox(width: PsySpacing.md),
+          ],
+          Flexible(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 640),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+              decoration: BoxDecoration(
+                color: isUser
+                    ? cs.primary.withValues(alpha: 0.10)
+                    : cs.surfaceContainerLow,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(PsyRadius.lg),
+                  topRight: const Radius.circular(PsyRadius.lg),
+                  bottomLeft: Radius.circular(
+                      isUser ? PsyRadius.lg : PsyRadius.xs),
+                  bottomRight: Radius.circular(
+                      isUser ? PsyRadius.xs : PsyRadius.lg),
+                ),
+                border: Border.all(
+                    color: isUser
+                        ? cs.primary.withValues(alpha: 0.25)
+                        : cs.outlineVariant),
+              ),
+              child: SelectableText(
+                turn.text,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.55),
+              ),
+            ),
+          ),
+          if (isUser) ...[
+            const SizedBox(width: PsySpacing.md),
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: cs.surfaceContainerHigh,
+              child: Icon(Icons.person_outline,
+                  color: cs.onSurface, size: 16),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TypingBubble extends StatelessWidget {
+  const _TypingBubble({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: PsySpacing.lg),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: cs.primary,
+            child: Icon(Icons.smart_toy_outlined,
+                color: cs.onPrimary, size: 16),
+          ),
+          const SizedBox(width: PsySpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(PsyRadius.lg),
+              border: Border.all(color: cs.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(cs.primary),
+                  ),
+                ),
+                const SizedBox(width: PsySpacing.md),
+                Text('Thinking…',
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.7),
+                      fontStyle: FontStyle.italic,
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Composer extends StatelessWidget {
+  const _Composer({
+    required this.input,
+    required this.cs,
+    required this.sending,
+    required this.onSend,
+  });
+  final TextEditingController input;
+  final ColorScheme cs;
+  final bool sending;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(top: BorderSide(color: cs.outlineVariant)),
+      ),
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.xxl, vertical: PsySpacing.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: input,
+              minLines: 1,
+              maxLines: 6,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => onSend(),
+              decoration: const InputDecoration(
+                hintText: 'Ask anything clinical — Enter to send',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: PsySpacing.md),
+          PsyButton(
+            label: 'Send',
+            icon: Icons.send,
+            loading: sending,
+            onPressed: sending ? null : onSend,
+          ),
+        ],
+      ),
+    );
+  }
 }

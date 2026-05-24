@@ -203,6 +203,8 @@ class _BrowserWindow extends StatelessWidget {
               asset,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
+              semanticLabel:
+                  'Product screenshot showing the $title interface',
               errorBuilder: (_, __, ___) => Container(
                 color: cs.surfaceContainerHighest,
                 alignment: Alignment.center,

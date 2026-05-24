@@ -3,21 +3,32 @@ import 'package:flutter/material.dart';
 import '_landing_tokens.dart';
 
 /// Pricing tiers — solo / practice / group. Founding rates highlighted.
-class PricingSection extends StatelessWidget {
+class PricingSection extends StatefulWidget {
   const PricingSection({super.key, required this.onPickTier});
 
   final void Function(String tier) onPickTier;
+
+  @override
+  State<PricingSection> createState() => _PricingSectionState();
+}
+
+class _PricingSectionState extends State<PricingSection> {
+  bool _annual = false;
+
+  int _priceFor(int monthly) =>
+      _annual ? (monthly * 0.8).round() : monthly;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
+    final period = _annual ? '/month, billed annually' : '/month';
     final tiers = <_Tier>[
       _Tier(
         name: 'Solo Founding',
-        price: r'$49',
-        period: '/month',
+        price: '\$${_priceFor(49)}',
+        period: period,
         followUp: r'$99/mo standard after pilot',
         features: const [
           '1 clinician',
@@ -31,8 +42,8 @@ class PricingSection extends StatelessWidget {
       ),
       _Tier(
         name: 'Practice Founding',
-        price: r'$149',
-        period: '/month',
+        price: '\$${_priceFor(149)}',
+        period: period,
         followUp: r'$299/mo standard after pilot',
         features: const [
           '2 – 10 clinicians',
@@ -46,8 +57,8 @@ class PricingSection extends StatelessWidget {
       ),
       _Tier(
         name: 'Group Founding',
-        price: r'$299',
-        period: '/month',
+        price: '\$${_priceFor(299)}',
+        period: period,
         followUp: r'$599/mo standard after pilot',
         features: const [
           '11+ clinicians',
@@ -76,7 +87,21 @@ class PricingSection extends StatelessWidget {
               'First 30 clinicians lock in the founding rate. No card on file '
               'during onboarding — your trial seat is yours until you say otherwise.',
               textAlign: TextAlign.center),
-          const SizedBox(height: 40),
+          const SizedBox(height: 28),
+          Center(
+            child: SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: false, label: Text('Monthly')),
+                ButtonSegment(
+                    value: true, label: Text('Annual · Save 20%')),
+              ],
+              selected: {_annual},
+              onSelectionChanged: (s) =>
+                  setState(() => _annual = s.first),
+              showSelectedIcon: false,
+            ),
+          ),
+          const SizedBox(height: 28),
           LayoutBuilder(
             builder: (ctx, c) {
               final isWide = c.maxWidth >= 980;
@@ -94,14 +119,29 @@ class PricingSection extends StatelessWidget {
                                 tier: t,
                                 theme: theme,
                                 cs: cs,
-                                onPick: () => onPickTier(t.name)),
+                                onPick: () =>
+                                    widget.onPickTier(t.name)),
                           ),
                         ))
                     .toList(),
               );
             },
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 18,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _MicroChip(cs: cs, text: 'No credit card during pilot'),
+              _MicroChip(cs: cs, text: 'Cancel anytime'),
+              _MicroChip(
+                  cs: cs, text: '30-day money-back, no questions'),
+              _MicroChip(
+                  cs: cs, text: 'BAA + DPA pre-signed before you pay'),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(
             'No surprises: prices switch to standard at month 7 only after we email you a reminder at month 5.',
             textAlign: TextAlign.center,
@@ -111,6 +151,29 @@ class PricingSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MicroChip extends StatelessWidget {
+  const _MicroChip({required this.cs, required this.text});
+  final ColorScheme cs;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.check, size: 14, color: cs.primary),
+        const SizedBox(width: 6),
+        Text(text,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: cs.onSurface.withValues(alpha: 0.72),
+            )),
+      ],
     );
   }
 }

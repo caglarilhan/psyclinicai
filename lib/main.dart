@@ -25,6 +25,10 @@ import 'package:psyclinicai/screens/static/security_page.dart';
 import 'package:psyclinicai/screens/static/about_page.dart';
 import 'package:psyclinicai/screens/static/changelog_page.dart';
 import 'package:psyclinicai/screens/static/status_page.dart';
+import 'package:psyclinicai/screens/static/privacy_page.dart';
+import 'package:psyclinicai/screens/static/tos_page.dart';
+import 'package:psyclinicai/screens/static/contact_page.dart';
+import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
@@ -100,6 +104,10 @@ class PsyClinicAIApp extends StatelessWidget {
               '/about': (context) => const AboutPage(),
               '/changelog': (context) => const ChangelogPage(),
               '/status': (context) => const StatusPage(),
+              '/privacy': (context) => const PrivacyPage(),
+              '/tos': (context) => const TosPage(),
+              '/contact': (context) => const ContactPage(),
+              '/press': (context) => const PressPage(),
               '/patients': (context) => const PatientListScreen(),
               '/patient/detail': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments

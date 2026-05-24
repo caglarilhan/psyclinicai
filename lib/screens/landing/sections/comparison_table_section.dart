@@ -58,13 +58,37 @@ class ComparisonTableSection extends StatelessWidget {
           const SectionSubtitle(
               'Apples-to-apples on the capabilities that move the needle.'),
           const SizedBox(height: 32),
-          _Table(rows: rows, theme: theme, cs: cs),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                  minWidth: MediaQuery.of(context).size.width - 96),
+              child: _Table(rows: rows, theme: theme, cs: cs),
+            ),
+          ),
           const SizedBox(height: 12),
           Text(
             "Competitor data sourced from each vendor's public product pages, May 2026.",
             style: theme.textTheme.bodySmall?.copyWith(
               color: cs.onSurface.withValues(alpha: 0.55),
               fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 28),
+          Center(
+            child: FilledButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/login'),
+              icon: const Icon(Icons.rocket_launch, size: 18),
+              label: const Text('Reserve your founding seat'),
+              style: FilledButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 26, vertical: 16),
+                textStyle: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -211,6 +235,7 @@ class _Cell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = bold ? null : _iconFor(text, cs, highlight);
     return Container(
       decoration: highlight
           ? BoxDecoration(
@@ -222,14 +247,54 @@ class _Cell extends StatelessWidget {
             )
           : null,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Text(
-        text,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
-          color: highlight ? cs.primary : cs.onSurface,
-          height: 1.4,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          if (icon != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 2, right: 8),
+              child: icon,
+            ),
+          ],
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
+                color: highlight ? cs.primary : cs.onSurface,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  static Widget? _iconFor(String value, ColorScheme cs, bool highlight) {
+    final v = value.toLowerCase();
+    if (v == 'yes' ||
+        v == 'built-in' ||
+        v.startsWith('yes') ||
+        v == 'included') {
+      return Icon(Icons.check_circle,
+          size: 16, color: highlight ? cs.primary : const Color(0xFF16A34A));
+    }
+    if (v == 'no' || v == 'not available') {
+      return Icon(Icons.cancel,
+          size: 16,
+          color: cs.onSurface.withValues(alpha: 0.35));
+    }
+    if (v.contains('manual') ||
+        v.contains('opt-in') ||
+        v.contains('beta') ||
+        v.contains('coming') ||
+        v.contains('add-on') ||
+        v.contains('hipaa only')) {
+      return const Icon(Icons.schedule,
+          size: 16, color: Color(0xFFEA580C));
+    }
+    return null;
   }
 }

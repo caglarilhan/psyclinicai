@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/data/firebase_bootstrap.dart';
 import '../../widgets/landing/demo_modal.dart';
+import '../../widgets/landing/exit_intent_modal.dart';
 import '../../widgets/landing/sticky_cta_bar.dart';
+import '../../widgets/landing/trust_strip.dart';
 import 'sections/built_for_section.dart';
 import 'sections/comparison_table_section.dart';
 import 'sections/faq_section.dart';
@@ -34,6 +37,25 @@ class _LandingScreenState extends State<LandingScreen> {
   final _scroll = ScrollController();
   bool _stickyVisible = false;
 
+  final _anchors = <String, GlobalKey>{
+    'comparison': GlobalKey(),
+    'pricing': GlobalKey(),
+    'faq': GlobalKey(),
+  };
+
+  bool _exitIntentShown = false;
+
+  void _onMouseHover(PointerHoverEvent e) {
+    if (_exitIntentShown) return;
+    // After the visitor has scrolled past the hero — they've seen the
+    // pitch — fire when the cursor approaches the browser tab bar.
+    if (_scroll.hasClients && _scroll.offset > 1200 && e.position.dy < 8) {
+      _exitIntentShown = true;
+      ExitIntentModal.show(
+          context, (email) => _waitlistSubmit(context, email));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +76,18 @@ class _LandingScreenState extends State<LandingScreen> {
     }
   }
 
+  void _scrollTo(String anchor) {
+    final key = _anchors[anchor];
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      alignment: 0.05,
+    );
+  }
+
   void _gotoSignup(BuildContext context) {
     Navigator.of(context).pushNamed('/login');
   }
@@ -70,7 +104,6 @@ class _LandingScreenState extends State<LandingScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Reserving a $tier seat — sign in to continue'),
-        behavior: SnackBarBehavior.floating,
       ),
     );
     Navigator.of(context).pushNamed('/login');
@@ -99,12 +132,30 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   void _footerLink(BuildContext context, String id) {
+    // Anchors scroll inside the landing.
+    if (_anchors.containsKey(id) ||
+        const ['features', 'roadmap'].contains(id)) {
+      final mapped = switch (id) {
+        'features' => 'comparison',
+        'roadmap' => 'faq',
+        _ => id,
+      };
+      _scrollTo(mapped);
+      return;
+    }
+
     final route = switch (id) {
       'security' => '/security',
       'about' => '/about',
       'changelog' => '/changelog',
       'status' => '/status',
-      'pricing' => null, // anchor on current page; future Sprint
+      'privacy' => '/privacy',
+      'tos' => '/tos',
+      'contact' => '/contact',
+      'press' => '/press',
+      'help' => '/security',
+      'baa' => '/privacy',
+      'dpa' => '/privacy',
       _ => null,
     };
     if (route != null) {
@@ -112,10 +163,7 @@ class _LandingScreenState extends State<LandingScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('"$id" page coming soon'),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text('"$id" page coming soon')),
     );
   }
 
@@ -125,8 +173,12 @@ class _LandingScreenState extends State<LandingScreen> {
       appBar: _LandingAppBar(
         onSignIn: () => _gotoLogin(context),
         onStart: () => _gotoSignup(context),
+        onScrollTo: _scrollTo,
+        onSecurity: () => Navigator.of(context).pushNamed('/security'),
       ),
-      body: Stack(
+      body: MouseRegion(
+        onHover: _onMouseHover,
+        child: Stack(
         children: [
           ListView(
             controller: _scroll,
@@ -138,16 +190,23 @@ class _LandingScreenState extends State<LandingScreen> {
                 onWaitlistEmail: (email) =>
                     _waitlistSubmit(context, email),
               ),
+              const TrustStrip(),
               const TrustBarSection(),
-              const ComparisonTableSection(),
+              KeyedSubtree(
+                  key: _anchors['comparison'],
+                  child: const ComparisonTableSection()),
               const ProductGallerySection(),
               const HowItWorksSection(),
               const FeatureGridSection(),
               const BuiltForSection(),
               const ProblemSection(),
-              PricingSection(onPickTier: (t) => _pickTier(context, t)),
+              KeyedSubtree(
+                  key: _anchors['pricing'],
+                  child: PricingSection(
+                      onPickTier: (t) => _pickTier(context, t))),
               TestimonialsSection(onCta: () => _gotoSignup(context)),
-              const FaqSection(),
+              KeyedSubtree(
+                  key: _anchors['faq'], child: const FaqSection()),
               FinalCtaSection(
                 onPrimary: () => _gotoSignup(context),
                 onSecondary: () => _bookDemo(context),
@@ -168,15 +227,25 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 }
 
 class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _LandingAppBar({required this.onSignIn, required this.onStart});
+  const _LandingAppBar({
+    required this.onSignIn,
+    required this.onStart,
+    required this.onScrollTo,
+    required this.onSecurity,
+  });
 
   final VoidCallback onSignIn;
   final VoidCallback onStart;
+
+  /// Scroll to a named landing section (`pricing`, `faq`, `comparison`).
+  final void Function(String anchor) onScrollTo;
+  final VoidCallback onSecurity;
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
@@ -185,10 +254,12 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isWide = MediaQuery.of(context).size.width >= 720;
+
     return AppBar(
       backgroundColor: cs.surface,
       elevation: 0,
-      scrolledUnderElevation: 1,
+      scrolledUnderElevation: 0,
       surfaceTintColor: cs.surface,
       title: Row(
         children: [
@@ -204,6 +275,13 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        if (isWide) ...[
+          _NavLink('Pricing', () => onScrollTo('pricing'), cs),
+          _NavLink('Compare', () => onScrollTo('comparison'), cs),
+          _NavLink('FAQ', () => onScrollTo('faq'), cs),
+          _NavLink('Security', onSecurity, cs),
+          const SizedBox(width: 12),
+        ],
         TextButton(
           onPressed: onSignIn,
           child: Text('Sign in', style: TextStyle(color: cs.onSurface)),
@@ -212,6 +290,8 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
         FilledButton(
           onPressed: onStart,
           style: FilledButton.styleFrom(
+            backgroundColor: cs.primary,
+            foregroundColor: cs.onPrimary,
             padding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
@@ -219,6 +299,27 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         const SizedBox(width: 16),
       ],
+    );
+  }
+}
+
+class _NavLink extends StatelessWidget {
+  const _NavLink(this.label, this.onPressed, this.cs);
+  final String label;
+  final VoidCallback onPressed;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: cs.onSurface.withValues(alpha: 0.78),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      child: Text(label),
     );
   }
 }

@@ -1,6 +1,6 @@
 class AppConstants {
   // Uygulama bilgileri
-  static const String appName = 'PsyClinic AI';
+  static const String appName = 'PsyClinicAI';
   static const String appVersion = '1.0.0';
   static const String appDescription = 'AI Destekli Klinik Yönetim Sistemi';
 

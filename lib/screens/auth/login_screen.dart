@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
+import '../../services/data/onboarding_service.dart';
 
 enum _Mode { signIn, signUp }
 
@@ -44,7 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_backendReady) {
       await Future<void>.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      // Demo mode: surface the wizard so new visitors still see the
+      // "first 5 minutes" pitch even without Firebase configured.
+      Navigator.of(context).pushReplacementNamed('/onboarding');
       return;
     }
 
@@ -65,7 +68,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
 
     if (result.success) {
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      // New sign-ups always run the wizard; returning sign-ins skip it
+      // if they already completed it on any device.
+      String route = '/onboarding';
+      if (_mode == _Mode.signIn) {
+        final done = await OnboardingService.instance
+            .isCurrentUserOnboarded();
+        route = done ? '/dashboard' : '/onboarding';
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(route);
     } else {
       setState(() => _error = result.error ?? 'Unknown error');
     }

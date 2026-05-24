@@ -32,6 +32,7 @@ import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
+import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -123,6 +124,7 @@ class PsyClinicAIApp extends StatelessWidget {
                     as PatientDetailArgs?;
                 return OutcomesDashboardScreen(args: args);
               },
+              '/onboarding': (context) => const OnboardingScreen(),
             },
           );
         },

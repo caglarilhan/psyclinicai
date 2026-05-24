@@ -1,0 +1,48 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/lighthouse.yml'
+  push:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    name: Audit landing performance + a11y + SEO
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install deps
+        run: flutter pub get
+
+      - name: Build web release
+        run: flutter build web --release --pwa-strategy=none
+
+      - name: Serve build
+        run: |
+          (cd build/web && python3 -m http.server 8000 &)
+          sleep 5
+
+      - name: Lighthouse — landing
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:8000/
+            http://localhost:8000/#/security
+            http://localhost:8000/#/about
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./.github/lighthouse/lighthouserc.json

@@ -1,0 +1,91 @@
+import 'package:flutter/foundation.dart';
+
+/// Telemetry façade — Sentry (errors) + PostHog (funnel events).
+///
+/// Today this is a no-op stub: it logs to `debugPrint` in debug and does
+/// nothing in release builds. When real keys are wired in Sprint E the
+/// body becomes real `Sentry.captureException` + `Posthog.capture` calls.
+/// Every call site can stay unchanged because the API surface below is
+/// the canonical one.
+class TelemetryService {
+  TelemetryService._();
+  static final TelemetryService instance = TelemetryService._();
+
+  bool get _enabled => _sentryDsn.isNotEmpty || _posthogKey.isNotEmpty;
+
+  // Replace these constants in Sprint E with values from `--dart-define`
+  // or a generated config file.
+  static const String _sentryDsn = '';
+  static const String _posthogKey = '';
+
+  Future<void> initialize() async {
+    if (_enabled) {
+      // Real init goes here once keys are wired:
+      //   await SentryFlutter.init((o) => o.dsn = _sentryDsn);
+      //   await Posthog().setup(_posthogKey, ...);
+    }
+    if (kDebugMode) {
+      debugPrint('[telemetry] init — enabled=$_enabled');
+    }
+  }
+
+  /// Funnel event (PostHog).
+  Future<void> capture(String event,
+      {Map<String, Object?> properties = const {}}) async {
+    if (kDebugMode) {
+      debugPrint('[telemetry] capture: $event $properties');
+    }
+  }
+
+  /// Tag a user (after signup or sign-in).
+  Future<void> identify(String userId,
+      {Map<String, Object?> traits = const {}}) async {
+    if (kDebugMode) {
+      debugPrint('[telemetry] identify: $userId $traits');
+    }
+  }
+
+  /// Reset on sign-out so the next session starts anonymous.
+  Future<void> reset() async {
+    if (kDebugMode) {
+      debugPrint('[telemetry] reset');
+    }
+  }
+
+  /// Crash + error reporting (Sentry).
+  Future<void> captureError(Object error, StackTrace? stack,
+      {String? hint}) async {
+    if (kDebugMode) {
+      debugPrint(
+          '[telemetry] error${hint != null ? '/$hint' : ''}: $error');
+    }
+  }
+}
+
+/// Common funnel event names — centralised so dashboards use a stable
+/// vocabulary.
+class TelemetryEvents {
+  const TelemetryEvents._();
+
+  static const String landingHeroEmailSubmit = 'landing.hero_email_submit';
+  static const String landingWatchDemoClick = 'landing.watch_demo_click';
+  static const String landingPricingPickTier = 'landing.pricing_pick_tier';
+  static const String landingExitIntentSubmit =
+      'landing.exit_intent_submit';
+
+  static const String signUpStarted = 'auth.signup_started';
+  static const String signUpCompleted = 'auth.signup_completed';
+  static const String signInCompleted = 'auth.signin_completed';
+  static const String passwordResetSent = 'auth.password_reset_sent';
+
+  static const String onboardingStarted = 'onboarding.started';
+  static const String onboardingFinished = 'onboarding.finished';
+  static const String onboardingSkipped = 'onboarding.skipped';
+  static const String onboardingByokSaved = 'onboarding.byok_saved';
+  static const String onboardingSeedRequested = 'onboarding.seed_requested';
+
+  static const String sessionStarted = 'session.started';
+  static const String sessionNoteSaved = 'session.note_saved';
+  static const String superbillGenerated = 'billing.superbill_generated';
+  static const String assessmentCompleted = 'assessment.completed';
+}

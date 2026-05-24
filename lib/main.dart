@@ -7,7 +7,9 @@ import 'package:psyclinicai/services/patient_service.dart';
 import 'package:psyclinicai/services/region_service.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
+import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/theme/psy_theme.dart';
+import 'package:psyclinicai/utils/document_title.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
@@ -19,6 +21,7 @@ import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
+import 'package:psyclinicai/screens/settings/settings_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/static/security_page.dart';
@@ -46,9 +49,13 @@ Future<void> _initializeServices() async {
     await ThemeService.initialize();
     await ThemeService.setPresetTheme('purple_blue');
     await PsyFirebase.bootstrap();
-    debugPrint('Services initialized successfully (firebase: ${PsyFirebase.isReady})');
-  } catch (e) {
+    await TelemetryService.instance.initialize();
+    debugPrint(
+        'Services initialized (firebase: ${PsyFirebase.isReady})');
+  } catch (e, stack) {
     debugPrint('Error initializing services: $e');
+    await TelemetryService.instance
+        .captureError(e, stack, hint: 'bootstrap');
   }
 }
 
@@ -76,6 +83,7 @@ class PsyClinicAIApp extends StatelessWidget {
             darkTheme: PsyTheme.dark(),
             themeMode: ThemeMode.light,
             debugShowCheckedModeBanner: false,
+            navigatorObservers: [_PsyTitleObserver()],
             initialRoute: '/landing',
             routes: {
               '/landing': (context) => const LandingScreen(),
@@ -92,6 +100,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/ai_chatbot': (context) => const AIChatbotScreen(),
               '/mood_tracking': (context) => const MoodTrackingScreen(),
               '/ai_diagnosis': (context) => const AIDiagnosisScreen(),
+              '/settings': (context) => const SettingsScreen(),
               '/settings/api_keys': (context) => const ApiKeysScreen(),
               '/superbill': (context) => const SuperbillScreen(),
               '/assessments/phq9': (context) => const AssessmentScreen(
@@ -135,4 +144,26 @@ class PsyClinicAIApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Updates the browser tab title each time the top route changes (web).
+/// On mobile/desktop the underlying setter is a no-op via conditional
+/// import, so this observer is safe to register everywhere.
+class _PsyTitleObserver extends NavigatorObserver {
+  void _apply(Route<dynamic>? route) {
+    if (route == null) return;
+    setDocumentTitle(titleForRoute(route.settings.name));
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _apply(route);
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      _apply(newRoute);
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _apply(previousRoute);
 }

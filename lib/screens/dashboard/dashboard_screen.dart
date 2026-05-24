@@ -40,6 +40,12 @@ class DashboardScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Settings',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/settings'),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+          IconButton(
             tooltip: 'API keys',
             onPressed: () =>
                 Navigator.of(context).pushNamed('/settings/api_keys'),

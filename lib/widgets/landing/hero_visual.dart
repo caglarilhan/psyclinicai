@@ -66,6 +66,24 @@ class _HeroVisualState extends State<HeroVisual>
         ),
         child: LayoutBuilder(
           builder: (ctx, c) {
+            // Compact mobile (< 480px) → single full-bleed panel.
+            // Anything wider keeps the 3-panel mockup.
+            if (c.maxWidth < 480) {
+              return Center(
+                child: _floatedSlide(
+                  delay: 0,
+                  dx: 0,
+                  floatY: 4,
+                  elevated: true,
+                  child: _BrowserWindow(
+                    title: 'psyclinicai.com/session/live',
+                    asset: 'assets/landing/session.png',
+                    cs: cs,
+                    pulseDot: true,
+                  ),
+                ),
+              );
+            }
             return Stack(
               clipBehavior: Clip.none,
               children: [

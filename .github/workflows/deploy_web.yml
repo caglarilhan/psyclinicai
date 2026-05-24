@@ -9,7 +9,7 @@ on:
       - 'pubspec.yaml'
       - '.github/workflows/deploy_web.yml'
 
-jobs:
+ilkjobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 

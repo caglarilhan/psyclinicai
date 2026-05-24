@@ -22,8 +22,8 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
       'anxiety': 4,
       'energy': 2,
       'sleep': 3,
-      'notes': 'Bugün kendimi daha iyi hissediyorum. İlaçlarımı düzenli alıyorum.',
-      'tags': ['İlaç', 'Pozitif'],
+      'notes': 'Feeling better today. Taking my medications regularly.',
+      'tags': ['Medication', 'Positive'],
     },
     {
       'id': '2',
@@ -34,8 +34,8 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
       'anxiety': 5,
       'energy': 1,
       'sleep': 2,
-      'notes': 'Çok endişeli ve yorgun hissediyorum. Uyku sorunları devam ediyor.',
-      'tags': ['Anksiyete', 'Uyku'],
+      'notes': 'Feeling very anxious and tired. Sleep issues persist.',
+      'tags': ['Anxiety', 'Sleep'],
     },
     {
       'id': '3',
@@ -46,20 +46,20 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
       'anxiety': 2,
       'energy': 4,
       'sleep': 4,
-      'notes': 'Harika bir gün! Terapi seansı çok faydalı oldu.',
-      'tags': ['Terapi', 'Pozitif'],
+      'notes': 'Great day! Therapy session was very helpful.',
+      'tags': ['Therapy', 'Positive'],
     },
     {
       'id': '4',
       'patientId': 'P002',
-      'patientName': 'Ayşe Demir',
+      'patientName': 'Sarah Johnson',
       'date': DateTime(2024, 2, 15),
       'mood': 4,
       'anxiety': 3,
       'energy': 3,
       'sleep': 3,
-      'notes': 'Meditasyon yaptım, kendimi sakin hissediyorum.',
-      'tags': ['Meditasyon', 'Sakinlik'],
+      'notes': 'Did meditation, feeling calm.',
+      'tags': ['Meditation', 'Calm'],
     },
   ];
 
@@ -68,36 +68,36 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
       'id': '1',
       'patientId': 'P001',
       'patientName': 'Ahmet Yılmaz',
-      'goal': 'Günlük mood skorunu 4\'ün üzerinde tutmak',
+      'goal': 'Keep daily mood score above 4',
       'targetValue': 4.0,
       'currentValue': 3.0,
       'startDate': DateTime(2024, 2, 1),
       'endDate': DateTime(2024, 3, 1),
-      'status': 'Devam Ediyor',
+      'status': 'In Progress',
       'progress': 75.0,
     },
     {
       'id': '2',
       'patientId': 'P001',
       'patientName': 'Ahmet Yılmaz',
-      'goal': 'Anksiyete seviyesini 3\'ün altına düşürmek',
+      'goal': 'Reduce anxiety level below 3',
       'targetValue': 3.0,
       'currentValue': 3.5,
       'startDate': DateTime(2024, 2, 1),
       'endDate': DateTime(2024, 3, 1),
-      'status': 'Devam Ediyor',
+      'status': 'In Progress',
       'progress': 60.0,
     },
     {
       'id': '3',
       'patientId': 'P002',
-      'patientName': 'Ayşe Demir',
-      'goal': 'Günlük enerji seviyesini artırmak',
+      'patientName': 'Sarah Johnson',
+      'goal': 'Increase daily energy level',
       'targetValue': 4.0,
       'currentValue': 3.0,
       'startDate': DateTime(2024, 2, 10),
       'endDate': DateTime(2024, 3, 10),
-      'status': 'Devam Ediyor',
+      'status': 'In Progress',
       'progress': 50.0,
     },
   ];
@@ -138,7 +138,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
           controller: _tabController,
           tabs: const [
             Tab(icon: Icon(Icons.timeline), text: 'Takip'),
-            Tab(icon: Icon(Icons.track_changes), text: 'Hedefler'),
+            Tab(icon: Icon(Icons.track_changes), text: 'Goals'),
             Tab(icon: Icon(Icons.insights), text: 'Analiz'),
           ],
         ),
@@ -244,7 +244,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
                   child: OutlinedButton.icon(
                     onPressed: () => _editMoodEntry(entry),
                     icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Düzenle'),
+                    label: const Text('Edit'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -252,7 +252,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
                   child: ElevatedButton.icon(
                     onPressed: () => _viewMoodDetails(entry),
                     icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('Detaylar'),
+                    label: const Text('Details'),
                   ),
                 ),
               ],
@@ -358,7 +358,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hedef Değer',
+                        'Target Value',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -400,7 +400,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
             ),
             const SizedBox(height: 16),
             Text(
-              'İlerleme: %${goal['progress'].toStringAsFixed(0)}',
+              'Progress: ${goal['progress'].toStringAsFixed(0)}%',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -428,7 +428,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
                   child: OutlinedButton.icon(
                     onPressed: () => _editGoal(goal),
                     icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Düzenle'),
+                    label: const Text('Edit'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -630,7 +630,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
                   const Divider(),
                   _buildWeeklySummaryItem('Ortalama Uyku', '6.5 saat', Icons.bedtime, Colors.purple),
                   const Divider(),
-                  _buildWeeklySummaryItem('Aktif Hedefler', '3 hedef', Icons.track_changes, Colors.blue),
+                  _buildWeeklySummaryItem('Active Goals', '3 goals', Icons.track_changes, Colors.blue),
                 ],
               ),
             ),
@@ -809,7 +809,7 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> with TickerProv
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${entry['patientName']} - Mood Detayları'),
+        title: Text('${entry['patientName']} - Mood Details'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

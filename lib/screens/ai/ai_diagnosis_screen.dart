@@ -35,21 +35,21 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
   String? _selectedPatientId;
   
   final List<String> _commonSymptoms = [
-    'Üzüntü',
-    'Anksiyete',
-    'Panik atak',
-    'Uykusuzluk',
-    'İştahsızlık',
-    'Yorgunluk',
-    'Konsantrasyon güçlüğü',
-    'Sinirlilik',
-    'Umutsuzluk',
-    'Suçluluk',
-    'Değersizlik',
-    'İntihar düşüncesi',
-    'Sosyal izolasyon',
-    'Madde kullanımı',
-    'Travma',
+    'Sadness',
+    'Anxiety',
+    'Panic attack',
+    'Insomnia',
+    'Loss of appetite',
+    'Fatigue',
+    'Concentration difficulty',
+    'Irritability',
+    'Hopelessness',
+    'Guilt',
+    'Worthlessness',
+    'Suicidal thoughts',
+    'Social isolation',
+    'Substance use',
+    'Trauma',
   ];
 
   late TabController _tabController;
@@ -68,7 +68,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Destekli Tanı'),
+        title: const Text('AI-Powered Diagnosis'),
         backgroundColor: colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -85,10 +85,10 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
           tabs: [
-            Tab(icon: Icon(Icons.psychology_alt), text: 'Tanı Asistanı'),
-            Tab(icon: Icon(Icons.smart_toy), text: 'Sohbet'),
-            Tab(icon: Icon(Icons.warning_amber_rounded), text: 'Risk Analizi'),
-            Tab(icon: Icon(Icons.medical_services), text: 'Tedavi Önerici'),
+            Tab(icon: Icon(Icons.psychology_alt), text: 'Diagnosis'),
+            Tab(icon: Icon(Icons.smart_toy), text: 'Chat'),
+            Tab(icon: Icon(Icons.warning_amber_rounded), text: 'Risk Analysis'),
+            Tab(icon: Icon(Icons.medical_services), text: 'Treatment'),
           ],
           isScrollable: true,
         ),
@@ -111,7 +111,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hasta Seçimi',
+                          'Patient Selection',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -121,7 +121,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                         DropdownButtonFormField<String>(
                           value: _selectedPatientId,
                           decoration: InputDecoration(
-                            labelText: 'Hasta Seçin',
+                            labelText: 'Select Patient',
                             labelStyle: const TextStyle(color: Colors.white70),
                             prefixIcon: const Icon(Icons.person, color: Colors.white),
                             border: OutlineInputBorder(
@@ -156,7 +156,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                         if (_selectedPatientId != null) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Seçili Hasta: ${context.read<PatientService>().getById(_selectedPatientId!)?.name ?? ''}',
+                            'Selected Patient: ${context.read<PatientService>().getById(_selectedPatientId!)?.name ?? ''}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white70,
                               fontWeight: FontWeight.w500,
@@ -177,7 +177,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: _showAddFileSheet,
                       icon: const Icon(Icons.upload_file),
-                      label: const Text('Dosya Ekle'),
+                      label: const Text('Add File'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purple[600],
                         foregroundColor: Colors.white,
@@ -188,7 +188,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                         Navigator.pushNamed(context, '/appointment');
                       },
                       icon: const Icon(Icons.event_available),
-                      label: const Text('Randevu'),
+                      label: const Text('Appointment'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.purple[800],
                         side: BorderSide(color: Colors.purple[800]!),
@@ -197,7 +197,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     OutlinedButton.icon(
                       onPressed: (_selectedPatientId==null || _analysisResult==null) ? null : _addTreatmentHomework,
                       icon: const Icon(Icons.task_alt),
-                      label: const Text('Ödev'),
+                      label: const Text('Homework'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.purple[800],
                         side: BorderSide(color: Colors.purple[800]!),
@@ -228,14 +228,14 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI Tanı Asistanı',
+                            'AI Diagnosis Assistant',
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
                           Text(
-                            'Hastanın semptomlarını analiz ederek tanı önerileri sunar',
+                            'Analyzes patient symptoms and suggests evidence-based diagnoses',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: Colors.white70,
                             ),
@@ -262,7 +262,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: _showAnalysisHistory,
                       icon: const Icon(Icons.history, size: 16),
-                      label: const Text('Geçmiş'),
+                      label: const Text('History'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.purple[800],
@@ -292,7 +292,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: _analysisResult == null ? null : _addToNotes,
                       icon: const Icon(Icons.note_add_outlined, size: 16),
-                      label: const Text('Not Ekle'),
+                      label: const Text('Add Note'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.purple[800],
@@ -302,7 +302,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: () => Navigator.pushNamed(context, '/diagnosis-guide'),
                       icon: const Icon(Icons.menu_book_outlined, size: 16),
-                      label: const Text('Rehber'),
+                      label: const Text('Guide'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.purple[800],
@@ -312,7 +312,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: _selectedPatientId == null ? null : _generateAISuggestions,
                       icon: const Icon(Icons.auto_awesome, size: 16),
-                      label: const Text('AI Ödev'),
+                      label: const Text('AI Homework'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.purple[800],
@@ -322,7 +322,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                     ElevatedButton.icon(
                       onPressed: _showHelpDialog,
                       icon: const Icon(Icons.help, size: 16),
-                      label: const Text('Yardım'),
+                      label: const Text('Help'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.purple[800],
@@ -338,7 +338,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             
             // Semptomlar Bölümü
             Text(
-              'Semptomlar',
+              'Symptoms',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -346,7 +346,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             ),
             const SizedBox(height: 8),
             Text(
-              'Hastanın yaşadığı semptomları girin:',
+              'Enter the symptoms the patient is experiencing:',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: Colors.white70,
               ),
@@ -393,7 +393,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
               decoration: InputDecoration(
                 labelText: 'Semptomlar',
                 labelStyle: const TextStyle(color: Colors.white70),
-                hintText: 'Hastanın semptomlarını detaylı olarak açıklayın...',
+                hintText: 'Describe the patient\'s symptoms in detail...',
                 hintStyle: const TextStyle(color: Colors.white54),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -418,7 +418,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             
             // Geçmiş Bölümü
             Text(
-              'Hasta Geçmişi',
+              'Patient History',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -427,8 +427,8 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             TextField(
               controller: _historyController,
               decoration: InputDecoration(
-                labelText: 'Geçmiş',
-                hintText: 'Hastanın geçmiş tedavileri, aile öyküsü, ilaç kullanımı...',
+                labelText: 'History',
+                hintText: 'Past treatments, family history, medication use...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -441,7 +441,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             
             // Gözlemler Bölümü
             Text(
-              'Klinik Gözlemler',
+              'Clinical Observations',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -450,8 +450,8 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             TextField(
               controller: _observationsController,
               decoration: InputDecoration(
-                labelText: 'Gözlemler',
-                hintText: 'Hastanın görünümü, davranışı, konuşması hakkında gözlemler...',
+                labelText: 'Observations',
+                hintText: 'Patient appearance, behavior, speech observations...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -474,7 +474,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.psychology_alt),
-                label: Text(_isAnalyzing ? 'Analiz Ediliyor...' : 'AI Analizi Başlat'),
+                label: Text(_isAnalyzing ? 'Analyzing...' : 'Start AI Analysis'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: Colors.white,
@@ -488,7 +488,7 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> with SingleTicker
             if (_selectedPatientId == null) ...[
               const SizedBox(height: 8),
               Text(
-                'Lütfen önce bir hasta seçin',
+                'Please select a patient first',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: Colors.red,
                   fontStyle: FontStyle.italic,

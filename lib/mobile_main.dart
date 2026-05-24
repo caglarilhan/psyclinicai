@@ -55,7 +55,7 @@ class PsyClinicAIMobileApp extends StatelessWidget {
                 type: BottomNavigationBarType.fixed,
                 elevation: 8,
               ),
-              cardTheme: const CardTheme(
+              cardTheme: CardThemeData(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -64,8 +64,8 @@ class PsyClinicAIMobileApp extends StatelessWidget {
               elevatedButtonTheme: ElevatedButtonThemeData(
                 style: ElevatedButton.styleFrom(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                 ),
               ),

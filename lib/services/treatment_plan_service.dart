@@ -112,6 +112,15 @@ class TreatmentPlanService {
         .firstOrNull;
   }
 
+  // Get treatment plan by ID
+  TreatmentPlan? getPlan(String planId) {
+    try {
+      return _treatmentPlans.firstWhere((plan) => plan.id == planId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Get all treatment plans for patient
   List<TreatmentPlan> getAllTreatmentPlansForPatient(String patientId) {
     return _treatmentPlans

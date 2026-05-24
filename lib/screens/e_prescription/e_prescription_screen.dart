@@ -14,29 +14,29 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
   final List<Map<String, dynamic>> _medications = [
     {
       'id': 'MED001',
-      'name': 'Fluoksetin',
-      'genericName': 'Fluoxetine',
+      'name': 'Fluoxetine',
+      'genericName': 'Fluoxetine HCl',
       'dosage': '20mg',
       'form': 'Tablet',
-      'category': 'Antidepresan',
+      'category': 'Antidepressant (SSRI)',
       'stock': 150,
-      'price': 45.50,
+      'price': 12.50,
       'prescriptionRequired': true,
-      'sideEffects': ['Bulantı', 'Baş ağrısı', 'Uykusuzluk'],
-      'interactions': ['MAO inhibitörleri', 'Warfarin'],
+      'sideEffects': ['Nausea', 'Headache', 'Insomnia'],
+      'interactions': ['MAO inhibitors', 'Warfarin'],
     },
     {
       'id': 'MED002',
-      'name': 'Sertralin',
-      'genericName': 'Sertraline',
+      'name': 'Sertraline',
+      'genericName': 'Sertraline HCl',
       'dosage': '50mg',
       'form': 'Tablet',
-      'category': 'Antidepresan',
+      'category': 'Antidepressant (SSRI)',
       'stock': 200,
-      'price': 52.30,
+      'price': 15.20,
       'prescriptionRequired': true,
-      'sideEffects': ['Mide bulantısı', 'İshal', 'Baş dönmesi'],
-      'interactions': ['Pimozid', 'MAO inhibitörleri'],
+      'sideEffects': ['Nausea', 'Diarrhea', 'Dizziness'],
+      'interactions': ['Pimozide', 'MAO inhibitors'],
     },
     {
       'id': 'MED003',
@@ -44,25 +44,25 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
       'genericName': 'Lorazepam',
       'dosage': '1mg',
       'form': 'Tablet',
-      'category': 'Anksiyolitik',
+      'category': 'Anxiolytic (Benzodiazepine)',
       'stock': 80,
-      'price': 28.75,
+      'price': 8.75,
       'prescriptionRequired': true,
-      'sideEffects': ['Uyku hali', 'Baş dönmesi', 'Koordinasyon bozukluğu'],
-      'interactions': ['Alkol', 'Opioidler', 'Barbitüratlar'],
+      'sideEffects': ['Drowsiness', 'Dizziness', 'Coordination issues'],
+      'interactions': ['Alcohol', 'Opioids', 'Barbiturates'],
     },
     {
       'id': 'MED004',
-      'name': 'Risperidon',
+      'name': 'Risperidone',
       'genericName': 'Risperidone',
       'dosage': '2mg',
       'form': 'Tablet',
-      'category': 'Antipsikotik',
+      'category': 'Antipsychotic',
       'stock': 120,
-      'price': 67.80,
+      'price': 24.80,
       'prescriptionRequired': true,
-      'sideEffects': ['Ağız kuruluğu', 'Kabızlık', 'Kilo artışı'],
-      'interactions': ['Karbamazepin', 'Rifampin'],
+      'sideEffects': ['Dry mouth', 'Constipation', 'Weight gain'],
+      'interactions': ['Carbamazepine', 'Rifampin'],
     },
   ];
 
@@ -73,7 +73,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
       'patientName': 'Ahmet Yılmaz',
       'doctorName': 'Dr. Ayşe Demir',
       'date': DateTime(2024, 2, 15),
-      'status': 'Aktif',
+      'status': 'Active',
       'medications': [
         {
           'medicationId': 'MED001',
@@ -102,7 +102,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
       'patientName': 'Ayşe Demir',
       'doctorName': 'Dr. Mehmet Kaya',
       'date': DateTime(2024, 2, 14),
-      'status': 'Tamamlandı',
+      'status': 'Completed',
       'medications': [
         {
           'medicationId': 'MED002',
@@ -192,7 +192,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('E-Reçete Sistemi'),
+        title: const Text('E-Prescription System'),
         backgroundColor: colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -208,9 +208,9 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.medication), text: 'İlaçlar'),
-            Tab(icon: Icon(Icons.receipt), text: 'Reçeteler'),
-            Tab(icon: Icon(Icons.local_pharmacy), text: 'Eczaneler'),
+            Tab(icon: Icon(Icons.medication), text: 'Medications'),
+            Tab(icon: Icon(Icons.receipt), text: 'Prescriptions'),
+            Tab(icon: Icon(Icons.local_pharmacy), text: 'Pharmacies'),
           ],
         ),
       ),
@@ -286,7 +286,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Stok: ${medication['stock']}',
+                    'Stock: ${medication['stock']}',
                     style: TextStyle(
                       color: medication['stock'] > 50 ? Colors.green : Colors.orange,
                       fontSize: 12,
@@ -300,26 +300,26 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
             Row(
               children: [
                 Expanded(
-                  child: _buildMedicationInfo('Dozaj', medication['dosage'], Icons.science),
+                  child: _buildMedicationInfo('Dosage', medication['dosage'], Icons.science),
                 ),
                 Expanded(
                   child: _buildMedicationInfo('Form', medication['form'], Icons.medication_liquid),
                 ),
                 Expanded(
-                  child: _buildMedicationInfo('Fiyat', '₺${medication['price']}', Icons.attach_money),
+                  child: _buildMedicationInfo('Price', '\$${medication['price']}', Icons.attach_money),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              'Kategori: ${medication['category']}',
+              'Category: ${medication['category']}',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Yan Etkiler: ${medication['sideEffects'].join(', ')}',
+              'Side Effects: ${medication['sideEffects'].join(', ')}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.red[600],
               ),
@@ -331,7 +331,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                   child: OutlinedButton.icon(
                     onPressed: () => _viewMedicationDetails(medication),
                     icon: const Icon(Icons.info, size: 16),
-                    label: const Text('Detaylar'),
+                    label: const Text('Details'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -339,7 +339,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                   child: ElevatedButton.icon(
                     onPressed: () => _addToPrescription(medication),
                     icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Reçeteye Ekle'),
+                    label: const Text('Add to Prescription'),
                   ),
                 ),
               ],
@@ -393,8 +393,8 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
             children: [
               Expanded(
                 child: _buildSummaryCard(
-                  'Aktif Reçeteler',
-                  '${_prescriptions.where((prescription) => prescription['status'] == 'Aktif').length}',
+                  'Active Prescriptions',
+                  '${_prescriptions.where((prescription) => prescription['status'] == 'Active').length}',
                   Icons.receipt,
                   Colors.blue,
                 ),
@@ -460,10 +460,10 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
     
     Color statusColor;
     switch (prescription['status']) {
-      case 'Aktif':
+      case 'Active':
         statusColor = Colors.purple[300]!;
         break;
-      case 'Tamamlandı':
+      case 'Completed':
         statusColor = Colors.purple[600]!;
         break;
       case 'İptal Edildi':
@@ -508,12 +508,12 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
               ],
             ),
             const SizedBox(height: 8),
-            Text('Hasta: ${prescription['patientName']}'),
+            Text('Patient: ${prescription['patientName']}'),
             Text('Doktor: ${prescription['doctorName']}'),
             Text('Tarih: ${DateFormat('dd.MM.yyyy').format(prescription['date'])}'),
             const SizedBox(height: 12),
             Text(
-              'İlaçlar (${prescription['medications'].length} adet):',
+              'Medications (${prescription['medications'].length} items):',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -551,7 +551,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                         ),
                       ),
                       Text(
-                        '₺${prescription['totalAmount'].toStringAsFixed(2)}',
+                        '\$${prescription['totalAmount'].toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -565,14 +565,14 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hasta Ödemesi',
+                        'Patient Payment',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
                         ),
                       ),
                       Text(
-                        '₺${prescription['patientPayment'].toStringAsFixed(2)}',
+                        '\$${prescription['patientPayment'].toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -591,7 +591,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                   child: OutlinedButton.icon(
                     onPressed: () => _viewPrescriptionDetails(prescription),
                     icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('Detaylar'),
+                    label: const Text('Details'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -599,7 +599,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                   child: ElevatedButton.icon(
                     onPressed: () => _sendToPharmacy(prescription),
                     icon: const Icon(Icons.local_pharmacy, size: 16),
-                    label: const Text('Eczaneye Gönder'),
+                    label: const Text('Send to Pharmacy'),
                   ),
                 ),
               ],
@@ -671,7 +671,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    pharmacy['isOpen'] ? 'Açık' : 'Kapalı',
+                    pharmacy['isOpen'] ? 'Open' : 'Closed',
                     style: TextStyle(
                       color: pharmacy['isOpen'] ? Colors.green : Colors.red,
                       fontSize: 12,
@@ -731,7 +731,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                 ElevatedButton.icon(
                   onPressed: () => _sendPrescriptionToPharmacy(pharmacy),
                   icon: const Icon(Icons.send, size: 16),
-                  label: const Text('Reçete Gönder'),
+                  label: const Text('Send Prescription'),
                 ),
               ],
             ),
@@ -775,8 +775,8 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Yeni Reçete'),
-        content: const Text('Reçete oluşturma formu burada olacak.'),
+        title: const Text('New Prescription'),
+        content: const Text('Prescription creation form will be here.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -800,10 +800,10 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('İlaç Ara'),
+        title: const Text('Search Medication'),
         content: const TextField(
           decoration: InputDecoration(
-            labelText: 'İlaç adı veya etken madde',
+            labelText: 'Medication name or active ingredient',
             border: OutlineInputBorder(),
           ),
         ),
@@ -839,7 +839,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
               Text('Etken Madde: ${medication['genericName']}'),
               Text('Dozaj: ${medication['dosage']}'),
               Text('Form: ${medication['form']}'),
-              Text('Kategori: ${medication['category']}'),
+              Text('Category: ${medication['category']}'),
               Text('Stok: ${medication['stock']} adet'),
               Text('Fiyat: ₺${medication['price']}'),
               Text('Reçete Gerekli: ${medication['prescriptionRequired'] ? 'Evet' : 'Hayır'}'),
@@ -882,7 +882,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Hasta: ${prescription['patientName']}'),
+              Text('Patient: ${prescription['patientName']}'),
               Text('Doktor: ${prescription['doctorName']}'),
               Text('Tarih: ${DateFormat('dd.MM.yyyy').format(prescription['date'])}'),
               Text('Durum: ${prescription['status']}'),
@@ -922,7 +922,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> with TickerPr
                 const SnackBar(content: Text('Reçete PDF olarak indiriliyor')),
               );
             },
-            child: const Text('PDF İndir'),
+            child: const Text('Download PDF'),
           ),
         ],
       ),

@@ -411,4 +411,29 @@ class VitalSignsService {
       'criticalAlerts': criticalAlerts,
     };
   }
+
+  // Get vital signs history for a patient
+  List<VitalSigns> getVitalSignsHistory(String patientId) {
+    return _vitalSignsRecords
+        .where((record) => record.patientId == patientId)
+        .toList();
+  }
+
+  // Get active alerts for a patient
+  List<Map<String, dynamic>> getActiveAlerts(String patientId) {
+    return _alerts
+        .where((alert) => alert.patientId == patientId && !alert.isResolved)
+        .map((alert) => alert.toJson())
+        .toList();
+  }
+
+  // Record new vital signs
+  Future<void> recordVitalSigns(Map<String, dynamic> vitalSignsData) async {
+    final vitalSigns = VitalSigns.fromJson(vitalSignsData);
+    _vitalSignsRecords.add(vitalSigns);
+    await _saveVitalSignsRecords();
+    
+    // Check for alerts
+    await _checkForAlerts(vitalSigns);
+  }
 }

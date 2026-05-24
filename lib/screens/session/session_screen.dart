@@ -3,8 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../services/copilot/soap_generator_service.dart';
+import '../../services/data/auth_service.dart';
+import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/patient_repository.dart';
+import '../../services/data/session_repository.dart';
 import '../../services/pdf_export_service.dart';
 import '../../services/therapy_note_service.dart';
+import '../../widgets/copilot/live_ai_panel.dart';
 
 class SessionScreen extends StatefulWidget {
   final String sessionId;
@@ -80,26 +86,26 @@ class _SessionScreenState extends State<SessionScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Seans Sonlandırıldı'),
+        title: const Text('Session Ended'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Seans süresi: ${_formatDuration(_sessionDuration)}'),
+            Text('Session duration: ${_formatDuration(_sessionDuration)}'),
             const SizedBox(height: 16),
-            const Text('Seans notunu kaydetmek istiyor musunuz?'),
+            const Text('Do you want to save the session note?'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _saveSessionNotes();
             },
-            child: const Text('Kaydet'),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -139,15 +145,58 @@ class _SessionScreenState extends State<SessionScreen> {
         },
       );
 
+      await _persistToFirestore(noteText);
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seans notu kaydedildi')),
+        const SnackBar(content: Text('Session note saved')),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Not kaydedilemedi: $e')),
+        SnackBar(content: Text('Could not save note: $e')),
       );
+    }
+  }
+
+  Future<void> _persistToFirestore(String noteText) async {
+    if (!PsyFirebase.isReady) return;
+    final auth = FirebaseAuthService.instance;
+    final profile = auth.profile;
+    if (profile == null) return;
+    try {
+      await PatientRepository.instance.upsert(
+        profile.clinicId,
+        widget.clientId,
+        PatientDraft(fullName: widget.clientName),
+      );
+      final sessionId = await SessionRepository.instance.createSession(
+        clinicId: profile.clinicId,
+        patientId: widget.clientId,
+        clinicianId: profile.userId,
+        startedAt: DateTime.now().subtract(_sessionDuration),
+      );
+      final note = SoapNote(
+        rawMarkdown: noteText,
+        format: SoapFormat.soap,
+        generatedAt: DateTime.now(),
+      );
+      await SessionRepository.instance.saveNote(
+        clinicId: profile.clinicId,
+        patientId: widget.clientId,
+        sessionId: sessionId,
+        note: note,
+      );
+      await SessionRepository.instance.endSession(
+        clinicId: profile.clinicId,
+        patientId: widget.clientId,
+        sessionId: sessionId,
+        endedAt: DateTime.now(),
+        durationMinutes: _sessionDuration.inMinutes,
+      );
+    } catch (_) {
+      // Swallow — local save already succeeded; Firestore retry will be
+      // handled by the offline persistence layer in a future sprint.
     }
   }
 
@@ -227,7 +276,7 @@ class _SessionScreenState extends State<SessionScreen> {
       risks.add('Madde kullanımı');
     }
     
-    return risks.isEmpty ? 'Acil risk tespit edilmedi' : risks.join(', ');
+    return risks.isEmpty ? 'No immediate risk detected' : risks.join(', ');
   }
 
   String _suggestNextSession(String text) {
@@ -260,14 +309,14 @@ class _SessionScreenState extends State<SessionScreen> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('PDF başarıyla oluşturuldu ve yazdırıcıya gönderildi'),
+          content: Text('PDF generated successfully and sent to printer'),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('PDF oluşturulurken hata: $e'),
+          content: Text('PDF generation error: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -349,7 +398,7 @@ class _SessionScreenState extends State<SessionScreen> {
                     style: const TextStyle(fontSize: 18),
                   ),
                   Text(
-                    'Seans ID: ${widget.sessionId}',
+                    'Session ID: ${widget.sessionId}',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
                   ),
                 ],
@@ -389,13 +438,13 @@ class _SessionScreenState extends State<SessionScreen> {
             IconButton(
               onPressed: _endSession,
               icon: const Icon(Icons.stop_circle),
-              tooltip: 'Seansı Sonlandır',
+              tooltip: 'End Session',
             )
           else
             IconButton(
               onPressed: _startSession,
               icon: const Icon(Icons.play_circle),
-              tooltip: 'Seansı Başlat',
+              tooltip: 'Start Session',
             ),
           IconButton(
             onPressed: _exportToPDF,
@@ -459,7 +508,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 Icon(Icons.edit_note, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
-                  'Seans Notu',
+                  'Session Note',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -472,7 +521,7 @@ class _SessionScreenState extends State<SessionScreen> {
                     _saveSessionNotes();
                   },
                   icon: const Icon(Icons.save),
-                  label: const Text('Kaydet'),
+                  label: const Text('Save'),
                   style: TextButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
@@ -490,7 +539,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 maxLines: null,
                 expands: true,
                 decoration: const InputDecoration(
-                  hintText: 'Seans notlarınızı buraya yazın...\n\nÖrnek:\n- Danışanın bugünkü ruh hali\n- Ana problemler\n- Kullanılan teknikler\n- Sonraki adımlar',
+                  hintText: 'Write your session notes here...\n\nExample:\n- Client mood today\n- Main concerns\n- Techniques used\n- Next steps',
                   border: InputBorder.none,
                   alignLabelWithHint: true,
                 ),
@@ -507,6 +556,13 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Widget _buildAIPanel() {
+    return LiveAiPanel(
+      clientName: widget.clientName,
+      localeId: 'en_US',
+    );
+  }
+
+  Widget _buildAIPanelLegacy() {
     return Container(
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -538,7 +594,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 Icon(Icons.psychology, color: Colors.blue),
                 const SizedBox(width: 8),
                 Text(
-                  'AI Asistan',
+                  'AI Assistant',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -552,7 +608,7 @@ class _SessionScreenState extends State<SessionScreen> {
                     _isGeneratingAI ? Icons.hourglass_empty : Icons.refresh,
                     color: Colors.blue,
                   ),
-                  tooltip: 'AI Özeti Oluştur',
+                  tooltip: 'Generate AI Summary',
                 ),
               ],
             ),
@@ -568,7 +624,7 @@ class _SessionScreenState extends State<SessionScreen> {
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(height: 16),
-                          Text('AI özeti oluşturuluyor...'),
+                          Text('Generating AI summary...'),
                         ],
                       ),
                     )
@@ -584,7 +640,7 @@ class _SessionScreenState extends State<SessionScreen> {
                               ),
                               const SizedBox(height: 16),
                               const Text(
-                                'AI özeti oluşturmak için\n"Yenile" butonuna tıklayın',
+                                'Click "Refresh" to generate\nthe AI session summary',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.grey),
                               ),
@@ -639,7 +695,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 Icon(Icons.person, color: Colors.green),
                 const SizedBox(width: 8),
                 Text(
-                  'Danışan Bilgileri',
+                  'Client Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -656,24 +712,24 @@ class _SessionScreenState extends State<SessionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoCard('Kişisel Bilgiler', [
-                    'Ad: ${widget.clientName}',
+                  _buildInfoCard('Personal Info', [
+                    'Name: ${widget.clientName}',
                     'ID: ${widget.clientId}',
-                    'Seans Tarihi: ${DateTime.now().toString().split(' ')[0]}',
-                    'Seans Saati: ${DateTime.now().toString().split(' ')[1].substring(0, 5)}',
+                    'Session Date: ${DateTime.now().toString().split(' ')[0]}',
+                    'Session Time: ${DateTime.now().toString().split(' ')[1].substring(0, 5)}',
                   ]),
                   const SizedBox(height: 16),
-                  _buildInfoCard('Seans Durumu', [
-                    'Durum: ${_isSessionActive ? "Aktif" : "Pasif"}',
-                    'Başlangıç: ${_sessionStartTime?.toString().split(' ')[1].substring(0, 5) ?? "Başlatılmadı"}',
-                    'Süre: ${_formatDuration(_sessionDuration)}',
+                  _buildInfoCard('Session Status', [
+                    'Status: ${_isSessionActive ? "Active" : "Inactive"}',
+                    'Start: ${_sessionStartTime?.toString().split(' ')[1].substring(0, 5) ?? "Not started"}',
+                    'Duration: ${_formatDuration(_sessionDuration)}',
                   ]),
                   const SizedBox(height: 16),
-                  _buildInfoCard('Hızlı Erişim', [
-                    'Önceki Seanslar',
-                    'Tedavi Planı',
-                    'İlaç Listesi',
-                    'Acil İletişim',
+                  _buildInfoCard('Quick Access', [
+                    'Previous Sessions',
+                    'Treatment Plan',
+                    'Medication List',
+                    'Emergency Contact',
                   ]),
                 ],
               ),
@@ -735,7 +791,7 @@ class _SessionScreenState extends State<SessionScreen> {
           // Klavye kısayolları bilgisi
           Expanded(
             child: Text(
-              '💡 Kısayollar: Ctrl+S (Kaydet) | Ctrl+P (PDF) | Ctrl+N (Yeni)',
+              '💡 Shortcuts: Ctrl+S (Save) | Ctrl+P (PDF) | Ctrl+N (New)',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
@@ -746,13 +802,13 @@ class _SessionScreenState extends State<SessionScreen> {
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.calendar_today),
-            label: const Text('Randevu'),
+            label: const Text('Appointment'),
           ),
           const SizedBox(width: 8),
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.medical_services),
-            label: const Text('Reçete'),
+            label: const Text('Prescription'),
           ),
           const SizedBox(width: 8),
           TextButton.icon(

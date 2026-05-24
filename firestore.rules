@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// PsyClinicAI Firestore security rules.
+//
+// Tenant model: solo-practice — clinicId == request.auth.uid.
+// Every collection lives under /clinics/{clinicId}/... and access is
+// granted only when the requester owns that clinic.
+//
+// Default posture: deny. Every path is explicitly allow-listed below.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isClinicOwner(clinicId) {
+      return isAuthed() && request.auth.uid == clinicId;
+    }
+
+    function isSelf(userId) {
+      return isAuthed() && request.auth.uid == userId;
+    }
+
+    match /clinics/{clinicId} {
+      allow read, write: if isClinicOwner(clinicId);
+
+      match /clinicians/{userId} {
+        allow read:   if isClinicOwner(clinicId);
+        allow write:  if isClinicOwner(clinicId) && isSelf(userId);
+      }
+
+      match /patients/{patientId} {
+        allow read, write: if isClinicOwner(clinicId);
+
+        match /sessions/{sessionId} {
+          allow read, write: if isClinicOwner(clinicId);
+
+          match /notes/{noteId} {
+            allow read, write: if isClinicOwner(clinicId);
+          }
+        }
+
+        match /assessments/{aId} {
+          allow read, write: if isClinicOwner(clinicId);
+        }
+
+        match /superbills/{invoiceId} {
+          allow read, write: if isClinicOwner(clinicId);
+        }
+      }
+    }
+
+    // Hard fail — anything else is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

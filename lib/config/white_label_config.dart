@@ -45,9 +45,9 @@ class WhiteLabelConfig {
   Future<void> loadConfig(String configPath) async {
     try {
       // TODO: JSON dosyasından konfigürasyon yükleme
-      print('White-label konfigürasyon yüklendi: $configPath');
+      debugPrint('White-label konfigürasyon yüklendi: $configPath');
     } catch (e) {
-      print('White-label konfigürasyon yüklenemedi: $e');
+      debugPrint('White-label konfigürasyon yüklenemedi: $e');
       _loadDefaultConfig();
     }
   }
@@ -99,7 +99,7 @@ class WhiteLabelConfig {
     if (customTexts != null) _customTexts = customTexts;
     if (customUrls != null) _customUrls = customUrls;
 
-    print('White-label konfigürasyon güncellendi');
+    debugPrint('White-label konfigürasyon güncellendi');
   }
 
   // Özelleştirilmiş tema oluşturma
@@ -114,11 +114,9 @@ class WhiteLabelConfig {
         primary: _primaryColor,
         secondary: _secondaryColor,
         surface: Colors.white,
-        background: Colors.grey[50]!,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: Colors.black87,
-        onBackground: Colors.black87,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: _primaryColor,
@@ -165,7 +163,7 @@ class WhiteLabelConfig {
   // Konfigürasyon sıfırlama
   void resetToDefault() {
     _loadDefaultConfig();
-    print('White-label konfigürasyon varsayılana sıfırlandı');
+    debugPrint('White-label konfigürasyon varsayılana sıfırlandı');
   }
 
   // Konfigürasyon dışa aktarma
@@ -204,9 +202,9 @@ class WhiteLabelConfig {
       _customTexts = Map<String, String>.from(config['customTexts'] ?? {});
       _customUrls = Map<String, String>.from(config['customUrls'] ?? {});
 
-      print('White-label konfigürasyon içe aktarıldı');
+      debugPrint('White-label konfigürasyon içe aktarıldı');
     } catch (e) {
-      print('White-label konfigürasyon içe aktarılamadı: $e');
+      debugPrint('White-label konfigürasyon içe aktarılamadı: $e');
       _loadDefaultConfig();
     }
   }
@@ -248,9 +246,9 @@ class WhiteLabelConfig {
       _secondaryColor = theme['secondary']!;
       _accentColor = theme['accent']!;
       _isCustomTheme = true;
-      print('Önceden tanımlanmış tema yüklendi: $themeName');
+      debugPrint('Önceden tanımlanmış tema yüklendi: $themeName');
     } else {
-      print('Tema bulunamadı: $themeName');
+      debugPrint('Tema bulunamadı: $themeName');
     }
   }
 

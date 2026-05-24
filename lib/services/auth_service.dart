@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_models.dart';
 
 // Legacy demo implementation (removed to avoid duplicate class error)
 
-class AuthService {
+class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();

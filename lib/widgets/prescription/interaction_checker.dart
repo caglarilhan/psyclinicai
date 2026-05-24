@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/theme.dart';
 import '../../models/medication_models.dart';
-import '../../models/prescription_ai_models.dart';
 import '../../services/medication_service.dart';
 
 class InteractionChecker extends StatefulWidget {
@@ -131,9 +129,9 @@ class _InteractionCheckerState extends State<InteractionChecker> {
   }
 
   Widget _buildInteractionCard(DrugInteraction interaction) {
-    final severityColor = _getSeverityColor(interaction.severity);
-    final severityIcon = _getSeverityIcon(interaction.severity);
-    final severityText = _getSeverityText(interaction.severity);
+    final severityColor = _getSeverityColor(interaction.severity.toString());
+    final severityIcon = _getSeverityIcon(interaction.severity.toString());
+    final severityText = _getSeverityText(interaction.severity.toString());
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -187,7 +185,7 @@ class _InteractionCheckerState extends State<InteractionChecker> {
               interaction.description,
               style: const TextStyle(fontSize: 13),
             ),
-            if (interaction.mechanism.isNotEmpty) ...[
+            if (interaction.mechanism?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Text(
                 'Mekanizma: ${interaction.mechanism}',
@@ -198,7 +196,7 @@ class _InteractionCheckerState extends State<InteractionChecker> {
                 ),
               ),
             ],
-            if (interaction.recommendations.isNotEmpty) ...[
+            if (interaction.recommendations?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Text(
                 'Öneriler:',
@@ -207,7 +205,7 @@ class _InteractionCheckerState extends State<InteractionChecker> {
                   fontSize: 12,
                 ),
               ),
-              ...interaction.recommendations.map((rec) => Padding(
+              ...(interaction.recommendations ?? []).map((rec) => Padding(
                 padding: const EdgeInsets.only(left: 16, top: 2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +225,7 @@ class _InteractionCheckerState extends State<InteractionChecker> {
                   fontSize: 12,
                 ),
               ),
-              ...interaction.monitoring.map((mon) => Padding(
+              ...(interaction.monitoring ?? []).map((mon) => Padding(
                 padding: const EdgeInsets.only(left: 16, top: 2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

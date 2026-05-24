@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 // Bölgesel konfigürasyon - PRD'ye göre
 class RegionConfig {
   static const String US = 'US';

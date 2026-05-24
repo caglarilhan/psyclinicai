@@ -1,8 +1,78 @@
+class TherapistPerformance {
+  final String id;
+  final String therapistId;
+  final String therapistName;
+  final String specialization;
+  final double successRate;
+  final int caseCount;
+  final double averageRating;
+  final int completedSessions;
+  final int cancelledSessions;
+  final double adherenceRate;
+  final List<String> strengths;
+  final List<String> areasForImprovement;
+  final DateTime lastUpdated;
+
+  const TherapistPerformance({
+    required this.id,
+    required this.therapistId,
+    required this.therapistName,
+    required this.specialization,
+    required this.successRate,
+    required this.caseCount,
+    required this.averageRating,
+    required this.completedSessions,
+    required this.cancelledSessions,
+    required this.adherenceRate,
+    required this.strengths,
+    required this.areasForImprovement,
+    required this.lastUpdated,
+  });
+
+  factory TherapistPerformance.fromJson(Map<String, dynamic> json) {
+    return TherapistPerformance(
+      id: json['id'] as String,
+      therapistId: json['therapistId'] as String,
+      therapistName: json['therapistName'] as String,
+      specialization: json['specialization'] as String,
+      successRate: (json['successRate'] as num).toDouble(),
+      caseCount: json['caseCount'] as int,
+      averageRating: (json['averageRating'] as num).toDouble(),
+      completedSessions: json['completedSessions'] as int,
+      cancelledSessions: json['cancelledSessions'] as int,
+      adherenceRate: (json['adherenceRate'] as num).toDouble(),
+      strengths: List<String>.from(json['strengths'] as List),
+      areasForImprovement: List<String>.from(json['areasForImprovement'] as List),
+      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'therapistId': therapistId,
+      'therapistName': therapistName,
+      'specialization': specialization,
+      'successRate': successRate,
+      'caseCount': caseCount,
+      'averageRating': averageRating,
+      'completedSessions': completedSessions,
+      'cancelledSessions': cancelledSessions,
+      'adherenceRate': adherenceRate,
+      'strengths': strengths,
+      'areasForImprovement': areasForImprovement,
+      'lastUpdated': lastUpdated.toIso8601String(),
+    };
+  }
+}
+
 class SupervisionSession {
   final String id;
   final String supervisorId;
   final String superviseeId;
-  final DateTime scheduledAt;
+  final String title;
+  final String therapistName;
+  final DateTime scheduledDate;
   final Duration duration;
   final SupervisionType type;
   final SupervisionStatus status;
@@ -23,7 +93,9 @@ class SupervisionSession {
     required this.id,
     required this.supervisorId,
     required this.superviseeId,
-    required this.scheduledAt,
+    required this.title,
+    required this.therapistName,
+    required this.scheduledDate,
     required this.duration,
     required this.type,
     this.status = SupervisionStatus.scheduled,
@@ -46,7 +118,9 @@ class SupervisionSession {
       id: json['id'] as String,
       supervisorId: json['supervisorId'] as String,
       superviseeId: json['superviseeId'] as String,
-      scheduledAt: DateTime.parse(json['scheduledAt'] as String),
+      title: json['title'] as String? ?? 'Supervision Session',
+      therapistName: json['therapistName'] as String? ?? 'Unknown Therapist',
+      scheduledDate: DateTime.parse(json['scheduledDate'] as String? ?? json['scheduledAt'] as String),
       duration: Duration(minutes: json['duration'] as int),
       type: SupervisionType.values.firstWhere(
         (e) => e.name == json['type'],
@@ -82,7 +156,9 @@ class SupervisionSession {
       'id': id,
       'supervisorId': supervisorId,
       'superviseeId': superviseeId,
-      'scheduledAt': scheduledAt.toIso8601String(),
+      'title': title,
+      'therapistName': therapistName,
+      'scheduledDate': scheduledDate.toIso8601String(),
       'duration': duration.inMinutes,
       'type': type.name,
       'status': status.name,
@@ -405,6 +481,8 @@ enum SupervisionStatus {
   completed,
   cancelled,
   rescheduled,
+  pending,
+  requiresFollowUp,
 }
 
 enum NoteType {

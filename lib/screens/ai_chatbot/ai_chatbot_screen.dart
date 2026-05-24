@@ -33,8 +33,8 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> with TickerProviderSt
     
     // Welcome message
     _addMessage(
-      'AI Asistan',
-      'Merhaba! Ben PsyClinic AI asistanınızım. Size nasıl yardımcı olabilirim?',
+      'AI Assistant',
+      'Hi! I\'m your PsyClinic AI assistant. How can I help you today?',
       false,
       DateTime.now(),
     );
@@ -99,44 +99,44 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> with TickerProviderSt
     
     final lowerMessage = userMessage.toLowerCase();
     
-    if (lowerMessage.contains('hasta') || lowerMessage.contains('patient')) {
-      response = 'Hasta yönetimi konusunda size yardımcı olabilirim. Hangi hastayla ilgili bilgi istiyorsunuz?';
-    } else if (lowerMessage.contains('randevu') || lowerMessage.contains('appointment')) {
-      response = 'Randevu sistemi hakkında bilgi verebilirim. Yeni randevu oluşturmak mı istiyorsunuz?';
-    } else if (lowerMessage.contains('reçete') || lowerMessage.contains('prescription')) {
-      response = 'E-reçete sistemi ile ilgili sorularınızı yanıtlayabilirim. Hangi ilaç hakkında bilgi istiyorsunuz?';
-    } else if (lowerMessage.contains('fatura') || lowerMessage.contains('billing')) {
-      response = 'Faturalandırma sistemi hakkında yardımcı olabilirim. Hangi fatura ile ilgili sorunuz var?';
-    } else if (lowerMessage.contains('sigorta') || lowerMessage.contains('insurance')) {
-      response = 'Sigorta entegrasyonu konusunda bilgi verebilirim. Hangi sigorta şirketi ile ilgili sorunuz var?';
-    } else if (lowerMessage.contains('mood') || lowerMessage.contains('ruh hali')) {
-      response = 'Mood tracking sistemi hakkında bilgi verebilirim. Hangi hastanın mood verilerini incelemek istiyorsunuz?';
-    } else if (lowerMessage.contains('sesli not') || lowerMessage.contains('voice note')) {
-      response = 'Sesli notlar sistemi ile ilgili yardımcı olabilirim. Yeni sesli not kaydetmek mi istiyorsunuz?';
-    } else if (lowerMessage.contains('telemedicine') || lowerMessage.contains('video call')) {
-      response = 'Telemedicine sistemi hakkında bilgi verebilirim. Video görüşme başlatmak mı istiyorsunuz?';
-    } else if (lowerMessage.contains('güvenlik') || lowerMessage.contains('security')) {
-      response = 'Güvenlik ayarları hakkında yardımcı olabilirim. Hangi güvenlik özelliği ile ilgili sorunuz var?';
-    } else if (lowerMessage.contains('analitik') || lowerMessage.contains('analytics')) {
-      response = 'Analitik ve raporlama sistemi hakkında bilgi verebilirim. Hangi raporu oluşturmak istiyorsunuz?';
-    } else if (lowerMessage.contains('merhaba') || lowerMessage.contains('hello')) {
-      response = 'Merhaba! Size nasıl yardımcı olabilirim? Hasta yönetimi, randevular, reçeteler veya diğer konularda sorularınızı yanıtlayabilirim.';
-    } else if (lowerMessage.contains('yardım') || lowerMessage.contains('help')) {
-      response = 'PsyClinic AI sisteminde size yardımcı olabileceğim konular:\n\n'
-          '• Hasta yönetimi ve takibi\n'
-          '• Randevu planlama ve yönetimi\n'
-          '• E-reçete sistemi\n'
-          '• Faturalandırma\n'
-          '• Sigorta entegrasyonu\n'
+    if (lowerMessage.contains('patient') || lowerMessage.contains('hasta')) {
+      response = 'I can help you with patient management. Which patient would you like information about?';
+    } else if (lowerMessage.contains('appointment') || lowerMessage.contains('randevu')) {
+      response = 'I can help with the appointment system. Would you like to schedule a new appointment?';
+    } else if (lowerMessage.contains('prescription') || lowerMessage.contains('reçete')) {
+      response = 'I can answer questions about the e-prescription system. Which medication would you like info on?';
+    } else if (lowerMessage.contains('billing') || lowerMessage.contains('invoice')) {
+      response = 'I can help with billing. Which invoice or billing question do you have?';
+    } else if (lowerMessage.contains('insurance')) {
+      response = 'I can help with insurance integration. Which insurance provider are you asking about?';
+    } else if (lowerMessage.contains('mood')) {
+      response = 'I can help with mood tracking. Which patient\'s mood data would you like to review?';
+    } else if (lowerMessage.contains('voice note') || lowerMessage.contains('voice')) {
+      response = 'I can help with the voice notes system. Would you like to record a new voice note?';
+    } else if (lowerMessage.contains('telemedicine') || lowerMessage.contains('telehealth') || lowerMessage.contains('video call')) {
+      response = 'I can help with telehealth. Would you like to start a video session?';
+    } else if (lowerMessage.contains('security')) {
+      response = 'I can help with security settings. Which security feature do you have a question about?';
+    } else if (lowerMessage.contains('analytics') || lowerMessage.contains('reporting')) {
+      response = 'I can help with analytics and reporting. Which report would you like to generate?';
+    } else if (lowerMessage.contains('hello') || lowerMessage.contains('hi ') || lowerMessage.contains('hey')) {
+      response = 'Hi! How can I help you? Ask me about patient management, appointments, prescriptions, or anything else.';
+    } else if (lowerMessage.contains('help')) {
+      response = 'Here\'s what I can help you with in PsyClinic AI:\n\n'
+          '• Patient management & tracking\n'
+          '• Appointment scheduling\n'
+          '• E-prescription system\n'
+          '• Billing & invoicing\n'
+          '• Insurance integration\n'
           '• Mood tracking\n'
-          '• Sesli notlar\n'
-          '• Telemedicine\n'
-          '• Güvenlik ayarları\n'
-          '• Analitik ve raporlama\n\n'
-          'Hangi konuda daha detaylı bilgi istiyorsunuz?';
+          '• Voice notes\n'
+          '• Telehealth video sessions\n'
+          '• Security settings\n'
+          '• Analytics & reporting\n\n'
+          'Which topic would you like to know more about?';
     } else {
-      response = 'Anladım. Bu konuda size daha iyi yardımcı olabilmem için daha spesifik bir soru sorabilir misiniz? '
-          'Hasta yönetimi, randevular, reçeteler, faturalar veya diğer sistem özellikleri hakkında sorularınızı yanıtlayabilirim.';
+      response = 'Got it. Could you ask a more specific question so I can help better? '
+          'I can answer about patient management, appointments, prescriptions, billing, or other system features.';
     }
 
     _addMessage('AI Asistan', response, false, DateTime.now());

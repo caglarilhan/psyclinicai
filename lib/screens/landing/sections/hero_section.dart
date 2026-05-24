@@ -9,10 +9,17 @@ class HeroSection extends StatelessWidget {
     super.key,
     required this.onPrimaryCta,
     required this.onSecondaryCta,
+    this.onWaitlistEmail,
   });
 
+  /// Plain CTA — used by /landing composer for fallback flows.
   final VoidCallback onPrimaryCta;
   final VoidCallback onSecondaryCta;
+
+  /// Optional waitlist submit handler. When wired, the hero swaps the
+  /// plain button for an inline email-capture form — much higher
+  /// top-of-funnel conversion.
+  final ValueChanged<String>? onWaitlistEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -107,39 +114,37 @@ class HeroSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 32),
-        Wrap(
-          spacing: 14,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            FilledButton.icon(
-              onPressed: onPrimaryCta,
-              icon: const Icon(Icons.rocket_launch, size: 18),
-              label: const Text('Reserve a founding seat'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 26, vertical: 18),
-                textStyle: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700),
-              ),
+        if (onWaitlistEmail != null)
+          _WaitlistForm(
+              cs: cs, theme: theme, onSubmit: onWaitlistEmail!)
+        else
+          FilledButton.icon(
+            onPressed: onPrimaryCta,
+            icon: const Icon(Icons.rocket_launch, size: 18),
+            label: const Text('Reserve a founding seat'),
+            style: FilledButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+              textStyle: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w700),
             ),
-            TextButton.icon(
-              onPressed: onSecondaryCta,
-              icon: const Icon(Icons.play_circle_outline, size: 18),
-              label: const Text('Watch 90-sec demo'),
-              style: TextButton.styleFrom(
-                foregroundColor: cs.onSurface,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 18),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
-                  decorationThickness: 1.5,
-                ),
-              ),
+          ),
+        const SizedBox(height: 14),
+        TextButton.icon(
+          onPressed: onSecondaryCta,
+          icon: const Icon(Icons.play_circle_outline, size: 18),
+          label: const Text('Watch 90-sec demo'),
+          style: TextButton.styleFrom(
+            foregroundColor: cs.onSurface,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
+              decorationThickness: 1.5,
             ),
-          ],
+          ),
         ),
         const SizedBox(height: 18),
         Text(
@@ -153,7 +158,14 @@ class HeroSection extends StatelessWidget {
       ],
     );
 
-    const visual = HeroVisual();
+    final visual = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const HeroVisual(),
+        const SizedBox(height: 16),
+        _captionStrip(cs),
+      ],
+    );
 
     return LandingTokens.sectionContainer(
       context: context,
@@ -174,6 +186,35 @@ class HeroSection extends StatelessWidget {
                 visual,
               ],
             ),
+    );
+  }
+
+  Widget _captionStrip(ColorScheme cs) {
+    final muted = cs.onSurface.withValues(alpha: 0.55);
+    final dot = Container(
+      width: 3,
+      height: 3,
+      decoration: BoxDecoration(color: muted, shape: BoxShape.circle),
+    );
+    TextStyle s() => TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: muted,
+          letterSpacing: 0.6,
+        );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('LIVE SESSION', style: s()),
+        const SizedBox(width: 10),
+        dot,
+        const SizedBox(width: 10),
+        Text('AI NOTE', style: s()),
+        const SizedBox(width: 10),
+        dot,
+        const SizedBox(width: 10),
+        Text('SUPERBILL', style: s()),
+      ],
     );
   }
 }
@@ -210,6 +251,125 @@ class _TrustChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Inline email-capture form. Stripe-style: single row [email] [CTA].
+/// Lower friction than navigating to /login and seeing a multi-field form.
+class _WaitlistForm extends StatefulWidget {
+  const _WaitlistForm({
+    required this.cs,
+    required this.theme,
+    required this.onSubmit,
+  });
+  final ColorScheme cs;
+  final ThemeData theme;
+  final ValueChanged<String> onSubmit;
+
+  @override
+  State<_WaitlistForm> createState() => _WaitlistFormState();
+}
+
+class _WaitlistFormState extends State<_WaitlistForm> {
+  final _ctrl = TextEditingController();
+  String? _err;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final v = _ctrl.text.trim();
+    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
+    if (!ok) {
+      setState(() => _err = 'Enter a valid work email');
+      return;
+    }
+    setState(() => _err = null);
+    widget.onSubmit(v);
+    _ctrl.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: widget.cs.surface,
+              border: Border.all(
+                color: _err != null
+                    ? widget.cs.error
+                    : widget.cs.outlineVariant,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.cs.primary.withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctrl,
+                    keyboardType: TextInputType.emailAddress,
+                    onSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      hintText: 'you@clinic.com',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 18),
+                      isDense: true,
+                      filled: false,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: FilledButton.icon(
+                    onPressed: _submit,
+                    icon: const Icon(Icons.arrow_forward, size: 18),
+                    label: const Text('Get founding access'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: widget.cs.primary,
+                      foregroundColor: widget.cs.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 14),
+                      textStyle: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_err != null) ...[
+          const SizedBox(height: 6),
+          Text(_err!,
+              style: TextStyle(
+                color: widget.cs.error,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              )),
+        ],
+      ],
     );
   }
 }

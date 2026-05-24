@@ -150,15 +150,51 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      decoration: highlight
+          ? BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.10),
+              border: Border(
+                left: BorderSide(color: cs.primary, width: 3),
+                right: BorderSide(color: cs.primary, width: 3),
+              ),
+            )
+          : null,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Text(
-        text,
-        style: theme.textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: highlight ? cs.primary : cs.onSurface,
-          letterSpacing: 0.2,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (highlight)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'OUR PICK',
+                  style: TextStyle(
+                    color: cs.onPrimary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+          Text(
+            text,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: highlight ? cs.primary : cs.onSurface,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -176,7 +212,15 @@ class _Cell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: highlight ? cs.primary.withValues(alpha: 0.04) : null,
+      decoration: highlight
+          ? BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.06),
+              border: Border(
+                left: BorderSide(color: cs.primary, width: 3),
+                right: BorderSide(color: cs.primary, width: 3),
+              ),
+            )
+          : null,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Text(
         text,

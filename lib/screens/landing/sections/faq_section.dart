@@ -61,6 +61,43 @@ class _FaqSectionState extends State<FaqSection> {
           'session note, assessment, and superbill as JSON + PDF. No vendor '
           'lock-in — your patient records are yours.',
     ),
+    _Faq(
+      q: 'Who is liable if the AI drafts a wrong note?',
+      a: 'You are. PsyClinicAI drafts; the clinician reviews, edits, and '
+          'signs every note. The signed note is the legal record — same as '
+          'a dictation transcriptionist. Our audit log captures the AI '
+          'suggestion, your edits, and the timestamp on every save, so '
+          'you can defend any decision in retrospect.',
+    ),
+    _Faq(
+      q: 'Will insurance actually pay against this superbill?',
+      a: 'The PDF follows CMS-1500 layout with CPT (12 mental-health '
+          'codes) + ICD-10 (35) + NPI + Tax ID + DSM-5-aligned diagnoses. '
+          'Most US payers (BCBS, Aetna, Cigna, United) accept it out of '
+          'the box. If a claim is rejected, you keep all source data — '
+          'no vendor lock-in stops you from resubmitting.',
+    ),
+    _Faq(
+      q: 'Can I migrate patient data from SimplePractice / TherapyNotes?',
+      a: 'CSV import from any EHR that exports patient demographics, '
+          'session history, and superbills. We provide a 1:1 mapping '
+          'guide for the four largest mental-health EHRs and a hands-on '
+          'migration session during the founding pilot.',
+    ),
+    _Faq(
+      q: 'Does it work if my internet drops mid-session?',
+      a: 'Yes — the entire session UI is offline-first. The transcript '
+          'keeps building on-device, the SOAP draft is queued, and the '
+          'note + superbill sync to Firestore the moment connection '
+          'returns. You never lose a session.',
+    ),
+    _Faq(
+      q: 'Can I try it before signing a BAA?',
+      a: "Yes. Founding access starts in 'evaluation mode' with synthetic "
+          'demo data — no PHI, no BAA needed. The moment you switch to '
+          'real patients we email you a pre-signed BAA you counter-sign '
+          'with one click, fully effective before the first real save.',
+    ),
   ];
 
   @override

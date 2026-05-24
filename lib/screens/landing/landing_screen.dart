@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/data/firebase_bootstrap.dart';
 import '../../widgets/landing/demo_modal.dart';
+import '../../widgets/landing/sticky_cta_bar.dart';
 import 'sections/built_for_section.dart';
 import 'sections/comparison_table_section.dart';
 import 'sections/faq_section.dart';
@@ -18,9 +21,38 @@ import 'sections/trust_bar_section.dart';
 /// Landing page — modular composition of section widgets.
 ///
 /// Each section lives under `lib/screens/landing/sections/`. This file is the
-/// orchestrator only: it wires navigation handlers and chooses the order.
-class LandingScreen extends StatelessWidget {
+/// orchestrator only: it wires navigation handlers, chooses the order, and
+/// drives the scroll-aware sticky CTA bar.
+class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
+
+  @override
+  State<LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+  final _scroll = ScrollController();
+  bool _stickyVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final shouldShow = _scroll.offset > 600;
+    if (shouldShow != _stickyVisible) {
+      setState(() => _stickyVisible = shouldShow);
+    }
+  }
 
   void _gotoSignup(BuildContext context) {
     Navigator.of(context).pushNamed('/login');
@@ -42,6 +74,28 @@ class LandingScreen extends StatelessWidget {
       ),
     );
     Navigator.of(context).pushNamed('/login');
+  }
+
+  Future<void> _waitlistSubmit(BuildContext context, String email) async {
+    // Best-effort Firestore write — if rules deny, the user still gets a
+    // success confirmation (we never block conversion on backend ACK).
+    if (PsyFirebase.isReady) {
+      try {
+        await FirebaseFirestore.instance.collection('landing_waitlist').add({
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+          'source': 'hero',
+        });
+      } catch (_) {
+        // Rules deny / network fail — ignore, fall through to UI ack.
+      }
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("You're in. We'll email $email the moment a founding seat opens."),
+      ),
+    );
   }
 
   void _footerLink(BuildContext context, String id) {
@@ -72,28 +126,46 @@ class LandingScreen extends StatelessWidget {
         onSignIn: () => _gotoLogin(context),
         onStart: () => _gotoSignup(context),
       ),
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: Stack(
         children: [
-          HeroSection(
-            onPrimaryCta: () => _gotoSignup(context),
-            onSecondaryCta: () => _bookDemo(context),
+          ListView(
+            controller: _scroll,
+            padding: EdgeInsets.zero,
+            children: [
+              HeroSection(
+                onPrimaryCta: () => _gotoSignup(context),
+                onSecondaryCta: () => _bookDemo(context),
+                onWaitlistEmail: (email) =>
+                    _waitlistSubmit(context, email),
+              ),
+              const TrustBarSection(),
+              const ComparisonTableSection(),
+              const ProductGallerySection(),
+              const HowItWorksSection(),
+              const FeatureGridSection(),
+              const BuiltForSection(),
+              const ProblemSection(),
+              PricingSection(onPickTier: (t) => _pickTier(context, t)),
+              TestimonialsSection(onCta: () => _gotoSignup(context)),
+              const FaqSection(),
+              FinalCtaSection(
+                onPrimary: () => _gotoSignup(context),
+                onSecondary: () => _bookDemo(context),
+              ),
+              FooterSection(onLink: (id) => _footerLink(context, id)),
+              // Leave room for the sticky bar so the footer doesn't hide.
+              const SizedBox(height: 80),
+            ],
           ),
-          const TrustBarSection(),
-          const ComparisonTableSection(),
-          const ProductGallerySection(),
-          const HowItWorksSection(),
-          const FeatureGridSection(),
-          const BuiltForSection(),
-          const ProblemSection(),
-          PricingSection(onPickTier: (t) => _pickTier(context, t)),
-          TestimonialsSection(onCta: () => _gotoSignup(context)),
-          const FaqSection(),
-          FinalCtaSection(
-            onPrimary: () => _gotoSignup(context),
-            onSecondary: () => _bookDemo(context),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: StickyCtaBar(
+              visible: _stickyVisible,
+              onPrimary: () => _gotoSignup(context),
+            ),
           ),
-          FooterSection(onLink: (id) => _footerLink(context, id)),
         ],
       ),
     );

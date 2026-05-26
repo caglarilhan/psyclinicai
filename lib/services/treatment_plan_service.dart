@@ -107,6 +107,9 @@ class TreatmentPlanService {
     return plan;
   }
 
+  /// All plans across patients (read-only) — for caseload aggregation.
+  List<TreatmentPlan> get allPlans => List.unmodifiable(_treatmentPlans);
+
   // Get treatment plan for patient
   TreatmentPlan? getTreatmentPlanForPatient(String patientId) {
     return _treatmentPlans

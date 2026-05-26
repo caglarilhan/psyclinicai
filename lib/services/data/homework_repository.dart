@@ -37,6 +37,9 @@ class HomeworkRepository {
     }
   }
 
+  /// All items across patients (read-only) — for caseload aggregation.
+  List<HomeworkItem> get all => List.unmodifiable(_items);
+
   List<HomeworkItem> forPatient(String patientId) {
     final list = _items.where((i) => i.patientId == patientId).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));

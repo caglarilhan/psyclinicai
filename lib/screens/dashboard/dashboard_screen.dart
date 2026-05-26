@@ -325,6 +325,11 @@ class _QuickActions extends StatelessWidget {
           body: 'Live AI Co-Pilot with on-device transcription.',
           route: '/session'),
       _Action(
+          icon: Icons.notifications_active_outlined,
+          label: 'Caseload attention',
+          body: 'Who needs you now — overdue work, stalled plans, risk.',
+          route: '/caseload'),
+      _Action(
           icon: Icons.group_outlined,
           label: 'Patients',
           body: 'Search the roster, add a patient, open a chart.',

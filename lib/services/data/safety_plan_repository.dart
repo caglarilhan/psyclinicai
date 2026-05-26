@@ -30,6 +30,9 @@ class SafetyPlanRepository {
 
   SafetyPlan? forPatient(String patientId) => _byPatient[patientId];
 
+  /// All plans across patients (read-only) — for caseload aggregation.
+  List<SafetyPlan> get all => _byPatient.values.toList(growable: false);
+
   Future<void> save(SafetyPlan plan) async {
     _byPatient[plan.patientId] = plan;
     try {

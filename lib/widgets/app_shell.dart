@@ -222,10 +222,13 @@ class _Content extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: theme.textTheme.displaySmall
-                    ?.copyWith(fontWeight: FontWeight.bold, height: 1.1),
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: theme.textTheme.displaySmall
+                      ?.copyWith(fontWeight: FontWeight.bold, height: 1.1),
+                ),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: PsySpacing.sm),
@@ -381,11 +384,14 @@ class _SearchBox extends StatelessWidget {
               Icon(Icons.search,
                   size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
               const SizedBox(width: PsySpacing.sm),
-              Text(
-                'Search patients',
-                style: TextStyle(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontSize: 14,
+              Flexible(
+                child: Text(
+                  'Search patients',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],

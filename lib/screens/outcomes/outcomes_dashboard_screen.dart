@@ -7,6 +7,7 @@ import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
@@ -40,11 +41,13 @@ class _OutcomesDashboardScreenState
     final patientName = args?.name ?? 'Select a patient';
     final canPickLive = PsyFirebase.isReady;
 
-    return Scaffold(
-      appBar: AppBar(title: Text('Outcomes · $patientName')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
+    return AppShell(
+      routeName: '/outcomes',
+      title: 'Outcomes',
+      subtitle: 'PHQ-9 + GAD-7 trends with severity bands · $patientName',
+      scrollable: false,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           _Lede(theme: theme, cs: cs, patientName: patientName),
           const SizedBox(height: PsySpacing.xl),

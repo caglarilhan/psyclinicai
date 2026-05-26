@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/ds/psy_badge.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
 
@@ -96,27 +96,16 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.medication_outlined, color: cs.primary, size: 22),
-            const SizedBox(width: PsySpacing.sm),
-            const Text('e-Prescribing'),
-            const SizedBox(width: PsySpacing.md),
-            const PsyBadge(
-              label: 'Coming Q4 2026',
-              tone: PsyBadgeTone.warning,
-            ),
-          ],
-        ),
-      ),
-      body: Center(
+    return AppShell(
+      routeName: '/e_prescription',
+      title: 'e-Prescribing',
+      subtitle: 'SureScripts + DEA EPCS — general availability Q4 2026.',
+      scrollable: false,
+      child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(PsySpacing.xxl,
-                PsySpacing.xxl, PsySpacing.xxl, PsySpacing.xxxl),
+            padding: const EdgeInsets.symmetric(vertical: PsySpacing.xl),
             children: [
               Text('US e-prescribing, built right.',
                   style: theme.textTheme.headlineMedium?.copyWith(

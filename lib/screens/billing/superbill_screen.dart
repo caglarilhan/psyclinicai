@@ -8,6 +8,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
+import '../../widgets/app_shell.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
 /// the PDF. Material 3 design, two-column on wide layouts.
@@ -206,15 +207,11 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      appBar: AppBar(
-        title: const Text('Superbill'),
-        backgroundColor: cs.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-      ),
-      floatingActionButton: FilledButton.icon(
+    return AppShell(
+      routeName: '/superbill',
+      title: 'Superbill',
+      subtitle: 'CPT + ICD-10 picker, CMS-1500-aligned PDF.',
+      primaryAction: FilledButton.icon(
         onPressed: _generating ? null : _generate,
         icon: _generating
             ? const SizedBox(
@@ -226,16 +223,18 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             : const Icon(Icons.picture_as_pdf, size: 20),
         label: Text(_generating ? 'Generating…' : 'Generate PDF'),
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
-      body: LayoutBuilder(
+      scrollable: false,
+      child: LayoutBuilder(
         builder: (ctx, c) {
           final wide = c.maxWidth > 980;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+            padding: const EdgeInsets.only(bottom: 48),
             children: [
               _InvoiceMetaCard(
                 cs: cs,

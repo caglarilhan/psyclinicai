@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -18,11 +19,13 @@ class SettingsScreen extends StatelessWidget {
     final cs = theme.colorScheme;
     final profile = FirebaseAuthService.instance.profile;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
+    return AppShell(
+      routeName: '/settings',
+      title: 'Settings',
+      subtitle: 'Account, integrations, and trust & legal.',
+      scrollable: false,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           _section(theme, cs, 'Account'),
           PsyCard(

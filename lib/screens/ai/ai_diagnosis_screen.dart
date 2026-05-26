@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/copilot/diagnosis_service.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -97,22 +98,13 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.psychology_outlined, color: cs.primary, size: 22),
-            const SizedBox(width: PsySpacing.sm),
-            const Text('DSM-5 Differential'),
-            const SizedBox(width: PsySpacing.md),
-            const PsyBadge(
-                label: 'Claude Haiku 3.5', tone: PsyBadgeTone.brand),
-          ],
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
+    return AppShell(
+      routeName: '/ai_diagnosis',
+      title: 'DSM-5 Differential',
+      subtitle: 'Differential support · Claude Haiku — the clinician owns the diagnosis.',
+      scrollable: false,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           PsyCard(
             tinted: true,

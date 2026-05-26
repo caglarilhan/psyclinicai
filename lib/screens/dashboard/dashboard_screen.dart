@@ -5,13 +5,13 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 
 /// Dashboard v2 — clinician home.
 ///
-/// Replaces the previous 978-line monolithic dashboard with a focused
-/// surface: greeting, four outcome KPIs, quick-action grid, recent
-/// activity placeholder. Counts will go live once Sprint D wires
-/// repository streams in.
+/// Sits in the shared [AppShell] (rail + header + breadcrumb). Surface:
+/// greeting title + "New session" CTA, four outcome KPIs, quick-action grid,
+/// recent-activity empty state. Counts go live once repository streams wire in.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -21,61 +21,41 @@ class DashboardScreen extends StatelessWidget {
     final cs = theme.colorScheme;
     final auth = context.watch<FirebaseAuthService>();
     final profile = auth.profile;
-    final greeting = _greeting();
     final name = profile?.fullName.split(' ').first ?? 'there';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.psychology, color: cs.primary, size: 26),
-            const SizedBox(width: PsySpacing.sm),
-            Text(
-              'PsyClinicAI',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+    return AppShell(
+      routeName: '/dashboard',
+      title: '${_greeting()}, $name.',
+      subtitle: 'Here is what your practice looks like right now.',
+      primaryAction: FilledButton.icon(
+        onPressed: () => Navigator.of(context).pushNamed('/session'),
+        icon: const Icon(Icons.mic_none),
+        label: const Text('New session'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Settings',
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/settings'),
-            icon: const Icon(Icons.settings_outlined),
-          ),
-          IconButton(
-            tooltip: 'API keys',
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/settings/api_keys'),
-            icon: const Icon(Icons.key_outlined),
-          ),
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: () async {
-              if (PsyFirebase.isReady) {
-                await FirebaseAuthService.instance.signOut();
-              }
-              if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/landing');
-              }
-            },
-            icon: const Icon(Icons.logout),
-          ),
-          const SizedBox(width: PsySpacing.md),
-        ],
       ),
-      body: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Greeting(
-              greeting: greeting, name: name, role: profile?.role.label),
-          if (!PsyFirebase.isReady) _DemoBanner(cs: cs, theme: theme),
+          if (profile?.role.label != null) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _RoleChip(label: profile!.role.label, cs: cs, theme: theme),
+            ),
+            const SizedBox(height: PsySpacing.xl),
+          ],
+          if (!PsyFirebase.isReady) ...[
+            _DemoBanner(cs: cs, theme: theme),
+            const SizedBox(height: PsySpacing.xl),
+          ],
           _KpiRow(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.xxl),
           _QuickActions(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.xxl),
           _RecentActivity(theme: theme, cs: cs),
-          const SizedBox(height: PsySpacing.xxxl),
         ],
       ),
     );
@@ -89,68 +69,28 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _Greeting extends StatelessWidget {
-  const _Greeting(
-      {required this.greeting, required this.name, required this.role});
-  final String greeting;
-  final String name;
-  final String? role;
+class _RoleChip extends StatelessWidget {
+  const _RoleChip({required this.label, required this.cs, required this.theme});
+  final String label;
+  final ColorScheme cs;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.md, vertical: PsySpacing.xs),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            cs.primary.withValues(alpha: 0.10),
-            cs.surface,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
+        color: cs.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(PsyRadius.full),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.30)),
       ),
-      padding: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.xxxl, PsySpacing.xxl, PsySpacing.xxl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$greeting, $name.',
-            style: theme.textTheme.displaySmall
-                ?.copyWith(fontWeight: FontWeight.bold, height: 1.1),
-          ),
-          if (role != null) ...[
-            const SizedBox(height: PsySpacing.sm),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: PsySpacing.md, vertical: PsySpacing.xs),
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(PsyRadius.full),
-                border:
-                    Border.all(color: cs.primary.withValues(alpha: 0.30)),
-              ),
-              child: Text(
-                role!,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: PsySpacing.lg),
-          Text(
-            'Here is what your practice looks like right now.',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: cs.primary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -164,8 +104,6 @@ class _DemoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, 0),
       padding: const EdgeInsets.all(PsySpacing.xl),
       decoration: BoxDecoration(
         color: Colors.amber.withValues(alpha: 0.10),
@@ -200,10 +138,9 @@ class _DemoBanner extends StatelessWidget {
                   runSpacing: PsySpacing.sm,
                   children: [
                     TextButton.icon(
-                      onPressed: () => Navigator.of(context)
-                          .pushNamed('/security'),
-                      icon: const Icon(Icons.menu_book_outlined,
-                          size: 16),
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/security'),
+                      icon: const Icon(Icons.menu_book_outlined, size: 16),
                       label: const Text('Setup guide'),
                     ),
                     TextButton.icon(
@@ -284,30 +221,25 @@ class _KpiRow extends StatelessWidget {
           tint: cs.primary),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.xxl, PsySpacing.xxl, PsySpacing.lg),
-      child: LayoutBuilder(
-        builder: (ctx, c) {
-          final cols = c.maxWidth >= PsyBreakpoints.lg
-              ? 4
-              : c.maxWidth >= PsyBreakpoints.sm
-                  ? 2
-                  : 1;
-          final cardW =
-              (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
-          return Wrap(
-            spacing: PsySpacing.lg,
-            runSpacing: PsySpacing.lg,
-            children: kpis
-                .map((k) => SizedBox(
-                      width: cardW,
-                      child: _KpiCard(kpi: k, theme: theme, cs: cs),
-                    ))
-                .toList(),
-          );
-        },
-      ),
+    return LayoutBuilder(
+      builder: (ctx, c) {
+        final cols = c.maxWidth >= PsyBreakpoints.lg
+            ? 4
+            : c.maxWidth >= PsyBreakpoints.sm
+                ? 2
+                : 1;
+        final cardW = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
+        return Wrap(
+          spacing: PsySpacing.lg,
+          runSpacing: PsySpacing.lg,
+          children: kpis
+              .map((k) => SizedBox(
+                    width: cardW,
+                    child: _KpiCard(kpi: k, theme: theme, cs: cs),
+                  ))
+              .toList(),
+        );
+      },
     );
   }
 }
@@ -325,8 +257,7 @@ class _Kpi {
 }
 
 class _KpiCard extends StatelessWidget {
-  const _KpiCard(
-      {required this.kpi, required this.theme, required this.cs});
+  const _KpiCard({required this.kpi, required this.theme, required this.cs});
   final _Kpi kpi;
   final ThemeData theme;
   final ColorScheme cs;
@@ -429,40 +360,34 @@ class _QuickActions extends StatelessWidget {
           route: '/security'),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.lg, PsySpacing.xxl, PsySpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Quick actions',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: PsySpacing.lg),
-          LayoutBuilder(
-            builder: (ctx, c) {
-              final cols = c.maxWidth >= PsyBreakpoints.lg
-                  ? 3
-                  : c.maxWidth >= PsyBreakpoints.sm
-                      ? 2
-                      : 1;
-              final cardW =
-                  (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
-              return Wrap(
-                spacing: PsySpacing.lg,
-                runSpacing: PsySpacing.lg,
-                children: actions
-                    .map((a) => SizedBox(
-                          width: cardW,
-                          child: _ActionTile(
-                              action: a, theme: theme, cs: cs),
-                        ))
-                    .toList(),
-              );
-            },
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Quick actions',
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: PsySpacing.lg),
+        LayoutBuilder(
+          builder: (ctx, c) {
+            final cols = c.maxWidth >= PsyBreakpoints.lg
+                ? 3
+                : c.maxWidth >= PsyBreakpoints.sm
+                    ? 2
+                    : 1;
+            final cardW = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
+            return Wrap(
+              spacing: PsySpacing.lg,
+              runSpacing: PsySpacing.lg,
+              children: actions
+                  .map((a) => SizedBox(
+                        width: cardW,
+                        child: _ActionTile(action: a, theme: theme, cs: cs),
+                      ))
+                  .toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -480,8 +405,7 @@ class _Action {
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile(
-      {required this.action, required this.theme, required this.cs});
+  const _ActionTile({required this.action, required this.theme, required this.cs});
   final _Action action;
   final ThemeData theme;
   final ColorScheme cs;
@@ -538,46 +462,42 @@ class _RecentActivity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xxl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Recent activity',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: PsySpacing.lg),
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.xxl, vertical: PsySpacing.xxxl),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(PsyRadius.lg),
-              border: Border.all(color: cs.outlineVariant),
-            ),
-            alignment: Alignment.center,
-            child: Column(
-              children: [
-                Icon(Icons.history_outlined,
-                    color: cs.onSurface.withValues(alpha: 0.45),
-                    size: 36),
-                const SizedBox(height: PsySpacing.md),
-                Text('No activity yet.',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7))),
-                const SizedBox(height: PsySpacing.xs),
-                Text(
-                  'Start a session or send a screener — entries will show up here.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.55),
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Recent activity',
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: PsySpacing.lg),
+        Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: PsySpacing.xxl, vertical: PsySpacing.xxxl),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(PsyRadius.lg),
+            border: Border.all(color: cs.outlineVariant),
           ),
-        ],
-      ),
+          alignment: Alignment.center,
+          child: Column(
+            children: [
+              Icon(Icons.history_outlined,
+                  color: cs.onSurface.withValues(alpha: 0.45), size: 36),
+              const SizedBox(height: PsySpacing.md),
+              Text('No activity yet.',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7))),
+              const SizedBox(height: PsySpacing.xs),
+              Text(
+                'Start a session or send a screener — entries will show up here.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

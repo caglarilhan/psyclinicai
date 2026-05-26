@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/copilot/chat_service.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/ds/psy_badge.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 
 /// `/ai_chatbot` — real Anthropic Claude conversation. BYOK: nothing
@@ -92,28 +92,17 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.smart_toy_outlined, color: cs.primary, size: 22),
-            const SizedBox(width: PsySpacing.sm),
-            const Text('AI Copilot'),
-            const SizedBox(width: PsySpacing.md),
-            const PsyBadge(
-                label: 'Claude Haiku 3.5', tone: PsyBadgeTone.brand),
-          ],
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: _history.isEmpty ? null : _newConversation,
-            icon: const Icon(Icons.add_comment_outlined, size: 18),
-            label: const Text('New chat'),
-          ),
-          const SizedBox(width: PsySpacing.md),
-        ],
+    return AppShell(
+      routeName: '/ai_chatbot',
+      title: 'AI Copilot',
+      subtitle: 'Clinical reasoning assistant · Claude Haiku (BYOK)',
+      primaryAction: TextButton.icon(
+        onPressed: _history.isEmpty ? null : _newConversation,
+        icon: const Icon(Icons.add_comment_outlined, size: 18),
+        label: const Text('New chat'),
       ),
-      body: Column(
+      scrollable: false,
+      child: Column(
         children: [
           Expanded(
             child: _history.isEmpty
@@ -122,7 +111,6 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
                 : ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: PsySpacing.xxl,
                         vertical: PsySpacing.xl),
                     itemCount: _history.length + (_sending ? 1 : 0),
                     itemBuilder: (_, i) {

@@ -6,7 +6,7 @@ import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/mood_repository.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/ds/psy_badge.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
 
@@ -108,26 +108,13 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.spa_outlined, color: cs.primary, size: 22),
-            const SizedBox(width: PsySpacing.sm),
-            const Text('Mood tracker'),
-            const SizedBox(width: PsySpacing.md),
-            PsyBadge(
-              label: PsyFirebase.isReady ? 'Live' : 'Demo mode',
-              tone: PsyFirebase.isReady
-                  ? PsyBadgeTone.success
-                  : PsyBadgeTone.warning,
-            ),
-          ],
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
+    return AppShell(
+      routeName: '/mood_tracking',
+      title: 'Mood tracker',
+      subtitle: 'Daily mood, sleep & anxiety check-ins with a 30-day trend.',
+      scrollable: false,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           PsyCard(
             tinted: true,

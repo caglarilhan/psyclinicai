@@ -4,6 +4,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -31,37 +32,30 @@ class _PatientListScreenState extends State<PatientListScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Patients'),
-        actions: [
-          PsyButton(
-            label: 'Add patient',
-            icon: Icons.person_add_alt_1,
-            size: PsyButtonSize.sm,
-            onPressed: _openAddPatient,
-          ),
-          const SizedBox(width: PsySpacing.lg),
-        ],
+    return AppShell(
+      routeName: '/patients',
+      title: 'Patients',
+      subtitle: 'Search the roster, open a chart, or add a new patient.',
+      primaryAction: PsyButton(
+        label: 'Add patient',
+        icon: Icons.person_add_alt_1,
+        onPressed: _openAddPatient,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xxl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: PsySpacing.xl),
-            TextField(
-              controller: _searchCtrl,
-              onChanged: (v) => setState(() => _query = v.trim()),
-              decoration: const InputDecoration(
-                hintText: 'Search by name, member ID, or insurer…',
-                prefixIcon: Icon(Icons.search),
-              ),
+      scrollable: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (v) => setState(() => _query = v.trim()),
+            decoration: const InputDecoration(
+              hintText: 'Search by name, member ID, or insurer…',
+              prefixIcon: Icon(Icons.search),
             ),
-            const SizedBox(height: PsySpacing.xl),
-            Expanded(child: _list(context, theme, cs)),
-          ],
-        ),
+          ),
+          const SizedBox(height: PsySpacing.xl),
+          Expanded(child: _list(context, theme, cs)),
+        ],
       ),
     );
   }

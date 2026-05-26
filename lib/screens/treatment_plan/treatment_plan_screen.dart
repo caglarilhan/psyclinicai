@@ -98,6 +98,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _DiagnosisCard(theme: theme, cs: cs, plan: plan),
+        const SizedBox(height: PsySpacing.md),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: _busy ? null : _draftLetter,
+            icon: const Icon(Icons.description_outlined, size: 18),
+            label: const Text('Reimbursement letter (EU)'),
+          ),
+        ),
         const SizedBox(height: PsySpacing.xl),
         Row(
           children: [
@@ -313,6 +322,39 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
             content:
                 Text('${ideas.length} homework ideas added — review and edit.')));
       }
+    } on TreatmentPlanAiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'))
+            : null,
+      ));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _draftLetter() async {
+    final plan = _plan;
+    if (plan == null) return;
+    setState(() => _busy = true);
+    try {
+      final letter = await _ai.draftReimbursementLetter(
+        patientName: widget.args.name,
+        diagnosis: plan.primaryDiagnosis,
+        goals: plan.activeGoals.map((g) => g.description).toList(),
+      );
+      if (!mounted) return;
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (_) => _LetterSheet(letter: letter),
+      );
     } on TreatmentPlanAiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -887,6 +929,50 @@ class _HomeworkDialogState extends State<_HomeworkDialog> {
           child: const Text('Assign'),
         ),
       ],
+    );
+  }
+}
+
+class _LetterSheet extends StatelessWidget {
+  const _LetterSheet({required this.letter});
+  final String letter;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.description_outlined, color: cs.primary),
+              const SizedBox(width: 8),
+              Text('Reimbursement letter (draft)',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+            ]),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: SelectableText(letter,
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'AI-drafted — review, fill the [placeholders], and verify before '
+              'sending. Select text to copy.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

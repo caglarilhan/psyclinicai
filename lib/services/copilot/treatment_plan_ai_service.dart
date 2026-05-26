@@ -217,6 +217,82 @@ class TreatmentPlanAiService {
     }
   }
 
+  /// Drafts a formal insurance reimbursement-justification letter (EU
+  /// Kostenzuschuss / Erstattung / out-of-network), from the diagnosis +
+  /// goals. Returns the letter text; throws [TreatmentPlanAiException]
+  /// (noKey set) when no key. Decision-support draft — clinician reviews.
+  Future<String> draftReimbursementLetter({
+    required String patientName,
+    required String diagnosis,
+    required List<String> goals,
+    String language = 'English',
+  }) async {
+    final key = await _keyStorage.getAnthropicKey();
+    if (key == null || key.isEmpty) {
+      throw const TreatmentPlanAiException(
+        'No Anthropic API key configured. Add one under Settings → API Keys.',
+        noKey: true,
+      );
+    }
+
+    final system =
+        'You are a clinician drafting a concise, formal insurance '
+        'reimbursement-justification letter (for EU statutory/private '
+        'reimbursement such as Kostenzuschuss/Erstattung, or out-of-network). '
+        'Write in $language. State the diagnosis, medical necessity, treatment '
+        'goals and expected duration/frequency, in a professional letter '
+        'format with placeholders [Insurer], [Date], [Clinician], [Credentials]. '
+        'Do NOT invent facts beyond what is given. Output the letter text only.';
+    final user = 'Patient: $patientName\nDiagnosis: $diagnosis\n'
+        'Treatment goals:\n${goals.map((g) => '- $g').join('\n')}';
+
+    final body = jsonEncode({
+      'model': _model,
+      'max_tokens': 900,
+      'temperature': 0.3,
+      'system': system,
+      'messages': [
+        {'role': 'user', 'content': user}
+      ],
+    });
+
+    try {
+      final resp = await _client
+          .post(
+            Uri.parse(_apiUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': key,
+              'anthropic-version': _anthropicVersion,
+              'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: body,
+          )
+          .timeout(const Duration(seconds: 40));
+      if (resp.statusCode == 401 || resp.statusCode == 403) {
+        throw const TreatmentPlanAiException(
+            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+      }
+      if (resp.statusCode != 200) {
+        throw TreatmentPlanAiException(
+            'Anthropic error ${resp.statusCode}. Try again shortly.');
+      }
+      final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+      final content = (decoded['content'] as List<dynamic>? ?? const [])
+          .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
+          .join('\n')
+          .trim();
+      if (content.isEmpty) {
+        throw const TreatmentPlanAiException('Empty response. Try again.');
+      }
+      return content;
+    } on TreatmentPlanAiException {
+      rethrow;
+    } catch (e) {
+      throw TreatmentPlanAiException('Network error reaching Anthropic. $e');
+    }
+  }
+
   void dispose() => _client.close();
 }
 

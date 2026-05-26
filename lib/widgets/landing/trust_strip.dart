@@ -22,6 +22,14 @@ class TrustStrip extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _stat(
+              icon: Icons.flag_outlined,
+              label: 'Built in Europe 🇪🇺',
+              cs: cs,
+              theme: theme,
+              muted: muted,
+            ),
+            _dot(muted),
+            _stat(
               icon: Icons.groups_outlined,
               label: '247 clinicians on the waitlist',
               cs: cs,

@@ -1,6 +1,47 @@
 # 🚀 PsyClinicAI Deployment Guide
 
-## 🎯 Overview
+> ⚠️ **Read this section first.** The real production stack is **Flutter web
+> (static) + Firebase (Auth/Firestore) + nginx on a Hetzner VPS** — *not*
+> PostgreSQL/Docker. The generic PostgreSQL/Docker sections further below are
+> legacy and do not reflect how we actually ship. See also
+> [`LAUNCH-READINESS.md`](../LAUNCH-READINESS.md) for the go-live gate.
+
+## ⚡ Production deploy — current stack
+
+**Architecture:** Flutter compiles to a static web bundle (`build/web`) served
+by nginx on a Hetzner VPS. App data lives in **Firebase** (Firestore + Auth),
+isolated per clinic by `firestore.rules`. AI is **BYOK** — each clinician's
+Anthropic key, called directly from the browser; no PHI transits our servers.
+
+### One-time setup
+1. **Firebase project** — `flutterfire configure` (regenerates `lib/firebase_options.dart`).
+2. **Firestore rules** — `firebase deploy --only firestore:rules` (deploys `firestore.rules`).
+3. **VPS** — Ubuntu host with nginx + certbot; DNS A-record `psyclinicai.com` (and `demo.`) → VPS IP.
+4. **Stripe** — create live products/payment links (Solo/Practice/Group); no keys are hard-coded (BYOK pattern; publishable key supplied at runtime).
+
+### Each release
+```bash
+flutter pub get
+flutter analyze                 # demo graph must be clean
+flutter test                    # green gate
+flutter build web --release     # produces build/web
+npm test                        # Playwright E2E (serve build/web on :8000)
+bash deploy/deploy-hetzner.sh   # rsync build/web → VPS, nginx reload (needs SSH access)
+```
+
+### TLS
+Let's Encrypt via certbot on the VPS; `deploy/security-hardening.sh` assists.
+
+### Rollback
+Keep the previous `build/web` tarball on the VPS; revert the nginx symlink to
+roll back in seconds. Firestore rules are versioned — redeploy the prior file.
+
+---
+
+## 🎯 Overview (legacy — generic reference only)
+
+> The content below predates the current stack and references PostgreSQL/Docker.
+> Treat it as generic background, not the deployment path.
 
 This guide provides comprehensive instructions for deploying PsyClinicAI to various environments, from development to production. Whether you're setting up a local development environment or deploying to cloud infrastructure, this guide covers all the necessary steps.
 

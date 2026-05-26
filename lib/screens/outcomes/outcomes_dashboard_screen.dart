@@ -44,7 +44,9 @@ class _OutcomesDashboardScreenState
     return AppShell(
       routeName: '/outcomes',
       title: 'Outcomes',
-      subtitle: 'PHQ-9 + GAD-7 trends with severity bands · $patientName',
+      subtitle: args != null
+          ? 'PHQ-9 + GAD-7 trends with severity bands · ${args.name}'
+          : 'PHQ-9 + GAD-7 trends with severity bands — pick a patient to begin.',
       scrollable: false,
       child: ListView(
         padding: EdgeInsets.zero,

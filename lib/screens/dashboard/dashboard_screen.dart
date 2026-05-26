@@ -25,6 +25,7 @@ class DashboardScreen extends StatelessWidget {
 
     return AppShell(
       routeName: '/dashboard',
+      breadcrumbs: const [Crumb('Dashboard', null)],
       title: '${_greeting()}, $name.',
       subtitle: 'Here is what your practice looks like right now.',
       primaryAction: FilledButton.icon(

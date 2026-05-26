@@ -68,6 +68,16 @@ class PatientDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: PsySpacing.xxl),
+          const _SectionTitle('Treatment plan'),
+          const SizedBox(height: PsySpacing.md),
+          PsyButton(
+            label: 'Open treatment plan',
+            icon: Icons.assignment_outlined,
+            size: PsyButtonSize.sm,
+            onPressed: () => Navigator.of(context)
+                .pushNamed('/treatment_plan', arguments: args),
+          ),
+          const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Recent assessments'),
           const SizedBox(height: PsySpacing.md),
           _AssessmentList(patientId: args.id),

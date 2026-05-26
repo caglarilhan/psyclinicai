@@ -24,7 +24,8 @@ class TreatmentPlanService {
       _treatmentPlans.clear();
       
       for (final planJson in plansJson) {
-        final plan = TreatmentPlan.fromJson(jsonDecode(planJson));
+        final plan =
+            TreatmentPlan.fromJson(jsonDecode(planJson) as Map<String, dynamic>);
         _treatmentPlans.add(plan);
       }
     } catch (e) {
@@ -54,7 +55,8 @@ class TreatmentPlanService {
       _progressRecords.clear();
       
       for (final progress in progressJson) {
-        final progressRecord = TreatmentProgress.fromJson(jsonDecode(progress));
+        final progressRecord = TreatmentProgress.fromJson(
+            jsonDecode(progress) as Map<String, dynamic>);
         _progressRecords.add(progressRecord);
       }
     } catch (e) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/transcription_service.dart';
 
@@ -33,9 +34,15 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     with SingleTickerProviderStateMixin {
   late final TranscriptionService _transcription;
   late final SoapGeneratorService _generator;
+  late final RiskSignalService _risk;
   late final AnimationController _pulse;
 
   StreamSubscription<TranscriptUpdate>? _sub;
+  Timer? _tier2Timer;
+
+  /// Live risk signals surfaced during the session (decision-support only).
+  final List<RiskSignal> _signals = [];
+  final Set<String> _seenSignals = {};
 
   _PanelState _state = _PanelState.idle;
   String _transcript = '';
@@ -51,6 +58,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     super.initState();
     _transcription = TranscriptionService();
     _generator = SoapGeneratorService();
+    _risk = RiskSignalService();
     _pulse = AnimationController(
       duration: const Duration(milliseconds: 900),
       vsync: this,
@@ -70,6 +78,24 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     setState(() {
       _transcript = u.fullTranscript;
       _partial = u.partial;
+    });
+    if (u.isFinal && u.delta.trim().isNotEmpty) {
+      _addSignals(_risk.scanSegment(u.delta)); // Tier 1 — instant, offline
+      _scheduleTier2(); // Tier 2 — optional Claude refinement (BYOK)
+    }
+  }
+
+  void _addSignals(List<RiskSignal> found) {
+    final fresh = found.where((s) => _seenSignals.add(s.dedupKey)).toList();
+    if (fresh.isEmpty || !mounted) return;
+    setState(() => _signals.addAll(fresh));
+  }
+
+  void _scheduleTier2() {
+    _tier2Timer?.cancel();
+    _tier2Timer = Timer(const Duration(seconds: 4), () async {
+      final ai = await _risk.classifyWindow(_transcript);
+      _addSignals(ai);
     });
   }
 
@@ -91,6 +117,8 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       _transcript = '';
       _partial = '';
       _note = null;
+      _signals.clear();
+      _seenSignals.clear();
       _transcription.reset();
     });
     await _transcription.start(localeId: widget.localeId);
@@ -148,6 +176,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   }
 
   void _resetForNewSession() {
+    _tier2Timer?.cancel();
     setState(() {
       _state = _PanelState.idle;
       _transcript = '';
@@ -156,6 +185,8 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       _editing = false;
       _editCtl.clear();
       _errorMessage = null;
+      _signals.clear();
+      _seenSignals.clear();
       _transcription.reset();
     });
   }
@@ -163,8 +194,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   @override
   void dispose() {
     _sub?.cancel();
+    _tier2Timer?.cancel();
     _transcription.dispose();
     _generator.dispose();
+    _risk.dispose();
     _pulse.dispose();
     _editCtl.dispose();
     super.dispose();
@@ -226,21 +259,37 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       case _PanelState.idle:
         return _IdleView(theme: theme, cs: cs);
       case _PanelState.listening:
-        return _ListeningView(
-          theme: theme,
-          cs: cs,
-          transcript: _transcript,
-          partial: _partial,
+        return Column(
+          children: [
+            if (_signals.isNotEmpty)
+              _RiskStrip(signals: _signals, theme: theme, cs: cs),
+            Expanded(
+              child: _ListeningView(
+                theme: theme,
+                cs: cs,
+                transcript: _transcript,
+                partial: _partial,
+              ),
+            ),
+          ],
         );
       case _PanelState.generating:
         return _GeneratingView(theme: theme, cs: cs, transcript: _transcript);
       case _PanelState.noteReady:
-        return _NoteReadyView(
-          theme: theme,
-          cs: cs,
-          note: _note!,
-          controller: _editCtl,
-          editing: _editing,
+        return Column(
+          children: [
+            if (_signals.isNotEmpty)
+              _RiskStrip(signals: _signals, theme: theme, cs: cs),
+            Expanded(
+              child: _NoteReadyView(
+                theme: theme,
+                cs: cs,
+                note: _note!,
+                controller: _editCtl,
+                editing: _editing,
+              ),
+            ),
+          ],
         );
       case _PanelState.error:
         return _ErrorView(
@@ -768,6 +817,108 @@ class _ErrorView extends StatelessWidget {
               label: const Text('Open API Keys settings'),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Live risk-signal strip (decision-support — clinician reviews)
+// ---------------------------------------------------------------------------
+
+class _RiskStrip extends StatelessWidget {
+  const _RiskStrip({
+    required this.signals,
+    required this.theme,
+    required this.cs,
+  });
+
+  final List<RiskSignal> signals;
+  final ThemeData theme;
+  final ColorScheme cs;
+
+  Color _color(RiskSeverity s) => switch (s) {
+        RiskSeverity.high => const Color(0xFFDC2626),
+        RiskSeverity.elevated => const Color(0xFFD97706),
+        RiskSeverity.info => cs.primary,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    // Highest severity first, then most recent.
+    final sorted = [...signals]
+      ..sort((a, b) => b.severity.index != a.severity.index
+          ? b.severity.index - a.severity.index
+          : b.at.compareTo(a.at));
+    final topColor = _color(sorted.first.severity);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: topColor.withValues(alpha: 0.06),
+        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.health_and_safety_outlined, size: 16, color: topColor),
+              const SizedBox(width: 6),
+              Text(
+                'Live risk signals (${signals.length})',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: topColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: sorted.map((s) {
+              final c = _color(s.severity);
+              return Tooltip(
+                message: '${s.severity.label} · ${s.snippet}'
+                    '${s.source == RiskSource.ai ? '  (AI)' : ''}',
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: c.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: c.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 12, color: c),
+                      const SizedBox(width: 4),
+                      Text(
+                        s.category.label,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: c,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Decision-support — review clinically, not a diagnosis.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.55),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ],
       ),
     );

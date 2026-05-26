@@ -39,6 +39,7 @@ import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
+import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
@@ -148,6 +149,7 @@ class PsyClinicAIApp extends StatelessWidget {
                 return OutcomesDashboardScreen(args: args);
               },
               '/onboarding': (context) => const OnboardingScreen(),
+              '/appointments': (context) => const AppointmentsScreen(),
             },
             onUnknownRoute: (settings) => MaterialPageRoute(
               builder: (_) => NotFoundPage(path: settings.name),

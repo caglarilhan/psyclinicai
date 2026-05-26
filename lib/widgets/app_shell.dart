@@ -64,6 +64,7 @@ class AppShell extends StatelessWidget {
   static const List<_NavDest> _dests = [
     _NavDest('/dashboard', Icons.dashboard_outlined, Icons.dashboard, 'Dashboard'),
     _NavDest('/patients', Icons.group_outlined, Icons.group, 'Patients'),
+    _NavDest('/appointments', Icons.event_outlined, Icons.event, 'Calendar'),
     _NavDest('/session', Icons.graphic_eq, Icons.graphic_eq, 'Session'),
     _NavDest('/ai_chatbot', Icons.smart_toy_outlined, Icons.smart_toy, 'Assistant'),
     _NavDest('/ai_diagnosis', Icons.biotech_outlined, Icons.biotech, 'Diagnosis'),

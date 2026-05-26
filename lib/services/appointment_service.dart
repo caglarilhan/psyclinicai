@@ -23,7 +23,8 @@ class AppointmentService {
       final appointmentsJson = prefs.getStringList(_appointmentsKey) ?? [];
       
       _appointments = appointmentsJson
-          .map((json) => Appointment.fromJson(jsonDecode(json)))
+          .map((json) =>
+              Appointment.fromJson(jsonDecode(json) as Map<String, dynamic>))
           .toList();
     } catch (e) {
       print('Error loading appointments: $e');

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -12,6 +13,11 @@ class NotificationService {
 
   Future<void> initialize() async {
     if (_initialized) return;
+    // Local notifications are mobile-only; no-op on web (plugin unsupported).
+    if (kIsWeb) {
+      _initialized = true;
+      return;
+    }
     tzdata.initializeTimeZones();
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -28,6 +34,7 @@ class NotificationService {
     required String body,
     required DateTime startTime,
   }) async {
+    if (kIsWeb) return;
     await initialize();
 
     // 24 saat ve 1 saat önce hatırlatma
@@ -63,6 +70,7 @@ class NotificationService {
   }
 
   Future<void> cancelAppointmentReminders(String appointmentId) async {
+    if (kIsWeb) return;
     await initialize();
     await _fln.cancel(_notificationId(appointmentId, const Duration(hours: 24)));
     await _fln.cancel(_notificationId(appointmentId, const Duration(hours: 1)));

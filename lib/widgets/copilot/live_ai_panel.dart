@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
+import '../../services/copilot/session_insights_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/transcription_service.dart';
 
@@ -41,6 +42,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   late final SoapGeneratorService _generator;
   late final RiskSignalService _risk;
   late final ComplianceCheckService _compliance;
+  late final SessionInsightsService _insights;
   late final AnimationController _pulse;
 
   StreamSubscription<TranscriptUpdate>? _sub;
@@ -53,6 +55,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   /// Audit-readiness report for the generated note (decision-support).
   ComplianceReport? _report;
   bool _deepChecking = false;
+  bool _loadingInsights = false;
 
   _PanelState _state = _PanelState.idle;
   String _transcript = '';
@@ -70,6 +73,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _generator = SoapGeneratorService();
     _risk = RiskSignalService();
     _compliance = ComplianceCheckService();
+    _insights = SessionInsightsService();
     _pulse = AnimationController(
       duration: const Duration(milliseconds: 900),
       vsync: this,
@@ -230,6 +234,35 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     );
   }
 
+  Future<void> _showInsights(BuildContext context) async {
+    final transcript =
+        _transcript.trim().isNotEmpty ? _transcript : _note?.rawMarkdown ?? '';
+    setState(() => _loadingInsights = true);
+    try {
+      final insights = await _insights.analyze(transcript);
+      if (!mounted) return;
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (_) => _InsightsSheet(insights: insights),
+      );
+    } on SessionInsightsException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'))
+            : null,
+      ));
+    } finally {
+      if (mounted) setState(() => _loadingInsights = false);
+    }
+  }
+
   @override
   void dispose() {
     _sub?.cancel();
@@ -238,6 +271,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _generator.dispose();
     _risk.dispose();
     _compliance.dispose();
+    _insights.dispose();
     _pulse.dispose();
     _editCtl.dispose();
     super.dispose();
@@ -328,6 +362,8 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 cs: cs,
                 onDetails: () => _showAuditDetails(context),
                 onDeepCheck: _runDeepCheck,
+                onInsights: () => _showInsights(context),
+                loadingInsights: _loadingInsights,
               ),
             Expanded(
               child: _NoteReadyView(
@@ -1004,6 +1040,8 @@ class _AuditBanner extends StatelessWidget {
     required this.cs,
     required this.onDetails,
     required this.onDeepCheck,
+    required this.onInsights,
+    required this.loadingInsights,
   });
 
   final ComplianceReport report;
@@ -1012,6 +1050,8 @@ class _AuditBanner extends StatelessWidget {
   final ColorScheme cs;
   final VoidCallback onDetails;
   final VoidCallback onDeepCheck;
+  final VoidCallback onInsights;
+  final bool loadingInsights;
 
   @override
   Widget build(BuildContext context) {
@@ -1036,6 +1076,19 @@ class _AuditBanner extends StatelessWidget {
                     color: cs.onSurface.withValues(alpha: 0.6))),
           ],
           const Spacer(),
+          TextButton.icon(
+            onPressed: loadingInsights ? null : onInsights,
+            style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8)),
+            icon: loadingInsights
+                ? const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.school_outlined, size: 14),
+            label: const Text('Insights'),
+          ),
           TextButton(
             onPressed: onDetails,
             style: TextButton.styleFrom(
@@ -1145,6 +1198,103 @@ class _AuditSheet extends StatelessWidget {
             Text(
               'Decision-support against the payer "golden thread" rubric — '
               'review clinically. Not a reimbursement guarantee.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InsightsSheet extends StatelessWidget {
+  const _InsightsSheet({required this.insights});
+  final SessionInsights insights;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    Widget section(String title, IconData icon, List<String> items) {
+      if (items.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(icon, size: 16, color: cs.primary),
+              const SizedBox(width: 6),
+              Text(title,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+            ]),
+            const SizedBox(height: 4),
+            ...items.map((s) => Padding(
+                  padding: const EdgeInsets.only(left: 22, top: 2),
+                  child: Text('• $s',
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(height: 1.4)),
+                )),
+          ],
+        ),
+      );
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.psychology_alt_outlined, color: cs.primary),
+              const SizedBox(width: 8),
+              Text('Session insights',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+            ]),
+            if (insights.alliance.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(insights.alliance,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(height: 1.45)),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    section('Strengths', Icons.thumb_up_outlined,
+                        insights.strengths),
+                    section('Interventions observed',
+                        Icons.handyman_outlined, insights.interventions),
+                    section('Client themes', Icons.topic_outlined,
+                        insights.themes),
+                    section('Suggestions for next time',
+                        Icons.lightbulb_outline, insights.suggestions),
+                    section('Homework ideas', Icons.assignment_outlined,
+                        insights.homework),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Reflective AI feedback — not a performance evaluation and not a '
+              'substitute for clinical supervision.',
               style: theme.textTheme.labelSmall?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.55),
                   fontStyle: FontStyle.italic),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:psyclinicai/services/theme_service.dart';
@@ -38,10 +40,21 @@ import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await _initializeServices();
-  runApp(const PsyClinicAIApp());
+void main() {
+  // Route every uncaught error — framework and async — through the telemetry
+  // façade (no-op in debug, Sentry once a DSN is set). See TelemetryService.
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      TelemetryService.instance
+          .captureError(details.exception, details.stack, hint: 'flutter');
+    };
+    await _initializeServices();
+    runApp(const PsyClinicAIApp());
+  }, (error, stack) {
+    TelemetryService.instance.captureError(error, stack, hint: 'zone');
+  });
 }
 
 Future<void> _initializeServices() async {

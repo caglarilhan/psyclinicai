@@ -45,6 +45,7 @@ import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
+import 'package:psyclinicai/models/superbill_prefill.dart';
 
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
@@ -121,7 +122,11 @@ class PsyClinicAIApp extends StatelessWidget {
               '/ai_diagnosis': (context) => const AIDiagnosisScreen(),
               '/settings': (context) => const SettingsScreen(),
               '/settings/api_keys': (context) => const ApiKeysScreen(),
-              '/superbill': (context) => const SuperbillScreen(),
+              '/superbill': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments;
+                return SuperbillScreen(
+                    prefill: args is SuperbillPrefill ? args : null);
+              },
               '/assessments/phq9': (context) => const AssessmentScreen(
                     type: AssessmentType.phq9,
                     patientName: 'John Demo',

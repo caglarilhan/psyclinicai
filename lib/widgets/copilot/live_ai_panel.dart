@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../services/billing/icd10_lookup_service.dart';
+import '../../services/billing/note_billing_extractor.dart';
 import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/session_insights_service.dart';
@@ -212,6 +214,22 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     });
   }
 
+  /// Closes the golden thread: derive billing hints from the finished note and
+  /// open the superbill pre-filled. The clinician confirms every code.
+  void _createSuperbill(BuildContext context) {
+    final note = _note;
+    if (note == null) return;
+    final text = _editCtl.text.isEmpty ? note.rawMarkdown : _editCtl.text;
+    final prefill = const NoteBillingExtractor().fromNote(
+      text,
+      isKnownIcd: (c) => Icd10LookupService.instance.byCode(c) != null,
+      patientName: widget.clientName,
+      isPsychiatry: note.format == SoapFormat.psychiatry,
+      serviceDate: DateTime.now(),
+    );
+    Navigator.of(context).pushNamed('/superbill', arguments: prefill);
+  }
+
   Future<void> _runDeepCheck() async {
     final note = _note;
     final base = _report;
@@ -378,6 +396,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 note: _note!,
                 controller: _editCtl,
                 editing: _editing,
+                onCreateSuperbill: () => _createSuperbill(context),
               ),
             ),
           ],
@@ -788,6 +807,7 @@ class _NoteReadyView extends StatelessWidget {
     required this.note,
     required this.controller,
     required this.editing,
+    required this.onCreateSuperbill,
   });
 
   final ThemeData theme;
@@ -795,6 +815,7 @@ class _NoteReadyView extends StatelessWidget {
   final SoapNote note;
   final TextEditingController controller;
   final bool editing;
+  final VoidCallback onCreateSuperbill;
 
   @override
   Widget build(BuildContext context) {
@@ -846,6 +867,17 @@ class _NoteReadyView extends StatelessWidget {
                   ),
                 ),
               ],
+              const Spacer(),
+              TextButton.icon(
+                onPressed: onCreateSuperbill,
+                icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                label: const Text('Superbill'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/superbill_prefill.dart';
 import '../../services/billing/cpt_lookup_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/superbill_pdf_service.dart';
@@ -14,7 +15,11 @@ import '../../widgets/app_shell.dart';
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
 /// the PDF. Material 3 design, two-column on wide layouts.
 class SuperbillScreen extends StatefulWidget {
-  const SuperbillScreen({super.key});
+  const SuperbillScreen({super.key, this.prefill});
+
+  /// Optional billing hints extracted from a session note (diagnosis + CPT).
+  /// When present, the form starts from these instead of demo defaults.
+  final SuperbillPrefill? prefill;
 
   @override
   State<SuperbillScreen> createState() => _SuperbillScreenState();
@@ -56,9 +61,32 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   @override
   void initState() {
     super.initState();
-    _diagnoses.add(_icdService.byCode('F41.1')!);
-    _diagnoses.add(_icdService.byCode('F32.1')!);
-    final cpt = _cptService.byCode('90834')!;
+    final prefill = widget.prefill;
+
+    // Patient + service date from the note, when provided.
+    if (prefill?.patientName != null && prefill!.patientName!.isNotEmpty) {
+      _patientName.text = prefill.patientName!;
+    }
+    if (prefill?.serviceDate != null) _serviceDate = prefill!.serviceDate!;
+
+    // Diagnoses: resolve documented ICD-10 codes; fall back to demo defaults.
+    final resolved = <Icd10Code>[];
+    for (final code in prefill?.icd10Codes ?? const <String>[]) {
+      final icd = _icdService.byCode(code);
+      if (icd != null) resolved.add(icd);
+    }
+    if (resolved.isNotEmpty) {
+      _diagnoses.addAll(resolved);
+    } else {
+      _diagnoses.add(_icdService.byCode('F41.1')!);
+      _diagnoses.add(_icdService.byCode('F32.1')!);
+    }
+
+    // Service line: suggested CPT from the note, else the 90834 default.
+    final cpt = (prefill?.cptCode != null
+            ? _cptService.byCode(prefill!.cptCode!)
+            : null) ??
+        _cptService.byCode('90834')!;
     _lines.add(ServiceLine(
       date: _serviceDate,
       cpt: cpt,

@@ -6,7 +6,7 @@ class LanguageService extends ChangeNotifier {
   factory LanguageService() => _instance;
   LanguageService._internal();
 
-  Locale _currentLocale = const Locale('tr', 'TR');
+  Locale _currentLocale = const Locale('en', 'US');
   bool _isInitialized = false;
 
   final Map<String, Map<String, String>> _translations = {
@@ -639,8 +639,8 @@ class LanguageService extends ChangeNotifier {
     if (_isInitialized) return;
     
     final prefs = await SharedPreferences.getInstance();
-    final languageCode = prefs.getString('language_code') ?? 'tr';
-    final countryCode = prefs.getString('country_code') ?? 'TR';
+    final languageCode = prefs.getString('language_code') ?? 'en';
+    final countryCode = prefs.getString('country_code') ?? 'US';
     
     _currentLocale = Locale(languageCode, countryCode);
     _isInitialized = true;
@@ -661,20 +661,20 @@ class LanguageService extends ChangeNotifier {
   String translate(String key) {
     final translations = _translations[_currentLocale.languageCode];
     if (translations == null) {
-      // Fallback to Turkish if current language not found
-      final fallbackTranslations = _translations['tr'];
+      // Fallback to English (default market language) if locale not found.
+      final fallbackTranslations = _translations['en'];
       return fallbackTranslations?[key] ?? key;
     }
     return translations[key] ?? key;
   }
 
   List<Locale> get supportedLocales => [
-    const Locale('tr', 'TR'),
     const Locale('en', 'US'),
     const Locale('de', 'DE'),
     const Locale('fr', 'FR'),
     const Locale('es', 'ES'),
     const Locale('ar', 'SA'),
+    const Locale('tr', 'TR'),
   ];
 
   Map<String, String> get supportedLanguages => {

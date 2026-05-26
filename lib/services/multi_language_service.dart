@@ -9,8 +9,8 @@ class MultiLanguageService {
   MultiLanguageService._internal();
 
   bool _isInitialized = false;
-  String _currentLanguage = 'tr';
-  List<String> _supportedLanguages = ['tr', 'en', 'de', 'fr', 'es', 'ar'];
+  String _currentLanguage = 'en';
+  List<String> _supportedLanguages = ['en', 'de', 'fr', 'es', 'ar', 'tr'];
   
   Map<String, Map<String, String>> _translations = {};
   
@@ -31,7 +31,7 @@ class MultiLanguageService {
 
   Future<void> _loadLanguageSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    _currentLanguage = prefs.getString('current_language') ?? 'tr';
+    _currentLanguage = prefs.getString('current_language') ?? 'en';
   }
 
   Future<void> _saveLanguageSettings() async {

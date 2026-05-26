@@ -79,9 +79,9 @@ class DemoModal extends StatelessWidget {
                             onPressed: () {
                               Navigator.of(context).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                                const SnackBar(
                                   content: Text(
-                                    'Recorded demo coming soon. Tracking: $loomUrl',
+                                    "Thanks — we'll email you the moment the demo is live.",
                                   ),
                                 ),
                               );

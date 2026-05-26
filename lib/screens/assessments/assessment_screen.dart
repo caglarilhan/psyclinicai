@@ -6,6 +6,7 @@ import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
+import '../../services/data/telemetry_service.dart';
 
 /// Unified assessment runner for PHQ-9 and GAD-7. One question at a time with
 /// progress, navigation, instant scoring, and clinical-action guidance.
@@ -74,6 +75,8 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     final result = phq9 != null ? _resultFromPhq9(phq9) : _resultFromGad7(gad7!);
 
     await _persistToFirestore(phq9: phq9, gad7: gad7);
+    TelemetryService.instance.capture(TelemetryEvents.assessmentCompleted,
+        properties: {'type': widget.type.name});
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

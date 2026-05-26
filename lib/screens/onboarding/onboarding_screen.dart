@@ -5,6 +5,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
 import '../../services/data/seed_service.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -61,11 +62,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final key = _byokCtrl.text.trim();
     if (key.isNotEmpty) {
       await ApiKeyStorage.instance.setAnthropicKey(key);
+      TelemetryService.instance.capture(TelemetryEvents.onboardingByokSaved);
     }
 
     if (_seedDemo) {
       // Best-effort — silent no-op in demo mode (Firebase off).
       await SeedService.instance.seedDemoChart();
+      TelemetryService.instance
+          .capture(TelemetryEvents.onboardingSeedRequested);
     }
 
     if (uid != null) {
@@ -79,10 +83,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'phq9' => '/assessments/phq9',
       _ => '/dashboard',
     };
+    TelemetryService.instance.capture(TelemetryEvents.onboardingFinished,
+        properties: {'first_action': _firstAction});
     Navigator.of(context).pushReplacementNamed(route);
   }
 
   Future<void> _skip() async {
+    TelemetryService.instance.capture(TelemetryEvents.onboardingSkipped);
     final uid = FirebaseAuthService.instance.profile?.userId;
     if (uid != null) {
       await OnboardingService.instance.markCompleted(uid);

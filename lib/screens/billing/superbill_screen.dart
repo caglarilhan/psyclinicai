@@ -8,6 +8,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
@@ -119,6 +120,8 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         serviceLines: List.of(_lines),
       );
       await _pdfService.printOrShare(data);
+      TelemetryService.instance.capture(TelemetryEvents.superbillGenerated,
+          properties: {'lines': _lines.length, 'dx': _diagnoses.length});
       await _persistToFirestore(data);
     } catch (e) {
       if (!mounted) return;

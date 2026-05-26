@@ -4,6 +4,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
+import '../../services/data/telemetry_service.dart';
 
 enum _Mode { signIn, signUp }
 
@@ -68,6 +69,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
 
     if (result.success) {
+      final email = _email.text.trim();
+      TelemetryService.instance.capture(
+        _mode == _Mode.signIn
+            ? TelemetryEvents.signInCompleted
+            : TelemetryEvents.signUpCompleted,
+        properties: {'mode': _mode.name},
+      );
+      TelemetryService.instance.identify(email, traits: {'email': email});
       // New sign-ups always run the wizard; returning sign-ins skip it
       // if they already completed it on any device.
       String route = '/onboarding';

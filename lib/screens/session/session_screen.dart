@@ -8,6 +8,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/session_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../services/pdf_export_service.dart';
 import '../../services/therapy_note_service.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
@@ -146,6 +147,8 @@ class _SessionScreenState extends State<SessionScreen> {
       );
 
       await _persistToFirestore(noteText);
+      TelemetryService.instance.capture(TelemetryEvents.sessionNoteSaved,
+          properties: {'duration_s': _sessionDuration.inSeconds});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../widgets/landing/cookie_consent.dart';
 import '../../widgets/landing/demo_modal.dart';
 import '../../widgets/landing/exit_intent_modal.dart';
@@ -111,6 +112,8 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Future<void> _waitlistSubmit(BuildContext context, String email) async {
+    TelemetryService.instance.capture(TelemetryEvents.landingHeroEmailSubmit,
+        properties: {'source': 'hero'});
     // Best-effort Firestore write — if rules deny, the user still gets a
     // success confirmation (we never block conversion on backend ACK).
     if (PsyFirebase.isReady) {

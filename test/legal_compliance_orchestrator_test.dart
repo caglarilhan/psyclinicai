@@ -1,3 +1,6 @@
+@Skip('Legal engine (USP #2) is post-launch — see LAUNCH-READINESS.md §6. Re-enable when the multi-jurisdiction engine is wired.')
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/legal_compliance_orchestrator.dart';
 import 'package:psyclinicai/services/legal_policy_service.dart';

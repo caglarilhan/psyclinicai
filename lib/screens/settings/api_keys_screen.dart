@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/copilot/api_key_storage.dart';
+import '../../widgets/app_shell.dart';
 
 /// Settings page where clinicians provide their own AI provider API keys
 /// (BYOK — Bring Your Own Key).
@@ -91,18 +92,20 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: cs.surface,
-      appBar: AppBar(
-        title: const Text('API Keys'),
-        elevation: 0,
-        backgroundColor: cs.surface,
-        scrolledUnderElevation: 1,
-      ),
-      body: _loading
+    return AppShell(
+      routeName: '/settings',
+      title: 'API keys',
+      subtitle: 'Bring-your-own keys — stored encrypted on this device only.',
+      breadcrumbs: const [
+        Crumb('Home', '/dashboard'),
+        Crumb('Settings', '/settings'),
+        Crumb('API keys', null),
+      ],
+      scrollable: false,
+      child: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              padding: EdgeInsets.zero,
               children: [
                 _SecurityBanner(cs: cs),
                 const SizedBox(height: 24),

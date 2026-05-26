@@ -4,6 +4,7 @@ import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -20,11 +21,18 @@ class PatientDetailScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(args.name)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            PsySpacing.xxl, PsySpacing.xl, PsySpacing.xxl, PsySpacing.xxxl),
+    return AppShell(
+      routeName: '/patients',
+      title: args.name,
+      subtitle: 'Patient chart — screeners, trend, and recent activity.',
+      breadcrumbs: [
+        const Crumb('Home', '/dashboard'),
+        const Crumb('Patients', '/patients'),
+        Crumb(args.name, null),
+      ],
+      scrollable: false,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           _Header(args: args, theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xxl),

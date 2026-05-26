@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../models/medication.dart';
 import '../../services/data/assessment_repository.dart';
+import '../../services/data/medication_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
@@ -77,6 +79,10 @@ class PatientDetailScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context)
                 .pushNamed('/treatment_plan', arguments: args),
           ),
+          const SizedBox(height: PsySpacing.xxl),
+          const _SectionTitle('Medications'),
+          const SizedBox(height: PsySpacing.md),
+          _MedicationsSection(patientId: args.id),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Recent assessments'),
           const SizedBox(height: PsySpacing.md),
@@ -341,6 +347,229 @@ class _DemoAssessmentTile extends StatelessWidget {
           PsyBadge(label: severity, tone: tone),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Medications (psychiatry / prescriber workflow) — manual entry only.
+// ---------------------------------------------------------------------------
+
+class _MedicationsSection extends StatefulWidget {
+  const _MedicationsSection({required this.patientId});
+  final String patientId;
+
+  @override
+  State<_MedicationsSection> createState() => _MedicationsSectionState();
+}
+
+class _MedicationsSectionState extends State<_MedicationsSection> {
+  final _repo = MedicationRepository();
+  bool _loading = true;
+  List<Medication> _meds = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _repo.initialize();
+    if (mounted) {
+      setState(() {
+        _meds = _repo.forPatient(widget.patientId);
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _add() async {
+    final med = await showDialog<Medication>(
+      context: context,
+      builder: (_) => _MedicationDialog(patientId: widget.patientId),
+    );
+    if (med == null) return;
+    await _repo.add(med);
+    if (mounted) setState(() => _meds = _repo.forPatient(widget.patientId));
+  }
+
+  Future<void> _toggle(Medication m) async {
+    await _repo.toggleActive(m.id);
+    if (mounted) setState(() => _meds = _repo.forPatient(widget.patientId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.all(PsySpacing.md),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_meds.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(PsySpacing.lg),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(PsyRadius.lg),
+              border: Border.all(color: cs.outlineVariant),
+            ),
+            child: Text('No medications recorded.',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+          )
+        else
+          ..._meds.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+                child: _MedTile(med: m, theme: theme, cs: cs, onToggle: () => _toggle(m)),
+              )),
+        const SizedBox(height: PsySpacing.md),
+        PsyButton(
+          label: 'Add medication',
+          icon: Icons.medication_outlined,
+          size: PsyButtonSize.sm,
+          variant: PsyButtonVariant.secondary,
+          onPressed: _add,
+        ),
+      ],
+    );
+  }
+}
+
+class _MedTile extends StatelessWidget {
+  const _MedTile(
+      {required this.med,
+      required this.theme,
+      required this.cs,
+      required this.onToggle});
+  final Medication med;
+  final ThemeData theme;
+  final ColorScheme cs;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = [med.dose, med.frequency].where((s) => s.isNotEmpty).join(' · ');
+    return Container(
+      padding: const EdgeInsets.all(PsySpacing.lg),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(PsyRadius.lg),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.medication,
+              size: 20,
+              color: med.active
+                  ? cs.primary
+                  : cs.onSurface.withValues(alpha: 0.4)),
+          const SizedBox(width: PsySpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(med.name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      decoration:
+                          med.active ? null : TextDecoration.lineThrough,
+                      color: med.active
+                          ? null
+                          : cs.onSurface.withValues(alpha: 0.5),
+                    )),
+                if (detail.isNotEmpty)
+                  Text(detail,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.65))),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onToggle,
+            child: Text(med.active ? 'Discontinue' : 'Restart'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MedicationDialog extends StatefulWidget {
+  const _MedicationDialog({required this.patientId});
+  final String patientId;
+
+  @override
+  State<_MedicationDialog> createState() => _MedicationDialogState();
+}
+
+class _MedicationDialogState extends State<_MedicationDialog> {
+  final _name = TextEditingController();
+  final _dose = TextEditingController();
+  final _freq = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _dose.dispose();
+    _freq.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add medication'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _name,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                  labelText: 'Medication (e.g. Sertraline)'),
+            ),
+            const SizedBox(height: PsySpacing.md),
+            TextField(
+              controller: _dose,
+              decoration:
+                  const InputDecoration(labelText: 'Dose (e.g. 50 mg)'),
+            ),
+            const SizedBox(height: PsySpacing.md),
+            TextField(
+              controller: _freq,
+              decoration: const InputDecoration(
+                  labelText: 'Frequency (e.g. once daily)'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel')),
+        FilledButton(
+          onPressed: _name.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(Medication(
+                    id: DateTime.now().microsecondsSinceEpoch.toString(),
+                    patientId: widget.patientId,
+                    name: _name.text.trim(),
+                    dose: _dose.text.trim(),
+                    frequency: _freq.text.trim(),
+                    startedOn: DateTime.now(),
+                  )),
+          child: const Text('Add'),
+        ),
+      ],
     );
   }
 }

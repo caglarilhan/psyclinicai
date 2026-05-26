@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/transcription_service.dart';
@@ -35,6 +36,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   late final TranscriptionService _transcription;
   late final SoapGeneratorService _generator;
   late final RiskSignalService _risk;
+  late final ComplianceCheckService _compliance;
   late final AnimationController _pulse;
 
   StreamSubscription<TranscriptUpdate>? _sub;
@@ -43,6 +45,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   /// Live risk signals surfaced during the session (decision-support only).
   final List<RiskSignal> _signals = [];
   final Set<String> _seenSignals = {};
+
+  /// Audit-readiness report for the generated note (decision-support).
+  ComplianceReport? _report;
+  bool _deepChecking = false;
 
   _PanelState _state = _PanelState.idle;
   String _transcript = '';
@@ -59,6 +65,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _transcription = TranscriptionService();
     _generator = SoapGeneratorService();
     _risk = RiskSignalService();
+    _compliance = ComplianceCheckService();
     _pulse = AnimationController(
       duration: const Duration(milliseconds: 900),
       vsync: this,
@@ -119,6 +126,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       _note = null;
       _signals.clear();
       _seenSignals.clear();
+      _report = null;
       _transcription.reset();
     });
     await _transcription.start(localeId: widget.localeId);
@@ -149,6 +157,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       setState(() {
         _note = note;
         _editCtl.text = note.rawMarkdown;
+        _report = _compliance.check(note.rawMarkdown);
         _state = _PanelState.noteReady;
       });
     } on SoapGeneratorException catch (e) {
@@ -187,8 +196,33 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       _errorMessage = null;
       _signals.clear();
       _seenSignals.clear();
+      _report = null;
       _transcription.reset();
     });
+  }
+
+  Future<void> _runDeepCheck() async {
+    final note = _note;
+    final base = _report;
+    if (note == null || base == null) return;
+    setState(() => _deepChecking = true);
+    final updated = await _compliance.deepCheck(note.rawMarkdown, base: base);
+    if (!mounted) return;
+    setState(() {
+      _report = updated;
+      _deepChecking = false;
+    });
+  }
+
+  void _showAuditDetails(BuildContext context) {
+    final report = _report;
+    if (report == null) return;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _AuditSheet(report: report),
+    );
   }
 
   @override
@@ -198,6 +232,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _transcription.dispose();
     _generator.dispose();
     _risk.dispose();
+    _compliance.dispose();
     _pulse.dispose();
     _editCtl.dispose();
     super.dispose();
@@ -280,6 +315,15 @@ class _LiveAiPanelState extends State<LiveAiPanel>
           children: [
             if (_signals.isNotEmpty)
               _RiskStrip(signals: _signals, theme: theme, cs: cs),
+            if (_report != null)
+              _AuditBanner(
+                report: _report!,
+                deepChecking: _deepChecking,
+                theme: theme,
+                cs: cs,
+                onDetails: () => _showAuditDetails(context),
+                onDeepCheck: _runDeepCheck,
+              ),
             Expanded(
               child: _NoteReadyView(
                 theme: theme,
@@ -920,6 +964,188 @@ class _RiskStrip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Audit-readiness banner + sheet (decision-support)
+// ---------------------------------------------------------------------------
+
+Color _scoreColor(int score) => score >= 80
+    ? const Color(0xFF16A34A)
+    : score >= 60
+        ? const Color(0xFFD97706)
+        : const Color(0xFFDC2626);
+
+Color _checkColor(CheckStatus s) => switch (s) {
+      CheckStatus.pass => const Color(0xFF16A34A),
+      CheckStatus.warn => const Color(0xFFD97706),
+      CheckStatus.fail => const Color(0xFFDC2626),
+    };
+
+IconData _checkIcon(CheckStatus s) => switch (s) {
+      CheckStatus.pass => Icons.check_circle,
+      CheckStatus.warn => Icons.error_outline,
+      CheckStatus.fail => Icons.cancel,
+    };
+
+class _AuditBanner extends StatelessWidget {
+  const _AuditBanner({
+    required this.report,
+    required this.deepChecking,
+    required this.theme,
+    required this.cs,
+    required this.onDetails,
+    required this.onDeepCheck,
+  });
+
+  final ComplianceReport report;
+  final bool deepChecking;
+  final ThemeData theme;
+  final ColorScheme cs;
+  final VoidCallback onDetails;
+  final VoidCallback onDeepCheck;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _scoreColor(report.score);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified_outlined, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text('Audit readiness ${report.score}%',
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+          if (report.toFixCount > 0) ...[
+            const SizedBox(width: 6),
+            Text('· ${report.toFixCount} to fix',
+                style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6))),
+          ],
+          const Spacer(),
+          TextButton(
+            onPressed: onDetails,
+            style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8)),
+            child: const Text('Details'),
+          ),
+          if (report.source != ComplianceSource.ai)
+            TextButton.icon(
+              onPressed: deepChecking ? null : onDeepCheck,
+              style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8)),
+              icon: deepChecking
+                  ? const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome, size: 14),
+              label: const Text('AI check'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuditSheet extends StatelessWidget {
+  const _AuditSheet({required this.report});
+  final ComplianceReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final color = _scoreColor(report.score);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified_outlined, color: color),
+                const SizedBox(width: 8),
+                Text('Audit readiness · ${report.score}%',
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const Spacer(),
+                Text(
+                    report.source == ComplianceSource.ai
+                        ? 'AI review'
+                        : 'Quick check',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6))),
+              ],
+            ),
+            if (report.summary != null) ...[
+              const SizedBox(height: 6),
+              Text(report.summary!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7))),
+            ],
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: report.checks
+                      .map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(_checkIcon(c.status),
+                                    size: 18, color: _checkColor(c.status)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(c.label,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                  fontWeight: FontWeight.w600)),
+                                      if (c.fix != null)
+                                        Text(c.fix!,
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: cs.onSurface
+                                                  .withValues(alpha: 0.7),
+                                              height: 1.4,
+                                            )),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Decision-support against the payer "golden thread" rubric — '
+              'review clinically. Not a reimbursement guarantee.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
       ),
     );
   }

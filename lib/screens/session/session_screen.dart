@@ -11,6 +11,7 @@ import '../../services/data/session_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../services/pdf_export_service.dart';
 import '../../services/therapy_note_service.dart';
+import '../../services/treatment_plan_service.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
 
 class SessionScreen extends StatefulWidget {
@@ -35,7 +36,8 @@ class _SessionScreenState extends State<SessionScreen> {
   bool _isGeneratingAI = false;
   String _aiSummary = '';
   int _selectedPanelIndex = 0;
-  
+  List<String> _treatmentGoals = const [];
+
   // Seans durumu
   bool _isSessionActive = false;
   DateTime? _sessionStartTime;
@@ -48,6 +50,19 @@ class _SessionScreenState extends State<SessionScreen> {
   void initState() {
     super.initState();
     _startSession();
+    _loadGoals();
+  }
+
+  /// Load the patient's active treatment-plan goals so the AI note can tie
+  /// back to them (the "golden thread").
+  Future<void> _loadGoals() async {
+    final svc = TreatmentPlanService();
+    await svc.initialize();
+    final plan = svc.getTreatmentPlanForPatient(widget.clientId);
+    if (plan != null && mounted) {
+      setState(() => _treatmentGoals =
+          plan.activeGoals.map((g) => g.description).toList());
+    }
   }
 
   @override
@@ -562,6 +577,7 @@ class _SessionScreenState extends State<SessionScreen> {
     return LiveAiPanel(
       clientName: widget.clientName,
       localeId: 'en_US',
+      treatmentGoals: _treatmentGoals,
     );
   }
 

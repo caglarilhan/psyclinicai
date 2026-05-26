@@ -27,6 +27,7 @@ class SoapGeneratorService {
     String? clientName,
     String? clientPresenting,
     String? clinicianRole,
+    List<String> treatmentGoals = const [],
   }) async {
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
@@ -41,6 +42,7 @@ class SoapGeneratorService {
       transcript: transcript,
       clientName: clientName,
       presenting: clientPresenting,
+      treatmentGoals: treatmentGoals,
     );
 
     final body = jsonEncode({
@@ -184,6 +186,7 @@ Plan) note from a session transcript. Output ONLY four labelled sections:
     required String transcript,
     String? clientName,
     String? presenting,
+    List<String> treatmentGoals = const [],
   }) {
     final header = StringBuffer();
     if (clientName != null && clientName.isNotEmpty) {
@@ -191,6 +194,13 @@ Plan) note from a session transcript. Output ONLY four labelled sections:
     }
     if (presenting != null && presenting.isNotEmpty) {
       header.writeln('Presenting concern: $presenting');
+    }
+    if (treatmentGoals.isNotEmpty) {
+      header.writeln('Active treatment-plan goals (reference progress toward '
+          'these in the Assessment — the "golden thread"):');
+      for (final g in treatmentGoals) {
+        header.writeln('- $g');
+      }
     }
     if (header.isNotEmpty) header.writeln('---');
     header.writeln('Session transcript (raw, may contain ASR errors):');

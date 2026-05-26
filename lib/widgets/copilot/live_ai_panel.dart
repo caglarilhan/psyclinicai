@@ -18,12 +18,16 @@ class LiveAiPanel extends StatefulWidget {
     this.clientPresenting,
     this.clinicianRole = 'licensed mental health clinician',
     this.localeId = 'en_US',
+    this.treatmentGoals = const [],
   });
 
   final String? clientName;
   final String? clientPresenting;
   final String clinicianRole;
   final String localeId;
+
+  /// Active treatment-plan goal texts, surfaced into the note (golden thread).
+  final List<String> treatmentGoals;
 
   @override
   State<LiveAiPanel> createState() => _LiveAiPanelState();
@@ -152,6 +156,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         clientName: widget.clientName,
         clientPresenting: widget.clientPresenting,
         clinicianRole: widget.clinicianRole,
+        treatmentGoals: widget.treatmentGoals,
       );
       if (!mounted) return;
       setState(() {

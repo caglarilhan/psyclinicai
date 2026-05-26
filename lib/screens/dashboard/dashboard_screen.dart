@@ -355,6 +355,21 @@ class _QuickActions extends StatelessWidget {
           body: 'Anxiety screener with severity bands.',
           route: '/assessments/gad7'),
       _Action(
+          icon: Icons.shield_moon_outlined,
+          label: 'C-SSRS suicide screen',
+          body: 'Columbia suicide-risk screener with categorical guidance.',
+          route: '/scales/cssrs'),
+      _Action(
+          icon: Icons.bolt_outlined,
+          label: 'PCL-5 (PTSD)',
+          body: '20-item PTSD checklist with provisional threshold.',
+          route: '/scales/pcl5'),
+      _Action(
+          icon: Icons.local_bar_outlined,
+          label: 'AUDIT (alcohol)',
+          body: 'WHO alcohol-use screener with risk bands.',
+          route: '/scales/audit'),
+      _Action(
           icon: Icons.smart_toy_outlined,
           label: 'AI assistant',
           body: 'Chat with the clinical reasoning co-pilot.',

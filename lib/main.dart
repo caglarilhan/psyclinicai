@@ -43,6 +43,8 @@ import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
+import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
+import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
@@ -128,6 +130,12 @@ class PsyClinicAIApp extends StatelessWidget {
                     type: AssessmentType.gad7,
                     patientName: 'John Demo',
                   ),
+              '/scales/cssrs': (context) => ClinicalScaleScreen(
+                  scale: ClinicalScales.cssrs, patientName: 'John Demo'),
+              '/scales/pcl5': (context) => ClinicalScaleScreen(
+                  scale: ClinicalScales.pcl5, patientName: 'John Demo'),
+              '/scales/audit': (context) => ClinicalScaleScreen(
+                  scale: ClinicalScales.audit, patientName: 'John Demo'),
               '/security': (context) => const SecurityPage(),
               '/about': (context) => const AboutPage(),
               '/changelog': (context) => const ChangelogPage(),

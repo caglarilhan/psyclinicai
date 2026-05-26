@@ -58,3 +58,22 @@ test.describe('Sprint E-real — 4 legacy screens boot cleanly', () => {
     });
   }
 });
+
+test.describe('Differentiator screens boot cleanly (D1–D3)', () => {
+  const routes: Array<[string, string]> = [
+    ['/#/caseload', 'Caseload attention'],
+    ['/#/safety_plan', 'Safety plan'],
+    ['/#/treatment_plan', 'Treatment plan'],
+    ['/#/scales/cssrs', 'C-SSRS'],
+    ['/#/scales/pcl5', 'PCL-5'],
+    ['/#/scales/audit', 'AUDIT'],
+  ];
+
+  for (const [path, label] of routes) {
+    test(`${label} (${path}) boots without fatal errors`, async ({ page }) => {
+      const errors = await bootRoute(page, path);
+      const fatal = errors.filter((e) => FATAL.some((p) => p.test(e)));
+      expect(fatal, fatal.join('\n')).toEqual([]);
+    });
+  }
+});

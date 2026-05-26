@@ -41,6 +41,7 @@ import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
+import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
 
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
@@ -155,6 +156,15 @@ class PsyClinicAIApp extends StatelessWidget {
                 final args = ModalRoute.of(context)?.settings.arguments
                     as PatientDetailArgs?;
                 return TreatmentPlanScreen(
+                  args: args ??
+                      const PatientDetailArgs(
+                          id: 'demo-1', name: 'John Demo'),
+                );
+              },
+              '/safety_plan': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return SafetyPlanScreen(
                   args: args ??
                       const PatientDetailArgs(
                           id: 'demo-1', name: 'John Demo'),

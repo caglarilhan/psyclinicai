@@ -63,6 +63,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   String? _errorMessage;
   SoapNote? _note;
   SoapFormat _format = SoapFormat.soap;
+  Modality _modality = Modality.general;
   final _editCtl = TextEditingController();
   bool _editing = false;
 
@@ -161,6 +162,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         clientPresenting: widget.clientPresenting,
         clinicianRole: widget.clinicianRole,
         treatmentGoals: widget.treatmentGoals,
+        modality: _modality,
       );
       if (!mounted) return;
       setState(() {
@@ -307,6 +309,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
             onFormatChanged: _state == _PanelState.idle
                 ? (f) => setState(() => _format = f)
                 : null,
+            modality: _modality,
+            onModalityChanged: _state == _PanelState.idle
+                ? (m) => setState(() => _modality = m)
+                : null,
             onOpenSettings: () =>
                 Navigator.of(context).pushNamed('/settings/api_keys'),
           ),
@@ -401,6 +407,8 @@ class _Header extends StatelessWidget {
     required this.pulse,
     required this.format,
     required this.onFormatChanged,
+    required this.modality,
+    required this.onModalityChanged,
     required this.onOpenSettings,
   });
 
@@ -410,6 +418,8 @@ class _Header extends StatelessWidget {
   final AnimationController pulse;
   final SoapFormat format;
   final ValueChanged<SoapFormat>? onFormatChanged;
+  final Modality modality;
+  final ValueChanged<Modality>? onModalityChanged;
   final VoidCallback onOpenSettings;
 
   @override
@@ -458,6 +468,26 @@ class _Header extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          if (onModalityChanged != null)
+            DropdownButtonHideUnderline(
+              child: DropdownButton<Modality>(
+                value: modality,
+                icon: Icon(Icons.expand_more, color: cs.primary, size: 18),
+                isDense: true,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+                items: Modality.values
+                    .map((m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(m.label),
+                        ))
+                    .toList(),
+                onChanged: (v) => v != null ? onModalityChanged!(v) : null,
+              ),
+            ),
+          if (onModalityChanged != null) const SizedBox(width: 8),
           if (onFormatChanged != null)
             DropdownButtonHideUnderline(
               child: DropdownButton<SoapFormat>(

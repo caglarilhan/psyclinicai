@@ -28,6 +28,7 @@ class SoapGeneratorService {
     String? clientPresenting,
     String? clinicianRole,
     List<String> treatmentGoals = const [],
+    Modality modality = Modality.general,
   }) async {
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
@@ -37,7 +38,8 @@ class SoapGeneratorService {
       );
     }
 
-    final system = _systemPrompt(format, clinicianRole);
+    final system =
+        _systemPrompt(format, clinicianRole) + _modalityGuidance(modality);
     final user = _userPrompt(
       transcript: transcript,
       clientName: clientName,
@@ -179,7 +181,79 @@ Plan) note from a session transcript. Output ONLY four labelled sections:
 
 3-5 bullets per section. Do not invent details. Flag risk with a marker. Under 350 words.
 ''';
+      case SoapFormat.girp:
+        return '''
+You are an experienced $role drafting a GIRP (Goal, Intervention, Response,
+Plan) note from a session transcript. Output ONLY four labelled sections:
+
+## G — Goal
+(The treatment-plan goal/objective this session addressed — the golden thread.)
+
+## I — Intervention
+(Specific techniques used and why they were appropriate.)
+
+## R — Response
+(Client's response to the interventions, observable engagement and progress.)
+
+## P — Plan
+(Homework, next session focus, frequency, referrals, medication considerations.)
+
+3-5 bullets per section. Do not invent details. Flag risk with a marker. Under 350 words.
+''';
+      case SoapFormat.psychiatry:
+        return '''
+You are an experienced psychiatric prescriber drafting a medication-management
++ psychotherapy progress note from a session transcript. Output ONLY these
+labelled sections in plain markdown:
+
+## Interval history
+(Since last visit: symptom course, adherence, side effects, stressors.)
+
+## Mental Status Exam
+(Appearance, behavior, speech, mood/affect, thought process/content, perception,
+cognition, insight/judgment. Note "no SI/HI" explicitly if applicable.)
+
+## Assessment
+(Diagnosis with DSM-5/ICD-10 codes, risk level, response to current regimen,
+progress vs. treatment plan.)
+
+## Plan
+(Medication decisions WITH rationale — start/continue/adjust/discontinue + dose,
+target symptoms, expected effects; labs/monitoring; psychotherapy element if
+provided; follow-up interval.)
+
+Rules:
+- Do NOT invent medications, doses, or details not present in the transcript.
+- Flag risk (SI/HI/self-harm/substance) explicitly in **Assessment**.
+- If both an E/M service and psychotherapy occurred, make both clearly
+  documented and separable. Keep under 400 words.
+''';
     }
+  }
+
+  String _modalityGuidance(Modality modality) {
+    final m = switch (modality) {
+      Modality.general => '',
+      Modality.cbt =>
+        'Frame interventions in CBT terms (cognitive restructuring, thought '
+            'records, behavioral experiments, homework).',
+      Modality.dbt =>
+        'Frame interventions in DBT terms (skills: mindfulness, distress '
+            'tolerance, emotion regulation, interpersonal effectiveness; diary card).',
+      Modality.emdr =>
+        'Frame interventions in EMDR terms (phase, target, SUDS/VOC, bilateral '
+            'stimulation, installation) without inventing details.',
+      Modality.ifs =>
+        'Frame interventions in IFS terms (parts, Self-energy, unburdening) '
+            'without inventing details.',
+      Modality.act =>
+        'Frame interventions in ACT terms (values, defusion, acceptance, '
+            'committed action, present-moment).',
+      Modality.ocdErp =>
+        'Frame interventions in ERP terms for OCD (hierarchy, exposure, '
+            'response prevention, SUDS) without inventing details.',
+    };
+    return m.isEmpty ? '' : '\n\nModality: $m';
   }
 
   String _userPrompt({
@@ -212,13 +286,31 @@ Plan) note from a session transcript. Output ONLY four labelled sections:
   void dispose() => _client.close();
 }
 
-enum SoapFormat { soap, dap, birp }
+enum SoapFormat { soap, dap, birp, girp, psychiatry }
 
 extension SoapFormatX on SoapFormat {
   String get label => switch (this) {
         SoapFormat.soap => 'SOAP',
         SoapFormat.dap => 'DAP',
         SoapFormat.birp => 'BIRP',
+        SoapFormat.girp => 'GIRP',
+        SoapFormat.psychiatry => 'Psychiatry',
+      };
+}
+
+/// Therapeutic modality the note should be tailored to. `general` adds no
+/// extra guidance.
+enum Modality { general, cbt, dbt, emdr, ifs, act, ocdErp }
+
+extension ModalityX on Modality {
+  String get label => switch (this) {
+        Modality.general => 'General',
+        Modality.cbt => 'CBT',
+        Modality.dbt => 'DBT',
+        Modality.emdr => 'EMDR',
+        Modality.ifs => 'IFS',
+        Modality.act => 'ACT',
+        Modality.ocdErp => 'OCD / ERP',
       };
 }
 

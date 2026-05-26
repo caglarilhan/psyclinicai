@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../models/homework_item.dart';
 import '../../models/treatment_plan_models.dart';
 import '../../services/copilot/treatment_plan_ai_service.dart';
 import '../../services/data/auth_service.dart';
+import '../../services/data/homework_repository.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -22,9 +24,11 @@ class TreatmentPlanScreen extends StatefulWidget {
 class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   final _svc = TreatmentPlanService();
   final _ai = TreatmentPlanAiService();
+  final _homeworkRepo = HomeworkRepository();
   bool _loading = true;
   bool _busy = false;
   TreatmentPlan? _plan;
+  List<HomeworkItem> _homework = const [];
 
   @override
   void initState() {
@@ -40,12 +44,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
 
   Future<void> _init() async {
     await _svc.initialize();
+    await _homeworkRepo.initialize();
     _plan = _svc.getTreatmentPlanForPatient(widget.args.id);
+    _homework = _homeworkRepo.forPatient(widget.args.id);
     if (mounted) setState(() => _loading = false);
   }
 
   void _reload() {
     _plan = _svc.getTreatmentPlanForPatient(widget.args.id);
+    _homework = _homeworkRepo.forPatient(widget.args.id);
     if (mounted) setState(() {});
   }
 
@@ -121,6 +128,51 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
                   theme: theme,
                   cs: cs,
                   onUpdate: (p) => _updateProgress(g, p),
+                ),
+              )),
+        const SizedBox(height: PsySpacing.xxl),
+        Row(
+          children: [
+            Text('Homework (${_homework.length})',
+                style: theme.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            const Spacer(),
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _suggestHomework,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Suggest (AI)'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            TextButton.icon(
+              onPressed: _addHomework,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add'),
+            ),
+          ],
+        ),
+        const SizedBox(height: PsySpacing.md),
+        if (_homework.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: PsySpacing.xl, vertical: PsySpacing.xl),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(PsyRadius.lg),
+              border: Border.all(color: cs.outlineVariant),
+            ),
+            alignment: Alignment.center,
+            child: Text('No homework yet — add one or suggest with AI.',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+          )
+        else
+          ..._homework.map((h) => Padding(
+                padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+                child: _HomeworkTile(
+                  item: h,
+                  theme: theme,
+                  cs: cs,
+                  onToggle: () => _toggleHomework(h),
                 ),
               )),
       ],
@@ -211,6 +263,70 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       progress: progress,
     );
     _reload();
+  }
+
+  Future<void> _addHomework() async {
+    final title = await showDialog<String>(
+      context: context,
+      builder: (_) => const _HomeworkDialog(),
+    );
+    if (title == null || title.trim().isEmpty) return;
+    await _homeworkRepo.add(HomeworkItem(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      patientId: widget.args.id,
+      title: title.trim(),
+      dueDate: DateTime.now().add(const Duration(days: 7)),
+    ));
+    _reload();
+  }
+
+  Future<void> _toggleHomework(HomeworkItem h) async {
+    await _homeworkRepo.toggleDone(h.id);
+    _reload();
+  }
+
+  Future<void> _suggestHomework() async {
+    final plan = _plan;
+    if (plan == null) return;
+    final goals = plan.activeGoals.map((g) => g.description).toList();
+    if (goals.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Add a goal first — homework ties to goals.')));
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final ideas =
+          await _ai.suggestHomework(diagnosis: plan.primaryDiagnosis, goals: goals);
+      for (final t in ideas) {
+        await _homeworkRepo.add(HomeworkItem(
+          id: '${DateTime.now().microsecondsSinceEpoch}${t.hashCode}',
+          patientId: widget.args.id,
+          title: t,
+          dueDate: DateTime.now().add(const Duration(days: 7)),
+          linkedGoal: goals.first,
+        ));
+      }
+      _reload();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text('${ideas.length} homework ideas added — review and edit.')));
+      }
+    } on TreatmentPlanAiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'))
+            : null,
+      ));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
 
@@ -659,6 +775,116 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
                     targetWeeks: 12,
                   )),
           child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeworkTile extends StatelessWidget {
+  const _HomeworkTile(
+      {required this.item,
+      required this.theme,
+      required this.cs,
+      required this.onToggle});
+  final HomeworkItem item;
+  final ThemeData theme;
+  final ColorScheme cs;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final due =
+        '${item.dueDate.year}-${item.dueDate.month.toString().padLeft(2, '0')}-${item.dueDate.day.toString().padLeft(2, '0')}';
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(PsyRadius.lg),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(PsyRadius.full),
+            child: Icon(
+              item.done ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: item.done
+                  ? const Color(0xFF16A34A)
+                  : cs.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(width: PsySpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      decoration:
+                          item.done ? TextDecoration.lineThrough : null,
+                      color: item.done
+                          ? cs.onSurface.withValues(alpha: 0.5)
+                          : null,
+                    )),
+                Text('Due $due',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6))),
+              ],
+            ),
+          ),
+          if (item.linkedGoal != null)
+            Tooltip(
+              message: 'Goal: ${item.linkedGoal}',
+              child: Icon(Icons.link,
+                  size: 16, color: cs.primary.withValues(alpha: 0.7)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeworkDialog extends StatefulWidget {
+  const _HomeworkDialog();
+  @override
+  State<_HomeworkDialog> createState() => _HomeworkDialogState();
+}
+
+class _HomeworkDialogState extends State<_HomeworkDialog> {
+  final _ctl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Assign homework'),
+      content: TextField(
+        controller: _ctl,
+        onChanged: (_) => setState(() {}),
+        minLines: 2,
+        maxLines: 4,
+        decoration: const InputDecoration(
+            labelText: 'Homework (one actionable task)',
+            alignLabelWithHint: true),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel')),
+        FilledButton(
+          onPressed: _ctl.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(_ctl.text.trim()),
+          child: const Text('Assign'),
         ),
       ],
     );

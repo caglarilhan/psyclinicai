@@ -143,6 +143,80 @@ class TreatmentPlanAiService {
         _ => GoalPriority.medium,
       };
 
+  /// Suggests 3–5 concrete homework assignment titles tied to the active
+  /// goals. Throws [TreatmentPlanAiException] (noKey set) when no key.
+  Future<List<String>> suggestHomework({
+    required String diagnosis,
+    required List<String> goals,
+  }) async {
+    final key = await _keyStorage.getAnthropicKey();
+    if (key == null || key.isEmpty) {
+      throw const TreatmentPlanAiException(
+        'No Anthropic API key configured. Add one under Settings → API Keys.',
+        noKey: true,
+      );
+    }
+
+    const system =
+        'You are an experienced clinician suggesting concrete, doable '
+        'between-session homework assignments tied to the treatment goals. '
+        'Each is one short actionable sentence the client could do this week. '
+        'Respond STRICT JSON only: {"homework":["...","..."]} (3–5 items).';
+    final user = 'Diagnosis: $diagnosis\nActive goals:\n'
+        '${goals.map((g) => '- $g').join('\n')}';
+
+    final body = jsonEncode({
+      'model': _model,
+      'max_tokens': 500,
+      'temperature': 0.4,
+      'system': system,
+      'messages': [
+        {'role': 'user', 'content': user}
+      ],
+    });
+
+    try {
+      final resp = await _client
+          .post(
+            Uri.parse(_apiUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': key,
+              'anthropic-version': _anthropicVersion,
+              'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: body,
+          )
+          .timeout(const Duration(seconds: 30));
+      if (resp.statusCode == 401 || resp.statusCode == 403) {
+        throw const TreatmentPlanAiException(
+            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+      }
+      if (resp.statusCode != 200) {
+        throw TreatmentPlanAiException(
+            'Anthropic error ${resp.statusCode}. Try again shortly.');
+      }
+      final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+      final content = (decoded['content'] as List<dynamic>? ?? const [])
+          .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
+          .join('\n')
+          .trim();
+      final start = content.indexOf('{');
+      final end = content.lastIndexOf('}');
+      if (start < 0 || end <= start) return const [];
+      final json =
+          jsonDecode(content.substring(start, end + 1)) as Map<String, dynamic>;
+      return (json['homework'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList(growable: false);
+    } on TreatmentPlanAiException {
+      rethrow;
+    } catch (e) {
+      throw TreatmentPlanAiException('Network error reaching Anthropic. $e');
+    }
+  }
+
   void dispose() => _client.close();
 }
 

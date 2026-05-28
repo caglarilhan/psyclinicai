@@ -60,7 +60,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -146,7 +146,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           Text(
             'Kapsamlı ruh sağlığı klinik yönetim platformu',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: 16),
@@ -169,7 +169,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
       child: Container(
         padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -186,7 +186,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
           ],
@@ -235,7 +235,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -249,7 +249,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (category['color'] as Color).withOpacity(0.1),
+                color: (category['color'] as Color).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -307,7 +307,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -353,7 +353,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
                       Text(
                         category['description'] as String,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                     ],
@@ -362,7 +362,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -405,7 +405,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (feature['color'] as Color).withOpacity(0.1),
+              color: (feature['color'] as Color).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -440,7 +440,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getStatusColor(feature['status'] as String).withOpacity(0.1),
+                color: _getStatusColor(feature['status'] as String).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

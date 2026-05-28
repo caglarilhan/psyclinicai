@@ -265,7 +265,7 @@ class LanguageSettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -286,7 +286,7 @@ class LanguageSettingsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -338,7 +338,7 @@ class LanguageSettingsScreen extends StatelessWidget {
   void _changeLanguage(BuildContext context, Locale locale) {
     final languageService = Provider.of<LanguageService>(context, listen: false);
     
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(languageService.translate('select_language')),
@@ -374,7 +374,7 @@ class LanguageSettingsScreen extends StatelessWidget {
   void _showLanguageInfo(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
     
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(languageService.translate('language_settings')),

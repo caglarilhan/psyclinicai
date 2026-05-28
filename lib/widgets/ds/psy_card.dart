@@ -39,7 +39,8 @@ class _PsyCardState extends State<PsyCard> {
     final card = AnimatedContainer(
       duration: PsyMotion.fast,
       curve: PsyMotion.standard,
-      transform: Matrix4.identity()..translate(0.0, lifted ? -1.0 : 0.0),
+      transform: Matrix4.identity()
+        ..translateByDouble(0.0, lifted ? -1.0 : 0.0, 0.0, 1.0),
       transformAlignment: Alignment.center,
       decoration: BoxDecoration(
         color: bg,

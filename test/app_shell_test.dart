@@ -43,7 +43,9 @@ void main() {
 
     var foundHeader = false;
     void walk(SemanticsNode n) {
-      if (n.hasFlag(SemanticsFlag.isHeader) && n.label.contains('Outcomes')) {
+      // ignore: deprecated_member_use
+      final isHeader = n.hasFlag(SemanticsFlag.isHeader);
+      if (isHeader && n.label.contains('Outcomes')) {
         foundHeader = true;
       }
       n.visitChildren((c) {
@@ -52,6 +54,7 @@ void main() {
       });
     }
 
+    // ignore: deprecated_member_use
     walk(tester.binding.pipelineOwner.semanticsOwner!.rootSemanticsNode!);
     expect(foundHeader, isTrue,
         reason: 'page title should expose a semantic header');

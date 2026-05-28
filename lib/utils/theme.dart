@@ -367,7 +367,6 @@ class AppTheme {
         error: darkErrorColor,
         surface: darkSurface,
         surfaceTint: darkSurfaceVariant,
-        background: darkBackground,
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,

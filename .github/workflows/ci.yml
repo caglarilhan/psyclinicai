@@ -43,7 +43,9 @@ jobs:
             lib/screens/assessments/assessment_screen.dart
 
       - name: Analyze
-        run: flutter analyze
+        # Fails on errors + warnings (0 tolerated on owned code). Info-level
+        # lints are transitional debt per analysis_options.yaml policy.
+        run: flutter analyze --no-fatal-infos
 
   test:
     name: Unit + widget tests

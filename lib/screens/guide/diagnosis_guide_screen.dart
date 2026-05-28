@@ -353,7 +353,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.black12),
       ),
@@ -366,7 +366,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
       // HomeworkService mevcut; basit bir atama yapıyoruz
       // Varsayılan/örnek hasta ve klinisyen id'leri ile.
       // Not: Gerçek akışta bu id'ler seçili hastadan/oturumdan gelmeli.
-      final hwServiceImport = await _ensureHomeworkService();
+      await _ensureHomeworkService();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ödev eklendi')),

@@ -36,7 +36,7 @@ class DesktopTheme {
         secondary: desktopSecondary,
         tertiary: desktopAccent,
         surface: desktopSurface,
-        surfaceVariant: desktopSurfaceVariant,
+        surfaceContainerHighest: desktopSurfaceVariant,
         outline: desktopBorder,
       ),
       appBarTheme: const AppBarTheme(
@@ -209,7 +209,7 @@ class DesktopTheme {
         border: Border.all(color: desktopBorder),
         boxShadow: [
           BoxShadow(
-            color: desktopShadow.withOpacity(0.04),
+            color: desktopShadow.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

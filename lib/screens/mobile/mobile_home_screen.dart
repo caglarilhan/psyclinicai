@@ -115,13 +115,13 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
                             Icon(
                               Icons.psychology,
                               size: 48,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'AI Destekli Klinik Yönetimi',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -180,7 +180,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
   Widget _buildHomeTab() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final languageService = Provider.of<LanguageService>(context);
 
     return SingleChildScrollView(
       child: Column(
@@ -364,9 +363,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -398,14 +397,14 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.8)],
+          colors: [color, color.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -430,7 +429,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
             Text(
               subtitle,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 14,
               ),
             ),
@@ -476,7 +475,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -513,7 +512,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
   }
 
   void _showNotifications() {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       builder: (context) => Container(
         height: 400,
@@ -593,7 +592,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
   }
 }
 
-class MobileSearchDelegate extends SearchDelegate {
+class MobileSearchDelegate extends SearchDelegate<String?> {
   @override
   List<Widget> buildActions(BuildContext context) {
     return [

@@ -80,7 +80,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (_) => _ResultScreen(
           type: widget.type,
           patientName: widget.patientName,
@@ -591,7 +591,7 @@ class _ResultScreen extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () =>
                           Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
+                        MaterialPageRoute<void>(
                           builder: (_) => AssessmentScreen(
                               type: type, patientName: patientName),
                         ),

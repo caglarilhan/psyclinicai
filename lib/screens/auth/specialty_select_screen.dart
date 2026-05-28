@@ -71,7 +71,7 @@ class _SpecialtyChip extends StatelessWidget {
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => context.read<RoleService>().setRole(label),
-      selectedColor: color.withOpacity(0.15),
+      selectedColor: color.withValues(alpha: 0.15),
     );
   }
 }

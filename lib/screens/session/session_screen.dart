@@ -32,9 +32,7 @@ class SessionScreen extends StatefulWidget {
 class _SessionScreenState extends State<SessionScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _aiPromptController = TextEditingController();
-  bool _isGeneratingAI = false;
   String _aiSummary = '';
-  int _selectedPanelIndex = 0;
   List<String> _treatmentGoals = const [];
 
   // Seans durumu
@@ -98,7 +96,7 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   void _showSessionEndDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Session Ended'),
@@ -217,94 +215,6 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
-  Future<void> _generateAISummary() async {
-    if (_notesController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Önce seans notu yazın')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isGeneratingAI = true;
-    });
-
-    // Simüle edilmiş AI işlemi
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _aiSummary = '''
-🔍 **AI Özeti**
-
-**Duygu Durumu:** ${_analyzeEmotion(_notesController.text)}
-**Ana Tema:** ${_analyzeTheme(_notesController.text)}
-**ICD Önerisi:** ${_suggestICD(_notesController.text)}
-**Risk Faktörleri:** ${_analyzeRisk(_notesController.text)}
-**Sonraki Seans Önerisi:** ${_suggestNextSession(_notesController.text)}
-
-*Bu özet AI destekli olarak oluşturulmuştur. Klinik karar için değerlendirmeniz gerekir.*
-''';
-      _isGeneratingAI = false;
-    });
-  }
-
-  String _analyzeEmotion(String text) {
-    if (text.toLowerCase().contains('üzgün') || text.toLowerCase().contains('depresif')) {
-      return 'Depresif duygu durumu';
-    } else if (text.toLowerCase().contains('kaygı') || text.toLowerCase().contains('anksiyete')) {
-      return 'Anksiyöz duygu durumu';
-    } else if (text.toLowerCase().contains('öfke') || text.toLowerCase().contains('sinir')) {
-      return 'Öfkeli duygu durumu';
-    }
-    return 'Nötr duygu durumu';
-  }
-
-  String _analyzeTheme(String text) {
-    if (text.toLowerCase().contains('ilişki') || text.toLowerCase().contains('aile')) {
-      return 'İlişki problemleri';
-    } else if (text.toLowerCase().contains('iş') || text.toLowerCase().contains('kariyer')) {
-      return 'İş/kariyer problemleri';
-    } else if (text.toLowerCase().contains('travma') || text.toLowerCase().contains('geçmiş')) {
-      return 'Travmatik deneyimler';
-    }
-    return 'Genel yaşam problemleri';
-  }
-
-  String _suggestICD(String text) {
-    if (text.toLowerCase().contains('depresyon') || text.toLowerCase().contains('üzgün')) {
-      return 'F32.1 - Orta depresif bozukluk';
-    } else if (text.toLowerCase().contains('anksiyete') || text.toLowerCase().contains('kaygı')) {
-      return 'F41.1 - Anksiyete bozukluğu';
-    } else if (text.toLowerCase().contains('travma')) {
-      return 'F43.1 - Travma sonrası stres bozukluğu';
-    }
-    return 'F99 - Belirtilmemiş mental bozukluk';
-  }
-
-  String _analyzeRisk(String text) {
-    List<String> risks = [];
-    if (text.toLowerCase().contains('intihar') || text.toLowerCase().contains('ölüm')) {
-      risks.add('İntihar riski');
-    }
-    if (text.toLowerCase().contains('şiddet') || text.toLowerCase().contains('zarar')) {
-      risks.add('Şiddet riski');
-    }
-    if (text.toLowerCase().contains('madde') || text.toLowerCase().contains('alkol')) {
-      risks.add('Madde kullanımı');
-    }
-    
-    return risks.isEmpty ? 'No immediate risk detected' : risks.join(', ');
-  }
-
-  String _suggestNextSession(String text) {
-    if (text.toLowerCase().contains('kriz') || text.toLowerCase().contains('acil')) {
-      return '24-48 saat içinde takip seansı';
-    } else if (text.toLowerCase().contains('iyileşme') || text.toLowerCase().contains('gelişme')) {
-      return '1 hafta sonra rutin takip';
-    }
-    return '1-2 hafta sonra rutin takip';
-  }
-
   Future<void> _exportToPDF() async {
     try {
       // PDF servisini import et
@@ -338,55 +248,6 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
       );
     }
-  }
-
-  // Eksik metodlar
-  void _clearNotes() {
-    setState(() {
-      _notesController.clear();
-      _aiSummary = '';
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notlar temizlendi'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
-
-  // Helper methods for extracting information from AI summary
-  String _extractEmotionFromSummary() {
-    // Simple extraction logic - can be improved with regex
-    if (_aiSummary.toLowerCase().contains('üzgün') || _aiSummary.toLowerCase().contains('sad')) {
-      return 'Üzgün';
-    } else if (_aiSummary.toLowerCase().contains('mutlu') || _aiSummary.toLowerCase().contains('happy')) {
-      return 'Mutlu';
-    } else if (_aiSummary.toLowerCase().contains('kaygılı') || _aiSummary.toLowerCase().contains('anxious')) {
-      return 'Kaygılı';
-    } else if (_aiSummary.toLowerCase().contains('öfkeli') || _aiSummary.toLowerCase().contains('angry')) {
-      return 'Öfkeli';
-    }
-    return 'Nötr';
-  }
-
-  String _extractThemeFromSummary() {
-    if (_aiSummary.toLowerCase().contains('aile') || _aiSummary.toLowerCase().contains('family')) {
-      return 'Aile İlişkileri';
-    } else if (_aiSummary.toLowerCase().contains('iş') || _aiSummary.toLowerCase().contains('work')) {
-      return 'İş Hayatı';
-    } else if (_aiSummary.toLowerCase().contains('ilişki') || _aiSummary.toLowerCase().contains('relationship')) {
-      return 'İlişki Sorunları';
-    } else if (_aiSummary.toLowerCase().contains('travma') || _aiSummary.toLowerCase().contains('trauma')) {
-      return 'Travma';
-    }
-    return 'Genel';
-  }
-
-  String _extractICDFromSummary() {
-    // Extract ICD codes from summary
-    RegExp icdRegex = RegExp(r'[A-Z]\d{2}\.\d+');
-    Match? match = icdRegex.firstMatch(_aiSummary);
-    return match?.group(0) ?? 'ICD-10 kodu bulunamadı';
   }
 
   @override
@@ -430,7 +291,7 @@ class _SessionScreenState extends State<SessionScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -501,7 +362,7 @@ class _SessionScreenState extends State<SessionScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -514,7 +375,7 @@ class _SessionScreenState extends State<SessionScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -580,106 +441,6 @@ class _SessionScreenState extends State<SessionScreen> {
     );
   }
 
-  Widget _buildAIPanelLegacy() {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Panel başlığı
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.psychology, color: Colors.blue),
-                const SizedBox(width: 8),
-                Text(
-                  'AI Assistant',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: _generateAISummary,
-                  icon: Icon(
-                    _isGeneratingAI ? Icons.hourglass_empty : Icons.refresh,
-                    color: Colors.blue,
-                  ),
-                  tooltip: 'Generate AI Summary',
-                ),
-              ],
-            ),
-          ),
-          // AI özeti
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: _isGeneratingAI
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Generating AI summary...'),
-                        ],
-                      ),
-                    )
-                  : _aiSummary.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.psychology_outlined,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Click "Refresh" to generate\nthe AI session summary',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          child: Text(
-                            _aiSummary,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildClientInfoPanel() {
     return Container(
@@ -689,7 +450,7 @@ class _SessionScreenState extends State<SessionScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -702,7 +463,7 @@ class _SessionScreenState extends State<SessionScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -763,9 +524,9 @@ class _SessionScreenState extends State<SessionScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.05),
+        color: Colors.grey.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,7 +558,7 @@ class _SessionScreenState extends State<SessionScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             spreadRadius: 1,
             blurRadius: 10,
             offset: const Offset(0, -2),

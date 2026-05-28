@@ -394,7 +394,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
 class DesktopSidebar extends StatelessWidget {
   final List<DesktopSidebarItem> items;
   final int selectedIndex;
-  final Function(int) onItemSelected;
+  final void Function(int) onItemSelected;
 
   const DesktopSidebar({
     super.key,
@@ -427,7 +427,7 @@ class DesktopSidebar extends StatelessWidget {
             ),
           ),
           selected: isSelected,
-          selectedTileColor: DesktopTheme.desktopPrimary.withOpacity(0.1),
+          selectedTileColor: DesktopTheme.desktopPrimary.withValues(alpha: 0.1),
           onTap: () => onItemSelected(index),
         );
       },

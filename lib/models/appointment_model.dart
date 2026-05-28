@@ -66,19 +66,19 @@ class Appointment {
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
     return Appointment(
-      id: json['id'],
-      clientId: json['clientId'],
-      clientName: json['clientName'],
-      startTime: DateTime.parse(json['startTime']),
-      endTime: DateTime.parse(json['endTime']),
-      type: json['type'],
-      status: json['status'],
-      notes: json['notes'],
-      location: json['location'],
-      isRecurring: json['isRecurring'] ?? false,
-      recurringPattern: json['recurringPattern'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      id: json['id'] as String,
+      clientId: json['clientId'] as String,
+      clientName: json['clientName'] as String,
+      startTime: DateTime.parse(json['startTime'] as String),
+      endTime: DateTime.parse(json['endTime'] as String),
+      type: json['type'] as String,
+      status: json['status'] as String,
+      notes: json['notes'] as String,
+      location: json['location'] as String,
+      isRecurring: json['isRecurring'] as bool? ?? false,
+      recurringPattern: json['recurringPattern'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
 

@@ -206,7 +206,7 @@ class OfflineDataList extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              item['name'] ?? item['title'] ?? item['id'],
+                              '${item['name'] ?? item['title'] ?? item['id'] ?? ''}',
                               style: theme.textTheme.bodyMedium,
                             ),
                           ),
@@ -259,8 +259,9 @@ class OfflineDataList extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = data[index];
               return ListTile(
-                title: Text(item['name'] ?? item['title'] ?? item['id']),
-                subtitle: Text(item['created_at'] ?? ''),
+                title: Text(
+                    '${item['name'] ?? item['title'] ?? item['id'] ?? ''}'),
+                subtitle: Text('${item['created_at'] ?? ''}'),
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(

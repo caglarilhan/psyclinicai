@@ -471,7 +471,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
             const SizedBox(height: 4),
             ...((r['diagnoses'] as List).map((d)=> Row(children:[const Text('• '), Expanded(child: Text('${d['name']} (${d['code']}) – ${d['confidence']}%'))]))),
             const SizedBox(height: 8),
-            Text(r['notes'] ?? ''),
+            Text(r['notes'] as String? ?? ''),
           ],
         ),
       ),
@@ -521,7 +521,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
       final data = await DefaultAssetBundle.of(context).loadString('assets/guidelines/' + key);
       final map = convert.jsonDecode(data) as Map<String, dynamic>;
       final recs = (map['recommendations'] as List?) ?? [];
-      return recs.map<Widget>((r) => _guideCard(r['title'] ?? 'Öneri', r['text'] ?? '')).toList();
+      return recs
+          .map<Widget>((r) => _guideCard(
+              r['title'] as String? ?? 'Öneri', r['text'] as String? ?? ''))
+          .toList();
     } catch (_) {
       return _treatmentCardsFor(dx);
     }

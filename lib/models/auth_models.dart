@@ -13,9 +13,9 @@ class Organization {
       };
 
   factory Organization.fromJson(Map<String, dynamic> json) => Organization(
-        id: json['id'],
-        name: json['name'],
-        createdAt: DateTime.parse(json['createdAt']),
+        id: json['id'] as String,
+        name: json['name'] as String,
+        createdAt: DateTime.parse(json['createdAt'] as String),
       );
 }
 
@@ -48,12 +48,12 @@ class User {
       };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'],
-        email: json['email'],
-        fullName: json['fullName'],
+        id: json['id'] as String,
+        email: json['email'] as String,
+        fullName: json['fullName'] as String,
         roles: (json['roles'] as List).map((e) => UserRole.values.firstWhere((r) => r.name == e)).toList(),
-        organizationId: json['organizationId'],
-        is2FAEnabled: json['is2FAEnabled'] ?? true,
+        organizationId: json['organizationId'] as String,
+        is2FAEnabled: json['is2FAEnabled'] as bool? ?? true,
       );
 }
 

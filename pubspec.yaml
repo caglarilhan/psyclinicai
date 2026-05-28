@@ -66,6 +66,8 @@ dependencies:
   speech_to_text: ^7.3.0
   image_picker: ^1.0.4
 
+  intl: any
+  timezone: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

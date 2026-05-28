@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:psyclinicai/services/role_service.dart';
 
 class FeatureSystemScreen extends StatefulWidget {
   const FeatureSystemScreen({super.key});
@@ -72,7 +70,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         children: [
           Expanded(
             child: DropdownButtonFormField<String>(
-              value: _selectedRole,
+              initialValue: _selectedRole,
               decoration: const InputDecoration(
                 labelText: 'Rol Seçin',
                 border: OutlineInputBorder(),
@@ -96,7 +94,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               decoration: const InputDecoration(
                 labelText: 'Kategori',
                 border: OutlineInputBorder(),

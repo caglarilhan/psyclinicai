@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/services.dart';
 
 class KeyboardShortcutsService extends ChangeNotifier {
   static final KeyboardShortcutsService _instance = KeyboardShortcutsService._internal();

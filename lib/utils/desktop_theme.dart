@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'theme.dart';
 
 class DesktopTheme {
   // Masaüstü için özel renkler

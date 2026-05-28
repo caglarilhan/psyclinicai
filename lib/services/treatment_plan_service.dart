@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/treatment_plan_models.dart';
 
@@ -29,7 +30,7 @@ class TreatmentPlanService {
         _treatmentPlans.add(plan);
       }
     } catch (e) {
-      print('Error loading treatment plans: $e');
+      debugPrint('Error loading treatment plans: $e');
       _treatmentPlans.clear();
     }
   }
@@ -43,7 +44,7 @@ class TreatmentPlanService {
           .toList();
       await prefs.setStringList('treatment_plans', plansJson);
     } catch (e) {
-      print('Error saving treatment plans: $e');
+      debugPrint('Error saving treatment plans: $e');
     }
   }
 
@@ -60,7 +61,7 @@ class TreatmentPlanService {
         _progressRecords.add(progressRecord);
       }
     } catch (e) {
-      print('Error loading treatment progress: $e');
+      debugPrint('Error loading treatment progress: $e');
       _progressRecords.clear();
     }
   }
@@ -74,7 +75,7 @@ class TreatmentPlanService {
           .toList();
       await prefs.setStringList('treatment_progress', progressJson);
     } catch (e) {
-      print('Error saving treatment progress: $e');
+      debugPrint('Error saving treatment progress: $e');
     }
   }
 
@@ -242,7 +243,7 @@ class TreatmentPlanService {
       await _saveTreatmentPlans();
       return true;
     } catch (e) {
-      print('Error updating goal progress: $e');
+      debugPrint('Error updating goal progress: $e');
       return false;
     }
   }
@@ -531,7 +532,7 @@ class TreatmentPlanService {
 
     await _saveProgressRecords();
 
-    print('✅ Demo treatment plans created: ${demoPlans.length}');
-    print('✅ Demo progress records created: ${demoProgress.length}');
+    debugPrint('✅ Demo treatment plans created: ${demoPlans.length}');
+    debugPrint('✅ Demo progress records created: ${demoProgress.length}');
   }
 }

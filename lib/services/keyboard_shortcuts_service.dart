@@ -227,7 +227,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
       icon: const Icon(Icons.keyboard),
       tooltip: 'Klavye Kısayolları',
       onPressed: () {
-        showDialog(
+        showDialog<void>(
           context: context,
           builder: (context) => buildShortcutsWidget(context),
         );
@@ -252,7 +252,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
           const Spacer(),
           TextButton(
             onPressed: () {
-              showDialog(
+              showDialog<void>(
                 context: context,
                 builder: (context) => buildShortcutsWidget(context),
               );

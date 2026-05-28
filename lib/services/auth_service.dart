@@ -11,13 +11,13 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> isAuthenticated() async {
     // TODO: Firebase Auth entegrasyonu
-    await Future.delayed(const Duration(milliseconds: 500)); // Simülasyon
+    await Future<void>.delayed(const Duration(milliseconds: 500)); // Simülasyon
     return _isAuthenticated;
   }
 
   Future<bool> signIn(String email, String password) async {
     // TODO: Firebase Auth sign in
-    await Future.delayed(const Duration(seconds: 2)); // Simülasyon
+    await Future<void>.delayed(const Duration(seconds: 2)); // Simülasyon
 
     if (email == 'admin' && password == 'admin') {
       _isAuthenticated = true;
@@ -29,7 +29,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signOut() async {
     // TODO: Firebase Auth sign out
-    await Future.delayed(const Duration(milliseconds: 500)); // Simülasyon
+    await Future<void>.delayed(const Duration(milliseconds: 500)); // Simülasyon
     _isAuthenticated = false;
   }
 
@@ -40,7 +40,7 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> verify2FA(String code) async {
     // TODO: Firebase Auth 2FA verification
-    await Future.delayed(const Duration(seconds: 1)); // Simülasyon
+    await Future<void>.delayed(const Duration(seconds: 1)); // Simülasyon
     
     // Demo: Herhangi bir 6 haneli kod kabul edilir
     if (code.length == 6 && RegExp(r'^\d+$').hasMatch(code)) {

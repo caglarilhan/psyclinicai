@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
 import 'notification_service.dart';
@@ -27,7 +28,7 @@ class AppointmentService {
               Appointment.fromJson(jsonDecode(json) as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('Error loading appointments: $e');
+      debugPrint('Error loading appointments: $e');
       _appointments = [];
     }
   }
@@ -42,7 +43,7 @@ class AppointmentService {
       
       await prefs.setStringList(_appointmentsKey, appointmentsJson);
     } catch (e) {
-      print('Error saving appointments: $e');
+      debugPrint('Error saving appointments: $e');
     }
   }
 
@@ -111,7 +112,7 @@ class AppointmentService {
       );
       return true;
     } catch (e) {
-      print('Error adding appointment: $e');
+      debugPrint('Error adding appointment: $e');
       return false;
     }
   }
@@ -142,7 +143,7 @@ class AppointmentService {
       );
       return true;
     } catch (e) {
-      print('Error updating appointment: $e');
+      debugPrint('Error updating appointment: $e');
       return false;
     }
   }
@@ -160,7 +161,7 @@ class AppointmentService {
       await _saveAppointments();
       return true;
       } catch (e) {
-      print('Error deleting appointment: $e');
+      debugPrint('Error deleting appointment: $e');
       return false;
     }
   }

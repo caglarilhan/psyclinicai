@@ -503,7 +503,7 @@ class OfflineService extends ChangeNotifier {
 
   // Mock sync methods (replace with actual API calls)
   Future<void> _syncPatient(Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
     if (data['name'] == 'error') {
       throw Exception('Sync failed');
@@ -511,27 +511,27 @@ class OfflineService extends ChangeNotifier {
   }
 
   Future<void> _syncPatientUpdate(String id, Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
   }
 
   Future<void> _syncPatientDelete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
   }
 
   Future<void> _syncAppointment(Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
   }
 
   Future<void> _syncVoiceNote(Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
   }
 
   Future<void> _syncMoodEntry(Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     // Simulate API call
   }
 

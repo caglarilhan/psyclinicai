@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -30,7 +31,7 @@ class PDFExportService {
       ttf = pw.Font.ttf(fontData);
     } catch (e) {
       // Font bulunamazsa default font kullan
-      print('Font yüklenemedi, default font kullanılıyor: $e');
+      debugPrint('Font yüklenemedi, default font kullanılıyor: $e');
     }
 
     pdf.addPage(

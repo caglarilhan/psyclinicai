@@ -436,6 +436,7 @@ class _SessionScreenState extends State<SessionScreen> {
   Widget _buildAIPanel() {
     return LiveAiPanel(
       clientName: widget.clientName,
+      patientId: widget.clientId,
       localeId: 'en_US',
       treatmentGoals: _treatmentGoals,
     );

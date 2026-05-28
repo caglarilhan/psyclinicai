@@ -7,6 +7,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/clinical_brief_card.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -37,6 +38,18 @@ class PatientDetailScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           _Header(args: args, theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.xl),
+          ClinicalBriefCard(patientId: args.id, patientName: args.name),
+          const SizedBox(height: PsySpacing.md),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: PsyButton(
+              label: 'Start session',
+              icon: Icons.mic_none,
+              onPressed: () =>
+                  Navigator.of(context).pushNamed('/session', arguments: args),
+            ),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Send screener'),
           const SizedBox(height: PsySpacing.md),

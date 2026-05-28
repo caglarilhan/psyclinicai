@@ -110,11 +110,16 @@ class PsyClinicAIApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/dashboard': (context) => const DashboardScreen(),
               '/feature_system': (context) => const FeatureSystemScreen(),
-              '/session': (context) => const SessionScreen(
-                    sessionId: 'demo-session-001',
-                    clientId: 'demo-client-001',
-                    clientName: 'John Demo',
-                  ),
+              '/session': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return SessionScreen(
+                  sessionId:
+                      'session-${DateTime.now().millisecondsSinceEpoch}',
+                  clientId: args?.id ?? 'demo-1',
+                  clientName: args?.name ?? 'John Demo',
+                );
+              },
               '/session_management': (context) => const SessionManagementScreen(),
               '/e_prescription': (context) => const EPrescriptionScreen(),
               '/ai_chatbot': (context) => const AIChatbotScreen(),

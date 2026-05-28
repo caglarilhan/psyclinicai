@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/session_note.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/note_billing_extractor.dart';
+import '../../services/data/session_note_repository.dart';
 import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/session_insights_service.dart';
@@ -22,7 +24,12 @@ class LiveAiPanel extends StatefulWidget {
     this.clinicianRole = 'licensed mental health clinician',
     this.localeId = 'en_US',
     this.treatmentGoals = const [],
+    this.patientId,
   });
+
+  /// When set, generated notes are persisted to the patient's Clinical Memory
+  /// so the next pre-session brief includes this session.
+  final String? patientId;
 
   final String? clientName;
   final String? clientPresenting;
@@ -67,6 +74,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   SoapFormat _format = SoapFormat.soap;
   Modality _modality = Modality.general;
   final _editCtl = TextEditingController();
+  final _noteRepo = SessionNoteRepository();
   bool _editing = false;
 
   @override
@@ -173,6 +181,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         _report = _compliance.check(note.rawMarkdown);
         _state = _PanelState.noteReady;
       });
+      unawaited(_persistNote(note));
     } on SoapGeneratorException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -228,6 +237,21 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       serviceDate: DateTime.now(),
     );
     Navigator.of(context).pushNamed('/superbill', arguments: prefill);
+  }
+
+  /// Persists a finished note to the patient's Clinical Memory (the continuity
+  /// flywheel) so the next pre-session brief includes this session.
+  Future<void> _persistNote(SoapNote note) async {
+    final pid = widget.patientId;
+    if (pid == null || pid.isEmpty) return;
+    await _noteRepo.initialize();
+    await _noteRepo.add(SessionNote(
+      id: 'n-${DateTime.now().millisecondsSinceEpoch}',
+      patientId: pid,
+      markdown: note.rawMarkdown,
+      format: note.format.name,
+      flaggedRisk: note.flaggedRisk,
+    ));
   }
 
   Future<void> _runDeepCheck() async {

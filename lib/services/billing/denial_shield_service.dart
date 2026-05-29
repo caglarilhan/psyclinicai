@@ -102,6 +102,8 @@ class DenialShieldService {
         fixSentence: 'Add why the extended session was clinically required — '
             'e.g. "53+ minutes were medically necessary for trauma processing '
             'given symptom severity."',
+        insertText: 'The extended 53+ minute session was medically necessary '
+            'given symptom severity and the depth of material addressed.',
       ));
     }
 
@@ -158,6 +160,9 @@ class DenialShieldService {
           fixSentence:
               'Add how symptoms impair functioning — e.g. "Anxiety prevents '
               'the client from concentrating at work and led to missed shifts."',
+          insertText:
+              'Symptoms impair the client’s daily functioning — including '
+              'concentration at work and reduced engagement in relationships.',
         );
       case 'goal_linkage':
         return DenialReason(
@@ -170,6 +175,9 @@ class DenialShieldService {
               'Reference the goal worked on and progress — e.g. "Targeted Goal '
               '1 (reduce panic to <2/week); client reports 3 this week, down '
               'from 5."',
+          insertText:
+              'This session targeted the client’s active treatment-plan goal; '
+              'progress toward it was reviewed.',
         );
       case 'intervention':
         return DenialReason(
@@ -180,6 +188,9 @@ class DenialShieldService {
           fixSentence:
               'Name the technique used — e.g. "Used cognitive restructuring to '
               'challenge catastrophic predictions about the interview."',
+          insertText:
+              'Delivered a specific evidence-based intervention targeting the '
+              'presenting symptoms this session.',
         );
       case 'response':
         return DenialReason(
@@ -189,6 +200,9 @@ class DenialShieldService {
           fixSentence:
               'Add the response — e.g. "Client engaged, identified two '
               'automatic thoughts and practiced a reframe in session."',
+          insertText:
+              'The client engaged with the intervention and demonstrated '
+              'understanding in session.',
         );
       case 'risk':
         return DenialReason(
@@ -196,6 +210,7 @@ class DenialShieldService {
           detail: '$who expects risk addressed explicitly, even when absent.',
           fixSentence:
               'Add a risk line — e.g. "Denies SI/HI; no acute safety concerns."',
+          insertText: 'Risk reviewed: denies SI/HI; no acute safety concerns.',
         );
       case 'time':
         return DenialReason(
@@ -213,6 +228,9 @@ class DenialShieldService {
           fixSentence:
               'Add the plan — e.g. "Continue weekly; assigned a daily thought '
               'record; reassess GAD-7 in 4 weeks."',
+          insertText:
+              'Plan: continue weekly sessions; assigned between-session '
+              'homework; reassess at the next visit.',
         );
     }
     return null;

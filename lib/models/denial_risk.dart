@@ -42,6 +42,7 @@ class DenialReason {
     required this.title,
     required this.detail,
     required this.fixSentence,
+    this.insertText,
     this.critical = false,
   });
 
@@ -51,8 +52,12 @@ class DenialReason {
   /// Why this payer/code rejects it.
   final String detail;
 
-  /// A ready-to-paste sentence the clinician can add to the note.
+  /// Human guidance shown to the clinician ("Add … — e.g. …").
   final String fixSentence;
+
+  /// The clean, ready-to-append sentence for one-click "apply fix". Null when
+  /// the remedy is a coding change (e.g. downcode) rather than added text.
+  final String? insertText;
 
   /// True for hard blockers (almost-certain denial) vs. soft risks.
   final bool critical;

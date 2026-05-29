@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/clinical_lens.dart';
 import '../../models/denial_risk.dart';
 import '../../models/session_note.dart';
+import '../../models/supervision_report.dart';
 import '../../services/billing/denial_shield_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/note_billing_extractor.dart';
@@ -13,6 +15,7 @@ import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/session_insights_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
+import '../../services/copilot/supervision_service.dart';
 import '../../services/copilot/transcription_service.dart';
 import '../../services/data/session_note_repository.dart';
 import '../../theme/tokens.dart';
@@ -83,8 +86,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   final _editCtl = TextEditingController();
   final _noteRepo = SessionNoteRepository();
   final _lensService = ClinicalLensService();
+  final _supervision = SupervisionService();
   bool _editing = false;
   bool _loadingLens = false;
+  bool _loadingSupervision = false;
 
   @override
   void initState() {
@@ -499,9 +504,152 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _compliance.dispose();
     _insights.dispose();
     _lensService.dispose();
+    _supervision.dispose();
     _pulse.dispose();
     _editCtl.dispose();
     super.dispose();
+  }
+
+  /// Generates a de-identified supervision report (fidelity + reflective
+  /// questions) for the session and shows it in a sheet, copyable for a
+  /// supervisor.
+  Future<void> _showSupervision(BuildContext context) async {
+    final src =
+        _transcript.isNotEmpty ? _transcript : (_note?.rawMarkdown ?? '');
+    if (src.trim().isEmpty) return;
+    setState(() => _loadingSupervision = true);
+    try {
+      final report =
+          await _supervision.generate(transcript: src, modality: _modality);
+      if (!mounted) return;
+      _presentSupervision(context, report);
+    } on SupervisionException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'))
+            : null,
+      ));
+    } finally {
+      if (mounted) setState(() => _loadingSupervision = false);
+    }
+  }
+
+  void _presentSupervision(BuildContext context, SupervisionReport r) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final color = r.fidelityScore >= 80
+        ? const Color(0xFF16A34A)
+        : r.fidelityScore >= 60
+            ? const Color(0xFFD97706)
+            : cs.error;
+    Widget list(String title, List<String> items) {
+      if (items.isEmpty) return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Text(title.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6)),
+          const SizedBox(height: 4),
+          ...items.map((i) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.chevron_right,
+                        size: 16, color: cs.onSurface.withValues(alpha: 0.5)),
+                    Expanded(child: Text(i, style: theme.textTheme.bodyMedium)),
+                  ],
+                ),
+              )),
+        ],
+      );
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: cs.surface,
+      isScrollControlled: true,
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.92,
+        builder: (_, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.all(20),
+          children: [
+            Row(
+              children: [
+                Icon(Icons.school_outlined, color: cs.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${r.modalityLabel} supervision (de-identified)',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text('${r.fidelityScore}',
+                    style: theme.textTheme.displaySmall?.copyWith(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: color)),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6, left: 4),
+                  child: Text('/100 fidelity',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.6))),
+                ),
+              ],
+            ),
+            if (r.summary.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(r.summary, style: theme.textTheme.bodyMedium),
+            ],
+            if (r.fidelityNotes.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(r.fidelityNotes,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7))),
+            ],
+            list('Strengths', r.strengths),
+            list('Growth areas', r.growthAreas),
+            list('Reflective questions', r.reflectiveQuestions),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: r.anonymizedText()));
+                ScaffoldMessenger.of(sheetCtx).showSnackBar(const SnackBar(
+                    content: Text('De-identified report copied.')));
+              },
+              icon: const Icon(Icons.copy_outlined, size: 18),
+              label: const Text('Copy anonymized report'),
+              style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46)),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Decision-support for supervision — not a competency '
+              'determination. Verify anonymization before sharing.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Extracts the selected modality's clinical lens from the session and shows
@@ -680,6 +828,8 @@ class _LiveAiPanelState extends State<LiveAiPanel>
           onCreateSuperbill: () => _createSuperbill(context),
           onClinicalLens: () => _showClinicalLens(context),
           loadingLens: _loadingLens,
+          onSupervision: () => _showSupervision(context),
+          loadingSupervision: _loadingSupervision,
           modalityLabel: _modality.label,
         );
         void onPayer(Payer p) => setState(() {
@@ -1161,6 +1311,8 @@ class _NoteReadyView extends StatelessWidget {
     required this.onCreateSuperbill,
     required this.onClinicalLens,
     required this.loadingLens,
+    required this.onSupervision,
+    required this.loadingSupervision,
     required this.modalityLabel,
   });
 
@@ -1172,6 +1324,8 @@ class _NoteReadyView extends StatelessWidget {
   final VoidCallback onCreateSuperbill;
   final VoidCallback onClinicalLens;
   final bool loadingLens;
+  final VoidCallback onSupervision;
+  final bool loadingSupervision;
   final String modalityLabel;
 
   @override
@@ -1225,30 +1379,33 @@ class _NoteReadyView extends StatelessWidget {
                 ),
               ],
               const Spacer(),
-              TextButton.icon(
+              IconButton(
                 onPressed: loadingLens ? null : onClinicalLens,
+                visualDensity: VisualDensity.compact,
+                tooltip: '$modalityLabel lens',
                 icon: loadingLens
                     ? const SizedBox(
-                        width: 14,
-                        height: 14,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.center_focus_strong_outlined, size: 16),
-                label: Text('$modalityLabel lens'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
+                    : const Icon(Icons.center_focus_strong_outlined, size: 18),
               ),
-              TextButton.icon(
+              IconButton(
+                onPressed: loadingSupervision ? null : onSupervision,
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Supervision report (de-identified)',
+                icon: loadingSupervision
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.school_outlined, size: 18),
+              ),
+              IconButton(
                 onPressed: onCreateSuperbill,
-                icon: const Icon(Icons.receipt_long_outlined, size: 16),
-                label: const Text('Superbill'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Create superbill',
+                icon: const Icon(Icons.receipt_long_outlined, size: 18),
               ),
             ],
           ),

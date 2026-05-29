@@ -244,6 +244,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     'Password', Icons.lock_outline)
                                 .copyWith(
                               suffixIcon: IconButton(
+                                tooltip: _showPassword
+                                    ? 'Hide password'
+                                    : 'Show password',
                                 onPressed: () => setState(
                                     () => _showPassword = !_showPassword),
                                 icon: Icon(_showPassword
@@ -255,7 +258,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           if (_error != null) ...[
                             const SizedBox(height: 14),
-                            _errorBanner(_error!),
+                            // Announce auth/validation errors to screen readers.
+                            Semantics(
+                              liveRegion: true,
+                              child: _errorBanner(_error!),
+                            ),
                           ],
                           const SizedBox(height: 22),
                           FilledButton(

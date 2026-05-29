@@ -150,6 +150,9 @@ class _PsyButtonState extends State<PsyButton> {
         ..translateByDouble(0.0, isFilled && hovered ? -1.0 : 0.0, 0.0, 1.0),
       transformAlignment: Alignment.center,
       padding: pad,
+      // WCAG 2.5.8 / DESIGN.md: never below a 44px tap target (esp. sm size).
+      // Row defaults to vertical-center, so content stays centered.
+      constraints: const BoxConstraints(minHeight: 44),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: radius,
@@ -203,8 +206,17 @@ class _PsyButtonState extends State<PsyButton> {
       child: pressable,
     );
 
-    return widget.fullWidth
+    final result = widget.fullWidth
         ? SizedBox(width: double.infinity, child: ringed)
         : ringed;
+
+    // One semantic button node with the right role/label/state, instead of the
+    // inner Text being read as loose content.
+    return Semantics(
+      button: true,
+      enabled: !isDisabled,
+      label: widget.label,
+      child: ExcludeSemantics(child: result),
+    );
   }
 }

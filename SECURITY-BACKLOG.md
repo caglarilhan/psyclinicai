@@ -93,5 +93,47 @@ interpolated names.
 
 ---
 
-*Generated from an automated multi-agent review. Verify each item against
-current code before acting — the codebase moves.*
+---
+
+## Round 2 — billing rails + UI audit (added with the revenue-rails work)
+
+### Backend `functions/` — pre-deploy hardening (founder, before any real data)
+The Cloud Functions are a **skeleton**; a TypeScript review flagged these to fix
+before a production deploy that carries real data (tsc passes clean today):
+- **CRITICAL — auth on `anthropicRelay`:** verify the Firebase ID token before
+  relaying (PHI path). Marked TODO in `src/index.ts`.
+- **HIGH — webhook `customer_email` bug:** `Stripe.Subscription` has no
+  `customer_email`, so the webhook write is currently a no-op. Handle
+  `checkout.session.completed` (which *does* carry `customer_email` + metadata),
+  and key the Firestore doc by clinician UID, not email.
+- **HIGH — fail-fast on missing secrets** (STRIPE_SECRET_KEY / WEBHOOK_SECRET /
+  ANTHROPIC_API_KEY): throw at module load instead of `?? ""`.
+- **HIGH — webhook idempotency:** dedupe by `event.id` (Stripe is at-least-once).
+- **HIGH — relay input validation:** cap body size + allowlist fields / max_tokens.
+- **MEDIUM:** classify Stripe errors (400 vs 502); add ESLint; add
+  `noUncheckedIndexedAccess`; structured audit logging on the relay.
+
+### UI / accessibility — fixed this round ✅
+- `PsyButton`: enforced 44px min tap target (WCAG 2.5.8) + single
+  `Semantics(button:…)` node — fixes role/target across every screen at once.
+- Login: password-visibility toggle now has a tooltip; auth/validation errors
+  wrapped in a `liveRegion` so screen readers announce them.
+- Session: the primary notes `TextField` now has a `Semantics(label:'Session
+  notes')`.
+
+### UI / accessibility — remaining (tracked)
+- **HIGH — `session_screen` design-system bypass:** bare `Scaffold` + hard-coded
+  `Colors.*` + color-only timer state. Rebuild on `AppShell` + tokens, add a
+  text/icon label to the timer (not color alone). Biggest single UI/demo gap.
+- **HIGH — session 3-column layout** has no responsive reflow (<900px / 200%
+  zoom). Add a `LayoutBuilder` stacked fallback.
+- **MEDIUM:** dashboard quick-action tiles need `Semantics(button:…)`; pricing
+  "MOST POPULAR" badge (white@28% on teal) + comparison-table status icons fail
+  contrast / are icon-only; landing scroll/animations should honor
+  `MediaQuery.disableAnimations`; `app_shell` search is a fake input (give it a
+  button role); superbill prefilled sample data should be marked as demo.
+
+---
+
+*Generated from automated multi-agent reviews. Verify each item against current
+code before acting — the codebase moves.*

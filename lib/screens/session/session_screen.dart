@@ -424,7 +424,10 @@ class _SessionScreenState extends State<SessionScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: TextField(
+              child: Semantics(
+                label: 'Session notes',
+                textField: true,
+                child: TextField(
                 controller: _notesController,
                 maxLines: null,
                 expands: true,
@@ -437,6 +440,7 @@ class _SessionScreenState extends State<SessionScreen> {
                   fontSize: 16,
                   height: 1.5,
                 ),
+              ),
               ),
             ),
           ),

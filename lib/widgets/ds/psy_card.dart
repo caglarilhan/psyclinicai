@@ -40,7 +40,7 @@ class _PsyCardState extends State<PsyCard> {
       duration: PsyMotion.fast,
       curve: PsyMotion.standard,
       transform: Matrix4.identity()
-        ..translateByDouble(0.0, lifted ? -1.0 : 0.0, 0.0, 1.0),
+        ..translateByDouble(0.0, lifted ? -3.0 : 0.0, 0.0, 1.0),
       transformAlignment: Alignment.center,
       decoration: BoxDecoration(
         color: bg,
@@ -54,9 +54,10 @@ class _PsyCardState extends State<PsyCard> {
             ? [
                 BoxShadow(
                   color: cs.primary
-                      .withValues(alpha: lifted ? 0.10 : 0.06),
-                  blurRadius: lifted ? 14 : 10,
-                  offset: Offset(0, lifted ? 6 : 4),
+                      .withValues(alpha: lifted ? 0.13 : 0.06),
+                  blurRadius: lifted ? 20 : 10,
+                  spreadRadius: lifted ? -3 : 0,
+                  offset: Offset(0, lifted ? 8 : 4),
                 ),
               ]
             : const [],

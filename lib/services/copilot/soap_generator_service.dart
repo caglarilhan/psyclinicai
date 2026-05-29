@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'api_key_storage.dart';
+import 'copilot_endpoint.dart';
+import 'prompt_safety.dart';
 
 /// Generates structured therapy notes (SOAP / DAP / BIRP) from a session
 /// transcript using Anthropic Claude Haiku 3.5.
@@ -17,9 +19,7 @@ class SoapGeneratorService {
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
 
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
-  static const String _anthropicVersion = '2023-06-01';
 
   Future<SoapNote> generate({
     required String transcript,
@@ -61,13 +61,8 @@ class SoapGeneratorService {
     try {
       resp = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            CopilotEndpoint.uri,
+            headers: CopilotEndpoint.headers(key),
             body: body,
           )
           .timeout(const Duration(seconds: 45));
@@ -272,10 +267,11 @@ Rules:
   }) {
     final header = StringBuffer();
     if (clientName != null && clientName.isNotEmpty) {
-      header.writeln('Client: $clientName');
+      header.writeln('Client: ${PromptSafety.sanitize(clientName)}');
     }
     if (presenting != null && presenting.isNotEmpty) {
-      header.writeln('Presenting concern: $presenting');
+      header.writeln(
+          'Presenting concern: ${PromptSafety.sanitize(presenting)}');
     }
     if (treatmentGoals.isNotEmpty) {
       header.writeln('Active treatment-plan goals (reference progress toward '
@@ -287,7 +283,7 @@ Rules:
     if (header.isNotEmpty) header.writeln('---');
     header.writeln('Session transcript (raw, may contain ASR errors):');
     header.writeln();
-    header.writeln(transcript);
+    header.writeln(PromptSafety.fence('transcript', transcript));
     return header.toString();
   }
 

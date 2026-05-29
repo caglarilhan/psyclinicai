@@ -24,7 +24,10 @@
         "uses-rel-preconnect": "off",
         "errors-in-console": "off",
         "csp-xss": "off",
-        "robots-txt": "off"
+        "robots-txt": "off",
+        "total-byte-weight": "off",
+        "valid-source-maps": "off",
+        "meta-viewport": "warn"
       }
     },
     "upload": {

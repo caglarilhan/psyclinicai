@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/denial_risk.dart';
 import '../../models/superbill_prefill.dart';
 import '../../services/billing/cpt_lookup_service.dart';
+import '../../services/billing/denial_shield_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/superbill_pdf_service.dart';
+import '../../services/copilot/compliance_check_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
@@ -58,6 +61,11 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
 
   bool _generating = false;
 
+  // Denial Shield — computed when launched from a session note.
+  final _compliance = ComplianceCheckService();
+  Payer _payer = Payer.medicare;
+  DenialRisk? _denial;
+
   @override
   void initState() {
     super.initState();
@@ -94,10 +102,57 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
       chargePerUnit: cpt.nationalAverageUsd,
       diagnosisPointers: const [1],
     ));
+    _computeDenial();
+  }
+
+  /// Runs the Denial Shield for the first service line against the source note
+  /// (present only when launched from a session) + selected payer.
+  void _computeDenial() {
+    final note = widget.prefill?.noteText;
+    if (note == null || note.trim().isEmpty || _lines.isEmpty) {
+      _denial = null;
+      return;
+    }
+    final audit = _compliance.check(note, hasActivePlan: true);
+    _denial = const DenialShieldService().assess(
+      note: note,
+      cptCode: _lines.first.cpt.code,
+      payer: _payer,
+      audit: audit,
+    );
+  }
+
+  Future<bool?> _confirmHighRisk() {
+    final d = _denial!;
+    final cs = Theme.of(context).colorScheme;
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.verified_user_outlined, color: cs.error),
+        title: const Text('High denial risk'),
+        content: Text(
+          '${_payer.short} is likely to deny this ${d.cptCode} claim'
+          '${d.revenueAtRisk != null ? ' (~\$${d.revenueAtRisk!.round()})' : ''}'
+          '${d.reasons.isNotEmpty ? ': ${d.reasons.first.title}.' : '.'} '
+          'Fix the note first, or generate anyway?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Go back & fix'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Generate anyway'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _compliance.dispose();
     for (final c in [
       _providerName,
       _providerCreds,
@@ -120,6 +175,11 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   }
 
   Future<void> _generate() async {
+    // Denial Shield gate: warn before billing a high-risk claim.
+    if (_denial?.level == DenialLevel.high) {
+      final proceed = await _confirmHighRisk();
+      if (proceed != true) return;
+    }
     setState(() => _generating = true);
     try {
       final data = SuperbillData(
@@ -267,6 +327,10 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           return ListView(
             padding: const EdgeInsets.only(bottom: 48),
             children: [
+              if (_denial != null) ...[
+                _buildDenialCard(theme, cs),
+                const SizedBox(height: 16),
+              ],
               _InvoiceMetaCard(
                 cs: cs,
                 theme: theme,
@@ -296,6 +360,118 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDenialCard(ThemeData theme, ColorScheme cs) {
+    final d = _denial!;
+    final color = switch (d.level) {
+      DenialLevel.high => cs.error,
+      DenialLevel.medium => const Color(0xFFD97706),
+      DenialLevel.low => const Color(0xFF16A34A),
+    };
+    final risk = d.revenueAtRisk;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.verified_user_outlined, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Denial Shield · ${d.level.label}',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+              ),
+              DropdownButton<Payer>(
+                value: _payer,
+                isDense: true,
+                underline: const SizedBox.shrink(),
+                items: [
+                  for (final p in Payer.values)
+                    DropdownMenuItem(value: p, child: Text(p.short)),
+                ],
+                onChanged: (p) {
+                  if (p == null) return;
+                  setState(() {
+                    _payer = p;
+                    _computeDenial();
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${d.cptCode} · ${d.cptLabel}'
+            '${risk != null ? ' · ~\$${risk.round()} at risk if denied' : ''}',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+          ),
+          const SizedBox(height: 12),
+          if (d.reasons.isEmpty)
+            Row(
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    size: 18, color: Color(0xFF16A34A)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Documentation supports billing — no denial drivers for '
+                    '${_payer.short}.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            )
+          else
+            ...d.reasons.map((r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                              r.critical
+                                  ? Icons.error_outline
+                                  : Icons.warning_amber_rounded,
+                              size: 16,
+                              color: r.critical
+                                  ? cs.error
+                                  : const Color(0xFFD97706)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(r.title,
+                                style: theme.textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 22, top: 4),
+                        child: Text('+ ${r.fixSentence}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.primary, height: 1.4)),
+                      ),
+                    ],
+                  ),
+                )),
+          const SizedBox(height: 4),
+          Text(DenialShieldService.payerFocus(_payer),
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                  fontStyle: FontStyle.italic)),
+        ],
       ),
     );
   }

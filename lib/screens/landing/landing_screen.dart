@@ -11,6 +11,7 @@ import '../../widgets/landing/sticky_cta_bar.dart';
 import '../../widgets/landing/trust_strip.dart';
 import 'sections/built_for_section.dart';
 import 'sections/comparison_table_section.dart';
+import 'sections/denial_shield_section.dart';
 import 'sections/faq_section.dart';
 import 'sections/feature_grid_section.dart';
 import 'sections/final_cta_section.dart';
@@ -214,6 +215,7 @@ class _LandingScreenState extends State<LandingScreen> {
               const FeatureGridSection(),
               const BuiltForSection(),
               const ProblemSection(),
+              const DenialShieldSection(),
               KeyedSubtree(
                   key: _anchors['pricing'],
                   child: PricingSection(

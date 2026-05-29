@@ -71,6 +71,7 @@ class NoteBillingExtractor {
       icd10Codes: extractIcd10(note, isKnown: isKnownIcd),
       cptCode: suggestCpt(note, isPsychiatry: isPsychiatry),
       serviceDate: serviceDate,
+      noteText: note,
     );
   }
 }

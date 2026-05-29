@@ -320,8 +320,11 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _formatDuration(_sessionDuration),
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  // State carried in text too, not color alone (WCAG 1.4.1).
+                  '${_isSessionActive ? 'Live' : 'Ended'} · '
+                  '${_formatDuration(_sessionDuration)}',
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

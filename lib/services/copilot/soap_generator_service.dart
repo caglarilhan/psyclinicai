@@ -252,6 +252,14 @@ Rules:
       Modality.ocdErp =>
         'Frame interventions in ERP terms for OCD (hierarchy, exposure, '
             'response prevention, SUDS) without inventing details.',
+      Modality.schema =>
+        'Frame in Schema Therapy terms (early maladaptive schemas, schema '
+            'modes such as vulnerable child / punitive parent / healthy adult, '
+            'mode work, limited reparenting) without inventing details.',
+      Modality.psychodynamic =>
+        'Frame in psychodynamic terms (defense mechanisms, transference/'
+            'countertransference, recurring relational patterns, insight) '
+            'without inventing details.',
     };
     return m.isEmpty ? '' : '\n\nModality: $m';
   }
@@ -300,7 +308,17 @@ extension SoapFormatX on SoapFormat {
 
 /// Therapeutic modality the note should be tailored to. `general` adds no
 /// extra guidance.
-enum Modality { general, cbt, dbt, emdr, ifs, act, ocdErp }
+enum Modality {
+  general,
+  cbt,
+  dbt,
+  emdr,
+  ifs,
+  act,
+  ocdErp,
+  schema,
+  psychodynamic,
+}
 
 extension ModalityX on Modality {
   String get label => switch (this) {
@@ -311,6 +329,8 @@ extension ModalityX on Modality {
         Modality.ifs => 'IFS',
         Modality.act => 'ACT',
         Modality.ocdErp => 'OCD / ERP',
+        Modality.schema => 'Schema',
+        Modality.psychodynamic => 'Psychodynamic',
       };
 }
 

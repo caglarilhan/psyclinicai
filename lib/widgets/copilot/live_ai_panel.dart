@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/clinical_lens.dart';
 import '../../models/denial_risk.dart';
 import '../../models/session_note.dart';
 import '../../services/billing/denial_shield_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/note_billing_extractor.dart';
+import '../../services/copilot/clinical_lens_service.dart';
 import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/session_insights_service.dart';
@@ -80,7 +82,9 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   DenialRisk? _denial;
   final _editCtl = TextEditingController();
   final _noteRepo = SessionNoteRepository();
+  final _lensService = ClinicalLensService();
   bool _editing = false;
+  bool _loadingLens = false;
 
   @override
   void initState() {
@@ -462,9 +466,100 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     _risk.dispose();
     _compliance.dispose();
     _insights.dispose();
+    _lensService.dispose();
     _pulse.dispose();
     _editCtl.dispose();
     super.dispose();
+  }
+
+  /// Extracts the selected modality's clinical lens from the session and shows
+  /// it in a sheet — the clinical-depth engine.
+  Future<void> _showClinicalLens(BuildContext context) async {
+    final src = _transcript.isNotEmpty
+        ? _transcript
+        : (_note?.rawMarkdown ?? '');
+    if (src.trim().isEmpty) return;
+    setState(() => _loadingLens = true);
+    try {
+      final lens =
+          await _lensService.extract(transcript: src, modality: _modality);
+      if (!mounted) return;
+      _presentLens(context, lens);
+    } on ClinicalLensException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'))
+            : null,
+      ));
+    } finally {
+      if (mounted) setState(() => _loadingLens = false);
+    }
+  }
+
+  void _presentLens(BuildContext context, ClinicalLens lens) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: cs.surface,
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.92,
+        builder: (_, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.all(20),
+          children: [
+            Row(
+              children: [
+                Icon(Icons.center_focus_strong_outlined, color: cs.primary),
+                const SizedBox(width: 8),
+                Text('${lens.modalityLabel} lens',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            for (final s in lens.sections) ...[
+              Text(s.title.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6)),
+              const SizedBox(height: 6),
+              ...s.items.map((it) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.chevron_right,
+                            size: 16,
+                            color: cs.onSurface.withValues(alpha: 0.5)),
+                        Expanded(
+                            child: Text(it,
+                                style: theme.textTheme.bodyMedium)),
+                      ],
+                    ),
+                  )),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              'Decision-support — extracted from the transcript for review, not '
+              'a diagnosis.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -579,6 +674,9 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 controller: _editCtl,
                 editing: _editing,
                 onCreateSuperbill: () => _createSuperbill(context),
+                onClinicalLens: () => _showClinicalLens(context),
+                loadingLens: _loadingLens,
+                modalityLabel: _modality.label,
               ),
             ),
           ],
@@ -990,6 +1088,9 @@ class _NoteReadyView extends StatelessWidget {
     required this.controller,
     required this.editing,
     required this.onCreateSuperbill,
+    required this.onClinicalLens,
+    required this.loadingLens,
+    required this.modalityLabel,
   });
 
   final ThemeData theme;
@@ -998,6 +1099,9 @@ class _NoteReadyView extends StatelessWidget {
   final TextEditingController controller;
   final bool editing;
   final VoidCallback onCreateSuperbill;
+  final VoidCallback onClinicalLens;
+  final bool loadingLens;
+  final String modalityLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -1050,6 +1154,21 @@ class _NoteReadyView extends StatelessWidget {
                 ),
               ],
               const Spacer(),
+              TextButton.icon(
+                onPressed: loadingLens ? null : onClinicalLens,
+                icon: loadingLens
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.center_focus_strong_outlined, size: 16),
+                label: Text('$modalityLabel lens'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
               TextButton.icon(
                 onPressed: onCreateSuperbill,
                 icon: const Icon(Icons.receipt_long_outlined, size: 16),

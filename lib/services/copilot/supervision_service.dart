@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/supervision_report.dart';
+import '../data/telemetry_service.dart';
 import 'api_key_storage.dart';
+import 'prompt_safety.dart';
 import 'soap_generator_service.dart' show Modality, ModalityX;
 
 /// Produces a de-identified supervision report from a session: fidelity to the
@@ -52,7 +54,8 @@ class SupervisionService {
         'competency or licensure determination. Respond STRICT JSON only: '
         '{"fidelityScore":0-100,"fidelityNotes":"...","strengths":["..."],'
         '"growthAreas":["..."],"reflectiveQuestions":["..."],'
-        '"summary":"<=25 words, de-identified"}';
+        '"summary":"<=25 words, de-identified"}. '
+        '${PromptSafety.dataOnlyDirective}';
 
     final body = jsonEncode({
       'model': _model,
@@ -60,7 +63,7 @@ class SupervisionService {
       'temperature': 0.3,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': transcript}
+        {'role': 'user', 'content': PromptSafety.fence('transcript', transcript)}
       ],
     });
 
@@ -134,7 +137,8 @@ class SupervisionService {
           report.summary.isEmpty &&
           report.fidelityNotes.isEmpty;
       return empty ? null : report;
-    } catch (_) {
+    } catch (e, st) {
+      TelemetryService.instance.captureError(e, st, hint: 'supervision_parse');
       return null;
     }
   }

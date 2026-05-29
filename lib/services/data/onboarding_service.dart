@@ -48,13 +48,10 @@ class OnboardingService {
       try {
         await FirebaseFirestore.instance
             .doc(FirestoreSchema.clinicPath(uid))
-            .set(
-          {
-            'onboardingCompleted': true,
-            'onboardingCompletedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+            .set({
+              'onboardingCompleted': true,
+              'onboardingCompletedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       } catch (_) {
         // Best-effort; the local flag is enough to stop re-prompting.
       }

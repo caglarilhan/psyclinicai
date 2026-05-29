@@ -24,11 +24,15 @@ class HomeworkRepository {
         // Per-record resilience: one corrupt entry must not wipe the list.
         try {
           _items.add(
-              HomeworkItem.fromJson(jsonDecode(s) as Map<String, dynamic>));
+            HomeworkItem.fromJson(jsonDecode(s) as Map<String, dynamic>),
+          );
         } catch (err, st) {
           dropped++;
-          TelemetryService.instance
-              .captureError(err, st, hint: 'homework_decode_record');
+          TelemetryService.instance.captureError(
+            err,
+            st,
+            hint: 'homework_decode_record',
+          );
         }
       }
       if (dropped > 0) {
@@ -48,7 +52,9 @@ class HomeworkRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(
-          _key, _items.map((i) => jsonEncode(i.toJson())).toList());
+        _key,
+        _items.map((i) => jsonEncode(i.toJson())).toList(),
+      );
     } catch (e, st) {
       TelemetryService.instance.captureError(e, st, hint: 'homework_save');
     }

@@ -18,8 +18,8 @@ import 'soap_generator_service.dart' show Modality, ModalityX;
 /// licensure determination. BYOK Claude (mirrors the SOAP generator pattern).
 class SupervisionService {
   SupervisionService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -63,7 +63,10 @@ class SupervisionService {
       'temperature': 0.3,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': PromptSafety.fence('transcript', transcript)}
+        {
+          'role': 'user',
+          'content': PromptSafety.fence('transcript', transcript),
+        },
       ],
     });
 
@@ -82,11 +85,13 @@ class SupervisionService {
           .timeout(const Duration(seconds: 45));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const SupervisionException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw SupervisionException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -96,7 +101,8 @@ class SupervisionService {
       final report = parse(content, modality);
       if (report == null) {
         throw const SupervisionException(
-            'Could not parse the supervision report. Try again.');
+          'Could not parse the supervision report. Try again.',
+        );
       }
       return report;
     } on SupervisionException {
@@ -131,7 +137,8 @@ class SupervisionService {
         reflectiveQuestions: l('reflectiveQuestions'),
         summary: (j['summary'] as String?)?.trim() ?? '',
       );
-      final empty = report.strengths.isEmpty &&
+      final empty =
+          report.strengths.isEmpty &&
           report.growthAreas.isEmpty &&
           report.reflectiveQuestions.isEmpty &&
           report.summary.isEmpty &&

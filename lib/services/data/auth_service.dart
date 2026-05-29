@@ -108,13 +108,13 @@ class FirebaseAuthService extends ChangeNotifier {
           .collection(FirestoreSchema.clinicians)
           .doc(_user!.uid)
           .set({
-        FirestoreSchema.fieldEmail: email.trim(),
-        FirestoreSchema.fieldFullName: fullName,
-        FirestoreSchema.fieldRole: role.id,
-        FirestoreSchema.fieldCredentials: credentials,
-        FirestoreSchema.fieldCreatedAt: now,
-        FirestoreSchema.fieldUpdatedAt: now,
-      });
+            FirestoreSchema.fieldEmail: email.trim(),
+            FirestoreSchema.fieldFullName: fullName,
+            FirestoreSchema.fieldRole: role.id,
+            FirestoreSchema.fieldCredentials: credentials,
+            FirestoreSchema.fieldCreatedAt: now,
+            FirestoreSchema.fieldUpdatedAt: now,
+          });
 
       _profile = ClinicianProfile(
         userId: _user!.uid,
@@ -174,8 +174,7 @@ class FirebaseAuthService extends ChangeNotifier {
     } catch (e, st) {
       // A null profile means clinicId is unavailable and downstream Firestore
       // calls will fail far from here — make the root cause observable.
-      await TelemetryService.instance
-          .captureError(e, st, hint: 'load_profile');
+      await TelemetryService.instance.captureError(e, st, hint: 'load_profile');
       return null;
     }
   }
@@ -183,16 +182,16 @@ class FirebaseAuthService extends ChangeNotifier {
   // user-not-found and wrong-password return the SAME message to avoid account
   // enumeration (OWASP) — never confirm whether an email is registered.
   String _mapFirebaseError(FirebaseAuthException e) => switch (e.code) {
-        'user-not-found' => 'Invalid email or password.',
-        'wrong-password' => 'Invalid email or password.',
-        'invalid-credential' => 'Invalid email or password.',
-        'email-already-in-use' => 'That email is already registered.',
-        'weak-password' => 'Password too weak (min 8 characters).',
-        'invalid-email' => 'That email is not valid.',
-        'network-request-failed' => 'Network error. Check your connection.',
-        'too-many-requests' => 'Too many attempts. Try again later.',
-        _ => 'Authentication failed: ${e.message ?? e.code}',
-      };
+    'user-not-found' => 'Invalid email or password.',
+    'wrong-password' => 'Invalid email or password.',
+    'invalid-credential' => 'Invalid email or password.',
+    'email-already-in-use' => 'That email is already registered.',
+    'weak-password' => 'Password too weak (min 8 characters).',
+    'invalid-email' => 'That email is not valid.',
+    'network-request-failed' => 'Network error. Check your connection.',
+    'too-many-requests' => 'Too many attempts. Try again later.',
+    _ => 'Authentication failed: ${e.message ?? e.code}',
+  };
 
   @override
   void dispose() {

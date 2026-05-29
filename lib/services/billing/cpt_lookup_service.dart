@@ -23,8 +23,7 @@ class CptLookupService {
     CptCode(
       code: '90792',
       shortLabel: 'Psychiatric Eval (with medical)',
-      description:
-          'Psychiatric diagnostic evaluation with medical services.',
+      description: 'Psychiatric diagnostic evaluation with medical services.',
       typicalDurationMinutes: 60,
       nationalAverageUsd: 215,
       category: CptCategory.evaluation,
@@ -56,8 +55,7 @@ class CptLookupService {
     CptCode(
       code: '90846',
       shortLabel: 'Family Psychotherapy (no patient)',
-      description:
-          'Family or couples psychotherapy, without patient present.',
+      description: 'Family or couples psychotherapy, without patient present.',
       typicalDurationMinutes: 50,
       nationalAverageUsd: 130,
       category: CptCategory.familyGroup,
@@ -141,11 +139,11 @@ enum CptCategory { evaluation, psychotherapy, familyGroup, crisis }
 
 extension CptCategoryX on CptCategory {
   String get label => switch (this) {
-        CptCategory.evaluation => 'Evaluation / E&M',
-        CptCategory.psychotherapy => 'Psychotherapy',
-        CptCategory.familyGroup => 'Family / Group',
-        CptCategory.crisis => 'Crisis',
-      };
+    CptCategory.evaluation => 'Evaluation / E&M',
+    CptCategory.psychotherapy => 'Psychotherapy',
+    CptCategory.familyGroup => 'Family / Group',
+    CptCategory.crisis => 'Crisis',
+  };
 }
 
 class CptCode {

@@ -19,8 +19,8 @@ import 'prompt_safety.dart';
 ///    any network/parse error — it never throws into the UI.
 class RiskSignalService {
   RiskSignalService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -34,25 +34,55 @@ class RiskSignalService {
   /// small and reviewable; expand with clinical input.
   static const Map<RiskCategory, List<String>> _lexicon = {
     RiskCategory.suicidalIdeation: [
-      'kill myself', 'end my life', 'take my own life', 'want to die',
-      'better off dead', 'no reason to live', 'not worth living',
-      'suicidal', 'suicide', 'ending it all',
+      'kill myself',
+      'end my life',
+      'take my own life',
+      'want to die',
+      'better off dead',
+      'no reason to live',
+      'not worth living',
+      'suicidal',
+      'suicide',
+      'ending it all',
     ],
     RiskCategory.selfHarm: [
-      'cut myself', 'hurt myself', 'harm myself', 'harming myself',
-      'self harm', 'burning myself', 'cutting again',
+      'cut myself',
+      'hurt myself',
+      'harm myself',
+      'harming myself',
+      'self harm',
+      'burning myself',
+      'cutting again',
     ],
     RiskCategory.harmToOthers: [
-      'kill him', 'kill her', 'kill them', 'hurt him', 'hurt her',
-      'want to hurt', 'homicidal', 'make them pay',
+      'kill him',
+      'kill her',
+      'kill them',
+      'hurt him',
+      'hurt her',
+      'want to hurt',
+      'homicidal',
+      'make them pay',
     ],
     RiskCategory.substanceUse: [
-      'overdose', 'using again', 'relapsed', 'relapse', 'drinking too much',
-      'cant stop drinking', 'high every day', 'pills to cope', 'blackout',
+      'overdose',
+      'using again',
+      'relapsed',
+      'relapse',
+      'drinking too much',
+      'cant stop drinking',
+      'high every day',
+      'pills to cope',
+      'blackout',
     ],
     RiskCategory.hopelessness: [
-      'hopeless', 'no way out', 'nothing matters', 'cant go on',
-      'give up on everything', 'trapped', 'no future',
+      'hopeless',
+      'no way out',
+      'nothing matters',
+      'cant go on',
+      'give up on everything',
+      'trapped',
+      'no future',
     ],
   };
 
@@ -71,16 +101,18 @@ class RiskSignalService {
     for (final entry in _lexicon.entries) {
       for (final phrase in entry.value) {
         if (normalized.contains(' $phrase ')) {
-          out.add(RiskSignal(
-            category: entry.key,
-            severity: _highSeverity.contains(entry.key)
-                ? RiskSeverity.high
-                : RiskSeverity.elevated,
-            matchedText: phrase,
-            snippet: _snippet(segment, phrase),
-            source: RiskSource.lexicon,
-            at: DateTime.now(),
-          ));
+          out.add(
+            RiskSignal(
+              category: entry.key,
+              severity: _highSeverity.contains(entry.key)
+                  ? RiskSeverity.high
+                  : RiskSeverity.elevated,
+              matchedText: phrase,
+              snippet: _snippet(segment, phrase),
+              source: RiskSource.lexicon,
+              at: DateTime.now(),
+            ),
+          );
           break; // one signal per category per segment
         }
       }
@@ -127,7 +159,7 @@ class RiskSignalService {
       'temperature': 0.0,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': PromptSafety.fence('transcript', text)}
+        {'role': 'user', 'content': PromptSafety.fence('transcript', text)},
       ],
     });
 
@@ -162,8 +194,11 @@ class RiskSignalService {
           .trim();
       return _parseAiSignals(content);
     } catch (e, st) {
-      await TelemetryService.instance
-          .captureError(e, st, hint: 'risk_classify');
+      await TelemetryService.instance.captureError(
+        e,
+        st,
+        hint: 'risk_classify',
+      );
       return const [];
     }
   }
@@ -173,19 +208,21 @@ class RiskSignalService {
       final start = content.indexOf('{');
       final end = content.lastIndexOf('}');
       if (start < 0 || end <= start) return const [];
-      final json = jsonDecode(content.substring(start, end + 1))
-          as Map<String, dynamic>;
+      final json =
+          jsonDecode(content.substring(start, end + 1)) as Map<String, dynamic>;
       final list = json['signals'] as List<dynamic>? ?? const [];
       return list
           .map((e) => e as Map<String, dynamic>)
-          .map((m) => RiskSignal(
-                category: _categoryFrom(m['category'] as String? ?? ''),
-                severity: _severityFrom(m['severity'] as String? ?? ''),
-                matchedText: (m['quote'] as String? ?? '').trim(),
-                snippet: (m['quote'] as String? ?? '').trim(),
-                source: RiskSource.ai,
-                at: DateTime.now(),
-              ))
+          .map(
+            (m) => RiskSignal(
+              category: _categoryFrom(m['category'] as String? ?? ''),
+              severity: _severityFrom(m['severity'] as String? ?? ''),
+              matchedText: (m['quote'] as String? ?? '').trim(),
+              snippet: (m['quote'] as String? ?? '').trim(),
+              source: RiskSource.ai,
+              at: DateTime.now(),
+            ),
+          )
           .where((s) => s.matchedText.isNotEmpty)
           .toList(growable: false);
     } catch (e, st) {
@@ -197,18 +234,18 @@ class RiskSignalService {
   }
 
   static RiskCategory _categoryFrom(String s) => switch (s.trim()) {
-        'suicidal_ideation' => RiskCategory.suicidalIdeation,
-        'self_harm' => RiskCategory.selfHarm,
-        'harm_to_others' => RiskCategory.harmToOthers,
-        'substance_use' => RiskCategory.substanceUse,
-        _ => RiskCategory.hopelessness,
-      };
+    'suicidal_ideation' => RiskCategory.suicidalIdeation,
+    'self_harm' => RiskCategory.selfHarm,
+    'harm_to_others' => RiskCategory.harmToOthers,
+    'substance_use' => RiskCategory.substanceUse,
+    _ => RiskCategory.hopelessness,
+  };
 
   static RiskSeverity _severityFrom(String s) => switch (s.trim()) {
-        'high' => RiskSeverity.high,
-        'info' => RiskSeverity.info,
-        _ => RiskSeverity.elevated,
-      };
+    'high' => RiskSeverity.high,
+    'info' => RiskSeverity.info,
+    _ => RiskSeverity.elevated,
+  };
 
   void dispose() => _client.close();
 }
@@ -227,20 +264,20 @@ enum RiskSource { lexicon, ai }
 
 extension RiskCategoryX on RiskCategory {
   String get label => switch (this) {
-        RiskCategory.suicidalIdeation => 'Suicidal ideation',
-        RiskCategory.selfHarm => 'Self-harm',
-        RiskCategory.harmToOthers => 'Harm to others',
-        RiskCategory.substanceUse => 'Substance use',
-        RiskCategory.hopelessness => 'Hopelessness',
-      };
+    RiskCategory.suicidalIdeation => 'Suicidal ideation',
+    RiskCategory.selfHarm => 'Self-harm',
+    RiskCategory.harmToOthers => 'Harm to others',
+    RiskCategory.substanceUse => 'Substance use',
+    RiskCategory.hopelessness => 'Hopelessness',
+  };
 }
 
 extension RiskSeverityX on RiskSeverity {
   String get label => switch (this) {
-        RiskSeverity.high => 'High',
-        RiskSeverity.elevated => 'Elevated',
-        RiskSeverity.info => 'Info',
-      };
+    RiskSeverity.high => 'High',
+    RiskSeverity.elevated => 'Elevated',
+    RiskSeverity.info => 'Info',
+  };
 }
 
 /// A single surfaced risk signal. [matchedText] is the trigger; [snippet] is a

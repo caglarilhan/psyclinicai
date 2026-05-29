@@ -10,8 +10,8 @@ import 'api_key_storage.dart';
 /// PsyClinicAI servers.
 class ChatService {
   ChatService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -53,10 +53,12 @@ Rules:
     }
 
     final messages = history
-        .map((t) => {
-              'role': t.role == ChatRole.user ? 'user' : 'assistant',
-              'content': t.text,
-            })
+        .map(
+          (t) => {
+            'role': t.role == ChatRole.user ? 'user' : 'assistant',
+            'content': t.text,
+          },
+        )
         .toList();
 
     final body = jsonEncode({
@@ -139,7 +141,7 @@ enum ChatRole { user, assistant }
 
 class ChatTurn {
   ChatTurn({required this.role, required this.text, DateTime? at})
-      : at = at ?? DateTime.now();
+    : at = at ?? DateTime.now();
 
   final ChatRole role;
   final String text;

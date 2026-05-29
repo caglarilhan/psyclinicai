@@ -14,8 +14,8 @@ import 'api_key_storage.dart';
 /// HTTP/auth pattern of the other co-pilot services.
 class SessionInsightsService {
   SessionInsightsService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -30,7 +30,8 @@ class SessionInsightsService {
     final text = transcript.trim();
     if (text.length < 40) {
       throw const SessionInsightsException(
-          'Not enough session content to analyze yet.');
+        'Not enough session content to analyze yet.',
+      );
     }
 
     final key = await _keyStorage.getAnthropicKey();
@@ -57,7 +58,7 @@ class SessionInsightsService {
       'temperature': 0.4,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': text}
+        {'role': 'user', 'content': text},
       ],
     });
 
@@ -81,11 +82,13 @@ class SessionInsightsService {
 
     if (resp.statusCode == 401 || resp.statusCode == 403) {
       throw const SessionInsightsException(
-          'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+        'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+      );
     }
     if (resp.statusCode != 200) {
       throw SessionInsightsException(
-          'Anthropic error ${resp.statusCode}. Try again shortly.');
+        'Anthropic error ${resp.statusCode}. Try again shortly.',
+      );
     }
 
     final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -97,7 +100,8 @@ class SessionInsightsService {
     final insights = _parse(content);
     if (insights == null) {
       throw const SessionInsightsException(
-          'Could not parse insights from the AI response. Try again.');
+        'Could not parse insights from the AI response. Try again.',
+      );
     }
     return insights;
   }

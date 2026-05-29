@@ -12,8 +12,8 @@ import 'api_key_storage.dart';
 /// We do NOT return a single diagnosis — the clinician owns it.
 class DiagnosisService {
   DiagnosisService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -67,14 +67,14 @@ Return strictly JSON in this shape, no prose:
 
     final userPrompt = StringBuffer()
       ..writeln('Clinical vignette:')
-      ..writeln(vignette.trim().isEmpty
-          ? '(none provided)'
-          : vignette.trim())
+      ..writeln(vignette.trim().isEmpty ? '(none provided)' : vignette.trim())
       ..writeln()
       ..writeln('Selected symptoms:')
-      ..writeln(selectedSymptoms.isEmpty
-          ? '(none)'
-          : selectedSymptoms.map((s) => '- $s').join('\n'))
+      ..writeln(
+        selectedSymptoms.isEmpty
+            ? '(none)'
+            : selectedSymptoms.map((s) => '- $s').join('\n'),
+      )
       ..writeln()
       ..writeln('Return JSON only.');
 
@@ -84,7 +84,7 @@ Return strictly JSON in this shape, no prose:
       'temperature': 0.2,
       'system': _systemPrompt,
       'messages': [
-        {'role': 'user', 'content': userPrompt.toString()}
+        {'role': 'user', 'content': userPrompt.toString()},
       ],
     });
 
@@ -136,8 +136,7 @@ Return strictly JSON in this shape, no prose:
         'Anthropic returned an empty response.',
       );
     }
-    final text =
-        (content.first as Map<String, dynamic>)['text'] as String?;
+    final text = (content.first as Map<String, dynamic>)['text'] as String?;
     if (text == null || text.trim().isEmpty) {
       throw const DiagnosisException(
         DiagnosisErrorCode.parse,
@@ -184,21 +183,20 @@ class DxCandidate {
   });
 
   factory DxCandidate.fromJson(Map<String, dynamic> j) => DxCandidate(
-        name: j['name'] as String? ?? '',
-        icd10: j['icd10'] as String? ?? '',
-        dsm5: j['dsm5'] as String? ?? '',
-        confidence: j['confidence'] as String? ?? 'medium',
-        matchingCriteria:
-            ((j['matchingCriteria'] as List<dynamic>?) ?? [])
-                .map((e) => e.toString())
-                .toList(),
-        missingCriteria: ((j['missingCriteria'] as List<dynamic>?) ?? [])
-            .map((e) => e.toString())
-            .toList(),
-        nextSteps: ((j['nextSteps'] as List<dynamic>?) ?? [])
-            .map((e) => e.toString())
-            .toList(),
-      );
+    name: j['name'] as String? ?? '',
+    icd10: j['icd10'] as String? ?? '',
+    dsm5: j['dsm5'] as String? ?? '',
+    confidence: j['confidence'] as String? ?? 'medium',
+    matchingCriteria: ((j['matchingCriteria'] as List<dynamic>?) ?? [])
+        .map((e) => e.toString())
+        .toList(),
+    missingCriteria: ((j['missingCriteria'] as List<dynamic>?) ?? [])
+        .map((e) => e.toString())
+        .toList(),
+    nextSteps: ((j['nextSteps'] as List<dynamic>?) ?? [])
+        .map((e) => e.toString())
+        .toList(),
+  );
 
   final String name;
   final String icd10;

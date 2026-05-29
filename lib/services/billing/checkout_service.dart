@@ -15,8 +15,8 @@ import 'subscription_service.dart';
 /// non-configured error instead of a broken redirect.
 class CheckoutService {
   CheckoutService({http.Client? client, Future<bool> Function(Uri)? launcher})
-      : _client = client ?? http.Client(),
-        _launch = launcher ?? _defaultLaunch;
+    : _client = client ?? http.Client(),
+      _launch = launcher ?? _defaultLaunch;
 
   final http.Client _client;
   final Future<bool> Function(Uri) _launch;
@@ -48,7 +48,9 @@ class CheckoutService {
   }
 
   Future<String> _createSession(
-      SubscriptionTier tier, String? customerEmail) async {
+    SubscriptionTier tier,
+    String? customerEmail,
+  ) async {
     try {
       final resp = await _client
           .post(

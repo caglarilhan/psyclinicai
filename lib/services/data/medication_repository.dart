@@ -22,12 +22,16 @@ class MedicationRepository {
       for (final s in raw) {
         // Per-record resilience: one corrupt entry must not wipe the list.
         try {
-          _items
-              .add(Medication.fromJson(jsonDecode(s) as Map<String, dynamic>));
+          _items.add(
+            Medication.fromJson(jsonDecode(s) as Map<String, dynamic>),
+          );
         } catch (err, st) {
           dropped++;
-          TelemetryService.instance
-              .captureError(err, st, hint: 'medication_decode_record');
+          TelemetryService.instance.captureError(
+            err,
+            st,
+            hint: 'medication_decode_record',
+          );
         }
       }
       if (dropped > 0) {
@@ -47,7 +51,9 @@ class MedicationRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(
-          _key, _items.map((m) => jsonEncode(m.toJson())).toList());
+        _key,
+        _items.map((m) => jsonEncode(m.toJson())).toList(),
+      );
     } catch (e, st) {
       // Medication is clinical data — a lost write must be observable.
       TelemetryService.instance.captureError(e, st, hint: 'medication_save');

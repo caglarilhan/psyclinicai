@@ -21,8 +21,8 @@ import 'prompt_safety.dart';
 /// care.
 class ClinicalMemoryService {
   ClinicalMemoryService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -43,10 +43,12 @@ class ClinicalMemoryService {
     final clock = now ?? DateTime.now();
     final last = notes.isEmpty ? null : notes.first;
 
-    final overdue =
-        homework.where((h) => !h.done && h.dueDate.isBefore(clock)).length;
-    final pending =
-        homework.where((h) => !h.done && !h.dueDate.isBefore(clock)).length;
+    final overdue = homework
+        .where((h) => !h.done && h.dueDate.isBefore(clock))
+        .length;
+    final pending = homework
+        .where((h) => !h.done && !h.dueDate.isBefore(clock))
+        .length;
 
     final goals = (plan?.activeGoals ?? const <TreatmentGoal>[])
         .map((g) => '${g.description} (${g.progress}%)')
@@ -57,11 +59,14 @@ class ClinicalMemoryService {
     final todos = <String>[];
     if (overdue > 0) {
       todos.add(
-          'Check the $overdue overdue homework ${overdue == 1 ? 'task' : 'tasks'}.');
+        'Check the $overdue overdue homework ${overdue == 1 ? 'task' : 'tasks'}.',
+      );
     }
     if (recentRisk && !hasSafetyPlan) {
-      todos.add('Risk was flagged recently and there is no safety plan on '
-          'file — consider building one together.');
+      todos.add(
+        'Risk was flagged recently and there is no safety plan on '
+        'file — consider building one together.',
+      );
     }
     if (goals.isNotEmpty) {
       todos.add('Revisit progress on: ${goals.first}.');
@@ -76,8 +81,9 @@ class ClinicalMemoryService {
       homeworkOverdue: overdue,
       homeworkPending: pending,
       hasSafetyPlan: hasSafetyPlan,
-      riskNote:
-          recentRisk ? 'Risk was flagged in a recent session — review.' : null,
+      riskNote: recentRisk
+          ? 'Risk was flagged in a recent session — review.'
+          : null,
       todos: todos,
     );
   }
@@ -97,12 +103,16 @@ class ClinicalMemoryService {
       );
     }
 
-    final recent = notes.take(3).map((n) {
-      final when = n.createdAt.toIso8601String().split('T').first;
-      return '[$when${n.flaggedRisk ? ' · RISK FLAGGED' : ''}] ${n.markdown}';
-    }).join('\n\n');
-    final goalsText =
-        brief.activeGoals.isEmpty ? 'none recorded' : brief.activeGoals.join('; ');
+    final recent = notes
+        .take(3)
+        .map((n) {
+          final when = n.createdAt.toIso8601String().split('T').first;
+          return '[$when${n.flaggedRisk ? ' · RISK FLAGGED' : ''}] ${n.markdown}';
+        })
+        .join('\n\n');
+    final goalsText = brief.activeGoals.isEmpty
+        ? 'none recorded'
+        : brief.activeGoals.join('; ');
 
     const system =
         'You are preparing a therapist to walk into their next session in 30 '
@@ -117,7 +127,8 @@ class ClinicalMemoryService {
 
     // Free-text fields (name, notes) are untrusted — fence them so a malicious
     // value can't act as a prompt instruction.
-    final user = 'Patient: ${PromptSafety.fence('patient_name', brief.patientName)}\n'
+    final user =
+        'Patient: ${PromptSafety.fence('patient_name', brief.patientName)}\n'
         'Active goals: ${PromptSafety.sanitize(goalsText)}\n'
         'Homework: ${brief.homeworkOverdue} overdue, '
         '${brief.homeworkPending} pending\n'
@@ -131,7 +142,7 @@ class ClinicalMemoryService {
       'temperature': 0.3,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': user}
+        {'role': 'user', 'content': user},
       ],
     });
 
@@ -150,11 +161,13 @@ class ClinicalMemoryService {
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const ClinicalMemoryException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw ClinicalMemoryException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -164,7 +177,8 @@ class ClinicalMemoryService {
       final parsed = _parse(content);
       if (parsed == null) {
         throw const ClinicalMemoryException(
-            'Could not parse the brief. Try again.');
+          'Could not parse the brief. Try again.',
+        );
       }
       return brief.copyWith(
         narrative: parsed.$1,
@@ -192,8 +206,11 @@ class ClinicalMemoryService {
       if (narrative.isEmpty && todos.isEmpty) return null;
       return (narrative, todos);
     } catch (e, st) {
-      TelemetryService.instance
-          .captureError(e, st, hint: 'clinical_memory_parse');
+      TelemetryService.instance.captureError(
+        e,
+        st,
+        hint: 'clinical_memory_parse',
+      );
       return null;
     }
   }

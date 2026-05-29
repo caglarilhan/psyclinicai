@@ -11,8 +11,8 @@ import 'api_key_storage.dart';
 /// `soap_generator_service.dart`.
 class TreatmentPlanAiService {
   TreatmentPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -47,7 +47,8 @@ class TreatmentPlanAiService {
         'crisisPrevention|other","priority":"low|medium|high|critical",'
         '"measurement":"how progress is measured","targetWeeks":<int>}]}';
 
-    final user = 'Primary diagnosis: $diagnosis\n\n'
+    final user =
+        'Primary diagnosis: $diagnosis\n\n'
         'Clinical formulation:\n$formulation';
 
     final body = jsonEncode({
@@ -56,7 +57,7 @@ class TreatmentPlanAiService {
       'temperature': 0.3,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': user}
+        {'role': 'user', 'content': user},
       ],
     });
 
@@ -80,11 +81,13 @@ class TreatmentPlanAiService {
 
     if (resp.statusCode == 401 || resp.statusCode == 403) {
       throw const TreatmentPlanAiException(
-          'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+        'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+      );
     }
     if (resp.statusCode != 200) {
       throw TreatmentPlanAiException(
-          'Anthropic error ${resp.statusCode}. Try again shortly.');
+        'Anthropic error ${resp.statusCode}. Try again shortly.',
+      );
     }
 
     final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -96,7 +99,8 @@ class TreatmentPlanAiService {
     final goals = _parse(content);
     if (goals.isEmpty) {
       throw const TreatmentPlanAiException(
-          'Could not parse goals from the AI response. Try again.');
+        'Could not parse goals from the AI response. Try again.',
+      );
     }
     return goals;
   }
@@ -111,13 +115,15 @@ class TreatmentPlanAiService {
       final list = json['goals'] as List<dynamic>? ?? const [];
       return list
           .map((e) => e as Map<String, dynamic>)
-          .map((m) => DraftGoal(
-                description: (m['description'] as String? ?? '').trim(),
-                category: _category(m['category'] as String? ?? ''),
-                priority: _priority(m['priority'] as String? ?? ''),
-                measurement: (m['measurement'] as String? ?? '').trim(),
-                targetWeeks: (m['targetWeeks'] as num?)?.toInt() ?? 12,
-              ))
+          .map(
+            (m) => DraftGoal(
+              description: (m['description'] as String? ?? '').trim(),
+              category: _category(m['category'] as String? ?? ''),
+              priority: _priority(m['priority'] as String? ?? ''),
+              measurement: (m['measurement'] as String? ?? '').trim(),
+              targetWeeks: (m['targetWeeks'] as num?)?.toInt() ?? 12,
+            ),
+          )
           .where((g) => g.description.isNotEmpty)
           .toList(growable: false);
     } catch (_) {
@@ -126,22 +132,22 @@ class TreatmentPlanAiService {
   }
 
   static GoalCategory _category(String s) => switch (s.trim()) {
-        'symptomReduction' => GoalCategory.symptomReduction,
-        'functionalImprovement' => GoalCategory.functionalImprovement,
-        'skillDevelopment' => GoalCategory.skillDevelopment,
-        'relationshipImprovement' => GoalCategory.relationshipImprovement,
-        'medicationCompliance' => GoalCategory.medicationCompliance,
-        'lifestyleChange' => GoalCategory.lifestyleChange,
-        'crisisPrevention' => GoalCategory.crisisPrevention,
-        _ => GoalCategory.other,
-      };
+    'symptomReduction' => GoalCategory.symptomReduction,
+    'functionalImprovement' => GoalCategory.functionalImprovement,
+    'skillDevelopment' => GoalCategory.skillDevelopment,
+    'relationshipImprovement' => GoalCategory.relationshipImprovement,
+    'medicationCompliance' => GoalCategory.medicationCompliance,
+    'lifestyleChange' => GoalCategory.lifestyleChange,
+    'crisisPrevention' => GoalCategory.crisisPrevention,
+    _ => GoalCategory.other,
+  };
 
   static GoalPriority _priority(String s) => switch (s.trim()) {
-        'critical' => GoalPriority.critical,
-        'high' => GoalPriority.high,
-        'low' => GoalPriority.low,
-        _ => GoalPriority.medium,
-      };
+    'critical' => GoalPriority.critical,
+    'high' => GoalPriority.high,
+    'low' => GoalPriority.low,
+    _ => GoalPriority.medium,
+  };
 
   /// Suggests 3–5 concrete homework assignment titles tied to the active
   /// goals. Throws [TreatmentPlanAiException] (noKey set) when no key.
@@ -162,7 +168,8 @@ class TreatmentPlanAiService {
         'between-session homework assignments tied to the treatment goals. '
         'Each is one short actionable sentence the client could do this week. '
         'Respond STRICT JSON only: {"homework":["...","..."]} (3–5 items).';
-    final user = 'Diagnosis: $diagnosis\nActive goals:\n'
+    final user =
+        'Diagnosis: $diagnosis\nActive goals:\n'
         '${goals.map((g) => '- $g').join('\n')}';
 
     final body = jsonEncode({
@@ -171,7 +178,7 @@ class TreatmentPlanAiService {
       'temperature': 0.4,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': user}
+        {'role': 'user', 'content': user},
       ],
     });
 
@@ -190,11 +197,13 @@ class TreatmentPlanAiService {
           .timeout(const Duration(seconds: 30));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw TreatmentPlanAiException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -243,7 +252,8 @@ class TreatmentPlanAiService {
         'goals and expected duration/frequency, in a professional letter '
         'format with placeholders [Insurer], [Date], [Clinician], [Credentials]. '
         'Do NOT invent facts beyond what is given. Output the letter text only.';
-    final user = 'Patient: $patientName\nDiagnosis: $diagnosis\n'
+    final user =
+        'Patient: $patientName\nDiagnosis: $diagnosis\n'
         'Treatment goals:\n${goals.map((g) => '- $g').join('\n')}';
 
     final body = jsonEncode({
@@ -252,7 +262,7 @@ class TreatmentPlanAiService {
       'temperature': 0.3,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': user}
+        {'role': 'user', 'content': user},
       ],
     });
 
@@ -271,11 +281,13 @@ class TreatmentPlanAiService {
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw TreatmentPlanAiException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])

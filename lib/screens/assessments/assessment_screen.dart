@@ -11,11 +11,7 @@ import '../../services/data/telemetry_service.dart';
 /// Unified assessment runner for PHQ-9 and GAD-7. One question at a time with
 /// progress, navigation, instant scoring, and clinical-action guidance.
 class AssessmentScreen extends StatefulWidget {
-  const AssessmentScreen({
-    super.key,
-    required this.type,
-    this.patientName,
-  });
+  const AssessmentScreen({super.key, required this.type, this.patientName});
 
   final AssessmentType type;
   final String? patientName;
@@ -72,11 +68,15 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     final gad7 = widget.type == AssessmentType.gad7
         ? Gad7Service.instance.score(intAnswers)
         : null;
-    final result = phq9 != null ? _resultFromPhq9(phq9) : _resultFromGad7(gad7!);
+    final result = phq9 != null
+        ? _resultFromPhq9(phq9)
+        : _resultFromGad7(gad7!);
 
     await _persistToFirestore(phq9: phq9, gad7: gad7);
-    TelemetryService.instance.capture(TelemetryEvents.assessmentCompleted,
-        properties: {'type': widget.type.name});
+    TelemetryService.instance.capture(
+      TelemetryEvents.assessmentCompleted,
+      properties: {'type': widget.type.name},
+    );
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -90,10 +90,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     );
   }
 
-  Future<void> _persistToFirestore({
-    Phq9Result? phq9,
-    Gad7Result? gad7,
-  }) async {
+  Future<void> _persistToFirestore({Phq9Result? phq9, Gad7Result? gad7}) async {
     if (!PsyFirebase.isReady) return;
     final auth = FirebaseAuthService.instance;
     final profile = auth.profile;
@@ -125,45 +122,46 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     }
   }
 
-  String _slug(String s) =>
-      s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(
-          RegExp(r'(^-|-$)'), '');
+  String _slug(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'(^-|-$)'), '');
 
   _GenericResult _resultFromPhq9(Phq9Result r) => _GenericResult(
-        total: r.total,
-        maxScore: 27,
-        severityLabel: r.severity.label,
-        severityColor: _phq9Color(r.severity),
-        actionSuggestion: r.severity.actionSuggestion,
-        riskFlag: r.selfHarmFlag,
-        riskFlagText: r.selfHarmFlag
-            ? 'Item 9 (self-harm/suicide ideation) endorsed — clinical review required.'
-            : null,
-      );
+    total: r.total,
+    maxScore: 27,
+    severityLabel: r.severity.label,
+    severityColor: _phq9Color(r.severity),
+    actionSuggestion: r.severity.actionSuggestion,
+    riskFlag: r.selfHarmFlag,
+    riskFlagText: r.selfHarmFlag
+        ? 'Item 9 (self-harm/suicide ideation) endorsed — clinical review required.'
+        : null,
+  );
 
   _GenericResult _resultFromGad7(Gad7Result r) => _GenericResult(
-        total: r.total,
-        maxScore: 21,
-        severityLabel: r.severity.label,
-        severityColor: _gad7Color(r.severity),
-        actionSuggestion: r.severity.actionSuggestion,
-        riskFlag: false,
-      );
+    total: r.total,
+    maxScore: 21,
+    severityLabel: r.severity.label,
+    severityColor: _gad7Color(r.severity),
+    actionSuggestion: r.severity.actionSuggestion,
+    riskFlag: false,
+  );
 
   Color _phq9Color(Phq9Severity s) => switch (s) {
-        Phq9Severity.minimal => Colors.green,
-        Phq9Severity.mild => Colors.lightGreen,
-        Phq9Severity.moderate => Colors.amber,
-        Phq9Severity.moderatelySevere => Colors.deepOrange,
-        Phq9Severity.severe => Colors.red,
-      };
+    Phq9Severity.minimal => Colors.green,
+    Phq9Severity.mild => Colors.lightGreen,
+    Phq9Severity.moderate => Colors.amber,
+    Phq9Severity.moderatelySevere => Colors.deepOrange,
+    Phq9Severity.severe => Colors.red,
+  };
 
   Color _gad7Color(Gad7Severity s) => switch (s) {
-        Gad7Severity.minimal => Colors.green,
-        Gad7Severity.mild => Colors.lightGreen,
-        Gad7Severity.moderate => Colors.amber,
-        Gad7Severity.severe => Colors.red,
-      };
+    Gad7Severity.minimal => Colors.green,
+    Gad7Severity.mild => Colors.lightGreen,
+    Gad7Severity.moderate => Colors.amber,
+    Gad7Severity.severe => Colors.red,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +199,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 if (widget.patientName != null) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: cs.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -209,19 +209,25 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     child: Text(
                       widget.patientName!,
                       style: theme.textTheme.labelMedium?.copyWith(
-                          color: cs.primary, fontWeight: FontWeight.w600),
+                        color: cs.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                 ],
-                Text(widget.type.instructionsPrompt,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                Text(
+                  widget.type.instructionsPrompt,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Question ${_currentIndex + 1} of ${questions.length}',
                   style: theme.textTheme.labelMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.55)),
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Container(
@@ -237,7 +243,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                       Text(
                         questions[_currentIndex],
                         style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w600, height: 1.35),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       ...List.generate(choices.length, (i) {
@@ -252,7 +260,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                               decoration: BoxDecoration(
                                 color: selected
                                     ? cs.primary.withValues(alpha: 0.1)
@@ -268,8 +278,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                               child: Row(
                                 children: [
                                   AnimatedContainer(
-                                    duration:
-                                        const Duration(milliseconds: 180),
+                                    duration: const Duration(milliseconds: 180),
                                     width: 22,
                                     height: 22,
                                     decoration: BoxDecoration(
@@ -286,36 +295,41 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                                     ),
                                     alignment: Alignment.center,
                                     child: selected
-                                        ? const Icon(Icons.check,
-                                            color: Colors.white, size: 14)
+                                        ? const Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 14,
+                                          )
                                         : null,
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Text(
                                       choices[i],
-                                      style:
-                                          theme.textTheme.bodyLarge?.copyWith(
-                                        fontWeight: selected
-                                            ? FontWeight.w600
-                                            : FontWeight.normal,
-                                      ),
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            fontWeight: selected
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                          ),
                                     ),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 2),
+                                      horizontal: 10,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: cs.surfaceContainerHighest,
-                                      borderRadius:
-                                          BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
                                       '+$i',
                                       style: TextStyle(
                                         fontFamily: 'monospace',
-                                        color: cs.onSurface
-                                            .withValues(alpha: 0.55),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.55,
+                                        ),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -340,13 +354,16 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     const Spacer(),
                     if (_currentIndex < questions.length - 1)
                       FilledButton.icon(
-                        onPressed:
-                            _answers[_currentIndex] == null ? null : _next,
+                        onPressed: _answers[_currentIndex] == null
+                            ? null
+                            : _next,
                         icon: const Icon(Icons.arrow_forward, size: 18),
                         label: const Text('Next'),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 14),
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
                         ),
                       )
                     else
@@ -356,7 +373,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                         label: const Text('Score'),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 14),
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                   ],
@@ -411,7 +430,8 @@ class _ResultScreen extends StatelessWidget {
       backgroundColor: cs.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
-            '${type == AssessmentType.phq9 ? "PHQ-9" : "GAD-7"} Result'),
+          '${type == AssessmentType.phq9 ? "PHQ-9" : "GAD-7"} Result',
+        ),
         backgroundColor: cs.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -426,7 +446,8 @@ class _ResultScreen extends StatelessWidget {
                 Text(
                   patientName!,
                   style: theme.textTheme.titleMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7)),
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -443,17 +464,20 @@ class _ResultScreen extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color:
-                          result.severityColor.withValues(alpha: 0.35),
-                      width: 2),
+                    color: result.severityColor.withValues(alpha: 0.35),
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total score',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                            letterSpacing: 0.8)),
+                    Text(
+                      'Total score',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -472,8 +496,8 @@ class _ResultScreen extends StatelessWidget {
                           child: Text(
                             '/ ${result.maxScore}',
                             style: theme.textTheme.titleMedium?.copyWith(
-                                color:
-                                    cs.onSurface.withValues(alpha: 0.5)),
+                              color: cs.onSurface.withValues(alpha: 0.5),
+                            ),
                           ),
                         ),
                       ],
@@ -485,14 +509,17 @@ class _ResultScreen extends StatelessWidget {
                         value: progressValue,
                         minHeight: 8,
                         color: result.severityColor,
-                        backgroundColor: result.severityColor
-                            .withValues(alpha: 0.15),
+                        backgroundColor: result.severityColor.withValues(
+                          alpha: 0.15,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: result.severityColor,
                         borderRadius: BorderRadius.circular(20),
@@ -518,13 +545,13 @@ class _ResultScreen extends StatelessWidget {
                     color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.35)),
+                      color: Colors.red.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: Colors.red[700]),
+                      Icon(Icons.warning_amber_rounded, color: Colors.red[700]),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -533,15 +560,16 @@ class _ResultScreen extends StatelessWidget {
                             Text(
                               'Clinical risk flag',
                               style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red[800]),
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red[800],
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               result.riskFlagText!,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: cs.onSurface
-                                      .withValues(alpha: 0.85)),
+                                color: cs.onSurface.withValues(alpha: 0.85),
+                              ),
                             ),
                           ],
                         ),
@@ -559,10 +587,13 @@ class _ResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Clinical guidance',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                            letterSpacing: 0.8)),
+                    Text(
+                      'Clinical guidance',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       result.actionSuggestion,
@@ -588,11 +619,12 @@ class _ResultScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: () =>
-                          Navigator.of(context).pushReplacement(
+                      onPressed: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => AssessmentScreen(
-                              type: type, patientName: patientName),
+                            type: type,
+                            patientName: patientName,
+                          ),
                         ),
                       ),
                       icon: const Icon(Icons.refresh, size: 18),

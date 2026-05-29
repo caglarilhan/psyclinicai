@@ -58,16 +58,20 @@ class SuperbillPdfService {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text('SUPERBILL',
-                style: pw.TextStyle(
-                    fontSize: 22,
-                    fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: const PdfColor.fromInt(0xFF6B46C1))),
+            pw.Text(
+              'SUPERBILL',
+              style: pw.TextStyle(
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+                letterSpacing: 1.2,
+                color: const PdfColor.fromInt(0xFF6B46C1),
+              ),
+            ),
             pw.SizedBox(height: 2),
-            pw.Text('Out-of-network insurance reimbursement receipt',
-                style: const pw.TextStyle(
-                    fontSize: 10, color: PdfColors.grey700)),
+            pw.Text(
+              'Out-of-network insurance reimbursement receipt',
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+            ),
           ],
         ),
         pw.Column(
@@ -75,8 +79,10 @@ class SuperbillPdfService {
           children: [
             _kvPair('Invoice #', d.invoiceNumber),
             _kvPair('Issued', DateFormat('yyyy-MM-dd').format(d.issuedAt)),
-            _kvPair('Service Date',
-                DateFormat('yyyy-MM-dd').format(d.serviceDate)),
+            _kvPair(
+              'Service Date',
+              DateFormat('yyyy-MM-dd').format(d.serviceDate),
+            ),
           ],
         ),
       ],
@@ -92,7 +98,8 @@ class SuperbillPdfService {
             d.provider.fullName,
             if (d.provider.credentials.isNotEmpty) d.provider.credentials,
             if (d.provider.npi.isNotEmpty) 'NPI: ${d.provider.npi}',
-            if (d.provider.taxId.isNotEmpty) 'Tax ID / EIN: ${d.provider.taxId}',
+            if (d.provider.taxId.isNotEmpty)
+              'Tax ID / EIN: ${d.provider.taxId}',
             if (d.provider.addressLine1.isNotEmpty) d.provider.addressLine1,
             if (d.provider.addressLine2.isNotEmpty) d.provider.addressLine2,
             if (d.provider.phone.isNotEmpty) 'Phone: ${d.provider.phone}',
@@ -105,7 +112,8 @@ class SuperbillPdfService {
             d.patient.fullName,
             if (d.patient.dob != null)
               'DOB: ${DateFormat('yyyy-MM-dd').format(d.patient.dob!)}',
-            if (d.patient.memberId.isNotEmpty) 'Member ID: ${d.patient.memberId}',
+            if (d.patient.memberId.isNotEmpty)
+              'Member ID: ${d.patient.memberId}',
             if (d.patient.insurer.isNotEmpty) 'Insurer: ${d.patient.insurer}',
             if (d.patient.addressLine1.isNotEmpty) d.patient.addressLine1,
             if (d.patient.addressLine2.isNotEmpty) d.patient.addressLine2,
@@ -146,14 +154,16 @@ class SuperbillPdfService {
   pw.Widget _buildServiceLines(SuperbillData d) {
     final headers = ['Date', 'CPT', 'Description', 'Dx Ptr', 'Units', 'Charge'];
     final rows = d.serviceLines
-        .map((line) => [
-              DateFormat('MM/dd/yyyy').format(line.date),
-              line.cpt.code,
-              line.cpt.shortLabel,
-              line.diagnosisPointers.join(','),
-              line.units.toString(),
-              '\$${line.totalCharge.toStringAsFixed(2)}',
-            ])
+        .map(
+          (line) => [
+            DateFormat('MM/dd/yyyy').format(line.date),
+            line.cpt.code,
+            line.cpt.shortLabel,
+            line.diagnosisPointers.join(','),
+            line.units.toString(),
+            '\$${line.totalCharge.toStringAsFixed(2)}',
+          ],
+        )
         .toList();
 
     return pw.Column(
@@ -212,8 +222,12 @@ class SuperbillPdfService {
               _totalRow('Total charges', total),
               _totalRow('Amount paid', paid, color: PdfColors.green700),
               pw.Container(height: 6),
-              _totalRow('Balance due', balance,
-                  bold: true, color: const PdfColor.fromInt(0xFF6B46C1)),
+              _totalRow(
+                'Balance due',
+                balance,
+                bold: true,
+                color: const PdfColor.fromInt(0xFF6B46C1),
+              ),
             ],
           ),
         ],
@@ -240,11 +254,17 @@ class SuperbillPdfService {
                         ? ', ${d.provider.credentials}'
                         : ''),
                 style: pw.TextStyle(
-                    fontSize: 10, fontWeight: pw.FontWeight.bold),
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
-              pw.Text('Provider signature',
-                  style: const pw.TextStyle(
-                      fontSize: 9, color: PdfColors.grey700)),
+              pw.Text(
+                'Provider signature',
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey700,
+                ),
+              ),
             ],
           ),
         ),
@@ -258,12 +278,20 @@ class SuperbillPdfService {
                 color: PdfColors.grey600,
                 margin: const pw.EdgeInsets.only(bottom: 4),
               ),
-              pw.Text(DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                  style: pw.TextStyle(
-                      fontSize: 10, fontWeight: pw.FontWeight.bold)),
-              pw.Text('Date',
-                  style: const pw.TextStyle(
-                      fontSize: 9, color: PdfColors.grey700)),
+              pw.Text(
+                DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.Text(
+                'Date',
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey700,
+                ),
+              ),
             ],
           ),
         ),
@@ -291,19 +319,21 @@ class SuperbillPdfService {
   // ---- Helpers -----------------------------------------------------------
 
   pw.Widget _kvPair(String k, String v) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 1),
-        child: pw.Row(
-          mainAxisSize: pw.MainAxisSize.min,
-          children: [
-            pw.Text('$k: ',
-                style: const pw.TextStyle(
-                    fontSize: 10, color: PdfColors.grey700)),
-            pw.Text(v,
-                style: pw.TextStyle(
-                    fontSize: 10, fontWeight: pw.FontWeight.bold)),
-          ],
+    padding: const pw.EdgeInsets.symmetric(vertical: 1),
+    child: pw.Row(
+      mainAxisSize: pw.MainAxisSize.min,
+      children: [
+        pw.Text(
+          '$k: ',
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
         ),
-      );
+        pw.Text(
+          v,
+          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+        ),
+      ],
+    ),
+  );
 
   pw.Widget _card(String title, List<String> lines) {
     return pw.Container(
@@ -317,39 +347,49 @@ class SuperbillPdfService {
         children: [
           _sectionTitle(title),
           pw.SizedBox(height: 6),
-          ...lines.where((l) => l.isNotEmpty).map((l) => pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 1),
-                child: pw.Text(l, style: const pw.TextStyle(fontSize: 10)),
-              )),
+          ...lines
+              .where((l) => l.isNotEmpty)
+              .map(
+                (l) => pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 1),
+                  child: pw.Text(l, style: const pw.TextStyle(fontSize: 10)),
+                ),
+              ),
         ],
       ),
     );
   }
 
   pw.Widget _sectionTitle(String text) => pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 9,
-          fontWeight: pw.FontWeight.bold,
-          letterSpacing: 0.8,
-          color: PdfColors.grey700,
-        ),
-      );
+    text,
+    style: pw.TextStyle(
+      fontSize: 9,
+      fontWeight: pw.FontWeight.bold,
+      letterSpacing: 0.8,
+      color: PdfColors.grey700,
+    ),
+  );
 
-  pw.Widget _totalRow(String label, double value,
-      {bool bold = false, PdfColor? color}) {
+  pw.Widget _totalRow(
+    String label,
+    double value, {
+    bool bold = false,
+    PdfColor? color,
+  }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 1),
       child: pw.Row(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
           pw.Container(width: 100),
-          pw.Text(label,
-              style: pw.TextStyle(
-                  fontSize: 10,
-                  fontWeight:
-                      bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-                  color: color)),
+          pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              color: color,
+            ),
+          ),
           pw.SizedBox(width: 16),
           pw.Container(
             width: 100,
@@ -357,10 +397,10 @@ class SuperbillPdfService {
             child: pw.Text(
               '\$${value.toStringAsFixed(2)}',
               style: pw.TextStyle(
-                  fontSize: bold ? 12 : 10,
-                  fontWeight:
-                      bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-                  color: color),
+                fontSize: bold ? 12 : 10,
+                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+                color: color,
+              ),
             ),
           ),
         ],

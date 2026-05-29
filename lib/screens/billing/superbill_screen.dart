@@ -53,7 +53,8 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
 
   // Invoice
   final _invoiceNumber = TextEditingController(
-      text: 'PSY-${DateTime.now().millisecondsSinceEpoch ~/ 1000}');
+    text: 'PSY-${DateTime.now().millisecondsSinceEpoch ~/ 1000}',
+  );
   DateTime _serviceDate = DateTime.now();
 
   final List<Icd10Code> _diagnoses = [];
@@ -91,16 +92,19 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
     }
 
     // Service line: suggested CPT from the note, else the 90834 default.
-    final cpt = (prefill?.cptCode != null
+    final cpt =
+        (prefill?.cptCode != null
             ? _cptService.byCode(prefill!.cptCode!)
             : null) ??
         _cptService.byCode('90834')!;
-    _lines.add(ServiceLine(
-      date: _serviceDate,
-      cpt: cpt,
-      units: 1,
-      chargePerUnit: cpt.nationalAverageUsd,
-    ));
+    _lines.add(
+      ServiceLine(
+        date: _serviceDate,
+        cpt: cpt,
+        units: 1,
+        chargePerUnit: cpt.nationalAverageUsd,
+      ),
+    );
     _computeDenial();
   }
 
@@ -207,14 +211,16 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         serviceLines: List.of(_lines),
       );
       await _pdfService.printOrShare(data);
-      TelemetryService.instance.capture(TelemetryEvents.superbillGenerated,
-          properties: {'lines': _lines.length, 'dx': _diagnoses.length});
+      TelemetryService.instance.capture(
+        TelemetryEvents.superbillGenerated,
+        properties: {'lines': _lines.length, 'dx': _diagnoses.length},
+      );
       await _persistToFirestore(data);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to generate PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to generate PDF: $e')));
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -250,9 +256,10 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
     }
   }
 
-  String _slug(String s) =>
-      s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(
-          RegExp(r'(^-|-$)'), '');
+  String _slug(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'(^-|-$)'), '');
 
   Future<void> _pickDiagnosis() async {
     final picked = await showDialog<Icd10Code>(
@@ -271,12 +278,14 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
     );
     if (picked != null) {
       setState(() {
-        _lines.add(ServiceLine(
-          date: _serviceDate,
-          cpt: picked,
-          units: 1,
-          chargePerUnit: picked.nationalAverageUsd,
-        ));
+        _lines.add(
+          ServiceLine(
+            date: _serviceDate,
+            cpt: picked,
+            units: 1,
+            chargePerUnit: picked.nationalAverageUsd,
+          ),
+        );
       });
     }
   }
@@ -307,15 +316,18 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : const Icon(Icons.picture_as_pdf, size: 20),
         label: Text(_generating ? 'Generating…' : 'Generate PDF'),
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
       scrollable: false,
@@ -385,9 +397,13 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               Icon(Icons.verified_user_outlined, color: color, size: 20),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Denial Shield · ${d.level.label}',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+                child: Text(
+                  'Denial Shield · ${d.level.label}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
               ),
               DropdownButton<Payer>(
                 value: _payer,
@@ -411,15 +427,19 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           Text(
             '${d.cptCode} · ${d.cptLabel}'
             '${risk != null ? ' · ~\$${risk.round()} at risk if denied' : ''}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
           ),
           const SizedBox(height: 12),
           if (d.reasons.isEmpty)
             Row(
               children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 18, color: Color(0xFF16A34A)),
+                const Icon(
+                  Icons.check_circle_outline,
+                  size: 18,
+                  color: Color(0xFF16A34A),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -431,44 +451,57 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               ],
             )
           else
-            ...d.reasons.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                              r.critical
-                                  ? Icons.error_outline
-                                  : Icons.warning_amber_rounded,
-                              size: 16,
-                              color: r.critical
-                                  ? cs.error
-                                  : const Color(0xFFD97706)),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(r.title,
-                                style: theme.textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w700)),
+            ...d.reasons.map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          r.critical
+                              ? Icons.error_outline
+                              : Icons.warning_amber_rounded,
+                          size: 16,
+                          color: r.critical
+                              ? cs.error
+                              : const Color(0xFFD97706),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            r.title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 22, top: 4),
+                      child: Text(
+                        '+ ${r.fixSentence}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.primary,
+                          height: 1.4,
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 22, top: 4),
-                        child: Text('+ ${r.fixSentence}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.primary, height: 1.4)),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 4),
-          Text(DenialShieldService.payerFocus(_payer),
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic)),
+          Text(
+            DenialShieldService.payerFocus(_payer),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.55),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ],
       ),
     );
@@ -482,19 +515,35 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
       child: Column(
         children: [
           _Field(controller: _providerName, label: 'Full name'),
-          _Field(controller: _providerCreds, label: 'Credentials (e.g. LCSW, PhD)'),
-          Row(children: [
-            Expanded(child: _Field(controller: _providerNpi, label: 'NPI')),
-            const SizedBox(width: 12),
-            Expanded(
-                child:
-                    _Field(controller: _providerTaxId, label: 'Tax ID / EIN')),
-          ]),
-          Row(children: [
-            Expanded(child: _Field(controller: _providerPhone, label: 'Phone')),
-            const SizedBox(width: 12),
-            Expanded(child: _Field(controller: _providerEmail, label: 'Email')),
-          ]),
+          _Field(
+            controller: _providerCreds,
+            label: 'Credentials (e.g. LCSW, PhD)',
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _Field(controller: _providerNpi, label: 'NPI'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Field(
+                  controller: _providerTaxId,
+                  label: 'Tax ID / EIN',
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _Field(controller: _providerPhone, label: 'Phone'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Field(controller: _providerEmail, label: 'Email'),
+              ),
+            ],
+          ),
           _Field(controller: _providerAddr, label: 'Address line 1'),
           _Field(controller: _providerAddr2, label: 'Address line 2'),
         ],
@@ -510,27 +559,29 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
       child: Column(
         children: [
           _Field(controller: _patientName, label: 'Full name'),
-          Row(children: [
-            Expanded(
-              child: _DateField(
-                label: 'Date of birth',
-                value: _patientDob,
-                onPick: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _patientDob ?? DateTime(1990),
-                    firstDate: DateTime(1920),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null) setState(() => _patientDob = picked);
-                },
+          Row(
+            children: [
+              Expanded(
+                child: _DateField(
+                  label: 'Date of birth',
+                  value: _patientDob,
+                  onPick: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _patientDob ?? DateTime(1990),
+                      firstDate: DateTime(1920),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) setState(() => _patientDob = picked);
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child:
-                    _Field(controller: _patientMemberId, label: 'Member ID')),
-          ]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Field(controller: _patientMemberId, label: 'Member ID'),
+              ),
+            ],
+          ),
           _Field(controller: _patientInsurer, label: 'Insurer'),
           _Field(controller: _patientAddr, label: 'Address line 1'),
           _Field(controller: _patientAddr2, label: 'Address line 2'),
@@ -555,7 +606,8 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               child: Text(
                 'No diagnoses yet. Add an ICD-10 code to continue.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.55)),
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                ),
               ),
             )
           : Column(
@@ -574,34 +626,47 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                           color: cs.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: Text('$idx',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                                color: cs.primary,
-                                fontWeight: FontWeight.bold)),
+                        child: Text(
+                          '$idx',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(dx.code,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                                color: cs.primary,
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.w600)),
+                        child: Text(
+                          dx.code,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: cs.primary,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Text(dx.label,
-                              style: theme.textTheme.bodyMedium)),
+                        child: Text(
+                          dx.label,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
                       IconButton(
                         tooltip: 'Remove',
-                        icon: Icon(Icons.close,
-                            size: 18,
-                            color: cs.onSurface.withValues(alpha: 0.5)),
+                        icon: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                        ),
                         onPressed: () =>
                             setState(() => _diagnoses.removeAt(e.key)),
                       ),
@@ -629,9 +694,12 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           if (_lines.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text('No service lines yet. Add a CPT code.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.55))),
+              child: Text(
+                'No service lines yet. Add a CPT code.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                ),
+              ),
             )
           else
             ..._lines.asMap().entries.map((e) {
@@ -642,45 +710,58 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                 child: Row(
                   children: [
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: cs.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(line.cpt.code,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                              color: cs.primary,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w600)),
+                      child: Text(
+                        line.cpt.code,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: cs.primary,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(line.cpt.shortLabel,
-                              style: theme.textTheme.bodyMedium),
+                          Text(
+                            line.cpt.shortLabel,
+                            style: theme.textTheme.bodyMedium,
+                          ),
                           Text(
                             '${line.units} unit · ${DateFormat('yyyy-MM-dd').format(line.date)}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurface.withValues(alpha: 0.6)),
+                              color: cs.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(
                       width: 80,
-                      child: Text('\$${line.totalCharge.toStringAsFixed(2)}',
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600)),
+                      child: Text(
+                        '\$${line.totalCharge.toStringAsFixed(2)}',
+                        textAlign: TextAlign.right,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Remove',
-                      icon: Icon(Icons.close,
-                          size: 18,
-                          color: cs.onSurface.withValues(alpha: 0.5)),
+                      icon: Icon(
+                        Icons.close,
+                        size: 18,
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                      ),
                       onPressed: () => setState(() => _lines.removeAt(i)),
                     ),
                   ],
@@ -694,14 +775,20 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('Total: ',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.7))),
+                  Text(
+                    'Total: ',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Text('\$${total.toStringAsFixed(2)}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                          color: cs.primary,
-                          fontWeight: FontWeight.bold)),
+                  Text(
+                    '\$${total.toStringAsFixed(2)}',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -742,9 +829,12 @@ class _SectionCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(title,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               if (trailing != null) trailing!,
             ],
@@ -771,8 +861,10 @@ class _Field extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
           isDense: true,
         ),
       ),
@@ -799,8 +891,10 @@ class _DateField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           isDense: true,
         ),
         child: InkWell(
@@ -809,9 +903,7 @@ class _DateField extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  value == null
-                      ? '—'
-                      : DateFormat('yyyy-MM-dd').format(value!),
+                  value == null ? '—' : DateFormat('yyyy-MM-dd').format(value!),
                   style: const TextStyle(fontSize: 15),
                 ),
               ),
@@ -870,15 +962,19 @@ class _InvoiceMetaCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Superbill Draft',
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Superbill Draft',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Out-of-network insurance reimbursement receipt. '
                   'Provider must verify codes before submission.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7)),
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               ],
             ),
@@ -927,9 +1023,12 @@ class _DiagnosisPickerState extends State<_DiagnosisPicker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Pick ICD-10 diagnosis',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Pick ICD-10 diagnosis',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               TextField(
                 autofocus: true,
@@ -941,16 +1040,20 @@ class _DiagnosisPickerState extends State<_DiagnosisPicker> {
                   hintText: 'Search by code, label, or synonym…',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               Expanded(
                 child: _results.isEmpty
                     ? Center(
-                        child: Text('No diagnoses match "$_query"',
-                            style: TextStyle(
-                                color: cs.onSurface.withValues(alpha: 0.5))),
+                        child: Text(
+                          'No diagnoses match "$_query"',
+                          style: TextStyle(
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
                       )
                     : ListView.separated(
                         itemCount: _results.length,
@@ -962,25 +1065,34 @@ class _DiagnosisPickerState extends State<_DiagnosisPicker> {
                             dense: true,
                             leading: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: cs.primary.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Text(c.code,
-                                  style: TextStyle(
-                                      color: cs.primary,
-                                      fontFamily: 'monospace',
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12)),
-                            ),
-                            title: Text(c.label,
-                                style: Theme.of(context).textTheme.bodyMedium),
-                            subtitle: Text(c.category.label,
+                              child: Text(
+                                c.code,
                                 style: TextStyle(
-                                    fontSize: 11,
-                                    color: cs.onSurface
-                                        .withValues(alpha: 0.55))),
+                                  color: cs.primary,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              c.label,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            subtitle: Text(
+                              c.category.label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurface.withValues(alpha: 0.55),
+                              ),
+                            ),
                             onTap: () => Navigator.of(context).pop(c),
                           );
                         },
@@ -1027,9 +1139,12 @@ class _CptPickerState extends State<_CptPicker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Pick CPT code',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Pick CPT code',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -1058,21 +1173,27 @@ class _CptPickerState extends State<_CptPicker> {
                     return ListTile(
                       leading: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(c.code,
-                            style: TextStyle(
-                                color: cs.primary,
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12)),
+                        child: Text(
+                          c.code,
+                          style: TextStyle(
+                            color: cs.primary,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                       title: Text(c.shortLabel),
                       subtitle: Text(
-                          '${c.typicalDurationMinutes} min · \$${c.nationalAverageUsd.toStringAsFixed(0)} avg'),
+                        '${c.typicalDurationMinutes} min · \$${c.nationalAverageUsd.toStringAsFixed(0)} avg',
+                      ),
                       onTap: () => Navigator.of(context).pop(c),
                     );
                   },

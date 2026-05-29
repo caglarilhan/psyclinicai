@@ -20,7 +20,8 @@ class CopilotEndpoint {
 
   /// The endpoint to POST the Anthropic-shaped body to.
   static Uri get uri => Uri.parse(
-      useRelay ? '${BuildConfig.backendUrl}/anthropicRelay' : _anthropicUrl);
+    useRelay ? '${BuildConfig.backendUrl}/anthropicRelay' : _anthropicUrl,
+  );
 
   /// Headers for the request. In relay mode the key stays server-side, so it is
   /// NOT attached here (the relay injects it); in direct mode we send the

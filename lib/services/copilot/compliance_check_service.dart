@@ -24,8 +24,8 @@ import 'api_key_storage.dart';
 ///    no-key / error.
 class ComplianceCheckService {
   ComplianceCheckService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -50,8 +50,9 @@ class ComplianceCheckService {
       label: 'Functional impairment',
       patterns: [
         RegExp(
-            r'\b(function|impair|unable to|difficulty|work|job|relationship|self-care|daily|sleep|appetite|concentrat)',
-            caseSensitive: false),
+          r'\b(function|impair|unable to|difficulty|work|job|relationship|self-care|daily|sleep|appetite|concentrat)',
+          caseSensitive: false,
+        ),
       ],
       fix:
           'Document how symptoms impair daily functioning (work, relationships, '
@@ -62,8 +63,9 @@ class ComplianceCheckService {
       label: 'Named intervention',
       patterns: [
         RegExp(
-            r'\b(CBT|DBT|EMDR|exposure|cognitive|behavioral activation|motivational|mindfulness|psychoeducation|restructur|interpersonal|ACT|schema|IFS|grounding|relapse prevention|safety plan)',
-            caseSensitive: false),
+          r'\b(CBT|DBT|EMDR|exposure|cognitive|behavioral activation|motivational|mindfulness|psychoeducation|restructur|interpersonal|ACT|schema|IFS|grounding|relapse prevention|safety plan)',
+          caseSensitive: false,
+        ),
       ],
       fix:
           'Name the specific technique used (e.g. cognitive restructuring, '
@@ -74,8 +76,9 @@ class ComplianceCheckService {
       label: 'Client response to intervention',
       patterns: [
         RegExp(
-            r'\b(responded|response|engaged|tolerated|reported|able to|identified|practiced|insight)',
-            caseSensitive: false),
+          r'\b(responded|response|engaged|tolerated|reported|able to|identified|practiced|insight)',
+          caseSensitive: false,
+        ),
       ],
       fix: 'Document how the client responded to the intervention.',
     ),
@@ -83,8 +86,10 @@ class ComplianceCheckService {
       id: 'goal_linkage',
       label: 'Treatment-plan goal linkage',
       patterns: [
-        RegExp(r'\b(goal|objective|treatment plan|progress toward|target)',
-            caseSensitive: false),
+        RegExp(
+          r'\b(goal|objective|treatment plan|progress toward|target)',
+          caseSensitive: false,
+        ),
       ],
       fix:
           'Reference at least one treatment-plan goal and progress toward it — '
@@ -95,8 +100,9 @@ class ComplianceCheckService {
       label: 'Risk / safety addressed',
       patterns: [
         RegExp(
-            r'\b(risk|safety|suicid|self-harm|self harm|SI/HI|homicid|no acute|denied)',
-            caseSensitive: false),
+          r'\b(risk|safety|suicid|self-harm|self harm|SI/HI|homicid|no acute|denied)',
+          caseSensitive: false,
+        ),
       ],
       fix:
           'Address risk explicitly, even if absent (e.g. "No SI/HI, no acute '
@@ -107,8 +113,10 @@ class ComplianceCheckService {
       label: 'Time documented (start/stop)',
       patterns: [
         RegExp(r'\d{1,2}:\d{2}'), // clock time
-        RegExp(r'\b(start|stop|started|ended|duration|\d+\s*min)',
-            caseSensitive: false),
+        RegExp(
+          r'\b(start|stop|started|ended|duration|\d+\s*min)',
+          caseSensitive: false,
+        ),
       ],
       fix:
           'Document exact start & stop times (e.g. "10:02–10:55"), not just '
@@ -119,8 +127,9 @@ class ComplianceCheckService {
       label: 'Plan / next steps',
       patterns: [
         RegExp(
-            r'\b(plan|next session|next appointment|homework|follow-up|follow up|referral|frequency)',
-            caseSensitive: false),
+          r'\b(plan|next session|next appointment|homework|follow-up|follow up|referral|frequency)',
+          caseSensitive: false,
+        ),
       ],
       fix: 'State the plan: next session, frequency, homework, or referrals.',
     ),
@@ -142,12 +151,14 @@ class ComplianceCheckService {
       if (r.id == 'goal_linkage' && !hit && !hasActivePlan) {
         status = CheckStatus.fail;
       }
-      checks.add(ComplianceCheck(
-        id: r.id,
-        label: r.label,
-        status: status,
-        fix: status == CheckStatus.pass ? null : r.fix,
-      ));
+      checks.add(
+        ComplianceCheck(
+          id: r.id,
+          label: r.label,
+          status: status,
+          fix: status == CheckStatus.pass ? null : r.fix,
+        ),
+      );
     }
 
     // CPT/time alignment hint when a duration is known.
@@ -155,9 +166,9 @@ class ComplianceCheckService {
       final t = checks.firstWhere((c) => c.id == 'time');
       // 90837 — needs explicit justification for the extended session.
       if (!RegExp(
-              r'\b(medically necessary|due to|because|severity|trauma|crisis|complex)',
-              caseSensitive: false)
-          .hasMatch(text)) {
+        r'\b(medically necessary|due to|because|severity|trauma|crisis|complex)',
+        caseSensitive: false,
+      ).hasMatch(text)) {
         t.status = CheckStatus.warn;
         t.fix =
             '53+ min (90837) is the most-audited code — add a one-line reason '
@@ -169,8 +180,10 @@ class ComplianceCheckService {
   }
 
   /// Tier 2 — Claude semantic review. Falls back to [base] on no-key/error.
-  Future<ComplianceReport> deepCheck(String note,
-      {required ComplianceReport base}) async {
+  Future<ComplianceReport> deepCheck(
+    String note, {
+    required ComplianceReport base,
+  }) async {
     String? key;
     try {
       key = await _keyStorage.getAnthropicKey();
@@ -194,7 +207,7 @@ class ComplianceCheckService {
       'temperature': 0.0,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': note}
+        {'role': 'user', 'content': note},
       ],
     });
 
@@ -237,12 +250,14 @@ class ComplianceCheckService {
       final checks = list
           .map((e) => e as Map<String, dynamic>)
           .where((m) => byId.containsKey(m['id']))
-          .map((m) => ComplianceCheck(
-                id: m['id'] as String,
-                label: byId[m['id']]!,
-                status: _status(m['status'] as String? ?? ''),
-                fix: (m['fix'] as String?)?.trim(),
-              ))
+          .map(
+            (m) => ComplianceCheck(
+              id: m['id'] as String,
+              label: byId[m['id']]!,
+              status: _status(m['status'] as String? ?? ''),
+              fix: (m['fix'] as String?)?.trim(),
+            ),
+          )
           .toList();
       if (checks.isEmpty) return null;
       return ComplianceReport(
@@ -256,20 +271,21 @@ class ComplianceCheckService {
   }
 
   static CheckStatus _status(String s) => switch (s.trim()) {
-        'pass' => CheckStatus.pass,
-        'fail' => CheckStatus.fail,
-        _ => CheckStatus.warn,
-      };
+    'pass' => CheckStatus.pass,
+    'fail' => CheckStatus.fail,
+    _ => CheckStatus.warn,
+  };
 
   void dispose() => _client.close();
 }
 
 class _Rule {
-  _Rule(
-      {required this.id,
-      required this.label,
-      required this.patterns,
-      required this.fix});
+  _Rule({
+    required this.id,
+    required this.label,
+    required this.patterns,
+    required this.fix,
+  });
   final String id;
   final String label;
   final List<RegExp> patterns;

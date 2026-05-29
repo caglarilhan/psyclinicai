@@ -1,13 +1,10 @@
 name: Deploy Web
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'lib/**'
-      - 'web/**'
-      - 'pubspec.yaml'
-      - '.github/workflows/deploy_web.yml'
+  # Manual only — this targets a VPS over SSH and needs SSH_HOST / SSH_USER /
+  # SSH_KEY secrets. The public demo is published by pages.yml instead, so this
+  # no longer runs (and fails) on every push.
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:

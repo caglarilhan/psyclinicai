@@ -87,23 +87,28 @@ class TranscriptionService extends ChangeNotifier {
     final text = result.recognizedWords;
     if (result.finalResult) {
       if (text.isNotEmpty) {
-        _fullTranscript =
-            _fullTranscript.isEmpty ? text : '$_fullTranscript $text';
+        _fullTranscript = _fullTranscript.isEmpty
+            ? text
+            : '$_fullTranscript $text';
       }
       _currentPartial = '';
-      _controller.add(TranscriptUpdate(
-        delta: text,
-        fullTranscript: _fullTranscript,
-        isFinal: true,
-      ));
+      _controller.add(
+        TranscriptUpdate(
+          delta: text,
+          fullTranscript: _fullTranscript,
+          isFinal: true,
+        ),
+      );
     } else {
       _currentPartial = text;
-      _controller.add(TranscriptUpdate(
-        delta: text,
-        fullTranscript: _fullTranscript,
-        partial: text,
-        isFinal: false,
-      ));
+      _controller.add(
+        TranscriptUpdate(
+          delta: text,
+          fullTranscript: _fullTranscript,
+          partial: text,
+          isFinal: false,
+        ),
+      );
     }
     notifyListeners();
   }

@@ -52,8 +52,7 @@ class SeedService {
         insurer: 'Blue Cross Blue Shield',
         addressLine1: '500 Demo Ave, Suite 100',
         addressLine2: 'New York, NY 10001',
-        notes:
-            'Synthetic onboarding patient — safe to delete from the chart.',
+        notes: 'Synthetic onboarding patient — safe to delete from the chart.',
         dob: DateTime(1989, 5, 14),
       ),
     );
@@ -114,9 +113,19 @@ class SeedService {
     final earlier = phq9.score(const [3, 2, 2, 2, 2, 1, 2, 1, 1]);
     final recent = phq9.score(const [1, 1, 1, 1, 2, 1, 1, 1, 0]);
     await _writeAssessmentWithDate(
-        clinicId, _patientId, clinicianId, earlier, twoWeeksAgo);
+      clinicId,
+      _patientId,
+      clinicianId,
+      earlier,
+      twoWeeksAgo,
+    );
     await _writeAssessmentWithDate(
-        clinicId, _patientId, clinicianId, recent, now);
+      clinicId,
+      _patientId,
+      clinicianId,
+      recent,
+      now,
+    );
 
     final cpt = CptLookupService.instance.byCode('90834')!;
     final icd = Icd10LookupService.instance.byCode('F32.1')!;
@@ -177,16 +186,16 @@ class SeedService {
         .doc(patientId)
         .collection('assessments')
         .add({
-      'clinicianId': clinicianId,
-      'type': 'phq9',
-      'score': result.total,
-      'severity': result.severity.label,
-      'selfHarmFlag': result.selfHarmFlag,
-      'answers': const <int>[],
-      'completedAt': Timestamp.fromDate(completedAt),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+          'clinicianId': clinicianId,
+          'type': 'phq9',
+          'score': result.total,
+          'severity': result.severity.label,
+          'selfHarmFlag': result.selfHarmFlag,
+          'answers': const <int>[],
+          'completedAt': Timestamp.fromDate(completedAt),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 }
 

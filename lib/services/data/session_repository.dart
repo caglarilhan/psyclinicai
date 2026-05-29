@@ -12,21 +12,22 @@ class SessionRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _sessions(
-          String clinicId, String patientId) =>
-      _db
-          .collection(FirestoreSchema.clinics)
-          .doc(clinicId)
-          .collection(FirestoreSchema.patients)
-          .doc(patientId)
-          .collection(FirestoreSchema.sessions);
+    String clinicId,
+    String patientId,
+  ) => _db
+      .collection(FirestoreSchema.clinics)
+      .doc(clinicId)
+      .collection(FirestoreSchema.patients)
+      .doc(patientId)
+      .collection(FirestoreSchema.sessions);
 
-  Stream<List<SessionDoc>> watchForPatient(
-      String clinicId, String patientId) {
+  Stream<List<SessionDoc>> watchForPatient(String clinicId, String patientId) {
     return _sessions(clinicId, patientId)
         .orderBy(FirestoreSchema.fieldStartedAt, descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map(SessionDoc.fromSnapshot).toList(growable: false));
+        .map(
+          (s) => s.docs.map(SessionDoc.fromSnapshot).toList(growable: false),
+        );
   }
 
   Future<String> createSession({
@@ -69,14 +70,14 @@ class SessionRepository {
         .doc(sessionId)
         .collection(FirestoreSchema.notes)
         .add({
-      FirestoreSchema.fieldFormat: note.format.id,
-      FirestoreSchema.fieldMarkdown: note.rawMarkdown,
-      FirestoreSchema.fieldTranscript: transcript,
-      FirestoreSchema.fieldFlaggedRisk: note.flaggedRisk,
-      FirestoreSchema.fieldGeneratedByAi: true,
-      FirestoreSchema.fieldCreatedAt: FieldValue.serverTimestamp(),
-      FirestoreSchema.fieldUpdatedAt: FieldValue.serverTimestamp(),
-    });
+          FirestoreSchema.fieldFormat: note.format.id,
+          FirestoreSchema.fieldMarkdown: note.rawMarkdown,
+          FirestoreSchema.fieldTranscript: transcript,
+          FirestoreSchema.fieldFlaggedRisk: note.flaggedRisk,
+          FirestoreSchema.fieldGeneratedByAi: true,
+          FirestoreSchema.fieldCreatedAt: FieldValue.serverTimestamp(),
+          FirestoreSchema.fieldUpdatedAt: FieldValue.serverTimestamp(),
+        });
     return ref.id;
   }
 }

@@ -10,8 +10,8 @@ import 'api_key_storage.dart';
 /// substitute for clinical risk assessment; the clinician owns the plan.
 class SafetyPlanAiService {
   SafetyPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -38,7 +38,7 @@ class SafetyPlanAiService {
 
     final crisisHint = region == 'EU'
         ? 'Use generic EU crisis-line placeholders (e.g. 112 emergency, '
-            'national crisis line) — do not invent specific numbers.'
+              'national crisis line) — do not invent specific numbers.'
         : 'Include US 988 Suicide & Crisis Lifeline and 911 for emergencies.';
 
     final system =
@@ -57,7 +57,7 @@ class SafetyPlanAiService {
       'temperature': 0.4,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': 'Context: $context'}
+        {'role': 'user', 'content': 'Context: $context'},
       ],
     });
 
@@ -76,11 +76,13 @@ class SafetyPlanAiService {
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const SafetyPlanAiException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw SafetyPlanAiException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -90,7 +92,8 @@ class SafetyPlanAiService {
       final plan = _parse(patientId, content);
       if (plan == null) {
         throw const SafetyPlanAiException(
-            'Could not parse the safety plan. Try again.');
+          'Could not parse the safety plan. Try again.',
+        );
       }
       return plan;
     } on SafetyPlanAiException {

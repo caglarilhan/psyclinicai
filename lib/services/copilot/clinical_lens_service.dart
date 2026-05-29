@@ -17,8 +17,8 @@ import 'soap_generator_service.dart' show Modality, ModalityX;
 /// surfaces what the transcript supports; it does not invent clinical material.
 class ClinicalLensService {
   ClinicalLensService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -30,11 +30,7 @@ class ClinicalLensService {
   /// The constructs each modality extracts — the section titles of the lens.
   /// Every [Modality] is covered so the UI never falls back to a flat note.
   static const Map<Modality, List<String>> _constructs = {
-    Modality.general: [
-      'Themes',
-      'Interventions used',
-      'Client response',
-    ],
+    Modality.general: ['Themes', 'Interventions used', 'Client response'],
     Modality.cbt: [
       'Automatic thoughts',
       'Cognitive distortions',
@@ -45,11 +41,7 @@ class ClinicalLensService {
       'Target behaviors',
       'Diary-card observations',
     ],
-    Modality.emdr: [
-      'Targets',
-      'Phase / SUDS / VOC',
-      'Processing observations',
-    ],
+    Modality.emdr: ['Targets', 'Phase / SUDS / VOC', 'Processing observations'],
     Modality.ifs: [
       'Parts identified',
       'Self-energy / unburdening',
@@ -111,7 +103,7 @@ class ClinicalLensService {
       'temperature': 0.2,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': transcript}
+        {'role': 'user', 'content': transcript},
       ],
     });
 
@@ -130,11 +122,13 @@ class ClinicalLensService {
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const ClinicalLensException(
-            'Anthropic rejected the API key. Verify it in Settings → API Keys.');
+          'Anthropic rejected the API key. Verify it in Settings → API Keys.',
+        );
       }
       if (resp.statusCode != 200) {
         throw ClinicalLensException(
-            'Anthropic error ${resp.statusCode}. Try again shortly.');
+          'Anthropic error ${resp.statusCode}. Try again shortly.',
+        );
       }
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -144,7 +138,8 @@ class ClinicalLensService {
       final lens = parse(content, modality);
       if (lens == null) {
         throw const ClinicalLensException(
-            'Could not parse the clinical lens. Try again.');
+          'Could not parse the clinical lens. Try again.',
+        );
       }
       return lens;
     } on ClinicalLensException {

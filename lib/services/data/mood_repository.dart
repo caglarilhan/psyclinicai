@@ -12,13 +12,14 @@ class MoodRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _coll(
-          String clinicId, String patientId) =>
-      _db
-          .collection(FirestoreSchema.clinics)
-          .doc(clinicId)
-          .collection(FirestoreSchema.patients)
-          .doc(patientId)
-          .collection('mood');
+    String clinicId,
+    String patientId,
+  ) => _db
+      .collection(FirestoreSchema.clinics)
+      .doc(clinicId)
+      .collection(FirestoreSchema.patients)
+      .doc(patientId)
+      .collection('mood');
 
   /// Newest first. UI can reverse for time-series plots.
   Stream<List<MoodEntry>> watch(String clinicId, String patientId) {
@@ -26,8 +27,7 @@ class MoodRepository {
         .orderBy('completedAt', descending: true)
         .limit(60)
         .snapshots()
-        .map((s) =>
-            s.docs.map(MoodEntry.fromSnapshot).toList(growable: false));
+        .map((s) => s.docs.map(MoodEntry.fromSnapshot).toList(growable: false));
   }
 
   Future<String> add({
@@ -73,8 +73,7 @@ class MoodEntry {
     this.completedAt,
   });
 
-  factory MoodEntry.fromSnapshot(
-      DocumentSnapshot<Map<String, dynamic>> snap) {
+  factory MoodEntry.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> snap) {
     final d = snap.data() ?? const {};
     return MoodEntry(
       id: snap.id,

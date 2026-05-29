@@ -46,8 +46,11 @@ class PsyFirebase {
       // Report unconditionally: in release, debugPrint is a no-op, so without
       // this a Firebase init failure (and the auth/Firestore outage it causes)
       // would be completely invisible.
-      await TelemetryService.instance
-          .captureError(e, stack, hint: 'firebase_bootstrap');
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'firebase_bootstrap',
+      );
       if (kDebugMode) {
         debugPrint('[PsyFirebase] $_initError\n$stack');
       }

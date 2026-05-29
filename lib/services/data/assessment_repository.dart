@@ -13,21 +13,25 @@ class AssessmentRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _coll(
-          String clinicId, String patientId) =>
-      _db
-          .collection(FirestoreSchema.clinics)
-          .doc(clinicId)
-          .collection(FirestoreSchema.patients)
-          .doc(patientId)
-          .collection(FirestoreSchema.assessments);
+    String clinicId,
+    String patientId,
+  ) => _db
+      .collection(FirestoreSchema.clinics)
+      .doc(clinicId)
+      .collection(FirestoreSchema.patients)
+      .doc(patientId)
+      .collection(FirestoreSchema.assessments);
 
   Stream<List<AssessmentDoc>> watchForPatient(
-      String clinicId, String patientId) {
+    String clinicId,
+    String patientId,
+  ) {
     return _coll(clinicId, patientId)
         .orderBy(FirestoreSchema.fieldCompletedAt, descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map(AssessmentDoc.fromSnapshot).toList(growable: false));
+        .map(
+          (s) => s.docs.map(AssessmentDoc.fromSnapshot).toList(growable: false),
+        );
   }
 
   Future<String> savePhq9({
@@ -80,7 +84,8 @@ class AssessmentDoc {
   });
 
   factory AssessmentDoc.fromSnapshot(
-      DocumentSnapshot<Map<String, dynamic>> snap) {
+    DocumentSnapshot<Map<String, dynamic>> snap,
+  ) {
     final d = snap.data() ?? const {};
     final rawAnswers = d[FirestoreSchema.fieldAnswers];
     return AssessmentDoc(
@@ -92,8 +97,8 @@ class AssessmentDoc {
       answers: rawAnswers is List
           ? rawAnswers.map((e) => (e as num).toInt()).toList(growable: false)
           : const [],
-      completedAt:
-          (d[FirestoreSchema.fieldCompletedAt] as Timestamp?)?.toDate(),
+      completedAt: (d[FirestoreSchema.fieldCompletedAt] as Timestamp?)
+          ?.toDate(),
     );
   }
 

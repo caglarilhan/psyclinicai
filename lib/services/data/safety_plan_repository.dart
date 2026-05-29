@@ -13,12 +13,14 @@ import 'telemetry_service.dart';
 /// invisible "no crisis plan" state for an at-risk patient is unacceptable.
 class SafetyPlanRepository {
   SafetyPlanRepository({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-              iOptions:
-                  IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   static const _key = 'safety_plans';
   final FlutterSecureStorage _storage;
@@ -41,8 +43,11 @@ class SafetyPlanRepository {
             _byPatient[plan.patientId] = plan;
           } catch (err, st) {
             dropped++;
-            TelemetryService.instance
-                .captureError(err, st, hint: 'safety_plan_decode_record');
+            TelemetryService.instance.captureError(
+              err,
+              st,
+              hint: 'safety_plan_decode_record',
+            );
           }
         }
         if (dropped > 0) {
@@ -71,7 +76,8 @@ class SafetyPlanRepository {
     _byPatient[plan.patientId] = plan;
     try {
       final raw = jsonEncode(
-          _byPatient.values.map((p) => p.toJson()).toList(growable: false));
+        _byPatient.values.map((p) => p.toJson()).toList(growable: false),
+      );
       await _storage.write(key: _key, value: raw);
     } catch (e, st) {
       TelemetryService.instance.captureError(e, st, hint: 'safety_plan_save');

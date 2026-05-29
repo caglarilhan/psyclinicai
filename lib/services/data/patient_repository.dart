@@ -19,8 +19,9 @@ class PatientRepository {
     return _coll(clinicId)
         .orderBy(FirestoreSchema.fieldCreatedAt, descending: true)
         .snapshots()
-        .map((s) =>
-            s.docs.map(PatientDoc.fromSnapshot).toList(growable: false));
+        .map(
+          (s) => s.docs.map(PatientDoc.fromSnapshot).toList(growable: false),
+        );
   }
 
   Future<PatientDoc?> get(String clinicId, String patientId) async {
@@ -34,9 +35,9 @@ class PatientRepository {
     return _coll(clinicId)
         .orderBy(FirestoreSchema.fieldUpdatedAt, descending: true)
         .snapshots()
-        .map((s) => s.docs
-            .map(PatientDoc.fromSnapshot)
-            .toList(growable: false));
+        .map(
+          (s) => s.docs.map(PatientDoc.fromSnapshot).toList(growable: false),
+        );
   }
 
   Future<String> create(String clinicId, PatientDraft draft) async {
@@ -45,8 +46,9 @@ class PatientRepository {
       FirestoreSchema.fieldFullName: draft.fullName,
       FirestoreSchema.fieldEmail: draft.email,
       FirestoreSchema.fieldPhone: draft.phone,
-      FirestoreSchema.fieldDob:
-          draft.dob != null ? Timestamp.fromDate(draft.dob!) : null,
+      FirestoreSchema.fieldDob: draft.dob != null
+          ? Timestamp.fromDate(draft.dob!)
+          : null,
       FirestoreSchema.fieldMemberId: draft.memberId,
       FirestoreSchema.fieldInsurer: draft.insurer,
       FirestoreSchema.fieldAddressLine1: draft.addressLine1,
@@ -59,13 +61,17 @@ class PatientRepository {
   }
 
   Future<void> update(
-      String clinicId, String patientId, PatientDraft draft) async {
+    String clinicId,
+    String patientId,
+    PatientDraft draft,
+  ) async {
     await _coll(clinicId).doc(patientId).update({
       FirestoreSchema.fieldFullName: draft.fullName,
       FirestoreSchema.fieldEmail: draft.email,
       FirestoreSchema.fieldPhone: draft.phone,
-      FirestoreSchema.fieldDob:
-          draft.dob != null ? Timestamp.fromDate(draft.dob!) : null,
+      FirestoreSchema.fieldDob: draft.dob != null
+          ? Timestamp.fromDate(draft.dob!)
+          : null,
       FirestoreSchema.fieldMemberId: draft.memberId,
       FirestoreSchema.fieldInsurer: draft.insurer,
       FirestoreSchema.fieldAddressLine1: draft.addressLine1,
@@ -82,25 +88,26 @@ class PatientRepository {
   /// Upsert a patient under a fixed [patientId]. Useful when the caller
   /// already has a stable identifier (e.g. legacy demo data).
   Future<void> upsert(
-      String clinicId, String patientId, PatientDraft draft) async {
+    String clinicId,
+    String patientId,
+    PatientDraft draft,
+  ) async {
     final now = FieldValue.serverTimestamp();
-    await _coll(clinicId).doc(patientId).set(
-      {
-        FirestoreSchema.fieldFullName: draft.fullName,
-        FirestoreSchema.fieldEmail: draft.email,
-        FirestoreSchema.fieldPhone: draft.phone,
-        FirestoreSchema.fieldDob:
-            draft.dob != null ? Timestamp.fromDate(draft.dob!) : null,
-        FirestoreSchema.fieldMemberId: draft.memberId,
-        FirestoreSchema.fieldInsurer: draft.insurer,
-        FirestoreSchema.fieldAddressLine1: draft.addressLine1,
-        FirestoreSchema.fieldAddressLine2: draft.addressLine2,
-        FirestoreSchema.fieldNotes: draft.notes,
-        FirestoreSchema.fieldUpdatedAt: now,
-        FirestoreSchema.fieldCreatedAt: now,
-      },
-      SetOptions(merge: true),
-    );
+    await _coll(clinicId).doc(patientId).set({
+      FirestoreSchema.fieldFullName: draft.fullName,
+      FirestoreSchema.fieldEmail: draft.email,
+      FirestoreSchema.fieldPhone: draft.phone,
+      FirestoreSchema.fieldDob: draft.dob != null
+          ? Timestamp.fromDate(draft.dob!)
+          : null,
+      FirestoreSchema.fieldMemberId: draft.memberId,
+      FirestoreSchema.fieldInsurer: draft.insurer,
+      FirestoreSchema.fieldAddressLine1: draft.addressLine1,
+      FirestoreSchema.fieldAddressLine2: draft.addressLine2,
+      FirestoreSchema.fieldNotes: draft.notes,
+      FirestoreSchema.fieldUpdatedAt: now,
+      FirestoreSchema.fieldCreatedAt: now,
+    }, SetOptions(merge: true));
   }
 }
 

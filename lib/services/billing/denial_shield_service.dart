@@ -18,7 +18,12 @@ class DenialShieldService {
 
   /// Time-based psychotherapy codes that require explicit start/stop time.
   static const Set<String> _timeBased = {
-    '90832', '90834', '90837', '90846', '90847', '90839',
+    '90832',
+    '90834',
+    '90837',
+    '90846',
+    '90847',
+    '90839',
   };
 
   /// CPT → inclusive minute band (min, max). null max = open-ended.
@@ -49,16 +54,16 @@ class DenialShieldService {
 
   /// One-line note on what each payer is strict about (shown in the UI).
   static String payerFocus(Payer p) => switch (p) {
-        Payer.medicare =>
-          'Strict on start/stop time and a documented plan/signature.',
-        Payer.medicaid =>
-          'Requires measurable treatment-plan goals + functional impairment.',
-        Payer.bcbs => 'Wants documented impairment and a named intervention.',
-        Payer.uhcOptum =>
-          'Optum audits the golden thread — goal linkage + impairment.',
-        Payer.aetna => 'Wants the named intervention and the client response.',
-        Payer.cigna => 'Wants functional impairment and risk addressed.',
-      };
+    Payer.medicare =>
+      'Strict on start/stop time and a documented plan/signature.',
+    Payer.medicaid =>
+      'Requires measurable treatment-plan goals + functional impairment.',
+    Payer.bcbs => 'Wants documented impairment and a named intervention.',
+    Payer.uhcOptum =>
+      'Optum audits the golden thread — goal linkage + impairment.',
+    Payer.aetna => 'Wants the named intervention and the client response.',
+    Payer.cigna => 'Wants functional impairment and risk addressed.',
+  };
 
   DenialRisk assess({
     required String note,
@@ -78,51 +83,60 @@ class DenialShieldService {
     // 1 — CPT ↔ documented time.
     if (band != null && mins != null && mins < band.$1) {
       final lower = _downcode[cptCode];
-      reasons.add(DenialReason(
-        critical: true,
-        title: 'Documented time does not support $cptCode',
-        detail:
-            '${payer.short} will downcode or deny — $mins min is below the '
-            '${band.$1}-minute threshold for $cptCode.',
-        fixSentence: lower != null
-            ? 'Either bill $lower instead, or document the full session length '
-                'with exact start–stop times.'
-            : 'Document the full session length with exact start–stop times.',
-      ));
+      reasons.add(
+        DenialReason(
+          critical: true,
+          title: 'Documented time does not support $cptCode',
+          detail:
+              '${payer.short} will downcode or deny — $mins min is below the '
+              '${band.$1}-minute threshold for $cptCode.',
+          fixSentence: lower != null
+              ? 'Either bill $lower instead, or document the full session length '
+                    'with exact start–stop times.'
+              : 'Document the full session length with exact start–stop times.',
+        ),
+      );
     }
 
     // 1b — 90837 (60 min) extended-session medical necessity.
     if (cptCode == '90837' && !_hasMedicalNecessity(note)) {
-      reasons.add(const DenialReason(
-        critical: true,
-        title:
-            '90837 lacks a medical-necessity reason for the extended session',
-        detail: '90837 (53+ min) is the most-audited psychotherapy code; '
-            'without a stated reason it is routinely denied or downcoded.',
-        fixSentence: 'Add why the extended session was clinically required — '
-            'e.g. "53+ minutes were medically necessary for trauma processing '
-            'given symptom severity."',
-        insertText: 'The extended 53+ minute session was medically necessary '
-            'given symptom severity and the depth of material addressed.',
-      ));
+      reasons.add(
+        const DenialReason(
+          critical: true,
+          title:
+              '90837 lacks a medical-necessity reason for the extended session',
+          detail:
+              '90837 (53+ min) is the most-audited psychotherapy code; '
+              'without a stated reason it is routinely denied or downcoded.',
+          fixSentence:
+              'Add why the extended session was clinically required — '
+              'e.g. "53+ minutes were medically necessary for trauma processing '
+              'given symptom severity."',
+          insertText:
+              'The extended 53+ minute session was medically necessary '
+              'given symptom severity and the depth of material addressed.',
+        ),
+      );
     }
 
     // 1c — time-based code with no start/stop time at all.
     if (_timeBased.contains(cptCode) && !_hasClockTime(note) && mins == null) {
-      reasons.add(DenialReason(
-        critical: true,
-        title: 'No session time documented',
-        detail:
-            'Time-based code $cptCode requires the session length on the note.',
-        fixSentence:
-            'Document exact start and stop times (e.g. "10:02–10:55").',
-      ));
+      reasons.add(
+        DenialReason(
+          critical: true,
+          title: 'No session time documented',
+          detail:
+              'Time-based code $cptCode requires the session length on the note.',
+          fixSentence:
+              'Document exact start and stop times (e.g. "10:02–10:55").',
+        ),
+      );
     }
 
     // 2 — payer-weighted documentation gaps (from the rubric).
     final failing = {
       for (final c in audit.checks)
-        if (c.status != CheckStatus.pass) c.id
+        if (c.status != CheckStatus.pass) c.id,
     };
     for (final id in _payerCritical[payer] ?? const <String>[]) {
       if (failing.contains(id)) {
@@ -134,8 +148,8 @@ class DenialShieldService {
     final level = reasons.any((r) => r.critical)
         ? DenialLevel.high
         : reasons.isNotEmpty
-            ? DenialLevel.medium
-            : DenialLevel.low;
+        ? DenialLevel.medium
+        : DenialLevel.low;
 
     return DenialRisk(
       level: level,
@@ -195,7 +209,8 @@ class DenialShieldService {
       case 'response':
         return DenialReason(
           title: 'Client response to the intervention not documented',
-          detail: '$who wants evidence the intervention was delivered and how '
+          detail:
+              '$who wants evidence the intervention was delivered and how '
               'the client responded.',
           fixSentence:
               'Add the response — e.g. "Client engaged, identified two '
@@ -216,7 +231,8 @@ class DenialShieldService {
         return DenialReason(
           critical: payer == Payer.medicare,
           title: 'Start/stop time missing',
-          detail: '$who requires exact start and stop times for time-based '
+          detail:
+              '$who requires exact start and stop times for time-based '
               'psychotherapy codes.',
           fixSentence: 'Document start and stop times (e.g. "10:02–10:55").',
         );
@@ -237,18 +253,22 @@ class DenialShieldService {
   }
 
   int? _parseMinutes(String note) {
-    final m = RegExp(r'(\d{1,3})\s*(?:min\b|minute)', caseSensitive: false)
-        .firstMatch(note);
+    final m = RegExp(
+      r'(\d{1,3})\s*(?:min\b|minute)',
+      caseSensitive: false,
+    ).firstMatch(note);
     return m == null ? null : int.tryParse(m.group(1)!);
   }
 
   bool _hasClockTime(String note) =>
       RegExp(r'\d{1,2}:\d{2}').hasMatch(note) ||
-      RegExp(r'\b(start|stop|started|ended|duration)\b', caseSensitive: false)
-          .hasMatch(note);
-
-  bool _hasMedicalNecessity(String note) => RegExp(
-        r'\b(medically necessary|medical necessity|due to|because|severity|trauma|crisis|complex|extended)',
+      RegExp(
+        r'\b(start|stop|started|ended|duration)\b',
         caseSensitive: false,
       ).hasMatch(note);
+
+  bool _hasMedicalNecessity(String note) => RegExp(
+    r'\b(medically necessary|medical necessity|due to|because|severity|trauma|crisis|complex|extended)',
+    caseSensitive: false,
+  ).hasMatch(note);
 }

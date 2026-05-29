@@ -43,20 +43,19 @@ enum Gad7Severity { minimal, mild, moderate, severe }
 
 extension Gad7SeverityX on Gad7Severity {
   String get label => switch (this) {
-        Gad7Severity.minimal => 'None / Minimal',
-        Gad7Severity.mild => 'Mild',
-        Gad7Severity.moderate => 'Moderate',
-        Gad7Severity.severe => 'Severe',
-      };
+    Gad7Severity.minimal => 'None / Minimal',
+    Gad7Severity.mild => 'Mild',
+    Gad7Severity.moderate => 'Moderate',
+    Gad7Severity.severe => 'Severe',
+  };
 
   String get actionSuggestion => switch (this) {
-        Gad7Severity.minimal => 'No intervention typically needed.',
-        Gad7Severity.mild => 'Watchful waiting + psychoeducation.',
-        Gad7Severity.moderate =>
-          'Active treatment recommended (CBT and/or SSRI).',
-        Gad7Severity.severe =>
-          'Specialist referral or intensive treatment indicated.',
-      };
+    Gad7Severity.minimal => 'No intervention typically needed.',
+    Gad7Severity.mild => 'Watchful waiting + psychoeducation.',
+    Gad7Severity.moderate => 'Active treatment recommended (CBT and/or SSRI).',
+    Gad7Severity.severe =>
+      'Specialist referral or intensive treatment indicated.',
+  };
 }
 
 class Gad7Result {

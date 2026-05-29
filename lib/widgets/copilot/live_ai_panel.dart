@@ -261,13 +261,15 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     final pid = widget.patientId;
     if (pid == null || pid.isEmpty) return;
     await _noteRepo.initialize();
-    await _noteRepo.add(SessionNote(
-      id: 'n-${DateTime.now().millisecondsSinceEpoch}',
-      patientId: pid,
-      markdown: note.rawMarkdown,
-      format: note.format.name,
-      flaggedRisk: note.flaggedRisk,
-    ));
+    await _noteRepo.add(
+      SessionNote(
+        id: 'n-${DateTime.now().millisecondsSinceEpoch}',
+        patientId: pid,
+        markdown: note.rawMarkdown,
+        format: note.format.name,
+        flaggedRisk: note.flaggedRisk,
+      ),
+    );
   }
 
   Future<void> _runDeepCheck() async {
@@ -293,8 +295,11 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       return;
     }
     final text = _editCtl.text.isEmpty ? note.rawMarkdown : _editCtl.text;
-    final cpt = const NoteBillingExtractor().suggestCpt(text,
-            isPsychiatry: note.format == SoapFormat.psychiatry) ??
+    final cpt =
+        const NoteBillingExtractor().suggestCpt(
+          text,
+          isPsychiatry: note.format == SoapFormat.psychiatry,
+        ) ??
         '90834';
     _denial = const DenialShieldService().assess(
       note: text,
@@ -310,11 +315,14 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   void _applyDenialFixes() {
     final d = _denial;
     if (d == null) return;
-    final additions =
-        d.reasons.map((r) => r.insertText).whereType<String>().toList();
+    final additions = d.reasons
+        .map((r) => r.insertText)
+        .whereType<String>()
+        .toList();
     if (additions.isEmpty) return;
-    final current =
-        _editCtl.text.isEmpty ? (_note?.rawMarkdown ?? '') : _editCtl.text;
+    final current = _editCtl.text.isEmpty
+        ? (_note?.rawMarkdown ?? '')
+        : _editCtl.text;
     final updated = '$current\n\n${additions.join(' ')}';
     setState(() {
       _editCtl.text = updated;
@@ -345,9 +353,12 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 Icon(Icons.verified_user_outlined, color: _denialColor(cs, d)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('${d.level.label} · ${d.payer.label}',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    '${d.level.label} · ${d.payer.label}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -355,8 +366,9 @@ class _LiveAiPanelState extends State<LiveAiPanel>
             Text(
               '${d.cptCode} · ${d.cptLabel}'
               '${d.revenueAtRisk != null ? ' · ~\$${d.revenueAtRisk!.round()} at risk' : ''}',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
             ),
             if (d.reasons.any((r) => r.insertText != null)) ...[
               const SizedBox(height: 12),
@@ -368,86 +380,110 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 icon: const Icon(Icons.auto_fix_high, size: 18),
                 label: const Text('Update note & reset risk'),
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(46)),
+                  minimumSize: const Size.fromHeight(46),
+                ),
               ),
             ],
             const SizedBox(height: 16),
             if (d.reasons.isEmpty)
-              Text('No denial drivers found for ${d.payer.short}. '
-                  'Documentation supports the billed code.',
-                  style: theme.textTheme.bodyMedium)
+              Text(
+                'No denial drivers found for ${d.payer.short}. '
+                'Documentation supports the billed code.',
+                style: theme.textTheme.bodyMedium,
+              )
             else
-              ...d.reasons.map((r) => Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: r.critical
-                              ? cs.error.withValues(alpha: 0.4)
-                              : cs.outlineVariant),
+              ...d.reasons.map(
+                (r) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: r.critical
+                          ? cs.error.withValues(alpha: 0.4)
+                          : cs.outlineVariant,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            r.critical
+                                ? Icons.error_outline
+                                : Icons.warning_amber_rounded,
+                            size: 16,
+                            color: r.critical
+                                ? cs.error
+                                : const Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              r.title,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        r.detail,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.75),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                                r.critical
-                                    ? Icons.error_outline
-                                    : Icons.warning_amber_rounded,
-                                size: 16,
-                                color: r.critical
-                                    ? cs.error
-                                    : const Color(0xFFD97706)),
+                              Icons.add_circle_outline,
+                              size: 15,
+                              color: cs.primary,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
-                              child: Text(r.title,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w700)),
+                              child: Text(
+                                r.fixSentence,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.primary,
+                                  height: 1.4,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(r.detail,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurface.withValues(alpha: 0.75))),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: cs.primary.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.add_circle_outline,
-                                  size: 15, color: cs.primary),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(r.fixSentence,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                        color: cs.primary, height: 1.4)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
-            Text(DenialShieldService.payerFocus(d.payer),
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.55),
-                    fontStyle: FontStyle.italic)),
+            Text(
+              DenialShieldService.payerFocus(d.payer),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               'Decision-support — payer rules and reimbursement vary and change. '
               'This estimates denial risk; it does not guarantee payment.',
               style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5)),
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
             ),
           ],
         ),
@@ -467,8 +503,9 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   }
 
   Future<void> _showInsights(BuildContext context) async {
-    final transcript =
-        _transcript.trim().isNotEmpty ? _transcript : _note?.rawMarkdown ?? '';
+    final transcript = _transcript.trim().isNotEmpty
+        ? _transcript
+        : _note?.rawMarkdown ?? '';
     setState(() => _loadingInsights = true);
     try {
       final insights = await _insights.analyze(transcript);
@@ -481,15 +518,18 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       );
     } on SessionInsightsException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loadingInsights = false);
     }
@@ -515,26 +555,32 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   /// questions) for the session and shows it in a sheet, copyable for a
   /// supervisor.
   Future<void> _showSupervision(BuildContext context) async {
-    final src =
-        _transcript.isNotEmpty ? _transcript : (_note?.rawMarkdown ?? '');
+    final src = _transcript.isNotEmpty
+        ? _transcript
+        : (_note?.rawMarkdown ?? '');
     if (src.trim().isEmpty) return;
     setState(() => _loadingSupervision = true);
     try {
-      final report =
-          await _supervision.generate(transcript: src, modality: _modality);
+      final report = await _supervision.generate(
+        transcript: src,
+        modality: _modality,
+      );
       if (!mounted) return;
       _presentSupervision(context, report);
     } on SupervisionException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loadingSupervision = false);
     }
@@ -546,31 +592,39 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     final color = r.fidelityScore >= 80
         ? const Color(0xFF16A34A)
         : r.fidelityScore >= 60
-            ? const Color(0xFFD97706)
-            : cs.error;
+        ? const Color(0xFFD97706)
+        : cs.error;
     Widget list(String title, List<String> items) {
       if (items.isEmpty) return const SizedBox.shrink();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          Text(title.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6)),
+          Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
+          ),
           const SizedBox(height: 4),
-          ...items.map((i) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.chevron_right,
-                        size: 16, color: cs.onSurface.withValues(alpha: 0.5)),
-                    Expanded(child: Text(i, style: theme.textTheme.bodyMedium)),
-                  ],
-                ),
-              )),
+          ...items.map(
+            (i) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                  Expanded(child: Text(i, style: theme.textTheme.bodyMedium)),
+                ],
+              ),
+            ),
+          ),
         ],
       );
     }
@@ -592,25 +646,34 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 Icon(Icons.school_outlined, color: cs.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('${r.modalityLabel} supervision (de-identified)',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    '${r.modalityLabel} supervision (de-identified)',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Text('${r.fidelityScore}',
-                    style: theme.textTheme.displaySmall?.copyWith(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
+                Text(
+                  '${r.fidelityScore}',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6, left: 4),
-                  child: Text('/100 fidelity',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.6))),
+                  child: Text(
+                    '/100 fidelity',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -620,9 +683,12 @@ class _LiveAiPanelState extends State<LiveAiPanel>
             ],
             if (r.fidelityNotes.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(r.fidelityNotes,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7))),
+              Text(
+                r.fidelityNotes,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
             ],
             list('Strengths', r.strengths),
             list('Growth areas', r.growthAreas),
@@ -631,21 +697,24 @@ class _LiveAiPanelState extends State<LiveAiPanel>
             OutlinedButton.icon(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: r.anonymizedText()));
-                ScaffoldMessenger.of(sheetCtx).showSnackBar(const SnackBar(
-                    content: Text('De-identified report copied.')));
+                ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                  const SnackBar(content: Text('De-identified report copied.')),
+                );
               },
               icon: const Icon(Icons.copy_outlined, size: 18),
               label: const Text('Copy anonymized report'),
               style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(46)),
+                minimumSize: const Size.fromHeight(46),
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               'Decision-support for supervision — not a competency '
               'determination. Verify anonymization before sharing.',
               style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic),
+                color: cs.onSurface.withValues(alpha: 0.5),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -662,21 +731,26 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     if (src.trim().isEmpty) return;
     setState(() => _loadingLens = true);
     try {
-      final lens =
-          await _lensService.extract(transcript: src, modality: _modality);
+      final lens = await _lensService.extract(
+        transcript: src,
+        modality: _modality,
+      );
       if (!mounted) return;
       _presentLens(context, lens);
     } on ClinicalLensException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loadingLens = false);
     }
@@ -701,41 +775,52 @@ class _LiveAiPanelState extends State<LiveAiPanel>
               children: [
                 Icon(Icons.center_focus_strong_outlined, color: cs.primary),
                 const SizedBox(width: 8),
-                Text('${lens.modalityLabel} lens',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  '${lens.modalityLabel} lens',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
             for (final s in lens.sections) ...[
-              Text(s.title.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6)),
+              Text(
+                s.title.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
               const SizedBox(height: 6),
-              ...s.items.map((it) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.chevron_right,
-                            size: 16,
-                            color: cs.onSurface.withValues(alpha: 0.5)),
-                        Expanded(
-                            child: Text(it,
-                                style: theme.textTheme.bodyMedium)),
-                      ],
-                    ),
-                  )),
+              ...s.items.map(
+                (it) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                      ),
+                      Expanded(
+                        child: Text(it, style: theme.textTheme.bodyMedium),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
             ],
             Text(
               'Decision-support — extracted from the transcript for review, not '
               'a diagnosis.',
               style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic),
+                color: cs.onSurface.withValues(alpha: 0.5),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -834,9 +919,9 @@ class _LiveAiPanelState extends State<LiveAiPanel>
           modalityLabel: _modality.label,
         );
         void onPayer(Payer p) => setState(() {
-              _payer = p;
-              _computeDenial();
-            });
+          _payer = p;
+          _computeDenial();
+        });
         return Column(
           children: [
             if (_signals.isNotEmpty)
@@ -852,7 +937,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                       children: [
                         Expanded(flex: 3, child: noteView),
                         VerticalDivider(
-                            width: 1, thickness: 1, color: cs.outlineVariant),
+                          width: 1,
+                          thickness: 1,
+                          color: cs.outlineVariant,
+                        ),
                         SizedBox(
                           width: 360,
                           child: _ComplianceRail(
@@ -965,8 +1053,7 @@ class _Header extends StatelessWidget {
                 height: 10,
                 margin: const EdgeInsets.only(right: 8),
                 decoration: BoxDecoration(
-                  color:
-                      Colors.red.withValues(alpha: 0.5 + pulse.value * 0.5),
+                  color: Colors.red.withValues(alpha: 0.5 + pulse.value * 0.5),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -1000,10 +1087,9 @@ class _Header extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
                 items: Modality.values
-                    .map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(m.label),
-                        ))
+                    .map(
+                      (m) => DropdownMenuItem(value: m, child: Text(m.label)),
+                    )
                     .toList(),
                 onChanged: (v) => v != null ? onModalityChanged!(v) : null,
               ),
@@ -1020,18 +1106,20 @@ class _Header extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
                 items: SoapFormat.values
-                    .map((f) => DropdownMenuItem(
-                          value: f,
-                          child: Text(f.label),
-                        ))
+                    .map(
+                      (f) => DropdownMenuItem(value: f, child: Text(f.label)),
+                    )
                     .toList(),
                 onChanged: (v) => v != null ? onFormatChanged!(v) : null,
               ),
             ),
           IconButton(
             tooltip: 'API Keys',
-            icon: Icon(Icons.key,
-                size: 18, color: cs.onSurface.withValues(alpha: 0.7)),
+            icon: Icon(
+              Icons.key,
+              size: 18,
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
             onPressed: onOpenSettings,
           ),
         ],
@@ -1083,73 +1171,69 @@ class _Footer extends StatelessWidget {
       ),
       child: switch (state) {
         _PanelState.idle => FilledButton.icon(
-            onPressed: onStart,
-            icon: const Icon(Icons.mic, size: 18),
-            label: const Text('Start AI Recording'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
-            ),
-          ),
+          onPressed: onStart,
+          icon: const Icon(Icons.mic, size: 18),
+          label: const Text('Start AI Recording'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+        ),
         _PanelState.listening => Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onStopGenerate,
-                  icon: const Icon(Icons.stop, size: 18),
-                  label: const Text('Stop & Generate Note'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    backgroundColor: Colors.red[600],
-                  ),
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: onStopGenerate,
+                icon: const Icon(Icons.stop, size: 18),
+                label: const Text('Stop & Generate Note'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                  backgroundColor: Colors.red[600],
                 ),
               ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                tooltip: 'Cancel',
-                onPressed: onCancel,
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filledTonal(
+              tooltip: 'Cancel',
+              onPressed: onCancel,
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
         _PanelState.generating => OutlinedButton.icon(
-            onPressed: null,
-            icon: const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            label: const Text('Generating note…'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
-            ),
+          onPressed: null,
+          icon: const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
+          label: const Text('Generating note…'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
+          ),
+        ),
         _PanelState.noteReady => Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: editing ? onSaveEdit : onEdit,
-                  icon: Icon(editing ? Icons.check : Icons.edit, size: 16),
-                  label: Text(editing ? 'Save edits' : 'Edit note'),
-                ),
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: editing ? onSaveEdit : onEdit,
+                icon: Icon(editing ? Icons.check : Icons.edit, size: 16),
+                label: Text(editing ? 'Save edits' : 'Edit note'),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onNewSession,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('New session'),
-                ),
-              ),
-            ],
-          ),
-        _PanelState.error => FilledButton.icon(
-            onPressed: onNewSession,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Try again'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
             ),
-          ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: onNewSession,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('New session'),
+              ),
+            ),
+          ],
+        ),
+        _PanelState.error => FilledButton.icon(
+          onPressed: onNewSession,
+          icon: const Icon(Icons.refresh, size: 18),
+          label: const Text('Try again'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+        ),
       },
     );
   }
@@ -1182,8 +1266,9 @@ class _IdleView extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             'Ready to listen',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1229,8 +1314,7 @@ class _ListeningView extends StatelessWidget {
                     height: 1.55,
                   ),
                   children: [
-                    if (transcript.isNotEmpty)
-                      TextSpan(text: '$transcript '),
+                    if (transcript.isNotEmpty) TextSpan(text: '$transcript '),
                     if (partial.isNotEmpty)
                       TextSpan(
                         text: partial,
@@ -1339,8 +1423,10 @@ class _NoteReadyView extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: cs.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -1356,8 +1442,10 @@ class _NoteReadyView extends StatelessWidget {
               if (note.flaggedRisk) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
@@ -1365,8 +1453,11 @@ class _NoteReadyView extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.warning_amber_rounded,
-                          size: 12, color: Colors.red[700]),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 12,
+                        color: Colors.red[700],
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Risk flagged',
@@ -1388,7 +1479,8 @@ class _NoteReadyView extends StatelessWidget {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.center_focus_strong_outlined, size: 18),
               ),
               IconButton(
@@ -1399,7 +1491,8 @@ class _NoteReadyView extends StatelessWidget {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.school_outlined, size: 18),
               ),
               IconButton(
@@ -1418,8 +1511,10 @@ class _NoteReadyView extends StatelessWidget {
                     maxLines: null,
                     expands: true,
                     textAlignVertical: TextAlignVertical.top,
-                    style:
-                        const TextStyle(fontFamily: 'monospace', height: 1.45),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      height: 1.45,
+                    ),
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1427,8 +1522,9 @@ class _NoteReadyView extends StatelessWidget {
                       ),
                       contentPadding: const EdgeInsets.all(12),
                       filled: true,
-                      fillColor: cs.surfaceContainerHighest
-                          .withValues(alpha: 0.3),
+                      fillColor: cs.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
                     ),
                   )
                 : SingleChildScrollView(
@@ -1436,8 +1532,10 @@ class _NoteReadyView extends StatelessWidget {
                       controller.text.isEmpty
                           ? note.rawMarkdown
                           : controller.text,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(height: 1.5, fontFamily: 'monospace'),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.5,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
           ),
@@ -1474,8 +1572,9 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Could not complete',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1516,18 +1615,20 @@ class _RiskStrip extends StatelessWidget {
   final ColorScheme cs;
 
   Color _color(RiskSeverity s) => switch (s) {
-        RiskSeverity.high => const Color(0xFFDC2626),
-        RiskSeverity.elevated => const Color(0xFFD97706),
-        RiskSeverity.info => cs.primary,
-      };
+    RiskSeverity.high => const Color(0xFFDC2626),
+    RiskSeverity.elevated => const Color(0xFFD97706),
+    RiskSeverity.info => cs.primary,
+  };
 
   @override
   Widget build(BuildContext context) {
     // Highest severity first, then most recent.
     final sorted = [...signals]
-      ..sort((a, b) => b.severity.index != a.severity.index
-          ? b.severity.index - a.severity.index
-          : b.at.compareTo(a.at));
+      ..sort(
+        (a, b) => b.severity.index != a.severity.index
+            ? b.severity.index - a.severity.index
+            : b.at.compareTo(a.at),
+      );
     final topColor = _color(sorted.first.severity);
 
     return Container(
@@ -1560,11 +1661,14 @@ class _RiskStrip extends StatelessWidget {
             children: sorted.map((s) {
               final c = _color(s.severity);
               return Tooltip(
-                message: '${s.severity.label} · ${s.snippet}'
+                message:
+                    '${s.severity.label} · ${s.snippet}'
                     '${s.source == RiskSource.ai ? '  (AI)' : ''}',
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: c.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
@@ -1609,26 +1713,26 @@ class _RiskStrip extends StatelessWidget {
 Color _scoreColor(int score) => score >= 80
     ? const Color(0xFF16A34A)
     : score >= 60
-        ? const Color(0xFFD97706)
-        : const Color(0xFFDC2626);
+    ? const Color(0xFFD97706)
+    : const Color(0xFFDC2626);
 
 Color _checkColor(CheckStatus s) => switch (s) {
-      CheckStatus.pass => const Color(0xFF16A34A),
-      CheckStatus.warn => const Color(0xFFD97706),
-      CheckStatus.fail => const Color(0xFFDC2626),
-    };
+  CheckStatus.pass => const Color(0xFF16A34A),
+  CheckStatus.warn => const Color(0xFFD97706),
+  CheckStatus.fail => const Color(0xFFDC2626),
+};
 
 IconData _checkIcon(CheckStatus s) => switch (s) {
-      CheckStatus.pass => Icons.check_circle,
-      CheckStatus.warn => Icons.error_outline,
-      CheckStatus.fail => Icons.cancel,
-    };
+  CheckStatus.pass => Icons.check_circle,
+  CheckStatus.warn => Icons.error_outline,
+  CheckStatus.fail => Icons.cancel,
+};
 
 Color _denialColor(ColorScheme cs, DenialRisk d) => switch (d.level) {
-      DenialLevel.high => cs.error,
-      DenialLevel.medium => const Color(0xFFD97706),
-      DenialLevel.low => const Color(0xFF16A34A),
-    };
+  DenialLevel.high => cs.error,
+  DenialLevel.medium => const Color(0xFFD97706),
+  DenialLevel.low => const Color(0xFF16A34A),
+};
 
 /// Denial Shield strip — payer-aware claim-rejection risk for the note, with a
 /// payer selector. Tap opens the reasons + the exact sentences to add.
@@ -1677,7 +1781,9 @@ class _DenialBanner extends StatelessWidget {
                     '${risk != null ? ' · ~\$${risk.round()} risk' : ''}',
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelMedium?.copyWith(
-                        color: color, fontWeight: FontWeight.w700),
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1686,8 +1792,9 @@ class _DenialBanner extends StatelessWidget {
                     value: payer,
                     isDense: true,
                     icon: const Icon(Icons.expand_more, size: 16),
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: cs.onSurface),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: cs.onSurface,
+                    ),
                     items: [
                       for (final p in Payer.values)
                         DropdownMenuItem(value: p, child: Text(p.short)),
@@ -1695,8 +1802,11 @@ class _DenialBanner extends StatelessWidget {
                     onChanged: (p) => p == null ? null : onPayerChanged(p),
                   ),
                 ),
-                Icon(Icons.chevron_right,
-                    size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
               ],
             ),
           ),
@@ -1765,37 +1875,51 @@ class _ComplianceRail extends StatelessWidget {
     final color = score >= 80
         ? const Color(0xFF16A34A)
         : score >= 60
-            ? const Color(0xFFD97706)
-            : cs.error;
+        ? const Color(0xFFD97706)
+        : cs.error;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('AUDIT READINESS',
-            style: theme.textTheme.labelSmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6)),
+        Text(
+          'AUDIT READINESS',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.55),
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.6,
+          ),
+        ),
         const SizedBox(height: 6),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('$score%',
-                style: theme.textTheme.displaySmall?.copyWith(
-                    fontSize: 40, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              '$score%',
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
             const SizedBox(width: 8),
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text('${r.toFixCount} to fix',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.6))),
+              child: Text(
+                '${r.toFixCount} to fix',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
             ),
           ],
         ),
         if (r.summary != null && r.summary!.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(r.summary!,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7))),
+          Text(
+            r.summary!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
         ],
         const SizedBox(height: 8),
         Wrap(
@@ -1804,13 +1928,15 @@ class _ComplianceRail extends StatelessWidget {
           children: [
             _railBtn(Icons.list_alt_outlined, 'Details', onDetails),
             _railBtn(
-                deepChecking ? null : Icons.auto_awesome,
-                deepChecking ? 'Checking…' : 'Deep check',
-                deepChecking ? null : onDeepCheck),
+              deepChecking ? null : Icons.auto_awesome,
+              deepChecking ? 'Checking…' : 'Deep check',
+              deepChecking ? null : onDeepCheck,
+            ),
             _railBtn(
-                loadingInsights ? null : Icons.psychology_alt_outlined,
-                loadingInsights ? 'Loading…' : 'Insights',
-                loadingInsights ? null : onInsights),
+              loadingInsights ? null : Icons.psychology_alt_outlined,
+              loadingInsights ? 'Loading…' : 'Insights',
+              loadingInsights ? null : onInsights,
+            ),
           ],
         ),
       ],
@@ -1829,11 +1955,14 @@ class _ComplianceRail extends StatelessWidget {
             Icon(Icons.verified_user_outlined, size: 15, color: color),
             const SizedBox(width: 6),
             Expanded(
-              child: Text('DENIAL SHIELD',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6)),
+              child: Text(
+                'DENIAL SHIELD',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
             ),
             DropdownButton<Payer>(
               value: payer,
@@ -1849,62 +1978,82 @@ class _ComplianceRail extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        Text(d.level.label,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(color: color, fontWeight: FontWeight.w700)),
+        Text(
+          d.level.label,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         Text(
           '${d.cptCode} · ${d.cptLabel}'
           '${risk != null ? ' · ~\$${risk.round()} at risk' : ''}',
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.7),
+          ),
         ),
         const SizedBox(height: 10),
         if (d.reasons.isEmpty)
           Row(
             children: [
-              const Icon(Icons.check_circle_outline,
-                  size: 16, color: Color(0xFF16A34A)),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 16,
+                color: Color(0xFF16A34A),
+              ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('Documentation supports the billed code.',
-                    style: theme.textTheme.bodySmall),
+                child: Text(
+                  'Documentation supports the billed code.',
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
             ],
           )
         else
-          ...d.reasons.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                            r.critical
-                                ? Icons.error_outline
-                                : Icons.warning_amber_rounded,
-                            size: 14,
-                            color: r.critical
-                                ? cs.error
-                                : const Color(0xFFD97706)),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(r.title,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w700, height: 1.35)),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 19, top: 2),
-                      child: Text('+ ${r.fixSentence}',
+          ...d.reasons.map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        r.critical
+                            ? Icons.error_outline
+                            : Icons.warning_amber_rounded,
+                        size: 14,
+                        color: r.critical ? cs.error : const Color(0xFFD97706),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          r.title,
                           style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.primary, height: 1.4, fontSize: 11.5)),
+                            fontWeight: FontWeight.w700,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 19, top: 2),
+                    child: Text(
+                      '+ ${r.fixSentence}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.primary,
+                        height: 1.4,
+                        fontSize: 11.5,
+                      ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         if (canApply) ...[
           const SizedBox(height: 6),
           SizedBox(
@@ -1928,7 +2077,8 @@ class _ComplianceRail extends StatelessWidget {
           : const SizedBox(
               width: 12,
               height: 12,
-              child: CircularProgressIndicator(strokeWidth: 2)),
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
       label: Text(label, style: const TextStyle(fontSize: 12)),
       style: OutlinedButton.styleFrom(
         visualDensity: VisualDensity.compact,
@@ -1972,47 +2122,59 @@ class _AuditBanner extends StatelessWidget {
         children: [
           Icon(Icons.verified_outlined, size: 16, color: color),
           const SizedBox(width: 6),
-          Text('Audit readiness ${report.score}%',
-              style: theme.textTheme.labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w700, color: color)),
+          Text(
+            'Audit readiness ${report.score}%',
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
           if (report.toFixCount > 0) ...[
             const SizedBox(width: 6),
-            Text('· ${report.toFixCount} to fix',
-                style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6))),
+            Text(
+              '· ${report.toFixCount} to fix',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
           ],
           const Spacer(),
           TextButton.icon(
             onPressed: loadingInsights ? null : onInsights,
             style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8)),
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
             icon: loadingInsights
                 ? const SizedBox(
                     width: 12,
                     height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.school_outlined, size: 14),
             label: const Text('Insights'),
           ),
           TextButton(
             onPressed: onDetails,
             style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8)),
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
             child: const Text('Details'),
           ),
           if (report.source != ComplianceSource.ai)
             TextButton.icon(
               onPressed: deepChecking ? null : onDeepCheck,
               style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8)),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
               icon: deepChecking
                   ? const SizedBox(
                       width: 12,
                       height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.auto_awesome, size: 14),
               label: const Text('AI check'),
             ),
@@ -2042,60 +2204,78 @@ class _AuditSheet extends StatelessWidget {
               children: [
                 Icon(Icons.verified_outlined, color: color),
                 const SizedBox(width: 8),
-                Text('Audit readiness · ${report.score}%',
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'Audit readiness · ${report.score}%',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const Spacer(),
                 Text(
-                    report.source == ComplianceSource.ai
-                        ? 'AI review'
-                        : 'Quick check',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
+                  report.source == ComplianceSource.ai
+                      ? 'AI review'
+                      : 'Quick check',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
             if (report.summary != null) ...[
               const SizedBox(height: 6),
-              Text(report.summary!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7))),
+              Text(
+                report.summary!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
             ],
             const SizedBox(height: 12),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   children: report.checks
-                      .map((c) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(_checkIcon(c.status),
-                                    size: 18, color: _checkColor(c.status)),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(c.label,
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                  fontWeight: FontWeight.w600)),
-                                      if (c.fix != null)
-                                        Text(c.fix!,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                              color: cs.onSurface
-                                                  .withValues(alpha: 0.7),
+                      .map(
+                        (c) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                _checkIcon(c.status),
+                                size: 18,
+                                color: _checkColor(c.status),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c.label,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    if (c.fix != null)
+                                      Text(
+                                        c.fix!,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: cs.onSurface.withValues(
+                                                alpha: 0.7,
+                                              ),
                                               height: 1.4,
-                                            )),
-                                    ],
-                                  ),
+                                            ),
+                                      ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ))
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -2105,8 +2285,9 @@ class _AuditSheet extends StatelessWidget {
               'Decision-support against the payer "golden thread" rubric — '
               'review clinically. Not a reimbursement guarantee.',
               style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic),
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -2131,20 +2312,28 @@ class _InsightsSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(icon, size: 16, color: cs.primary),
-              const SizedBox(width: 6),
-              Text(title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ]),
+            Row(
+              children: [
+                Icon(icon, size: 16, color: cs.primary),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
-            ...items.map((s) => Padding(
-                  padding: const EdgeInsets.only(left: 22, top: 2),
-                  child: Text('• $s',
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(height: 1.4)),
-                )),
+            ...items.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(left: 22, top: 2),
+                child: Text(
+                  '• $s',
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+                ),
+              ),
+            ),
           ],
         ),
       );
@@ -2157,13 +2346,18 @@ class _InsightsSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(Icons.psychology_alt_outlined, color: cs.primary),
-              const SizedBox(width: 8),
-              Text('Session insights',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ]),
+            Row(
+              children: [
+                Icon(Icons.psychology_alt_outlined, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Session insights',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
             if (insights.alliance.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
@@ -2172,9 +2366,10 @@ class _InsightsSheet extends StatelessWidget {
                   color: cs.primaryContainer.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(insights.alliance,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(height: 1.45)),
+                child: Text(
+                  insights.alliance,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+                ),
               ),
             ],
             const SizedBox(height: 14),
@@ -2183,16 +2378,31 @@ class _InsightsSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    section('Strengths', Icons.thumb_up_outlined,
-                        insights.strengths),
-                    section('Interventions observed',
-                        Icons.handyman_outlined, insights.interventions),
-                    section('Client themes', Icons.topic_outlined,
-                        insights.themes),
-                    section('Suggestions for next time',
-                        Icons.lightbulb_outline, insights.suggestions),
-                    section('Homework ideas', Icons.assignment_outlined,
-                        insights.homework),
+                    section(
+                      'Strengths',
+                      Icons.thumb_up_outlined,
+                      insights.strengths,
+                    ),
+                    section(
+                      'Interventions observed',
+                      Icons.handyman_outlined,
+                      insights.interventions,
+                    ),
+                    section(
+                      'Client themes',
+                      Icons.topic_outlined,
+                      insights.themes,
+                    ),
+                    section(
+                      'Suggestions for next time',
+                      Icons.lightbulb_outline,
+                      insights.suggestions,
+                    ),
+                    section(
+                      'Homework ideas',
+                      Icons.assignment_outlined,
+                      insights.homework,
+                    ),
                   ],
                 ),
               ),
@@ -2202,8 +2412,9 @@ class _InsightsSheet extends StatelessWidget {
               'Reflective AI feedback — not a performance evaluation and not a '
               'substitute for clinical supervision.',
               style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic),
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),

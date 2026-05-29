@@ -26,16 +26,20 @@ class TelemetryService {
   }
 
   /// Funnel event (PostHog).
-  Future<void> capture(String event,
-      {Map<String, Object?> properties = const {}}) async {
+  Future<void> capture(
+    String event, {
+    Map<String, Object?> properties = const {},
+  }) async {
     if (kDebugMode) {
       debugPrint('[telemetry] capture: $event $properties');
     }
   }
 
   /// Tag a user (after signup or sign-in).
-  Future<void> identify(String userId,
-      {Map<String, Object?> traits = const {}}) async {
+  Future<void> identify(
+    String userId, {
+    Map<String, Object?> traits = const {},
+  }) async {
     if (kDebugMode) {
       debugPrint('[telemetry] identify: $userId $traits');
     }
@@ -49,11 +53,13 @@ class TelemetryService {
   }
 
   /// Crash + error reporting (Sentry).
-  Future<void> captureError(Object error, StackTrace? stack,
-      {String? hint}) async {
+  Future<void> captureError(
+    Object error,
+    StackTrace? stack, {
+    String? hint,
+  }) async {
     if (kDebugMode) {
-      debugPrint(
-          '[telemetry] error${hint != null ? '/$hint' : ''}: $error');
+      debugPrint('[telemetry] error${hint != null ? '/$hint' : ''}: $error');
     }
   }
 }
@@ -66,8 +72,7 @@ class TelemetryEvents {
   static const String landingHeroEmailSubmit = 'landing.hero_email_submit';
   static const String landingWatchDemoClick = 'landing.watch_demo_click';
   static const String landingPricingPickTier = 'landing.pricing_pick_tier';
-  static const String landingExitIntentSubmit =
-      'landing.exit_intent_submit';
+  static const String landingExitIntentSubmit = 'landing.exit_intent_submit';
 
   static const String signUpStarted = 'auth.signup_started';
   static const String signUpCompleted = 'auth.signup_completed';

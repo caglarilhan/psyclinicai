@@ -12,22 +12,27 @@ class SuperbillRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _coll(
-          String clinicId, String patientId) =>
-      _db
-          .collection(FirestoreSchema.clinics)
-          .doc(clinicId)
-          .collection(FirestoreSchema.patients)
-          .doc(patientId)
-          .collection(FirestoreSchema.superbills);
+    String clinicId,
+    String patientId,
+  ) => _db
+      .collection(FirestoreSchema.clinics)
+      .doc(clinicId)
+      .collection(FirestoreSchema.patients)
+      .doc(patientId)
+      .collection(FirestoreSchema.superbills);
 
   Stream<List<SuperbillRecordDoc>> watchForPatient(
-      String clinicId, String patientId) {
+    String clinicId,
+    String patientId,
+  ) {
     return _coll(clinicId, patientId)
         .orderBy(FirestoreSchema.fieldServiceDate, descending: true)
         .snapshots()
-        .map((s) => s.docs
-            .map(SuperbillRecordDoc.fromSnapshot)
-            .toList(growable: false));
+        .map(
+          (s) => s.docs
+              .map(SuperbillRecordDoc.fromSnapshot)
+              .toList(growable: false),
+        );
   }
 
   Future<String> save({
@@ -38,10 +43,14 @@ class SuperbillRepository {
     String pdfUrl = '',
     String status = 'draft',
   }) async {
-    final totalCharges =
-        data.serviceLines.fold<double>(0, (s, l) => s + l.totalCharge);
-    final balanceDue =
-        (totalCharges - data.amountPaid).clamp(0.0, double.infinity);
+    final totalCharges = data.serviceLines.fold<double>(
+      0,
+      (s, l) => s + l.totalCharge,
+    );
+    final balanceDue = (totalCharges - data.amountPaid).clamp(
+      0.0,
+      double.infinity,
+    );
 
     final ref = await _coll(clinicId, patientId).add({
       FirestoreSchema.fieldClinicianId: clinicianId,
@@ -55,15 +64,17 @@ class SuperbillRepository {
           .map((d) => {'code': d.code, 'label': d.label})
           .toList(),
       FirestoreSchema.fieldServiceLines: data.serviceLines
-          .map((l) => {
-                'date': Timestamp.fromDate(l.date),
-                'cptCode': l.cpt.code,
-                'cptLabel': l.cpt.shortLabel,
-                'units': l.units,
-                'chargePerUnit': l.chargePerUnit,
-                'totalCharge': l.totalCharge,
-                'diagnosisPointers': l.diagnosisPointers,
-              })
+          .map(
+            (l) => {
+              'date': Timestamp.fromDate(l.date),
+              'cptCode': l.cpt.code,
+              'cptLabel': l.cpt.shortLabel,
+              'units': l.units,
+              'chargePerUnit': l.chargePerUnit,
+              'totalCharge': l.totalCharge,
+              'diagnosisPointers': l.diagnosisPointers,
+            },
+          )
           .toList(),
       FirestoreSchema.fieldPdfUrl: pdfUrl,
       FirestoreSchema.fieldCreatedAt: FieldValue.serverTimestamp(),
@@ -86,20 +97,19 @@ class SuperbillRecordDoc {
   });
 
   factory SuperbillRecordDoc.fromSnapshot(
-      DocumentSnapshot<Map<String, dynamic>> snap) {
+    DocumentSnapshot<Map<String, dynamic>> snap,
+  ) {
     final d = snap.data() ?? const {};
     return SuperbillRecordDoc(
       id: snap.id,
       invoiceNumber: d[FirestoreSchema.fieldInvoiceNumber] as String? ?? '',
       totalCharges:
           (d[FirestoreSchema.fieldTotalCharges] as num?)?.toDouble() ?? 0,
-      amountPaid:
-          (d[FirestoreSchema.fieldAmountPaid] as num?)?.toDouble() ?? 0,
-      balanceDue:
-          (d[FirestoreSchema.fieldBalanceDue] as num?)?.toDouble() ?? 0,
+      amountPaid: (d[FirestoreSchema.fieldAmountPaid] as num?)?.toDouble() ?? 0,
+      balanceDue: (d[FirestoreSchema.fieldBalanceDue] as num?)?.toDouble() ?? 0,
       status: d[FirestoreSchema.fieldStatus] as String? ?? 'draft',
-      serviceDate:
-          (d[FirestoreSchema.fieldServiceDate] as Timestamp?)?.toDate(),
+      serviceDate: (d[FirestoreSchema.fieldServiceDate] as Timestamp?)
+          ?.toDate(),
       pdfUrl: d[FirestoreSchema.fieldPdfUrl] as String? ?? '',
     );
   }

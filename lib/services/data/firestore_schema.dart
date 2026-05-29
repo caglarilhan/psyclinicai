@@ -76,16 +76,23 @@ class FirestoreSchema {
   static String patientPath(String clinicId, String patientId) =>
       '${clinicPath(clinicId)}/$patients/$patientId';
   static String sessionPath(
-          String clinicId, String patientId, String sessionId) =>
-      '${patientPath(clinicId, patientId)}/$sessions/$sessionId';
-  static String notePath(String clinicId, String patientId, String sessionId,
-          String noteId) =>
-      '${sessionPath(clinicId, patientId, sessionId)}/$notes/$noteId';
+    String clinicId,
+    String patientId,
+    String sessionId,
+  ) => '${patientPath(clinicId, patientId)}/$sessions/$sessionId';
+  static String notePath(
+    String clinicId,
+    String patientId,
+    String sessionId,
+    String noteId,
+  ) => '${sessionPath(clinicId, patientId, sessionId)}/$notes/$noteId';
   static String assessmentPath(String clinicId, String patientId, String aId) =>
       '${patientPath(clinicId, patientId)}/$assessments/$aId';
   static String superbillPath(
-          String clinicId, String patientId, String invoiceId) =>
-      '${patientPath(clinicId, patientId)}/$superbills/$invoiceId';
+    String clinicId,
+    String patientId,
+    String invoiceId,
+  ) => '${patientPath(clinicId, patientId)}/$superbills/$invoiceId';
 }
 
 /// Clinician roles for RBAC.
@@ -101,13 +108,13 @@ enum ClinicianRole {
 extension ClinicianRoleX on ClinicianRole {
   String get id => name;
   String get label => switch (this) {
-        ClinicianRole.psychiatrist => 'Psychiatrist',
-        ClinicianRole.psychologist => 'Psychologist',
-        ClinicianRole.therapist => 'Therapist',
-        ClinicianRole.nurse => 'Nurse',
-        ClinicianRole.secretary => 'Secretary',
-        ClinicianRole.administrator => 'Administrator',
-      };
+    ClinicianRole.psychiatrist => 'Psychiatrist',
+    ClinicianRole.psychologist => 'Psychologist',
+    ClinicianRole.therapist => 'Therapist',
+    ClinicianRole.nurse => 'Nurse',
+    ClinicianRole.secretary => 'Secretary',
+    ClinicianRole.administrator => 'Administrator',
+  };
 
   bool get canPrescribe => this == ClinicianRole.psychiatrist;
   bool get canSeeFinancials =>

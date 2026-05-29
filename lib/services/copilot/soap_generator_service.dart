@@ -13,8 +13,8 @@ import 'prompt_safety.dart';
 /// dependency drift in third-party packages. Cost ~$0.001 per 5-minute session.
 class SoapGeneratorService {
   SoapGeneratorService({ApiKeyStorage? keyStorage, http.Client? client})
-      : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client();
+    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+      _client = client ?? http.Client();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -53,7 +53,7 @@ class SoapGeneratorService {
       'temperature': 0.2,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': user}
+        {'role': 'user', 'content': user},
       ],
     });
 
@@ -271,11 +271,14 @@ Rules:
     }
     if (presenting != null && presenting.isNotEmpty) {
       header.writeln(
-          'Presenting concern: ${PromptSafety.sanitize(presenting)}');
+        'Presenting concern: ${PromptSafety.sanitize(presenting)}',
+      );
     }
     if (treatmentGoals.isNotEmpty) {
-      header.writeln('Active treatment-plan goals (reference progress toward '
-          'these in the Assessment — the "golden thread"):');
+      header.writeln(
+        'Active treatment-plan goals (reference progress toward '
+        'these in the Assessment — the "golden thread"):',
+      );
       for (final g in treatmentGoals) {
         header.writeln('- $g');
       }
@@ -294,12 +297,12 @@ enum SoapFormat { soap, dap, birp, girp, psychiatry }
 
 extension SoapFormatX on SoapFormat {
   String get label => switch (this) {
-        SoapFormat.soap => 'SOAP',
-        SoapFormat.dap => 'DAP',
-        SoapFormat.birp => 'BIRP',
-        SoapFormat.girp => 'GIRP',
-        SoapFormat.psychiatry => 'Psychiatry',
-      };
+    SoapFormat.soap => 'SOAP',
+    SoapFormat.dap => 'DAP',
+    SoapFormat.birp => 'BIRP',
+    SoapFormat.girp => 'GIRP',
+    SoapFormat.psychiatry => 'Psychiatry',
+  };
 }
 
 /// Therapeutic modality the note should be tailored to. `general` adds no
@@ -318,22 +321,22 @@ enum Modality {
 
 extension ModalityX on Modality {
   String get label => switch (this) {
-        Modality.general => 'General',
-        Modality.cbt => 'CBT',
-        Modality.dbt => 'DBT',
-        Modality.emdr => 'EMDR',
-        Modality.ifs => 'IFS',
-        Modality.act => 'ACT',
-        Modality.ocdErp => 'OCD / ERP',
-        Modality.schema => 'Schema',
-        Modality.psychodynamic => 'Psychodynamic',
-      };
+    Modality.general => 'General',
+    Modality.cbt => 'CBT',
+    Modality.dbt => 'DBT',
+    Modality.emdr => 'EMDR',
+    Modality.ifs => 'IFS',
+    Modality.act => 'ACT',
+    Modality.ocdErp => 'OCD / ERP',
+    Modality.schema => 'Schema',
+    Modality.psychodynamic => 'Psychodynamic',
+  };
 }
 
 class SoapNote {
-
   factory SoapNote.parse(String content, {required SoapFormat format}) {
-    final hasRiskFlag = content.toLowerCase().contains('risk') &&
+    final hasRiskFlag =
+        content.toLowerCase().contains('risk') &&
         (content.contains('high') || content.contains('moderate'));
     return SoapNote(
       rawMarkdown: content,

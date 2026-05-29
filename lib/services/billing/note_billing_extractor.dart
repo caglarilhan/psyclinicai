@@ -12,20 +12,25 @@ class NoteBillingExtractor {
 
   // ICD-10-CM: a letter (excluding U), two digits, optional dotted suffix.
   // e.g. F41.1, F32, Z63.0, R45.851
-  static final RegExp _icdRe =
-      RegExp(r'\b([A-TV-Z][0-9]{2}(?:\.[0-9A-Z]{1,4})?)\b');
+  static final RegExp _icdRe = RegExp(
+    r'\b([A-TV-Z][0-9]{2}(?:\.[0-9A-Z]{1,4})?)\b',
+  );
 
   // Explicit psychotherapy / E&M CPT codes.
   static final RegExp _cptRe = RegExp(r'\b(908[0-9]{2}|9079[12]|9921[34])\b');
 
-  static final RegExp _minutesRe =
-      RegExp(r'(\d{1,3})\s*(?:min\b|minute)', caseSensitive: false);
+  static final RegExp _minutesRe = RegExp(
+    r'(\d{1,3})\s*(?:min\b|minute)',
+    caseSensitive: false,
+  );
 
   /// ICD-10 codes appearing in [note], filtered to those [isKnown] accepts
   /// (so free-text false positives never reach the superbill). Order-preserving
   /// and de-duplicated.
-  List<String> extractIcd10(String note,
-      {required bool Function(String) isKnown}) {
+  List<String> extractIcd10(
+    String note, {
+    required bool Function(String) isKnown,
+  }) {
     final out = <String>[];
     for (final m in _icdRe.allMatches(note)) {
       final code = m.group(1)!.toUpperCase();

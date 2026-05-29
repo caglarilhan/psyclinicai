@@ -54,23 +54,23 @@ enum Phq9Severity { minimal, mild, moderate, moderatelySevere, severe }
 
 extension Phq9SeverityX on Phq9Severity {
   String get label => switch (this) {
-        Phq9Severity.minimal => 'None / Minimal',
-        Phq9Severity.mild => 'Mild',
-        Phq9Severity.moderate => 'Moderate',
-        Phq9Severity.moderatelySevere => 'Moderately Severe',
-        Phq9Severity.severe => 'Severe',
-      };
+    Phq9Severity.minimal => 'None / Minimal',
+    Phq9Severity.mild => 'Mild',
+    Phq9Severity.moderate => 'Moderate',
+    Phq9Severity.moderatelySevere => 'Moderately Severe',
+    Phq9Severity.severe => 'Severe',
+  };
 
   String get actionSuggestion => switch (this) {
-        Phq9Severity.minimal => 'Monitor; may not require treatment.',
-        Phq9Severity.mild => 'Watchful waiting; reassess at next visit.',
-        Phq9Severity.moderate =>
-          'Treatment plan; consider therapy, pharmacotherapy, or both.',
-        Phq9Severity.moderatelySevere =>
-          'Active treatment with pharmacotherapy and/or psychotherapy.',
-        Phq9Severity.severe =>
-          'Immediate initiation of treatment, consider hospitalization if active suicidality.',
-      };
+    Phq9Severity.minimal => 'Monitor; may not require treatment.',
+    Phq9Severity.mild => 'Watchful waiting; reassess at next visit.',
+    Phq9Severity.moderate =>
+      'Treatment plan; consider therapy, pharmacotherapy, or both.',
+    Phq9Severity.moderatelySevere =>
+      'Active treatment with pharmacotherapy and/or psychotherapy.',
+    Phq9Severity.severe =>
+      'Immediate initiation of treatment, consider hospitalization if active suicidality.',
+  };
 }
 
 class Phq9Result {

@@ -8,19 +8,19 @@ enum SubscriptionTier { free, solo, practice, group }
 
 extension SubscriptionTierX on SubscriptionTier {
   String get label => switch (this) {
-        SubscriptionTier.free => 'Free / Trial',
-        SubscriptionTier.solo => 'Solo',
-        SubscriptionTier.practice => 'Practice',
-        SubscriptionTier.group => 'Group',
-      };
+    SubscriptionTier.free => 'Free / Trial',
+    SubscriptionTier.solo => 'Solo',
+    SubscriptionTier.practice => 'Practice',
+    SubscriptionTier.group => 'Group',
+  };
 
   /// Clinician seats the tier allows.
   int get seats => switch (this) {
-        SubscriptionTier.free => 1,
-        SubscriptionTier.solo => 1,
-        SubscriptionTier.practice => 5,
-        SubscriptionTier.group => 9999,
-      };
+    SubscriptionTier.free => 1,
+    SubscriptionTier.solo => 1,
+    SubscriptionTier.practice => 5,
+    SubscriptionTier.group => 9999,
+  };
 
   bool get isPaid => this != SubscriptionTier.free;
 }
@@ -62,8 +62,7 @@ class SubscriptionService extends ChangeNotifier {
   static SubscriptionTier tierFromPriceId(
     String priceId, {
     required Map<String, SubscriptionTier> priceMap,
-  }) =>
-      priceMap[priceId] ?? SubscriptionTier.free;
+  }) => priceMap[priceId] ?? SubscriptionTier.free;
 
   /// Maps a Stripe subscription status string to active/not.
   static bool isActiveStatus(String stripeStatus) =>

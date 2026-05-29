@@ -19,7 +19,7 @@ class PromptSafety {
     for (final rune in input.replaceAll('\r\n', '\n').runes) {
       final isControl =
           (rune < 0x20 && rune != 0x09 && rune != 0x0A) ||
-              (rune >= 0x7F && rune <= 0x9F);
+          (rune >= 0x7F && rune <= 0x9F);
       if (!isControl) buf.writeCharCode(rune);
     }
     final cleaned = buf.toString();

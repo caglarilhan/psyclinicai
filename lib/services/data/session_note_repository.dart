@@ -12,12 +12,14 @@ import 'telemetry_service.dart';
 /// seeds a couple of demo notes for the demo patient so the brief has history.
 class SessionNoteRepository {
   SessionNoteRepository({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-              iOptions:
-                  IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   static const _key = 'session_notes';
   final FlutterSecureStorage _storage;
@@ -42,8 +44,11 @@ class SessionNoteRepository {
             _notes.add(SessionNote.fromJson(e as Map<String, dynamic>));
           } catch (err, st) {
             dropped++;
-            TelemetryService.instance
-                .captureError(err, st, hint: 'session_note_decode_record');
+            TelemetryService.instance.captureError(
+              err,
+              st,
+              hint: 'session_note_decode_record',
+            );
           }
         }
         if (dropped > 0) {
@@ -77,11 +82,15 @@ class SessionNoteRepository {
     // clinician regardless, but a cache-write failure is still reported.
     try {
       final raw = jsonEncode(
-          _notes.map((n) => n.toJson()).toList(growable: false));
+        _notes.map((n) => n.toJson()).toList(growable: false),
+      );
       await _storage.write(key: _key, value: raw);
     } catch (e, st) {
-      TelemetryService.instance
-          .captureError(e, st, hint: 'session_note_persist');
+      TelemetryService.instance.captureError(
+        e,
+        st,
+        hint: 'session_note_persist',
+      );
     }
   }
 
@@ -93,7 +102,8 @@ class SessionNoteRepository {
         id: 'seed-demo-1-a',
         patientId: 'demo-1',
         createdAt: now.subtract(const Duration(days: 14)),
-        markdown: 'S: Reports persistent worry about work performance and '
+        markdown:
+            'S: Reports persistent worry about work performance and '
             'sleep-onset difficulty. O: Anxious affect, future-oriented '
             'rumination. A: GAD (F41.1), moderate. P: Began psychoeducation on '
             'the worry cycle; assigned a daily breathing log; goal — reduce '
@@ -104,7 +114,8 @@ class SessionNoteRepository {
         patientId: 'demo-1',
         flaggedRisk: true,
         createdAt: now.subtract(const Duration(days: 7)),
-        markdown: 'S: "Some days I feel like there is no point." Denies plan or '
+        markdown:
+            'S: "Some days I feel like there is no point." Denies plan or '
             'intent. Breathing log done 3/7 days. O: Tearful early, brighter by '
             'end; alliance strong. A: GAD with transient hopelessness — risk '
             'reviewed, no active SI. P: Introduced cognitive restructuring; '

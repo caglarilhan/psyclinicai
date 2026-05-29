@@ -1,0 +1,54 @@
+name: Deploy demo to GitHub Pages
+
+# Public, credential-free test build for clinician reviewers.
+# Serves the full app in DEMO mode (no Firebase, no real PHI) at
+# https://caglarilhan.github.io/psyclinicai/
+#
+# One-time setup: repo Settings → Pages → Build and deployment →
+# Source = "GitHub Actions". Then every push to main republishes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.8'
+          channel: stable
+      - run: flutter pub get
+      # Project pages are served under /<repo>/, so the base href must match.
+      # No IS_DEMO override → stays in demo mode (safe for external testers).
+      - run: flutter build web --release --base-href /psyclinicai/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -9,7 +9,7 @@ on:
       - 'pubspec.yaml'
       - '.github/workflows/deploy_web.yml'
 
-ilkjobs:
+jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
@@ -31,7 +31,7 @@ ilkjobs:
       - name: Deploy via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: eE
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: "build/web/*"

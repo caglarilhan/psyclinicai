@@ -138,7 +138,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   onTap: () => _changeLanguage(context, locale),
                 ),
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
 

@@ -3,6 +3,7 @@
 /// and the exact sentences to add. Decision-support — payer rules and
 /// reimbursement amounts vary and change; this estimates risk, it does not
 /// guarantee payment.
+library;
 
 enum Payer { medicare, medicaid, bcbs, uhcOptum, aetna, cigna }
 

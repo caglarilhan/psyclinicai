@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/treatment_plan_models.dart';
 
 class TreatmentPlanService {
-  static final TreatmentPlanService _instance = TreatmentPlanService._internal();
   factory TreatmentPlanService() => _instance;
   TreatmentPlanService._internal();
+  static final TreatmentPlanService _instance = TreatmentPlanService._internal();
 
   final List<TreatmentPlan> _treatmentPlans = [];
   final List<TreatmentProgress> _progressRecords = [];
@@ -99,7 +99,6 @@ class TreatmentPlanService {
       clinicalFormulation: clinicalFormulation,
       prognosis: prognosis,
       notes: notes,
-      status: TreatmentPlanStatus.active,
     );
 
     _treatmentPlans.add(plan);
@@ -445,7 +444,6 @@ class TreatmentPlanService {
         clinicalFormulation: 'Stres faktörleri ile tetiklenen depresif epizod. Hasta iş stresi ve aile sorunları yaşıyor.',
         prognosis: 'İyi. Uygun tedavi ile 6-12 ay içinde düzelme bekleniyor.',
         notes: 'Hasta tedaviye uyumlu, motivasyonu yüksek.',
-        status: TreatmentPlanStatus.active,
         reviewDate: DateTime.now().add(const Duration(days: 30)),
         goals: [
           TreatmentGoal(
@@ -478,7 +476,7 @@ class TreatmentPlanService {
             type: InterventionType.medication,
             description: 'Escitalopram 10mg/gün',
             frequency: InterventionFrequency.daily,
-            duration: const Duration(minutes: 0),
+            duration: const Duration(),
             instructions: 'Sabah kahvaltıdan sonra alınacak',
             expectedOutcome: 'Depresif belirtilerde azalma',
             startDate: DateTime.now().subtract(const Duration(days: 30)),

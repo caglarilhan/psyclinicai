@@ -1,17 +1,4 @@
 class Appointment {
-  final String id;
-  final String clientId;
-  final String clientName;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String type;
-  final String status;
-  final String notes;
-  final String location;
-  final bool isRecurring;
-  final String? recurringPattern;
-  final DateTime createdAt;
-  final DateTime updatedAt;
 
   Appointment({
     required this.id,
@@ -28,6 +15,37 @@ class Appointment {
     required this.createdAt,
     required this.updatedAt,
   });
+
+  factory Appointment.fromJson(Map<String, dynamic> json) {
+    return Appointment(
+      id: json['id'] as String,
+      clientId: json['clientId'] as String,
+      clientName: json['clientName'] as String,
+      startTime: DateTime.parse(json['startTime'] as String),
+      endTime: DateTime.parse(json['endTime'] as String),
+      type: json['type'] as String,
+      status: json['status'] as String,
+      notes: json['notes'] as String,
+      location: json['location'] as String,
+      isRecurring: json['isRecurring'] as bool? ?? false,
+      recurringPattern: json['recurringPattern'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+  final String id;
+  final String clientId;
+  final String clientName;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String type;
+  final String status;
+  final String notes;
+  final String location;
+  final bool isRecurring;
+  final String? recurringPattern;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Duration get duration => endTime.difference(startTime);
 
@@ -62,24 +80,6 @@ class Appointment {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
-  }
-
-  factory Appointment.fromJson(Map<String, dynamic> json) {
-    return Appointment(
-      id: json['id'] as String,
-      clientId: json['clientId'] as String,
-      clientName: json['clientName'] as String,
-      startTime: DateTime.parse(json['startTime'] as String),
-      endTime: DateTime.parse(json['endTime'] as String),
-      type: json['type'] as String,
-      status: json['status'] as String,
-      notes: json['notes'] as String,
-      location: json['location'] as String,
-      isRecurring: json['isRecurring'] as bool? ?? false,
-      recurringPattern: json['recurringPattern'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-    );
   }
 
   Appointment copyWith({

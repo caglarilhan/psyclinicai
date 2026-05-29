@@ -148,7 +148,6 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         severityColor: _gad7Color(r.severity),
         actionSuggestion: r.severity.actionSuggestion,
         riskFlag: false,
-        riskFlagText: null,
       );
 
   Color _phq9Color(Phq9Severity s) => switch (s) {

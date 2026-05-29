@@ -82,7 +82,6 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
               ),
             ),
-      scrollable: true,
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),

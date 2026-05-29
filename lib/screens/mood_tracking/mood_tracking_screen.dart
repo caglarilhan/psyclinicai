@@ -315,7 +315,6 @@ class _TrendCard extends StatelessWidget {
           color: c,
           barWidth: 2.4,
           dotData: FlDotData(
-            show: true,
             getDotPainter: (s, p, b, i) => FlDotCirclePainter(
               radius: 3,
               color: c,
@@ -353,11 +352,11 @@ class _TrendCard extends StatelessWidget {
                 borderData: FlBorderData(show: false),
                 titlesData: const FlTitlesData(
                   rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                      ),
                   topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                      ),
                   bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                      ),
                 ),
                 lineBarsData: [
                   line(mood, PsyColors.success),

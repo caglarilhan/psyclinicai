@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isSignUp = _mode == _Mode.signUp;
 
     return Scaffold(
-      body: Container(
+      body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -336,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Expanded(
               child: Text(
                 'Demo mode — Firebase not configured. Sign-in skips '
-                "to dashboard. Run `flutterfire configure` to enable accounts.",
+                'to dashboard. Run `flutterfire configure` to enable accounts.',
                 style: TextStyle(
                   color: cs.onSurface.withValues(alpha: 0.8),
                   fontSize: 12.5,

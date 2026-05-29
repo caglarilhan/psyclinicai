@@ -2,6 +2,18 @@
 /// Intervention structure). Decision-support scaffold the clinician completes
 /// WITH the client — not a substitute for clinical risk assessment.
 class SafetyPlan {
+
+  factory SafetyPlan.fromJson(Map<String, dynamic> json) => SafetyPlan(
+        patientId: json['patientId'] as String? ?? '',
+        warningSigns: _strList(json['warningSigns']),
+        copingStrategies: _strList(json['copingStrategies']),
+        socialDistractions: _strList(json['socialDistractions']),
+        supportContacts: _strList(json['supportContacts']),
+        professionals: _strList(json['professionals']),
+        crisisLines: _strList(json['crisisLines']),
+        meansSafety: json['meansSafety'] as String? ?? '',
+        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+      );
   SafetyPlan({
     required this.patientId,
     this.warningSigns = const [],
@@ -82,16 +94,4 @@ class SafetyPlan {
 
   static List<String> _strList(dynamic v) =>
       (v as List<dynamic>? ?? const []).map((e) => e.toString()).toList();
-
-  factory SafetyPlan.fromJson(Map<String, dynamic> json) => SafetyPlan(
-        patientId: json['patientId'] as String? ?? '',
-        warningSigns: _strList(json['warningSigns']),
-        copingStrategies: _strList(json['copingStrategies']),
-        socialDistractions: _strList(json['socialDistractions']),
-        supportContacts: _strList(json['supportContacts']),
-        professionals: _strList(json['professionals']),
-        crisisLines: _strList(json['crisisLines']),
-        meansSafety: json['meansSafety'] as String? ?? '',
-        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-      );
 }

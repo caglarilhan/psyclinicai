@@ -92,7 +92,6 @@ class _CaseloadScreenState extends State<CaseloadScreen> {
         Crumb('Home', '/dashboard'),
         Crumb('Caseload attention', null),
       ],
-      scrollable: true,
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),

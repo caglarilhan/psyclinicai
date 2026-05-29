@@ -153,11 +153,9 @@ class SeedService {
             cpt: cpt,
             units: 1,
             chargePerUnit: cpt.nationalAverageUsd,
-            diagnosisPointers: const [1],
           ),
         ],
       ),
-      status: 'draft',
     );
 
     // Silence unused-import warning if AssessmentRepository ever

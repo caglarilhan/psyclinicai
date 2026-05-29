@@ -82,7 +82,6 @@ void main() {
     final b = svc.build(
       patientName: 'Alice',
       notes: [note(1, risk: true)],
-      hasSafetyPlan: false,
       now: now,
     );
     expect(b.riskNote, isNotNull);

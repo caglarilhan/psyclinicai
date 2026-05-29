@@ -1,9 +1,5 @@
 
 class TherapyNoteTemplate {
-  final String id;
-  final String name;
-  final String description;
-  final List<TherapyNoteField> fields;
 
   const TherapyNoteTemplate({
     required this.id,
@@ -11,30 +7,27 @@ class TherapyNoteTemplate {
     required this.description,
     required this.fields,
   });
+  final String id;
+  final String name;
+  final String description;
+  final List<TherapyNoteField> fields;
 }
 
 class TherapyNoteField {
-  final String key;
-  final String label;
-  final NoteFieldType type;
 
   const TherapyNoteField({
     required this.key,
     required this.label,
     required this.type,
   });
+  final String key;
+  final String label;
+  final NoteFieldType type;
 }
 
 enum NoteFieldType { text, longText, checklist }
 
 class TherapyNoteEntry {
-  final String id;
-  final String sessionId;
-  final String clinicianId;
-  final String clientId;
-  final String templateId;
-  final Map<String, dynamic> values;
-  final DateTime createdAt;
 
   TherapyNoteEntry({
     required this.id,
@@ -46,18 +39,6 @@ class TherapyNoteEntry {
     required this.createdAt,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'sessionId': sessionId,
-      'clinicianId': clinicianId,
-      'clientId': clientId,
-      'templateId': templateId,
-      'values': values,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
   factory TherapyNoteEntry.fromJson(Map<String, dynamic> json) {
     return TherapyNoteEntry(
       id: json['id'] as String,
@@ -68,5 +49,24 @@ class TherapyNoteEntry {
       values: Map<String, dynamic>.from(json['values'] as Map),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
+  }
+  final String id;
+  final String sessionId;
+  final String clinicianId;
+  final String clientId;
+  final String templateId;
+  final Map<String, dynamic> values;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sessionId': sessionId,
+      'clinicianId': clinicianId,
+      'clientId': clientId,
+      'templateId': templateId,
+      'values': values,
+      'createdAt': createdAt.toIso8601String(),
+    };
   }
 }

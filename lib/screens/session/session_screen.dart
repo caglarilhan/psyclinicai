@@ -14,9 +14,6 @@ import '../../services/treatment_plan_service.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
 
 class SessionScreen extends StatefulWidget {
-  final String sessionId;
-  final String clientId;
-  final String clientName;
 
   const SessionScreen({
     super.key,
@@ -24,6 +21,9 @@ class SessionScreen extends StatefulWidget {
     required this.clientId,
     required this.clientName,
   });
+  final String sessionId;
+  final String clientId;
+  final String clientName;
 
   @override
   State<SessionScreen> createState() => _SessionScreenState();
@@ -32,7 +32,7 @@ class SessionScreen extends StatefulWidget {
 class _SessionScreenState extends State<SessionScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _aiPromptController = TextEditingController();
-  String _aiSummary = '';
+  final String _aiSummary = '';
   List<String> _treatmentGoals = const [];
 
   // Seans durumu
@@ -127,9 +127,9 @@ class _SessionScreenState extends State<SessionScreen> {
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    final String hours = twoDigits(duration.inHours);
+    final String minutes = twoDigits(duration.inMinutes.remainder(60));
+    final String seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
   }
 
@@ -340,12 +340,10 @@ class _SessionScreenState extends State<SessionScreen> {
           ),
           // Orta panel - AI özeti
           Expanded(
-            flex: 1,
             child: _buildAIPanel(),
           ),
           // Sağ panel - Danışan bilgileri
           Expanded(
-            flex: 1,
             child: _buildClientInfoPanel(),
           ),
         ],
@@ -395,9 +393,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () {
-                    _saveSessionNotes();
-                  },
+                  onPressed: _saveSessionNotes,
                   icon: const Icon(Icons.save),
                   label: const Text('Save'),
                   style: TextButton.styleFrom(
@@ -437,7 +433,6 @@ class _SessionScreenState extends State<SessionScreen> {
     return LiveAiPanel(
       clientName: widget.clientName,
       patientId: widget.clientId,
-      localeId: 'en_US',
       treatmentGoals: _treatmentGoals,
     );
   }
@@ -470,10 +465,10 @@ class _SessionScreenState extends State<SessionScreen> {
                 topRight: Radius.circular(12),
               ),
             ),
-            child: Row(
+            child: const Row(
               children: [
                 Icon(Icons.person, color: Colors.green),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   'Client Information',
                   style: TextStyle(

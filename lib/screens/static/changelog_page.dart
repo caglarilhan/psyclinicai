@@ -154,7 +154,7 @@ class _ReleaseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: PsySpacing.lg),
-          ...release.bullets.map((b) => StaticBullet(b)),
+          ...release.bullets.map(StaticBullet.new),
         ],
       ),
     );

@@ -178,7 +178,7 @@ class AppShell extends StatelessWidget {
     );
   }
 
-  List<Crumb> _defaultCrumbs() => [Crumb('Home', '/dashboard'), Crumb(title, null)];
+  List<Crumb> _defaultCrumbs() => [const Crumb('Home', '/dashboard'), Crumb(title, null)];
 }
 
 /// A breadcrumb segment. A null [route] marks the current (non-tappable) page.

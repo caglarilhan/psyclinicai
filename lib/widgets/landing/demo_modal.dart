@@ -31,7 +31,7 @@ class DemoModal extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 760),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
               color: cs.surface,
               borderRadius: BorderRadius.circular(22),
@@ -173,7 +173,7 @@ class _VideoPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [

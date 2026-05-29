@@ -76,7 +76,6 @@ class _PricingSectionState extends State<PricingSection> {
       context: context,
       background: cs.surfaceContainerLowest,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SectionEyebrow('Founding pricing'),
           const SizedBox(height: 12),

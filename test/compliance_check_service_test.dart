@@ -43,7 +43,7 @@ and practiced reframing. Homework assigned; next session in one week.
     });
 
     test('goal linkage is a hard fail when no plan exists', () {
-      final r = svc.check(vagueNote, hasActivePlan: false);
+      final r = svc.check(vagueNote);
       final goal = r.checks.firstWhere((c) => c.id == 'goal_linkage');
       expect(goal.status, CheckStatus.fail);
     });

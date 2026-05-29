@@ -1,19 +1,4 @@
 class TreatmentPlan {
-  final String id;
-  final String patientId;
-  final String clinicianId;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final String primaryDiagnosis;
-  final List<String> secondaryDiagnoses;
-  final String clinicalFormulation;
-  final List<TreatmentGoal> goals;
-  final List<TreatmentIntervention> interventions;
-  final String? prognosis;
-  final String? notes;
-  final TreatmentPlanStatus status;
-  final DateTime? reviewDate;
-  final String? reviewNotes;
 
   const TreatmentPlan({
     required this.id,
@@ -63,6 +48,21 @@ class TreatmentPlan {
       reviewNotes: json['reviewNotes'] as String?,
     );
   }
+  final String id;
+  final String patientId;
+  final String clinicianId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String primaryDiagnosis;
+  final List<String> secondaryDiagnoses;
+  final String clinicalFormulation;
+  final List<TreatmentGoal> goals;
+  final List<TreatmentIntervention> interventions;
+  final String? prognosis;
+  final String? notes;
+  final TreatmentPlanStatus status;
+  final DateTime? reviewDate;
+  final String? reviewNotes;
 
   Map<String, dynamic> toJson() {
     return {
@@ -103,18 +103,6 @@ class TreatmentPlan {
 }
 
 class TreatmentGoal {
-  final String id;
-  final String description;
-  final GoalCategory category;
-  final GoalPriority priority;
-  final DateTime targetDate;
-  final GoalStatus status;
-  final int progress; // 0-100
-  final String? notes;
-  final DateTime createdAt;
-  final DateTime? completedAt;
-  final List<String> milestones;
-  final String? measurementMethod;
 
   const TreatmentGoal({
     required this.id,
@@ -158,6 +146,18 @@ class TreatmentGoal {
       measurementMethod: json['measurementMethod'] as String?,
     );
   }
+  final String id;
+  final String description;
+  final GoalCategory category;
+  final GoalPriority priority;
+  final DateTime targetDate;
+  final GoalStatus status;
+  final int progress; // 0-100
+  final String? notes;
+  final DateTime createdAt;
+  final DateTime? completedAt;
+  final List<String> milestones;
+  final String? measurementMethod;
 
   Map<String, dynamic> toJson() {
     return {
@@ -191,19 +191,6 @@ class TreatmentGoal {
 }
 
 class TreatmentIntervention {
-  final String id;
-  final String name;
-  final InterventionType type;
-  final String description;
-  final InterventionFrequency frequency;
-  final Duration duration;
-  final String? instructions;
-  final String? expectedOutcome;
-  final InterventionStatus status;
-  final DateTime startDate;
-  final DateTime? endDate;
-  final String? notes;
-  final List<String> contraindications;
 
   const TreatmentIntervention({
     required this.id,
@@ -249,6 +236,19 @@ class TreatmentIntervention {
       contraindications: List<String>.from(json['contraindications'] as List? ?? []),
     );
   }
+  final String id;
+  final String name;
+  final InterventionType type;
+  final String description;
+  final InterventionFrequency frequency;
+  final Duration duration;
+  final String? instructions;
+  final String? expectedOutcome;
+  final InterventionStatus status;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final String? notes;
+  final List<String> contraindications;
 
   Map<String, dynamic> toJson() {
     return {
@@ -276,16 +276,6 @@ class TreatmentIntervention {
 }
 
 class TreatmentProgress {
-  final String id;
-  final String treatmentPlanId;
-  final DateTime assessmentDate;
-  final String assessedBy;
-  final Map<String, dynamic> goalProgress;
-  final Map<String, dynamic> interventionEffectiveness;
-  final String overallAssessment;
-  final String? recommendations;
-  final String? notes;
-  final DateTime nextReviewDate;
 
   const TreatmentProgress({
     required this.id,
@@ -314,6 +304,16 @@ class TreatmentProgress {
       nextReviewDate: DateTime.parse(json['nextReviewDate'] as String),
     );
   }
+  final String id;
+  final String treatmentPlanId;
+  final DateTime assessmentDate;
+  final String assessedBy;
+  final Map<String, dynamic> goalProgress;
+  final Map<String, dynamic> interventionEffectiveness;
+  final String overallAssessment;
+  final String? recommendations;
+  final String? notes;
+  final DateTime nextReviewDate;
 
   Map<String, dynamic> toJson() {
     return {

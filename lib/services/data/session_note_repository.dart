@@ -64,7 +64,6 @@ class SessionNoteRepository {
       SessionNote(
         id: 'seed-demo-1-a',
         patientId: 'demo-1',
-        format: 'soap',
         createdAt: now.subtract(const Duration(days: 14)),
         markdown: 'S: Reports persistent worry about work performance and '
             'sleep-onset difficulty. O: Anxious affect, future-oriented '
@@ -75,7 +74,6 @@ class SessionNoteRepository {
       SessionNote(
         id: 'seed-demo-1-b',
         patientId: 'demo-1',
-        format: 'soap',
         flaggedRisk: true,
         createdAt: now.subtract(const Duration(days: 7)),
         markdown: 'S: "Some days I feel like there is no point." Denies plan or '

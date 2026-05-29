@@ -2,6 +2,15 @@
 /// material the Clinical Memory brief synthesizes — every note written makes
 /// the next pre-session brief richer (the continuity flywheel).
 class SessionNote {
+
+  factory SessionNote.fromJson(Map<String, dynamic> json) => SessionNote(
+        id: json['id'] as String? ?? '',
+        patientId: json['patientId'] as String? ?? '',
+        markdown: json['markdown'] as String? ?? '',
+        format: json['format'] as String? ?? 'soap',
+        flaggedRisk: json['flaggedRisk'] as bool? ?? false,
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+      );
   SessionNote({
     required this.id,
     required this.patientId,
@@ -26,13 +35,4 @@ class SessionNote {
         'flaggedRisk': flaggedRisk,
         'createdAt': createdAt.toIso8601String(),
       };
-
-  factory SessionNote.fromJson(Map<String, dynamic> json) => SessionNote(
-        id: json['id'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        markdown: json['markdown'] as String? ?? '',
-        format: json['format'] as String? ?? 'soap',
-        flaggedRisk: json['flaggedRisk'] as bool? ?? false,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
-      );
 }

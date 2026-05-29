@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageService extends ChangeNotifier {
-  static final LanguageService _instance = LanguageService._internal();
   factory LanguageService() => _instance;
   LanguageService._internal();
+  static final LanguageService _instance = LanguageService._internal();
 
   Locale _currentLocale = const Locale('en', 'US');
   bool _isInitialized = false;

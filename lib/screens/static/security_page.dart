@@ -90,7 +90,7 @@ class SecurityPage extends StatelessWidget {
               'Found a vulnerability? Email security@psyclinicai.com with '
               'the steps to reproduce. We acknowledge within 24 hours, '
               'triage within 72 hours, and credit you in our release notes '
-              "unless you ask us not to."),
+              'unless you ask us not to.'),
           StaticH2('8. Backups & disaster recovery'),
           StaticBullet(
               'Firestore: daily snapshot, 30-day retention. Point-in-time '

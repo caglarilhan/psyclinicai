@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 class OfflineService extends ChangeNotifier {
-  static final OfflineService _instance = OfflineService._internal();
   factory OfflineService() => _instance;
   OfflineService._internal();
+  static final OfflineService _instance = OfflineService._internal();
 
   bool _isOnline = true;
   bool _isInitialized = false;
@@ -28,9 +29,7 @@ class OfflineService extends ChangeNotifier {
     await _loadOfflineData();
     
     // Connectivity listener
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-      _updateConnectivityStatus(result);
-    });
+    Connectivity().onConnectivityChanged.listen(_updateConnectivityStatus);
 
     _isInitialized = true;
     notifyListeners();
@@ -427,16 +426,16 @@ class OfflineService extends ChangeNotifier {
       
       for (final item in pendingItems) {
         try {
-          final data = jsonDecode(item['data'] as String) as Map<String, dynamic>;
+          final data = jsonDecode(item['data']! as String) as Map<String, dynamic>;
           
           switch (item['table_name']) {
             case 'patients':
               if (item['operation'] == 'create') {
                 await _syncPatient(data);
               } else if (item['operation'] == 'update') {
-                await _syncPatientUpdate(item['record_id'] as String, data);
+                await _syncPatientUpdate(item['record_id']! as String, data);
               } else if (item['operation'] == 'delete') {
-                await _syncPatientDelete(item['record_id'] as String);
+                await _syncPatientDelete(item['record_id']! as String);
               }
               break;
             case 'appointments':
@@ -465,7 +464,7 @@ class OfflineService extends ChangeNotifier {
 
           // Update sync status
           await _database!.update(
-            item['table_name'] as String,
+            item['table_name']! as String,
             {'sync_status': 'synced'},
             where: 'id = ?',
             whereArgs: [item['record_id']],
@@ -483,7 +482,7 @@ class OfflineService extends ChangeNotifier {
           // Increment retry count
           await _database!.update(
             'sync_queue',
-            {'retry_count': (item['retry_count'] as int) + 1},
+            {'retry_count': (item['retry_count']! as int) + 1},
             where: 'id = ?',
             whereArgs: [item['id']],
           );

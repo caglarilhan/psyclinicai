@@ -142,7 +142,6 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
               ),
             ),
-      scrollable: true,
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),

@@ -32,7 +32,7 @@ class ClinicalScales {
 
   // ───────────────────────────── AUDIT ─────────────────────────────
   // Alcohol Use Disorders Identification Test (Saunders et al., 1993, WHO).
-  static final ClinicalScale audit = ClinicalScale(
+  static const ClinicalScale audit = ClinicalScale(
     id: 'audit',
     shortName: 'AUDIT',
     title: 'AUDIT — Alcohol Use Disorders Identification Test',
@@ -40,7 +40,7 @@ class ClinicalScales {
         'Please answer about your alcohol use in the last year. Place the '
         'answer that is correct for you.',
     referenceNote: 'WHO AUDIT (Saunders et al., 1993). Score 0–40.',
-    questions: const [
+    questions: [
       ScaleQuestion('How often do you have a drink containing alcohol?', [
         ScaleChoice('Never', 0),
         ScaleChoice('Monthly or less', 1),
@@ -138,7 +138,7 @@ class ClinicalScales {
 
   // ───────────────────────────── PCL-5 ─────────────────────────────
   // PTSD Checklist for DSM-5 (Weathers et al., 2013).
-  static final ClinicalScale pcl5 = ClinicalScale(
+  static const ClinicalScale pcl5 = ClinicalScale(
     id: 'pcl5',
     shortName: 'PCL-5',
     title: 'PCL-5 — PTSD Checklist for DSM-5',
@@ -146,7 +146,7 @@ class ClinicalScales {
         'In the past month, how much were you bothered by each problem?',
     referenceNote:
         'Weathers et al. (2013). Score 0–80; provisional PTSD threshold ≥33.',
-    questions: const [
+    questions: [
       ScaleQuestion('Repeated, disturbing, and unwanted memories of the '
           'stressful experience', _freq5),
       ScaleQuestion(
@@ -241,7 +241,7 @@ class ClinicalScales {
   // ───────────────────────────── C-SSRS ────────────────────────────
   // Columbia-Suicide Severity Rating Scale — Screener (Posner et al., 2011).
   // Categorical risk from the escalation ladder, not a simple sum.
-  static final ClinicalScale cssrs = ClinicalScale(
+  static const ClinicalScale cssrs = ClinicalScale(
     id: 'cssrs',
     shortName: 'C-SSRS',
     title: 'C-SSRS — Columbia Suicide Severity Rating Scale (Screener)',
@@ -251,7 +251,7 @@ class ClinicalScales {
     referenceNote:
         'Posner et al. (2011). Risk is categorical — any positive answer '
         'requires a full clinical risk assessment.',
-    questions: const [
+    questions: [
       ScaleQuestion('1. Have you wished you were dead or wished you could go '
           'to sleep and not wake up?', _yesNo),
       ScaleQuestion(

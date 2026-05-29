@@ -9,7 +9,7 @@ class SpecialtySelectScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final specialties = const [
+    const specialties = [
       'Psikiyatrist',
       'Psikolog',
       'Hemşire',
@@ -60,9 +60,9 @@ class SpecialtySelectScreen extends StatelessWidget {
 }
 
 class _SpecialtyChip extends StatelessWidget {
+  const _SpecialtyChip({required this.label, required this.color});
   final String label;
   final Color color;
-  const _SpecialtyChip({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {

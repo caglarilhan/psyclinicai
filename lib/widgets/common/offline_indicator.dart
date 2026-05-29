@@ -134,9 +134,6 @@ class OfflineStatusCard extends StatelessWidget {
 }
 
 class OfflineDataList extends StatelessWidget {
-  final String tableName;
-  final String title;
-  final IconData icon;
 
   const OfflineDataList({
     super.key,
@@ -144,6 +141,9 @@ class OfflineDataList extends StatelessWidget {
     required this.title,
     required this.icon,
   });
+  final String tableName;
+  final String title;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +230,7 @@ class OfflineDataList extends StatelessWidget {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 if (data.length > 5)
                   TextButton(
                     onPressed: () {

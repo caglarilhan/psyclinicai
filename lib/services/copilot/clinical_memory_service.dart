@@ -102,7 +102,7 @@ class ClinicalMemoryService {
     final goalsText =
         brief.activeGoals.isEmpty ? 'none recorded' : brief.activeGoals.join('; ');
 
-    final system =
+    const system =
         'You are preparing a therapist to walk into their next session in 30 '
         'seconds. From the prior session notes, active treatment goals, and '
         'homework status, write a brief continuity summary (2-3 sentences, '

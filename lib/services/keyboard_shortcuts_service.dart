@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class KeyboardShortcutsService extends ChangeNotifier {
-  static final KeyboardShortcutsService _instance = KeyboardShortcutsService._internal();
   factory KeyboardShortcutsService() => _instance;
   KeyboardShortcutsService._internal();
+  static final KeyboardShortcutsService _instance = KeyboardShortcutsService._internal();
 
   // Kısayol tanımları
   static const Map<String, String> shortcuts = {
@@ -229,7 +229,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
       onPressed: () {
         showDialog<void>(
           context: context,
-          builder: (context) => buildShortcutsWidget(context),
+          builder: buildShortcutsWidget,
         );
       },
     );
@@ -254,7 +254,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
             onPressed: () {
               showDialog<void>(
                 context: context,
-                builder: (context) => buildShortcutsWidget(context),
+                builder: buildShortcutsWidget,
               );
             },
             child: const Text(

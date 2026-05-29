@@ -95,10 +95,10 @@ class HeroSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 28),
-        Wrap(
+        const Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: const [
+          children: [
             _TrustChip(
                 icon: Icons.verified_user_outlined,
                 label: 'HIPAA-aligned'),
@@ -171,7 +171,6 @@ class HeroSection extends StatelessWidget {
       context: context,
       child: isWide
           ? Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(flex: 5, child: copy),
                 const SizedBox(width: 48),

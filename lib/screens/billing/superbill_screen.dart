@@ -100,7 +100,6 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
       cpt: cpt,
       units: 1,
       chargePerUnit: cpt.nationalAverageUsd,
-      diagnosisPointers: const [1],
     ));
     _computeDenial();
   }
@@ -277,7 +276,6 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           cpt: picked,
           units: 1,
           chargePerUnit: picked.nationalAverageUsd,
-          diagnosisPointers: const [1],
         ));
       });
     }
@@ -858,7 +856,6 @@ class _InvoiceMetaCard extends StatelessWidget {
         border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(14),

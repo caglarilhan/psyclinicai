@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/specialty_select_screen.dart';
+import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/guide/diagnosis_guide_screen.dart';
+import 'screens/settings/language_settings_screen.dart';
+import 'screens/settings/region_settings_screen.dart';
 import 'services/language_service.dart';
 import 'services/offline_service.dart';
-       import 'screens/auth/login_screen.dart';
-       import 'screens/auth/specialty_select_screen.dart';
-       import 'services/role_service.dart';
-import 'screens/dashboard/dashboard_screen.dart';
-import 'screens/settings/language_settings_screen.dart';
-import 'screens/guide/diagnosis_guide_screen.dart';
+import 'services/role_service.dart';
 import 'widgets/common/offline_indicator.dart';
-import 'screens/settings/region_settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,9 +30,6 @@ void main() async {
 }
 
        class PsyClinicAIWebApp extends StatelessWidget {
-  final LanguageService languageService;
-  final OfflineService offlineService;
-         final RoleService roleService;
   
          const PsyClinicAIWebApp({
     super.key,
@@ -39,6 +37,9 @@ void main() async {
     required this.offlineService,
            required this.roleService,
   });
+  final LanguageService languageService;
+  final OfflineService offlineService;
+         final RoleService roleService;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,6 @@ void main() async {
                      useMaterial3: true,
                      colorScheme: ColorScheme.fromSeed(
                        seedColor: const Color(0xFF6D4AFF), // modern mor ton
-                       brightness: Brightness.light,
                      ),
                      visualDensity: VisualDensity.adaptivePlatformDensity,
                    ),

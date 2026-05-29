@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/desktop_theme.dart';
+
 import '../../services/keyboard_shortcuts_service.dart';
+import '../../utils/desktop_theme.dart';
 
 class DesktopLayout extends StatefulWidget {
-  final Widget child;
-  final String title;
-  final List<Widget>? actions;
-  final Widget? sidebar;
-  final Widget? rightPanel;
-  final bool showStatusBar;
-  final bool showShortcuts;
-  // Geri uyumluluk: bazı ekranlarda doğrudan sidebarItems geçiliyor
-  final List<DesktopSidebarItem>? sidebarItems;
 
   const DesktopLayout({
     super.key,
@@ -25,6 +17,15 @@ class DesktopLayout extends StatefulWidget {
     this.showShortcuts = true,
     this.sidebarItems,
   });
+  final Widget child;
+  final String title;
+  final List<Widget>? actions;
+  final Widget? sidebar;
+  final Widget? rightPanel;
+  final bool showStatusBar;
+  final bool showShortcuts;
+  // Geri uyumluluk: bazı ekranlarda doğrudan sidebarItems geçiliyor
+  final List<DesktopSidebarItem>? sidebarItems;
 
   @override
   State<DesktopLayout> createState() => _DesktopLayoutState();
@@ -132,12 +133,11 @@ class _DesktopLayoutState extends State<DesktopLayout> {
   Widget _buildTopBar() {
     return Container(
       height: DesktopTheme.topBarHeight,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
             color: DesktopTheme.desktopBorder,
-            width: 1,
           ),
         ),
       ),
@@ -148,7 +148,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.psychology,
                   color: DesktopTheme.desktopPrimary,
                   size: 24,
@@ -214,11 +214,10 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(
                   color: DesktopTheme.desktopBorder,
-                  width: 1,
                 ),
               ),
             ),
@@ -274,12 +273,11 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
                 bottom: BorderSide(
                   color: DesktopTheme.desktopBorder,
-                  width: 1,
                 ),
               ),
             ),
@@ -328,11 +326,10 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           Container(
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(
                   color: DesktopTheme.desktopBorder,
-                  width: 1,
                 ),
               ),
             ),
@@ -392,9 +389,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
 
 // Masaüstü sidebar widget'ı
 class DesktopSidebar extends StatelessWidget {
-  final List<DesktopSidebarItem> items;
-  final int selectedIndex;
-  final void Function(int) onItemSelected;
 
   const DesktopSidebar({
     super.key,
@@ -402,6 +396,9 @@ class DesktopSidebar extends StatelessWidget {
     required this.selectedIndex,
     required this.onItemSelected,
   });
+  final List<DesktopSidebarItem> items;
+  final int selectedIndex;
+  final void Function(int) onItemSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -436,11 +433,6 @@ class DesktopSidebar extends StatelessWidget {
 }
 
 class DesktopSidebarItem {
-  final String title;
-  final IconData icon;
-  final String? route;
-  // Geri uyumluluk: bazı ekranlar onTap bekliyor
-  final VoidCallback? onTap;
 
   const DesktopSidebarItem({
     required this.title,
@@ -448,13 +440,15 @@ class DesktopSidebarItem {
     this.route,
     this.onTap,
   });
+  final String title;
+  final IconData icon;
+  final String? route;
+  // Geri uyumluluk: bazı ekranlar onTap bekliyor
+  final VoidCallback? onTap;
 }
 
 // Masaüstü panel widget'ı
 class DesktopPanel extends StatelessWidget {
-  final String title;
-  final Widget child;
-  final List<Widget>? actions;
 
   const DesktopPanel({
     super.key,
@@ -462,6 +456,9 @@ class DesktopPanel extends StatelessWidget {
     required this.child,
     this.actions,
   });
+  final String title;
+  final Widget child;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -471,11 +468,10 @@ class DesktopPanel extends StatelessWidget {
         // Panel Header
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(
               bottom: BorderSide(
                 color: DesktopTheme.desktopBorder,
-                width: 1,
               ),
             ),
           ),

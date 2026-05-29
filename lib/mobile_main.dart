@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'screens/auth/login_screen.dart';
+import 'screens/mobile/mobile_home_screen.dart';
 import 'services/language_service.dart';
 import 'services/offline_service.dart';
-import 'screens/mobile/mobile_home_screen.dart';
-import 'screens/auth/login_screen.dart';
 import 'widgets/common/offline_indicator.dart';
 
 void main() async {
@@ -21,14 +22,14 @@ void main() async {
 }
 
 class PsyClinicAIMobileApp extends StatelessWidget {
-  final LanguageService languageService;
-  final OfflineService offlineService;
   
   const PsyClinicAIMobileApp({
     super.key,
     required this.languageService,
     required this.offlineService,
   });
+  final LanguageService languageService;
+  final OfflineService offlineService;
 
   @override
   Widget build(BuildContext context) {
@@ -102,10 +103,6 @@ class PsyClinicAIMobileApp extends StatelessWidget {
 }
 
 class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final List<Widget>? actions;
-  final Widget? leading;
-  final bool automaticallyImplyLeading;
 
   const MobileAppBar({
     super.key,
@@ -114,6 +111,10 @@ class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.automaticallyImplyLeading = true,
   });
+  final String title;
+  final List<Widget>? actions;
+  final Widget? leading;
+  final bool automaticallyImplyLeading;
 
   @override
   Widget build(BuildContext context) {
@@ -151,12 +152,6 @@ class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class MobileCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final EdgeInsetsGeometry? margin;
-  final Color? color;
-  final double? elevation;
-  final VoidCallback? onTap;
 
   const MobileCard({
     super.key,
@@ -167,6 +162,12 @@ class MobileCard extends StatelessWidget {
     this.elevation,
     this.onTap,
   });
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final Color? color;
+  final double? elevation;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -190,13 +191,6 @@ class MobileCard extends StatelessWidget {
 }
 
 class MobileButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
-  final double? width;
-  final double? height;
 
   const MobileButton({
     super.key,
@@ -208,6 +202,13 @@ class MobileButton extends StatelessWidget {
     this.width,
     this.height,
   });
+  final String text;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final double? width;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -257,18 +258,6 @@ class MobileButton extends StatelessWidget {
 }
 
 class MobileTextField extends StatelessWidget {
-  final String? labelText;
-  final String? hintText;
-  final TextEditingController? controller;
-  final IconData? prefixIcon;
-  final IconData? suffixIcon;
-  final VoidCallback? onSuffixIconTap;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-  final void Function(String)? onChanged;
-  final int? maxLines;
-  final bool enabled;
 
   const MobileTextField({
     super.key,
@@ -285,6 +274,18 @@ class MobileTextField extends StatelessWidget {
     this.maxLines = 1,
     this.enabled = true,
   });
+  final String? labelText;
+  final String? hintText;
+  final TextEditingController? controller;
+  final IconData? prefixIcon;
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixIconTap;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final int? maxLines;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -319,13 +320,6 @@ class MobileTextField extends StatelessWidget {
 }
 
 class MobileListTile extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final IconData? leading;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final Color? leadingColor;
-  final Color? backgroundColor;
 
   const MobileListTile({
     super.key,
@@ -337,6 +331,13 @@ class MobileListTile extends StatelessWidget {
     this.leadingColor,
     this.backgroundColor,
   });
+  final String title;
+  final String? subtitle;
+  final IconData? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final Color? leadingColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -396,11 +397,6 @@ class MobileListTile extends StatelessWidget {
 }
 
 class MobileFloatingActionButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String? tooltip;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
 
   const MobileFloatingActionButton({
     super.key,
@@ -410,6 +406,11 @@ class MobileFloatingActionButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
   });
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String? tooltip;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {

@@ -7,9 +7,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 class PDFExportService {
-  static final PDFExportService _instance = PDFExportService._internal();
   factory PDFExportService() => _instance;
   PDFExportService._internal();
+  static final PDFExportService _instance = PDFExportService._internal();
 
   /// Seans notu PDF'i oluştur
   Future<Uint8List> generateSessionPDF({
@@ -27,7 +27,7 @@ class PDFExportService {
     // Font yükleme - Sistem fontlarını kullan
     pw.Font? ttf;
     try {
-      final fontData = await rootBundle.load("assets/fonts/Roboto-Regular.ttf");
+      final fontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
       ttf = pw.Font.ttf(fontData);
     } catch (e) {
       // Font bulunamazsa default font kullan
@@ -90,7 +90,6 @@ class PDFExportService {
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
       ),
       child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
           // Logo ve başlık
           pw.Row(
@@ -106,7 +105,7 @@ class PDFExportService {
                 child: pw.Center(
                   child: pw.Text(
                     '🧠',
-                    style: pw.TextStyle(fontSize: 30),
+                    style: const pw.TextStyle(fontSize: 30),
                   ),
                 ),
               ),
@@ -141,9 +140,9 @@ class PDFExportService {
           // Bilgi tablosu
           pw.Container(
             padding: const pw.EdgeInsets.all(20),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.grey100,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
             ),
             child: pw.Column(
               children: [
@@ -198,13 +197,13 @@ class PDFExportService {
           // Sayfa başlığı
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.blue50,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
             ),
             child: pw.Row(
               children: [
-                pw.Icon(pw.IconData(0xe3b9), color: PdfColors.blue), // edit icon
+                pw.Icon(const pw.IconData(0xe3b9), color: PdfColors.blue), // edit icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'SEANS NOTLARI',
@@ -224,13 +223,13 @@ class PDFExportService {
           // Seans süresi
           pw.Container(
             padding: const pw.EdgeInsets.all(10),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.grey50,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(5)),
             ),
             child: pw.Row(
               children: [
-                pw.Icon(pw.IconData(0xe425), color: PdfColors.grey700), // timer icon
+                pw.Icon(const pw.IconData(0xe425), color: PdfColors.grey700), // timer icon
                 pw.SizedBox(width: 8),
                 pw.Text(
                   'Seans Süresi: ${_formatDuration(sessionDuration)}',
@@ -295,13 +294,13 @@ class PDFExportService {
           // Sayfa başlığı
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.green50,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
             ),
             child: pw.Row(
               children: [
-                pw.Icon(pw.IconData(0xe3b9), color: PdfColors.green), // psychology icon
+                pw.Icon(const pw.IconData(0xe3b9), color: PdfColors.green), // psychology icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'AI DESTEKLİ ÖZET',
@@ -425,9 +424,9 @@ class PDFExportService {
           // Alt bilgi
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.grey50,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(5)),
             ),
             child: pw.Column(
               children: [
@@ -509,13 +508,13 @@ class PDFExportService {
         children: [
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.purple50,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
             ),
             child: pw.Row(
               children: [
-                pw.Icon(pw.IconData(0xe3b6), color: PdfColors.purple), // attachment icon
+                pw.Icon(const pw.IconData(0xe3b6), color: PdfColors.purple), // attachment icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'EKLER',
@@ -540,7 +539,7 @@ class PDFExportService {
                 ),
                 child: pw.Padding(
                   padding: const pw.EdgeInsets.all(8),
-                  child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain, height: 300),
+                  child: pw.Image(pw.MemoryImage(bytes), height: 300),
                 ),
               )),
         ],
@@ -551,9 +550,9 @@ class PDFExportService {
   /// Süre formatla
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    final String hours = twoDigits(duration.inHours);
+    final String minutes = twoDigits(duration.inMinutes.remainder(60));
+    final String seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
   }
 

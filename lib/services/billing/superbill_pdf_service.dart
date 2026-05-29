@@ -63,7 +63,7 @@ class SuperbillPdfService {
                     fontSize: 22,
                     fontWeight: pw.FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: PdfColor.fromInt(0xFF6B46C1))),
+                    color: const PdfColor.fromInt(0xFF6B46C1))),
             pw.SizedBox(height: 2),
             pw.Text('Out-of-network insurance reimbursement receipt',
                 style: const pw.TextStyle(
@@ -118,9 +118,9 @@ class SuperbillPdfService {
   pw.Widget _buildDiagnoses(SuperbillData d) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(
+      decoration: const pw.BoxDecoration(
         color: PdfColors.grey100,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+        borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -185,7 +185,7 @@ class SuperbillPdfService {
             1: pw.FlexColumnWidth(1.4),
             2: pw.FlexColumnWidth(4),
             3: pw.FlexColumnWidth(1.2),
-            4: pw.FlexColumnWidth(1),
+            4: pw.FlexColumnWidth(),
             5: pw.FlexColumnWidth(1.6),
           },
         ),
@@ -213,7 +213,7 @@ class SuperbillPdfService {
               _totalRow('Amount paid', paid, color: PdfColors.green700),
               pw.Container(height: 6),
               _totalRow('Balance due', balance,
-                  bold: true, color: PdfColor.fromInt(0xFF6B46C1)),
+                  bold: true, color: const PdfColor.fromInt(0xFF6B46C1)),
             ],
           ),
         ],
@@ -274,14 +274,14 @@ class SuperbillPdfService {
   pw.Widget _buildDisclaimer() {
     return pw.Container(
       padding: const pw.EdgeInsets.all(8),
-      decoration: pw.BoxDecoration(
+      decoration: const pw.BoxDecoration(
         color: PdfColors.grey100,
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+        borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
       ),
       child: pw.Text(
         'This superbill is generated as a draft by PsyClinicAI. The provider is '
-        "responsible for verifying all CPT and ICD-10 codes, charges, and patient "
-        "information before submitting to an insurer. PsyClinicAI does not file "
+        'responsible for verifying all CPT and ICD-10 codes, charges, and patient '
+        'information before submitting to an insurer. PsyClinicAI does not file '
         "claims on the provider's behalf.",
         style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
       ),

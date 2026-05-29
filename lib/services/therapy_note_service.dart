@@ -4,15 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/therapy_note_models.dart';
 
 class TherapyNoteService extends ChangeNotifier {
-  static final TherapyNoteService _instance = TherapyNoteService._internal();
   factory TherapyNoteService() => _instance;
   TherapyNoteService._internal();
+  static final TherapyNoteService _instance = TherapyNoteService._internal();
 
   static const String _storageKey = 'therapy_note_entries';
   SharedPreferences? _prefs;
 
   final List<TherapyNoteTemplate> _templates = [
-    TherapyNoteTemplate(
+    const TherapyNoteTemplate(
       id: 'dap',
       name: 'DAP Notu',
       description: 'Data-Assessment-Plan formatı',
@@ -22,7 +22,7 @@ class TherapyNoteService extends ChangeNotifier {
         TherapyNoteField(key: 'plan', label: 'Plan', type: NoteFieldType.longText),
       ],
     ),
-    TherapyNoteTemplate(
+    const TherapyNoteTemplate(
       id: 'soap',
       name: 'SOAP Notu',
       description: 'Subjective-Objective-Assessment-Plan',

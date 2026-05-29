@@ -42,11 +42,11 @@ class AboutPage extends StatelessWidget {
           StaticH2('Who we are'),
           StaticP(
               "We're an engineering team partnered with licensed clinical "
-              "advisors who review every prompt and every severity band. "
-              "Frankfurt-headquartered for EU data residency; available "
-              "across US time zones for pilot support. We do not publish "
-              "team headshots — clinicians evaluate us on the product and "
-              "the architecture, not the marketing photos."),
+              'advisors who review every prompt and every severity band. '
+              'Frankfurt-headquartered for EU data residency; available '
+              'across US time zones for pilot support. We do not publish '
+              'team headshots — clinicians evaluate us on the product and '
+              'the architecture, not the marketing photos.'),
           StaticH2('Roadmap milestones'),
           StaticBullet(
               'Q2 2026 — Live AI Co-Pilot, Superbill, MBC (shipped).'),

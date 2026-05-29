@@ -335,17 +335,6 @@ extension ModalityX on Modality {
 }
 
 class SoapNote {
-  SoapNote({
-    required this.rawMarkdown,
-    required this.format,
-    required this.generatedAt,
-    this.flaggedRisk = false,
-  });
-
-  final String rawMarkdown;
-  final SoapFormat format;
-  final DateTime generatedAt;
-  final bool flaggedRisk;
 
   factory SoapNote.parse(String content, {required SoapFormat format}) {
     final hasRiskFlag = content.toLowerCase().contains('risk') &&
@@ -357,6 +346,17 @@ class SoapNote {
       flaggedRisk: hasRiskFlag,
     );
   }
+  SoapNote({
+    required this.rawMarkdown,
+    required this.format,
+    required this.generatedAt,
+    this.flaggedRisk = false,
+  });
+
+  final String rawMarkdown;
+  final SoapFormat format;
+  final DateTime generatedAt;
+  final bool flaggedRisk;
 }
 
 enum SoapGeneratorErrorCode {

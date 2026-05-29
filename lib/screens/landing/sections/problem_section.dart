@@ -40,9 +40,9 @@ class ProblemSection extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
             child: const SectionSubtitle(
-              "Documentation, insurance, and reporting take a third of every "
+              'Documentation, insurance, and reporting take a third of every '
               "clinician's working week. Legacy EHRs designed in 2010 don't "
-              "fix it — they just digitise the same forms.",
+              'fix it — they just digitise the same forms.',
             ),
           ),
           const SizedBox(height: 40),

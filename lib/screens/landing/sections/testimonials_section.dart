@@ -17,7 +17,6 @@ class TestimonialsSection extends StatelessWidget {
       context: context,
       background: cs.surface,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SectionEyebrow('Founding members'),
           const SizedBox(height: 12),

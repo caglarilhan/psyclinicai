@@ -229,7 +229,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
   }
 
   Widget _buildCategoryCard(ThemeData theme, Map<String, dynamic> category) {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),

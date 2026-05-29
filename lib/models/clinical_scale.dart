@@ -2,6 +2,7 @@
 /// AUDIT, …). Keeps each instrument's items, per-item options, and scoring in
 /// one auditable place so the runner UI stays generic. Decision-support — every
 /// result tells the clinician what to review, never diagnoses.
+library;
 
 enum ScaleSeverity { minimal, mild, moderate, severe, critical }
 

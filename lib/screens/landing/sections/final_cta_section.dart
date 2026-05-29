@@ -107,11 +107,11 @@ class FinalCtaSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 28),
-            Wrap(
+            const Wrap(
               spacing: 18,
               runSpacing: 8,
               alignment: WrapAlignment.center,
-              children: const [
+              children: [
                 _Pill('No card required'),
                 _Pill('Cancel anytime'),
                 _Pill('Your data stays yours'),

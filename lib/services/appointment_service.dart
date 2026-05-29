@@ -5,9 +5,9 @@ import '../models/appointment_model.dart';
 import 'notification_service.dart';
 
 class AppointmentService {
-  static final AppointmentService _instance = AppointmentService._internal();
   factory AppointmentService() => _instance;
   AppointmentService._internal();
+  static final AppointmentService _instance = AppointmentService._internal();
 
   static const String _appointmentsKey = 'appointments';
   List<Appointment> _appointments = [];
@@ -185,7 +185,7 @@ class AppointmentService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final weekStart = today.subtract(Duration(days: today.weekday - 1));
-    final monthStart = DateTime(now.year, now.month, 1);
+    final monthStart = DateTime(now.year, now.month);
 
     final todaysAppointments = _appointments.where((a) => a.isToday).length;
     final thisWeekAppointments = _appointments.where((a) => 
@@ -194,7 +194,7 @@ class AppointmentService {
     ).length;
     final thisMonthAppointments = _appointments.where((a) => 
         a.startTime.isAfter(monthStart.subtract(const Duration(days: 1))) &&
-        a.startTime.isBefore(DateTime(now.year, now.month + 1, 1))
+        a.startTime.isBefore(DateTime(now.year, now.month + 1))
     ).length;
     final upcomingAppointments = _appointments.where((a) => a.isUpcoming).length;
 
@@ -216,8 +216,8 @@ class AppointmentService {
         id: '1',
         clientId: '1',
         clientName: 'Ahmet Yılmaz',
-        startTime: DateTime(now.year, now.month, now.day, 10, 0),
-        endTime: DateTime(now.year, now.month, now.day, 11, 0),
+        startTime: DateTime(now.year, now.month, now.day, 10),
+        endTime: DateTime(now.year, now.month, now.day, 11),
         type: 'Bireysel Terapi',
         status: 'Scheduled',
         notes: 'İlk seans - Anksiyete değerlendirmesi',
@@ -229,8 +229,8 @@ class AppointmentService {
         id: '2',
         clientId: '2',
         clientName: 'Fatma Kaya',
-        startTime: DateTime(now.year, now.month, now.day, 14, 0),
-        endTime: DateTime(now.year, now.month, now.day, 15, 0),
+        startTime: DateTime(now.year, now.month, now.day, 14),
+        endTime: DateTime(now.year, now.month, now.day, 15),
         type: 'Bireysel Terapi',
         status: 'Scheduled',
         notes: 'Depresyon tedavisi - 3. seans',
@@ -242,8 +242,8 @@ class AppointmentService {
         id: '3',
         clientId: '3',
         clientName: 'Mehmet Demir',
-        startTime: DateTime(now.year, now.month, now.day + 1, 9, 0),
-        endTime: DateTime(now.year, now.month, now.day + 1, 10, 0),
+        startTime: DateTime(now.year, now.month, now.day + 1, 9),
+        endTime: DateTime(now.year, now.month, now.day + 1, 10),
         type: 'Bireysel Terapi',
         status: 'Scheduled',
         notes: 'PTSD tedavisi - 2. seans',

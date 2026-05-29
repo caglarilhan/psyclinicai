@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/medication.dart';
 import '../../services/data/assessment_repository.dart';
-import '../../services/data/medication_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/medication_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/clinical_brief_card.dart';
@@ -217,8 +217,8 @@ class _AssessmentList extends StatelessWidget {
   }
 
   Widget _demoAssessments(BuildContext context) {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         _DemoAssessmentTile(
             type: 'phq9',
             score: 14,

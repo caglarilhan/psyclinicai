@@ -332,7 +332,6 @@ class _ChartCard extends StatelessWidget {
                 minY: 0,
                 maxY: 27,
                 gridData: FlGridData(
-                  show: true,
                   drawVerticalLine: false,
                   horizontalInterval: 5,
                   getDrawingHorizontalLine: (_) => FlLine(
@@ -343,9 +342,9 @@ class _ChartCard extends StatelessWidget {
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
                   rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                      ),
                   topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                      ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -415,7 +414,6 @@ class _ChartCard extends StatelessWidget {
         color: color,
         barWidth: 2.6,
         dotData: FlDotData(
-          show: true,
           getDotPainter: (s, p, b, i) => FlDotCirclePainter(
             radius: 4,
             color: color,

@@ -162,13 +162,12 @@ class _CalendarCard extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant),
       ),
       child: TableCalendar<Appointment>(
-        firstDay: DateTime.utc(2024, 1, 1),
+        firstDay: DateTime.utc(2024),
         lastDay: DateTime.utc(2030, 12, 31),
         focusedDay: focusedDay,
         selectedDayPredicate: (d) => isSameDay(selectedDay, d),
         onDaySelected: onSelected,
         eventLoader: eventsFor,
-        calendarFormat: CalendarFormat.month,
         availableGestures: AvailableGestures.horizontalSwipe,
         headerStyle: const HeaderStyle(
           formatButtonVisible: false,

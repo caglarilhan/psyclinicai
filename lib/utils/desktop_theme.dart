@@ -31,7 +31,6 @@ class DesktopTheme {
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: desktopPrimary,
-        brightness: Brightness.light,
         primary: desktopPrimary,
         secondary: desktopSecondary,
         tertiary: desktopAccent,

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 /// On-device live transcription via `speech_to_text`.
 ///
@@ -32,7 +32,6 @@ class TranscriptionService extends ChangeNotifier {
       _available = await _engine.initialize(
         onStatus: _onStatus,
         onError: _onError,
-        debugLogging: false,
       );
     } catch (_) {
       _available = false;
@@ -56,8 +55,6 @@ class TranscriptionService extends ChangeNotifier {
       listenFor: const Duration(minutes: 60),
       pauseFor: const Duration(seconds: 30),
       listenOptions: stt.SpeechListenOptions(
-        partialResults: true,
-        cancelOnError: false,
         listenMode: stt.ListenMode.dictation,
       ),
     );

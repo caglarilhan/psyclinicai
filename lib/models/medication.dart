@@ -1,6 +1,18 @@
 /// A medication on a patient's regimen (psychiatry / prescriber workflow).
 /// Manual entry only — no AI suggestion of medications (clinical safety).
 class Medication {
+
+  factory Medication.fromJson(Map<String, dynamic> json) => Medication(
+        id: json['id'] as String,
+        patientId: json['patientId'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        dose: json['dose'] as String? ?? '',
+        frequency: json['frequency'] as String? ?? '',
+        startedOn: DateTime.tryParse(json['startedOn'] as String? ?? '') ??
+            DateTime.now(),
+        active: json['active'] as bool? ?? true,
+        notes: json['notes'] as String? ?? '',
+      );
   Medication({
     required this.id,
     required this.patientId,
@@ -42,16 +54,4 @@ class Medication {
         'active': active,
         'notes': notes,
       };
-
-  factory Medication.fromJson(Map<String, dynamic> json) => Medication(
-        id: json['id'] as String,
-        patientId: json['patientId'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        dose: json['dose'] as String? ?? '',
-        frequency: json['frequency'] as String? ?? '',
-        startedOn: DateTime.tryParse(json['startedOn'] as String? ?? '') ??
-            DateTime.now(),
-        active: json['active'] as bool? ?? true,
-        notes: json['notes'] as String? ?? '',
-      );
 }

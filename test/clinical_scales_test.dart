@@ -4,7 +4,7 @@ import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 
 void main() {
   group('AUDIT', () {
-    final s = ClinicalScales.audit;
+    const s = ClinicalScales.audit;
     test('has 10 items, max 40', () {
       expect(s.itemCount, 10);
       expect(s.score(List.filled(10, 0)).maxScore, 40);
@@ -34,7 +34,7 @@ void main() {
   });
 
   group('PCL-5', () {
-    final s = ClinicalScales.pcl5;
+    const s = ClinicalScales.pcl5;
     test('has 20 items, max 80', () {
       expect(s.itemCount, 20);
       expect(s.score(List.filled(20, 0)).maxScore, 80);
@@ -63,7 +63,7 @@ void main() {
   });
 
   group('C-SSRS', () {
-    final s = ClinicalScales.cssrs;
+    const s = ClinicalScales.cssrs;
     test('has 6 items, max 6', () {
       expect(s.itemCount, 6);
       expect(s.score(List.filled(6, 0)).maxScore, 6);

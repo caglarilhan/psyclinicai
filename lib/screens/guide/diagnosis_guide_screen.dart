@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:convert' as convert;
+
+import 'package:flutter/material.dart';
+import 'package:psyclinicai/models/homework_item.dart';
+import 'package:psyclinicai/services/data/homework_repository.dart';
 
 class DiagnosisGuideScreen extends StatefulWidget {
   const DiagnosisGuideScreen({super.key});
@@ -24,6 +27,8 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
 
   // AI sonuç durumu
   Map<String, dynamic>? _aiResult; // {risk: low/medium/high, diagnoses: [...], notes: ...}
+
+  final HomeworkRepository _homeworkRepo = HomeworkRepository();
 
   @override
   void initState() {
@@ -177,7 +182,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
               label: const Text('Sıfırla'),
             ),
             const SizedBox(width: 8),
-            Text('Özet: ' + _scalesSummary(), style: t.textTheme.bodyMedium),
+            Text('Özet: ${_scalesSummary()}', style: t.textTheme.bodyMedium),
           ],
         ),
       ],
@@ -213,7 +218,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
         const SizedBox(height: 12),
         ElevatedButton.icon(
           onPressed: () {
-            final txt = (_symptoms.text + ' ' + _history.text + ' ' + _observations.text).toLowerCase();
+            final txt = ('${_symptoms.text} ${_history.text} ${_observations.text}').toLowerCase();
             String risk = 'low';
             if (txt.contains('intihar') || txt.contains('ölüm')) {
               risk = 'high';
@@ -255,7 +260,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Tedavi ve İzlem' + (dx != null ? ' • Odak: $dx' : ''),
+        Text('Tedavi ve İzlem${dx != null ? ' • Odak: $dx' : ''}',
             style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         FutureBuilder<List<Widget>>(
@@ -362,11 +367,20 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
   }
 
   Future<void> _assignHomework() async {
+    // No patient is selected on this reference screen, so the assignment lands
+    // under the app's demo patient (consistent with the rest of the app's
+    // 'demo-1' convention). It is a real persisted item — caseload and the
+    // pre-session brief read the same repository.
     try {
-      // HomeworkService mevcut; basit bir atama yapıyoruz
-      // Varsayılan/örnek hasta ve klinisyen id'leri ile.
-      // Not: Gerçek akışta bu id'ler seçili hastadan/oturumdan gelmeli.
-      await _ensureHomeworkService();
+      await _homeworkRepo.initialize();
+      await _homeworkRepo.add(HomeworkItem(
+        id: 'hw-${DateTime.now().millisecondsSinceEpoch}',
+        patientId: 'demo-1',
+        title: 'Otomatik düşünce kaydı (CBT)',
+        note: 'Bilişsel yeniden yapılandırma — günlük otomatik düşünce kaydı.',
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+        linkedGoal: 'CBT: Bilişsel Yeniden Yapılandırma',
+      ));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ödev eklendi')),
@@ -374,23 +388,8 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödev eklerken hata (servis bulunamadı)')),
+        const SnackBar(content: Text('Ödev eklenemedi')),
       );
-    }
-  }
-
-  Future<bool> _ensureHomeworkService() async {
-    // Burada yalnızca dosyanın varlığını varsayıp import edildiğini kabul ediyoruz;
-    // projede HomeworkService mevcut.
-    // Atama için doğrudan dinamik import yerine basit try-catch kullanalım.
-    try {
-      // ignore: unused_local_variable
-      dynamic _ = () {};
-      // Gerçek atama: import edip çağırmak yerine kullanıcı koduna bağlı kalmamak için
-      // placeholder bırakıyoruz. UI geri bildirimi üstte veriliyor.
-      return true;
-    } catch (_) {
-      return false;
     }
   }
 
@@ -416,7 +415,6 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
                 Expanded(
                   child: Slider(
                     value: (value < 0 ? 0 : value).toDouble(),
-                    min: 0,
                     max: max.toDouble(),
                     divisions: max,
                     label: value < 0 ? '—' : value.toString(),
@@ -458,7 +456,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
 
   // AI sonuç paneli
   Widget _aiResultPanel(Map<String, dynamic> r){
-    Color col = r['risk'] == 'high' ? Colors.red : r['risk'] == 'medium' ? Colors.orange : Colors.green;
+    final Color col = r['risk'] == 'high' ? Colors.red : r['risk'] == 'medium' ? Colors.orange : Colors.green;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -467,7 +465,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
           children: [
             Row(children: [Icon(Icons.shield, color: col), const SizedBox(width: 8), Text('Risk: ${r['risk']}')]),
             const SizedBox(height: 8),
-            Text('Olası Tanılar', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Olası Tanılar', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             ...((r['diagnoses'] as List).map((d)=> Row(children:[const Text('• '), Expanded(child: Text('${d['name']} (${d['code']}) – ${d['confidence']}%'))]))),
             const SizedBox(height: 8),
@@ -518,7 +516,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
           : (dx == 'PTSD')
               ? 'ptsd_tr.json'
               : 'depression_tr.json';
-      final data = await DefaultAssetBundle.of(context).loadString('assets/guidelines/' + key);
+      final data = await DefaultAssetBundle.of(context).loadString('assets/guidelines/$key');
       final map = convert.jsonDecode(data) as Map<String, dynamic>;
       final recs = (map['recommendations'] as List?) ?? [];
       return recs

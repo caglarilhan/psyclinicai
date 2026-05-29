@@ -71,7 +71,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
           return [
             SliverAppBar(
               expandedHeight: 200,
-              floating: false,
               pinned: true,
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
@@ -83,7 +82,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                background: Container(
+                background: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [colorScheme.primary, colorScheme.secondary],
@@ -136,11 +135,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
               actions: [
                 IconButton(
                   icon: const Icon(Icons.notifications),
-                  onPressed: () => _showNotifications(),
+                  onPressed: _showNotifications,
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => _showSearch(),
+                  onPressed: _showSearch,
                 ),
               ],
             ),
@@ -168,8 +167,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
             icon: const Icon(Icons.calendar_today),
             label: languageService.translate('appointments'),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person),
             label: 'Profil',
           ),
         ],
@@ -299,25 +298,25 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
                       'Yeni Hasta Ekle',
                       Icons.person_add,
                       Colors.blue,
-                      () => _addPatient(),
+                      _addPatient,
                     ),
                     _buildQuickActionCard(
                       'Randevu Oluştur',
                       Icons.event,
                       Colors.green,
-                      () => _createAppointment(),
+                      _createAppointment,
                     ),
                     _buildQuickActionCard(
                       'Sesli Not Al',
                       Icons.mic,
                       Colors.orange,
-                      () => _recordVoiceNote(),
+                      _recordVoiceNote,
                     ),
                     _buildQuickActionCard(
                       'AI Tanı',
                       Icons.psychology,
                       Colors.purple,
-                      () => _startAIDiagnosis(),
+                      _startAIDiagnosis,
                     ),
                   ],
                 ),

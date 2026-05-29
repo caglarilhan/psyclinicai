@@ -104,7 +104,6 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
-        brightness: Brightness.light,
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
@@ -472,10 +471,10 @@ class AppTheme {
         color: Color(0xFF4B5563),
         thickness: 1,
       ),
-      chipTheme: ChipThemeData(
+      chipTheme: const ChipThemeData(
         backgroundColor: darkSurfaceVariant,
-        labelStyle: const TextStyle(color: darkTextPrimary),
-        side: const BorderSide(color: Color(0xFF4B5563)),
+        labelStyle: TextStyle(color: darkTextPrimary),
+        side: BorderSide(color: Color(0xFF4B5563)),
       ),
     );
   }

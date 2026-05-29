@@ -2,50 +2,49 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:psyclinicai/services/theme_service.dart';
-import 'package:psyclinicai/services/auth_service.dart';
-import 'package:psyclinicai/services/role_service.dart';
-import 'package:psyclinicai/services/patient_service.dart';
-import 'package:psyclinicai/services/region_service.dart';
+import 'package:psyclinicai/models/superbill_prefill.dart';
+import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
+import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
+import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
+import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
+import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
+import 'package:psyclinicai/screens/auth/login_screen.dart';
+import 'package:psyclinicai/screens/billing/superbill_screen.dart';
+import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
+import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
+import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
+import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
+import 'package:psyclinicai/screens/landing/landing_screen.dart';
+import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
+import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
+import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
+import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
+import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
+import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
+import 'package:psyclinicai/screens/session/session_management_screen.dart';
+import 'package:psyclinicai/screens/session/session_screen.dart';
+import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
+import 'package:psyclinicai/screens/settings/settings_screen.dart';
+import 'package:psyclinicai/screens/static/about_page.dart';
+import 'package:psyclinicai/screens/static/changelog_page.dart';
+import 'package:psyclinicai/screens/static/contact_page.dart';
+import 'package:psyclinicai/screens/static/not_found_page.dart';
+import 'package:psyclinicai/screens/static/press_page.dart';
+import 'package:psyclinicai/screens/static/privacy_page.dart';
+import 'package:psyclinicai/screens/static/security_page.dart';
+import 'package:psyclinicai/screens/static/status_page.dart';
+import 'package:psyclinicai/screens/static/tos_page.dart';
+import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
+import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
+import 'package:psyclinicai/services/patient_service.dart';
+import 'package:psyclinicai/services/region_service.dart';
+import 'package:psyclinicai/services/role_service.dart';
+import 'package:psyclinicai/services/theme_service.dart';
 import 'package:psyclinicai/theme/psy_theme.dart';
 import 'package:psyclinicai/utils/document_title.dart';
-import 'package:psyclinicai/screens/landing/landing_screen.dart';
-import 'package:psyclinicai/screens/auth/login_screen.dart';
-import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
-import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
-import 'package:psyclinicai/screens/session/session_screen.dart';
-import 'package:psyclinicai/screens/session/session_management_screen.dart';
-import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
-import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
-import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
-import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
-import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
-import 'package:psyclinicai/screens/settings/settings_screen.dart';
-import 'package:psyclinicai/screens/billing/superbill_screen.dart';
-import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
-import 'package:psyclinicai/screens/static/security_page.dart';
-import 'package:psyclinicai/screens/static/about_page.dart';
-import 'package:psyclinicai/screens/static/changelog_page.dart';
-import 'package:psyclinicai/screens/static/status_page.dart';
-import 'package:psyclinicai/screens/static/privacy_page.dart';
-import 'package:psyclinicai/screens/static/tos_page.dart';
-import 'package:psyclinicai/screens/static/contact_page.dart';
-import 'package:psyclinicai/screens/static/press_page.dart';
-import 'package:psyclinicai/screens/static/not_found_page.dart';
-import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
-import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
-import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
-import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
-import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
-import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
-import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
-import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
-import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
-import 'package:psyclinicai/services/assessments/clinical_scales.dart';
-import 'package:psyclinicai/models/superbill_prefill.dart';
 
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
@@ -86,7 +85,6 @@ class PsyClinicAIApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider<fb_auth.FirebaseAuthService>.value(
           value: fb_auth.FirebaseAuthService.instance,
         ),
@@ -140,11 +138,11 @@ class PsyClinicAIApp extends StatelessWidget {
                     type: AssessmentType.gad7,
                     patientName: 'John Demo',
                   ),
-              '/scales/cssrs': (context) => ClinicalScaleScreen(
+              '/scales/cssrs': (context) => const ClinicalScaleScreen(
                   scale: ClinicalScales.cssrs, patientName: 'John Demo'),
-              '/scales/pcl5': (context) => ClinicalScaleScreen(
+              '/scales/pcl5': (context) => const ClinicalScaleScreen(
                   scale: ClinicalScales.pcl5, patientName: 'John Demo'),
-              '/scales/audit': (context) => ClinicalScaleScreen(
+              '/scales/audit': (context) => const ClinicalScaleScreen(
                   scale: ClinicalScales.audit, patientName: 'John Demo'),
               '/security': (context) => const SecurityPage(),
               '/about': (context) => const AboutPage(),

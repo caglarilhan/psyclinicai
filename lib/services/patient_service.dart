@@ -1,17 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 class PatientItem {
-  final String id;
-  final String name;
-  final String? email;
-  final String? phone;
-  final DateTime? birthDate;
-  final String? gender;
-  final String? notes;
-  final bool kvkkConsent;
-  final List<String> allergies;
-  final List<String> currentMedications;
-  final List<String> diagnosis;
   
   const PatientItem({
     required this.id, 
@@ -26,15 +15,20 @@ class PatientItem {
     this.currentMedications = const [],
     this.diagnosis = const [],
   });
+  final String id;
+  final String name;
+  final String? email;
+  final String? phone;
+  final DateTime? birthDate;
+  final String? gender;
+  final String? notes;
+  final bool kvkkConsent;
+  final List<String> allergies;
+  final List<String> currentMedications;
+  final List<String> diagnosis;
 }
 
-class PatientDoc {
-  final String id;
-  final String patientId;
-  final String name;
-  final String mimeType; // e.g. application/pdf
-  final DateTime createdAt;
-  final List<int> data; // demo: memory
+class PatientDoc { // demo: memory
   const PatientDoc({
     required this.id,
     required this.patientId,
@@ -43,19 +37,24 @@ class PatientDoc {
     required this.createdAt,
     required this.data,
   });
+  final String id;
+  final String patientId;
+  final String name;
+  final String mimeType; // e.g. application/pdf
+  final DateTime createdAt;
+  final List<int> data;
 }
 
 class PatientService extends ChangeNotifier {
-  static final PatientService _instance = PatientService._internal();
   factory PatientService() => _instance;
   PatientService._internal();
+  static final PatientService _instance = PatientService._internal();
 
   final List<PatientItem> _patients = [
     const PatientItem(
       id: '1', 
       name: 'Ahmet Yılmaz', 
       email: 'ahmet@example.com',
-      birthDate: null,
       gender: 'Erkek',
       notes: 'Tip 2 Diabetes Mellitus',
       kvkkConsent: true,
@@ -67,55 +66,45 @@ class PatientService extends ChangeNotifier {
       id: '2', 
       name: 'Ayşe Demir', 
       email: 'ayse@example.com',
-      birthDate: null,
       gender: 'Kadın',
       notes: 'Hipertansiyon',
       kvkkConsent: true,
-      allergies: [],
       currentMedications: ['Lisinopril'],
       diagnosis: ['Esansiyel Hipertansiyon'],
     ),
     const PatientItem(
       id: '3', 
       name: 'Mehmet Kaya',
-      birthDate: null,
       gender: 'Erkek',
       notes: 'Hipotiroidizm',
       kvkkConsent: true,
-      allergies: [],
       currentMedications: ['Levotiroksin'],
       diagnosis: ['Subklinik Hipotiroidizm'],
     ),
     const PatientItem(
       id: '4', 
       name: 'Zeynep Can',
-      birthDate: null,
       gender: 'Kadın',
       notes: 'Depresyon',
       kvkkConsent: true,
-      allergies: [],
       currentMedications: ['Sertralin'],
       diagnosis: ['Major Depresif Bozukluk'],
     ),
     const PatientItem(
       id: '5', 
       name: 'Deniz Ak',
-      birthDate: null,
       gender: 'Erkek',
       notes: 'Anksiyete',
       kvkkConsent: true,
-      allergies: [],
       currentMedications: ['Alprazolam'],
       diagnosis: ['Yaygın Anksiyete Bozukluğu'],
     ),
     const PatientItem(
       id: '6', 
       name: 'Efe Kara',
-      birthDate: null,
       gender: 'Erkek',
       notes: 'Uyku bozukluğu',
       kvkkConsent: true,
-      allergies: [],
       currentMedications: ['Zolpidem'],
       diagnosis: ['İnsomnia'],
     ),

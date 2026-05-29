@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/theme.dart';
+
 import '../../services/keyboard_shortcuts_service.dart';
+import '../../utils/theme.dart';
 import '../../widgets/desktop/desktop_layout.dart';
 
 class SessionManagementScreen extends StatefulWidget {
-  final String? clientId;
   
   const SessionManagementScreen({
     super.key,
     this.clientId,
   });
+  final String? clientId;
 
   @override
   State<SessionManagementScreen> createState() => _SessionManagementScreenState();
@@ -59,35 +60,6 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
   Widget build(BuildContext context) {
     return DesktopLayout(
       title: 'Seans Yönetimi',
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.medical_services,
-              size: 64,
-              color: AppTheme.primaryColor,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Seans Yönetimi',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Seans yönetimi bileşenleri yakında eklenecek',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
       actions: [
         IconButton(
           onPressed: () {
@@ -130,6 +102,35 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
           onTap: () {},
         ),
       ],
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.medical_services,
+              size: 64,
+              color: AppTheme.primaryColor,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Seans Yönetimi',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Seans yönetimi bileşenleri yakında eklenecek',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

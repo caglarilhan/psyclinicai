@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import 'firestore_schema.dart';
+import 'telemetry_service.dart';
 
 /// Real Firebase Auth wrapper. Replaces the legacy mock that only accepted
 /// `admin/admin`. Solo-practice tenant model: 1 user = 1 clinic.
@@ -46,8 +47,11 @@ class FirebaseAuthService extends ChangeNotifier {
         _profile = await _loadProfile(_user!.uid);
       }
       _initialized = true;
-    } catch (_) {
-      // Firebase not configured — stay in offline / demo mode.
+    } catch (e, st) {
+      // bootstrap() only calls this once real (non-placeholder) config is
+      // present, so an exception here is a genuine failure, not demo mode —
+      // report it. We still degrade to offline rather than crash.
+      await TelemetryService.instance.captureError(e, st, hint: 'auth_init');
     }
   }
 
@@ -167,17 +171,23 @@ class FirebaseAuthService extends ChangeNotifier {
         npi: d[FirestoreSchema.fieldNpi] as String? ?? '',
         taxId: d[FirestoreSchema.fieldTaxId] as String? ?? '',
       );
-    } catch (_) {
+    } catch (e, st) {
+      // A null profile means clinicId is unavailable and downstream Firestore
+      // calls will fail far from here — make the root cause observable.
+      await TelemetryService.instance
+          .captureError(e, st, hint: 'load_profile');
       return null;
     }
   }
 
+  // user-not-found and wrong-password return the SAME message to avoid account
+  // enumeration (OWASP) — never confirm whether an email is registered.
   String _mapFirebaseError(FirebaseAuthException e) => switch (e.code) {
-        'user-not-found' => 'No account found with that email.',
-        'wrong-password' => 'Incorrect password.',
+        'user-not-found' => 'Invalid email or password.',
+        'wrong-password' => 'Invalid email or password.',
         'invalid-credential' => 'Invalid email or password.',
         'email-already-in-use' => 'That email is already registered.',
-        'weak-password' => 'Password too weak (min 6 characters).',
+        'weak-password' => 'Password too weak (min 8 characters).',
         'invalid-email' => 'That email is not valid.',
         'network-request-failed' => 'Network error. Check your connection.',
         'too-many-requests' => 'Too many attempts. Try again later.',

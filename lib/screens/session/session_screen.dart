@@ -40,8 +40,10 @@ class _SessionScreenState extends State<SessionScreen> {
   DateTime? _sessionStartTime;
   Duration _sessionDuration = Duration.zero;
   
-  // Timer için
-  late Timer _sessionTimer;
+  // Session clock — a no-op sentinel until _startSession installs the real
+  // periodic timer, so dispose() can always cancel safely (no late-init crash
+  // if start ever fails before assignment).
+  Timer _sessionTimer = Timer(Duration.zero, () {});
 
   @override
   void initState() {
@@ -75,7 +77,8 @@ class _SessionScreenState extends State<SessionScreen> {
       _isSessionActive = true;
       _sessionStartTime = DateTime.now();
     });
-    
+
+    _sessionTimer.cancel(); // never orphan a previous clock on restart
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -244,7 +247,8 @@ class _SessionScreenState extends State<SessionScreen> {
       
       // PDF'i yazdır
       await pdfService.printPDF(pdfBytes);
-      
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('PDF generated successfully and sent to printer'),
@@ -252,6 +256,7 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('PDF generation error: $e'),

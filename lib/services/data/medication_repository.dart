@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/medication.dart';
+import 'telemetry_service.dart';
 
 /// Offline medication store (SharedPreferences) — works on web + mobile.
 class MedicationRepository {
@@ -13,15 +14,31 @@ class MedicationRepository {
 
   Future<void> initialize() async {
     if (_loaded) return;
+    _items.clear();
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getStringList(_key) ?? [];
-      _items
-        ..clear()
-        ..addAll(raw.map(
-            (s) => Medication.fromJson(jsonDecode(s) as Map<String, dynamic>)));
-    } catch (_) {
-      _items.clear();
+      var dropped = 0;
+      for (final s in raw) {
+        // Per-record resilience: one corrupt entry must not wipe the list.
+        try {
+          _items
+              .add(Medication.fromJson(jsonDecode(s) as Map<String, dynamic>));
+        } catch (err, st) {
+          dropped++;
+          TelemetryService.instance
+              .captureError(err, st, hint: 'medication_decode_record');
+        }
+      }
+      if (dropped > 0) {
+        TelemetryService.instance.captureError(
+          StateError('Dropped $dropped corrupt medication record(s) on load'),
+          StackTrace.current,
+          hint: 'medication_init',
+        );
+      }
+    } catch (e, st) {
+      TelemetryService.instance.captureError(e, st, hint: 'medication_init');
     }
     _loaded = true;
   }
@@ -31,8 +48,9 @@ class MedicationRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(
           _key, _items.map((m) => jsonEncode(m.toJson())).toList());
-    } catch (_) {
-      // best-effort
+    } catch (e, st) {
+      // Medication is clinical data — a lost write must be observable.
+      TelemetryService.instance.captureError(e, st, hint: 'medication_save');
     }
   }
 

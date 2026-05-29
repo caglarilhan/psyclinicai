@@ -1,36 +1,61 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../models/session_note.dart';
+import 'telemetry_service.dart';
 
-/// Offline per-patient session-note store (SharedPreferences). Feeds the
-/// Clinical Memory pre-session brief. On first run it seeds a couple of demo
-/// notes for the demo patient so the brief has history to synthesize.
+/// Offline per-patient session-note store. Feeds the Clinical Memory
+/// pre-session brief. Firestore is the authoritative store; this is a local
+/// cache, but the notes are clinical text (PHI) so it persists to the device's
+/// secure storage rather than plaintext SharedPreferences. On first run it
+/// seeds a couple of demo notes for the demo patient so the brief has history.
 class SessionNoteRepository {
+  SessionNoteRepository({FlutterSecureStorage? storage})
+      : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+              iOptions:
+                  IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+            );
+
   static const _key = 'session_notes';
+  final FlutterSecureStorage _storage;
 
   final List<SessionNote> _notes = [];
   bool _loaded = false;
 
   Future<void> initialize() async {
     if (_loaded) return;
+    _notes.clear();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getStringList(_key);
-      if (raw == null) {
-        _notes
-          ..clear()
-          ..addAll(_demoSeed());
+      final raw = await _storage.read(key: _key);
+      if (raw == null || raw.isEmpty) {
+        _notes.addAll(_demoSeed());
         await _persist();
       } else {
-        _notes
-          ..clear()
-          ..addAll(raw.map((s) =>
-              SessionNote.fromJson(jsonDecode(s) as Map<String, dynamic>)));
+        final list = jsonDecode(raw) as List<dynamic>;
+        var dropped = 0;
+        for (final e in list) {
+          // Per-record resilience: one corrupt note must not wipe history.
+          try {
+            _notes.add(SessionNote.fromJson(e as Map<String, dynamic>));
+          } catch (err, st) {
+            dropped++;
+            TelemetryService.instance
+                .captureError(err, st, hint: 'session_note_decode_record');
+          }
+        }
+        if (dropped > 0) {
+          TelemetryService.instance.captureError(
+            StateError('Dropped $dropped corrupt session note(s) on load'),
+            StackTrace.current,
+            hint: 'session_note_init',
+          );
+        }
       }
-    } catch (_) {
-      _notes.clear();
+    } catch (e, st) {
+      TelemetryService.instance.captureError(e, st, hint: 'session_note_init');
     }
     _loaded = true;
   }
@@ -48,12 +73,15 @@ class SessionNoteRepository {
   }
 
   Future<void> _persist() async {
+    // Best-effort: Firestore is authoritative and the note is shown to the
+    // clinician regardless, but a cache-write failure is still reported.
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
-          _key, _notes.map((n) => jsonEncode(n.toJson())).toList());
-    } catch (_) {
-      // best-effort
+      final raw = jsonEncode(
+          _notes.map((n) => n.toJson()).toList(growable: false));
+      await _storage.write(key: _key, value: raw);
+    } catch (e, st) {
+      TelemetryService.instance
+          .captureError(e, st, hint: 'session_note_persist');
     }
   }
 

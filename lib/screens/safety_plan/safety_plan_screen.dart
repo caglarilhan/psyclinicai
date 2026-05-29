@@ -80,10 +80,16 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       );
 
   Future<void> _save() async {
-    await _repo.save(_current());
-    if (mounted) {
+    try {
+      await _repo.save(_current());
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Safety plan saved')));
+    } catch (_) {
+      // A crisis plan that failed to persist must NOT report success.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Could not save the safety plan — please retry.')));
     }
   }
 

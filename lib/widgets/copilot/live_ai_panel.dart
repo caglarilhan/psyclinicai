@@ -134,6 +134,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   void _scheduleTier2() {
     _tier2Timer?.cancel();
     _tier2Timer = Timer(const Duration(seconds: 4), () async {
+      if (!mounted) return; // don't touch _risk after dispose
       final ai = await _risk.classifyWindow(_transcript);
       _addSignals(ai);
     });

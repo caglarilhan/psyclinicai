@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../data/telemetry_service.dart';
 import 'api_key_storage.dart';
 
 /// Real-time clinical **risk-signal** detection over a live session transcript.
@@ -141,7 +142,16 @@ class RiskSignalService {
             body: body,
           )
           .timeout(const Duration(seconds: 20));
-      if (resp.statusCode != 200) return const [];
+      if (resp.statusCode != 200) {
+        // Keep the no-throw contract, but record degradation so we can tell
+        // when the AI risk layer is silently running on Tier-1 lexicon only.
+        await TelemetryService.instance.captureError(
+          StateError('risk classifyWindow HTTP ${resp.statusCode}'),
+          StackTrace.current,
+          hint: 'risk_classify_http',
+        );
+        return const [];
+      }
 
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (decoded['content'] as List<dynamic>? ?? const [])
@@ -149,7 +159,9 @@ class RiskSignalService {
           .join('\n')
           .trim();
       return _parseAiSignals(content);
-    } catch (_) {
+    } catch (e, st) {
+      await TelemetryService.instance
+          .captureError(e, st, hint: 'risk_classify');
       return const [];
     }
   }
@@ -174,7 +186,10 @@ class RiskSignalService {
               ))
           .where((s) => s.matchedText.isNotEmpty)
           .toList(growable: false);
-    } catch (_) {
+    } catch (e, st) {
+      // Malformed AI JSON — Tier-1 lexicon still ran, but log so prompt/format
+      // drift is detectable rather than silently dropping AI signals.
+      TelemetryService.instance.captureError(e, st, hint: 'risk_parse');
       return const [];
     }
   }

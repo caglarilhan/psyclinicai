@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/homework_item.dart';
+import 'telemetry_service.dart';
 
 /// Offline homework store (SharedPreferences) — works on web + mobile.
 /// Keyed list of [HomeworkItem]; filter by patient in the UI.
@@ -14,15 +15,31 @@ class HomeworkRepository {
 
   Future<void> initialize() async {
     if (_loaded) return;
+    _items.clear();
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getStringList(_key) ?? [];
-      _items
-        ..clear()
-        ..addAll(raw.map((s) =>
-            HomeworkItem.fromJson(jsonDecode(s) as Map<String, dynamic>)));
-    } catch (_) {
-      _items.clear();
+      var dropped = 0;
+      for (final s in raw) {
+        // Per-record resilience: one corrupt entry must not wipe the list.
+        try {
+          _items.add(
+              HomeworkItem.fromJson(jsonDecode(s) as Map<String, dynamic>));
+        } catch (err, st) {
+          dropped++;
+          TelemetryService.instance
+              .captureError(err, st, hint: 'homework_decode_record');
+        }
+      }
+      if (dropped > 0) {
+        TelemetryService.instance.captureError(
+          StateError('Dropped $dropped corrupt homework record(s) on load'),
+          StackTrace.current,
+          hint: 'homework_init',
+        );
+      }
+    } catch (e, st) {
+      TelemetryService.instance.captureError(e, st, hint: 'homework_init');
     }
     _loaded = true;
   }
@@ -32,8 +49,8 @@ class HomeworkRepository {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList(
           _key, _items.map((i) => jsonEncode(i.toJson())).toList());
-    } catch (_) {
-      // best-effort
+    } catch (e, st) {
+      TelemetryService.instance.captureError(e, st, hint: 'homework_save');
     }
   }
 

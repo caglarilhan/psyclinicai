@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../firebase_options.dart';
 import 'auth_service.dart';
+import 'telemetry_service.dart';
 
 /// Initialises Firebase + auth service.
 ///
@@ -42,6 +43,11 @@ class PsyFirebase {
       _ready = true;
     } catch (e, stack) {
       _initError = 'Firebase init failed: $e';
+      // Report unconditionally: in release, debugPrint is a no-op, so without
+      // this a Firebase init failure (and the auth/Firestore outage it causes)
+      // would be completely invisible.
+      await TelemetryService.instance
+          .captureError(e, stack, hint: 'firebase_bootstrap');
       if (kDebugMode) {
         debugPrint('[PsyFirebase] $_initError\n$stack');
       }

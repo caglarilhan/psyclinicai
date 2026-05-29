@@ -64,16 +64,19 @@ class _PsyRevealState extends State<PsyReveal>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _t,
-      builder: (context, child) => Opacity(
-        opacity: _t.value.clamp(0.0, 1.0),
-        child: Transform.translate(
+    // FadeTransition composites opacity (no per-frame child repaint the way
+    // Opacity does); the small vertical rise stays on Transform.translate.
+    // _t is easeOutCubic (no overshoot), so it stays within [0,1] for fade.
+    return FadeTransition(
+      opacity: _t,
+      child: AnimatedBuilder(
+        animation: _t,
+        builder: (context, child) => Transform.translate(
           offset: Offset(0, (1 - _t.value) * widget.offset),
           child: child,
         ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }

@@ -11,6 +11,8 @@ import '../../services/data/telemetry_service.dart';
 import '../../services/pdf_export_service.dart';
 import '../../services/therapy_note_service.dart';
 import '../../services/treatment_plan_service.dart';
+import '../../theme/tokens.dart';
+import '../../widgets/app_shell.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
 
 class SessionScreen extends StatefulWidget {
@@ -268,123 +270,58 @@ class _SessionScreenState extends State<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                widget.clientName[0].toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.clientName,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  Text(
-                    'Session ID: ${widget.sessionId}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          // Seans süresi
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _isSessionActive ? Icons.timer : Icons.timer_off,
-                  size: 16,
-                  color: _isSessionActive ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  // State carried in text too, not color alone (WCAG 1.4.1).
-                  '${_isSessionActive ? 'Live' : 'Ended'} · '
-                  '${_formatDuration(_sessionDuration)}',
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Seans kontrol butonları
-          if (_isSessionActive)
-            IconButton(
-              onPressed: _endSession,
-              icon: const Icon(Icons.stop_circle),
-              tooltip: 'End Session',
-            )
-          else
-            IconButton(
-              onPressed: _startSession,
-              icon: const Icon(Icons.play_circle),
-              tooltip: 'Start Session',
-            ),
-          IconButton(
-            onPressed: _exportToPDF,
-            icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'PDF Export',
-          ),
-        ],
-      ),
-      body: Row(
+    return AppShell(
+      routeName: '/session',
+      title: widget.clientName,
+      subtitle: 'Session ID: ${widget.sessionId}',
+      scrollable: false,
+      child: Column(
         children: [
-          // Sol panel - Seans notu
-          Expanded(
-            flex: 2,
-            child: _buildNotesPanel(),
+          _SessionControlBar(
+            active: _isSessionActive,
+            durationLabel: _formatDuration(_sessionDuration),
+            onStartStop: _isSessionActive ? _endSession : _startSession,
+            onExport: _exportToPDF,
           ),
-          // Orta panel - AI özeti
+          const SizedBox(height: PsySpacing.md),
           Expanded(
-            child: _buildAIPanel(),
-          ),
-          // Sağ panel - Danışan bilgileri
-          Expanded(
-            child: _buildClientInfoPanel(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Reflow below ~900px / at high zoom (WCAG 1.4.10): the three
+                // panels stack instead of crushing into unreadable slivers.
+                if (constraints.maxWidth >= 900) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(flex: 2, child: _buildNotesPanel()),
+                      Expanded(child: _buildAIPanel()),
+                      Expanded(child: _buildClientInfoPanel()),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    Expanded(flex: 3, child: _buildNotesPanel()),
+                    Expanded(flex: 2, child: _buildAIPanel()),
+                    Expanded(flex: 2, child: _buildClientInfoPanel()),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigation(),
     );
   }
 
   Widget _buildNotesPanel() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(PsySpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(PsyRadius.md),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         children: [
@@ -462,19 +399,13 @@ class _SessionScreenState extends State<SessionScreen> {
 
 
   Widget _buildClientInfoPanel() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(PsySpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(PsyRadius.md),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         children: [
@@ -482,33 +413,32 @@ class _SessionScreenState extends State<SessionScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
+              color: cs.primary.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+                topLeft: Radius.circular(PsyRadius.md),
+                topRight: Radius.circular(PsyRadius.md),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.person, color: Colors.green),
-                SizedBox(width: 8),
+                Icon(Icons.person, color: cs.primary),
+                const SizedBox(width: 8),
                 Text(
                   'Client Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: cs.primary,
                   ),
                 ),
               ],
             ),
           ),
-          // Danışan bilgileri
+          // Danışan bilgileri — scrollable so it never overflows when stacked.
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListView(
                 children: [
                   _buildInfoCard('Personal Info', [
                     'Name: ${widget.clientName}',
@@ -539,13 +469,14 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Widget _buildInfoCard(String title, List<String> items) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(PsyRadius.sm),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,49 +501,80 @@ class _SessionScreenState extends State<SessionScreen> {
     );
   }
 
-  Widget _buildBottomNavigation() {
+}
+
+/// Session control bar: timer state, start/stop, export, and quick nav —
+/// surfaced inside the AppShell body (the screen no longer has a bare AppBar).
+class _SessionControlBar extends StatelessWidget {
+  const _SessionControlBar({
+    required this.active,
+    required this.durationLabel,
+    required this.onStartStop,
+    required this.onExport,
+  });
+
+  final bool active;
+  final String durationLabel;
+  final VoidCallback onStartStop;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final timerTint = active ? cs.primary : cs.onSurfaceVariant;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(PsyRadius.md),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
-          // Klavye kısayolları bilgisi
-          Expanded(
-            child: Text(
-              '💡 Shortcuts: Ctrl+S (Save) | Ctrl+P (PDF) | Ctrl+N (New)',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+          // Timer — state shown in text + icon, not color alone (WCAG 1.4.1).
+          Semantics(
+            label: active ? 'Session live, $durationLabel' : 'Session ended',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(active ? Icons.timer : Icons.timer_off,
+                    size: 18, color: timerTint),
+                const SizedBox(width: PsySpacing.xs),
+                Text(
+                  '${active ? 'Live' : 'Ended'} · $durationLabel',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, color: timerTint),
+                ),
+              ],
             ),
           ),
-          // Hızlı aksiyonlar
-          TextButton.icon(
-            onPressed: () {},
+          const Spacer(),
+          FilledButton.icon(
+            onPressed: onStartStop,
+            icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
+            label: Text(active ? 'End session' : 'Start session'),
+            style: FilledButton.styleFrom(
+              backgroundColor: active ? cs.error : cs.primary,
+            ),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          OutlinedButton.icon(
+            onPressed: onExport,
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Export PDF'),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          IconButton(
+            tooltip: 'Appointments',
+            onPressed: () => Navigator.of(context).pushNamed('/appointments'),
             icon: const Icon(Icons.calendar_today),
-            label: const Text('Appointment'),
           ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () {},
+          IconButton(
+            tooltip: 'Prescriptions',
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/e_prescription'),
             icon: const Icon(Icons.medical_services),
-            label: const Text('Prescription'),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.flag),
-            label: const Text('Flag'),
           ),
         ],
       ),

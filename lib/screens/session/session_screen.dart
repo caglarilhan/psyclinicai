@@ -215,11 +215,22 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
+  /// The signing clinician for exports — the authenticated profile, with
+  /// credentials when present (e.g. "Jane Smith, LCSW"). Falls back to a
+  /// neutral label in demo mode where no profile is loaded.
+  String get _therapistDisplayName {
+    final p = FirebaseAuthService.instance.profile;
+    if (p == null || p.fullName.trim().isEmpty) return 'Clinician';
+    return p.credentials.trim().isEmpty
+        ? p.fullName
+        : '${p.fullName}, ${p.credentials}';
+  }
+
   Future<void> _exportToPDF() async {
     try {
       // PDF servisini import et
       final pdfService = PDFExportService();
-      
+
       // PDF oluştur
       final pdfBytes = await pdfService.generateSessionPDF(
         clientName: widget.clientName,
@@ -228,7 +239,7 @@ class _SessionScreenState extends State<SessionScreen> {
         aiSummary: _aiSummary,
         sessionDate: _sessionStartTime ?? DateTime.now(),
         sessionDuration: _sessionDuration,
-        therapistName: 'Dr. Terapist', // TODO: Gerçek terapist adını al
+        therapistName: _therapistDisplayName,
       );
       
       // PDF'i yazdır

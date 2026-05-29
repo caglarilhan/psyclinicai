@@ -52,3 +52,19 @@ app.*.map.json
 /playwright/.cache/
 package-lock.json
 
+# Secrets & credentials — never commit (PHI/clinical app, defense in depth)
+*.env
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+**/serviceAccount*.json
+**/service-account*.json
+# Firebase client configs (low-risk client keys, kept out of VCS regardless)
+**/google-services.json
+**/GoogleService-Info*.plist
+GoogleService-Info*.plist
+

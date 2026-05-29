@@ -1,22 +1,18 @@
 import 'package:flutter/foundation.dart';
 
+import '../../config/build_config.dart';
+
 /// Telemetry façade — Sentry (errors) + PostHog (funnel events).
 ///
-/// Today this is a no-op stub: it logs to `debugPrint` in debug and does
-/// nothing in release builds. When real keys are wired in Sprint E the
-/// body becomes real `Sentry.captureException` + `Posthog.capture` calls.
-/// Every call site can stay unchanged because the API surface below is
-/// the canonical one.
+/// No-op until a DSN/key is injected via `--dart-define` (see [BuildConfig]).
+/// Once keys are present the body becomes real `Sentry.captureException` +
+/// `Posthog.capture` calls; every call site stays unchanged because the API
+/// surface below is the canonical one.
 class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
 
-  bool get _enabled => _sentryDsn.isNotEmpty || _posthogKey.isNotEmpty;
-
-  // Replace these constants in Sprint E with values from `--dart-define`
-  // or a generated config file.
-  static const String _sentryDsn = '';
-  static const String _posthogKey = '';
+  bool get _enabled => BuildConfig.telemetryEnabled;
 
   Future<void> initialize() async {
     if (_enabled) {

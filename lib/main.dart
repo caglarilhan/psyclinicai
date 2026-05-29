@@ -38,6 +38,7 @@ import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
+import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/services/patient_service.dart';
 import 'package:psyclinicai/services/region_service.dart';
@@ -92,6 +93,7 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => PatientService()),
         ChangeNotifierProvider(create: (_) => RegionService()),
+        ChangeNotifierProvider(create: (_) => SubscriptionService()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {

@@ -6,6 +6,7 @@ import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_reveal.dart';
 
 /// Dashboard v2 — clinician home.
 ///
@@ -52,11 +53,17 @@ class DashboardScreen extends StatelessWidget {
             _DemoBanner(cs: cs, theme: theme),
             const SizedBox(height: PsySpacing.xl),
           ],
-          _KpiRow(theme: theme, cs: cs),
+          PsyReveal(child: _KpiRow(theme: theme, cs: cs)),
           const SizedBox(height: PsySpacing.xxl),
-          _QuickActions(theme: theme, cs: cs),
+          PsyReveal(
+            delay: const Duration(milliseconds: 80),
+            child: _QuickActions(theme: theme, cs: cs),
+          ),
           const SizedBox(height: PsySpacing.xxl),
-          _RecentActivity(theme: theme, cs: cs),
+          PsyReveal(
+            delay: const Duration(milliseconds: 160),
+            child: _RecentActivity(theme: theme, cs: cs),
+          ),
         ],
       ),
     );
@@ -425,38 +432,92 @@ class _Action {
   final String route;
 }
 
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.action, required this.theme, required this.cs});
+class _ActionTile extends StatefulWidget {
+  const _ActionTile(
+      {required this.action, required this.theme, required this.cs});
   final _Action action;
   final ThemeData theme;
   final ColorScheme cs;
 
   @override
+  State<_ActionTile> createState() => _ActionTileState();
+}
+
+class _ActionTileState extends State<_ActionTile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
+    final theme = widget.theme;
+    final cs = widget.cs;
+    final action = widget.action;
+    final hover = _hover;
+    final radius = BorderRadius.circular(PsyRadius.lg);
+
     return Material(
       color: cs.surface,
-      borderRadius: BorderRadius.circular(PsyRadius.lg),
+      borderRadius: radius,
       child: InkWell(
-        borderRadius: BorderRadius.circular(PsyRadius.lg),
+        borderRadius: radius,
         onTap: () => Navigator.of(context).pushNamed(action.route),
-        child: Container(
+        onHover: (h) => setState(() => _hover = h),
+        hoverColor: Colors.transparent,
+        child: AnimatedContainer(
+          duration: PsyMotion.fast,
+          curve: PsyMotion.standard,
+          transform: Matrix4.identity()
+            ..translateByDouble(0.0, hover ? -3.0 : 0.0, 0.0, 1.0),
+          transformAlignment: Alignment.center,
           padding: const EdgeInsets.all(PsySpacing.xl),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(PsyRadius.lg),
-            border: Border.all(color: cs.outlineVariant),
+            borderRadius: radius,
+            border: Border.all(
+              color: hover
+                  ? cs.primary.withValues(alpha: 0.45)
+                  : cs.outlineVariant,
+            ),
+            boxShadow: hover
+                ? [
+                    BoxShadow(
+                      color: cs.primary.withValues(alpha: 0.12),
+                      blurRadius: 18,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : const [],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(PsyRadius.sm),
-                ),
-                child: Icon(action.icon, color: cs.primary, size: 20),
+              Row(
+                children: [
+                  AnimatedContainer(
+                    duration: PsyMotion.fast,
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: cs.primary
+                          .withValues(alpha: hover ? 0.18 : 0.12),
+                      borderRadius: BorderRadius.circular(PsyRadius.sm),
+                    ),
+                    child: Icon(action.icon, color: cs.primary, size: 20),
+                  ),
+                  const Spacer(),
+                  // Surprise affordance: an arrow slides in on hover.
+                  AnimatedOpacity(
+                    duration: PsyMotion.fast,
+                    opacity: hover ? 1 : 0,
+                    child: AnimatedSlide(
+                      duration: PsyMotion.fast,
+                      curve: PsyMotion.standard,
+                      offset: hover ? Offset.zero : const Offset(-0.3, 0.3),
+                      child: Icon(Icons.arrow_outward,
+                          color: cs.primary, size: 18),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: PsySpacing.lg),
               Text(action.label,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../config/build_config.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
@@ -44,9 +45,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (!_backendReady) {
+      if (!BuildConfig.isDemo) {
+        // Release build with no working backend is a misconfiguration — never
+        // silently grant unauthenticated access.
+        setState(() {
+          _loading = false;
+          _error = 'Service is temporarily unavailable. Please try again later.';
+        });
+        return;
+      }
       await Future<void>.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      // Demo mode: surface the wizard so new visitors still see the
+      // Demo mode only: surface the wizard so new visitors still see the
       // "first 5 minutes" pitch even without Firebase configured.
       Navigator.of(context).pushReplacementNamed('/onboarding');
       return;

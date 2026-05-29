@@ -68,3 +68,8 @@ package-lock.json
 **/GoogleService-Info*.plist
 GoogleService-Info*.plist
 
+# Cloud Functions build + deps
+functions/node_modules/
+functions/lib/
+functions/.env
+

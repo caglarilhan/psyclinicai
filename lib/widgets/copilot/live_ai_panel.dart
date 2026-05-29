@@ -2,15 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/denial_risk.dart';
 import '../../models/session_note.dart';
+import '../../services/billing/denial_shield_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/note_billing_extractor.dart';
-import '../../services/data/session_note_repository.dart';
 import '../../services/copilot/compliance_check_service.dart';
 import '../../services/copilot/risk_signal_service.dart';
 import '../../services/copilot/session_insights_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/transcription_service.dart';
+import '../../services/data/session_note_repository.dart';
+import '../../theme/tokens.dart';
 
 /// Real-time AI Co-Pilot panel.
 ///
@@ -73,6 +76,8 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   SoapNote? _note;
   SoapFormat _format = SoapFormat.soap;
   Modality _modality = Modality.general;
+  Payer _payer = Payer.medicare;
+  DenialRisk? _denial;
   final _editCtl = TextEditingController();
   final _noteRepo = SessionNoteRepository();
   bool _editing = false;
@@ -180,6 +185,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         _editCtl.text = note.rawMarkdown;
         _report = _compliance.check(note.rawMarkdown);
         _state = _PanelState.noteReady;
+        _computeDenial();
       });
       unawaited(_persistNote(note));
     } on SoapGeneratorException catch (e) {
@@ -264,7 +270,147 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     setState(() {
       _report = updated;
       _deepChecking = false;
+      _computeDenial();
     });
+  }
+
+  /// Recomputes the Denial Shield risk from the current note + report + payer.
+  void _computeDenial() {
+    final note = _note;
+    final report = _report;
+    if (note == null || report == null) {
+      _denial = null;
+      return;
+    }
+    final text = _editCtl.text.isEmpty ? note.rawMarkdown : _editCtl.text;
+    final cpt = const NoteBillingExtractor().suggestCpt(text,
+            isPsychiatry: note.format == SoapFormat.psychiatry) ??
+        '90834';
+    _denial = const DenialShieldService().assess(
+      note: text,
+      cptCode: cpt,
+      payer: _payer,
+      audit: report,
+    );
+  }
+
+  void _showDenialDetails(BuildContext context) {
+    final d = _denial;
+    if (d == null) return;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: cs.surface,
+      isScrollControlled: true,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.92,
+        builder: (_, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.all(20),
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified_user_outlined, color: _denialColor(cs, d)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${d.level.label} · ${d.payer.label}',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${d.cptCode} · ${d.cptLabel}'
+              '${d.revenueAtRisk != null ? ' · ~\$${d.revenueAtRisk!.round()} at risk' : ''}',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+            ),
+            const SizedBox(height: 16),
+            if (d.reasons.isEmpty)
+              Text('No denial drivers found for ${d.payer.short}. '
+                  'Documentation supports the billed code.',
+                  style: theme.textTheme.bodyMedium)
+            else
+              ...d.reasons.map((r) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: r.critical
+                              ? cs.error.withValues(alpha: 0.4)
+                              : cs.outlineVariant),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                                r.critical
+                                    ? Icons.error_outline
+                                    : Icons.warning_amber_rounded,
+                                size: 16,
+                                color: r.critical
+                                    ? cs.error
+                                    : const Color(0xFFD97706)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(r.title,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w700)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(r.detail,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.75))),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.add_circle_outline,
+                                  size: 15, color: cs.primary),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(r.fixSentence,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                        color: cs.primary, height: 1.4)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            const SizedBox(height: 8),
+            Text(DenialShieldService.payerFocus(d.payer),
+                style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                    fontStyle: FontStyle.italic)),
+            const SizedBox(height: 12),
+            Text(
+              'Decision-support — payer rules and reimbursement vary and change. '
+              'This estimates denial risk; it does not guarantee payment.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.5)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showAuditDetails(BuildContext context) {
@@ -412,6 +558,18 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                 onDeepCheck: _runDeepCheck,
                 onInsights: () => _showInsights(context),
                 loadingInsights: _loadingInsights,
+              ),
+            if (_denial != null)
+              _DenialBanner(
+                denial: _denial!,
+                payer: _payer,
+                theme: theme,
+                cs: cs,
+                onPayerChanged: (p) => setState(() {
+                  _payer = p;
+                  _computeDenial();
+                }),
+                onDetails: () => _showDenialDetails(context),
               ),
             Expanded(
               child: _NoteReadyView(
@@ -1117,6 +1275,88 @@ IconData _checkIcon(CheckStatus s) => switch (s) {
       CheckStatus.warn => Icons.error_outline,
       CheckStatus.fail => Icons.cancel,
     };
+
+Color _denialColor(ColorScheme cs, DenialRisk d) => switch (d.level) {
+      DenialLevel.high => cs.error,
+      DenialLevel.medium => const Color(0xFFD97706),
+      DenialLevel.low => const Color(0xFF16A34A),
+    };
+
+/// Denial Shield strip — payer-aware claim-rejection risk for the note, with a
+/// payer selector. Tap opens the reasons + the exact sentences to add.
+class _DenialBanner extends StatelessWidget {
+  const _DenialBanner({
+    required this.denial,
+    required this.payer,
+    required this.theme,
+    required this.cs,
+    required this.onPayerChanged,
+    required this.onDetails,
+  });
+
+  final DenialRisk denial;
+  final Payer payer;
+  final ThemeData theme;
+  final ColorScheme cs;
+  final ValueChanged<Payer> onPayerChanged;
+  final VoidCallback onDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _denialColor(cs, denial);
+    final risk = denial.revenueAtRisk;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onDetails,
+          borderRadius: BorderRadius.circular(PsyRadius.md),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(PsyRadius.md),
+              border: Border.all(color: color.withValues(alpha: 0.32)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.verified_user_outlined, size: 16, color: color),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    '${denial.level.label} · ${denial.cptCode}'
+                    '${risk != null ? ' · ~\$${risk.round()} risk' : ''}',
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: color, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<Payer>(
+                    value: payer,
+                    isDense: true,
+                    icon: const Icon(Icons.expand_more, size: 16),
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: cs.onSurface),
+                    items: [
+                      for (final p in Payer.values)
+                        DropdownMenuItem(value: p, child: Text(p.short)),
+                    ],
+                    onChanged: (p) => p == null ? null : onPayerChanged(p),
+                  ),
+                ),
+                Icon(Icons.chevron_right,
+                    size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _AuditBanner extends StatelessWidget {
   const _AuditBanner({

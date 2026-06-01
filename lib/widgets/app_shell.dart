@@ -223,9 +223,14 @@ class _Content extends StatelessWidget {
             ?.copyWith(fontWeight: FontWeight.w700, height: 1.15)
         : theme.textTheme.displaySmall
             ?.copyWith(fontWeight: FontWeight.bold, height: 1.1);
+    // Mobile subtitle steps down from bodyMedium → bodySmall (~13px) to
+    // feel like a clinical document rather than a marketing hero. Per
+    // user critique: 'bazı body metinleri 20px civarı görünüyor —
+    // profesyonel hukuk/klinik doküman sayfalarında biraz kaba duruyor'.
     final subtitleStyle = isPhone
-        ? theme.textTheme.bodyMedium?.copyWith(
+        ? theme.textTheme.bodySmall?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.7),
+            height: 1.45,
           )
         : theme.textTheme.bodyLarge?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.7),

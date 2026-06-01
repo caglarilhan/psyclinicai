@@ -325,36 +325,49 @@ class _SessionScreenState extends State<SessionScreen> {
       ),
       child: Column(
         children: [
-          // Panel başlığı
+          // Panel başlığı — neutral surface (was tinted teal). Only the
+          // AI co-pilot panel below should carry the teal tint, per
+          // critique: 'Session Note kartı beyaz olsun. Sadece AI paneli
+          // açık teal olsun.'
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(
+                horizontal: PsySpacing.lg, vertical: PsySpacing.md),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
+              border: Border(
+                bottom: BorderSide(
+                    color: cs.outlineVariant.withValues(alpha: 0.7)),
+              ),
             ),
             child: Row(
               children: [
-                Icon(Icons.edit_note, color: Theme.of(context).primaryColor),
+                Icon(Icons.edit_note,
+                    color: cs.onSurface.withValues(alpha: 0.75), size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Session Note',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
                   ),
                 ),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: _saveSessionNotes,
-                  icon: const Icon(Icons.save),
+                  icon: const Icon(Icons.save, size: 16),
                   label: const Text('Save'),
                   style: TextButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    textStyle: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),
               ],

@@ -72,7 +72,7 @@ class _NoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PsyCard(
-      tinted: true,
+      // Neutral surface — teal reserved for the Export CSV CTA per critique.
       child: Row(
         children: [
           Icon(Icons.shield_outlined, color: cs.primary, size: 22),
@@ -167,11 +167,14 @@ extension on _AuditKind {
         _AuditKind.delete => Icons.delete_outlined,
       };
 
+  // Explicit color system per critique: sign-in teal, read blue,
+  // write pink, export purple/orange. Helps clinicians scan a long
+  // audit log at a glance — each event type has a distinct chip tone.
   Color tone(ColorScheme cs) => switch (this) {
-        _AuditKind.read => cs.primary,
-        _AuditKind.write => cs.tertiary,
-        _AuditKind.export => cs.secondary,
-        _AuditKind.signin => cs.primary,
+        _AuditKind.signin => cs.primary, // brand teal
+        _AuditKind.read => const Color(0xFF2563EB), // blue 600
+        _AuditKind.write => const Color(0xFFDB2777), // pink 600
+        _AuditKind.export => const Color(0xFFD97706), // amber 600 (export action)
         _AuditKind.delete => cs.error,
       };
 }

@@ -30,6 +30,14 @@ class DpaPage extends StatelessWidget {
         children: [
           _Summary(theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xl),
+          _FactsCard(theme: theme, cs: cs, rows: const [
+            _Fact('Controller', 'Clinic / clinician'),
+            _Fact('Processor', 'PsyClinic Software GmbH'),
+            _Fact('Data residency', 'Frankfurt, EU-Central'),
+            _Fact('Audio handling', 'On-device by default'),
+            _Fact('Breach notice', 'Within 72 hours'),
+          ]),
+          const SizedBox(height: PsySpacing.xl),
           _Section(
             theme: theme,
             cs: cs,
@@ -95,7 +103,8 @@ class _Summary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PsyCard(
-      tinted: true,
+      // Info notice (no action) — neutral surface keeps the teal palette
+      // reserved for primary CTAs and active states, per critique.
       child: Row(
         children: [
           Icon(Icons.verified_user_outlined, color: cs.primary, size: 22),
@@ -140,10 +149,78 @@ class _Section extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: PsySpacing.sm),
           Text(body,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: cs.onSurface.withValues(alpha: 0.72),
-                height: 1.6,
+                height: 1.55,
+                fontSize: 13.5,
               )),
+        ],
+      ),
+    );
+  }
+}
+
+// Quick facts strip — the 5 questions every clinic asks before signing.
+// Scannable in 5 seconds, while the narrative _Section below carries
+// the full legal language.
+class _Fact {
+  const _Fact(this.label, this.value);
+  final String label;
+  final String value;
+}
+
+class _FactsCard extends StatelessWidget {
+  const _FactsCard(
+      {required this.theme, required this.cs, required this.rows});
+  final ThemeData theme;
+  final ColorScheme cs;
+  final List<_Fact> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Divider(
+                    height: 1, color: cs.outlineVariant.withValues(alpha: 0.6)),
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      rows[i].label,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      rows[i].value,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

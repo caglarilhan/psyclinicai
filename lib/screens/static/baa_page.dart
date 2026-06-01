@@ -28,7 +28,7 @@ class BaaPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PsyCard(
-            tinted: true,
+            // Neutral info notice — teal reserved for CTAs per critique.
             child: Row(
               children: [
                 Icon(Icons.health_and_safety_outlined,
@@ -48,6 +48,14 @@ class BaaPage extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: PsySpacing.xl),
+          _FactsCard(theme: theme, cs: cs, rows: const [
+            _Fact('Our role', 'Business Associate · 45 CFR §160.103'),
+            _Fact('PHI handling', 'AES-256 at rest, TLS 1.3 in transit'),
+            _Fact('Access control', 'Role-based + audit-logged'),
+            _Fact('Breach notice', 'Within 60 days (we aim for 72 h)'),
+            _Fact('On termination', 'Return or destroy PHI within 30 days'),
+          ]),
           const SizedBox(height: PsySpacing.xl),
           _Section(
             theme: theme,
@@ -128,6 +136,74 @@ class BaaPage extends StatelessWidget {
   }
 }
 
+// Quick facts strip — see [DpaPage] for the mirror version. The pair is
+// intentionally duplicated (private classes, no public widget) so each
+// page's content stays a single file.
+class _Fact {
+  const _Fact(this.label, this.value);
+  final String label;
+  final String value;
+}
+
+class _FactsCard extends StatelessWidget {
+  const _FactsCard(
+      {required this.theme, required this.cs, required this.rows});
+  final ThemeData theme;
+  final ColorScheme cs;
+  final List<_Fact> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      padding: const EdgeInsets.symmetric(
+          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Divider(
+                    height: 1,
+                    color: cs.outlineVariant.withValues(alpha: 0.6)),
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      rows[i].label,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      rows[i].value,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _Section extends StatelessWidget {
   const _Section({
     required this.theme,
@@ -152,9 +228,10 @@ class _Section extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: PsySpacing.sm),
           Text(body,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: cs.onSurface.withValues(alpha: 0.72),
-                height: 1.6,
+                height: 1.55,
+                fontSize: 13.5,
               )),
         ],
       ),

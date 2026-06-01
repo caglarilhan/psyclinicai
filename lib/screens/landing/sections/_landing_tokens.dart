@@ -7,6 +7,9 @@ class LandingTokens {
   const LandingTokens._();
 
   static const double sectionVerticalPadding = 80;
+  // Mobile: the first 600 px is the most valuable real estate, so we tighten
+  // the top/bottom breathing room so the headline + CTA fit above the fold.
+  static const double sectionVerticalPaddingMobile = 32;
   static const double sectionHorizontalPaddingDesktop = 64;
   static const double sectionHorizontalPaddingMobile = 24;
   static const double maxContentWidth = 1180;
@@ -14,12 +17,11 @@ class LandingTokens {
 
   static EdgeInsetsGeometry sectionPadding(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final h = w >= 768
-        ? sectionHorizontalPaddingDesktop
-        : sectionHorizontalPaddingMobile;
+    final wide = w >= 768;
     return EdgeInsets.symmetric(
-      horizontal: h,
-      vertical: sectionVerticalPadding,
+      horizontal:
+          wide ? sectionHorizontalPaddingDesktop : sectionHorizontalPaddingMobile,
+      vertical: wide ? sectionVerticalPadding : sectionVerticalPaddingMobile,
     );
   }
 

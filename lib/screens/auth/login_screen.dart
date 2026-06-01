@@ -149,6 +149,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final isSignUp = _mode == _Mode.signUp;
 
     return Scaffold(
+      // Transparent AppBar gives us an automatic back button (when there's a
+      // route to pop to) without breaking the gradient behind it.
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.white,
+      ),
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -172,6 +180,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.all(28),
                     child: Form(
                       key: _formKey,
+                      // Errors update as the user types (not before they touch
+                      // anything), instead of staying red across a blank form.
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -318,6 +329,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _segmented() {
     return SegmentedButton<_Mode>(
+      // Drop the leading ✓ — on a narrow phone width it pushes the segment
+      // group ~0.7 px past the card and Flutter paints a debug "OVERFLOWED"
+      // stripe between the logo and the form (the red mark you saw).
+      showSelectedIcon: false,
       segments: const [
         ButtonSegment(value: _Mode.signIn, label: Text('Sign in')),
         ButtonSegment(value: _Mode.signUp, label: Text('Sign up')),
@@ -352,8 +367,9 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Demo mode — Firebase not configured. Sign-in skips '
-                'to dashboard. Run `flutterfire configure` to enable accounts.',
+                'Demo mode — sign in with any email + 8+ char password '
+                '(e.g. demo@psyclinicai.com / demo1234) to enter the app. '
+                'Real accounts require `flutterfire configure`.',
                 style: TextStyle(
                   color: cs.onSurface.withValues(alpha: 0.8),
                   fontSize: 12.5,

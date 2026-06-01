@@ -107,14 +107,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.psychology, color: cs.primary, size: 24),
-            const SizedBox(width: 8),
-            Text('Welcome to PsyClinicAI',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ],
+        // Same defensive scale-down as the landing AppBar — keep the brand row
+        // from overflowing the middle slot on narrow phones.
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Row(
+            children: [
+              Icon(Icons.psychology, color: cs.primary, size: 24),
+              const SizedBox(width: 8),
+              Text('Welcome to PsyClinicAI',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+            ],
+          ),
         ),
         actions: [
           TextButton(

@@ -259,6 +259,7 @@ class _Cell extends StatelessWidget {
           Expanded(
             child: Text(
               text,
+              softWrap: true,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
                 color: highlight ? cs.primary : cs.onSurface,

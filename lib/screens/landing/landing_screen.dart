@@ -283,18 +283,24 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: cs.surface,
-      title: Row(
-        children: [
-          Icon(Icons.psychology, color: cs.primary, size: 26),
-          const SizedBox(width: 8),
-          Text(
-            'PsyClinicAI',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: cs.onSurface,
+      // Scale-down on narrow phones so the brand never overflows the AppBar
+      // middle slot (fixes the 28px OVERFLOWED stripe seen on iPhone widths).
+      title: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: AlignmentDirectional.centerStart,
+        child: Row(
+          children: [
+            Icon(Icons.psychology, color: cs.primary, size: 26),
+            const SizedBox(width: 8),
+            Text(
+              'PsyClinicAI',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         if (isWide) ...[

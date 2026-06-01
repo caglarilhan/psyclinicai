@@ -125,6 +125,12 @@ class SettingsScreen extends StatelessWidget {
               onTap: () =>
                   Navigator.of(context).pushNamed('/settings/audit_log')),
           _row(context, theme, cs,
+              icon: Icons.cloud_download_outlined,
+              title: 'Patient data export (DSAR)',
+              body: 'GDPR Art. 15 + 20 portable JSON bundle.',
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/settings/data_export')),
+          _row(context, theme, cs,
               icon: Icons.assignment_turned_in_outlined,
               title: 'GDPR DPA',
               body: 'EU Data Processing Agreement (Article 28).',

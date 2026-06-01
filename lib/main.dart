@@ -11,6 +11,7 @@ import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
 import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
+import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
 import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
@@ -128,6 +129,11 @@ class PsyClinicAIApp extends StatelessWidget {
               },
               '/settings/mfa': (context) => const MfaSetupScreen(),
               '/settings/profile': (context) => const ClinicianProfileScreen(),
+              '/settings/data_export': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as String?;
+                return DataExportScreen(patientId: args ?? 'demo-1');
+              },
               '/patients/intake': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments
                     as PatientDetailArgs?;

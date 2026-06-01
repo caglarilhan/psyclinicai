@@ -1067,23 +1067,28 @@ class _Header extends StatelessWidget {
           else
             Icon(Icons.auto_awesome, color: cs.primary, size: 20),
           const SizedBox(width: 6),
-          // Flexible — two dropdowns + an IconButton on the right can
-          // starve this title to ~0px on a 390-wide screen, fusing it
-          // with the next dropdown ("Live AI Co-PilotGeneral"). Letting
-          // it ellipsize keeps the visual hierarchy intact.
-          Flexible(
-            child: Text(
-              'Live AI Co-Pilot',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.primary,
-                letterSpacing: 0.2,
+          // On phones, two dropdowns + the key IconButton consume so much
+          // width that any title ellipsizes to "Li...". The leading
+          // sparkles/pulse icon already signals "AI co-pilot", so we drop
+          // the title text below 560 and let the dropdowns keep full,
+          // legible labels ("General" / "SOAP").
+          Builder(builder: (ctx) {
+            final wide = MediaQuery.sizeOf(ctx).width >= 560;
+            if (!wide) return const SizedBox.shrink();
+            return Flexible(
+              child: Text(
+                'Live AI Co-Pilot',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.primary,
+                  letterSpacing: 0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
+            );
+          }),
+          const Spacer(),
           if (onModalityChanged != null)
             DropdownButtonHideUnderline(
               child: DropdownButton<Modality>(

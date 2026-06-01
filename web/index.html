@@ -20,12 +20,18 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Baseline Content-Security-Policy. Flutter Web needs 'unsafe-inline' +
-       'wasm-unsafe-eval' to bootstrap; everything else is locked to known
-       endpoints (Anthropic BYOK, Sentry ingest, Firebase, Google Fonts).
-       frame-ancestors 'none' blocks clickjacking. Tighten progressively as
-       we drop legacy bootstrap shims. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.anthropic.com https://*.sentry.io https://*.ingest.sentry.io https://*.googleapis.com https://*.firebaseio.com https://*.firebasestorage.app https://identitytoolkit.googleapis.com wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';">
+  <!-- Content-Security-Policy intentionally absent until we land a
+       Flutter-Web-tested baseline. The strict policy attempted in
+       99aded0 blank-screened every route because connect-src missed the
+       URLs Flutter uses at runtime (NOT just script load):
+         - https://www.gstatic.com → CanvasKit .wasm fetched via Fetch API
+         - https://fonts.gstatic.com → Roboto .woff2 fetched via Fetch API
+       (link rel=stylesheet only covers font-src; the renderer itself
+       Fetch()'s the binary, which connect-src governs.) Re-introduce
+       CSP only with both gstatic origins in connect-src AND a
+       Playwright SPA-boot check that fails closed if main.dart.js
+       does not paint. The non-CSP headers below stay since they
+       don't depend on Flutter's runtime. -->
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="permissions-policy" content="camera=(), microphone=(self), geolocation=(), payment=(self)">

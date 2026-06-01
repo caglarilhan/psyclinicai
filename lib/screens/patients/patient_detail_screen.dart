@@ -83,6 +83,16 @@ class PatientDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: PsySpacing.xxl),
+          const _SectionTitle('Intake & consent'),
+          const SizedBox(height: PsySpacing.md),
+          PsyButton(
+            label: 'Open intake form',
+            icon: Icons.assignment_ind_outlined,
+            size: PsyButtonSize.sm,
+            onPressed: () => Navigator.of(context)
+                .pushNamed('/patients/intake', arguments: args),
+          ),
+          const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Treatment plan'),
           const SizedBox(height: PsySpacing.md),
           PsyButton(

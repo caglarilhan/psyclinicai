@@ -9,6 +9,10 @@ import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
+import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
+import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
+import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
+import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
@@ -117,6 +121,22 @@ class PsyClinicAIApp extends StatelessWidget {
               '/': (context) => const SplashScreen(),
               '/landing': (context) => const LandingScreen(),
               '/login': (context) => const LoginScreen(),
+              '/auth/password_reset': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as String?;
+                return PasswordResetScreen(prefilledEmail: args);
+              },
+              '/settings/mfa': (context) => const MfaSetupScreen(),
+              '/settings/profile': (context) => const ClinicianProfileScreen(),
+              '/patients/intake': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return IntakeFormScreen(
+                  args: args ??
+                      const PatientDetailArgs(
+                          id: 'demo-1', name: 'John Demo'),
+                );
+              },
               '/dashboard': (context) => const DashboardScreen(),
               '/feature_system': (context) => const FeatureSystemScreen(),
               '/session': (context) {

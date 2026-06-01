@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/note_format.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
@@ -14,6 +15,7 @@ import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
+import '../../widgets/structured_note_editor.dart';
 
 class SessionScreen extends StatefulWidget {
 
@@ -32,7 +34,9 @@ class SessionScreen extends StatefulWidget {
 }
 
 class _SessionScreenState extends State<SessionScreen> {
-  final TextEditingController _notesController = TextEditingController();
+  /// Latest snapshot from [StructuredNoteEditor]. Null until the clinician
+  /// types something; persisted on save via [StructuredNoteValue.markdown].
+  StructuredNoteValue? _noteValue;
   final TextEditingController _aiPromptController = TextEditingController();
   final String _aiSummary = '';
   List<String> _treatmentGoals = const [];
@@ -69,7 +73,6 @@ class _SessionScreenState extends State<SessionScreen> {
   @override
   void dispose() {
     _sessionTimer.cancel();
-    _notesController.dispose();
     _aiPromptController.dispose();
     super.dispose();
   }
@@ -139,13 +142,14 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Future<void> _saveSessionNotes() async {
-    final noteText = _notesController.text.trim();
-    if (noteText.isEmpty) {
+    final snapshot = _noteValue;
+    if (snapshot == null || snapshot.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kaydedilecek bir seans notu bulunamadı')),
       );
       return;
     }
+    final markdown = snapshot.markdown;
 
     try {
       final therapyNoteService = context.read<TherapyNoteService>();
@@ -155,7 +159,9 @@ class _SessionScreenState extends State<SessionScreen> {
         clientId: widget.clientId,
         templateId: 'session_note',
         values: {
-          'notes': noteText,
+          'notes': markdown,
+          'format': snapshot.format.id,
+          'sections': snapshot.sections,
           'aiSummary': _aiSummary,
           'aiPrompt': _aiPromptController.text.trim(),
           'sessionDuration': _sessionDuration.inSeconds,
@@ -163,9 +169,12 @@ class _SessionScreenState extends State<SessionScreen> {
         },
       );
 
-      await _persistToFirestore(noteText);
+      await _persistToFirestore(markdown, snapshot.format);
       TelemetryService.instance.capture(TelemetryEvents.sessionNoteSaved,
-          properties: {'duration_s': _sessionDuration.inSeconds});
+          properties: {
+            'duration_s': _sessionDuration.inSeconds,
+            'format': snapshot.format.id,
+          });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -179,7 +188,17 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
-  Future<void> _persistToFirestore(String noteText) async {
+  /// Maps the editor-level [NoteFormat] (SOAP / BIRP / DAP) to the broader
+  /// [SoapFormat] the persistence layer accepts (which also includes GIRP
+  /// and a psychiatry variant managed by the AI generator).
+  SoapFormat _toSoapFormat(NoteFormat f) => switch (f) {
+        NoteFormat.soap => SoapFormat.soap,
+        NoteFormat.birp => SoapFormat.birp,
+        NoteFormat.dap => SoapFormat.dap,
+      };
+
+  Future<void> _persistToFirestore(
+      String noteText, NoteFormat format) async {
     if (!PsyFirebase.isReady) return;
     final auth = FirebaseAuthService.instance;
     final profile = auth.profile;
@@ -198,7 +217,7 @@ class _SessionScreenState extends State<SessionScreen> {
       );
       final note = SoapNote(
         rawMarkdown: noteText,
-        format: SoapFormat.soap,
+        format: _toSoapFormat(format),
         generatedAt: DateTime.now(),
       );
       await SessionRepository.instance.saveNote(
@@ -240,7 +259,7 @@ class _SessionScreenState extends State<SessionScreen> {
       final pdfBytes = await pdfService.generateSessionPDF(
         clientName: widget.clientName,
         sessionId: widget.sessionId,
-        sessionNotes: _notesController.text,
+        sessionNotes: _noteValue?.markdown ?? '',
         aiSummary: _aiSummary,
         sessionDate: _sessionStartTime ?? DateTime.now(),
         sessionDuration: _sessionDuration,
@@ -373,27 +392,19 @@ class _SessionScreenState extends State<SessionScreen> {
               ],
             ),
           ),
-          // Not yazma alanı
+          // Structured editor — SOAP / BIRP / DAP with one field per
+          // section. Snapshot piped to [_noteValue] for save + export.
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Semantics(
-                label: 'Session notes',
-                textField: true,
-                child: TextField(
-                controller: _notesController,
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  hintText: 'Write your session notes here...\n\nExample:\n- Client mood today\n- Main concerns\n- Techniques used\n- Next steps',
-                  border: InputBorder.none,
-                  alignLabelWithHint: true,
+                label: 'Structured session notes',
+                child: StructuredNoteEditor(
+                  initialFormat:
+                      _noteValue?.format ?? NoteFormat.soap,
+                  initialSections: _noteValue?.sections ?? const {},
+                  onChanged: (v) => setState(() => _noteValue = v),
                 ),
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-              ),
               ),
             ),
           ),

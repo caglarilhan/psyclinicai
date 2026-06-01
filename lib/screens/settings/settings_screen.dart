@@ -71,6 +71,15 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: PsySpacing.xxl),
+          _section(theme, cs, 'Profile'),
+          _row(context, theme, cs,
+              icon: Icons.badge_outlined,
+              title: 'Clinician profile',
+              body: 'Name, credentials, NPI, license — flows into the '
+                  'superbill and PDF exports.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/profile')),
+          const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Workspace'),
           _row(context, theme, cs,
               icon: Icons.key_outlined,
@@ -89,6 +98,15 @@ class SettingsScreen extends StatelessWidget {
               title: 'Outcomes dashboard',
               body: 'Trend across all your patients.',
               onTap: () => Navigator.of(context).pushNamed('/outcomes')),
+          const SizedBox(height: PsySpacing.xxl),
+          _section(theme, cs, 'Security'),
+          _row(context, theme, cs,
+              icon: Icons.shield_outlined,
+              title: 'Two-factor authentication',
+              body: 'TOTP + recovery codes — required for ePHI under '
+                  'HIPAA §164.312(d). Status: not enabled.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/mfa')),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Trust & legal'),
           _row(context, theme, cs,

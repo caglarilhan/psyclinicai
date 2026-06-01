@@ -135,4 +135,20 @@ class TelemetryEvents {
   static const String sessionNoteSaved = 'session.note_saved';
   static const String superbillGenerated = 'billing.superbill_generated';
   static const String assessmentCompleted = 'assessment.completed';
+
+  /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
+  /// MUST NOT include item answers or patient identifiers — only the tier
+  /// and severity band so dashboards can monitor escalation volume.
+  static const String cssrsRiskEscalated = 'assessment.cssrs_escalated';
+
+  /// The clinician acted on the escalation banner and navigated to safety
+  /// planning. Pairs with [cssrsRiskEscalated] to measure follow-through.
+  static const String safetyPlanInitiatedFromCssrs =
+      'assessment.cssrs_safety_plan_initiated';
+
+  /// The clinician dismissed the high-risk escalation modal without
+  /// initiating safety planning. Useful to flag training gaps. Carries a
+  /// non-PHI reason code ("opened_full_view", "dismissed_explicit").
+  static const String cssrsEscalationModalDismissed =
+      'assessment.cssrs_escalation_dismissed';
 }

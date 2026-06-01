@@ -36,6 +36,17 @@ extension AssessmentTypeX on AssessmentType {
 
   List<String> get choices =>
       this == AssessmentType.phq9 ? Phq9Service.choices : Gad7Service.choices;
+
+  /// Public-domain attribution shown on the result screen. The PHQ-9 and
+  /// GAD-7 are free to use under their original educational grants — we
+  /// display the citation so clinicians and auditors can trace provenance.
+  String get referenceNote => this == AssessmentType.phq9
+      ? 'PHQ-9 — Kroenke, Spitzer & Williams (2001). Developed with an '
+          'educational grant from Pfizer Inc. No permission required to '
+          'reproduce, translate, display, or distribute.'
+      : 'GAD-7 — Spitzer, Kroenke, Williams & Löwe (2006). Developed with '
+          'an educational grant from Pfizer Inc. Free to use without '
+          'permission.';
 }
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
@@ -605,6 +616,14 @@ class _ResultScreen extends StatelessWidget {
                     Text(
                       result.actionSuggestion,
                       style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      type.referenceNote,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ),

@@ -105,27 +105,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _resetPassword() async {
-    final email = _email.text.trim();
-    if (email.isEmpty) {
-      setState(() => _error = 'Enter your email first, then tap Reset.');
-      return;
-    }
-    if (!_backendReady) {
-      setState(() => _error = 'Password reset requires backend configuration.');
-      return;
-    }
-    setState(() => _loading = true);
-    final result =
-        await FirebaseAuthService.instance.sendPasswordReset(email);
-    if (!mounted) return;
-    setState(() => _loading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.success
-            ? 'Reset link sent to $email'
-            : (result.error ?? 'Failed to send reset link')),
-      ),
+  void _resetPassword() {
+    // Hand off to the dedicated reset screen so the clinician gets a
+    // confirmation state (and a chance to fix typos) instead of guessing
+    // what a snackbar meant. The current email seeds the form.
+    Navigator.of(context).pushNamed(
+      '/auth/password_reset',
+      arguments: _email.text.trim().isEmpty ? null : _email.text.trim(),
     );
   }
 

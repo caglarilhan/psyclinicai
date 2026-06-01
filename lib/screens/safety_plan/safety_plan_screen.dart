@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/safety_plan.dart';
 import '../../services/copilot/safety_plan_ai_service.dart';
+import '../../services/crisis/crisis_resource_registry.dart';
 import '../../services/data/safety_plan_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -30,6 +31,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   final _support = <String>[];
   final _pros = <String>[];
   final _crisis = <String>[];
+  final _reasons = <String>[];
   final _means = TextEditingController();
 
   @override
@@ -59,6 +61,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
     _set(_support, p.supportContacts);
     _set(_pros, p.professionals);
     _set(_crisis, p.crisisLines);
+    _set(_reasons, p.reasonsForLiving);
     _means.text = p.meansSafety;
   }
 
@@ -76,8 +79,30 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
         supportContacts: List.of(_support),
         professionals: List.of(_pros),
         crisisLines: List.of(_crisis),
+        reasonsForLiving: List.of(_reasons),
         meansSafety: _means.text.trim(),
       );
+
+  /// Pre-fill the crisis lines list with the locale-appropriate hotlines.
+  /// Never overwrites items the clinician already entered; only appends ones
+  /// the registry knows about that aren't already in the list.
+  void _suggestCrisisLines() {
+    final locale = Localizations.maybeLocaleOf(context);
+    final suggestions = CrisisResourceRegistry.forLocale(locale)
+        .map((r) => '${r.name} — ${r.displayNumber}')
+        .where((line) => !_crisis.contains(line))
+        .toList();
+    if (suggestions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No new suggestions for this locale.')));
+      return;
+    }
+    setState(() => _crisis.addAll(suggestions));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            'Added ${suggestions.length} regional crisis lines — review and '
+            'edit as needed.')));
+  }
 
   Future<void> _save() async {
     try {
@@ -244,9 +269,22 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
                 _Section(
                     title: '6 · Crisis lines / emergency',
                     items: _crisis,
+                    onChanged: () => setState(() {}),
+                    trailing: TextButton.icon(
+                      onPressed: _suggestCrisisLines,
+                      icon: const Icon(Icons.add_location_outlined, size: 16),
+                      label: const Text('Suggest for this region'),
+                      style: TextButton.styleFrom(
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    )),
+                _Section(
+                    title: '7 · Reasons to keep living',
+                    items: _reasons,
                     onChanged: () => setState(() {})),
                 const SizedBox(height: PsySpacing.md),
-                Text('7 · Making the environment safe',
+                Text('8 · Making the environment safe',
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: PsySpacing.sm),
@@ -267,11 +305,16 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
 }
 
 class _Section extends StatefulWidget {
-  const _Section(
-      {required this.title, required this.items, required this.onChanged});
+  const _Section({
+    required this.title,
+    required this.items,
+    required this.onChanged,
+    this.trailing,
+  });
   final String title;
   final List<String> items;
   final VoidCallback onChanged;
+  final Widget? trailing;
 
   @override
   State<_Section> createState() => _SectionState();
@@ -303,9 +346,14 @@ class _SectionState extends State<_Section> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Row(children: [
+            Expanded(
+              child: Text(widget.title,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+            ),
+            if (widget.trailing != null) widget.trailing!,
+          ]),
           const SizedBox(height: PsySpacing.sm),
           ...widget.items.asMap().entries.map((e) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),

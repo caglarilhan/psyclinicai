@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 
 import '../../models/clinical_scale.dart';
+import '../../models/crisis_resource.dart';
+import '../../services/assessments/clinical_scales.dart';
+import '../../services/assessments/cssrs_escalation_service.dart';
+import '../../services/crisis/crisis_resource_registry.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../widgets/crisis_escalation_card.dart';
+import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// Generic runner for any [ClinicalScale] (C-SSRS, PCL-5, AUDIT, …). One
 /// question at a time with per-item options, instant scoring, severity band,
 /// and clinical-action guidance. Decision-support — never a diagnosis.
 class ClinicalScaleScreen extends StatefulWidget {
-  const ClinicalScaleScreen({super.key, required this.scale, this.patientName});
+  const ClinicalScaleScreen({
+    super.key,
+    required this.scale,
+    this.patientName,
+    this.patientId,
+  });
 
   final ClinicalScale scale;
   final String? patientName;
+
+  /// Optional patient identifier used to route to the safety plan when a
+  /// C-SSRS positive screen triggers escalation. Falls back to `demo-1`
+  /// (matching the rest of the demo routing) when omitted.
+  final String? patientId;
 
   @override
   State<ClinicalScaleScreen> createState() => _ClinicalScaleScreenState();
@@ -36,7 +52,7 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
     if (_index > 0) setState(() => _index--);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final values = <int>[];
     for (var i = 0; i < _answers.length; i++) {
       values.add(widget.scale.questions[i].choices[_answers[i]!].value);
@@ -44,11 +60,51 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
     final result = widget.scale.score(values);
     TelemetryService.instance.capture(TelemetryEvents.assessmentCompleted,
         properties: {'type': widget.scale.id});
+
+    // C-SSRS only: derive the escalation tier, surface a blocking modal for
+    // the high tiers, and remember the escalation so the result screen can
+    // render the crisis card and resources. Other scales fall through.
+    CssrsEscalation? escalation;
+    List<CrisisResource> resources = const [];
+    if (widget.scale.id == ClinicalScales.cssrs.id) {
+      final service = CssrsEscalationService();
+      escalation = service.evaluate(result);
+      resources = CrisisResourceRegistry.forLocale(
+          Localizations.maybeLocaleOf(context));
+      service.recordEscalation(escalation);
+
+      if (escalation.requiresImmediateAction) {
+        final outcome = await showCrisisEscalationModal(
+          context: context,
+          escalation: escalation,
+          resources: resources,
+        );
+        if (!mounted) return;
+        if (outcome == CrisisModalOutcome.initiateSafetyPlan) {
+          service.recordSafetyPlanInitiated(escalation);
+          Navigator.of(context).pushReplacementNamed(
+            '/safety_plan',
+            arguments: PatientDetailArgs(
+              id: widget.patientId ?? 'demo-1',
+              name: widget.patientName ?? 'Patient',
+            ),
+          );
+          return;
+        }
+        service.recordModalDismissed(escalation, reason: 'modal_dismissed');
+      }
+    }
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
       builder: (_) => _ScaleResultScreen(
-          scale: widget.scale,
-          patientName: widget.patientName,
-          result: result),
+        scale: widget.scale,
+        patientName: widget.patientName,
+        patientId: widget.patientId,
+        result: result,
+        escalation: escalation,
+        resources: resources,
+      ),
     ));
   }
 
@@ -247,12 +303,25 @@ Color _severityColor(ScaleSeverity s) => switch (s) {
     };
 
 class _ScaleResultScreen extends StatelessWidget {
-  const _ScaleResultScreen(
-      {required this.scale, required this.patientName, required this.result});
+  const _ScaleResultScreen({
+    required this.scale,
+    required this.patientName,
+    required this.patientId,
+    required this.result,
+    required this.escalation,
+    required this.resources,
+  });
 
   final ClinicalScale scale;
   final String? patientName;
+  final String? patientId;
   final ScaleResult result;
+
+  /// Populated only for C-SSRS; null for other scales.
+  final CssrsEscalation? escalation;
+
+  /// Crisis resources matched to the device locale; empty for non-C-SSRS.
+  final List<CrisisResource> resources;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +420,24 @@ class _ScaleResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              if (result.riskFlag && result.riskFlagText != null)
+              if (escalation != null && escalation!.hasAnyRisk) ...[
+                CrisisEscalationCard(
+                  escalation: escalation!,
+                  resources: resources,
+                  onInitiateSafetyPlan: () {
+                    CssrsEscalationService()
+                        .recordSafetyPlanInitiated(escalation!);
+                    Navigator.of(context).pushNamed(
+                      '/safety_plan',
+                      arguments: PatientDetailArgs(
+                        id: patientId ?? 'demo-1',
+                        name: patientName ?? 'Patient',
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ] else if (result.riskFlag && result.riskFlagText != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(16),
@@ -432,7 +518,10 @@ class _ScaleResultScreen extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => ClinicalScaleScreen(
-                              scale: scale, patientName: patientName),
+                            scale: scale,
+                            patientName: patientName,
+                            patientId: patientId,
+                          ),
                         ),
                       ),
                       icon: const Icon(Icons.refresh, size: 18),

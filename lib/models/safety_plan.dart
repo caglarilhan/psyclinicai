@@ -11,6 +11,7 @@ class SafetyPlan {
         supportContacts: _strList(json['supportContacts']),
         professionals: _strList(json['professionals']),
         crisisLines: _strList(json['crisisLines']),
+        reasonsForLiving: _strList(json['reasonsForLiving']),
         meansSafety: json['meansSafety'] as String? ?? '',
         updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
       );
@@ -22,6 +23,7 @@ class SafetyPlan {
     this.supportContacts = const [],
     this.professionals = const [],
     this.crisisLines = const [],
+    this.reasonsForLiving = const [],
     this.meansSafety = '',
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
@@ -46,6 +48,11 @@ class SafetyPlan {
   /// Step 6 — crisis lines / emergency.
   final List<String> crisisLines;
 
+  /// Optional, evidence-supported extension (Brown & Stanley, 2012). A short
+  /// list the client generates of reasons to keep living — often surfaced
+  /// during de-escalation. Empty by default for legacy plans.
+  final List<String> reasonsForLiving;
+
   /// Step 7 — making the environment safe (means restriction).
   final String meansSafety;
 
@@ -57,6 +64,8 @@ class SafetyPlan {
       socialDistractions.isEmpty &&
       supportContacts.isEmpty &&
       professionals.isEmpty &&
+      crisisLines.isEmpty &&
+      reasonsForLiving.isEmpty &&
       meansSafety.isEmpty;
 
   SafetyPlan copyWith({
@@ -66,6 +75,7 @@ class SafetyPlan {
     List<String>? supportContacts,
     List<String>? professionals,
     List<String>? crisisLines,
+    List<String>? reasonsForLiving,
     String? meansSafety,
   }) =>
       SafetyPlan(
@@ -76,6 +86,7 @@ class SafetyPlan {
         supportContacts: supportContacts ?? this.supportContacts,
         professionals: professionals ?? this.professionals,
         crisisLines: crisisLines ?? this.crisisLines,
+        reasonsForLiving: reasonsForLiving ?? this.reasonsForLiving,
         meansSafety: meansSafety ?? this.meansSafety,
         updatedAt: DateTime.now(),
       );
@@ -88,6 +99,7 @@ class SafetyPlan {
         'supportContacts': supportContacts,
         'professionals': professionals,
         'crisisLines': crisisLines,
+        'reasonsForLiving': reasonsForLiving,
         'meansSafety': meansSafety,
         'updatedAt': updatedAt.toIso8601String(),
       };

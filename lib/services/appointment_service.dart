@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
+import '../utils/appointment_conflict.dart';
 import 'notification_service.dart';
 
 class AppointmentService {
@@ -166,19 +167,12 @@ class AppointmentService {
     }
   }
 
-  // Check for time conflicts
-  bool _hasTimeConflict(Appointment newAppointment, {String? excludeId}) {
-    for (final appointment in _appointments) {
-      if (excludeId != null && appointment.id == excludeId) continue;
-      
-      // Check if appointments overlap
-      if (newAppointment.startTime.isBefore(appointment.endTime) &&
-          newAppointment.endTime.isAfter(appointment.startTime)) {
-        return true;
-      }
-    }
-    return false;
-  }
+  // Check for time conflicts using the pure utility — keeps the rule
+  // (half-open intervals, back-to-back OK) testable without bootstrapping
+  // SharedPreferences.
+  bool _hasTimeConflict(Appointment newAppointment, {String? excludeId}) =>
+      hasAppointmentConflict(newAppointment, _appointments,
+          excludeId: excludeId);
 
   // Get appointment statistics
   Map<String, int> getAppointmentStatistics() {

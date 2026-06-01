@@ -47,6 +47,31 @@ void main() {
       expect(next.copingStrategies, ['a']); // untouched
       expect(next.warningSigns, ['w']);
     });
+
+    test('reasonsForLiving round-trips through JSON', () {
+      final plan = SafetyPlan(
+        patientId: 'p5',
+        reasonsForLiving: const ['my daughter', 'finishing my research'],
+      );
+      final r = SafetyPlan.fromJson(plan.toJson());
+      expect(r.reasonsForLiving, plan.reasonsForLiving);
+    });
+
+    test('legacy JSON without reasonsForLiving stays empty (back-compat)', () {
+      final r = SafetyPlan.fromJson({
+        'patientId': 'p6',
+        'warningSigns': ['x'],
+      });
+      expect(r.reasonsForLiving, isEmpty);
+      expect(r.warningSigns, ['x']);
+    });
+
+    test('copyWith can update reasonsForLiving in isolation', () {
+      final base = SafetyPlan(patientId: 'p7', warningSigns: const ['w']);
+      final next = base.copyWith(reasonsForLiving: const ['hope']);
+      expect(next.warningSigns, ['w']);
+      expect(next.reasonsForLiving, ['hope']);
+    });
   });
 
   group('SessionNote', () {

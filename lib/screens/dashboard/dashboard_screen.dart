@@ -144,7 +144,7 @@ class _DemoBanner extends StatelessWidget {
                 _bullet(cs, theme,
                     'Sign-ups, patients and superbills are stored in memory only.'),
                 _bullet(cs, theme,
-                    'Counts and trends show placeholders ("—") until a real backend is online.'),
+                    'KPI cards show empty-state copy until a real backend is online.'),
                 _bullet(cs, theme,
                     'Run flutterfire configure with your Firebase project and refresh.'),
                 const SizedBox(height: PsySpacing.md),
@@ -213,25 +213,32 @@ class _KpiRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Until a real backend is online, surface semantic empty-state copy
+    // instead of a bare em-dash so the cards read as "ready, just empty"
+    // rather than "broken / placeholder".
     final kpis = <_Kpi>[
       _Kpi(
           label: "Today's sessions",
-          value: '—',
+          value: null,
+          emptyText: 'No sessions today',
           icon: Icons.event_available_outlined,
           tint: cs.primary),
       _Kpi(
           label: 'Pending notes',
-          value: '—',
+          value: null,
+          emptyText: 'All notes signed',
           icon: Icons.edit_note_outlined,
           tint: cs.tertiary),
       _Kpi(
           label: 'Active patients',
-          value: '—',
+          value: null,
+          emptyText: 'No active patients yet',
           icon: Icons.group_outlined,
           tint: cs.secondary),
       _Kpi(
           label: 'Assessments this week',
-          value: '—',
+          value: null,
+          emptyText: 'No assessments this week',
           icon: Icons.show_chart,
           tint: cs.primary),
     ];
@@ -260,13 +267,18 @@ class _KpiRow extends StatelessWidget {
 }
 
 class _Kpi {
-  _Kpi(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.tint});
+  _Kpi({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.tint,
+    this.emptyText,
+  });
   final String label;
-  final String value;
+  // `value` is null while we have no backend data; the card then renders
+  // `emptyText` in a calmer body style instead of a giant em-dash.
+  final String? value;
+  final String? emptyText;
   final IconData icon;
   final Color tint;
 }
@@ -303,17 +315,30 @@ class _KpiCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  kpi.value,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                if (kpi.value != null)
+                  Text(
+                    kpi.value!,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                else
+                  // Empty state: smaller, muted — reads as "ready, no data
+                  // yet" instead of a broken placeholder.
+                  Text(
+                    kpi.emptyText ?? '—',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurface.withValues(alpha: 0.85),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
                 const SizedBox(height: PsySpacing.xxs),
                 Text(
                   kpi.label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.65),
+                    color: cs.onSurface.withValues(alpha: 0.55),
                   ),
                 ),
               ],

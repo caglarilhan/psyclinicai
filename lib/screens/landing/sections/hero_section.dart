@@ -33,20 +33,23 @@ class HeroSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
+          // Pill is informational, not a CTA — slimmer padding + just an
+          // outline (no fill) so the teal stays reserved for primary
+          // actions, per "teal discipline" guideline.
           padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.10),
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(40),
             border:
-                Border.all(color: cs.primary.withValues(alpha: 0.35)),
+                Border.all(color: cs.primary.withValues(alpha: 0.30)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 8,
-                height: 8,
+                width: 7,
+                height: 7,
                 decoration: const BoxDecoration(
                   color: Color(0xFFEF4444),
                   shape: BoxShape.circle,
@@ -55,10 +58,11 @@ class HeroSection extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'FOUNDING ACCESS · 18 of 30 seats left',
-                style: theme.textTheme.labelMedium?.copyWith(
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: cs.primary,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.6,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -68,20 +72,24 @@ class HeroSection extends StatelessWidget {
         Text(
           'Your AI co-pilot\nfor therapy sessions.',
           style: theme.textTheme.displayLarge?.copyWith(
-            fontSize: isWide ? 56 : 38,
+            // Mobile headline trimmed -15% (was 38) to keep enterprise
+            // weight without overwhelming a 390px viewport. Desktop
+            // unchanged — wider canvas tolerates the bigger type.
+            fontSize: isWide ? 56 : 32,
             fontWeight: FontWeight.w800,
-            height: 1.05,
-            letterSpacing: -1.4,
+            height: 1.08,
+            letterSpacing: -1.2,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Text(
           'Notes drafted in 30 seconds. Superbill PDF in one click. '
           'Audio never leaves the device.',
-          style: theme.textTheme.headlineSmall?.copyWith(
+          style: theme.textTheme.titleMedium?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.78),
-            height: 1.45,
+            height: 1.5,
             fontWeight: FontWeight.w500,
+            fontSize: isWide ? 18 : 15,
           ),
         ),
         const SizedBox(height: 22),

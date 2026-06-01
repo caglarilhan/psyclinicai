@@ -48,73 +48,71 @@ class _CookieConsentState extends State<CookieConsent> {
     if (!_checked || !_visible) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
+    // Compact bottom strip (was: a large boxed card that covered ~30% of
+    // the mobile viewport and hid the hero CTA). Single row, full-bleed,
+    // ~56–72px tall. Same consent semantics, less obstruction.
     return Align(
       alignment: Alignment.bottomCenter,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Material(
-              elevation: 8,
-              borderRadius: BorderRadius.circular(12),
-              color: cs.surface,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cs.outlineVariant),
+        top: false,
+        child: Material(
+          elevation: 6,
+          color: cs.surface,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: cs.outlineVariant)),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: isPhone ? 16 : 24,
+              vertical: 10,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.cookie_outlined, size: 18, color: cs.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Session cookie only — no third-party analytics.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.78),
+                      height: 1.35,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.cookie_outlined, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Text('A note on cookies',
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                      ],
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/privacy'),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    foregroundColor: cs.primary,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "PsyClinicAI doesn't use third-party analytics on "
-                      'this landing — only a single browser session '
-                      'cookie so the app can remember your sign-in. '
-                      'Read the full notice at /privacy.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.72),
-                        height: 1.55,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.of(context).pushNamed('/privacy'),
-                          child: const Text('Read full notice'),
-                        ),
-                        FilledButton(
-                          onPressed: _answer,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: cs.primary,
-                            foregroundColor: cs.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 12),
-                          ),
-                          child: const Text('Got it'),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
+                  child: const Text('Details'),
                 ),
-              ),
+                const SizedBox(width: 4),
+                FilledButton(
+                  onPressed: _answer,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  child: const Text('Accept'),
+                ),
+              ],
             ),
           ),
         ),

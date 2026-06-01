@@ -215,6 +215,21 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isPhone = MediaQuery.sizeOf(context).width < PsyBreakpoints.md;
+    // Mobile titles step down to headlineMedium (-15%) to feel less shouty
+    // on a 390px viewport — desktop keeps displaySmall for executive weight.
+    final titleStyle = isPhone
+        ? theme.textTheme.headlineMedium
+            ?.copyWith(fontWeight: FontWeight.w700, height: 1.15)
+        : theme.textTheme.displaySmall
+            ?.copyWith(fontWeight: FontWeight.bold, height: 1.1);
+    final subtitleStyle = isPhone
+        ? theme.textTheme.bodyMedium?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.7),
+          )
+        : theme.textTheme.bodyLarge?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.7),
+          );
 
     final header = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,20 +240,11 @@ class _Content extends StatelessWidget {
             children: [
               Semantics(
                 header: true,
-                child: Text(
-                  title,
-                  style: theme.textTheme.displaySmall
-                      ?.copyWith(fontWeight: FontWeight.bold, height: 1.1),
-                ),
+                child: Text(title, style: titleStyle),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: PsySpacing.sm),
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
+                Text(subtitle!, style: subtitleStyle),
               ],
             ],
           ),

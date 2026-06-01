@@ -34,6 +34,10 @@ const ROUTES: Array<[string, string]> = [
   ["/settings/audit_log", "21-audit-log"],
   ["/dpa", "22-dpa"],
   ["/baa", "23-baa"],
+  ["/trust", "24-trust-center"],
+  ["/trust/subprocessors", "25-subprocessors"],
+  ["/trust/security_controls", "26-security-controls"],
+  ["/trust/incident_response", "27-incident-response"],
 ];
 
 async function dismissCookie(page: Page) {

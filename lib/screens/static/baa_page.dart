@@ -100,6 +100,8 @@ class BaaPage extends StatelessWidget {
                 'infeasible, per §164.504(e)(2)(ii)(J).',
           ),
           const SizedBox(height: PsySpacing.xl),
+          _OperationalControlsCard(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.xl),
           PsyCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,6 +204,112 @@ class _FactsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// Operational controls glance — the questions that come right after
+// 'is a BAA available?' on every US procurement call: MFA, backup,
+// RPO/RTO, geo-redundancy, access review, session timeout. Full
+// HIPAA Security Rule mapping lives at /trust/security_controls.
+class _OperationalControlsCard extends StatelessWidget {
+  const _OperationalControlsCard({required this.theme, required this.cs});
+  final ThemeData theme;
+  final ColorScheme cs;
+  @override
+  Widget build(BuildContext context) {
+    const rows = [
+      _OpRow(Icons.lock_outline, 'MFA',
+          'TOTP + WebAuthn passkey supported for every workforce member.'),
+      _OpRow(Icons.cloud_upload_outlined, 'Backup',
+          'Encrypted snapshots every 15 min · daily copy to a second EU region.'),
+      _OpRow(Icons.timelapse, 'RPO / RTO',
+          '≤ 15 min RPO · ≤ 1 h RTO · quarterly restore tests.'),
+      _OpRow(Icons.manage_accounts_outlined, 'Access reviews',
+          'Quarterly attestation · departure deactivation within 24 h.'),
+      _OpRow(Icons.timer_outlined, 'Session timeout',
+          '30 minutes idle (configurable per clinic).'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Operational controls',
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: PsySpacing.sm),
+        Text(
+          'The questions that follow "is a BAA available?". Full HIPAA '
+          'Security Rule mapping lives in the security controls page.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.72),
+            height: 1.5,
+            fontSize: 13.5,
+          ),
+        ),
+        const SizedBox(height: PsySpacing.md),
+        PsyCard(
+          padding: const EdgeInsets.symmetric(
+              horizontal: PsySpacing.lg, vertical: PsySpacing.sm),
+          child: Column(
+            children: [
+              for (var i = 0; i < rows.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                      height: 1,
+                      color: cs.outlineVariant.withValues(alpha: 0.6)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(rows[i].icon, size: 16, color: cs.primary),
+                      const SizedBox(width: PsySpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(rows[i].label,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 2),
+                            Text(
+                              rows[i].body,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.72),
+                                height: 1.45,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: PsySpacing.md),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context)
+              .pushNamed('/trust/security_controls'),
+          icon: const Icon(Icons.shield_outlined, size: 16),
+          label: const Text('Open full security controls'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            textStyle: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OpRow {
+  const _OpRow(this.icon, this.label, this.body);
+  final IconData icon;
+  final String label;
+  final String body;
 }
 
 class _Section extends StatelessWidget {

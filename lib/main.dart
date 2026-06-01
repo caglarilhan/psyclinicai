@@ -27,6 +27,10 @@ import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
 import 'package:psyclinicai/screens/settings/audit_log_screen.dart';
 import 'package:psyclinicai/screens/static/baa_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
+import 'package:psyclinicai/screens/trust/incident_response_screen.dart';
+import 'package:psyclinicai/screens/trust/security_controls_screen.dart';
+import 'package:psyclinicai/screens/trust/subprocessors_screen.dart';
+import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
 import 'package:psyclinicai/screens/settings/settings_screen.dart';
 import 'package:psyclinicai/screens/static/about_page.dart';
 import 'package:psyclinicai/screens/static/changelog_page.dart';
@@ -135,6 +139,13 @@ class PsyClinicAIApp extends StatelessWidget {
               '/settings/audit_log': (context) => const AuditLogScreen(),
               '/dpa': (context) => const DpaPage(),
               '/baa': (context) => const BaaPage(),
+              '/trust': (context) => const TrustCenterScreen(),
+              '/trust/subprocessors': (context) =>
+                  const SubprocessorsScreen(),
+              '/trust/security_controls': (context) =>
+                  const SecurityControlsScreen(),
+              '/trust/incident_response': (context) =>
+                  const IncidentResponseScreen(),
               '/superbill': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments;
                 return SuperbillScreen(

@@ -31,6 +31,9 @@ const ROUTES: Array<[string, string]> = [
   ["/mood_tracking", "18-mood"],
   ["/e_prescription", "19-e-prescription"],
   ["/feature_system", "20-feature-system"],
+  ["/settings/audit_log", "21-audit-log"],
+  ["/dpa", "22-dpa"],
+  ["/baa", "23-baa"],
 ];
 
 async function dismissCookie(page: Page) {

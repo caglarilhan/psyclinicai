@@ -947,53 +947,73 @@ class _InvoiceMetaCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.receipt_long, color: cs.primary, size: 28),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final wide = c.maxWidth > 560;
+          final header = Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.receipt_long, color: cs.primary, size: 28),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Superbill Draft',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Out-of-network insurance reimbursement receipt. '
+                      'Provider must verify codes before submission.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+          final fields = Column(
+            children: [
+              _Field(controller: invoiceNumber, label: 'Invoice #'),
+              _DateField(
+                label: 'Service date',
+                value: serviceDate,
+                onPick: onPickDate,
+              ),
+            ],
+          );
+          // Below ~560 px the fixed-220 sidecar starved the title to 34 px
+          // and the text rendered one letter per line — stack on mobile.
+          if (wide) {
+            return Row(
               children: [
-                Text(
-                  'Superbill Draft',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Out-of-network insurance reimbursement receipt. '
-                  'Provider must verify codes before submission.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
+                Expanded(child: header),
+                const SizedBox(width: 20),
+                SizedBox(width: 220, child: fields),
               ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          SizedBox(
-            width: 220,
-            child: Column(
-              children: [
-                _Field(controller: invoiceNumber, label: 'Invoice #'),
-                _DateField(
-                  label: 'Service date',
-                  value: serviceDate,
-                  onPick: onPickDate,
-                ),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header,
+              const SizedBox(height: 16),
+              fields,
+            ],
+          );
+        },
       ),
     );
   }

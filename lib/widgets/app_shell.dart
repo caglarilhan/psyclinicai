@@ -412,6 +412,20 @@ class _Breadcrumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    // On a phone the full "Home › Patients › John Demo › Safety plan" chain
+    // collides with the search + avatar in the AppBar — show just the current
+    // page label there. The full trail still renders on desktop.
+    final isPhone = MediaQuery.sizeOf(context).width < PsyBreakpoints.md;
+    if (isPhone && crumbs.isNotEmpty) {
+      return Text(
+        crumbs.last.label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
     final children = <Widget>[];
     for (var i = 0; i < crumbs.length; i++) {
       final c = crumbs[i];

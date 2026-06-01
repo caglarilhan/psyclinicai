@@ -44,10 +44,17 @@ class SettingsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(profile?.fullName ?? 'Demo user',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
+                      // Phones can't fit a full email + Demo-mode badge in one
+                      // row; truncate cleanly instead of letting the last char
+                      // drop to a second line.
                       Text(profile?.email ?? 'demo@psyclinicai.com',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: cs.onSurface.withValues(alpha: 0.6),
                           )),

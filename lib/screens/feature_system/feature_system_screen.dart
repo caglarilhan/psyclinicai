@@ -8,8 +8,8 @@ class FeatureSystemScreen extends StatefulWidget {
 }
 
 class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
-  String _selectedRole = 'Psikiyatrist';
-  String _selectedCategory = 'Tümü';
+  String _selectedRole = 'Psychiatrist';
+  String _selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PsyClinic AI - Özellik Sistemi'),
+        title: const Text('PsyClinicAI — Feature System'),
         backgroundColor: const Color(0xFF6B46C1),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -72,17 +72,17 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             child: DropdownButtonFormField<String>(
               initialValue: _selectedRole,
               decoration: const InputDecoration(
-                labelText: 'Rol Seçin',
+                labelText: 'Role',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: const [
-                DropdownMenuItem(value: 'Psikiyatrist', child: Text('Psikiyatrist')),
-                DropdownMenuItem(value: 'Psikolog', child: Text('Psikolog')),
-                DropdownMenuItem(value: 'Hemşire', child: Text('Hemşire')),
-                DropdownMenuItem(value: 'Sekreter', child: Text('Sekreter')),
-                DropdownMenuItem(value: 'Yönetici', child: Text('Yönetici')),
-                DropdownMenuItem(value: 'Hasta', child: Text('Hasta')),
+                DropdownMenuItem(value: 'Psychiatrist', child: Text('Psychiatrist')),
+                DropdownMenuItem(value: 'Psychologist', child: Text('Psychologist')),
+                DropdownMenuItem(value: 'Nurse', child: Text('Nurse')),
+                DropdownMenuItem(value: 'Receptionist', child: Text('Receptionist')),
+                DropdownMenuItem(value: 'Admin', child: Text('Admin')),
+                DropdownMenuItem(value: 'Patient', child: Text('Patient')),
               ],
               onChanged: (value) {
                 setState(() {
@@ -96,17 +96,17 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             child: DropdownButtonFormField<String>(
               initialValue: _selectedCategory,
               decoration: const InputDecoration(
-                labelText: 'Kategori',
+                labelText: 'Category',
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               items: const [
-                DropdownMenuItem(value: 'Tümü', child: Text('Tümü')),
-                DropdownMenuItem(value: 'Hasta Yönetimi', child: Text('Hasta Yönetimi')),
-                DropdownMenuItem(value: 'AI & Analitik', child: Text('AI & Analitik')),
-                DropdownMenuItem(value: 'İletişim', child: Text('İletişim')),
-                DropdownMenuItem(value: 'Yönetim', child: Text('Yönetim')),
-                DropdownMenuItem(value: 'Güvenlik', child: Text('Güvenlik')),
+                DropdownMenuItem(value: 'All', child: Text('All')),
+                DropdownMenuItem(value: 'Patient management', child: Text('Patient management')),
+                DropdownMenuItem(value: 'AI & analytics', child: Text('AI & analytics')),
+                DropdownMenuItem(value: 'Communication', child: Text('Communication')),
+                DropdownMenuItem(value: 'Operations', child: Text('Operations')),
+                DropdownMenuItem(value: 'Security', child: Text('Security')),
               ],
               onChanged: (value) {
                 setState(() {
@@ -136,7 +136,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PsyClinic AI Özellik Sistemi',
+            'PsyClinicAI Feature System',
             style: theme.textTheme.headlineMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -144,7 +144,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Kapsamlı ruh sağlığı klinik yönetim platformu',
+            'Comprehensive mental-health clinic management platform',
             style: theme.textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),
@@ -152,11 +152,11 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStatCard(theme, '150+', 'Özellik', Icons.apps),
+              _buildStatCard(theme, '150+', 'Features', Icons.apps),
               const SizedBox(width: 16),
-              _buildStatCard(theme, '6', 'Ana Kategori', Icons.category),
+              _buildStatCard(theme, '6', 'Main categories', Icons.category),
               const SizedBox(width: 16),
-              _buildStatCard(theme, '6', 'Rol Desteği', Icons.people),
+              _buildStatCard(theme, '6', 'Roles supported', Icons.people),
             ],
           ),
         ],
@@ -474,31 +474,31 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
   List<Map<String, dynamic>> _getMainCategories() {
     return [
       {
-        'name': 'Hasta Yönetimi',
+        'name': 'Patient management',
         'icon': Icons.people,
         'color': const Color(0xFF6B46C1),
         'featureCount': 25,
       },
       {
-        'name': 'AI & Analitik',
+        'name': 'AI & analytics',
         'icon': Icons.psychology,
         'color': const Color(0xFF7C3AED),
         'featureCount': 20,
       },
       {
-        'name': 'İletişim',
+        'name': 'Communication',
         'icon': Icons.video_call,
         'color': const Color(0xFF8B5CF6),
         'featureCount': 15,
       },
       {
-        'name': 'Yönetim',
+        'name': 'Operations',
         'icon': Icons.analytics,
         'color': const Color(0xFF9333EA),
         'featureCount': 18,
       },
       {
-        'name': 'Güvenlik',
+        'name': 'Security',
         'icon': Icons.security,
         'color': const Color(0xFFA855F7),
         'featureCount': 12,
@@ -514,8 +514,8 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
 
   List<Map<String, dynamic>> _getDetailedFeatures(String role, String category) {
     final allFeatures = {
-      'Hasta Yönetimi': {
-        'name': 'Hasta Yönetimi',
+      'Patient management': {
+        'name': 'Patient management',
         'description': 'Hasta kayıtları, randevular ve takip sistemleri',
         'icon': Icons.people,
         'colors': [const Color(0xFF6B46C1), const Color(0xFF8B5CF6)],
@@ -592,8 +592,8 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           },
         ],
       },
-      'AI & Analitik': {
-        'name': 'AI & Analitik',
+      'AI & analytics': {
+        'name': 'AI & analytics',
         'description': 'Yapay zeka destekli tanı ve analiz araçları',
         'icon': Icons.psychology,
         'colors': [const Color(0xFF7C3AED), const Color(0xFF9333EA)],
@@ -670,8 +670,8 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           },
         ],
       },
-      'İletişim': {
-        'name': 'İletişim & Telemedicine',
+      'Communication': {
+        'name': 'Communication & telemedicine',
         'description': 'Uzaktan görüşme ve iletişim platformları',
         'icon': Icons.video_call,
         'colors': [const Color(0xFF8B5CF6), const Color(0xFFA855F7)],
@@ -734,7 +734,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           },
         ],
       },
-      'Yönetim': {
+      'Operations': {
         'name': 'Yönetim & Raporlama',
         'description': 'Raporlar, finansal ve personel yönetimi',
         'icon': Icons.analytics,
@@ -798,21 +798,21 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
           },
         ],
       },
-      'Güvenlik': {
-        'name': 'Güvenlik & Ayarlar',
-        'description': 'Güvenlik ayarları ve sistem yapılandırması',
+      'Security': {
+        'name': 'Security & settings',
+        'description': 'Security settings and system configuration',
         'icon': Icons.security,
         'colors': [const Color(0xFFA855F7), const Color(0xFFDDD6FE)],
         'features': [
           {
-            'name': 'Güvenlik Ayarları',
+            'name': 'Security settings',
             'description': 'Sistem güvenlik yapılandırması',
             'icon': Icons.security,
             'color': const Color(0xFF6B46C1),
             'status': 'Aktif',
           },
           {
-            'name': 'Dil Ayarları',
+            'name': 'Dil settings',
             'description': 'Çoklu dil desteği',
             'icon': Icons.language,
             'color': const Color(0xFF7C3AED),
@@ -914,7 +914,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
       },
     };
 
-    if (category == 'Tümü') {
+    if (category == 'All') {
       return allFeatures.values.toList();
     } else {
       return allFeatures.containsKey(category) ? [allFeatures[category]!] : [];

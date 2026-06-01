@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/build_config.dart';
@@ -149,22 +150,18 @@ class _LoginScreenState extends State<LoginScreen> {
     final isSignUp = _mode == _Mode.signUp;
 
     return Scaffold(
-      // Transparent AppBar gives us an automatic back button (when there's a
-      // route to pop to) without breaking the gradient behind it.
+      // Clean clinical surface — not a gradient app screen — and a compact
+      // header so the back button sits close to the card.
+      backgroundColor: cs.surfaceContainerLow,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.white,
+        foregroundColor: cs.onSurface,
+        toolbarHeight: 44,
       ),
       body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [cs.primary, cs.secondary],
-          ),
-        ),
+        decoration: BoxDecoration(color: cs.surfaceContainerLow),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -208,7 +205,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          if (!_backendReady) _backendBanner(cs),
+                          // Demo helper is for developers only — visitors
+                          // arriving from the landing page should see a clean
+                          // sign-in, not a yellow "debug" callout.
+                          if (!_backendReady && kDebugMode)
+                            _backendBanner(cs),
                           if (!_backendReady) const SizedBox(height: 14),
                           _segmented(),
                           const SizedBox(height: 20),
@@ -267,6 +268,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: _passwordValidator,
                           ),
+                          if (!isSignUp)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _loading ? null : _resetPassword,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 4),
+                                  minimumSize: const Size(0, 32),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                child: const Text('Forgot password?'),
+                              ),
+                            ),
                           if (_error != null) ...[
                             const SizedBox(height: 14),
                             // Announce auth/validation errors to screen readers.
@@ -304,16 +323,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                           ),
-                          if (!isSignUp) ...[
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _loading ? null : _resetPassword,
-                                child: const Text('Forgot password?'),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -328,11 +337,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _segmented() {
+    final cs = Theme.of(context).colorScheme;
     return SegmentedButton<_Mode>(
       // Drop the leading ✓ — on a narrow phone width it pushes the segment
       // group ~0.7 px past the card and Flutter paints a debug "OVERFLOWED"
-      // stripe between the logo and the form (the red mark you saw).
+      // stripe between the logo and the form.
       showSelectedIcon: false,
+      // Selected segment reads clearly as the active state.
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? cs.primary : cs.surface),
+        foregroundColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? cs.onPrimary
+                : cs.onSurfaceVariant),
+        textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w600)),
+      ),
       segments: const [
         ButtonSegment(value: _Mode.signIn, label: Text('Sign in')),
         ButtonSegment(value: _Mode.signUp, label: Text('Sign up')),
@@ -406,18 +427,25 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Solid teal tile + Icons.psychology — same icon the landing AppBar uses,
+    // so the brand reads consistently from landing → login.
     return Center(
       child: Container(
-        width: 72,
-        height: 72,
+        width: 64,
+        height: 64,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [cs.primary, cs.secondary],
-          ),
-          borderRadius: BorderRadius.circular(18),
+          color: cs.primary,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: cs.primary.withValues(alpha: 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
-        child: const Icon(Icons.psychology_alt,
-            color: Colors.white, size: 36),
+        child: Icon(Icons.psychology,
+            color: cs.onPrimary, size: 34),
       ),
     );
   }

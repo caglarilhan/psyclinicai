@@ -103,7 +103,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final profile = FirebaseAuthService.instance.profile;
-    final firstName = profile?.fullName.split(' ').first ?? 'there';
+    final firstName = profile?.fullName.split(' ').first;
+    final roleLabel = profile?.role.label ?? 'Clinician';
 
     return Scaffold(
       appBar: AppBar(
@@ -140,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 _WelcomeStep(
                     firstName: firstName,
-                    role: profile?.role.label ?? 'Clinician',
+                    role: roleLabel,
                     theme: theme,
                     cs: cs),
                 _PracticeStep(
@@ -228,8 +229,10 @@ class _NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLast = step == total - 1;
     return Container(
+      // Tighter top + bottom — Continue sits closer to the content instead of
+      // hovering ~80px below it on short steps.
       padding: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.lg, PsySpacing.xxl, PsySpacing.xxl),
+          PsySpacing.xxl, PsySpacing.sm, PsySpacing.xxl, PsySpacing.lg),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
@@ -264,16 +267,23 @@ class _WelcomeStep extends StatelessWidget {
       required this.role,
       required this.theme,
       required this.cs});
-  final String firstName;
+  // null when there's no signed-in profile yet (demo mode) — the card shows
+  // the role instead of a placeholder "there" name.
+  final String? firstName;
   final String role;
   final ThemeData theme;
   final ColorScheme cs;
 
   @override
   Widget build(BuildContext context) {
+    final greeting =
+        (firstName == null || firstName!.isEmpty) ? 'Welcome.' : 'Welcome, ${firstName!}.';
+    final cardPrimary = (firstName == null || firstName!.isEmpty) ? role : firstName!;
+    final cardSecondary =
+        (firstName == null || firstName!.isEmpty) ? 'Licensed clinician' : role;
     return _StepShell(
       eyebrow: 'Step 1 of 5',
-      title: 'Welcome, $firstName.',
+      title: greeting,
       lede:
           "We'll have you ready in under four minutes. First — confirm "
           'your role so we can tailor the workspace.',
@@ -293,11 +303,11 @@ class _WelcomeStep extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(firstName,
+                    Text(cardPrimary,
                         style: theme.textTheme.titleLarge
                             ?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
-                    Text(role,
+                    Text(cardSecondary,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.7),
                         )),
@@ -382,53 +392,69 @@ class _ByokStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StepShell(
-      eyebrow: 'Step 3 of 5',
-      title: 'Bring your own Anthropic key.',
+      eyebrow: 'Step 3 of 5 · Optional',
+      title: 'Start in demo mode.',
       lede:
-          'PsyClinicAI never holds the BAA-protected data path — you '
-          'sign the BAA directly with Anthropic and paste your key here. '
-          'Skip if you want to explore demo mode first.',
+          'Every feature works on demo data — no key needed. Add your '
+          'Anthropic key later from Settings when you want live AI on real '
+          'sessions.',
       children: [
-        TextField(
-          controller: ctrl,
-          obscureText: true,
-          decoration: const InputDecoration(
-            labelText: 'sk-ant-api03-…',
-            hintText: 'Paste your Anthropic API key',
-            prefixIcon: Icon(Icons.key_outlined),
-          ),
-        ),
-        const SizedBox(height: PsySpacing.md),
-        Row(
-          children: [
-            Icon(Icons.lock_outline,
-                size: 14, color: cs.onSurface.withValues(alpha: 0.55)),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                'Stored in your browser keychain. Never sent to our '
-                'servers; never logged.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: PsySpacing.xl),
         PsyCard(
           tinted: true,
           padding: const EdgeInsets.all(PsySpacing.lg),
           child: Row(
             children: [
-              Icon(Icons.info_outline, color: cs.primary, size: 20),
+              Icon(Icons.check_circle, color: cs.primary, size: 22),
               const SizedBox(width: PsySpacing.md),
               Expanded(
                 child: Text(
-                  'Need a key? Visit console.anthropic.com → API Keys → '
-                  'Create. Costs ~\$0.003 per session today.',
-                  style: theme.textTheme.bodyMedium,
+                  "Continue → you'll land on demo data with John Demo and "
+                  'sample sessions. No card, no key, no commitment.',
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
                 ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: PsySpacing.md),
+        // Advanced: clinicians who already have a key can paste it now.
+        Theme(
+          data: theme.copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            childrenPadding: const EdgeInsets.only(top: PsySpacing.sm),
+            title: Text(
+              'I already have an Anthropic key',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            children: [
+              TextField(
+                controller: ctrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'sk-ant-api03-…',
+                  prefixIcon: Icon(Icons.key_outlined),
+                ),
+              ),
+              const SizedBox(height: PsySpacing.sm),
+              Row(
+                children: [
+                  Icon(Icons.lock_outline,
+                      size: 14,
+                      color: cs.onSurface.withValues(alpha: 0.55)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Stored only on this device. Never sent to our servers.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -501,13 +527,16 @@ class _FirstActionStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // PHQ-9 first: a brand-new clinician likely has no patient yet, so an
+    // assessment is the safest demo entry point. Live session next, superbill
+    // last (depends on a logged session + diagnosis).
     final options = <(String, IconData, String, String)>[
+      ('phq9', Icons.psychology_outlined, 'Send a PHQ-9',
+          'Try the depression screener to see the outcome dashboard.'),
       ('session', Icons.mic_none, 'Start a live session',
           'See the AI Co-Pilot in motion right now.'),
       ('superbill', Icons.receipt_long_outlined, 'Create a superbill',
           'CPT + ICD-10 + CMS-1500 PDF in under a minute.'),
-      ('phq9', Icons.psychology_outlined, 'Send a PHQ-9',
-          'Try the depression screener to see the outcome dashboard.'),
     ];
     return _StepShell(
       eyebrow: 'Step 5 of 5',
@@ -611,7 +640,9 @@ class _ChoiceCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(PsyRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.all(PsySpacing.xl),
+        // Slightly tighter than xl(24) so more cards fit above the fold on
+        // small phones without losing tap-target comfort.
+        padding: const EdgeInsets.all(PsySpacing.lg),
         decoration: BoxDecoration(
           color: selected
               ? cs.primary.withValues(alpha: 0.08)
@@ -625,8 +656,8 @@ class _ChoiceCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: cs.primary.withValues(alpha: 0.12),

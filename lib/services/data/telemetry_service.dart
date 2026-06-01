@@ -1,45 +1,81 @@
 import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../config/build_config.dart';
 
 /// Telemetry façade — Sentry (errors) + PostHog (funnel events).
 ///
 /// No-op until a DSN/key is injected via `--dart-define` (see [BuildConfig]).
-/// Once keys are present the body becomes real `Sentry.captureException` +
-/// `Posthog.capture` calls; every call site stays unchanged because the API
-/// surface below is the canonical one.
+/// When `SENTRY_DSN` is set, this class wires real `Sentry.captureException`
+/// calls behind the same API surface that call sites already use. PostHog
+/// stays a logging-only stub for now — when `POSTHOG_KEY` lands the same
+/// `capture` / `identify` hooks here will fan out without touching UI code.
 class TelemetryService {
   TelemetryService._();
   static final TelemetryService instance = TelemetryService._();
 
+  bool _sentryReady = false;
+
   bool get _enabled => BuildConfig.telemetryEnabled;
+  bool get _sentryEnabled => BuildConfig.sentryDsn.isNotEmpty;
 
   Future<void> initialize() async {
-    if (_enabled) {
-      // Real init goes here once keys are wired:
-      //   await SentryFlutter.init((o) => o.dsn = _sentryDsn);
-      //   await Posthog().setup(_posthogKey, ...);
+    if (_sentryEnabled) {
+      try {
+        await SentryFlutter.init((options) {
+          options.dsn = BuildConfig.sentryDsn;
+          // Tag every event so dashboards can split by build mode.
+          options.environment = kReleaseMode ? 'production' : 'development';
+          // Default off — clinical PHI must never leave the device through
+          // a stack frame. Re-enable only after a PHI-scrubbing pass.
+          options.sendDefaultPii = false;
+          // Keep traces sample low; we care about errors, not perf yet.
+          options.tracesSampleRate = 0.0;
+        });
+        _sentryReady = true;
+      } catch (e, stack) {
+        // Never let a misconfigured DSN crash the app — fall back to no-op.
+        _sentryReady = false;
+        if (kDebugMode) debugPrint('[telemetry] Sentry init failed: $e\n$stack');
+      }
     }
     if (kDebugMode) {
-      debugPrint('[telemetry] init — enabled=$_enabled');
+      debugPrint('[telemetry] init — enabled=$_enabled sentry=$_sentryReady');
     }
   }
 
-  /// Funnel event (PostHog).
+  /// Funnel event (PostHog — still a logging stub; same call sites already
+  /// flow through here so wiring PostHog later doesn't touch UI code).
   Future<void> capture(
     String event, {
     Map<String, Object?> properties = const {},
   }) async {
+    if (_sentryReady) {
+      // Record as a Sentry breadcrumb so a later crash carries the funnel
+      // context. Cheap and PHI-free (event names are public constants).
+      await Sentry.addBreadcrumb(Breadcrumb(
+        message: event,
+        category: 'funnel',
+        level: SentryLevel.info,
+        data: properties.map((k, v) => MapEntry(k, v?.toString() ?? '')),
+      ));
+    }
     if (kDebugMode) {
       debugPrint('[telemetry] capture: $event $properties');
     }
   }
 
-  /// Tag a user (after signup or sign-in).
+  /// Tag a user (after signup or sign-in). We send only an opaque id —
+  /// never email, name, or any free-text PII.
   Future<void> identify(
     String userId, {
     Map<String, Object?> traits = const {},
   }) async {
+    if (_sentryReady) {
+      await Sentry.configureScope((scope) {
+        scope.setUser(SentryUser(id: userId));
+      });
+    }
     if (kDebugMode) {
       debugPrint('[telemetry] identify: $userId $traits');
     }
@@ -47,6 +83,9 @@ class TelemetryService {
 
   /// Reset on sign-out so the next session starts anonymous.
   Future<void> reset() async {
+    if (_sentryReady) {
+      await Sentry.configureScope((scope) => scope.setUser(null));
+    }
     if (kDebugMode) {
       debugPrint('[telemetry] reset');
     }
@@ -58,6 +97,13 @@ class TelemetryService {
     StackTrace? stack, {
     String? hint,
   }) async {
+    if (_sentryReady) {
+      await Sentry.captureException(
+        error,
+        stackTrace: stack,
+        hint: hint != null ? Hint.withMap({'hint': hint}) : null,
+      );
+    }
     if (kDebugMode) {
       debugPrint('[telemetry] error${hint != null ? '/$hint' : ''}: $error');
     }

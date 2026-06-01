@@ -68,6 +68,11 @@ dependencies:
 
   intl: any
   timezone: any
+  # Observability — Sentry crash + error capture. No-op until SENTRY_DSN
+  # is provided via --dart-define (see lib/config/build_config.dart and
+  # lib/services/data/telemetry_service.dart). Pinned to a major because
+  # 9.x dropped legacy event format.
+  sentry_flutter: ^8.10.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

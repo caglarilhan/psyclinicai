@@ -158,7 +158,7 @@ Full security policy: [SECURITY.md](SECURITY.md).
 | Speech-to-text | On-device (Apple Speech / Android SpeechRecognizer / Web Speech API) |
 | Payments | Paddle MoR (planned Sprint 6); Cenoa for Turkish payouts |
 | Hosting | Hetzner CX33 (Frankfurt) + Nginx + Let's Encrypt |
-| Observability | Sentry (errors) + PostHog (product analytics), Sprint 5 |
+| Observability | Sentry crash + error capture (wired, gated by `--dart-define=SENTRY_DSN=...`); PostHog product analytics — Sprint 5 |
 | CI/CD | GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) |
 | Design | Material 3 + custom theme tokens |
 

@@ -1046,24 +1046,39 @@ class _Header extends StatelessWidget {
       child: Row(
         children: [
           if (isLive)
-            AnimatedBuilder(
-              animation: pulse,
-              builder: (_, __) => Container(
-                width: 10,
-                height: 10,
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.5 + pulse.value * 0.5),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withValues(alpha: pulse.value * 0.6),
-                      blurRadius: 8 + pulse.value * 4,
+            // prefers-reduced-motion → static red dot (no pulse/shadow).
+            // WCAG 2.3.3 + Apple HIG. The icon-and-label combo still
+            // conveys "live" without the throbbing visual.
+            (MediaQuery.maybeOf(context)?.disableAnimations ?? false)
+                ? Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-              ),
-            )
+                  )
+                : AnimatedBuilder(
+                    animation: pulse,
+                    builder: (_, __) => Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color:
+                            Colors.red.withValues(alpha: 0.5 + pulse.value * 0.5),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red
+                                .withValues(alpha: pulse.value * 0.6),
+                            blurRadius: 8 + pulse.value * 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
           else
             Icon(Icons.auto_awesome, color: cs.primary, size: 20),
           const SizedBox(width: 6),

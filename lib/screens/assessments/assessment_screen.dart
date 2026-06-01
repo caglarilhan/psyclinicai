@@ -343,8 +343,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Row(
+                const SizedBox(height: 16),
+                // Visual anchor — same sticky-feeling pattern as clinical_scale.
+                Container(
+                  decoration: BoxDecoration(
+                      border: Border(
+                          top: BorderSide(color: cs.outlineVariant))),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
                   children: [
                     OutlinedButton.icon(
                       onPressed: _currentIndex == 0 ? null : _prev,
@@ -379,6 +385,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                         ),
                       ),
                   ],
+                ),
                 ),
               ],
             ),

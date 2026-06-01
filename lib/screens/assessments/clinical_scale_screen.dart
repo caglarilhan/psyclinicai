@@ -192,8 +192,15 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Row(
+                const SizedBox(height: 16),
+                // Visual anchor — top border so Back / Next read as a sticky
+                // action bar at the foot of the question card.
+                Container(
+                  decoration: BoxDecoration(
+                      border: Border(
+                          top: BorderSide(color: cs.outlineVariant))),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
                   children: [
                     OutlinedButton.icon(
                       onPressed: _index == 0 ? null : _prev,
@@ -220,6 +227,7 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                                 horizontal: 24, vertical: 14)),
                       ),
                   ],
+                ),
                 ),
               ],
             ),

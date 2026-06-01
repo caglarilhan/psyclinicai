@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,12 +23,16 @@ class DashboardScreen extends StatelessWidget {
     final cs = theme.colorScheme;
     final auth = context.watch<FirebaseAuthService>();
     final profile = auth.profile;
-    final name = profile?.fullName.split(' ').first ?? 'there';
+    final name = profile?.fullName.split(' ').first;
+    // Don't fall back to "Good afternoon, there." — that screams placeholder.
+    final title = (name == null || name.isEmpty)
+        ? '${_greeting()}.'
+        : '${_greeting()}, $name.';
 
     return AppShell(
       routeName: '/dashboard',
       breadcrumbs: const [Crumb('Dashboard', null)],
-      title: '${_greeting()}, $name.',
+      title: title,
       subtitle: 'Here is what your practice looks like right now.',
       primaryAction: FilledButton.icon(
         onPressed: () => Navigator.of(context).pushNamed('/session'),
@@ -49,7 +54,9 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: PsySpacing.xl),
           ],
-          if (!PsyFirebase.isReady) ...[
+          // Dev-only callout — production visitors should not see "Firebase
+          // isn't configured" on the dashboard.
+          if (!PsyFirebase.isReady && kDebugMode) ...[
             _DemoBanner(cs: cs, theme: theme),
             const SizedBox(height: PsySpacing.xl),
           ],

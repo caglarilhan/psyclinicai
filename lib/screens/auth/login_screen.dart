@@ -56,10 +56,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 600));
+      // Demo mode: returning visitors skip the wizard — first-timers see it.
+      final done =
+          await OnboardingService.instance.isOnboarded('demo');
       if (!mounted) return;
-      // Demo mode only: surface the wizard so new visitors still see the
-      // "first 5 minutes" pitch even without Firebase configured.
-      Navigator.of(context).pushReplacementNamed('/onboarding');
+      Navigator.of(context)
+          .pushReplacementNamed(done ? '/dashboard' : '/onboarding');
       return;
     }
 

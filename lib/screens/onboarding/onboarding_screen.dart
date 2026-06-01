@@ -72,9 +72,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           .capture(TelemetryEvents.onboardingSeedRequested);
     }
 
-    if (uid != null) {
-      await OnboardingService.instance.markCompleted(uid);
-    }
+    // Even without Firebase (demo mode), persist a local 'demo' flag so the
+    // next sign-in lands on /dashboard instead of replaying the wizard.
+    await OnboardingService.instance.markCompleted(uid ?? 'demo');
 
     if (!mounted) return;
     final route = switch (_firstAction) {
@@ -91,9 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _skip() async {
     TelemetryService.instance.capture(TelemetryEvents.onboardingSkipped);
     final uid = FirebaseAuthService.instance.profile?.userId;
-    if (uid != null) {
-      await OnboardingService.instance.markCompleted(uid);
-    }
+    await OnboardingService.instance.markCompleted(uid ?? 'demo');
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/dashboard');
   }

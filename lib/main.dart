@@ -33,6 +33,7 @@ import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/static/privacy_page.dart';
 import 'package:psyclinicai/screens/static/security_page.dart';
 import 'package:psyclinicai/screens/static/status_page.dart';
+import 'package:psyclinicai/screens/splash/splash_screen.dart';
 import 'package:psyclinicai/screens/static/tos_page.dart';
 import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
@@ -104,8 +105,9 @@ class PsyClinicAIApp extends StatelessWidget {
             themeMode: ThemeMode.light,
             debugShowCheckedModeBanner: false,
             navigatorObservers: [_PsyTitleObserver()],
-            initialRoute: '/landing',
+            initialRoute: '/',
             routes: {
+              '/': (context) => const SplashScreen(),
               '/landing': (context) => const LandingScreen(),
               '/login': (context) => const LoginScreen(),
               '/dashboard': (context) => const DashboardScreen(),

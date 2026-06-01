@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
+import '../../models/audit_log_entry.dart';
 import '../../theme/tokens.dart';
+import '../../utils/audit_log_exporter.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -31,6 +34,101 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
   int? _expandedIndex;
   _AuditKind? _filterKind;
 
+  /// Map the private demo row onto the public [AuditLogEntry] so the
+  /// pure exporter pipeline can format it. Demo rows already use the
+  /// production Firestore shape, so the adapter is mechanical.
+  AuditLogEntry _toPublicEntry(_AuditEntry e) => AuditLogEntry(
+        id: e.id.toString(),
+        kind: e.kind.name,
+        action: e.action,
+        actor: e.actor,
+        entity: e.entity,
+        timestampUtc:
+            DateTime.tryParse(e.timestampUtc) ?? DateTime.now().toUtc(),
+        result: AuditResult.fromId(e.result),
+        userId: e.userId,
+        ip: e.ip,
+        device: e.device,
+        hash: e.hash,
+      );
+
+  Future<void> _exportInFormat(
+      List<_AuditEntry> rows, String format) async {
+    final redacted = rows.map(_toPublicEntry).map(redactForSiem);
+    final String body;
+    switch (format) {
+      case 'jsonl':
+        body = toJsonLines(redacted);
+        break;
+      case 'syslog':
+        body = toSyslogRfc5424(redacted);
+        break;
+      case 'csv':
+      default:
+        body = toCsv(redacted);
+        break;
+    }
+    await Clipboard.setData(ClipboardData(text: body));
+    if (!mounted) return;
+    Navigator.of(context).maybePop();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+          '${rows.length} rows copied as ${format.toUpperCase()} '
+          '(PHI redacted).'),
+    ));
+  }
+
+  void _showExportSheet(BuildContext context, List<_AuditEntry> rows) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final cs = theme.colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+                PsySpacing.xl, 0, PsySpacing.xl, PsySpacing.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Export audit log',
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: PsySpacing.xs),
+                Text(
+                  'Email-shaped actors and the last two IP octets are '
+                  'masked before the bundle leaves your device. The '
+                  'export itself is logged on this trail.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7),
+                      height: 1.4),
+                ),
+                const SizedBox(height: PsySpacing.lg),
+                _ExportTile(
+                  label: 'JSONL · for Splunk / Datadog',
+                  icon: Icons.data_object,
+                  onTap: () => _exportInFormat(rows, 'jsonl'),
+                ),
+                _ExportTile(
+                  label: 'CSV · for compliance review',
+                  icon: Icons.table_chart_outlined,
+                  onTap: () => _exportInFormat(rows, 'csv'),
+                ),
+                _ExportTile(
+                  label: 'Syslog RFC 5424 · for ELK',
+                  icon: Icons.dns_outlined,
+                  onTap: () => _exportInFormat(rows, 'syslog'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -51,14 +149,9 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
         Crumb('Audit log', null),
       ],
       primaryAction: OutlinedButton.icon(
-        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'CSV export logs an event on this trail before streaming.'),
-          ),
-        ),
+        onPressed: () => _showExportSheet(context, all),
         icon: const Icon(Icons.download_outlined, size: 18),
-        label: const Text('Export CSV'),
+        label: const Text('Export'),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -104,6 +197,48 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ExportTile extends StatelessWidget {
+  const _ExportTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(PsyRadius.md),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(children: [
+            Icon(icon, color: cs.primary, size: 22),
+            const SizedBox(width: PsySpacing.md),
+            Expanded(
+              child: Text(label,
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ),
+            const Icon(Icons.copy_outlined, size: 18),
+          ]),
+        ),
       ),
     );
   }

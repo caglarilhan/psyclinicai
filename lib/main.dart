@@ -10,9 +10,12 @@ import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
+import 'package:psyclinicai/screens/settings/account_deletion_screen.dart';
 import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
 import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
+import 'package:psyclinicai/screens/auth/telehealth_setup_screen.dart';
+import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
 import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
@@ -134,6 +137,12 @@ class PsyClinicAIApp extends StatelessWidget {
                     as String?;
                 return DataExportScreen(patientId: args ?? 'demo-1');
               },
+              '/settings/account_deletion': (context) =>
+                  const AccountDeletionScreen(),
+              '/settings/telehealth': (context) =>
+                  const TelehealthSetupScreen(),
+              '/settings/payments': (context) =>
+                  const PaymentSetupScreen(),
               '/patients/intake': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments
                     as PatientDetailArgs?;

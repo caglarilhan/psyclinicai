@@ -107,6 +107,18 @@ class SettingsScreen extends StatelessWidget {
                   'HIPAA §164.312(d). Status: not enabled.',
               onTap: () =>
                   Navigator.of(context).pushNamed('/settings/mfa')),
+          _row(context, theme, cs,
+              icon: Icons.videocam_outlined,
+              title: 'Telehealth video',
+              body: 'EU-routed WebRTC sessions — early access.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/telehealth')),
+          _row(context, theme, cs,
+              icon: Icons.payments_outlined,
+              title: 'Payments',
+              body: 'Stripe + Mollie (SEPA, iDEAL, SOFORT) — early access.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/payments')),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Trust & legal'),
           _row(context, theme, cs,
@@ -183,7 +195,8 @@ class SettingsScreen extends StatelessWidget {
                   label: 'Request deletion',
                   variant: PsyButtonVariant.destructive,
                   icon: Icons.delete_forever_outlined,
-                  onPressed: () => _confirmDelete(context),
+                  onPressed: () => Navigator.of(context)
+                      .pushNamed('/settings/account_deletion'),
                 ),
               ],
             ),

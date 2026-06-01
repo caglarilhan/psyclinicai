@@ -3,18 +3,26 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/safety_plan.dart';
+import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
 
 /// AI-drafts a Stanley-Brown crisis safety plan (BYOK Claude) the clinician
 /// reviews and completes WITH the client. Decision-support scaffold — not a
 /// substitute for clinical risk assessment; the clinician owns the plan.
 class SafetyPlanAiService {
-  SafetyPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-      _client = client ?? http.Client();
+  SafetyPlanAiService({
+    ApiKeyStorage? keyStorage,
+    http.Client? client,
+    ConsentGuard? consentGuard,
+  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+        _client = client ?? http.Client(),
+        // Default to a fail-closed guard — production callers MUST inject
+        // an IntakeRepository-backed lookup before invoking [draft].
+        _guard = consentGuard ?? ConsentGuard();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
+  final ConsentGuard _guard;
 
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
@@ -28,6 +36,10 @@ class SafetyPlanAiService {
     required String context,
     String region = 'US',
   }) async {
+    // GDPR Art. 7 / Art. 9(2)(a) gate. Throws [ConsentDeniedException]
+    // when the patient has not granted AI-assistance consent; callers
+    // surface that as a UI banner with a link to the consent screen.
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const SafetyPlanAiException(

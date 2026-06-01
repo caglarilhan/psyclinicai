@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../models/safety_plan.dart';
+import '../../services/compliance/consent_guard.dart';
 import '../../services/copilot/safety_plan_ai_service.dart';
 import '../../services/crisis/crisis_resource_registry.dart';
+import '../../services/data/intake_repository.dart';
 import '../../services/data/safety_plan_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -21,7 +23,15 @@ class SafetyPlanScreen extends StatefulWidget {
 
 class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   final _repo = SafetyPlanRepository();
-  final _ai = SafetyPlanAiService();
+  final _intakes = IntakeRepository();
+  // Production-wired ConsentGuard: AI may only run for a patient whose
+  // intake records an explicit AI-assistance consent. Fail-closed by
+  // default when no record exists.
+  late final SafetyPlanAiService _ai = SafetyPlanAiService(
+    consentGuard: ConsentGuard(
+      consentLookup: (id) => _intakes.forPatient(id)?.consent,
+    ),
+  );
   bool _loading = true;
   bool _busy = false;
 
@@ -49,6 +59,9 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
 
   Future<void> _init() async {
     await _repo.initialize();
+    // Consent guard reads from the intake repo; initialise it before
+    // any AI entry point fires.
+    await _intakes.initialize();
     final p = _repo.forPatient(widget.args.id);
     if (p != null) _apply(p);
     if (mounted) setState(() => _loading = false);
@@ -132,6 +145,18 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
             content: Text(
                 'Starter plan drafted — review and edit WITH the client.')));
       }
+    } on ConsentDeniedException catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text(
+            'AI assistance is not consented for this patient. Update '
+            'the intake form before drafting with AI.'),
+        action: SnackBarAction(
+          label: 'Intake',
+          onPressed: () => Navigator.of(context)
+              .pushNamed('/patients/intake', arguments: widget.args),
+        ),
+      ));
     } on SafetyPlanAiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

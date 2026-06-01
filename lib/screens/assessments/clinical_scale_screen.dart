@@ -4,6 +4,7 @@ import '../../models/clinical_scale.dart';
 import '../../models/crisis_resource.dart';
 import '../../services/assessments/clinical_scales.dart';
 import '../../services/assessments/cssrs_escalation_service.dart';
+import '../../services/assessments/escalation_soft_lock.dart';
 import '../../services/crisis/crisis_resource_registry.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/crisis_escalation_card.dart';
@@ -16,17 +17,20 @@ class ClinicalScaleScreen extends StatefulWidget {
   const ClinicalScaleScreen({
     super.key,
     required this.scale,
+    required this.patientId,
     this.patientName,
-    this.patientId,
   });
 
   final ClinicalScale scale;
+
+  /// Display name shown on the result + escalation cards.
   final String? patientName;
 
-  /// Optional patient identifier used to route to the safety plan when a
-  /// C-SSRS positive screen triggers escalation. Falls back to `demo-1`
-  /// (matching the rest of the demo routing) when omitted.
-  final String? patientId;
+  /// Patient identifier carried into the safety-plan route when a
+  /// positive C-SSRS triggers escalation. **Required** since B2 — a
+  /// silent `demo-1` fallback could open the wrong chart on a positive
+  /// screen, which is a clinical-safety hazard.
+  final String patientId;
 
   @override
   State<ClinicalScaleScreen> createState() => _ClinicalScaleScreenState();
@@ -74,24 +78,37 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
       service.recordEscalation(escalation);
 
       if (escalation.requiresImmediateAction) {
-        final outcome = await showCrisisEscalationModal(
+        final result = await showCrisisEscalationModal(
           context: context,
           escalation: escalation,
           resources: resources,
         );
         if (!mounted) return;
-        if (outcome == CrisisModalOutcome.initiateSafetyPlan) {
+        if (result.outcome == CrisisModalOutcome.initiateSafetyPlan) {
           service.recordSafetyPlanInitiated(escalation);
           Navigator.of(context).pushReplacementNamed(
             '/safety_plan',
             arguments: PatientDetailArgs(
-              id: widget.patientId ?? 'demo-1',
+              id: widget.patientId,
               name: widget.patientName ?? 'Patient',
             ),
           );
           return;
         }
-        service.recordModalDismissed(escalation, reason: 'modal_dismissed');
+        // Dismissed — clinician picked a reason on the picker. Telemetry
+        // splits manual handoff from a true dismissal, and the soft-lock
+        // banner reminds the next dashboard load there is unfinished
+        // high-risk follow-up.
+        final reason = result.dismissReason ?? 'modal_dismissed';
+        service.recordModalDismissed(escalation, reason: reason);
+        EscalationSoftLock.instance.record(EscalationSoftLockEntry(
+          patientId: widget.patientId,
+          patientName: widget.patientName ?? 'Patient',
+          severity: escalation.severity.name,
+          tier: escalation.tier.name,
+          reason: reason,
+          dismissedAt: DateTime.now().toUtc(),
+        ));
       }
     }
 
@@ -314,7 +331,7 @@ class _ScaleResultScreen extends StatelessWidget {
 
   final ClinicalScale scale;
   final String? patientName;
-  final String? patientId;
+  final String patientId;
   final ScaleResult result;
 
   /// Populated only for C-SSRS; null for other scales.
@@ -430,7 +447,7 @@ class _ScaleResultScreen extends StatelessWidget {
                     Navigator.of(context).pushNamed(
                       '/safety_plan',
                       arguments: PatientDetailArgs(
-                        id: patientId ?? 'demo-1',
+                        id: patientId,
                         name: patientName ?? 'Patient',
                       ),
                     );

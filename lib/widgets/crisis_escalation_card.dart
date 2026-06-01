@@ -88,19 +88,116 @@ class CrisisEscalationCard extends StatelessWidget {
 /// Show the high-risk blocking modal *before* presenting the result screen
 /// when the C-SSRS lands in the immediate / imminent tiers. The modal is
 /// barrier-dismissible only via explicit buttons so the clinician makes a
-/// deliberate choice. Returns the [CrisisModalOutcome] picked.
-Future<CrisisModalOutcome> showCrisisEscalationModal({
+/// deliberate choice. Returns a [CrisisModalResult] — when the clinician
+/// picks "I'll handle this manually" on the immediate / imminent tiers we
+/// force them through a reason picker so the dismissal carries an
+/// audit-grade reason code.
+Future<CrisisModalResult> showCrisisEscalationModal({
   required BuildContext context,
   required CssrsEscalation escalation,
   required List<CrisisResource> resources,
 }) async {
-  final result = await showDialog<CrisisModalOutcome>(
+  final result = await showDialog<CrisisModalResult>(
     context: context,
     barrierDismissible: false,
     builder: (ctx) =>
         _CrisisModal(escalation: escalation, resources: resources),
   );
-  return result ?? CrisisModalOutcome.dismissed;
+  return result ??
+      const CrisisModalResult(outcome: CrisisModalOutcome.dismissed);
+}
+
+/// Reason codes the clinician can pick on the dismissal flow. Lower-
+/// case stable ids so analytics + audit log can aggregate without
+/// translating display labels.
+const Map<String, String> _dismissReasonLabels = {
+  'hospitalized':
+      'Patient is on the way to / already at an inpatient setting',
+  'family_present':
+      'Family or trusted adult is with the patient and informed',
+  'supervisor_handoff':
+      'Handed off to a supervisor / on-call psychiatrist',
+  'in_session_plan':
+      'Completing a safety plan inside this session instead',
+  'other': 'Other (documented in the session note)',
+};
+
+/// Shows the dismissal reason picker. Returns the picked reason code,
+/// or `null` if the clinician cancelled.
+Future<String?> _pickDismissReason(BuildContext context) {
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => const _DismissReasonPicker(),
+  );
+}
+
+class _DismissReasonPicker extends StatefulWidget {
+  const _DismissReasonPicker();
+
+  @override
+  State<_DismissReasonPicker> createState() => _DismissReasonPickerState();
+}
+
+class _DismissReasonPickerState extends State<_DismissReasonPicker> {
+  String? _picked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return AlertDialog(
+      title: const Text('Document the dismissal'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'C-SSRS escalation dismissal is logged with a reason so a '
+            'supervisor can follow up. Pick the closest match.',
+            style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.7), height: 1.45),
+          ),
+          const SizedBox(height: PsySpacing.md),
+          for (final entry in _dismissReasonLabels.entries)
+            RadioListTile<String>(
+              value: entry.key,
+              groupValue: _picked,
+              onChanged: (v) => setState(() => _picked = v),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(entry.value,
+                  style: theme.textTheme.bodyMedium),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _picked == null
+              ? null
+              : () => Navigator.of(context).pop(_picked),
+          child: const Text('Confirm dismissal'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Carries the modal outcome plus, when relevant, the reason picked on
+/// the dismissal flow.
+class CrisisModalResult {
+  const CrisisModalResult({required this.outcome, this.dismissReason});
+  final CrisisModalOutcome outcome;
+
+  /// Lower-case stable reason code (`'hospitalized'`, `'in_session_plan'`,
+  /// `'family_present'`, `'supervisor_handoff'`, `'other'`). Null when
+  /// the modal was resolved via [CrisisModalOutcome.initiateSafetyPlan]
+  /// or when the tier did not require a reason (mild / monitor flows).
+  final String? dismissReason;
 }
 
 /// What the clinician picked on the blocking modal.
@@ -193,8 +290,9 @@ class _CrisisModal extends StatelessWidget {
               LayoutBuilder(builder: (context, c) {
                 final stack = c.maxWidth < 420;
                 final primary = FilledButton.icon(
-                  onPressed: () => Navigator.of(context)
-                      .pop(CrisisModalOutcome.initiateSafetyPlan),
+                  onPressed: () => Navigator.of(context).pop(
+                      const CrisisModalResult(
+                          outcome: CrisisModalOutcome.initiateSafetyPlan)),
                   icon: const Icon(Icons.health_and_safety_outlined),
                   label: const Text('Start safety plan now'),
                   style: FilledButton.styleFrom(
@@ -204,8 +302,22 @@ class _CrisisModal extends StatelessWidget {
                   ),
                 );
                 final secondary = TextButton(
-                  onPressed: () => Navigator.of(context)
-                      .pop(CrisisModalOutcome.dismissed),
+                  onPressed: () async {
+                    // Immediate + imminent tiers MUST capture a reason
+                    // code before the modal goes away. Lower tiers can
+                    // dismiss without one.
+                    if (escalation.requiresImmediateAction) {
+                      final reason = await _pickDismissReason(context);
+                      if (reason == null) return; // clinician cancelled
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(CrisisModalResult(
+                          outcome: CrisisModalOutcome.dismissed,
+                          dismissReason: reason));
+                    } else {
+                      Navigator.of(context).pop(const CrisisModalResult(
+                          outcome: CrisisModalOutcome.dismissed));
+                    }
+                  },
                   child: const Text("I'll handle this manually"),
                 );
                 if (stack) {

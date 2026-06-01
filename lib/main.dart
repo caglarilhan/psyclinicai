@@ -194,12 +194,33 @@ class PsyClinicAIApp extends StatelessWidget {
                     type: AssessmentType.gad7,
                     patientName: 'John Demo',
                   ),
-              '/scales/cssrs': (context) => const ClinicalScaleScreen(
-                  scale: ClinicalScales.cssrs, patientName: 'John Demo'),
-              '/scales/pcl5': (context) => const ClinicalScaleScreen(
-                  scale: ClinicalScales.pcl5, patientName: 'John Demo'),
-              '/scales/audit': (context) => const ClinicalScaleScreen(
-                  scale: ClinicalScales.audit, patientName: 'John Demo'),
+              '/scales/cssrs': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return ClinicalScaleScreen(
+                  scale: ClinicalScales.cssrs,
+                  patientId: args?.id ?? 'demo-1',
+                  patientName: args?.name ?? 'John Demo',
+                );
+              },
+              '/scales/pcl5': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return ClinicalScaleScreen(
+                  scale: ClinicalScales.pcl5,
+                  patientId: args?.id ?? 'demo-1',
+                  patientName: args?.name ?? 'John Demo',
+                );
+              },
+              '/scales/audit': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return ClinicalScaleScreen(
+                  scale: ClinicalScales.audit,
+                  patientId: args?.id ?? 'demo-1',
+                  patientName: args?.name ?? 'John Demo',
+                );
+              },
               '/security': (context) => const SecurityPage(),
               '/about': (context) => const AboutPage(),
               '/changelog': (context) => const ChangelogPage(),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/treatment_plan_models.dart';
+import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
 
 /// AI-drafts SMART treatment-plan goals from a diagnosis + clinical
@@ -10,12 +11,19 @@ import 'api_key_storage.dart';
 /// clinician reviews and edits every goal. Mirrors the HTTP/auth pattern of
 /// `soap_generator_service.dart`.
 class TreatmentPlanAiService {
-  TreatmentPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-      _client = client ?? http.Client();
+  TreatmentPlanAiService({
+    ApiKeyStorage? keyStorage,
+    http.Client? client,
+    ConsentGuard? consentGuard,
+  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+        _client = client ?? http.Client(),
+        // Default to fail-closed; production caller injects an
+        // IntakeRepository-backed guard.
+        _guard = consentGuard ?? ConsentGuard();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
+  final ConsentGuard _guard;
 
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
@@ -25,9 +33,11 @@ class TreatmentPlanAiService {
   /// no-key case (so the UI can prompt for a key); other failures surface as a
   /// typed message too, never an opaque crash.
   Future<List<DraftGoal>> draftGoals({
+    required String patientId,
     required String diagnosis,
     required String formulation,
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(
@@ -152,9 +162,11 @@ class TreatmentPlanAiService {
   /// Suggests 3–5 concrete homework assignment titles tied to the active
   /// goals. Throws [TreatmentPlanAiException] (noKey set) when no key.
   Future<List<String>> suggestHomework({
+    required String patientId,
     required String diagnosis,
     required List<String> goals,
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(
@@ -231,11 +243,13 @@ class TreatmentPlanAiService {
   /// goals. Returns the letter text; throws [TreatmentPlanAiException]
   /// (noKey set) when no key. Decision-support draft — clinician reviews.
   Future<String> draftReimbursementLetter({
+    required String patientId,
     required String patientName,
     required String diagnosis,
     required List<String> goals,
     String language = 'English',
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(

@@ -5,6 +5,8 @@ import '../../models/treatment_plan_models.dart';
 import '../../services/copilot/treatment_plan_ai_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/homework_repository.dart';
+import '../../services/compliance/consent_guard.dart';
+import '../../services/data/intake_repository.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../utils/smart_goal_notes.dart';
@@ -24,7 +26,16 @@ class TreatmentPlanScreen extends StatefulWidget {
 
 class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   final _svc = TreatmentPlanService();
-  final _ai = TreatmentPlanAiService();
+  final _intakes = IntakeRepository();
+  // Production-wired ConsentGuard reads the patient's recorded
+  // AI-assistance consent from the local intake repository. The guard
+  // is fail-closed by default — no consent record on file blocks the
+  // AI service.
+  late final TreatmentPlanAiService _ai = TreatmentPlanAiService(
+    consentGuard: ConsentGuard(
+      consentLookup: (id) => _intakes.forPatient(id)?.consent,
+    ),
+  );
   final _homeworkRepo = HomeworkRepository();
   bool _loading = true;
   bool _busy = false;
@@ -46,6 +57,9 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   Future<void> _init() async {
     await _svc.initialize();
     await _homeworkRepo.initialize();
+    // ConsentGuard reads from this repo; loading it before any AI
+    // entry point means the gate never fails for a stale snapshot.
+    await _intakes.initialize();
     _plan = _svc.getTreatmentPlanForPatient(widget.args.id);
     _homework = _homeworkRepo.forPatient(widget.args.id);
     if (mounted) setState(() => _loading = false);
@@ -231,6 +245,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     setState(() => _busy = true);
     try {
       final drafts = await _ai.draftGoals(
+        patientId: widget.args.id,
         diagnosis: _plan!.primaryDiagnosis,
         formulation: _plan!.clinicalFormulation,
       );
@@ -308,7 +323,10 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     setState(() => _busy = true);
     try {
       final ideas =
-          await _ai.suggestHomework(diagnosis: plan.primaryDiagnosis, goals: goals);
+          await _ai.suggestHomework(
+              patientId: widget.args.id,
+              diagnosis: plan.primaryDiagnosis,
+              goals: goals);
       for (final t in ideas) {
         await _homeworkRepo.add(HomeworkItem(
           id: '${DateTime.now().microsecondsSinceEpoch}${t.hashCode}',
@@ -346,6 +364,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     setState(() => _busy = true);
     try {
       final letter = await _ai.draftReimbursementLetter(
+        patientId: widget.args.id,
         patientName: widget.args.name,
         diagnosis: plan.primaryDiagnosis,
         goals: plan.activeGoals.map((g) => g.description).toList(),

@@ -9,7 +9,7 @@ import { homedir } from "os";
 // splash screen's pushReplacement('/landing') from swallowing direct hash URLs.)
 
 const BASE = "https://caglarilhan.github.io/psyclinicai/";
-const OUT = resolve(homedir(), "Downloads/psyclinicai-screens-web");
+const OUT = resolve(homedir(), "Downloads/psyclinicai-screens");
 
 const ROUTES: Array<[string, string]> = [
   ["/landing", "02-landing"],
@@ -35,7 +35,8 @@ const ROUTES: Array<[string, string]> = [
 
 async function dismissCookie(page: Page) {
   try {
-    const got = page.getByRole("button", { name: /got it/i });
+    // Cookie strip button labels evolved: "Got it" (old) → "Accept" (new).
+    const got = page.getByRole("button", { name: /accept|got it/i });
     if (await got.isVisible({ timeout: 1500 })) await got.click();
   } catch {
     // no modal — fine

@@ -638,9 +638,10 @@ class _ChoiceCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(PsyRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        // Slightly tighter than xl(24) so more cards fit above the fold on
-        // small phones without losing tap-target comfort.
-        padding: const EdgeInsets.all(PsySpacing.lg),
+        // Compact rev: padding lg→md, icon 40→36, title titleMedium→
+        // titleSmall+w700, body bodyMedium→bodySmall. Net ~22% height drop
+        // so all role choices fit above the fold on 390-wide phones.
+        padding: const EdgeInsets.all(PsySpacing.md),
         decoration: BoxDecoration(
           color: selected
               ? cs.primary.withValues(alpha: 0.08)
@@ -654,37 +655,37 @@ class _ChoiceCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: cs.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(PsyRadius.md),
               ),
-              child: Icon(icon, color: cs.primary, size: 22),
+              child: Icon(icon, color: cs.primary, size: 20),
             ),
-            const SizedBox(width: PsySpacing.lg),
+            const SizedBox(width: PsySpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: theme.textTheme.titleMedium
+                      style: theme.textTheme.titleSmall
                           ?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: PsySpacing.xs),
+                  const SizedBox(height: 2),
                   Text(body,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.5,
+                        height: 1.4,
                       )),
                 ],
               ),
             ),
             if (selected)
-              Icon(Icons.check_circle, color: cs.primary, size: 24)
+              Icon(Icons.check_circle, color: cs.primary, size: 22)
             else
               Icon(Icons.radio_button_unchecked,
-                  color: cs.outlineVariant, size: 22),
+                  color: cs.outlineVariant, size: 20),
           ],
         ),
       ),

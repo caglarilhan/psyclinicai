@@ -323,10 +323,15 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             : const Icon(Icons.picture_as_pdf, size: 20),
         label: Text(_generating ? 'Generating…' : 'Generate PDF'),
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          // Tighter than the dashboard "New session" CTA — PDF generation
+          // is the primary action here but it shouldn't dominate the
+          // header band on a 390-wide phone.
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          textStyle:
+              const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),

@@ -155,39 +155,70 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Calmer notice: neutral surface tint + tight padding so
+                // the warning reads as guidance, not as a giant pink alarm.
+                // The red icon still carries the safety semantic. "Draft
+                // with AI" steps down to TextButton — pure secondary.
                 Container(
-                  padding: const EdgeInsets.all(PsySpacing.lg),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.md, vertical: PsySpacing.sm),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(PsyRadius.lg),
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(PsyRadius.md),
                     border: Border.all(color: cs.outlineVariant),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.health_and_safety_outlined,
-                          color: Color(0xFFDC2626)),
+                  child: LayoutBuilder(builder: (context, c) {
+                    final compact = c.maxWidth < 560;
+                    final icon = const Icon(Icons.health_and_safety_outlined,
+                        color: Color(0xFFDC2626), size: 20);
+                    final body = Text(
+                      'Complete this WITH the client. Decision-support '
+                      'scaffold — not a clinical risk assessment.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.78),
+                          height: 1.4),
+                    );
+                    final draftButton = TextButton.icon(
+                      onPressed: _busy ? null : _draftAi,
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.auto_awesome, size: 16),
+                      label: const Text('Draft with AI'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: cs.primary,
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    );
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            icon,
+                            const SizedBox(width: PsySpacing.sm),
+                            Expanded(child: body),
+                          ]),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: draftButton,
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(children: [
+                      icon,
                       const SizedBox(width: PsySpacing.md),
-                      Expanded(
-                        child: Text(
-                          'Complete this WITH the client. Decision-support '
-                          'scaffold — not a clinical risk assessment.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.8)),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _draftAi,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.auto_awesome, size: 18),
-                        label: const Text('Draft with AI'),
-                      ),
-                    ],
-                  ),
+                      Expanded(child: body),
+                      const SizedBox(width: PsySpacing.sm),
+                      draftButton,
+                    ]);
+                  }),
                 ),
                 const SizedBox(height: PsySpacing.xl),
                 _Section(

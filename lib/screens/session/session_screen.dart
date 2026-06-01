@@ -522,62 +522,126 @@ class _SessionControlBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final timerTint = active ? cs.primary : cs.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(PsyRadius.md),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          // Timer — state shown in text + icon, not color alone (WCAG 1.4.1).
-          Semantics(
-            label: active ? 'Session live, $durationLabel' : 'Session ended',
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(active ? Icons.timer : Icons.timer_off,
-                    size: 18, color: timerTint),
-                const SizedBox(width: PsySpacing.xs),
-                Text(
-                  '${active ? 'Live' : 'Ended'} · $durationLabel',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700, color: timerTint),
-                ),
-              ],
+    return LayoutBuilder(builder: (context, c) {
+      // Mobile (<560): timer + primary action + overflow menu (Export PDF,
+      // Appointments, Prescriptions). Stops Export PDF from being cut off
+      // at the right edge and calms the secondary actions, per feedback.
+      final compact = c.maxWidth < 560;
+      final timer = Semantics(
+        label: active ? 'Session live, $durationLabel' : 'Session ended',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(active ? Icons.timer : Icons.timer_off,
+                size: 18, color: timerTint),
+            const SizedBox(width: PsySpacing.xs),
+            Text(
+              '${active ? 'Live' : 'Ended'} · $durationLabel',
+              style:
+                  TextStyle(fontWeight: FontWeight.w700, color: timerTint),
             ),
+          ],
+        ),
+      );
+      final startStop = FilledButton.icon(
+        onPressed: onStartStop,
+        icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
+        label: Text(active ? 'End session' : 'Start session'),
+        style: FilledButton.styleFrom(
+          backgroundColor: active ? cs.error : cs.primary,
+          // Slightly tighter on mobile so the red CTA reads as "important"
+          // without dominating the toolbar width.
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 14 : 18,
+            vertical: compact ? 10 : 12,
           ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: onStartStop,
-            icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
-            label: Text(active ? 'End session' : 'Start session'),
-            style: FilledButton.styleFrom(
-              backgroundColor: active ? cs.error : cs.primary,
-            ),
-          ),
-          const SizedBox(width: PsySpacing.sm),
-          OutlinedButton.icon(
-            onPressed: onExport,
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('Export PDF'),
-          ),
-          const SizedBox(width: PsySpacing.sm),
-          IconButton(
-            tooltip: 'Appointments',
-            onPressed: () => Navigator.of(context).pushNamed('/appointments'),
-            icon: const Icon(Icons.calendar_today),
-          ),
-          IconButton(
-            tooltip: 'Prescriptions',
-            onPressed: () =>
-                Navigator.of(context).pushNamed('/e_prescription'),
-            icon: const Icon(Icons.medical_services),
-          ),
-        ],
-      ),
-    );
+        ),
+      );
+      return Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(PsyRadius.md),
+          border: Border.all(color: cs.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            timer,
+            const Spacer(),
+            startStop,
+            const SizedBox(width: PsySpacing.sm),
+            if (compact)
+              PopupMenuButton<_SessionAction>(
+                tooltip: 'More',
+                icon: const Icon(Icons.more_vert),
+                onSelected: (a) {
+                  switch (a) {
+                    case _SessionAction.export:
+                      onExport();
+                      break;
+                    case _SessionAction.appointments:
+                      Navigator.of(context).pushNamed('/appointments');
+                      break;
+                    case _SessionAction.prescriptions:
+                      Navigator.of(context).pushNamed('/e_prescription');
+                      break;
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: _SessionAction.export,
+                    child: ListTile(
+                      leading: Icon(Icons.picture_as_pdf),
+                      title: Text('Export PDF'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _SessionAction.appointments,
+                    child: ListTile(
+                      leading: Icon(Icons.calendar_today),
+                      title: Text('Appointments'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _SessionAction.prescriptions,
+                    child: ListTile(
+                      leading: Icon(Icons.medical_services),
+                      title: Text('Prescriptions'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              OutlinedButton.icon(
+                onPressed: onExport,
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Export PDF'),
+              ),
+              const SizedBox(width: PsySpacing.sm),
+              IconButton(
+                tooltip: 'Appointments',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/appointments'),
+                icon: const Icon(Icons.calendar_today),
+              ),
+              IconButton(
+                tooltip: 'Prescriptions',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/e_prescription'),
+                icon: const Icon(Icons.medical_services),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
   }
 }
+
+/// Mobile overflow-menu actions for the session control bar — keeps
+/// secondary actions reachable without crowding the top row.
+enum _SessionAction { export, appointments, prescriptions }

@@ -198,33 +198,40 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
   Widget _buildMainCategories(ThemeData theme) {
     final categories = _getMainCategories();
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Ana Kategoriler',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF6B46C1),
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return _buildCategoryCard(theme, category);
-          },
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Phones: 2-col grid so "Patient management" / "Communication"
+        // fit without truncation; wider screens keep 3 col.
+        final cols = c.maxWidth < 480 ? 2 : 3;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Main categories',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF6B46C1),
+              ),
+            ),
+            const SizedBox(height: 16),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.05,
+              ),
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return _buildCategoryCard(theme, category);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -262,14 +269,17 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             Text(
               category['name'] as String,
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF6B46C1),
+                height: 1.2,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              '${category['featureCount']} Özellik',
+              '${category['featureCount']} features',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.grey[600],
               ),
@@ -457,13 +467,16 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
   }
 
   Color _getStatusColor(String status) {
+    // English status keys (post-translation pass). Legacy Turkish 'Test'
+    // is kept so any data missed by the sed still maps correctly.
     switch (status) {
-      case 'Aktif':
+      case 'Active':
         return Colors.green;
-      case 'Geliştiriliyor':
+      case 'In development':
         return Colors.orange;
-      case 'Planlanıyor':
+      case 'Planned':
         return Colors.blue;
+      case 'Testing':
       case 'Test':
         return Colors.purple;
       default:
@@ -504,7 +517,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         'featureCount': 12,
       },
       {
-        'name': 'Entegrasyon',
+        'name': 'Integrations',
         'icon': Icons.integration_instructions,
         'color': const Color(0xFFC084FC),
         'featureCount': 10,
@@ -516,79 +529,79 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
     final allFeatures = {
       'Patient management': {
         'name': 'Patient management',
-        'description': 'Hasta kayıtları, randevular ve takip sistemleri',
+        'description': 'Patient records, appointments and follow-ups',
         'icon': Icons.people,
         'colors': [const Color(0xFF6B46C1), const Color(0xFF8B5CF6)],
         'features': [
           {
-            'name': 'Hasta Listesi',
+            'name': 'Patient list',
             'description': 'Tüm hastaları görüntüleme ve yönetim',
             'icon': Icons.people,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
-            'name': 'Hasta Detayları',
+            'name': 'Patient details',
             'description': 'Detaylı hasta bilgileri ve geçmiş',
             'icon': Icons.person,
             'color': const Color(0xFF7C3AED),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
-            'name': 'Randevu Sistemi',
+            'name': 'Appointments',
             'description': 'Randevu oluşturma ve takip',
             'icon': Icons.calendar_today,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Randevu Geçmişi',
             'description': 'Geçmiş randevular ve notlar',
             'icon': Icons.history,
             'color': const Color(0xFF9333EA),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
-            'name': 'Hasta Portalı',
+            'name': 'Patient portal',
             'description': 'Hastalar için özel portal erişimi',
             'icon': Icons.person_pin,
             'color': const Color(0xFFA855F7),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Gelişmiş Arama',
             'description': 'Detaylı hasta arama ve filtreleme',
             'icon': Icons.search,
             'color': const Color(0xFFC084FC),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
-            'name': 'Hasta Grupları',
+            'name': 'Patient groups',
             'description': 'Hasta kategorilendirme ve gruplama',
             'icon': Icons.group,
             'color': const Color(0xFF6B46C1),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
-            'name': 'Hasta İstatistikleri',
+            'name': 'Patient statistics',
             'description': 'Hasta bazlı analiz ve istatistikler',
             'icon': Icons.bar_chart,
             'color': const Color(0xFF7C3AED),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
-            'name': 'Hasta Bildirimleri',
+            'name': 'Patient notifications',
             'description': 'Otomatik hasta bildirim sistemi',
             'icon': Icons.notifications,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
-            'name': 'Hasta Güvenliği',
+            'name': 'Patient privacy',
             'description': 'Hasta veri güvenliği ve gizlilik',
             'icon': Icons.security,
             'color': const Color(0xFF9333EA),
-            'status': 'Aktif',
+            'status': 'Active',
           },
         ],
       },
@@ -603,70 +616,70 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             'description': 'Yapay zeka destekli tanı önerileri',
             'icon': Icons.psychology,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'AI Sohbet Botu',
             'description': 'Hasta ile AI destekli sohbet',
             'icon': Icons.chat,
             'color': const Color(0xFF7C3AED),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Risk Analizi',
             'description': 'Hasta risk değerlendirmesi',
             'icon': Icons.warning,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Tedavi Önerici',
             'description': 'AI destekli tedavi planı önerileri',
             'icon': Icons.medical_services,
             'color': const Color(0xFF9333EA),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Analitik Raporlar',
             'description': 'Detaylı analiz ve raporlar',
             'icon': Icons.analytics,
             'color': const Color(0xFFA855F7),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Mood Takibi',
             'description': 'Hasta ruh hali takip sistemi',
             'icon': Icons.timeline,
             'color': const Color(0xFFC084FC),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Rol Analizi',
             'description': 'Rol bazlı özellik analizi',
             'icon': Icons.people_alt,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Tahmin Analizi',
             'description': 'Gelecek trend ve tahminler',
             'icon': Icons.trending_up,
             'color': const Color(0xFF7C3AED),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'Performans Metrikleri',
             'description': 'Klinik performans ölçümleri',
             'icon': Icons.speed,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Veri Görselleştirme',
             'description': 'İnteraktif grafik ve çizelgeler',
             'icon': Icons.show_chart,
             'color': const Color(0xFF9333EA),
-            'status': 'Aktif',
+            'status': 'Active',
           },
         ],
       },
@@ -681,56 +694,56 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             'description': 'Uzaktan görüşme sistemi',
             'icon': Icons.video_call,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Sesli Notlar',
             'description': 'Ses kayıt ve not alma',
             'icon': Icons.mic,
             'color': const Color(0xFF7C3AED),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Konsültasyon',
             'description': 'Uzman konsültasyon sistemi',
             'icon': Icons.medical_services,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Mobil Uygulama',
             'description': 'Mobil erişim ve özellikler',
             'icon': Icons.phone_android,
             'color': const Color(0xFF9333EA),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Mesajlaşma',
             'description': 'Güvenli mesajlaşma sistemi',
             'icon': Icons.message,
             'color': const Color(0xFFA855F7),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Video Kayıt',
             'description': 'Görüşme kayıt ve arşivleme',
             'icon': Icons.videocam,
             'color': const Color(0xFFC084FC),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'Ekran Paylaşımı',
             'description': 'Ekran paylaşım özelliği',
             'icon': Icons.screen_share,
             'color': const Color(0xFF6B46C1),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'Çoklu Dil',
             'description': 'Çoklu dil desteği',
             'icon': Icons.language,
             'color': const Color(0xFF7C3AED),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
         ],
       },
@@ -745,56 +758,56 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             'description': 'Detaylı rapor oluşturma',
             'icon': Icons.analytics,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Finansal Yönetim',
             'description': 'Gelir-gider takibi',
             'icon': Icons.account_balance_wallet,
             'color': const Color(0xFF7C3AED),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Personel Yönetimi',
             'description': 'Personel takip ve yönetim',
             'icon': Icons.people,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Faturalandırma',
             'description': 'Otomatik fatura oluşturma',
             'icon': Icons.receipt,
             'color': const Color(0xFF9333EA),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Sigorta Entegrasyonu',
             'description': 'Sigorta sistemleri entegrasyonu',
             'icon': Icons.local_hospital,
             'color': const Color(0xFFA855F7),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'E-Reçete',
             'description': 'Elektronik reçete sistemi',
             'icon': Icons.medication,
             'color': const Color(0xFFC084FC),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Stok Yönetimi',
             'description': 'İlaç ve malzeme stok takibi',
             'icon': Icons.inventory,
             'color': const Color(0xFF6B46C1),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'Kalite Kontrol',
             'description': 'Hizmet kalitesi değerlendirme',
             'icon': Icons.check_circle,
             'color': const Color(0xFF7C3AED),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
         ],
       },
@@ -809,56 +822,56 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             'description': 'Sistem güvenlik yapılandırması',
             'icon': Icons.security,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Dil settings',
             'description': 'Çoklu dil desteği',
             'icon': Icons.language,
             'color': const Color(0xFF7C3AED),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Offline Ayarlar',
             'description': 'Çevrimdışı çalışma modu',
             'icon': Icons.wifi_off,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Kullanıcı Yönetimi',
             'description': 'Kullanıcı hesapları ve yetkiler',
             'icon': Icons.person_add,
             'color': const Color(0xFF9333EA),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Veri Yedekleme',
             'description': 'Otomatik veri yedekleme',
             'icon': Icons.backup,
             'color': const Color(0xFFA855F7),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Audit Log',
             'description': 'Sistem aktivite kayıtları',
             'icon': Icons.history,
             'color': const Color(0xFFC084FC),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Şifreleme',
             'description': 'Veri şifreleme ve koruma',
             'icon': Icons.lock,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'İki Faktörlü Doğrulama',
             'description': '2FA güvenlik sistemi',
             'icon': Icons.verified_user,
             'color': const Color(0xFF7C3AED),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
         ],
       },
@@ -873,42 +886,42 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             'description': 'REST API ve dokümantasyon',
             'icon': Icons.api,
             'color': const Color(0xFF6B46C1),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Webhook Desteği',
             'description': 'Webhook entegrasyonları',
             'icon': Icons.webhook,
             'color': const Color(0xFF7C3AED),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Üçüncü Parti Entegrasyon',
             'description': 'Dış sistem entegrasyonları',
             'icon': Icons.link,
             'color': const Color(0xFF8B5CF6),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
           {
             'name': 'Veri Senkronizasyonu',
             'description': 'Çoklu sistem veri senkronizasyonu',
             'icon': Icons.sync,
             'color': const Color(0xFF9333EA),
-            'status': 'Geliştiriliyor',
+            'status': 'In development',
           },
           {
             'name': 'Cloud Entegrasyonu',
             'description': 'Bulut servisleri entegrasyonu',
             'icon': Icons.cloud,
             'color': const Color(0xFFA855F7),
-            'status': 'Aktif',
+            'status': 'Active',
           },
           {
             'name': 'Mobile SDK',
             'description': 'Mobil uygulama geliştirme kiti',
             'icon': Icons.phone_android,
             'color': const Color(0xFFC084FC),
-            'status': 'Planlanıyor',
+            'status': 'Planned',
           },
         ],
       },

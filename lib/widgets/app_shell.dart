@@ -143,6 +143,11 @@ class AppShell extends StatelessWidget {
         ),
         floatingActionButton: floatingActionButton,
         body: content,
+        bottomNavigationBar: _MobileTabBar(
+          dests: _dests,
+          selectedIndex: _selectedIndex ?? 0,
+          onSelect: (i) => _go(context, _dests[i].route),
+        ),
       );
     }
 
@@ -642,6 +647,57 @@ class _DrawerTile extends StatelessWidget {
         ),
         onTap: onTap,
       ),
+    );
+  }
+}
+
+
+class _MobileTabBar extends StatelessWidget {
+  const _MobileTabBar({
+    required this.dests,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  final List<_NavDest> dests;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  // HIG: <=5 destinations. We surface the five most-used clinician
+  // routes; the drawer still carries the long tail.
+  static const _primaryRoutes = [
+    "/dashboard",
+    "/patients",
+    "/appointments",
+    "/session",
+    "/settings",
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = <_NavDest>[];
+    for (final r in _primaryRoutes) {
+      final found = dests.where((d) => d.route == r).toList();
+      if (found.isNotEmpty) filtered.add(found.first);
+    }
+    final activeIndex = filtered.indexWhere(
+        (d) => d.route == (selectedIndex >= 0 && selectedIndex < dests.length
+            ? dests[selectedIndex].route
+            : ""));
+    return NavigationBar(
+      selectedIndex: activeIndex < 0 ? 0 : activeIndex,
+      destinations: [
+        for (final d in filtered)
+          NavigationDestination(
+            icon: Icon(d.icon),
+            selectedIcon: Icon(d.selectedIcon),
+            label: d.label,
+          ),
+      ],
+      onDestinationSelected: (i) {
+        final destIndex = dests.indexWhere((d) => d.route == filtered[i].route);
+        if (destIndex >= 0) onSelect(destIndex);
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/data/appearance_preferences.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
@@ -126,6 +127,11 @@ class SettingsScreen extends StatelessWidget {
                   'pinned per tenant, no cross-replication.',
               onTap: () =>
                   Navigator.of(context).pushNamed('/settings/region')),
+          _row(context, theme, cs,
+              icon: Icons.dark_mode_outlined,
+              title: 'Appearance',
+              body: 'Light, dark, or follow the operating system.',
+              onTap: () => _openAppearanceSheet(context)),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Trust & legal'),
           _row(context, theme, cs,
@@ -323,5 +329,59 @@ class SettingsScreen extends StatelessWidget {
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacementNamed('/landing');
+  }
+
+  Future<void> _openAppearanceSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (ctx) {
+        return SafeArea(
+          child: AnimatedBuilder(
+            animation: AppearancePreferences.instance,
+            builder: (_, __) {
+              final mode = AppearancePreferences.instance.themeMode;
+              Widget tile(ThemeMode m, String label, IconData icon) =>
+                  RadioListTile<ThemeMode>(
+                    value: m,
+                    groupValue: mode,
+                    title: Row(children: [
+                      Icon(icon, size: 18),
+                      const SizedBox(width: 8),
+                      Text(label),
+                    ]),
+                    onChanged: (v) async {
+                      if (v != null) {
+                        await AppearancePreferences.instance
+                            .setThemeMode(v);
+                      }
+                    },
+                  );
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Appearance',
+                        style: Theme.of(ctx)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 12),
+                    tile(ThemeMode.system, 'Follow system',
+                        Icons.brightness_auto_outlined),
+                    tile(ThemeMode.light, 'Light',
+                        Icons.light_mode_outlined),
+                    tile(ThemeMode.dark, 'Dark',
+                        Icons.dark_mode_outlined),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 }

@@ -227,6 +227,25 @@ class _AllClear extends StatelessWidget {
             Text('No patients need attention right now.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6))),
+            const SizedBox(height: PsySpacing.lg),
+            Wrap(
+              spacing: PsySpacing.sm,
+              alignment: WrapAlignment.center,
+              children: [
+                FilledButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/patients'),
+                  icon: const Icon(Icons.group_outlined),
+                  label: const Text('Open roster'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/appointments'),
+                  icon: const Icon(Icons.event),
+                  label: const Text('Schedule a session'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

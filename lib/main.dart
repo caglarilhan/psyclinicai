@@ -51,6 +51,9 @@ import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
 import 'package:psyclinicai/screens/settings/settings_screen.dart';
 import 'package:psyclinicai/screens/static/about_page.dart';
 import 'package:psyclinicai/screens/static/changelog_page.dart';
+import 'package:psyclinicai/screens/static/compare_page.dart';
+import 'package:psyclinicai/screens/static/faq_page.dart';
+import 'package:psyclinicai/screens/static/pricing_page.dart';
 import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
@@ -61,6 +64,7 @@ import 'package:psyclinicai/screens/splash/splash_screen.dart';
 import 'package:psyclinicai/screens/static/tos_page.dart';
 import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
+import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
@@ -132,11 +136,13 @@ class PsyClinicAIApp extends StatelessWidget {
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
-          return MaterialApp(
+          return AnimatedBuilder(
+            animation: AppearancePreferences.instance,
+            builder: (ctx, _) => MaterialApp(
             title: 'PsyClinicAI',
             theme: PsyTheme.light(),
             darkTheme: PsyTheme.dark(),
-            themeMode: ThemeMode.light,
+            themeMode: AppearancePreferences.instance.themeMode,
             debugShowCheckedModeBanner: false,
             navigatorObservers: [_PsyTitleObserver()],
             // B17 (Sprint 8): EN + TR ship today. Remaining EU locales
@@ -286,6 +292,9 @@ class PsyClinicAIApp extends StatelessWidget {
               },
               '/security': (context) => const SecurityPage(),
               '/about': (context) => const AboutPage(),
+              '/pricing': (context) => const PricingPage(),
+              '/compare': (context) => const ComparePage(),
+              '/faq': (context) => const FaqPage(),
               '/changelog': (context) => const ChangelogPage(),
               '/status': (context) => const StatusPage(),
               '/privacy': (context) => const PrivacyPage(),
@@ -332,6 +341,7 @@ class PsyClinicAIApp extends StatelessWidget {
             onUnknownRoute: (settings) => MaterialPageRoute(
               builder: (_) => NotFoundPage(path: settings.name),
             ),
+          ),
           );
         },
       ),

@@ -8,6 +8,7 @@ import '../../services/data/firestore_schema.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_reveal.dart';
+import '../../widgets/onboarding_checklist.dart';
 
 /// Dashboard v2 — clinician home.
 ///
@@ -61,6 +62,11 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: PsySpacing.xl),
           ],
           PsyReveal(child: _KpiRow(theme: theme, cs: cs)),
+          const SizedBox(height: PsySpacing.xxl),
+          PsyReveal(
+            delay: const Duration(milliseconds: 40),
+            child: _SetupChecklist(),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           PsyReveal(
             delay: const Duration(milliseconds: 80),
@@ -613,5 +619,49 @@ class _RecentActivity extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _SetupChecklist extends StatelessWidget {
+  const _SetupChecklist();
+
+  @override
+  Widget build(BuildContext context) {
+    final nav = Navigator.of(context);
+    final items = <OnboardingChecklistItem>[
+      OnboardingChecklistItem(
+        id: 'profile',
+        label: 'Add your clinician profile',
+        body: 'NPI, license, signature — feeds the superbill.',
+        icon: Icons.badge_outlined,
+        done: false,
+        onTap: () => nav.pushNamed('/settings/profile'),
+      ),
+      OnboardingChecklistItem(
+        id: 'mfa',
+        label: 'Enable two-factor authentication',
+        body: 'TOTP + recovery codes. Required for ePHI under HIPAA.',
+        icon: Icons.shield_outlined,
+        done: false,
+        onTap: () => nav.pushNamed('/settings/mfa'),
+      ),
+      OnboardingChecklistItem(
+        id: 'stripe',
+        label: 'Connect Stripe to take payments',
+        body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
+        icon: Icons.payments_outlined,
+        done: false,
+        onTap: () => nav.pushNamed('/settings/payments'),
+      ),
+      OnboardingChecklistItem(
+        id: 'first-patient',
+        label: 'Invite your first patient',
+        body: 'Send the intake form, capture consent, schedule.',
+        icon: Icons.person_add_alt_outlined,
+        done: false,
+        onTap: () => nav.pushNamed('/patients'),
+      ),
+    ];
+    return OnboardingChecklist(items: items);
   }
 }

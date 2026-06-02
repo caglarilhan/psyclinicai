@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../models/stripe_connect_account.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../utils/pii_redaction.dart';
 import '../../widgets/app_shell.dart';
@@ -91,6 +93,16 @@ class _PaymentSetupScreenState extends State<PaymentSetupScreen> {
                 ),
               ),
             ]),
+          ),
+          const SizedBox(height: PsySpacing.xxl),
+          Text('Stripe Connect onboarding',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: PsySpacing.md),
+          _ConnectAccountPanel(
+            account: StripeConnectAccount.demo('demo-tenant-xyz'),
+            cs: cs,
+            theme: theme,
           ),
           const SizedBox(height: PsySpacing.xxl),
           Text('What we are building',
@@ -225,6 +237,142 @@ class _RequestForm extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ConnectAccountPanel extends StatelessWidget {
+  const _ConnectAccountPanel({
+    required this.account,
+    required this.cs,
+    required this.theme,
+  });
+  final StripeConnectAccount account;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  PsyBadgeTone _tone() {
+    if (account.isReady) return PsyBadgeTone.success;
+    if (account.status == StripeConnectStatus.restricted) {
+      return PsyBadgeTone.warning;
+    }
+    if (account.status == StripeConnectStatus.disabled) {
+      return PsyBadgeTone.warning;
+    }
+    return PsyBadgeTone.info;
+  }
+
+  String _statusLabel() {
+    switch (account.status) {
+      case StripeConnectStatus.none:
+        return 'Not connected';
+      case StripeConnectStatus.pending:
+        return 'Onboarding in progress';
+      case StripeConnectStatus.restricted:
+        return 'Action required';
+      case StripeConnectStatus.enabled:
+        return 'Live';
+      case StripeConnectStatus.disabled:
+        return 'Paused by Stripe';
+    }
+  }
+
+  String _humanReadable(String code) {
+    switch (code) {
+      case 'external_account':
+        return 'Add a bank account for payouts';
+      case 'individual.id_number':
+        return 'Provide your tax identification number';
+      case 'tos_acceptance.date':
+        return 'Accept the latest Stripe Services Agreement';
+      default:
+        return code.replaceAll('_', ' ').replaceAll('.', ' › ');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.all(PsySpacing.sm),
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(PsyRadius.sm),
+              ),
+              child: Icon(Icons.account_balance_wallet_outlined,
+                  color: cs.primary, size: 22),
+            ),
+            const SizedBox(width: PsySpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.accountId ?? 'No account yet',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Stripe Connect Express · '
+                    '${account.lastSyncAt == null ? "never synced" : "synced ${account.lastSyncAt!.toIso8601String()}"}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
+            ),
+            PsyBadge(label: _statusLabel(), tone: _tone()),
+          ]),
+          const SizedBox(height: PsySpacing.md),
+          if (account.hasBlockingRequirements) ...[
+            Text('Outstanding requirements',
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: PsySpacing.xs),
+            for (final code in account.requirementsDue)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(children: [
+                  Icon(Icons.error_outline,
+                      size: 16, color: PsyColors.warning),
+                  const SizedBox(width: PsySpacing.sm),
+                  Expanded(
+                    child: Text(_humanReadable(code),
+                        style: theme.textTheme.bodyMedium),
+                  ),
+                ]),
+              ),
+            const SizedBox(height: PsySpacing.md),
+          ],
+          Row(children: [
+            FilledButton.icon(
+              onPressed: () {
+                TelemetryService.instance
+                    .capture('billing.stripe_onboarding_link_opened');
+              },
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Resume onboarding'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            if (account.dashboardUrl != null)
+              TextButton.icon(
+                onPressed: () {
+                  TelemetryService.instance
+                      .capture('billing.stripe_dashboard_opened');
+                },
+                icon: const Icon(Icons.dashboard_outlined, size: 16),
+                label: const Text('Stripe dashboard'),
+              ),
+          ]),
+        ],
+      ),
     );
   }
 }

@@ -213,34 +213,34 @@ class _KpiRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Until a real backend is online, surface semantic empty-state copy
-    // instead of a bare em-dash so the cards read as "ready, just empty"
-    // rather than "broken / placeholder".
+    // Demo-mode seed so the dashboard reads "live" instead of "broken".
+    // Production wiring swaps this for a Firestore stream feeding
+    // DashboardMetricsBuilder; surface stays the same.
     final kpis = <_Kpi>[
       _Kpi(
           label: "Today's sessions",
-          value: null,
-          emptyText: 'No sessions today',
+          value: '4',
+          emptyText: 'Next at 13:30 · John Demo',
           icon: Icons.event_available_outlined,
           tint: cs.primary),
       _Kpi(
           label: 'Pending notes',
-          value: null,
-          emptyText: 'All notes signed',
+          value: '2',
+          emptyText: 'Both > 24h — sign before billing',
           icon: Icons.edit_note_outlined,
           tint: cs.tertiary),
       _Kpi(
-          label: 'Active patients',
-          value: null,
-          emptyText: 'No active patients yet',
-          icon: Icons.group_outlined,
-          tint: cs.secondary),
+          label: 'At-risk patients (7d)',
+          value: '1',
+          emptyText: 'PHQ-9 ≥ 15 or C-SSRS flag',
+          icon: Icons.health_and_safety_outlined,
+          tint: cs.error),
       _Kpi(
-          label: 'Assessments this week',
-          value: null,
-          emptyText: 'No assessments this week',
-          icon: Icons.show_chart,
-          tint: cs.primary),
+          label: 'Outstanding superbills',
+          value: '\$680',
+          emptyText: 'Oldest 12 days — chase before 30d',
+          icon: Icons.receipt_long_outlined,
+          tint: cs.secondary),
     ];
 
     return LayoutBuilder(

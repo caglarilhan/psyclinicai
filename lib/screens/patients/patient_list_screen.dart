@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/patient_filter.dart';
 import '../../services/data/patient_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/patient_list_filter_bar.dart';
 
 /// `/patients` — searchable patient roster.
 class PatientListScreen extends StatefulWidget {
@@ -20,6 +22,7 @@ class PatientListScreen extends StatefulWidget {
 class _PatientListScreenState extends State<PatientListScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  PatientFilter _filter = PatientFilter.empty;
 
   @override
   void dispose() {
@@ -53,7 +56,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
               prefixIcon: Icon(Icons.search),
             ),
           ),
-          const SizedBox(height: PsySpacing.xl),
+          const SizedBox(height: PsySpacing.md),
+          PatientListFilterBar(
+            filter: _filter,
+            onChanged: (f) => setState(() => _filter = f),
+          ),
+          const SizedBox(height: PsySpacing.lg),
           Expanded(child: _list(context, theme, cs)),
         ],
       ),
@@ -140,11 +148,28 @@ class _PatientListScreenState extends State<PatientListScreen> {
           status: 'Follow-up'),
     ];
     final filtered = demos.where((d) {
-      if (_query.isEmpty) return true;
-      final q = _query.toLowerCase();
-      return d.name.toLowerCase().contains(q) ||
-          d.memberId.toLowerCase().contains(q) ||
-          d.insurer.toLowerCase().contains(q);
+      if (_query.isNotEmpty) {
+        final q = _query.toLowerCase();
+        final matchQuery = d.name.toLowerCase().contains(q) ||
+            d.memberId.toLowerCase().contains(q) ||
+            d.insurer.toLowerCase().contains(q);
+        if (!matchQuery) return false;
+      }
+      if (_filter.statuses.isNotEmpty) {
+        final statusId = d.status.toLowerCase().replaceAll(RegExp(r'\s+'), '-');
+        final matchStatus = _filter.statuses
+            .any((s) => s.id == statusId || s.name == statusId);
+        if (!matchStatus) return false;
+      }
+      if (_filter.risks.isNotEmpty) {
+        final risk = d.tone == PsyBadgeTone.warning
+            ? PatientRiskFilter.medium
+            : (d.tone == PsyBadgeTone.danger
+                ? PatientRiskFilter.high
+                : PatientRiskFilter.low);
+        if (!_filter.risks.contains(risk)) return false;
+      }
+      return true;
     }).toList(growable: false);
     if (filtered.isEmpty) {
       return _emptyState(

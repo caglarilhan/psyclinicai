@@ -27,6 +27,7 @@ class ConsentRecord {
     required this.sensitiveDataConsent,
     required this.signedFullName,
     DateTime? signedAt,
+    this.withdrawnAt,
   }) : signedAt = signedAt ?? DateTime.now();
 
   factory ConsentRecord.fromJson(Map<String, dynamic> json) => ConsentRecord(
@@ -38,6 +39,7 @@ class ConsentRecord {
         sensitiveDataConsent: json['sensitiveDataConsent'] as bool? ?? false,
         signedFullName: json['signedFullName'] as String? ?? '',
         signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
+        withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
       );
 
   /// Opaque patient id (same identifier used elsewhere in the chart).
@@ -67,15 +69,27 @@ class ConsentRecord {
   /// Server-clock-trusted timestamp. Stored as UTC ISO-8601.
   final DateTime signedAt;
 
-  /// True only when the legally required consents are granted and the
-  /// signature line is non-empty. AI assistance consent is granular —
-  /// the patient can withdraw it and still receive care, so it is NOT
+  /// GDPR Art. 7(3) — moment the patient withdrew this consent. When
+  /// set, the record is no longer a valid grant; downstream gates
+  /// ([ConsentGuard]) must deny. Null on a fresh signature.
+  final DateTime? withdrawnAt;
+
+  /// True only when the legally required consents are granted, the
+  /// signature line is non-empty, AND the patient has not subsequently
+  /// withdrawn. AI assistance consent is granular — the patient can
+  /// withdraw THAT specifically and still receive care, so it is NOT
   /// required for validity.
   bool get isValid =>
+      withdrawnAt == null &&
       dataProcessingConsent &&
       sensitiveDataConsent &&
       signedFullName.trim().isNotEmpty &&
       policyVersion.isNotEmpty;
+
+  /// True when this record has been formally withdrawn — surfaced on
+  /// the patient chart so a clinician can re-sign before a new
+  /// session.
+  bool get isWithdrawn => withdrawnAt != null;
 
   Map<String, dynamic> toJson() => {
         'patientId': patientId,
@@ -85,6 +99,8 @@ class ConsentRecord {
         'sensitiveDataConsent': sensitiveDataConsent,
         'signedFullName': signedFullName,
         'signedAt': signedAt.toUtc().toIso8601String(),
+        if (withdrawnAt != null)
+          'withdrawnAt': withdrawnAt!.toUtc().toIso8601String(),
       };
 
   ConsentRecord copyWith({
@@ -92,6 +108,7 @@ class ConsentRecord {
     bool? aiAssistanceConsent,
     bool? sensitiveDataConsent,
     String? signedFullName,
+    DateTime? withdrawnAt,
   }) =>
       ConsentRecord(
         patientId: patientId,
@@ -103,5 +120,6 @@ class ConsentRecord {
             sensitiveDataConsent ?? this.sensitiveDataConsent,
         signedFullName: signedFullName ?? this.signedFullName,
         signedAt: signedAt,
+        withdrawnAt: withdrawnAt ?? this.withdrawnAt,
       );
 }

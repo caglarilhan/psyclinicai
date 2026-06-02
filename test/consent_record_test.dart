@@ -78,5 +78,28 @@ void main() {
           reason: 'UTC ISO-8601 timestamps must end with Z');
       expect(DateTime.tryParse(signedAt), isNotNull);
     });
+
+    test('withdrawnAt invalidates the record (GDPR Art. 7(3))', () {
+      final live = build();
+      expect(live.isValid, isTrue);
+      expect(live.isWithdrawn, isFalse);
+
+      final withdrawn = live.copyWith(
+          withdrawnAt: DateTime.utc(2026, 6, 5, 10));
+      expect(withdrawn.isValid, isFalse);
+      expect(withdrawn.isWithdrawn, isTrue);
+    });
+
+    test('withdrawnAt survives JSON round-trip', () {
+      final src = build().copyWith(
+          withdrawnAt: DateTime.utc(2026, 6, 5, 10));
+      final back = ConsentRecord.fromJson(src.toJson());
+      expect(back.withdrawnAt?.toUtc(), src.withdrawnAt?.toUtc());
+      expect(back.isValid, isFalse);
+    });
+
+    test('toJson omits withdrawnAt when the record is still live', () {
+      expect(build().toJson().containsKey('withdrawnAt'), isFalse);
+    });
   });
 }

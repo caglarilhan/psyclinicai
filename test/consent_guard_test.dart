@@ -55,6 +55,14 @@ void main() {
       expect(guard.aiAllowed('p1'), isFalse);
       expect(guard.aiAllowed('anyone'), isFalse);
     });
+
+    test('a withdrawn consent denies AI even if AI flag was true', () {
+      final withdrawn = build()
+          .copyWith(withdrawnAt: DateTime.utc(2026, 6, 5));
+      final guard = ConsentGuard.fromMap({'p1': withdrawn});
+      expect(guard.aiAllowed('p1'), isFalse,
+          reason: 'GDPR Art. 7(3) — withdrawal must close the AI gate');
+    });
   });
 
   group('ConsentGuard.requireAi', () {

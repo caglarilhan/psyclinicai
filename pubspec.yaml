@@ -15,6 +15,9 @@ dependencies:
   shared_preferences: ^2.2.2
   gap: ^3.0.1
   crypto: ^3.0.3
+  # B6 (Sprint 8): DSAR encrypted ZIP export — bundle so PHI does
+  # not have to leave the device through the clipboard.
+  archive: ^3.6.1
   json_annotation: ^4.9.0
   provider: ^6.1.1
   # PDF Export için gerekli paketler
@@ -67,6 +70,11 @@ dependencies:
   image_picker: ^1.0.4
 
   intl: any
+  # B17 (Sprint 8): localizations baseline — EN + TR ship today, the
+  # remaining EU locales (DE/FR/NL/IT/ES) land once professional
+  # translations clear PHQ-9 / GAD-7 / C-SSRS validation review.
+  flutter_localizations:
+    sdk: flutter
   timezone: any
   # Observability — Sentry crash + error capture. No-op until SENTRY_DSN
   # is provided via --dart-define (see lib/config/build_config.dart and
@@ -88,6 +96,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Generates `lib/l10n/app_localizations.dart` from the .arb files
+  # under `lib/l10n/`. See `l10n.yaml` at repo root.
+  generate: true
   assets:
     - assets/
     - assets/guidelines/

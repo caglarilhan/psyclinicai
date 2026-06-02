@@ -1,0 +1,45 @@
+{
+  "@@locale": "tr",
+
+  "appName": "PsyClinicAI",
+
+  "navHome": "Anasayfa",
+  "navPatients": "Hastalar",
+  "navCalendar": "Takvim",
+  "navSettings": "Ayarlar",
+  "navTrustCenter": "Güven Merkezi",
+
+  "actionSave": "Kaydet",
+  "actionCancel": "Vazgeç",
+  "actionConfirm": "Onayla",
+  "actionBack": "Geri",
+  "actionNext": "İleri",
+  "actionExport": "Dışa aktar",
+  "actionCopy": "Kopyala",
+
+  "consentDeniedTitle": "Yapay zekâ rızası alınmamış",
+  "consentDeniedBody": "Yapay zekâ ile taslak oluşturmadan önce intake formunu güncelleyin.",
+  "consentDeniedAction": "Intake formunu aç",
+
+  "imminentRiskHeadline": "Akut risk — hemen müdahale",
+  "imminentRiskBody": "Hastayı yalnız bırakmayın. Tam klinik intihar risk değerlendirmesi yapın ve protokole göre acil ya da yatış birimine transferi başlatın.",
+  "imminentRiskCta": "Güvenlik planını şimdi başlat",
+  "imminentRiskDismiss": "Bu durumu kendim yöneteceğim",
+
+  "dismissReasonHospitalized": "Hasta yatış birimine yönlendirildi / götürüldü",
+  "dismissReasonFamilyPresent": "Hasta yanında bilgilendirilmiş bir aile bireyi/yetişkin var",
+  "dismissReasonSupervisorHandoff": "Süpervizöre / nöbetçi psikiyatriste devredildi",
+  "dismissReasonInSessionPlan": "Güvenlik planı bu seansın içinde tamamlanacak",
+  "dismissReasonOther": "Diğer (seans notunda belgelendi)",
+
+  "crisisResources": "Kriz kaynakları",
+  "crisisResourcesLastReviewed": "Son güncelleme {date} — acil durumlara güvenmeden önce numaraları doğrulayın.",
+
+  "dsarPortalTitle": "Veri ihracı (DSAR)",
+  "dsarPortalSubtitle": "KVKK Md. 11 ve GDPR Madde 15 + 20 kapsamında erişim ve taşınabilirlik.",
+  "dsarPhiBanner": "Bu dosyayı klinik dışına paylaşmak hastanın KVKK Md. 11 / GDPR Art. 15/20 hakkı altındadır. JSON'u PHI olarak işleyin.",
+  "dsarEmptyBundle": "Henüz hasta kaydı yok. Bir intake doldurun ya da güvenlik planı oluşturun.",
+
+  "phiBadge": "PHI",
+  "phiBannerWeb": "Web sürümü cihazda PHI önbellekleme yapmaz. Her işlemde sunucuya okur ve yazar."
+}

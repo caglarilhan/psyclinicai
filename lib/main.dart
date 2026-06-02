@@ -61,6 +61,7 @@ import 'package:psyclinicai/services/patient_service.dart';
 import 'package:psyclinicai/services/region_service.dart';
 import 'package:psyclinicai/services/role_service.dart';
 import 'package:psyclinicai/services/theme_service.dart';
+import 'package:psyclinicai/l10n/app_localizations.dart';
 import 'package:psyclinicai/theme/psy_theme.dart';
 import 'package:psyclinicai/utils/document_title.dart';
 
@@ -121,6 +122,11 @@ class PsyClinicAIApp extends StatelessWidget {
             themeMode: ThemeMode.light,
             debugShowCheckedModeBanner: false,
             navigatorObservers: [_PsyTitleObserver()],
+            // B17 (Sprint 8): EN + TR ship today. Remaining EU locales
+            // land once validated translations clear PHQ-9 / GAD-7 /
+            // C-SSRS review.
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             initialRoute: '/',
             routes: {
               '/': (context) => const SplashScreen(),

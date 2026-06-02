@@ -195,6 +195,42 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // MFA enrolments — owner-only; recovery_code_hashes immutable
+    // post-create. used_recovery_codes is append-only (you mark codes
+    // as used, never rewrite). HIPAA §164.312(d).
+    match /mfa_enrolments/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.recovery_code_hashes is list
+        && request.resource.data.recovery_code_hashes.size() >= 8
+        && request.resource.data.recovery_code_hashes.size() <= 12;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.recovery_code_hashes
+              == resource.data.recovery_code_hashes
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.enrolled_at == resource.data.enrolled_at
+        && request.resource.data.used_recovery_codes.size()
+              >= resource.data.used_recovery_codes.size();
+      allow delete: if false;
+    }
+
+    // Tenant region pin — write-once invariant. Region migrations go
+    // through tenant_region_changes/{id} resolved by a CISO-approved
+    // Cloud Function; clients cannot flip the field directly.
+    match /tenants/{tid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.region in ['eu-central', 'us-central'];
+      allow update: if request.auth != null
+        && request.resource.data.region == resource.data.region;
+      allow delete: if false;
+    }
+    match /tenant_region_changes/{id} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
     // Hard fail — anything else is denied.
     match /{document=**} {
       allow read, write: if false;

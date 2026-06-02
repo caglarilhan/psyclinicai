@@ -8,6 +8,7 @@ import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../utils/audit_log_exporter.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/audit_log_detail_sheet.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 
@@ -219,6 +220,9 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
               // Use the entry id (not list index) so filtering doesn't
               // confuse which row is expanded.
               final isOpen = _expandedIndex == entries[i].id;
+              final publicEntry = _toPublicEntry(entries[i]);
+              final previousHash =
+                  i == 0 ? null : _toPublicEntry(entries[i - 1]).hash;
               return _AuditRow(
                 entry: entries[i],
                 theme: theme,
@@ -226,6 +230,11 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
                 expanded: isOpen,
                 onTap: () => setState(() =>
                     _expandedIndex = isOpen ? null : entries[i].id),
+                onOpenDetail: () => AuditLogDetailSheet.show(
+                  context,
+                  entry: publicEntry,
+                  previousHash: previousHash,
+                ),
               );
             },
           ),
@@ -463,18 +472,20 @@ class _AuditRow extends StatelessWidget {
     required this.cs,
     required this.expanded,
     required this.onTap,
+    this.onOpenDetail,
   });
   final _AuditEntry entry;
   final ThemeData theme;
   final ColorScheme cs;
   final bool expanded;
   final VoidCallback onTap;
+  final VoidCallback? onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
     final tone = entry.kind.tone(cs);
     return PsyCard(
-      onTap: onTap,
+      onTap: onOpenDetail ?? onTap,
       padding: const EdgeInsets.symmetric(
           horizontal: PsySpacing.lg, vertical: PsySpacing.md),
       child: Column(

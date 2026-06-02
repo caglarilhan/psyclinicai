@@ -39,6 +39,13 @@ export { escalationSoftLockCleanup } from "./escalation_soft_lock_cleanup";
 export { telehealthRoom } from "./telehealth_room";
 export { depositIntent, depositCapture } from "./deposit_handler";
 
+// Sprint 21 — server-side LLM proxy + Stripe Connect onboarding.
+export { llmProxy } from "./llm_proxy";
+export {
+  stripeConnectOnboard,
+  stripeConnectWebhook,
+} from "./stripe_connect";
+
 // Sprint 14 — SOC 2 quarterly access review snapshot cron.
 export { accessReviewCron } from "./access_review_cron";
 

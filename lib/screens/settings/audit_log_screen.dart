@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../../models/audit_log_entry.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../utils/audit_log_exporter.dart';
 import '../../widgets/app_shell.dart';
@@ -53,78 +56,119 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
       );
 
   Future<void> _exportInFormat(
-      List<_AuditEntry> rows, String format) async {
-    final redacted = rows.map(_toPublicEntry).map(redactForSiem);
+    List<_AuditEntry> rows,
+    String format, {
+    required bool redact,
+  }) async {
+    final public = rows.map(_toPublicEntry);
+    final shaped = redact ? public.map(redactForSiem) : public;
     final String body;
     switch (format) {
       case 'jsonl':
-        body = toJsonLines(redacted);
+        body = toJsonLines(shaped);
         break;
       case 'syslog':
-        body = toSyslogRfc5424(redacted);
+        body = toSyslogRfc5424(shaped);
         break;
       case 'csv':
       default:
-        body = toCsv(redacted);
+        body = toCsv(shaped);
         break;
     }
     await Clipboard.setData(ClipboardData(text: body));
+    // Unredacted exports are still allowed — auditors sometimes need
+    // the raw row — but the event is split so dashboards can flag the
+    // unredacted leg for review.
+    unawaited(TelemetryService.instance.capture(
+      redact
+          ? 'compliance.audit_log_export'
+          : 'compliance.audit_log_export_unredacted',
+      properties: {
+        'format': format,
+        'rows': rows.length,
+        'redacted': redact,
+      },
+    ));
     if (!mounted) return;
     Navigator.of(context).maybePop();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
           '${rows.length} rows copied as ${format.toUpperCase()} '
-          '(PHI redacted).'),
+          '${redact ? '(PHI redacted)' : '(RAW — PHI included)'}.'),
     ));
   }
 
   void _showExportSheet(BuildContext context, List<_AuditEntry> rows) {
+    var redact = true; // default ON — fail-closed for PHI
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final cs = theme.colorScheme;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-                PsySpacing.xl, 0, PsySpacing.xl, PsySpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Export audit log',
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: PsySpacing.xs),
-                Text(
-                  'Email-shaped actors and the last two IP octets are '
-                  'masked before the bundle leaves your device. The '
-                  'export itself is logged on this trail.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      height: 1.4),
-                ),
-                const SizedBox(height: PsySpacing.lg),
-                _ExportTile(
-                  label: 'JSONL · for Splunk / Datadog',
-                  icon: Icons.data_object,
-                  onTap: () => _exportInFormat(rows, 'jsonl'),
-                ),
-                _ExportTile(
-                  label: 'CSV · for compliance review',
-                  icon: Icons.table_chart_outlined,
-                  onTap: () => _exportInFormat(rows, 'csv'),
-                ),
-                _ExportTile(
-                  label: 'Syslog RFC 5424 · for ELK',
-                  icon: Icons.dns_outlined,
-                  onTap: () => _exportInFormat(rows, 'syslog'),
-                ),
-              ],
+        return StatefulBuilder(builder: (ctx, setSheetState) {
+          final theme = Theme.of(ctx);
+          final cs = theme.colorScheme;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  PsySpacing.xl, 0, PsySpacing.xl, PsySpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Export audit log',
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: PsySpacing.xs),
+                  Text(
+                    'With redaction on, email-shaped actors and the last '
+                    'two IP octets are masked before the bundle leaves '
+                    'your device. The export itself is logged on this '
+                    'trail either way.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                        height: 1.4),
+                  ),
+                  const SizedBox(height: PsySpacing.md),
+                  SwitchListTile.adaptive(
+                    value: redact,
+                    onChanged: (v) => setSheetState(() => redact = v),
+                    title: const Text('Redact PHI (recommended)'),
+                    subtitle: Text(
+                      redact
+                          ? 'Emails and last two IP octets are masked.'
+                          : 'RAW export — file contains PHI. Audit log '
+                              'flags this leg for compliance review.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: redact
+                              ? cs.onSurface.withValues(alpha: 0.6)
+                              : cs.error),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  const SizedBox(height: PsySpacing.sm),
+                  _ExportTile(
+                    label: 'JSONL · for Splunk / Datadog',
+                    icon: Icons.data_object,
+                    onTap: () =>
+                        _exportInFormat(rows, 'jsonl', redact: redact),
+                  ),
+                  _ExportTile(
+                    label: 'CSV · for compliance review',
+                    icon: Icons.table_chart_outlined,
+                    onTap: () =>
+                        _exportInFormat(rows, 'csv', redact: redact),
+                  ),
+                  _ExportTile(
+                    label: 'Syslog RFC 5424 · for ELK',
+                    icon: Icons.dns_outlined,
+                    onTap: () =>
+                        _exportInFormat(rows, 'syslog', redact: redact),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }

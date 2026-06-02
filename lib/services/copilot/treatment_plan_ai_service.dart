@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../models/treatment_plan_models.dart';
 import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
+import 'prompt_safety.dart';
 
 /// AI-drafts SMART treatment-plan goals from a diagnosis + clinical
 /// formulation, using Anthropic Claude (BYOK). Decision-support — the
@@ -57,15 +58,17 @@ class TreatmentPlanAiService {
         'crisisPrevention|other","priority":"low|medium|high|critical",'
         '"measurement":"how progress is measured","targetWeeks":<int>}]}';
 
-    final user =
-        'Primary diagnosis: $diagnosis\n\n'
-        'Clinical formulation:\n$formulation';
+    // Prompt-injection guard (B7): clinician-supplied free-text is
+    // fenced as data-only blocks. Either field can be replayed as
+    // "ignore previous instructions" otherwise.
+    final user = '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('formulation', formulation)}';
 
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 900,
       'temperature': 0.3,
-      'system': system,
+      'system': '$system\n\n${PromptSafety.dataOnlyDirective}',
       'messages': [
         {'role': 'user', 'content': user},
       ],
@@ -180,15 +183,15 @@ class TreatmentPlanAiService {
         'between-session homework assignments tied to the treatment goals. '
         'Each is one short actionable sentence the client could do this week. '
         'Respond STRICT JSON only: {"homework":["...","..."]} (3–5 items).';
-    final user =
-        'Diagnosis: $diagnosis\nActive goals:\n'
-        '${goals.map((g) => '- $g').join('\n')}';
+    // Prompt-injection guard (B7): fence inputs as data-only.
+    final user = '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('active_goals', goals.map((g) => '- $g').join('\n'))}';
 
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 500,
       'temperature': 0.4,
-      'system': system,
+      'system': '$system\n\n${PromptSafety.dataOnlyDirective}',
       'messages': [
         {'role': 'user', 'content': user},
       ],
@@ -266,9 +269,11 @@ class TreatmentPlanAiService {
         'goals and expected duration/frequency, in a professional letter '
         'format with placeholders [Insurer], [Date], [Clinician], [Credentials]. '
         'Do NOT invent facts beyond what is given. Output the letter text only.';
-    final user =
-        'Patient: $patientName\nDiagnosis: $diagnosis\n'
-        'Treatment goals:\n${goals.map((g) => '- $g').join('\n')}';
+    // Prompt-injection guard (B7): patient name / diagnosis / goals
+    // are all clinician-supplied; fence them as data-only.
+    final user = '${PromptSafety.fence('patient', patientName)}\n\n'
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('treatment_goals', goals.map((g) => '- $g').join('\n'))}';
 
     final body = jsonEncode({
       'model': _model,

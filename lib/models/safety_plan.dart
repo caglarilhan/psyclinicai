@@ -68,6 +68,41 @@ class SafetyPlan {
       reasonsForLiving.isEmpty &&
       meansSafety.isEmpty;
 
+  /// Clinical completeness floor — Stanley-Brown intent. A plan is
+  /// considered clinically usable when at minimum it has:
+  ///   • ≥1 warning sign,
+  ///   • ≥1 internal coping strategy,
+  ///   • ≥1 person OR professional the patient can contact for help,
+  ///   • ≥1 crisis line / emergency contact.
+  ///
+  /// We surface this from the save action so a clinician does not
+  /// persist a half-finished plan and walk out of the room thinking
+  /// they did. The getter never blocks save by itself — the UI uses
+  /// it to render a soft warning and ask for confirmation.
+  bool get isClinicallyComplete {
+    final hasContactToReach =
+        supportContacts.isNotEmpty || professionals.isNotEmpty;
+    return warningSigns.isNotEmpty &&
+        copingStrategies.isNotEmpty &&
+        hasContactToReach &&
+        crisisLines.isNotEmpty;
+  }
+
+  /// Sections that are still empty according to [isClinicallyComplete].
+  /// The save dialog uses this to show the clinician exactly which
+  /// blocks still need an entry. Stable lower-case keys so localisation
+  /// keys can map onto them.
+  List<String> get missingClinicalSections {
+    final out = <String>[];
+    if (warningSigns.isEmpty) out.add('warning_signs');
+    if (copingStrategies.isEmpty) out.add('coping_strategies');
+    if (supportContacts.isEmpty && professionals.isEmpty) {
+      out.add('people_to_reach');
+    }
+    if (crisisLines.isEmpty) out.add('crisis_lines');
+    return out;
+  }
+
   SafetyPlan copyWith({
     List<String>? warningSigns,
     List<String>? copingStrategies,

@@ -11,6 +11,7 @@ void main() {
       'DSM-5-TR §296.32(C)',
     ],
     AiSuggestionDisposition disposition = AiSuggestionDisposition.pending,
+    String consentPolicyVersion = '2026-06',
   }) =>
       AiDiagnosisAudit(
         id: 'evt1',
@@ -25,6 +26,7 @@ void main() {
         criteriaMissing: 1,
         citations: citations,
         disposition: disposition,
+        consentPolicyVersion: consentPolicyVersion,
         createdAt: DateTime.utc(2026, 6, 1, 12),
       );
 
@@ -61,6 +63,7 @@ void main() {
         criteriaMissing: 0,
         citations: const ['DSM-5-TR §1'],
         disposition: AiSuggestionDisposition.pending,
+        consentPolicyVersion: '2026-06',
       );
       expect(a.toJson()['temperature'], 0.12);
     });
@@ -119,6 +122,23 @@ void main() {
         () {
       final tooLong = 'x' * 121;
       expect(() => build(candidateLabel: tooLong), throwsA(isA<Error>()));
+    });
+
+    test('empty consentPolicyVersion asserts (GDPR Art. 7 trace)', () {
+      expect(() => build(consentPolicyVersion: ''),
+          throwsA(isA<AssertionError>()));
+    });
+  });
+
+  group('consent policy version round-trip', () {
+    test('survives JSON round-trip', () {
+      final a = build(consentPolicyVersion: '2026-06');
+      final back = AiDiagnosisAudit.fromJson(a.toJson());
+      expect(back.consentPolicyVersion, '2026-06');
+    });
+
+    test('toJson exposes consent_policy_version', () {
+      expect(build().toJson()['consent_policy_version'], '2026-06');
     });
   });
 }

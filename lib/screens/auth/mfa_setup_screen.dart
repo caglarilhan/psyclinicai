@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/pii_redaction.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -33,7 +34,10 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
     TelemetryService.instance.capture(
       'security.mfa_early_access_requested',
       properties: {
-        'email': FirebaseAuthService.instance.profile?.email ?? 'anonymous',
+        // PHI redaction (B4) — telemetry never sees the raw inbox.
+        'email': redactEmail(
+                FirebaseAuthService.instance.profile?.email) ??
+            'anonymous',
       },
     );
     setState(() => _requestSent = true);

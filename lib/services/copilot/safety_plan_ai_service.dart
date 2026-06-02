@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../models/safety_plan.dart';
 import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
+import 'prompt_safety.dart';
 
 /// AI-drafts a Stanley-Brown crisis safety plan (BYOK Claude) the clinician
 /// reviews and completes WITH the client. Decision-support scaffold — not a
@@ -61,15 +62,20 @@ class SafetyPlanAiService {
         'JSON only: {"warningSigns":[],"copingStrategies":[],'
         '"socialDistractions":[],"supportContacts":[],"professionals":[],'
         '"crisisLines":[],"meansSafety":"one sentence on making the '
-        'environment safer"}';
+        'environment safer"}\n\n'
+        '${PromptSafety.dataOnlyDirective}';
 
+    // Prompt-injection guard (B7): fence the clinician-supplied context
+    // as a data-only block so a sentence like "ignore previous
+    // instructions" inside the context cannot hijack the system role.
+    final fencedContext = PromptSafety.fence('context', context);
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 800,
       'temperature': 0.4,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': 'Context: $context'},
+        {'role': 'user', 'content': fencedContext},
       ],
     });
 

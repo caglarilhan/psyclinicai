@@ -49,9 +49,13 @@ class AiDiagnosisAudit {
     required this.criteriaMissing,
     required this.citations,
     required this.disposition,
+    required this.consentPolicyVersion,
     DateTime? createdAt,
   })  : assert(candidateLabel.length <= 120,
             'candidateLabel must be clinician-curated; raw PHI is forbidden'),
+        assert(consentPolicyVersion.length > 0,
+            'consentPolicyVersion must be set — an AI audit row without '
+            'consent context is invalid (GDPR Art. 7).'),
         createdAt = (createdAt ?? DateTime.now()).toUtc();
 
   factory AiDiagnosisAudit.fromJson(Map<String, dynamic> json) =>
@@ -71,6 +75,8 @@ class AiDiagnosisAudit {
             .toList(),
         disposition: AiSuggestionDisposition.fromId(
             json['disposition'] as String?),
+        consentPolicyVersion:
+            json['consent_policy_version'] as String? ?? 'unknown',
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       );
 
@@ -115,6 +121,12 @@ class AiDiagnosisAudit {
   /// What happened next.
   final AiSuggestionDisposition disposition;
 
+  /// Privacy policy / consent template version active when the
+  /// suggestion was surfaced. Required — an AI audit row without a
+  /// consent context is meaningless under GDPR Art. 7. Stored as the
+  /// YYYY-MM stamp copied from the patient's signed [ConsentRecord].
+  final String consentPolicyVersion;
+
   /// UTC timestamp of the event.
   final DateTime createdAt;
 
@@ -142,6 +154,7 @@ class AiDiagnosisAudit {
         criteriaMissing: criteriaMissing,
         citations: citations,
         disposition: disposition ?? this.disposition,
+        consentPolicyVersion: consentPolicyVersion,
         createdAt: createdAt,
       );
 
@@ -158,6 +171,7 @@ class AiDiagnosisAudit {
         'criteria_missing': criteriaMissing,
         'citations': citations,
         'disposition': disposition.name,
+        'consent_policy_version': consentPolicyVersion,
         'created_at': createdAt.toUtc().toIso8601String(),
       };
 }

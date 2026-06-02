@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/pii_redaction.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -27,7 +28,10 @@ class _PaymentSetupScreenState extends State<PaymentSetupScreen> {
     TelemetryService.instance.capture(
       'payments.early_access_requested',
       properties: {
-        'email': FirebaseAuthService.instance.profile?.email ?? 'anonymous',
+        // PHI redaction (B4).
+        'email': redactEmail(
+                FirebaseAuthService.instance.profile?.email) ??
+            'anonymous',
       },
     );
     setState(() => _requested = true);

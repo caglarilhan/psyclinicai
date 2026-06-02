@@ -295,6 +295,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Web build does not cache PHI on this device. Records read from and write to the server on every action.'**
   String get phiBannerWeb;
+
+  /// No description provided for @supervisionQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supervision queue'**
+  String get supervisionQueueTitle;
+
+  /// No description provided for @supervisionQueueSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trainee notes awaiting your approval, change request, or co-sign.'**
+  String get supervisionQueueSubtitle;
+
+  /// No description provided for @supervisionOpenSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get supervisionOpenSection;
+
+  /// No description provided for @supervisionClosedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get supervisionClosedSection;
+
+  /// No description provided for @supervisionEmptyOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes are waiting on you.'**
+  String get supervisionEmptyOpen;
+
+  /// No description provided for @supervisionEmptyClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'No decisions on the record yet.'**
+  String get supervisionEmptyClosed;
+
+  /// No description provided for @supervisionActionApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get supervisionActionApprove;
+
+  /// No description provided for @supervisionActionChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Request changes'**
+  String get supervisionActionChanges;
+
+  /// No description provided for @supervisionActionCoSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Co-sign'**
+  String get supervisionActionCoSign;
+
+  /// No description provided for @supervisionCoSignDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Co-sign here records the supervisor decision but is NOT yet a legally binding electronic signature. Cryptographic signing (TOTP/WebAuthn, eIDAS / HIPAA §164.312(c)(2)) lands in Sprint 10. Until then, keep a wet-signature archive for billable Medicaid notes.'**
+  String get supervisionCoSignDisclaimer;
+
+  /// No description provided for @portalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your portal'**
+  String get portalTitle;
+
+  /// No description provided for @portalWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get portalWelcome;
+
+  /// No description provided for @portalIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'A private space connected to your clinic. Everything you do here is logged for your records and protected under GDPR and KVKK.'**
+  String get portalIntro;
+
+  /// No description provided for @portalIntakeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'First-visit questionnaire'**
+  String get portalIntakeTitle;
+
+  /// No description provided for @portalIntakeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Share history, current medications, and consent with your clinician before the first session.'**
+  String get portalIntakeBody;
+
+  /// No description provided for @portalPromTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress questionnaires'**
+  String get portalPromTitle;
+
+  /// No description provided for @portalPromBody.
+  ///
+  /// In en, this message translates to:
+  /// **'PHQ-9, GAD-7, and other measures requested by your clinician.'**
+  String get portalPromBody;
+
+  /// No description provided for @portalSessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming sessions'**
+  String get portalSessionsTitle;
+
+  /// No description provided for @portalSessionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'See the appointments your clinician scheduled. Cancellations and reschedule requests notify your clinician automatically.'**
+  String get portalSessionsBody;
+
+  /// No description provided for @portalDsarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request your data'**
+  String get portalDsarTitle;
+
+  /// No description provided for @portalDsarBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a copy of every record we hold for you. Delivered as a portable JSON archive.'**
+  String get portalDsarBody;
+
+  /// No description provided for @portalDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close your account'**
+  String get portalDeleteTitle;
+
+  /// No description provided for @portalDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a 30-day deletion. Your clinical record is pseudonymised after the grace window (replaced with an anonymous placeholder).'**
+  String get portalDeleteBody;
+
+  /// No description provided for @portalSecurityFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions and notes between you and your clinician are held on EU servers. AI assistance only runs when you have explicitly opted in.'**
+  String get portalSecurityFooter;
 }
 
 class _AppLocalizationsDelegate

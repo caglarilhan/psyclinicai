@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/analytics/caseload_outcomes_metrics.dart';
 import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
@@ -10,6 +11,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/outcomes/caseload_outcomes_panel.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/outcomes` — PHQ-9 + GAD-7 trend dashboard.
@@ -53,6 +55,34 @@ class _OutcomesDashboardScreenState
         children: [
           _Lede(theme: theme, cs: cs, patientName: patientName),
           const SizedBox(height: PsySpacing.xl),
+          // B20 (Sprint 9) — caseload roll-up. Demo data lives ONLY in
+          // demo mode; in live mode we hide the panel until the
+          // assessment repository streams a real roster (Sprint 10),
+          // so a clinician never sees fabricated aggregate numbers
+          // alongside a real patient's chart.
+          if (!canPickLive) ...[
+            CaseloadOutcomesPanel(
+              instrumentLabel: 'PHQ-9 · demo caseload roll-up',
+              metrics: buildCaseloadMetrics(
+                instrument: 'phq9',
+                series: const [
+                  PatientOutcomeSeries(
+                      patientId: 'demo-1',
+                      instrument: 'phq9',
+                      scores: [18, 14, 11, 9, 7]),
+                  PatientOutcomeSeries(
+                      patientId: 'demo-2',
+                      instrument: 'phq9',
+                      scores: [15, 12, 10]),
+                  PatientOutcomeSeries(
+                      patientId: 'demo-3',
+                      instrument: 'phq9',
+                      scores: [22, 17, 12, 8]),
+                ],
+              ),
+            ),
+            const SizedBox(height: PsySpacing.lg),
+          ],
           if (canPickLive)
             _PatientPicker(
               picked: args,

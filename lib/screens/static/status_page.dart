@@ -16,7 +16,10 @@ class StatusPage extends StatelessWidget {
         status: _Status.operational),
     _System(name: 'Firebase Authentication', status: _Status.operational),
     _System(
-        name: 'Firestore (eur3 + us-central1)',
+        name: 'Firestore — EU tenants (eur3, Frankfurt)',
+        status: _Status.operational),
+    _System(
+        name: 'Firestore — US tenants (us-central1, Iowa)',
         status: _Status.operational),
     _System(name: 'Anthropic API (BYOK)', status: _Status.operational),
     _System(
@@ -44,6 +47,14 @@ class StatusPage extends StatelessWidget {
           _SummaryBanner(allGreen: allGreen),
           const SizedBox(height: PsySpacing.xl),
           ..._systems.map((s) => _SystemRow(system: s)),
+          const SizedBox(height: PsySpacing.xxl),
+          const StaticH2('Data residency'),
+          const StaticP(
+              'Each tenant is pinned to a single Firestore region — EU '
+              'tenants stay in eur3 (Frankfurt), US tenants stay in '
+              'us-central1 (Iowa). We do not cross-replicate clinical '
+              'records between regions. KMS keys, audit logs and '
+              'transactional email pipelines follow the tenant region.'),
           const SizedBox(height: PsySpacing.xxl),
           const StaticH2('Recent incidents'),
           const StaticP('No incidents in the last 90 days.'),

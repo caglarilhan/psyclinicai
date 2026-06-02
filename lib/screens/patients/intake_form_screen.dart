@@ -208,6 +208,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
       title: 'Intake',
       subtitle:
           '${widget.args.name} · demographics, safety baseline, consent',
+      scrollable: false,
       breadcrumbs: [
         const Crumb('Home', '/dashboard'),
         const Crumb('Patients', '/patients'),

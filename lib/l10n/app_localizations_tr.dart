@@ -118,4 +118,85 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get phiBannerWeb =>
       'Web sürümü cihazda PHI önbellekleme yapmaz. Her işlemde sunucuya okur ve yazar.';
+
+  @override
+  String get supervisionQueueTitle => 'Süpervizyon kuyruğu';
+
+  @override
+  String get supervisionQueueSubtitle =>
+      'Stajyer notları onayınızı, değişiklik talebinizi veya birlikte imzanızı bekliyor.';
+
+  @override
+  String get supervisionOpenSection => 'Açık';
+
+  @override
+  String get supervisionClosedSection => 'Kapanmış';
+
+  @override
+  String get supervisionEmptyOpen => 'Şu an sizi bekleyen not yok.';
+
+  @override
+  String get supervisionEmptyClosed => 'Henüz kayda geçen karar yok.';
+
+  @override
+  String get supervisionActionApprove => 'Onayla';
+
+  @override
+  String get supervisionActionChanges => 'Değişiklik iste';
+
+  @override
+  String get supervisionActionCoSign => 'Birlikte imzala';
+
+  @override
+  String get supervisionCoSignDisclaimer =>
+      'Buradaki birlikte-imza süpervizör kararını kayıt altına alır, ANCAK henüz hukuki olarak bağlayıcı elektronik imza değildir. Kriptografik imza (TOTP/WebAuthn, eIDAS / HIPAA §164.312(c)(2)) Sprint 10\'da gelir. O zamana kadar fatura edilecek Medicaid notları için ıslak imza arşivini koruyun.';
+
+  @override
+  String get portalTitle => 'Portalım';
+
+  @override
+  String get portalWelcome => 'Hoş geldiniz';
+
+  @override
+  String get portalIntro =>
+      'Klinik ekibinize bağlı, size özel bir alan. Burada yaptığınız her işlem GDPR ve KVKK kapsamında korunarak kayıt altına alınır.';
+
+  @override
+  String get portalIntakeTitle => 'İlk görüşme formu';
+
+  @override
+  String get portalIntakeBody =>
+      'İlk seansa girmeden önce geçmişinizi, kullandığınız ilaçları ve onay tercihlerinizi klinisyeniniz ile paylaşın.';
+
+  @override
+  String get portalPromTitle => 'İyileşme anketleri';
+
+  @override
+  String get portalPromBody =>
+      'Klinisyeninizin istediği PHQ-9, GAD-7 ve diğer ölçüm anketleri.';
+
+  @override
+  String get portalSessionsTitle => 'Yaklaşan seanslar';
+
+  @override
+  String get portalSessionsBody =>
+      'Klinisyeninizin planladığı randevuları görün. İptal veya yeniden planlama talepleri klinisyeninize otomatik iletilir.';
+
+  @override
+  String get portalDsarTitle => 'Verilerinizi isteyin';
+
+  @override
+  String get portalDsarBody =>
+      'Sizinle ilgili tuttuğumuz tüm kayıtların kopyasını alın. Taşınabilir JSON arşiv olarak teslim edilir.';
+
+  @override
+  String get portalDeleteTitle => 'Hesabınızı kapatın';
+
+  @override
+  String get portalDeleteBody =>
+      '30 günlük silme sürecini başlatın. Süre dolunca klinik kaydınız anonim bir yer tutucu ile değiştirilerek pseudonimize edilir.';
+
+  @override
+  String get portalSecurityFooter =>
+      'Sizinle klinisyeniniz arasındaki seanslar ve notlar AB sunucularında tutulur. Yapay zekâ desteği yalnızca siz açıkça onay verdiğinizde çalışır.';
 }

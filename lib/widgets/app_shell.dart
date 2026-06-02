@@ -471,7 +471,10 @@ class _Breadcrumb extends StatelessWidget {
         ));
       }
     }
-    return Row(mainAxisSize: MainAxisSize.min, children: children);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(mainAxisSize: MainAxisSize.min, children: children),
+    );
   }
 }
 

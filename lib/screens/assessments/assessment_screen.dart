@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../services/assessments/gad7_service.dart';
+import '../../services/assessments/phq9_item9_router.dart';
 import '../../services/assessments/phq9_service.dart';
 import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../widgets/phq9_trigger_sheet.dart';
 
 /// Unified assessment runner for PHQ-9 and GAD-7. One question at a time with
 /// progress, navigation, instant scoring, and clinical-action guidance.
@@ -88,6 +90,23 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       TelemetryEvents.assessmentCompleted,
       properties: {'type': widget.type.name},
     );
+
+    // PHQ-9 item 9 (suicidal ideation) is a hard patient-safety
+    // signal: regardless of the total band, a positive answer must
+    // surface the Phq9TriggerSheet BEFORE the score page so the
+    // clinician decides on a C-SSRS / safety plan / crisis path.
+    if (widget.type == AssessmentType.phq9 && intAnswers.length >= 9) {
+      final recommendation = const Phq9Item9Router()
+          .evaluate({'phq9_9': intAnswers[8]});
+      if (recommendation.primaryAction != Phq9Item9Action.none) {
+        if (!mounted) return;
+        await Phq9TriggerSheet.show(
+          context,
+          recommendation: recommendation,
+          locale: Localizations.maybeLocaleOf(context),
+        );
+      }
+    }
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

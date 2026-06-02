@@ -46,6 +46,7 @@ class _PaymentSetupScreenState extends State<PaymentSetupScreen> {
       title: 'Payments',
       subtitle: 'Stripe (cards) + Mollie (SEPA, iDEAL, SOFORT) — '
           'session billing, deposits, no-show fees.',
+      scrollable: false,
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
         Crumb('Settings', '/settings'),

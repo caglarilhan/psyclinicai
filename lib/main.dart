@@ -7,7 +7,9 @@ import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
+import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
+import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
 import 'package:psyclinicai/screens/settings/account_deletion_screen.dart';
@@ -17,12 +19,15 @@ import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
 import 'package:psyclinicai/screens/auth/telehealth_setup_screen.dart';
 import 'package:psyclinicai/screens/billing/preauth_screen.dart';
 import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
+import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
 import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
+import 'package:psyclinicai/screens/patients/patient_chart_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
 import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
 import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
+import 'package:psyclinicai/screens/group_session/group_session_screen.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
@@ -35,6 +40,8 @@ import 'package:psyclinicai/screens/session/session_screen.dart';
 import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
 import 'package:psyclinicai/screens/settings/audit_log_screen.dart';
 import 'package:psyclinicai/screens/static/baa_page.dart';
+import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
+import 'package:psyclinicai/screens/supervision/supervision_queue_screen.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
 import 'package:psyclinicai/screens/trust/incident_response_screen.dart';
 import 'package:psyclinicai/screens/trust/security_controls_screen.dart';
@@ -74,6 +81,15 @@ void main() {
       FlutterError.presentError(details);
       TelemetryService.instance
           .captureError(details.exception, details.stack, hint: 'flutter');
+    };
+    // Async errors escaping the framework (platform channels, Timer
+    // callbacks, etc.) bypass FlutterError.onError. Wire the platform
+    // dispatcher so HIPAA telemetry never misses an uncaught throw.
+    WidgetsBinding.instance.platformDispatcher.onError =
+        (error, stack) {
+      TelemetryService.instance
+          .captureError(error, stack, hint: 'platform');
+      return true;
     };
     await _initializeServices();
     runApp(const PsyClinicAIApp());
@@ -155,6 +171,23 @@ class PsyClinicAIApp extends StatelessWidget {
                     as String?;
                 return PreAuthScreen(patientId: args ?? 'demo-1');
               },
+              '/patients/consents': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return ConsentCenterScreen(
+                  patientId: args?.id ?? 'demo-1',
+                  patientName: args?.name ?? 'John Demo',
+                );
+              },
+              '/patients/chart': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as PatientDetailArgs?;
+                return PatientChartScreen(
+                  args: args ??
+                      const PatientDetailArgs(
+                          id: 'demo-1', name: 'John Demo'),
+                );
+              },
               '/patients/intake': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments
                     as PatientDetailArgs?;
@@ -193,6 +226,10 @@ class PsyClinicAIApp extends StatelessWidget {
                   const SecurityControlsScreen(),
               '/trust/incident_response': (context) =>
                   const IncidentResponseScreen(),
+              '/supervision/queue': (context) =>
+                  const SupervisionQueueScreen(),
+              '/group_session': (context) => const GroupSessionScreen(),
+              '/portal': (context) => const PortalLandingScreen(),
               '/superbill': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments;
                 return SuperbillScreen(
@@ -202,6 +239,18 @@ class PsyClinicAIApp extends StatelessWidget {
                     type: AssessmentType.phq9,
                     patientName: 'John Demo',
                   ),
+              '/assessments/result': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments
+                    as AssessmentResultScreenArgs?;
+                return AssessmentResultScreen(
+                  args: args ??
+                      const AssessmentResultScreenArgs(
+                        instrument: AssessmentInstrument.phq9,
+                        score: 14,
+                        previousScore: 17,
+                      ),
+                );
+              },
               '/assessments/gad7': (context) => const AssessmentScreen(
                     type: AssessmentType.gad7,
                     patientName: 'John Demo',

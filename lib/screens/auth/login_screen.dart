@@ -90,13 +90,15 @@ class _LoginScreenState extends State<LoginScreen> {
         properties: {'mode': _mode.name},
       );
       TelemetryService.instance.identify(email, traits: {'email': email});
-      // New sign-ups always run the wizard; returning sign-ins skip it
-      // if they already completed it on any device.
+      // New sign-ups: onboarding → MFA enrollment (HIPAA §164.312(d)).
+      // Returning sign-ins skip onboarding if already done.
       String route = '/onboarding';
       if (_mode == _Mode.signIn) {
         final done = await OnboardingService.instance
             .isCurrentUserOnboarded();
         route = done ? '/dashboard' : '/onboarding';
+      } else {
+        route = '/settings/mfa';
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(route);
@@ -310,6 +312,41 @@ class _LoginScreenState extends State<LoginScreen> {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.shield_outlined,
+                                  size: 16,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Two-factor authentication is '
+                                    'required for HIPAA accounts. '
+                                    'Enrol after signing in — Settings '
+                                    '› Two-factor authentication.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

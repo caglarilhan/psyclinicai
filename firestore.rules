@@ -64,6 +64,137 @@ service cloud.firestore {
               ['email', 'createdAt', 'source']);
     }
 
+    // ------------------------------------------------------------------
+    // Sprint 9 — Compliance-scoped top-level collections
+    // ------------------------------------------------------------------
+
+    // Audit logs — HIPAA §164.312(b) + §164.316(b).
+    // Writes flow only through the admin SDK (Cloud Functions); client
+    // writes are denied so the hash chain stays tamper-evident.
+    // Reads are scoped to the clinic that owns the row.
+    match /audit_logs/{logId} {
+      allow create, update, delete: if false;
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+    }
+
+    // Consent records — GDPR Art. 7 (lawful basis) + 7(3) (right to
+    // withdraw). Once `withdrawn_at` is set the row is immutable so the
+    // withdrawal trail cannot be quietly rewritten.
+    match /consent_records/{recordId} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+
+      allow create: if isAuthed()
+          && request.resource.data.clinic_id == request.auth.uid;
+
+      // Update is intentionally narrow: only `withdrawn_at` may change,
+      // and only from null → a timestamp. Every other field is frozen
+      // so the consent record can never be retroactively rewritten
+      // (Art. 7(3) requires a tamper-evident withdrawal trail; flipping
+      // `ai_assistance_consent` after the fact would defeat that).
+      allow update: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid
+          && resource.data.withdrawn_at == null
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['withdrawn_at']);
+
+      // Hard-delete blocked — Art. 30 ROPA needs the trail.
+      allow delete: if false;
+    }
+
+    // Account deletion requests — GDPR Art. 17 erasure with 30-day grace.
+    // User writes own request (docId == uid). Cloud Function (admin
+    // SDK) bypasses these rules to mark `completed_at` after the purge;
+    // the client can never set or modify that field.
+    match /account_deletions/{userId} {
+      allow read: if isSelf(userId);
+
+      // Create: client must own the row, must not pre-set `completed_at`,
+      // and must not include it as a field at all. The Cloud Function
+      // (admin SDK) sets `completed_at` after the purge.
+      allow create: if isSelf(userId)
+          && request.resource.data.user_id == userId
+          && !('completed_at' in request.resource.data);
+
+      // Update is for cancellation. The user may flip `cancelled_at`
+      // null → timestamp, but only while the purge hasn't happened.
+      // `completed_at` and `user_id` must stay identical to the row
+      // already on disk — clients cannot inject a future completion
+      // stamp to bypass the purge.
+      allow update: if isSelf(userId)
+          && resource.data.completed_at == null
+          && request.resource.data.user_id == resource.data.user_id
+          && request.resource.data.completed_at == resource.data.completed_at
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['cancelled_at']);
+
+      allow delete: if false;
+    }
+
+    // Telehealth sessions (Sprint 11, sıkılaştırma Sprint 14).
+    // Clinic owner reads + creates; update is narrow — only the
+    // operational fields (`joinedAt`, `endedAt`, `recordingConsent`
+    // null → granted/declined once, `consentAt`) can move. PatientId,
+    // sessionId, scheduledFor, roomName, clinicId, clinicianId are
+    // frozen so a retroactive edit cannot rewrite the audit trail.
+    match /telehealth_sessions/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+      allow create: if isAuthed()
+          && request.resource.data.clinicId == request.auth.uid;
+      allow update: if isAuthed()
+          && resource.data.clinicId == request.auth.uid
+          && (
+            resource.data.recordingConsent == 'not_asked'
+            || request.resource.data.recordingConsent
+                == resource.data.recordingConsent
+          )
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['joinedAt', 'endedAt', 'recordingConsent',
+                        'consentAt']);
+      allow delete: if false;
+    }
+
+    // Deposit + no-show charges (Sprint 11, sıkılaştırma Sprint 14).
+    // Client direct-write is DENIED — `depositIntent` Cloud Function
+    // owns row creation so `patientId` ownership across clinics can
+    // be verified server-side. The client only reads; the admin SDK
+    // does the writes.
+    match /deposit_charges/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // C-SSRS imminent / immediate dismissal soft-lock (Sprint 10).
+    // - The clinic owner (and only the clinic owner) can read the
+    //   roster so a covering clinician sees the lock cross-device.
+    // - The dismissing clinician creates the row.
+    // - `stale` flips to true only via the cleanup Cloud Function
+    //   (admin SDK) — clients cannot silently age out a row.
+    // - Rows are never hard-deleted: the audit trail must show the
+    //   lock existed and was followed up.
+    match /escalation_soft_locks/{lockId} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+
+      allow create: if isAuthed()
+          && request.resource.data.clinicId == request.auth.uid
+          && request.resource.data.dismissingClinicianId
+              == request.auth.uid
+          && request.resource.data.stale == false;
+
+      // Update only allowed for the supervisor-handoff field; `stale`
+      // and the original audit columns stay client-immutable.
+      allow update: if isAuthed()
+          && resource.data.clinicId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['supervisorHandoffId']);
+
+      allow delete: if false;
+    }
+
     // Hard fail — anything else is denied.
     match /{document=**} {
       allow read, write: if false;

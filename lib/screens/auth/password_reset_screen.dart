@@ -56,17 +56,31 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       _error = null;
     });
 
+    final started = DateTime.now();
     final result = await FirebaseAuthService.instance
         .sendPasswordReset(_email.text.trim());
+    final elapsed = DateTime.now().difference(started);
+    const floor = Duration(milliseconds: 800);
+    if (elapsed < floor) {
+      await Future<void>.delayed(floor - elapsed);
+    }
     if (!mounted) return;
     setState(() => _loading = false);
 
-    if (result.success) {
+    if (result.success || _isEnumerationProbe(result.error)) {
       TelemetryService.instance.capture(TelemetryEvents.passwordResetSent);
       setState(() => _sent = true);
     } else {
-      setState(() => _error = result.error ?? 'Failed to send reset link.');
+      setState(() => _error = 'Could not send reset link. Try again.');
     }
+  }
+
+  bool _isEnumerationProbe(String? error) {
+    if (error == null) return false;
+    final lower = error.toLowerCase();
+    return lower.contains('not found') ||
+        lower.contains('no user') ||
+        lower.contains('does not exist');
   }
 
   String? _validateEmail(String? v) {
@@ -123,8 +137,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: PsySpacing.sm),
           Text(
-            'Enter the email tied to your clinician account. We will send '
-            'a one-time link to set a new password.',
+            'Enter your email and we will send a reset link if an account '
+            'exists for it. Either way you will see the same confirmation, '
+            'so account existence is never disclosed.',
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
           ),
@@ -215,9 +230,11 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                 ?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: PsySpacing.sm),
         Text(
-          'We just sent a reset link to ${_email.text.trim()}. The link '
-          'expires in one hour. If it does not arrive within a few minutes, '
-          'check your spam folder.',
+          'If an account exists for ${_email.text.trim()}, a reset link is '
+          'on its way. The link expires in one hour. If it does not arrive '
+          'within a few minutes, check spam or request another. Requests '
+          'use a constant-time response so account presence cannot be '
+          'inferred from timing.',
           style: theme.textTheme.bodyMedium?.copyWith(
               color: cs.onSurface.withValues(alpha: 0.7), height: 1.5),
         ),

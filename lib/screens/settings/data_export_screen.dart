@@ -102,6 +102,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
       title: 'Data export (DSAR)',
       subtitle: 'GDPR Article 15 (access) + Article 20 (portability) — '
           'one bundle, every record we hold.',
+      scrollable: false,
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
         Crumb('Settings', '/settings'),

@@ -69,6 +69,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
       subtitle:
           'GDPR Article 17 — right to erasure. 30-day grace period before '
           'we purge.',
+      scrollable: false,
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
         Crumb('Settings', '/settings'),

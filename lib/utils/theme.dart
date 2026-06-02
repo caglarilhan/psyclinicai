@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppColors {
-  // Ana renkler - Mor-Beyaz Tema
-  static const Color primary = Color(0xFF6B46C1); // Deep purple
-  static const Color primaryColor = Color(0xFF6B46C1); // Deep purple
-  static const Color secondary = Color(0xFFEC4899); // Pink
-  static const Color accent = Color(0xFF8B5CF6); // Violet
+  // Brand — deep teal (clinical + calm)
+  static const Color primary = Color(0xFF0F766E);
+  static const Color primaryColor = Color(0xFF0F766E);
+  static const Color secondary = Color(0xFF0EA5E9);
+  static const Color accent = Color(0xFF4F46E5);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color success = Color(0xFF10B981);
@@ -26,14 +26,14 @@ class AppColors {
 }
 
 class AppTheme {
-  // Ana renkler - Mor-Beyaz Profesyonel Tema
-  static const Color primaryColor = Color(0xFF6B46C1); // Deep purple - güven
-  static const Color secondaryColor = Color(0xFFEC4899); // Pink - şefkat
-  static const Color accentColor = Color(0xFF8B5CF6); // Violet - bilgelik
-  static const Color warningColor = Color(0xFFF59E0B); // Turuncu - uyarı
-  static const Color errorColor = Color(0xFFEF4444); // Kırmızı - tehlike
-  static const Color successColor = Color(0xFF10B981); // Yeşil - başarı
-  static const Color infoColor = Color(0xFF8B5CF6); // Violet - bilgi
+  // Brand — deep teal, clinical-grade palette
+  static const Color primaryColor = Color(0xFF0F766E);
+  static const Color secondaryColor = Color(0xFF0EA5E9);
+  static const Color accentColor = Color(0xFF4F46E5);
+  static const Color warningColor = Color(0xFFF59E0B);
+  static const Color errorColor = Color(0xFFEF4444);
+  static const Color successColor = Color(0xFF10B981);
+  static const Color infoColor = Color(0xFF0EA5E9);
 
   // Metin renkleri
   static const Color textPrimary = Color(0xFF1F2937);
@@ -41,9 +41,9 @@ class AppTheme {
   static const Color textTertiary = Color(0xFF9CA3AF);
 
   // Dark mode renkleri - Mor Tema
-  static const Color darkPrimaryColor = Color(0xFF9F7AEA); // Light purple
-  static const Color darkSecondaryColor = Color(0xFFF472B6); // Light pink
-  static const Color darkAccentColor = Color(0xFFA78BFA); // Light violet
+  static const Color darkPrimaryColor = Color(0xFF14B8A6);
+  static const Color darkSecondaryColor = Color(0xFF38BDF8);
+  static const Color darkAccentColor = Color(0xFF818CF8);
   static const Color darkWarningColor = Color(0xFFFBBF24); // Açık turuncu
   static const Color darkErrorColor = Color(0xFFF87171); // Açık kırmızı
   static const Color darkSuccessColor = Color(0xFF34D399); // Açık yeşil

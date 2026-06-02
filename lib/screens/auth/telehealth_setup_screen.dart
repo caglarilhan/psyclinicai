@@ -46,6 +46,7 @@ class _TelehealthSetupScreenState extends State<TelehealthSetupScreen> {
       routeName: '/settings',
       title: 'Telehealth video',
       subtitle: 'HIPAA + GDPR-aligned 1:1 sessions powered by Daily.co.',
+      scrollable: false,
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
         Crumb('Settings', '/settings'),

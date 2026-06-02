@@ -1,62 +1,101 @@
 /**
- * PsyClinicAI backend (Firebase Cloud Functions).
+ * PsyClinicAI backend — Firebase Cloud Functions entry point.
  *
- * Three responsibilities, all keeping secrets server-side:
- *   1. anthropicRelay        — proxy LLM calls so the API key + PHI never sit
- *                              in the browser (closes SECURITY-BACKLOG #1).
- *   2. createCheckoutSession — create a Stripe Checkout session (secret key
- *                              never reaches the client).
- *   3. stripeWebhook         — sync subscription status into Firestore.
+ * HTTP handlers:
+ *   • anthropicRelay         — proxy LLM calls so the API key + PHI
+ *                              never sit in the browser.
+ *   • createCheckoutSession  — create a Stripe Checkout session.
+ *   • stripeWebhook          — sync subscription status into Firestore.
+ *   • telehealthRoom         — mint a Daily.co meeting room + token.
+ *   • depositIntent          — create a manual-capture PaymentIntent.
+ *   • depositCapture         — capture the no-show charge.
  *
- * Secrets come from environment (see .env.example) — nothing is committed.
+ * Scheduled compliance jobs (no HTTP surface, exported for Firebase
+ * deploy discovery):
+ *   • auditRetentionPurge        (Sprint 9, HIPAA §164.316)
+ *   • accountDeletionPurge       (Sprint 9, GDPR Art. 17)
+ *   • escalationSoftLockCleanup  (Sprint 10, C-SSRS cross-device)
+ *   • accessReviewCron           (Sprint 14, SOC 2 CC6.1)
+ *
+ * Cross-cutting helpers live under `./lib/`:
+ *   • `lib/env.ts`     — fail-fast env loader + CORS allow-list.
+ *   • `lib/auth.ts`    — Firebase ID token verification + clinician
+ *                         claim gate + CORS preflight handshake.
+ *   • `lib/stripe.ts`  — single Stripe client factory.
  */
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import Stripe from "stripe";
+import * as functions from "firebase-functions";
 
 admin.initializeApp();
+
+// Sprint 9 — scheduled compliance jobs.
+export { auditRetentionPurge } from "./audit_retention_purge";
+export { accountDeletionPurge } from "./account_deletion_purge";
+
+// Sprint 10 — C-SSRS cross-device soft-lock cleanup (hourly).
+export { escalationSoftLockCleanup } from "./escalation_soft_lock_cleanup";
+
+// Sprint 11 — Telehealth room minting + Stripe deposit handlers.
+export { telehealthRoom } from "./telehealth_room";
+export { depositIntent, depositCapture } from "./deposit_handler";
+
+// Sprint 14 — SOC 2 quarterly access review snapshot cron.
+export { accessReviewCron } from "./access_review_cron";
+
+import { applyCors, authorizeUid } from "./lib/auth";
+import { env } from "./lib/env";
+import { stripeClient, verifyWebhook } from "./lib/stripe";
+
 const db = admin.firestore();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2024-06-20",
-});
+/**
+ * Lazy lookup so the module imports without env vars in tests; the
+ * checkout handler is the first caller that needs them.
+ */
+function priceByTier(): Record<string, string | undefined> {
+  return {
+    solo: process.env.STRIPE_PRICE_SOLO,
+    practice: process.env.STRIPE_PRICE_PRACTICE,
+    group: process.env.STRIPE_PRICE_GROUP,
+  };
+}
 
-// Maps our tier names to Stripe Price IDs (set in env).
-const PRICE_BY_TIER: Record<string, string | undefined> = {
-  solo: process.env.STRIPE_PRICE_SOLO,
-  practice: process.env.STRIPE_PRICE_PRACTICE,
-  group: process.env.STRIPE_PRICE_GROUP,
-};
-const TIER_BY_PRICE: Record<string, string> = Object.entries(PRICE_BY_TIER)
-  .filter(([, v]) => !!v)
-  .reduce((acc, [tier, price]) => ({ ...acc, [price as string]: tier }), {});
-
-const APP_URL = process.env.APP_URL ?? "https://app.psyclinicai.com";
+function tierByPrice(): Record<string, string> {
+  return Object.entries(priceByTier())
+    .filter(([, v]) => !!v)
+    .reduce(
+      (acc, [tier, price]) => ({ ...acc, [price as string]: tier }),
+      {},
+    );
+}
 
 /** 1. Anthropic relay — key stays server-side; clients send transcript only. */
 export const anthropicRelay = functions.https.onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", APP_URL);
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return void res.status(204).send("");
+  if (applyCors(req, res)) return;
   if (req.method !== "POST") return void res.status(405).send("POST only");
 
-  // TODO(founder): verify the Firebase ID token here before relaying PHI.
-  //   const decoded = await admin.auth().verifyIdToken(bearerToken);
+  const uid = await authorizeUid(req, "anthropicRelay");
+  if (!uid) return void res.status(401).json({ error: "unauthorized" });
 
   try {
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+        "x-api-key": env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify(req.body),
     });
     const text = await upstream.text();
-    res.status(upstream.status).set("Content-Type", "application/json").send(text);
+    res
+      .status(upstream.status)
+      .set("Content-Type", "application/json")
+      .send(text);
   } catch (e) {
-    functions.logger.error("anthropicRelay failed", e);
+    functions.logger.error("anthropicRelay.upstream_failed", {
+      reason: String(e),
+    });
     res.status(502).json({ error: "relay_failed" });
   }
 });
@@ -64,44 +103,47 @@ export const anthropicRelay = functions.https.onRequest(async (req, res) => {
 /** 2. Create a Stripe Checkout session for a tier. */
 export const createCheckoutSession = functions.https.onRequest(
   async (req, res) => {
-    res.set("Access-Control-Allow-Origin", APP_URL);
-    res.set("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") return void res.status(204).send("");
+    if (applyCors(req, res)) return;
     if (req.method !== "POST") return void res.status(405).send("POST only");
 
     const tier = String(req.body?.tier ?? "");
     const email = req.body?.email as string | undefined;
-    const price = PRICE_BY_TIER[tier];
+    const price = priceByTier()[tier];
     if (!price) return void res.status(400).json({ error: "unknown_tier" });
 
     try {
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripeClient().checkout.sessions.create({
         mode: "subscription",
         line_items: [{ price, quantity: 1 }],
         customer_email: email,
-        success_url: `${APP_URL}/#/dashboard?checkout=success`,
-        cancel_url: `${APP_URL}/#/?checkout=cancel`,
+        success_url: `${env.APP_URL}/#/dashboard?checkout=success`,
+        cancel_url: `${env.APP_URL}/#/?checkout=cancel`,
       });
       res.json({ url: session.url });
     } catch (e) {
-      functions.logger.error("createCheckoutSession failed", e);
+      const err = e as { code?: string; type?: string };
+      functions.logger.error("createCheckoutSession.failed", {
+        code: err.code,
+        type: err.type,
+      });
       res.status(502).json({ error: "stripe_error" });
     }
-  }
+  },
 );
 
 /** 3. Stripe webhook — keep subscription status in Firestore. */
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
   const sig = req.headers["stripe-signature"] as string;
-  let event: Stripe.Event;
+  let event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = verifyWebhook(
       (req as functions.https.Request).rawBody,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET ?? ""
     );
   } catch (e) {
-    functions.logger.error("webhook signature verification failed", e);
+    functions.logger.error("stripeWebhook.bad_signature", {
+      reason: String(e),
+    });
     return void res.status(400).send("bad signature");
   }
 
@@ -110,17 +152,17 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
     event.type === "customer.subscription.updated" ||
     event.type === "customer.subscription.deleted"
   ) {
-    const sub = event.data.object as Stripe.Subscription;
-    const email = (sub as unknown as { customer_email?: string }).customer_email;
+    const sub = event.data.object;
+    const email = (sub as unknown as { customer_email?: string })
+      .customer_email;
     const priceId = sub.items.data[0]?.price.id ?? "";
-    const tier = TIER_BY_PRICE[priceId] ?? "free";
+    const tier = tierByPrice()[priceId] ?? "free";
     const active = sub.status === "active" || sub.status === "trialing";
 
-    // TODO(founder): resolve the clinician UID from the Stripe customer id.
     if (email) {
       await db.collection("subscriptions").doc(email).set(
         { tier, active, status: sub.status, updatedAt: Date.now() },
-        { merge: true }
+        { merge: true },
       );
     }
   }

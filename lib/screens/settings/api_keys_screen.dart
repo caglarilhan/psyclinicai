@@ -114,7 +114,10 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
                   subtitle:
                       'Used for AI session notes (SOAP / DAP / BIRP), risk flagging, and treatment plan suggestions.',
                   pricing:
-                      'Pay-as-you-go, ~\$0.001 per 5-minute session (Haiku 3.5).',
+                      'Pay-as-you-go, ~\$0.001 per 5-minute session on '
+                      'Claude Haiku 4.5. Model picker (Sonnet 4.6 / Opus '
+                      '4.7) lands with the server-side LLM proxy in '
+                      'Sprint 19.',
                   helpUrl: 'console.anthropic.com → API Keys → Create Key',
                   controller: _anthropicCtl,
                   visible: _anthropicVisible,
@@ -205,6 +208,18 @@ class _SecurityBanner extends StatelessWidget {
                   'through PsyClinicAI servers.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.75),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Trade-off: direct-browser calls mean we cannot rate-limit '
+                  'misuse or log AI usage for your audit trail. A server-side '
+                  'LLM proxy with KMS-wrapped keys, PHI redaction, per-tenant '
+                  'cost meter and full audit logging is on the Sprint 19 '
+                  'roadmap — track it on /changelog.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
                     height: 1.4,
                   ),
                 ),

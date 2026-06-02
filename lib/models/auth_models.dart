@@ -19,7 +19,10 @@ class Organization {
       };
 }
 
-enum UserRole { admin, therapist, assistant, billing, auditor }
+/// `patient` is the only non-clinician role. It scopes to the patient
+/// portal surface (`/portal`) and must never grant access to any
+/// clinician dashboard or to another patient's record.
+enum UserRole { admin, therapist, assistant, billing, auditor, patient }
 
 class User {
 

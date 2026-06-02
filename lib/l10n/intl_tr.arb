@@ -41,5 +41,31 @@
   "dsarEmptyBundle": "Henüz hasta kaydı yok. Bir intake doldurun ya da güvenlik planı oluşturun.",
 
   "phiBadge": "PHI",
-  "phiBannerWeb": "Web sürümü cihazda PHI önbellekleme yapmaz. Her işlemde sunucuya okur ve yazar."
+  "phiBannerWeb": "Web sürümü cihazda PHI önbellekleme yapmaz. Her işlemde sunucuya okur ve yazar.",
+
+  "supervisionQueueTitle": "Süpervizyon kuyruğu",
+  "supervisionQueueSubtitle": "Stajyer notları onayınızı, değişiklik talebinizi veya birlikte imzanızı bekliyor.",
+  "supervisionOpenSection": "Açık",
+  "supervisionClosedSection": "Kapanmış",
+  "supervisionEmptyOpen": "Şu an sizi bekleyen not yok.",
+  "supervisionEmptyClosed": "Henüz kayda geçen karar yok.",
+  "supervisionActionApprove": "Onayla",
+  "supervisionActionChanges": "Değişiklik iste",
+  "supervisionActionCoSign": "Birlikte imzala",
+  "supervisionCoSignDisclaimer": "Buradaki birlikte-imza süpervizör kararını kayıt altına alır, ANCAK henüz hukuki olarak bağlayıcı elektronik imza değildir. Kriptografik imza (TOTP/WebAuthn, eIDAS / HIPAA §164.312(c)(2)) Sprint 10'da gelir. O zamana kadar fatura edilecek Medicaid notları için ıslak imza arşivini koruyun.",
+
+  "portalTitle": "Portalım",
+  "portalWelcome": "Hoş geldiniz",
+  "portalIntro": "Klinik ekibinize bağlı, size özel bir alan. Burada yaptığınız her işlem GDPR ve KVKK kapsamında korunarak kayıt altına alınır.",
+  "portalIntakeTitle": "İlk görüşme formu",
+  "portalIntakeBody": "İlk seansa girmeden önce geçmişinizi, kullandığınız ilaçları ve onay tercihlerinizi klinisyeniniz ile paylaşın.",
+  "portalPromTitle": "İyileşme anketleri",
+  "portalPromBody": "Klinisyeninizin istediği PHQ-9, GAD-7 ve diğer ölçüm anketleri.",
+  "portalSessionsTitle": "Yaklaşan seanslar",
+  "portalSessionsBody": "Klinisyeninizin planladığı randevuları görün. İptal veya yeniden planlama talepleri klinisyeninize otomatik iletilir.",
+  "portalDsarTitle": "Verilerinizi isteyin",
+  "portalDsarBody": "Sizinle ilgili tuttuğumuz tüm kayıtların kopyasını alın. Taşınabilir JSON arşiv olarak teslim edilir.",
+  "portalDeleteTitle": "Hesabınızı kapatın",
+  "portalDeleteBody": "30 günlük silme sürecini başlatın. Süre dolunca klinik kaydınız anonim bir yer tutucu ile değiştirilerek pseudonimize edilir.",
+  "portalSecurityFooter": "Sizinle klinisyeniniz arasındaki seanslar ve notlar AB sunucularında tutulur. Yapay zekâ desteği yalnızca siz açıkça onay verdiğinizde çalışır."
 }

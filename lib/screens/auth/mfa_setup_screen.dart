@@ -52,6 +52,7 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       routeName: '/settings',
       title: 'Two-factor authentication',
       subtitle: 'Add a second factor to your sign-in.',
+      scrollable: false,
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
         Crumb('Settings', '/settings'),

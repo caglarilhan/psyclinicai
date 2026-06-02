@@ -59,6 +59,7 @@ const ROUTES = [
   '/settings/data_export',
   '/settings/payments',
   '/settings/telehealth',
+  '/settings/region',
   '/trust',
   '/trust/subprocessors',
   '/trust/security_controls',

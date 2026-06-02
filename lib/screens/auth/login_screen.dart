@@ -6,6 +6,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
+import '../../services/data/security_settings_service.dart';
 import '../../services/data/telemetry_service.dart';
 
 enum _Mode { signIn, signUp }
@@ -90,15 +91,21 @@ class _LoginScreenState extends State<LoginScreen> {
         properties: {'mode': _mode.name},
       );
       TelemetryService.instance.identify(email, traits: {'email': email});
-      // New sign-ups: onboarding → MFA enrollment (HIPAA §164.312(d)).
-      // Returning sign-ins skip onboarding if already done.
-      String route = '/onboarding';
-      if (_mode == _Mode.signIn) {
-        final done = await OnboardingService.instance
-            .isCurrentUserOnboarded();
-        route = done ? '/dashboard' : '/onboarding';
-      } else {
+      // Post-sign-in interceptor (HIPAA §164.312(d)):
+      // - new sign-ups go straight to MFA enrolment
+      // - returning sign-ins without MFA are redirected to /settings/mfa
+      // - everyone else goes to /dashboard (or /onboarding if missing)
+      final uid =
+          auth.profile?.userId ?? email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+      final mfaOk =
+          await SecuritySettingsService.instance.isMfaEnrolled(uid);
+      String route;
+      if (_mode == _Mode.signUp || !mfaOk) {
         route = '/settings/mfa';
+      } else {
+        final done =
+            await OnboardingService.instance.isCurrentUserOnboarded();
+        route = done ? '/dashboard' : '/onboarding';
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(route);

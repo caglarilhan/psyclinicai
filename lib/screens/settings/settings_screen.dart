@@ -119,6 +119,13 @@ class SettingsScreen extends StatelessWidget {
               body: 'Stripe + Mollie (SEPA, iDEAL, SOFORT) — early access.',
               onTap: () =>
                   Navigator.of(context).pushNamed('/settings/payments')),
+          _row(context, theme, cs,
+              icon: Icons.public_outlined,
+              title: 'Data residency',
+              body: 'EU (eur3 · Frankfurt) or US (us-central1 · Iowa) — '
+                  'pinned per tenant, no cross-replication.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/region')),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Trust & legal'),
           _row(context, theme, cs,

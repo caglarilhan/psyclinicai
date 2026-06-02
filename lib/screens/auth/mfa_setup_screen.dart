@@ -1,53 +1,118 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../services/data/auth_service.dart';
+import '../../services/data/security_settings_service.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../services/mfa/totp_service.dart';
+import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
-import '../../utils/pii_redaction.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 
 /// `/settings/mfa` — Two-factor authentication setup hub.
 ///
-/// At the moment this is a transparency-first surface: a real Firebase
-/// MFA TOTP enrolment is on the roadmap (P0 in the security backlog).
-/// We deliberately do *not* fake a working enrolment — that would give
-/// clinicians a false sense of security. Instead we explain what's
-/// coming, let admins register for early access, and reuse this screen
-/// once the backend wiring lands.
+/// Four-step TOTP enrolment wizard backed by [TotpService] (pure-Dart
+/// RFC 6238). Secrets and recovery codes stay on-device for the demo;
+/// production wiring posts the SHA-256 hash of each recovery code +
+/// the encrypted secret to Firestore `mfa_enrolments/{uid}` once the
+/// Firebase Auth multi-factor binding lands.
 ///
-/// HIPAA §164.312(d) and SOC 2 CC6.1 both expect MFA for accounts with
-/// access to ePHI. This screen exists so the requirement is visible and
-/// trackable, not buried in a backlog ticket.
+/// HIPAA §164.312(d) and SOC 2 CC6.1 both require MFA on accounts
+/// that touch ePHI — this screen is the user-facing surface.
 class MfaSetupScreen extends StatefulWidget {
-  const MfaSetupScreen({super.key});
+  const MfaSetupScreen({super.key, @visibleForTesting this.totpOverride});
+
+  /// Tests can inject a deterministic [TotpService]; production
+  /// constructs one with `Random.secure()`.
+  final TotpService? totpOverride;
 
   @override
   State<MfaSetupScreen> createState() => _MfaSetupScreenState();
 }
 
-class _MfaSetupScreenState extends State<MfaSetupScreen> {
-  bool _requestSent = false;
+enum MfaStep { idle, scan, verify, recovery, done }
 
-  void _requestEarlyAccess() {
-    TelemetryService.instance.capture(
-      'security.mfa_early_access_requested',
-      properties: {
-        // PHI redaction (B4) — telemetry never sees the raw inbox.
-        'email': redactEmail(
-                FirebaseAuthService.instance.profile?.email) ??
-            'anonymous',
-      },
-    );
-    setState(() => _requestSent = true);
+class _MfaSetupScreenState extends State<MfaSetupScreen> {
+  late final TotpService _totp = widget.totpOverride ?? TotpService();
+  final TextEditingController _codeCtl = TextEditingController();
+
+  MfaStep _step = MfaStep.idle;
+  String? _secret;
+  List<String> _recoveryCodes = const [];
+  String? _error;
+  bool _verifying = false;
+
+  @override
+  void dispose() {
+    _codeCtl.dispose();
+    super.dispose();
+  }
+
+  String _accountLabel() {
+    final email = FirebaseAuthService.instance.profile?.email ??
+        'demo@psyclinicai.com';
+    return email;
+  }
+
+  void _startEnrol() {
+    setState(() {
+      _secret = _totp.generateSecret();
+      _step = MfaStep.scan;
+      _error = null;
+    });
+    TelemetryService.instance.capture('security.mfa_enrol_started');
+  }
+
+  Future<void> _verifyCode() async {
+    if (_secret == null) return;
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+    final ok = _totp.verify(secret: _secret!, code: _codeCtl.text.trim());
+    if (!mounted) return;
+    if (!ok) {
+      setState(() {
+        _verifying = false;
+        _error = 'That code did not match. Wait for the next window and '
+            'try again.';
+      });
+      return;
+    }
+    final codes = _totp.generateRecoveryCodes();
+    setState(() {
+      _verifying = false;
+      _recoveryCodes = codes;
+      _step = MfaStep.recovery;
+    });
+    TelemetryService.instance.capture('security.mfa_enrol_verified');
+  }
+
+  Future<void> _finish() async {
+    final uid = FirebaseAuthService.instance.profile?.userId ?? 'demo';
+    await SecuritySettingsService.instance.markMfaEnrolled(uid);
+    if (!mounted) return;
+    setState(() => _step = MfaStep.done);
+    TelemetryService.instance.capture('security.mfa_enrol_completed');
+  }
+
+  void _restart() {
+    setState(() {
+      _step = MfaStep.idle;
+      _secret = null;
+      _recoveryCodes = const [];
+      _codeCtl.clear();
+      _error = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-
     return AppShell(
       routeName: '/settings',
       title: 'Two-factor authentication',
@@ -61,106 +126,194 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          PsyCard(
-            tinted: true,
-            child: Row(children: [
-              Container(
-                padding: const EdgeInsets.all(PsySpacing.md),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(PsyRadius.md),
+          _StatusCard(step: _step, cs: cs, theme: theme),
+          const SizedBox(height: PsySpacing.xl),
+          _StepIndicator(step: _step, cs: cs),
+          const SizedBox(height: PsySpacing.lg),
+          switch (_step) {
+            MfaStep.idle => _IdlePane(onStart: _startEnrol),
+            MfaStep.scan => _ScanPane(
+                secret: _secret!,
+                uri: _totp.provisioningUri(
+                  label: _accountLabel(),
+                  secret: _secret!,
                 ),
-                child: Icon(Icons.shield_outlined,
-                    color: cs.primary, size: 24),
+                onContinue: () => setState(() => _step = MfaStep.verify),
+                onCancel: _restart,
               ),
-              const SizedBox(width: PsySpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Text('Status',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.6))),
-                      const SizedBox(width: PsySpacing.sm),
-                      const PsyBadge(
-                        label: 'Not enabled',
-                        tone: PsyBadgeTone.warning,
-                      ),
-                    ]),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Your account is currently protected by your password '
-                      'and Firebase Auth session controls.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.72)),
-                    ),
-                  ],
-                ),
+            MfaStep.verify => _VerifyPane(
+                controller: _codeCtl,
+                onVerify: _verifying ? null : _verifyCode,
+                onBack: () => setState(() => _step = MfaStep.scan),
+                error: _error,
+                busy: _verifying,
               ),
-            ]),
+            MfaStep.recovery => _RecoveryPane(
+                codes: _recoveryCodes,
+                onFinish: () => _finish(),
+              ),
+            MfaStep.done => _DonePane(onReset: _restart),
+          },
+          const SizedBox(height: PsySpacing.huge),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({
+    required this.step,
+    required this.cs,
+    required this.theme,
+  });
+  final MfaStep step;
+  final ColorScheme cs;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = step == MfaStep.done;
+    return PsyCard(
+      tinted: true,
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(PsySpacing.md),
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(PsyRadius.md),
           ),
-          const SizedBox(height: PsySpacing.xxl),
-          Text('What we are building',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: PsySpacing.md),
-          PsyCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _Bullet(
-                  icon: Icons.smartphone_outlined,
-                  title: 'Authenticator app (TOTP)',
-                  body: 'One-time codes from Google Authenticator, '
-                      'Authy, 1Password, or any RFC 6238 app.',
+          child: Icon(
+            enabled ? Icons.verified_user : Icons.shield_outlined,
+            color: cs.primary,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: PsySpacing.lg),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Text('Status',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6))),
+                const SizedBox(width: PsySpacing.sm),
+                PsyBadge(
+                  label: enabled ? 'Enabled' : 'Not enabled',
+                  tone: enabled
+                      ? PsyBadgeTone.success
+                      : PsyBadgeTone.warning,
                 ),
-                _Divider(cs: cs),
-                const _Bullet(
-                  icon: Icons.key_outlined,
-                  title: 'Recovery codes',
-                  body: 'Ten single-use codes you can store in your '
-                      'password manager — for when you lose your phone.',
-                ),
-                _Divider(cs: cs),
-                const _Bullet(
-                  icon: Icons.fingerprint,
-                  title: 'Device biometrics',
-                  body: 'Touch ID, Face ID, Windows Hello, or Android '
-                      'fingerprint as a fast second factor on trusted '
-                      'devices.',
-                ),
-                _Divider(cs: cs),
-                const _Bullet(
-                  icon: Icons.admin_panel_settings_outlined,
-                  title: 'Admin enforcement',
-                  body: 'Practice admins can require MFA across the '
-                      'workspace — needed for HIPAA §164.312(d) and '
-                      'SOC 2 CC6.1.',
-                ),
-              ],
+              ]),
+              const SizedBox(height: 4),
+              Text(
+                enabled
+                    ? 'TOTP enrolled on this device. Sign-ins now require a '
+                        '6-digit code from your authenticator app.'
+                    : 'Your account is currently protected by your password '
+                        'and Firebase Auth session controls. HIPAA §164.312(d) '
+                        'requires a second factor before storing ePHI.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.72)),
+              ),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  const _StepIndicator({required this.step, required this.cs});
+  final MfaStep step;
+  final ColorScheme cs;
+
+  static const _labels = ['Start', 'Scan QR', 'Verify', 'Recovery', 'Done'];
+
+  int get _activeIndex {
+    switch (step) {
+      case MfaStep.idle:
+        return 0;
+      case MfaStep.scan:
+        return 1;
+      case MfaStep.verify:
+        return 2;
+      case MfaStep.recovery:
+        return 3;
+      case MfaStep.done:
+        return 4;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Row(
+      children: List.generate(_labels.length, (i) {
+        final active = i <= _activeIndex;
+        final isLast = i == _labels.length - 1;
+        return Expanded(
+          child: Row(children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: active ? cs.primary : cs.surfaceContainerHigh,
+              child: Text('${i + 1}',
+                  style: t.labelSmall?.copyWith(
+                      color: active ? cs.onPrimary : cs.onSurface)),
             ),
-          ),
-          const SizedBox(height: PsySpacing.xxl),
-          Text('Early access',
+            const SizedBox(width: PsySpacing.xs),
+            Flexible(
+              child: Text(_labels[i],
+                  overflow: TextOverflow.ellipsis,
+                  style: t.labelMedium?.copyWith(
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                      color: active
+                          ? cs.onSurface
+                          : cs.onSurface.withValues(alpha: 0.5))),
+            ),
+            if (!isLast)
+              Expanded(
+                  child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: PsySpacing.sm),
+                      color: active
+                          ? cs.primary.withValues(alpha: 0.4)
+                          : cs.surfaceContainerHigh)),
+          ]),
+        );
+      }),
+    );
+  }
+}
+
+class _IdlePane extends StatelessWidget {
+  const _IdlePane({required this.onStart});
+  final VoidCallback onStart;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Set up an authenticator app',
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: PsySpacing.md),
-          PsyCard(
-            child: _requestSent
-                ? _RequestedState(cs: cs, theme: theme)
-                : _RequestForm(
-                    cs: cs, theme: theme, onRequest: _requestEarlyAccess),
-          ),
-          const SizedBox(height: PsySpacing.xxl),
+          const SizedBox(height: PsySpacing.sm),
           Text(
-            'Until MFA ships, treat shared devices as if they were not '
-            'authenticated — sign out at the end of every clinical shift '
-            'and never save your password in a browser on a shared machine.',
-            style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontStyle: FontStyle.italic,
-                height: 1.5),
+            'You will scan a QR code with Google Authenticator, Authy, '
+            '1Password, or any RFC 6238 app, then enter the 6-digit code '
+            'it shows you. Takes about 60 seconds.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: PsySpacing.lg),
+          FilledButton.icon(
+            onPressed: onStart,
+            icon: const Icon(Icons.qr_code_2),
+            label: const Text('Start TOTP setup'),
           ),
         ],
       ),
@@ -168,128 +321,263 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
   }
 }
 
-class _Bullet extends StatelessWidget {
-  const _Bullet({
-    required this.icon,
-    required this.title,
-    required this.body,
+class _ScanPane extends StatelessWidget {
+  const _ScanPane({
+    required this.secret,
+    required this.uri,
+    required this.onContinue,
+    required this.onCancel,
   });
-  final IconData icon;
-  final String title;
-  final String body;
+  final String secret;
+  final String uri;
+  final VoidCallback onContinue;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('1 · Scan the QR code',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+              'Open your authenticator app and scan this code. If you cannot '
+              'scan, enter the secret manually.',
+              style: theme.textTheme.bodyMedium),
+          const SizedBox(height: PsySpacing.lg),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(PsySpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(PsyRadius.md),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: QrImageView(
+                data: uri,
+                size: 200,
+                version: QrVersions.auto,
+                backgroundColor: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: PsySpacing.lg),
+          Text('Manual secret',
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Row(children: [
+            Expanded(
+              child: SelectableText(
+                _grouped(secret),
+                style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: 'monospace', letterSpacing: 1.5),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Copy secret',
+              icon: const Icon(Icons.copy, size: 18),
+              onPressed: () => Clipboard.setData(ClipboardData(text: secret)),
+            ),
+          ]),
+          const SizedBox(height: PsySpacing.lg),
+          Row(children: [
+            FilledButton.icon(
+              onPressed: onContinue,
+              icon: const Icon(Icons.arrow_forward),
+              label: const Text('I have scanned the code'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            TextButton(onPressed: onCancel, child: const Text('Cancel')),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  String _grouped(String secret) {
+    final out = StringBuffer();
+    for (var i = 0; i < secret.length; i += 4) {
+      if (i > 0) out.write(' ');
+      out.write(secret.substring(i, (i + 4).clamp(0, secret.length)));
+    }
+    return out.toString();
+  }
+}
+
+class _VerifyPane extends StatelessWidget {
+  const _VerifyPane({
+    required this.controller,
+    required this.onVerify,
+    required this.onBack,
+    required this.error,
+    required this.busy,
+  });
+  final TextEditingController controller;
+  final VoidCallback? onVerify;
+  final VoidCallback onBack;
+  final String? error;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('2 · Verify the 6-digit code',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+              'Enter the current code from your authenticator. Codes refresh '
+              'every 30 seconds — we accept the previous window if you are a '
+              'little late.',
+              style: theme.textTheme.bodyMedium),
+          const SizedBox(height: PsySpacing.lg),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            textInputAction: TextInputAction.done,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: '6-digit code',
+              hintText: '123 456',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => onVerify?.call(),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: PsySpacing.sm),
+            Text(error!,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: PsyColors.warning)),
+          ],
+          const SizedBox(height: PsySpacing.md),
+          Row(children: [
+            FilledButton.icon(
+              onPressed: onVerify,
+              icon: busy
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check),
+              label: const Text('Verify'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            TextButton(onPressed: onBack, child: const Text('Back')),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecoveryPane extends StatelessWidget {
+  const _RecoveryPane({required this.codes, required this.onFinish});
+  final List<String> codes;
+  final VoidCallback onFinish;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
-      child: Row(
+    return PsyCard(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: cs.primary, size: 22),
-          const SizedBox(width: PsySpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text('3 · Save your recovery codes',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+              'Each code can be used once if you lose access to your '
+              'authenticator. Store them in a password manager — we only '
+              'keep a one-way hash on our side.',
+              style: theme.textTheme.bodyMedium),
+          const SizedBox(height: PsySpacing.lg),
+          Container(
+            padding: const EdgeInsets.all(PsySpacing.md),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(PsyRadius.md),
+            ),
+            child: Wrap(
+              spacing: PsySpacing.lg,
+              runSpacing: PsySpacing.sm,
               children: [
-                Text(title,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(body,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.65),
-                        height: 1.45)),
+                for (final c in codes)
+                  SelectableText(c,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w700)),
               ],
             ),
           ),
+          const SizedBox(height: PsySpacing.md),
+          Row(children: [
+            FilledButton.icon(
+              onPressed: onFinish,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('I saved them — finish'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            TextButton.icon(
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Copy all'),
+              onPressed: () => Clipboard.setData(
+                ClipboardData(text: codes.join('\n')),
+              ),
+            ),
+          ]),
         ],
       ),
     );
   }
 }
 
-class _Divider extends StatelessWidget {
-  const _Divider({required this.cs});
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
-        child: Divider(height: 1, color: cs.outlineVariant),
-      );
-}
-
-class _RequestForm extends StatelessWidget {
-  const _RequestForm(
-      {required this.cs, required this.theme, required this.onRequest});
-  final ColorScheme cs;
-  final ThemeData theme;
-  final VoidCallback onRequest;
+class _DonePane extends StatelessWidget {
+  const _DonePane({required this.onReset});
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'We are wiring Firebase Auth multi-factor with TOTP enrolment '
-          'and recovery codes. If you handle PHI and need MFA today, ask '
-          'to join the early-access cohort — we will reach out within one '
-          'business day.',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: cs.onSurface.withValues(alpha: 0.78)),
-        ),
-        const SizedBox(height: PsySpacing.lg),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: onRequest,
-            icon: const Icon(Icons.send_outlined),
-            label: const Text('Request early access'),
-            style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RequestedState extends StatelessWidget {
-  const _RequestedState({required this.cs, required this.theme});
-  final ColorScheme cs;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.all(PsySpacing.sm),
-        decoration: BoxDecoration(
-          color: cs.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(PsyRadius.md),
-        ),
-        child: Icon(Icons.check_circle_outline, color: cs.primary),
-      ),
-      const SizedBox(width: PsySpacing.lg),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('You are on the early-access list',
-                style: theme.textTheme.titleSmall
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.verified_user, color: cs.primary),
+            const SizedBox(width: PsySpacing.sm),
+            Text('TOTP enabled on this device',
+                style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 4),
-            Text(
-              'We will email setup instructions once the build clears '
-              'our security review. No action needed from you.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.65), height: 1.45),
-            ),
-          ],
-        ),
+          ]),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+            'Your next sign-in will ask for the 6-digit code from your '
+            'authenticator. Lost your phone? Use one of the recovery codes '
+            'you just saved — each works once.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: PsySpacing.md),
+          TextButton.icon(
+            icon: const Icon(Icons.refresh),
+            onPressed: onReset,
+            label: const Text('Re-enrol (lost device)'),
+          ),
+        ],
       ),
-    ]);
+    );
   }
 }

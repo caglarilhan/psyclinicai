@@ -19,9 +19,14 @@ void main() {
       expect(r.mandatoryFrameworks, contains('HIPAA'));
     });
 
-    test('fromId falls back to EU when unknown', () {
-      expect(TenantRegion.fromId('unknown'), TenantRegion.euCentral);
+    test('fromId throws on unknown id (no silent GDPR fallback)', () {
+      expect(() => TenantRegion.fromId('unknown'), throwsArgumentError);
       expect(TenantRegion.fromId('us-central'), TenantRegion.usCentral);
+    });
+
+    test('tryFromId returns null for unknown ids (test seam)', () {
+      expect(TenantRegion.tryFromId('unknown'), isNull);
+      expect(TenantRegion.tryFromId('eu-central'), TenantRegion.euCentral);
     });
   });
 

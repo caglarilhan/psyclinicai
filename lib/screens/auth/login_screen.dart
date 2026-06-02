@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -90,22 +93,40 @@ class _LoginScreenState extends State<LoginScreen> {
             : TelemetryEvents.signUpCompleted,
         properties: {'mode': _mode.name},
       );
-      TelemetryService.instance.identify(email, traits: {'email': email});
-      // Post-sign-in interceptor (HIPAA §164.312(d)):
-      // - new sign-ups go straight to MFA enrolment
-      // - returning sign-ins without MFA are redirected to /settings/mfa
-      // - everyone else goes to /dashboard (or /onboarding if missing)
-      final uid =
-          auth.profile?.userId ?? email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
-      final mfaOk =
-          await SecuritySettingsService.instance.isMfaEnrolled(uid);
+      // Identify on a SHA-256 fingerprint so analytics never sees a raw
+      // PHI-adjacent identifier (GDPR Art. 25 — privacy by design).
+      final emailFingerprint =
+          sha256.convert(utf8.encode(email.toLowerCase())).toString();
+      TelemetryService.instance
+          .identify(emailFingerprint, traits: {'email_hash': emailFingerprint});
+      // Post-sign-in interceptor (HIPAA §164.312(d)).
+      // The UID source MUST match the one the MFA wizard wrote under
+      // (`mfa_setup_screen._finish` uses `userId ?? "demo"`). Email-
+      // derived keys collide and let attackers bypass MFA.
+      final uid = auth.profile?.userId ?? 'demo';
       String route;
-      if (_mode == _Mode.signUp || !mfaOk) {
-        route = '/settings/mfa';
-      } else {
-        final done =
-            await OnboardingService.instance.isCurrentUserOnboarded();
-        route = done ? '/dashboard' : '/onboarding';
+      try {
+        final mfaOk =
+            await SecuritySettingsService.instance.isMfaEnrolled(uid);
+        if (!mounted) return;
+        if (_mode == _Mode.signUp || !mfaOk) {
+          route = '/settings/mfa';
+        } else {
+          final done =
+              await OnboardingService.instance.isCurrentUserOnboarded();
+          if (!mounted) return;
+          route = done ? '/dashboard' : '/onboarding';
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _error =
+              'We signed you in but could not check your security '
+              'settings. Please retry — we will route you to MFA setup '
+              'if it is needed.';
+        });
+        return;
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(route);

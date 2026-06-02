@@ -32,8 +32,24 @@ class RiskEscalationChain {
 
   bool get isResolved => state == RiskEscalationState.resolved;
 
+  /// Apply [event] and return the next chain. Throws [StateError] when
+  /// the transition is illegal (forward-only ordering except for the
+  /// explicit `clinicianHandoff` rollback). The HIPAA audit trail
+  /// depends on this guard — a resolved chain MUST be immutable.
   RiskEscalationChain advance(RiskEscalationEvent event) {
+    if (isResolved) {
+      throw StateError(
+          'RiskEscalationChain is already resolved; the audit chain is '
+          'immutable after resolution. Start a new chain instead.');
+    }
     final next = _nextState(event);
+    if (event.kind != RiskEscalationEventKind.clinicianHandoff &&
+        next.index < state.index) {
+      throw StateError(
+          'Illegal transition: cannot move from ${state.name} '
+          'back to ${next.name} via ${event.kind.name}. '
+          'Use clinicianHandoff to roll back explicitly.');
+    }
     return RiskEscalationChain(
       patientId: patientId,
       encounterId: encounterId,

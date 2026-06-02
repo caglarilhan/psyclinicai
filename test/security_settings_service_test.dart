@@ -5,12 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    SecuritySettingsService.prefsOverride = SharedPreferences.getInstance();
+    SecuritySettingsService.setTestInstance(
+        () => SharedPreferences.getInstance());
   });
 
-  tearDown(() {
-    SecuritySettingsService.prefsOverride = null;
-  });
+  tearDown(SecuritySettingsService.resetTestInstance);
 
   group('SecuritySettingsService', () {
     test('isMfaEnrolled defaults to false', () async {

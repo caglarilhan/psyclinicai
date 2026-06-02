@@ -30,13 +30,26 @@ class TelehealthRoomToken {
     return diff.isNegative ? Duration.zero : diff;
   }
 
+  /// JSON shape for **persistence and audit logging only** — the raw
+  /// [token] is deliberately omitted. The credential lives in memory
+  /// for the duration of the call; persisting it (Firestore, telemetry,
+  /// crash reports) would violate HIPAA §164.312(c)(2) integrity +
+  /// GDPR Art. 5(1)(e) storage limitation. Use [toWireJson] only at
+  /// the WebRTC handoff boundary.
   Map<String, dynamic> toJson() => {
         'room_name': roomName,
-        'token': token,
         'expires_at': expiresAt.toUtc().toIso8601String(),
         'recording_enabled': recordingEnabled,
         'eu_region': euRegion,
         'created_at': createdAt.toUtc().toIso8601String(),
+      };
+
+  /// In-process JSON used to hand the live token to the WebRTC SDK.
+  /// Caller is responsible for dropping the reference immediately
+  /// after `join()` — never persist this map.
+  Map<String, dynamic> toWireJson() => {
+        ...toJson(),
+        'token': token,
       };
 
   factory TelehealthRoomToken.fromJson(Map<String, dynamic> json) {

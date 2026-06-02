@@ -73,6 +73,52 @@ void main() {
       expect(c.state, RiskEscalationState.clinicianAcknowledged);
     });
 
+    test('resolved chain refuses further events (audit immutability)', () {
+      final at = DateTime.utc(2026, 6, 2, 10, 5);
+      final c = newChain()
+          .advance(RiskEscalationEvent(
+              kind: RiskEscalationEventKind.cssrsAdministered,
+              at: at,
+              clinicianId: 'doc-1'))
+          .advance(RiskEscalationEvent(
+              kind: RiskEscalationEventKind.safetyPlanDrafted,
+              at: at.add(const Duration(minutes: 10)),
+              clinicianId: 'doc-1'))
+          .advance(RiskEscalationEvent(
+              kind: RiskEscalationEventKind.clinicianAcknowledged,
+              at: at.add(const Duration(minutes: 20)),
+              clinicianId: 'doc-1'))
+          .advance(RiskEscalationEvent(
+              kind: RiskEscalationEventKind.resolved,
+              at: at.add(const Duration(hours: 1)),
+              clinicianId: 'doc-1'));
+      expect(
+        () => c.advance(RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: at.add(const Duration(hours: 2)),
+          clinicianId: 'doc-1',
+        )),
+        throwsStateError,
+      );
+    });
+
+    test('illegal backward transition is rejected', () {
+      final at = DateTime.utc(2026, 6, 2, 10, 5);
+      final c = newChain().advance(RiskEscalationEvent(
+        kind: RiskEscalationEventKind.safetyPlanDrafted,
+        at: at,
+        clinicianId: 'doc-1',
+      ));
+      expect(
+        () => c.advance(RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: at.add(const Duration(minutes: 5)),
+          clinicianId: 'doc-1',
+        )),
+        throwsStateError,
+      );
+    });
+
     test('toJson preserves trigger severity + action chain', () {
       final c = newChain();
       final j = c.toJson();

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 
 /// Pure-Dart RFC 6238 TOTP + recovery codes for the MFA setup hub
 /// (`/settings/mfa`). No external runtime dependency — keeps the
@@ -17,6 +18,11 @@ class TotpService {
   TotpService({Random? random}) : _random = random ?? Random.secure();
 
   final Random _random;
+
+  /// (secret-hash, counter) tuples that have already been consumed —
+  /// guards against replay within the skew window. Keyed by a SHA-1
+  /// digest of the secret so we never hold the raw secret here.
+  final Set<String> _consumedCounters = <String>{};
 
   static const _base32Alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   static const int defaultDigits = 6;
@@ -80,21 +86,30 @@ class TotpService {
     int digits = defaultDigits,
     int period = defaultPeriodSeconds,
     int skew = defaultSkew,
+    bool consume = true,
   }) {
     final cleaned = code.replaceAll(RegExp(r'\s+'), '');
     if (cleaned.length != digits) return false;
     final ts = at ?? DateTime.now().toUtc();
     final current = ts.millisecondsSinceEpoch ~/ 1000 ~/ period;
+    final secretFingerprint = sha1.convert(utf8.encode(secret)).toString();
     for (var offset = -skew; offset <= skew; offset++) {
-      final candidate = _codeForCounter(
-        secret,
-        current + offset,
-        digits: digits,
-      );
-      if (_constantTimeEquals(candidate, cleaned)) return true;
+      final counter = current + offset;
+      final key = '$secretFingerprint:$counter';
+      // RFC 6238 §5.2: a verifier must reject the same counter twice.
+      if (_consumedCounters.contains(key)) continue;
+      final candidate = _codeForCounter(secret, counter, digits: digits);
+      if (_constantTimeEquals(candidate, cleaned)) {
+        if (consume) _consumedCounters.add(key);
+        return true;
+      }
     }
     return false;
   }
+
+  /// Test/storybook seam.
+  @visibleForTesting
+  void clearConsumedCounters() => _consumedCounters.clear();
 
   /// Ten single-use codes formatted as `XXXX-XXXX` so they look like
   /// password-manager fixtures, not lottery numbers.

@@ -28,13 +28,27 @@ void main() {
           Duration.zero);
     });
 
-    test('JSON round-trip preserves all fields', () {
-      final restored = TelehealthRoomToken.fromJson(tok.toJson());
-      expect(restored.roomName, tok.roomName);
+    test('toJson omits the raw token (audit safety)', () {
+      final j = tok.toJson();
+      expect(j.containsKey('token'), isFalse,
+          reason: 'Persisting the live token would leak a credential');
+      expect(j['room_name'], 'psy-t-1-s-1');
+      expect(j['recording_enabled'], isTrue);
+      expect(j['eu_region'], isTrue);
+    });
+
+    test('toWireJson includes the token for SDK handoff', () {
+      final w = tok.toWireJson();
+      expect(w['token'], 'jwt-X');
+      expect(w['room_name'], 'psy-t-1-s-1');
+    });
+
+    test('fromJson stays compatible with toWireJson at the SDK boundary',
+        () {
+      final restored = TelehealthRoomToken.fromJson(tok.toWireJson());
       expect(restored.token, tok.token);
       expect(restored.expiresAt, tok.expiresAt);
       expect(restored.recordingEnabled, tok.recordingEnabled);
-      expect(restored.euRegion, tok.euRegion);
     });
   });
 

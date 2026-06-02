@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../utils/phi_redaction.dart';
 
 /// Abstraction over the server-side LLM proxy (Sprint 19 backend).
@@ -16,10 +18,15 @@ enum LlmModel {
   final String label;
   final double usdPer5Min;
 
-  static LlmModel fromId(String id) => values.firstWhere(
-        (m) => m.id == id,
-        orElse: () => LlmModel.sonnet46,
-      );
+  static LlmModel fromId(String id) {
+    for (final m in values) {
+      if (m.id == id) return m;
+    }
+    // Loud fallback so cost attribution drift gets caught in QA.
+    debugPrint(
+        'LlmModel.fromId: unknown model id "$id", falling back to sonnet46');
+    return LlmModel.sonnet46;
+  }
 }
 
 class LlmRequest {

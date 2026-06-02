@@ -35,6 +35,19 @@ class MfaSetupScreen extends StatefulWidget {
 
 enum MfaStep { idle, scan, verify, recovery, done }
 
+/// Writes [value] to the clipboard, then schedules a wipe 60 s later
+/// so MFA secrets / recovery codes do not linger on the system
+/// clipboard for the next app to pick up.
+Future<void> _copyWithAutoClear(String value) async {
+  await Clipboard.setData(ClipboardData(text: value));
+  Future<void>.delayed(const Duration(seconds: 60), () async {
+    final current = await Clipboard.getData(Clipboard.kTextPlain);
+    if (current?.text == value) {
+      await Clipboard.setData(const ClipboardData(text: ''));
+    }
+  });
+}
+
 class _MfaSetupScreenState extends State<MfaSetupScreen> {
   late final TotpService _totp = widget.totpOverride ?? TotpService();
   final TextEditingController _codeCtl = TextEditingController();
@@ -72,7 +85,18 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       _verifying = true;
       _error = null;
     });
-    final ok = _totp.verify(secret: _secret!, code: _codeCtl.text.trim());
+    bool ok;
+    try {
+      ok = _totp.verify(secret: _secret!, code: _codeCtl.text.trim());
+    } on FormatException {
+      if (!mounted) return;
+      setState(() {
+        _verifying = false;
+        _error = 'The stored secret could not be read. Restart the '
+            'setup to regenerate one.';
+      });
+      return;
+    }
     if (!mounted) return;
     if (!ok) {
       setState(() {
@@ -93,7 +117,17 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
 
   Future<void> _finish() async {
     final uid = FirebaseAuthService.instance.profile?.userId ?? 'demo';
-    await SecuritySettingsService.instance.markMfaEnrolled(uid);
+    try {
+      await SecuritySettingsService.instance.markMfaEnrolled(uid);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'We verified the code but could not persist your '
+            'enrolment. Try again from the recovery step.';
+      });
+      TelemetryService.instance.capture('security.mfa_enrol_persist_failed');
+      return;
+    }
     if (!mounted) return;
     setState(() => _step = MfaStep.done);
     TelemetryService.instance.capture('security.mfa_enrol_completed');
@@ -379,9 +413,9 @@ class _ScanPane extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Copy secret',
+              tooltip: 'Copy secret (auto-clears in 60s)',
               icon: const Icon(Icons.copy, size: 18),
-              onPressed: () => Clipboard.setData(ClipboardData(text: secret)),
+              onPressed: () => _copyWithAutoClear(secret),
             ),
           ]),
           const SizedBox(height: PsySpacing.lg),
@@ -532,10 +566,8 @@ class _RecoveryPane extends StatelessWidget {
             const SizedBox(width: PsySpacing.sm),
             TextButton.icon(
               icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy all'),
-              onPressed: () => Clipboard.setData(
-                ClipboardData(text: codes.join('\n')),
-              ),
+              label: const Text('Copy all (auto-clears in 60s)'),
+              onPressed: () => _copyWithAutoClear(codes.join('\n')),
             ),
           ]),
         ],

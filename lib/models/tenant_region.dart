@@ -44,8 +44,20 @@ enum TenantRegion {
   static TenantRegion fromId(String id) {
     return values.firstWhere(
       (r) => r.id == id,
-      orElse: () => TenantRegion.euCentral,
+      orElse: () => throw ArgumentError(
+          'Unknown TenantRegion id: $id. A silent EU fallback would let '
+          'US tenants accidentally run under GDPR; caller must handle '
+          'this explicitly.'),
     );
+  }
+
+  /// Test/migration seam — returns null when [id] is unknown so the
+  /// caller can decide between propagation, logging, or fallback.
+  static TenantRegion? tryFromId(String id) {
+    for (final r in values) {
+      if (r.id == id) return r;
+    }
+    return null;
   }
 }
 
@@ -105,7 +117,7 @@ class TenantRegionPin {
       changeRequestedAt: json['change_requested_at'] != null
           ? DateTime.parse(json['change_requested_at'] as String)
           : null,
-      changeRequestedTo: json['change_requested_to'] != null
+      changeRequestedTo: json['change_requested_to'] is String
           ? TenantRegion.fromId(json['change_requested_to'] as String)
           : null,
     );

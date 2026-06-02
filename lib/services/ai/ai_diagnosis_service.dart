@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../models/differential_candidate.dart';
 import 'llm_proxy_client.dart';
 
@@ -50,12 +52,18 @@ class AiDiagnosisService {
     },
   };
 
+  /// Default network deadline. Mid-session clinicians cannot afford an
+  /// indefinite hang — surface a timeout so the UI can retry or fall
+  /// back to manual mode.
+  static const Duration defaultTimeout = Duration(seconds: 30);
+
   Future<List<DifferentialCandidate>> suggestDifferential({
     required String tenantId,
     required String vignette,
     required List<String> symptoms,
     LlmModel model = LlmModel.sonnet46,
     List<String> patientNames = const [],
+    Duration timeout = defaultTimeout,
   }) async {
     final prompt = _buildPrompt(vignette: vignette, symptoms: symptoms);
     final request = LlmRequest(
@@ -69,7 +77,12 @@ class AiDiagnosisService {
       patientNames: patientNames,
       tools: const [toolSchema],
     ).redacted();
-    final completion = await _client.complete(request: request);
+    final completion = await _client.complete(request: request).timeout(
+          timeout,
+          onTimeout: () => throw TimeoutException(
+              'LLM proxy did not respond within ${timeout.inSeconds}s',
+              timeout),
+        );
     final payload = completion.toolUse;
     if (payload == null) {
       throw const FormatException(

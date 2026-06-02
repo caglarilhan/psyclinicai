@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persisted per-user security flags surfaced by the MFA wizard and
@@ -10,16 +11,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// record. Production swaps this out for a Firestore-backed
 /// repository keyed on Firebase Auth UID; the surface stays the same.
 class SecuritySettingsService {
-  SecuritySettingsService._();
-  static final SecuritySettingsService instance = SecuritySettingsService._();
+  SecuritySettingsService._({Future<SharedPreferences> Function()? prefs})
+      : _prefsFactory = prefs;
 
-  /// Test seam: swap in a fake before the first call.
-  static Future<SharedPreferences>? prefsOverride;
+  static SecuritySettingsService instance = SecuritySettingsService._();
+
+  /// Test seam — swap in a synthetic backend before invoking the
+  /// singleton. The previous static mutable field was a hazard; tests
+  /// now wrap setup/teardown around this entry point.
+  @visibleForTesting
+  static void setTestInstance(
+      Future<SharedPreferences> Function() prefs) {
+    instance = SecuritySettingsService._(prefs: prefs);
+  }
+
+  @visibleForTesting
+  static void resetTestInstance() {
+    instance = SecuritySettingsService._();
+  }
+
+  final Future<SharedPreferences> Function()? _prefsFactory;
 
   String _mfaKey(String uid) => 'mfa_enrolled:$uid';
 
   Future<SharedPreferences> _prefs() =>
-      prefsOverride ?? SharedPreferences.getInstance();
+      _prefsFactory?.call() ?? SharedPreferences.getInstance();
 
   /// True if [uid] completed the TOTP wizard at any point.
   Future<bool> isMfaEnrolled(String uid) async {

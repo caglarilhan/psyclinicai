@@ -42,6 +42,29 @@ void main() {
       expect(svc.verify(secret: secret, code: '1234567'), isFalse);
     });
 
+    test('verify refuses replay of the same code (RFC 6238 §5.2)', () {
+      final secret = svc.generateSecret();
+      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final code = svc.currentCode(secret, forTime: at);
+      expect(svc.verify(secret: secret, code: code, at: at), isTrue);
+      expect(svc.verify(secret: secret, code: code, at: at), isFalse,
+          reason: 'second use must be rejected');
+    });
+
+    test('consume:false allows repeated verifies for tests/preview', () {
+      final secret = svc.generateSecret();
+      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final code = svc.currentCode(secret, forTime: at);
+      expect(
+        svc.verify(secret: secret, code: code, at: at, consume: false),
+        isTrue,
+      );
+      expect(
+        svc.verify(secret: secret, code: code, at: at, consume: false),
+        isTrue,
+      );
+    });
+
     test('provisioning URI follows otpauth spec with PsyClinicAI issuer', () {
       final uri = svc.provisioningUri(
         label: 'demo@psyclinicai.com',

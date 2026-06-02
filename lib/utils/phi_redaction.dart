@@ -22,8 +22,10 @@ class PhiRedactor {
   final List<String> patientNames;
 
   static final _phoneE164 = RegExp(r'\+\d{8,15}\b');
-  static final _phoneUs = RegExp(
-      r'(?:\(\d{3}\)\s*|(?<=\b)\d{3}[-.\s])\d{3}[-.\s]?\d{4}\b');
+  // Two alternations: parens-style (no leading \b) + dash-style with \b.
+  // Dart RegExp lookbehind support is unreliable on \b — split instead.
+  static final _phoneUs =
+      RegExp(r'(?:\(\d{3}\)\s*\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]?\d{4})\b');
   static final _email =
       RegExp(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b');
   static final _dateIso = RegExp(r'\b(19|20)\d{2}-\d{2}-\d{2}\b');
@@ -34,6 +36,12 @@ class PhiRedactor {
           caseSensitive: false);
   static final _ssn = RegExp(r'\b\d{3}-\d{2}-\d{4}\b');
   static final _kvnr = RegExp(r'\b[A-Z]\d{9}\b');
+  static final _ipV4 = RegExp(r'\b(?:\d{1,3}\.){3}\d{1,3}\b');
+  // US NPI is a 10-digit Luhn-validated id; we mask anything that
+  // looks like one even without Luhn — false positives on the LLM
+  // side are cheaper than PHI egress.
+  static final _npi = RegExp(r'\b(?:NPI\s*[:#-]?\s*)?\d{10}\b',
+      caseSensitive: false);
 
   PhiScrubResult scrub(String input) {
     final removed = <String, int>{};
@@ -45,9 +53,11 @@ class PhiRedactor {
     text = _replace(text, _ssn, '[SSN]', removed, 'ssn');
     text = _replace(text, _kvnr, '[KVNR]', removed, 'kvnr');
     text = _replace(text, _mrn, '[MRN]', removed, 'mrn');
+    text = _replace(text, _npi, '[NPI]', removed, 'npi');
     text = _replace(text, _dateIso, '[DATE]', removed, 'date_iso');
     text = _replace(text, _dateUs, '[DATE]', removed, 'date_us');
     text = _replace(text, _dateDe, '[DATE]', removed, 'date_de');
+    text = _replace(text, _ipV4, '[IP]', removed, 'ip_v4');
 
     for (final name in patientNames) {
       final n = name.trim();

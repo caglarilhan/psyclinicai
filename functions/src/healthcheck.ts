@@ -14,6 +14,16 @@ interface Dependency {
   name: string;
   status: "ok" | "degraded" | "outage";
   latency_ms: number;
+  error_code?: string;
+}
+
+function errorCodeOf(e: unknown): string {
+  if (typeof e === "object" && e !== null && "code" in e) {
+    const code = (e as { code?: unknown }).code;
+    if (typeof code === "string") return code;
+    if (typeof code === "number") return String(code);
+  }
+  return "unknown";
 }
 
 async function pingFirestore(): Promise<Dependency> {
@@ -25,11 +35,14 @@ async function pingFirestore(): Promise<Dependency> {
       status: "ok",
       latency_ms: Date.now() - started,
     };
-  } catch (_) {
+  } catch (e) {
+    const code = errorCodeOf(e);
+    functions.logger.error("healthcheck.firestore_outage", { code, error: e });
     return {
       name: "firestore",
       status: "outage",
       latency_ms: Date.now() - started,
+      error_code: code,
     };
   }
 }
@@ -43,18 +56,24 @@ async function pingAuth(): Promise<Dependency> {
       status: "ok",
       latency_ms: Date.now() - started,
     };
-  } catch (_) {
+  } catch (e) {
+    const code = errorCodeOf(e);
+    functions.logger.error("healthcheck.auth_outage", { code, error: e });
     return {
       name: "firebase_auth",
       status: "outage",
       latency_ms: Date.now() - started,
+      error_code: code,
     };
   }
 }
 
 export const healthcheck = functions.https.onRequest(
   async (req, res) => {
-    const deep = req.query.deep !== undefined;
+    // Strict opt-in: `?deep=true` or `?deep=1`; anything else (incl.
+    // `?deep=false`) skips the dependency probes.
+    const deepRaw = String(req.query.deep ?? "").toLowerCase();
+    const deep = deepRaw === "true" || deepRaw === "1";
     const dependencies: Dependency[] = [];
     if (deep) {
       const results = await Promise.all([pingFirestore(), pingAuth()]);

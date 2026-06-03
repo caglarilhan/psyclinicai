@@ -12,6 +12,7 @@ enum PasskeyOutcome {
   challengeExpired,
   networkError,
   serverRejected,
+  busy,
 }
 
 /// Pluggable backend the [PasskeyService] talks to. The default is
@@ -102,7 +103,7 @@ class PasskeyService extends ChangeNotifier {
   }
 
   Future<PasskeyOutcome> enrol({required String deviceLabel}) async {
-    if (_busy) return PasskeyOutcome.networkError;
+    if (_busy) return PasskeyOutcome.busy;
     _busy = true;
     _lastError = null;
     notifyListeners();
@@ -122,8 +123,15 @@ class PasskeyService extends ChangeNotifier {
   }
 
   Future<void> revoke(String credentialId) async {
-    await _repository.revoke(_uid, credentialId);
-    _credentials = await _repository.listForUser(_uid);
+    if (_busy) return;
+    _busy = true;
     notifyListeners();
+    try {
+      await _repository.revoke(_uid, credentialId);
+      _credentials = await _repository.listForUser(_uid);
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
   }
 }

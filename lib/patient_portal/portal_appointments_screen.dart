@@ -58,7 +58,9 @@ class PortalAppointmentsScreen extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      // Rescheduling flow ships in a follow-up sprint;
+                      // disabling the button avoids a dead click.
+                      onPressed: null,
                       child: const Text('Reschedule'),
                     ),
                   ],

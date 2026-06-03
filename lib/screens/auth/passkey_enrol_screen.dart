@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/passkey.dart';
@@ -34,7 +36,7 @@ class _PasskeyEnrolScreenState extends State<PasskeyEnrolScreen> {
   void initState() {
     super.initState();
     widget.service.addListener(_onServiceChanged);
-    widget.service.refresh();
+    unawaited(widget.service.refresh());
   }
 
   @override
@@ -71,6 +73,7 @@ class _PasskeyEnrolScreenState extends State<PasskeyEnrolScreen> {
         PasskeyOutcome.networkError => 'Network error — try again.',
         PasskeyOutcome.serverRejected =>
           'Server rejected the credential — try a different authenticator.',
+        PasskeyOutcome.busy => 'Already in progress — please wait.',
       };
       if (outcome == PasskeyOutcome.ok) _labelController.clear();
     });

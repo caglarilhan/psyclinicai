@@ -38,7 +38,10 @@ class PortalInboxScreen extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: PsySpacing.md),
               child: PsyCard(
-                onTap: () {},
+                // Thread detail view ships in a follow-up sprint;
+                // leaving `onTap` null avoids a deceptive ink-splash
+                // affordance on a no-op tap.
+                onTap: null,
                 child: Row(
                   children: [
                     Icon(r.unread ? Icons.mark_email_unread : Icons.mail),

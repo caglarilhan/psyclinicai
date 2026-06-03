@@ -21,12 +21,29 @@ import { rpIdFor, originFor } from "./lib/webauthn_env";
  * keep a stable correlation handle without pairing the hardware id to
  * the uid in plain text (HIPAA minimum-necessary).
  */
-function hashCredentialId(credentialId: string): string {
+export function hashCredentialId(credentialId: string): string {
   return crypto
     .createHash("sha256")
     .update(credentialId)
     .digest("hex")
     .slice(0, 16);
+}
+
+/**
+ * FIDO2 §6.1 step 17 — treat as cloning evidence when the
+ * authenticator's reported sign count fails to advance. Equality at
+ * non-zero is replay; equality at zero is the legitimate
+ * "this authenticator pins signCount at 0" case.
+ */
+export function isCloningEvidence(
+  storedSignCount: number,
+  receivedSignCount: number,
+): boolean {
+  if (receivedSignCount < storedSignCount) return true;
+  if (receivedSignCount === storedSignCount && receivedSignCount !== 0) {
+    return true;
+  }
+  return false;
 }
 
 export interface AssertionVerifier {
@@ -225,12 +242,9 @@ export const passkeyAuthVerify = functions.https.onRequest(
         res.status(400).json({ error: "assertion_failed" });
         return;
       }
-      // FIDO2 §6.1 step 17 — clone evidence when newSignCount <= stored,
-      // unless BOTH are 0 (some software authenticators legitimately
-      // pin signCount at 0). Equality at non-zero is replay.
+      // FIDO2 §6.1 step 17 — see isCloningEvidence.
       const newCount = result.newSignCount;
-      if (newCount < credData.sign_count ||
-          (newCount === credData.sign_count && newCount !== 0)) {
+      if (isCloningEvidence(credData.sign_count, newCount)) {
         functions.logger.error("passkeyAuthVerify.sign_count_regression", {
           uid,
           credentialIdHashHex: hashCredentialId(credentialId),

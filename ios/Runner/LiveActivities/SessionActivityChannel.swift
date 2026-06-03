@@ -103,7 +103,15 @@ public final class SessionActivityChannel: NSObject {
       let id = args["activityId"] as? String,
       let activity = activities[id]
     else {
-      result(false)
+      // Surface an explicit error so the Dart side sees a
+      // `PlatformException` instead of a silent `false` — otherwise
+      // a relaunched app leaves the Live Activity pinned to the lock
+      // screen until iOS times it out.
+      result(FlutterError(
+        code: "unknown_activity",
+        message: "No live activity with the supplied id",
+        details: nil
+      ))
       return
     }
     Task {

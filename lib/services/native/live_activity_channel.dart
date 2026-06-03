@@ -45,7 +45,12 @@ class LiveActivityChannel {
         return const LiveActivityHandle._noop();
       }
       return LiveActivityHandle._(channel: _channel, activityId: id);
-    } on PlatformException catch (_) {
+    } on PlatformException catch (e, st) {
+      // Surface the failure so misconfigured entitlements / disabled
+      // Live Activities don't silently degrade the lock-screen UX.
+      // The session screen receives a `notSupported` handle and can
+      // show a banner.
+      debugPrint('LiveActivity.start failed: ${e.code} ${e.message}\n$st');
       return const LiveActivityHandle._noop();
     }
   }

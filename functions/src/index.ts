@@ -52,6 +52,16 @@ export { accessReviewCron } from "./access_review_cron";
 // Sprint 25 W2 — public health probe for statuspage.io polling.
 export { healthcheck } from "./healthcheck";
 
+// Sprint 26 W1 — WebAuthn / FIDO2 passkey enrolment + assertion.
+export {
+  passkeyRegisterOptions,
+  passkeyRegisterVerify,
+} from "./passkey_register";
+export {
+  passkeyAuthOptions,
+  passkeyAuthVerify,
+} from "./passkey_authenticate";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

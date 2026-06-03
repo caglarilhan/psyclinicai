@@ -34,6 +34,21 @@ enum BetaFeedbackSeverity {
   }
 }
 
+/// Patterns that strongly suggest a clinician pasted PHI into the
+/// free-text field. Matching is fail-closed — we refuse the record
+/// rather than try to redact it, because partial redaction of a
+/// session note still leaks context.
+final List<RegExp> _phiSentinels = [
+  RegExp(r'\b\d{3}-\d{2}-\d{4}\b'), // US SSN
+  RegExp(r'\b\d{9,}\b'), // MRN / long digit runs
+  RegExp(r'\bDOB[:\s]', caseSensitive: false),
+  RegExp(r'\bMRN[:\s]', caseSensitive: false),
+  RegExp(r'\bICD-?10[:\s]', caseSensitive: false),
+  RegExp(r'\bC-?SSRS\b'),
+  RegExp(r'\bsession note\b', caseSensitive: false),
+  RegExp(r'\bSOAP\b'),
+];
+
 class BetaFeedback {
   BetaFeedback({
     required this.id,
@@ -41,6 +56,7 @@ class BetaFeedback {
     required this.body,
     required this.route,
     required this.uid,
+    required this.phiAttestation,
     DateTime? submittedAt,
     BetaFeedbackSeverity? severity,
   })  : submittedAt = submittedAt ?? DateTime.now().toUtc(),
@@ -51,7 +67,26 @@ class BetaFeedback {
     if (body.length > 2000) {
       throw ArgumentError('BetaFeedback.body exceeds 2000 chars.');
     }
+    if (!phiAttestation) {
+      throw ArgumentError(
+        'BetaFeedback requires the clinician to attest the body '
+        'contains no patient identifiers.',
+      );
+    }
+    for (final sentinel in _phiSentinels) {
+      if (sentinel.hasMatch(body)) {
+        throw ArgumentError(
+          'BetaFeedback.body looks like it contains PHI '
+          '(${sentinel.pattern}). Refusing to submit.',
+        );
+      }
+    }
   }
+
+  /// The submitter ticked the "no patient identifiers in this report"
+  /// confirmation. Persisted alongside the body so the audit trail
+  /// shows the attestation existed at submission time.
+  final bool phiAttestation;
 
   final String id;
   final BetaFeedbackKind kind;
@@ -68,6 +103,7 @@ class BetaFeedback {
         'route': route,
         'uid': uid,
         'severity': severity.name,
+        'phi_attested': phiAttestation,
         'submitted_at': submittedAt.toUtc().toIso8601String(),
       };
 
@@ -77,6 +113,7 @@ class BetaFeedback {
         body: json['body'] as String,
         route: json['route'] as String,
         uid: json['uid'] as String,
+        phiAttestation: json['phi_attested'] as bool? ?? false,
         submittedAt: DateTime.parse(json['submitted_at'] as String),
         severity: BetaFeedbackSeverity.values.firstWhere(
           (s) => s.name == json['severity'],

@@ -11,9 +11,23 @@
  * No PHI touches this code path.
  */
 import * as admin from "firebase-admin";
+import * as crypto from "crypto";
 import * as functions from "firebase-functions";
 import { applyCors, authorizeUid } from "./lib/auth";
 import { rpIdFor, originFor } from "./lib/webauthn_env";
+
+/**
+ * Returns a 16-char SHA-256 hex prefix of the credential id so logs
+ * keep a stable correlation handle without pairing the hardware id to
+ * the uid in plain text (HIPAA minimum-necessary).
+ */
+function hashCredentialId(credentialId: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(credentialId)
+    .digest("hex")
+    .slice(0, 16);
+}
 
 export interface AssertionVerifier {
   verifyAuthentication(params: {
@@ -120,39 +134,83 @@ export const passkeyAuthVerify = functions.https.onRequest(
       res.status(400).json({ error: "credential_id_required" });
       return;
     }
-    const challengeDoc = await admin
+    const challengeRef = admin
       .firestore()
-      .doc(`webauthn_challenges/${uid}_auth`)
-      .get();
-    if (!challengeDoc.exists) {
-      res.status(400).json({ error: "no_challenge" });
-      return;
-    }
-    const challengeData = challengeDoc.data() as {
-      challenge: string;
-      expiresAt: admin.firestore.Timestamp;
-    };
-    if (challengeData.expiresAt.toMillis() < Date.now()) {
-      await challengeDoc.ref.delete();
-      res.status(400).json({ error: "challenge_expired" });
-      return;
-    }
+      .doc(`webauthn_challenges/${uid}_auth`);
     const credRef = admin
       .firestore()
       .doc(`users/${uid}/passkeys/${credentialId}`);
-    const credSnap = await credRef.get();
-    if (!credSnap.exists) {
-      res.status(404).json({ error: "credential_not_found" });
-      return;
-    }
-    const credData = credSnap.data() as {
+
+    let challengeData: {
+      challenge: string;
+      expiresAt: admin.firestore.Timestamp;
+    };
+    let credData: {
       public_key: string;
       sign_count: number;
       revoked_at?: admin.firestore.Timestamp | null;
     };
-    if (credData.revoked_at) {
-      res.status(403).json({ error: "credential_revoked" });
-      return;
+
+    try {
+      const consumed = await admin.firestore().runTransaction(async (tx) => {
+        const challengeSnap = await tx.get(challengeRef);
+        if (!challengeSnap.exists) {
+          throw new HandlerError(400, "no_challenge");
+        }
+        const rawChallenge = challengeSnap.data();
+        if (
+          !rawChallenge ||
+          typeof rawChallenge["challenge"] !== "string" ||
+          !(rawChallenge["expiresAt"] instanceof admin.firestore.Timestamp)
+        ) {
+          tx.delete(challengeRef);
+          throw new HandlerError(500, "corrupt_challenge");
+        }
+        if ((rawChallenge["expiresAt"] as admin.firestore.Timestamp)
+            .toMillis() < Date.now()) {
+          tx.delete(challengeRef);
+          throw new HandlerError(400, "challenge_expired");
+        }
+        const credSnap = await tx.get(credRef);
+        if (!credSnap.exists) {
+          throw new HandlerError(404, "credential_not_found");
+        }
+        const rawCred = credSnap.data();
+        if (
+          !rawCred ||
+          typeof rawCred["public_key"] !== "string" ||
+          typeof rawCred["sign_count"] !== "number"
+        ) {
+          throw new HandlerError(500, "corrupt_credential");
+        }
+        if (rawCred["revoked_at"]) {
+          throw new HandlerError(403, "credential_revoked");
+        }
+        // Consume the challenge atomically with the read so a racing
+        // request hits no_challenge instead of double-spending it.
+        tx.delete(challengeRef);
+        return {
+          challenge: rawChallenge["challenge"] as string,
+          expiresAt:
+              rawChallenge["expiresAt"] as admin.firestore.Timestamp,
+          public_key: rawCred["public_key"] as string,
+          sign_count: rawCred["sign_count"] as number,
+        };
+      });
+      challengeData = {
+        challenge: consumed.challenge,
+        expiresAt: consumed.expiresAt,
+      };
+      credData = {
+        public_key: consumed.public_key,
+        sign_count: consumed.sign_count,
+      };
+    } catch (e) {
+      if (e instanceof HandlerError) {
+        res.status(e.status).json({ error: e.code });
+        return;
+      }
+      throw e;
     }
     try {
       const result = await _verifier.verifyAuthentication({
@@ -167,12 +225,17 @@ export const passkeyAuthVerify = functions.https.onRequest(
         res.status(400).json({ error: "assertion_failed" });
         return;
       }
-      if (result.newSignCount < credData.sign_count) {
+      // FIDO2 §6.1 step 17 — clone evidence when newSignCount <= stored,
+      // unless BOTH are 0 (some software authenticators legitimately
+      // pin signCount at 0). Equality at non-zero is replay.
+      const newCount = result.newSignCount;
+      if (newCount < credData.sign_count ||
+          (newCount === credData.sign_count && newCount !== 0)) {
         functions.logger.error("passkeyAuthVerify.sign_count_regression", {
           uid,
-          credentialId,
+          credentialIdHashHex: hashCredentialId(credentialId),
           stored: credData.sign_count,
-          received: result.newSignCount,
+          received: newCount,
         });
         await credRef.update({
           revoked_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -184,14 +247,19 @@ export const passkeyAuthVerify = functions.https.onRequest(
         sign_count: result.newSignCount,
         last_used_at: admin.firestore.FieldValue.serverTimestamp(),
       });
-      await challengeDoc.ref.delete();
       res.json({ ok: true, signCount: result.newSignCount });
     } catch (e) {
       functions.logger.error("passkeyAuthVerify.error", {
         uid,
-        reason: String(e),
+        error: e,
       });
       res.status(400).json({ error: "verification_error" });
     }
   }
 );
+
+class HandlerError extends Error {
+  constructor(public status: number, public code: string) {
+    super(code);
+  }
+}

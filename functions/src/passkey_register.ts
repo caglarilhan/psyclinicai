@@ -126,29 +126,60 @@ export const passkeyRegisterVerify = functions.https.onRequest(
         transports?: string[];
       }) ?? {};
 
-    const challengeDoc = await admin
+    // Defer verifier call into a transaction so two concurrent
+    // requests cannot both consume the same challenge.
+    const challengeRef = admin
       .firestore()
-      .doc(`webauthn_challenges/${uid}_register`)
-      .get();
-    if (!challengeDoc.exists) {
-      res.status(400).json({ error: "no_challenge" });
-      return;
-    }
-    const data = challengeDoc.data() as {
+      .doc(`webauthn_challenges/${uid}_register`);
+
+    let challengeData: {
       challenge: string;
       deviceLabel: string;
       expiresAt: admin.firestore.Timestamp;
     };
-    if (data.expiresAt.toMillis() < Date.now()) {
-      await challengeDoc.ref.delete();
-      res.status(400).json({ error: "challenge_expired" });
-      return;
+    try {
+      challengeData = await admin
+        .firestore()
+        .runTransaction(async (tx) => {
+          const snap = await tx.get(challengeRef);
+          if (!snap.exists) {
+            throw new HandlerError(400, "no_challenge");
+          }
+          const raw = snap.data();
+          if (
+            !raw ||
+            typeof raw["challenge"] !== "string" ||
+            typeof raw["deviceLabel"] !== "string" ||
+            !(raw["expiresAt"] instanceof admin.firestore.Timestamp)
+          ) {
+            tx.delete(challengeRef);
+            throw new HandlerError(500, "corrupt_challenge");
+          }
+          if ((raw["expiresAt"] as admin.firestore.Timestamp).toMillis() <
+              Date.now()) {
+            tx.delete(challengeRef);
+            throw new HandlerError(400, "challenge_expired");
+          }
+          // Consume here — any racing request now hits no_challenge.
+          tx.delete(challengeRef);
+          return {
+            challenge: raw["challenge"] as string,
+            deviceLabel: raw["deviceLabel"] as string,
+            expiresAt: raw["expiresAt"] as admin.firestore.Timestamp,
+          };
+        });
+    } catch (e) {
+      if (e instanceof HandlerError) {
+        res.status(e.status).json({ error: e.code });
+        return;
+      }
+      throw e;
     }
 
     try {
       const result = await _verifier.verifyRegistration({
         response: body.attestationResponse,
-        expectedChallenge: data.challenge,
+        expectedChallenge: challengeData.challenge,
         expectedOrigin: originFor(req),
         expectedRpId: rpIdFor(req),
       });
@@ -163,19 +194,24 @@ export const passkeyRegisterVerify = functions.https.onRequest(
           credential_id: result.credentialId,
           public_key: result.publicKey,
           sign_count: result.signCount,
-          device_label: data.deviceLabel,
+          device_label: challengeData.deviceLabel,
           transports: Array.isArray(body.transports) ? body.transports : [],
           aaguid: result.aaguid ?? null,
           created_at: admin.firestore.FieldValue.serverTimestamp(),
         });
-      await challengeDoc.ref.delete();
       res.json({ ok: true, credentialId: result.credentialId });
     } catch (e) {
       functions.logger.error("passkeyRegisterVerify.error", {
         uid,
-        reason: String(e),
+        error: e,
       });
       res.status(400).json({ error: "verification_error" });
     }
   }
 );
+
+class HandlerError extends Error {
+  constructor(public status: number, public code: string) {
+    super(code);
+  }
+}

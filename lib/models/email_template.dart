@@ -29,6 +29,60 @@ const Set<String> kEmailTemplateTokens = {
   'intake_link',
   'review_link',
   'reactivation_offer',
+  'crisis_hotline_local',
+  'safety_plan_link',
+};
+
+/// Per-kind narrowing on top of [kEmailTemplateTokens] — HIPAA
+/// minimum-necessary. Non-clinical kinds (birthday, reactivation,
+/// review_request) must NEVER mix `patient_full_name` with
+/// `clinic_name` in a single envelope that may land in a shared inbox.
+const Map<EmailTemplateKind, Set<String>> kPerKindTokenAllowList = {
+  EmailTemplateKind.reminder72h: {
+    'patient_first_name',
+    'session_date',
+    'session_time',
+    'session_link',
+    'clinician_name',
+    'clinic_name',
+  },
+  EmailTemplateKind.reminder24h: {
+    'patient_first_name',
+    'session_date',
+    'session_time',
+    'session_link',
+    'clinician_name',
+    'clinic_name',
+  },
+  EmailTemplateKind.reminder2h: {
+    'patient_first_name',
+    'session_time',
+    'session_link',
+    'clinician_name',
+  },
+  EmailTemplateKind.intakeLink: {
+    'patient_first_name',
+    'intake_link',
+    'clinician_name',
+    'clinic_name',
+  },
+  EmailTemplateKind.noShowFollowUp: {
+    'patient_first_name',
+    'clinician_name',
+    'crisis_hotline_local',
+    'safety_plan_link',
+  },
+  EmailTemplateKind.reviewRequest: {
+    'patient_first_name',
+    'review_link',
+  },
+  EmailTemplateKind.birthday: {
+    'patient_first_name',
+  },
+  EmailTemplateKind.reactivation: {
+    'patient_first_name',
+    'reactivation_offer',
+  },
 };
 
 class EmailTemplate {
@@ -51,12 +105,19 @@ class EmailTemplate {
   final DateTime updatedAt;
 
   String render(Map<String, String> tokens) {
+    final perKind = kPerKindTokenAllowList[kind] ?? kEmailTemplateTokens;
     return bodyMarkdown.replaceAllMapped(
       RegExp(r'\{\{\s*([a-zA-Z_]+)\s*\}\}'),
       (m) {
         final key = m.group(1)!;
         if (!kEmailTemplateTokens.contains(key)) {
           return '[unknown:$key]';
+        }
+        if (!perKind.contains(key)) {
+          // Per-kind minimum-necessary — a clinical token slipping
+          // into a birthday email is surfaced for QA, never silently
+          // rendered.
+          return '[blocked:$key]';
         }
         return tokens[key] ?? '';
       },

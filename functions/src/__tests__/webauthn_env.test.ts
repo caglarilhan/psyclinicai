@@ -23,6 +23,13 @@ describe("webauthn_env.rpIdFor", () => {
     expect(rpIdFor(req(undefined))).toBe("psyclinic.ai");
     expect(rpIdFor(req("not-a-url"))).toBe("psyclinic.ai");
   });
+
+  it("rejects suffix-only attackers (evil-psyclinic.ai)", () => {
+    // A naive endsWith('psyclinic.ai') would let this attacker through.
+    expect(rpIdFor(req("https://evil-psyclinic.ai"))).toBe("psyclinic.ai");
+    // The rp id ends up as the prod canonical, which the WebAuthn client
+    // will reject — the credential can't be bound to the attacker domain.
+  });
 });
 
 describe("webauthn_env.originFor", () => {

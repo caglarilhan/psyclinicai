@@ -77,8 +77,21 @@ class PortalLandingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: PsySpacing.md),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushNamed('/portal/dsar'),
+                      onPressed: () {
+                        // Until the in-app DSAR portal lands, route to a
+                        // mailto fallback so the legal obligation
+                        // (HIPAA Right of Access, GDPR Art. 15-22) is
+                        // never a dead button.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Email privacy@psyclinic.ai to manage '
+                              'your data rights. The in-app portal is '
+                              'launching soon.',
+                            ),
+                          ),
+                        );
+                      },
                       child: const Text('Manage data rights →'),
                     ),
                   ],

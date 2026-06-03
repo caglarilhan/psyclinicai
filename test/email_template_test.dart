@@ -31,6 +31,23 @@ void main() {
       expect(out, 'Hi ');
     });
 
+    test('per-kind allow-list blocks clinical tokens in birthday emails', () {
+      final birthday = EmailTemplate(
+        id: 't-bday',
+        kind: EmailTemplateKind.birthday,
+        subject: 'Happy birthday',
+        bodyMarkdown:
+            'Happy birthday {{patient_first_name}} from {{clinic_name}}!',
+      );
+      final out = birthday.render({
+        'patient_first_name': 'Alex',
+        'clinic_name': 'Berlin clinic',
+      });
+      expect(out, contains('Happy birthday Alex'));
+      // Clinic name is NOT in the per-kind allow-list for birthday.
+      expect(out, contains('[blocked:clinic_name]'));
+    });
+
     test('JSON round-trip preserves fields', () {
       final t = make('body').copyWith(enabled: false, abVariantId: 'B');
       final restored = EmailTemplate.fromJson(t.toJson());

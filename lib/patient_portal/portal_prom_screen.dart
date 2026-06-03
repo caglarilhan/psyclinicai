@@ -5,6 +5,23 @@ import '../widgets/ds/psy_badge.dart';
 import '../widgets/ds/psy_card.dart';
 
 /// `/portal/proms` — Patient-side PROM assignment queue. Skeleton.
+///
+/// **Clinical-safety contract:** patient-side completion is restricted
+/// to non-acuity self-report scales. High-acuity instruments (C-SSRS,
+/// safety-plan reviews, trauma exposure) MUST be administered with a
+/// clinician present and live escalation paths — they are filtered
+/// out here even if a clinician accidentally assigns them to the
+/// patient portal.
+const Set<String> kPortalSafePromIds = {
+  'phq9',
+  'gad7',
+  'who5',
+  'pss10',
+  'pcl5_screen',
+  'audit',
+  'eq5d',
+};
+
 class PortalPromScreen extends StatelessWidget {
   const PortalPromScreen({super.key, this.assignments});
 
@@ -12,7 +29,7 @@ class PortalPromScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = assignments ??
+    final rawRows = assignments ??
         <PortalPromAssignment>[
           const PortalPromAssignment(
             scaleId: 'phq9',
@@ -27,6 +44,11 @@ class PortalPromScreen extends StatelessWidget {
             dueInDays: 3,
           ),
         ];
+    // Hard allow-list — high-acuity scales (C-SSRS, full PCL-5, safety
+    // plan reviews) cannot be administered unsupervised on the portal.
+    final rows = rawRows
+        .where((a) => kPortalSafePromIds.contains(a.scaleId))
+        .toList(growable: false);
     return Scaffold(
       appBar: AppBar(title: const Text('Questionnaires')),
       body: SafeArea(
@@ -63,8 +85,15 @@ class PortalPromScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: FilledButton(
-                        onPressed: () => Navigator.of(context)
-                            .pushNamed('/portal/proms/${r.scaleId}'),
+                        onPressed: () {
+                          // Defence-in-depth — list is already filtered,
+                          // but never build a route from a raw scaleId.
+                          if (!kPortalSafePromIds.contains(r.scaleId)) {
+                            return;
+                          }
+                          Navigator.of(context)
+                              .pushNamed('/portal/proms/${r.scaleId}');
+                        },
                         child: const Text('Start'),
                       ),
                     ),

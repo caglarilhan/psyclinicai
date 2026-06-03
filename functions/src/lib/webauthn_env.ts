@@ -25,7 +25,11 @@ export function rpIdFor(req: functions.https.Request): string {
   }
   try {
     const u = new URL(origin);
-    if (u.hostname.endsWith(PROD_RP_ID)) return PROD_RP_ID;
+    // Anchor on the dot so `evil-psyclinic.ai` cannot pass as a subdomain.
+    if (u.hostname === PROD_RP_ID ||
+        u.hostname.endsWith(`.${PROD_RP_ID}`)) {
+      return PROD_RP_ID;
+    }
   } catch (_) {
     // fall through to prod default
   }

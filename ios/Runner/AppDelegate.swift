@@ -8,6 +8,13 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+
+    if #available(iOS 16.2, *) {
+      if let registrar = self.registrar(forPlugin: "SessionLiveActivity") {
+        SessionActivityChannel.register(with: registrar)
+      }
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

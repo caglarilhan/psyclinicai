@@ -49,6 +49,9 @@ export {
 // Sprint 14 — SOC 2 quarterly access review snapshot cron.
 export { accessReviewCron } from "./access_review_cron";
 
+// Sprint 25 W2 — public health probe for statuspage.io polling.
+export { healthcheck } from "./healthcheck";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

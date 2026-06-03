@@ -165,7 +165,7 @@ async function main() {
       await page.goto(`http://127.0.0.1:${PORT}/#${route}`, {
         waitUntil: 'networkidle',
       });
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(2200);
       await page.screenshot({
         path: path.join(OUT_DIR, file),
         fullPage: true,

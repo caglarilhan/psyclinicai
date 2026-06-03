@@ -28,7 +28,10 @@ class AppearancePreferences extends ChangeNotifier {
 
   static const _themeModeKey = 'appearance.theme_mode';
 
-  ThemeMode _themeMode = ThemeMode.system;
+  // Default to dark — the landing/marketing reference uses the dark
+  // palette as the brand surface; opting in to dark on first launch
+  // keeps the in-app experience consistent.
+  ThemeMode _themeMode = ThemeMode.dark;
   ThemeMode get themeMode => _themeMode;
   bool _loaded = false;
 
@@ -55,11 +58,12 @@ class AppearancePreferences extends ChangeNotifier {
     switch (raw) {
       case 'light':
         return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
       case 'system':
-      default:
         return ThemeMode.system;
+      case 'dark':
+      default:
+        // First-launch / unknown value → dark, matching the landing.
+        return ThemeMode.dark;
     }
   }
 

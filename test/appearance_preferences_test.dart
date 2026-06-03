@@ -11,8 +11,9 @@ void main() {
   tearDown(AppearancePreferences.resetTestInstance);
 
   group('AppearancePreferences', () {
-    test('defaults to ThemeMode.system before load', () async {
-      expect(AppearancePreferences.instance.themeMode, ThemeMode.system);
+    test('defaults to ThemeMode.dark before load (landing parity)',
+        () async {
+      expect(AppearancePreferences.instance.themeMode, ThemeMode.dark);
     });
 
     test('load reads persisted value', () async {

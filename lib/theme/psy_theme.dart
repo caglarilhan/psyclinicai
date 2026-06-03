@@ -32,12 +32,15 @@ class PsyTheme {
       hoverColor: cs.primary.withValues(alpha: 0.04),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          // Android FadeUpwards smells too mobile. Web/desktop = instant.
-          TargetPlatform.android: _NoTransitionsBuilder(),
-          TargetPlatform.linux: _NoTransitionsBuilder(),
-          TargetPlatform.windows: _NoTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          // Soft fade-through (220ms) on every surface — the landing
+          // reference uses a calm crossfade; instant snaps felt
+          // jarring against the dark canvas.
+          TargetPlatform.android: _FadeThroughBuilder(),
+          TargetPlatform.linux: _FadeThroughBuilder(),
+          TargetPlatform.windows: _FadeThroughBuilder(),
+          TargetPlatform.iOS: _FadeThroughBuilder(),
+          TargetPlatform.macOS: _FadeThroughBuilder(),
+          TargetPlatform.fuchsia: _FadeThroughBuilder(),
         },
       ),
       appBarTheme: AppBarTheme(
@@ -173,9 +176,11 @@ class PsyTheme {
   }
 }
 
-/// Web-native page transition — instant snap, no Android FadeUpwards.
-class _NoTransitionsBuilder extends PageTransitionsBuilder {
-  const _NoTransitionsBuilder();
+/// Calm fade-through used app-wide on web + mobile. 220ms feels
+/// natural against the dark slate canvas — long enough to register
+/// as a transition, short enough to stay snappy.
+class _FadeThroughBuilder extends PageTransitionsBuilder {
+  const _FadeThroughBuilder();
 
   @override
   Widget buildTransitions<T>(
@@ -184,6 +189,20 @@ class _NoTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) =>
-      child;
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final fade = Tween<double>(begin: 0, end: 1).animate(curved);
+    final lift = Tween<Offset>(
+      begin: const Offset(0, 0.012),
+      end: Offset.zero,
+    ).animate(curved);
+    return FadeTransition(
+      opacity: fade,
+      child: SlideTransition(position: lift, child: child),
+    );
+  }
 }

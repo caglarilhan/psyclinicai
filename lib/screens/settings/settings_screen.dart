@@ -128,6 +128,12 @@ class SettingsScreen extends StatelessWidget {
               onTap: () =>
                   Navigator.of(context).pushNamed('/settings/region')),
           _row(context, theme, cs,
+              icon: Icons.sync_alt_outlined,
+              title: 'EHR sync',
+              body: 'HL7 FHIR R4 connection to Epic / Cerner / Medistar.',
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/settings/ehr')),
+          _row(context, theme, cs,
               icon: Icons.dark_mode_outlined,
               title: 'Appearance',
               body: 'Light, dark, or follow the operating system.',

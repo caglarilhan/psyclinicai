@@ -18,6 +18,9 @@ import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
 import 'package:psyclinicai/screens/auth/telehealth_setup_screen.dart';
 import 'package:psyclinicai/screens/billing/preauth_screen.dart';
+import 'package:psyclinicai/screens/billing/insurance_claim_board_screen.dart';
+import 'package:psyclinicai/screens/inbox/inbox_screen.dart';
+import 'package:psyclinicai/screens/settings/ehr_sync_console_screen.dart';
 import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
 import 'package:psyclinicai/screens/settings/region_settings_screen.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
@@ -174,6 +177,10 @@ class PsyClinicAIApp extends StatelessWidget {
               '/settings/payments': (context) =>
                   const PaymentSetupScreen(),
               '/settings/region': (context) => const RegionSettingsScreen(),
+              '/settings/ehr': (context) => const EhrSyncConsoleScreen(),
+              '/billing/claims': (context) =>
+                  const InsuranceClaimBoardScreen(),
+              '/inbox': (context) => const InboxScreen(),
               '/billing/preauth': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments
                     as String?;

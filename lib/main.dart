@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/superbill_prefill.dart';
 import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
+import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
@@ -70,6 +71,7 @@ import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
+import 'package:psyclinicai/services/ai/rag_service.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/services/patient_service.dart';
@@ -136,6 +138,10 @@ class PsyClinicAIApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PatientService()),
         ChangeNotifierProvider(create: (_) => RegionService()),
         ChangeNotifierProvider(create: (_) => SubscriptionService()),
+        Provider<RagService>(
+          create: (_) => RagService.fromConfig(),
+          dispose: (_, svc) => svc.dispose(),
+        ),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -156,6 +162,7 @@ class PsyClinicAIApp extends StatelessWidget {
             initialRoute: '/',
             routes: {
               '/': (context) => const SplashScreen(),
+              '/ai/rag': (context) => const RagConsoleScreen(),
               '/landing': (context) => const LandingScreen(),
               '/login': (context) => const LoginScreen(),
               '/auth/password_reset': (context) {

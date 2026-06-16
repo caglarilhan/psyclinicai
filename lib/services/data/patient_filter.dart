@@ -115,8 +115,7 @@ class PatientFilter {
   List<PatientFilterRow> apply(
     List<PatientFilterRow> rows, {
     required DateTime now,
-  }) =>
-      rows.where((r) => matches(r, now)).toList(growable: false);
+  }) => rows.where((r) => matches(r, now)).toList(growable: false);
 
   PatientFilter toggleStatus(PatientStatusFilter s) {
     final next = {...statuses};
@@ -131,34 +130,34 @@ class PatientFilter {
   }
 
   PatientFilter withLastSeen(LastSeenFilter? value) => PatientFilter(
-        statuses: statuses,
-        risks: risks,
-        lastSeen: value,
-        insurer: insurer,
-        query: query,
-      );
+    statuses: statuses,
+    risks: risks,
+    lastSeen: value,
+    insurer: insurer,
+    query: query,
+  );
 
   PatientFilter withQuery(String value) => PatientFilter(
-        statuses: statuses,
-        risks: risks,
-        lastSeen: lastSeen,
-        insurer: insurer,
-        query: value,
-      );
+    statuses: statuses,
+    risks: risks,
+    lastSeen: lastSeen,
+    insurer: insurer,
+    query: value,
+  );
 
   PatientFilter _withStatuses(Set<PatientStatusFilter> next) => PatientFilter(
-        statuses: next,
-        risks: risks,
-        lastSeen: lastSeen,
-        insurer: insurer,
-        query: query,
-      );
+    statuses: next,
+    risks: risks,
+    lastSeen: lastSeen,
+    insurer: insurer,
+    query: query,
+  );
 
   PatientFilter _withRisks(Set<PatientRiskFilter> next) => PatientFilter(
-        statuses: statuses,
-        risks: next,
-        lastSeen: lastSeen,
-        insurer: insurer,
-        query: query,
-      );
+    statuses: statuses,
+    risks: next,
+    lastSeen: lastSeen,
+    insurer: insurer,
+    query: query,
+  );
 }

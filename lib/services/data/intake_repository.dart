@@ -13,14 +13,14 @@ import 'telemetry_service.dart';
 /// a false "intake saved" message while the consent record was lost.
 class IntakeRepository {
   IntakeRepository({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions:
-                  AndroidOptions(encryptedSharedPreferences: true),
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock,
-              ),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   static const _key = 'patient_intakes';
   final FlutterSecureStorage _storage;
@@ -39,8 +39,7 @@ class IntakeRepository {
         for (final e in list) {
           // Per-record resilience: one corrupt intake must not wipe the rest.
           try {
-            final intake =
-                PatientIntake.fromJson(e as Map<String, dynamic>);
+            final intake = PatientIntake.fromJson(e as Map<String, dynamic>);
             _byPatient[intake.patientId] = intake;
           } catch (err, st) {
             dropped++;

@@ -28,23 +28,25 @@ class MfaEnrolment {
       recoveryCodeHashes.length > usedRecoveryCodes.length;
 
   Map<String, dynamic> toJson() => {
-        'uid': uid,
-        'enrolled_at': enrolledAt.toUtc().toIso8601String(),
-        'recovery_code_hashes': recoveryCodeHashes,
-        'used_recovery_codes': usedRecoveryCodes,
-        if (lastVerifiedAt != null)
-          'last_verified_at': lastVerifiedAt!.toUtc().toIso8601String(),
-      };
+    'uid': uid,
+    'enrolled_at': enrolledAt.toUtc().toIso8601String(),
+    'recovery_code_hashes': recoveryCodeHashes,
+    'used_recovery_codes': usedRecoveryCodes,
+    if (lastVerifiedAt != null)
+      'last_verified_at': lastVerifiedAt!.toUtc().toIso8601String(),
+  };
 
   factory MfaEnrolment.fromJson(Map<String, dynamic> json) {
     return MfaEnrolment(
       uid: json['uid'] as String,
       enrolledAt: DateTime.parse(json['enrolled_at'] as String),
-      recoveryCodeHashes: (json['recovery_code_hashes'] as List?)
+      recoveryCodeHashes:
+          (json['recovery_code_hashes'] as List?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      usedRecoveryCodes: (json['used_recovery_codes'] as List?)
+      usedRecoveryCodes:
+          (json['used_recovery_codes'] as List?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
@@ -55,15 +57,15 @@ class MfaEnrolment {
   }
 
   MfaEnrolment markUsed(String hash, DateTime at) => MfaEnrolment(
-        uid: uid,
-        enrolledAt: enrolledAt,
-        recoveryCodeHashes: recoveryCodeHashes,
-        usedRecoveryCodes: [
-          ...usedRecoveryCodes,
-          if (!usedRecoveryCodes.contains(hash)) hash,
-        ],
-        lastVerifiedAt: at,
-      );
+    uid: uid,
+    enrolledAt: enrolledAt,
+    recoveryCodeHashes: recoveryCodeHashes,
+    usedRecoveryCodes: [
+      ...usedRecoveryCodes,
+      if (!usedRecoveryCodes.contains(hash)) hash,
+    ],
+    lastVerifiedAt: at,
+  );
 }
 
 abstract class MfaEnrolmentRepository {

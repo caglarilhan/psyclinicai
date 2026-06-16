@@ -44,11 +44,11 @@ extension AssessmentTypeX on AssessmentType {
   /// display the citation so clinicians and auditors can trace provenance.
   String get referenceNote => this == AssessmentType.phq9
       ? 'PHQ-9 — Kroenke, Spitzer & Williams (2001). Developed with an '
-          'educational grant from Pfizer Inc. No permission required to '
-          'reproduce, translate, display, or distribute.'
+            'educational grant from Pfizer Inc. No permission required to '
+            'reproduce, translate, display, or distribute.'
       : 'GAD-7 — Spitzer, Kroenke, Williams & Löwe (2006). Developed with '
-          'an educational grant from Pfizer Inc. Free to use without '
-          'permission.';
+            'an educational grant from Pfizer Inc. Free to use without '
+            'permission.';
 }
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
@@ -96,8 +96,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     // surface the Phq9TriggerSheet BEFORE the score page so the
     // clinician decides on a C-SSRS / safety plan / crisis path.
     if (widget.type == AssessmentType.phq9 && intAnswers.length >= 9) {
-      final recommendation = const Phq9Item9Router()
-          .evaluate({'phq9_9': intAnswers[8]});
+      final recommendation = const Phq9Item9Router().evaluate({
+        'phq9_9': intAnswers[8],
+      });
       if (recommendation.primaryAction != Phq9Item9Action.none) {
         if (!mounted) return;
         await Phq9TriggerSheet.show(
@@ -377,45 +378,45 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 // Visual anchor — same sticky-feeling pattern as clinical_scale.
                 Container(
                   decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(color: cs.outlineVariant))),
+                    border: Border(top: BorderSide(color: cs.outlineVariant)),
+                  ),
                   padding: const EdgeInsets.only(top: 12),
                   child: Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _currentIndex == 0 ? null : _prev,
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: const Text('Back'),
-                    ),
-                    const Spacer(),
-                    if (_currentIndex < questions.length - 1)
-                      FilledButton.icon(
-                        onPressed: _answers[_currentIndex] == null
-                            ? null
-                            : _next,
-                        icon: const Icon(Icons.arrow_forward, size: 18),
-                        label: const Text('Next'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                        ),
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: _allAnswered ? _submit : null,
-                        icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Score'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                        ),
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _currentIndex == 0 ? null : _prev,
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: const Text('Back'),
                       ),
-                  ],
-                ),
+                      const Spacer(),
+                      if (_currentIndex < questions.length - 1)
+                        FilledButton.icon(
+                          onPressed: _answers[_currentIndex] == null
+                              ? null
+                              : _next,
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: const Text('Next'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: _allAnswered ? _submit : null,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text('Score'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),

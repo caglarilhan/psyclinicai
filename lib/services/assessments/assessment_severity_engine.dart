@@ -63,11 +63,9 @@ class AssessmentResult {
   /// burden); positive = worsening.
   final int? deltaVsPrevious;
 
-  bool get isImproving =>
-      deltaVsPrevious != null && deltaVsPrevious! < 0;
+  bool get isImproving => deltaVsPrevious != null && deltaVsPrevious! < 0;
 
-  bool get isWorsening =>
-      deltaVsPrevious != null && deltaVsPrevious! > 0;
+  bool get isWorsening => deltaVsPrevious != null && deltaVsPrevious! > 0;
 }
 
 class AssessmentSeverityEngine {
@@ -90,8 +88,7 @@ class AssessmentSeverityEngine {
       score: score,
       band: band,
       recommendations: _recommendations(instrument, band),
-      deltaVsPrevious:
-          previousScore == null ? null : score - previousScore,
+      deltaVsPrevious: previousScore == null ? null : score - previousScore,
     );
   }
 
@@ -220,9 +217,7 @@ class AssessmentSeverityEngine {
     SeverityBand band,
   ) {
     if (!band.isClinicalConcern) {
-      return const [
-        'Continue routine monitoring; rescreen at the next visit.',
-      ];
+      return const ['Continue routine monitoring; rescreen at the next visit.'];
     }
     switch (instrument) {
       case AssessmentInstrument.phq9:

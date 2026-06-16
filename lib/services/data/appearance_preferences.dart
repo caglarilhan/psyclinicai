@@ -9,13 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// clinician toggles dark mode from Settings.
 class AppearancePreferences extends ChangeNotifier {
   AppearancePreferences._({Future<SharedPreferences> Function()? prefs})
-      : _prefsFactory = prefs;
+    : _prefsFactory = prefs;
 
   static AppearancePreferences instance = AppearancePreferences._();
 
   @visibleForTesting
-  static void setTestInstance(
-      Future<SharedPreferences> Function() prefs) {
+  static void setTestInstance(Future<SharedPreferences> Function() prefs) {
     instance = AppearancePreferences._(prefs: prefs);
   }
 

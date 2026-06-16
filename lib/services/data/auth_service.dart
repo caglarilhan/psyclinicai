@@ -173,8 +173,7 @@ class FirebaseAuthService extends ChangeNotifier {
         taxId: d[FirestoreSchema.fieldTaxId] as String? ?? '',
         specialty: d['specialty'] as String? ?? '',
         licenseNumber: d['licenseNumber'] as String? ?? '',
-        licenseExpiry:
-            expiryRaw == null ? null : DateTime.tryParse(expiryRaw),
+        licenseExpiry: expiryRaw == null ? null : DateTime.tryParse(expiryRaw),
       );
     } catch (e, st) {
       // A null profile means clinicId is unavailable and downstream Firestore
@@ -203,12 +202,13 @@ class FirebaseAuthService extends ChangeNotifier {
       return AuthResult.failure('No profile loaded — please sign in again.');
     }
     try {
-      final path =
-          FirestoreSchema.clinicianPath(current.userId, current.userId);
+      final path = FirestoreSchema.clinicianPath(
+        current.userId,
+        current.userId,
+      );
       await _db.doc(path).set({
         if (fullName != null) FirestoreSchema.fieldFullName: fullName,
-        if (credentials != null)
-          FirestoreSchema.fieldCredentials: credentials,
+        if (credentials != null) FirestoreSchema.fieldCredentials: credentials,
         if (npi != null) FirestoreSchema.fieldNpi: npi,
         if (taxId != null) FirestoreSchema.fieldTaxId: taxId,
         if (specialty != null) 'specialty': specialty,
@@ -231,8 +231,11 @@ class FirebaseAuthService extends ChangeNotifier {
       notifyListeners();
       return AuthResult.success();
     } catch (e, st) {
-      await TelemetryService.instance
-          .captureError(e, st, hint: 'update_profile');
+      await TelemetryService.instance.captureError(
+        e,
+        st,
+        hint: 'update_profile',
+      );
       return AuthResult.failure('Could not save profile: $e');
     }
   }
@@ -319,18 +322,17 @@ class ClinicianProfile {
     String? specialty,
     String? licenseNumber,
     DateTime? licenseExpiry,
-  }) =>
-      ClinicianProfile(
-        userId: userId,
-        clinicId: clinicId,
-        email: email,
-        fullName: fullName ?? this.fullName,
-        role: role,
-        credentials: credentials ?? this.credentials,
-        npi: npi ?? this.npi,
-        taxId: taxId ?? this.taxId,
-        specialty: specialty ?? this.specialty,
-        licenseNumber: licenseNumber ?? this.licenseNumber,
-        licenseExpiry: licenseExpiry ?? this.licenseExpiry,
-      );
+  }) => ClinicianProfile(
+    userId: userId,
+    clinicId: clinicId,
+    email: email,
+    fullName: fullName ?? this.fullName,
+    role: role,
+    credentials: credentials ?? this.credentials,
+    npi: npi ?? this.npi,
+    taxId: taxId ?? this.taxId,
+    specialty: specialty ?? this.specialty,
+    licenseNumber: licenseNumber ?? this.licenseNumber,
+    licenseExpiry: licenseExpiry ?? this.licenseExpiry,
+  );
 }

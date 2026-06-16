@@ -72,9 +72,7 @@ class Phq9Item9Router {
   /// `q9` — we tolerate all three because different intake tools
   /// emit different keys.
   Phq9Item9Recommendation evaluate(Map<String, int> responses) {
-    final value = responses['phq9_9'] ??
-        responses['item_9'] ??
-        responses['q9'];
+    final value = responses['phq9_9'] ?? responses['item_9'] ?? responses['q9'];
     if (value == null || value <= 0) {
       return const Phq9Item9Recommendation(
         severity: Phq9Item9Severity.none,

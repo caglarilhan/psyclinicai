@@ -36,7 +36,8 @@ class TelemetryService {
       } catch (e, stack) {
         // Never let a misconfigured DSN crash the app — fall back to no-op.
         _sentryReady = false;
-        if (kDebugMode) debugPrint('[telemetry] Sentry init failed: $e\n$stack');
+        if (kDebugMode)
+          debugPrint('[telemetry] Sentry init failed: $e\n$stack');
       }
     }
     if (kDebugMode) {
@@ -53,12 +54,14 @@ class TelemetryService {
     if (_sentryReady) {
       // Record as a Sentry breadcrumb so a later crash carries the funnel
       // context. Cheap and PHI-free (event names are public constants).
-      await Sentry.addBreadcrumb(Breadcrumb(
-        message: event,
-        category: 'funnel',
-        level: SentryLevel.info,
-        data: properties.map((k, v) => MapEntry(k, v?.toString() ?? '')),
-      ));
+      await Sentry.addBreadcrumb(
+        Breadcrumb(
+          message: event,
+          category: 'funnel',
+          level: SentryLevel.info,
+          data: properties.map((k, v) => MapEntry(k, v?.toString() ?? '')),
+        ),
+      );
     }
     if (kDebugMode) {
       debugPrint('[telemetry] capture: $event $properties');

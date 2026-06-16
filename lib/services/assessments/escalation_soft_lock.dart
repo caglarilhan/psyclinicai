@@ -48,8 +48,7 @@ class EscalationSoftLock extends ChangeNotifier {
   final List<EscalationSoftLockEntry> _entries = [];
 
   /// All entries (chronological).
-  List<EscalationSoftLockEntry> get entries =>
-      List.unmodifiable(_entries);
+  List<EscalationSoftLockEntry> get entries => List.unmodifiable(_entries);
 
   /// Entries whose 24-hour follow-up window is still open.
   List<EscalationSoftLockEntry> activeAt(DateTime now) =>
@@ -58,8 +57,7 @@ class EscalationSoftLock extends ChangeNotifier {
   /// True when the patient has at least one active soft-lock entry.
   bool isLocked(String patientId, {DateTime? now}) {
     final stamp = now ?? DateTime.now();
-    return _entries.any((e) =>
-        e.patientId == patientId && e.isActiveAt(stamp));
+    return _entries.any((e) => e.patientId == patientId && e.isActiveAt(stamp));
   }
 
   void record(EscalationSoftLockEntry entry) {

@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// repository keyed on Firebase Auth UID; the surface stays the same.
 class SecuritySettingsService {
   SecuritySettingsService._({Future<SharedPreferences> Function()? prefs})
-      : _prefsFactory = prefs;
+    : _prefsFactory = prefs;
 
   static SecuritySettingsService instance = SecuritySettingsService._();
 
@@ -20,8 +20,7 @@ class SecuritySettingsService {
   /// singleton. The previous static mutable field was a hazard; tests
   /// now wrap setup/teardown around this entry point.
   @visibleForTesting
-  static void setTestInstance(
-      Future<SharedPreferences> Function() prefs) {
+  static void setTestInstance(Future<SharedPreferences> Function() prefs) {
     instance = SecuritySettingsService._(prefs: prefs);
   }
 

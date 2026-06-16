@@ -328,8 +328,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           // header band on a 390-wide phone.
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          textStyle:
-              const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1012,11 +1011,7 @@ class _InvoiceMetaCard extends StatelessWidget {
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              header,
-              const SizedBox(height: 16),
-              fields,
-            ],
+            children: [header, const SizedBox(height: 16), fields],
           );
         },
       ),

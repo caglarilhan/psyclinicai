@@ -16,11 +16,11 @@ class TreatmentPlanAiService {
     ApiKeyStorage? keyStorage,
     http.Client? client,
     ConsentGuard? consentGuard,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        // Default to fail-closed; production caller injects an
-        // IntakeRepository-backed guard.
-        _guard = consentGuard ?? ConsentGuard();
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       // Default to fail-closed; production caller injects an
+       // IntakeRepository-backed guard.
+       _guard = consentGuard ?? ConsentGuard();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -61,7 +61,8 @@ class TreatmentPlanAiService {
     // Prompt-injection guard (B7): clinician-supplied free-text is
     // fenced as data-only blocks. Either field can be replayed as
     // "ignore previous instructions" otherwise.
-    final user = '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+    final user =
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('formulation', formulation)}';
 
     final body = jsonEncode({
@@ -184,7 +185,8 @@ class TreatmentPlanAiService {
         'Each is one short actionable sentence the client could do this week. '
         'Respond STRICT JSON only: {"homework":["...","..."]} (3–5 items).';
     // Prompt-injection guard (B7): fence inputs as data-only.
-    final user = '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+    final user =
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('active_goals', goals.map((g) => '- $g').join('\n'))}';
 
     final body = jsonEncode({
@@ -271,7 +273,8 @@ class TreatmentPlanAiService {
         'Do NOT invent facts beyond what is given. Output the letter text only.';
     // Prompt-injection guard (B7): patient name / diagnosis / goals
     // are all clinician-supplied; fence them as data-only.
-    final user = '${PromptSafety.fence('patient', patientName)}\n\n'
+    final user =
+        '${PromptSafety.fence('patient', patientName)}\n\n'
         '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('treatment_goals', goals.map((g) => '- $g').join('\n'))}';
 

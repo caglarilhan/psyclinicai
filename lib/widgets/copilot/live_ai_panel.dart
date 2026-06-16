@@ -1066,13 +1066,15 @@ class _Header extends StatelessWidget {
                       height: 10,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color:
-                            Colors.red.withValues(alpha: 0.5 + pulse.value * 0.5),
+                        color: Colors.red.withValues(
+                          alpha: 0.5 + pulse.value * 0.5,
+                        ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red
-                                .withValues(alpha: pulse.value * 0.6),
+                            color: Colors.red.withValues(
+                              alpha: pulse.value * 0.6,
+                            ),
                             blurRadius: 8 + pulse.value * 4,
                           ),
                         ],
@@ -1087,22 +1089,24 @@ class _Header extends StatelessWidget {
           // sparkles/pulse icon already signals "AI co-pilot", so we drop
           // the title text below 560 and let the dropdowns keep full,
           // legible labels ("General" / "SOAP").
-          Builder(builder: (ctx) {
-            final wide = MediaQuery.sizeOf(ctx).width >= 560;
-            if (!wide) return const SizedBox.shrink();
-            return Flexible(
-              child: Text(
-                'Live AI Co-Pilot',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: cs.primary,
-                  letterSpacing: 0.2,
+          Builder(
+            builder: (ctx) {
+              final wide = MediaQuery.sizeOf(ctx).width >= 560;
+              if (!wide) return const SizedBox.shrink();
+              return Flexible(
+                child: Text(
+                  'Live AI Co-Pilot',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: cs.primary,
+                    letterSpacing: 0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          }),
+              );
+            },
+          ),
           const Spacer(),
           if (onModalityChanged != null)
             DropdownButtonHideUnderline(

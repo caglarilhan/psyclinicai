@@ -10,7 +10,7 @@ import '../../models/tenant_membership.dart';
 /// `tenants/{tid}/members/{uid}`.
 class TenantMembershipService extends ChangeNotifier {
   TenantMembershipService._({Future<SharedPreferences> Function()? prefs})
-      : _prefsFactory = prefs;
+    : _prefsFactory = prefs;
 
   static TenantMembershipService instance = TenantMembershipService._();
 
@@ -82,20 +82,20 @@ class TenantMembershipService extends ChangeNotifier {
   }
 
   List<TenantMembership> _demoSeed() => [
-        TenantMembership(
-          tenantId: 'demo-tenant-xyz',
-          tenantName: 'Demo Practice',
-          uid: 'demo',
-          role: TenantRole.owner,
-          joinedAt: DateTime.utc(2026, 1, 14),
-          isDefault: true,
-        ),
-        TenantMembership(
-          tenantId: 'locum-frankfurt-01',
-          tenantName: 'Frankfurt Locum Clinic',
-          uid: 'demo',
-          role: TenantRole.clinician,
-          joinedAt: DateTime.utc(2026, 4, 1),
-        ),
-      ];
+    TenantMembership(
+      tenantId: 'demo-tenant-xyz',
+      tenantName: 'Demo Practice',
+      uid: 'demo',
+      role: TenantRole.owner,
+      joinedAt: DateTime.utc(2026, 1, 14),
+      isDefault: true,
+    ),
+    TenantMembership(
+      tenantId: 'locum-frankfurt-01',
+      tenantName: 'Frankfurt Locum Clinic',
+      uid: 'demo',
+      role: TenantRole.clinician,
+      joinedAt: DateTime.utc(2026, 4, 1),
+    ),
+  ];
 }

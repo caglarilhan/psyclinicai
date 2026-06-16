@@ -17,10 +17,7 @@ class CsvImportRow {
 }
 
 class CsvImportResult {
-  const CsvImportResult({
-    required this.rows,
-    required this.headers,
-  });
+  const CsvImportResult({required this.rows, required this.headers});
 
   final List<CsvImportRow> rows;
   final List<String> headers;
@@ -44,9 +41,9 @@ class PatientCsvImporter {
     if (lines.isEmpty) {
       return const CsvImportResult(rows: [], headers: []);
     }
-    final headers = _parseLine(lines.first)
-        .map((h) => h.trim().toLowerCase())
-        .toList();
+    final headers = _parseLine(
+      lines.first,
+    ).map((h) => h.trim().toLowerCase()).toList();
     if (headers.isEmpty) {
       return const CsvImportResult(rows: [], headers: []);
     }
@@ -60,11 +57,13 @@ class PatientCsvImporter {
       for (var c = 0; c < headers.length; c++) {
         values[headers[c]] = c < cells.length ? cells[c].trim() : '';
       }
-      rows.add(CsvImportRow(
-        lineNumber: i + 1,
-        values: values,
-        errors: _validate(values),
-      ));
+      rows.add(
+        CsvImportRow(
+          lineNumber: i + 1,
+          values: values,
+          errors: _validate(values),
+        ),
+      );
     }
     return CsvImportResult(rows: rows, headers: headers);
   }

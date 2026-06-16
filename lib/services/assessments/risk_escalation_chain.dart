@@ -39,16 +39,18 @@ class RiskEscalationChain {
   RiskEscalationChain advance(RiskEscalationEvent event) {
     if (isResolved) {
       throw StateError(
-          'RiskEscalationChain is already resolved; the audit chain is '
-          'immutable after resolution. Start a new chain instead.');
+        'RiskEscalationChain is already resolved; the audit chain is '
+        'immutable after resolution. Start a new chain instead.',
+      );
     }
     final next = _nextState(event);
     if (event.kind != RiskEscalationEventKind.clinicianHandoff &&
         next.index < state.index) {
       throw StateError(
-          'Illegal transition: cannot move from ${state.name} '
-          'back to ${next.name} via ${event.kind.name}. '
-          'Use clinicianHandoff to roll back explicitly.');
+        'Illegal transition: cannot move from ${state.name} '
+        'back to ${next.name} via ${event.kind.name}. '
+        'Use clinicianHandoff to roll back explicitly.',
+      );
     }
     return RiskEscalationChain(
       patientId: patientId,
@@ -76,19 +78,18 @@ class RiskEscalationChain {
   }
 
   Map<String, dynamic> toJson() => {
-        'patient_id': patientId,
-        'encounter_id': encounterId,
-        'started_at': startedAt.toUtc().toIso8601String(),
-        'trigger': {
-          'severity': trigger.severity.name,
-          'primary_action': trigger.primaryAction.name,
-          'secondary_actions':
-              trigger.secondaryActions.map((a) => a.name).toList(),
-          'reason': trigger.reason,
-        },
-        'state': state.name,
-        'events': events.map((e) => e.toJson()).toList(),
-      };
+    'patient_id': patientId,
+    'encounter_id': encounterId,
+    'started_at': startedAt.toUtc().toIso8601String(),
+    'trigger': {
+      'severity': trigger.severity.name,
+      'primary_action': trigger.primaryAction.name,
+      'secondary_actions': trigger.secondaryActions.map((a) => a.name).toList(),
+      'reason': trigger.reason,
+    },
+    'state': state.name,
+    'events': events.map((e) => e.toJson()).toList(),
+  };
 }
 
 enum RiskEscalationState {
@@ -121,9 +122,9 @@ class RiskEscalationEvent {
   final String? note;
 
   Map<String, dynamic> toJson() => {
-        'kind': kind.name,
-        'at': at.toUtc().toIso8601String(),
-        'clinician_id': clinicianId,
-        if (note != null) 'note': note,
-      };
+    'kind': kind.name,
+    'at': at.toUtc().toIso8601String(),
+    'clinician_id': clinicianId,
+    if (note != null) 'note': note,
+  };
 }

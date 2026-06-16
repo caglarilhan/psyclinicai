@@ -15,11 +15,11 @@ class SafetyPlanAiService {
     ApiKeyStorage? keyStorage,
     http.Client? client,
     ConsentGuard? consentGuard,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        // Default to a fail-closed guard — production callers MUST inject
-        // an IntakeRepository-backed lookup before invoking [draft].
-        _guard = consentGuard ?? ConsentGuard();
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       // Default to a fail-closed guard — production callers MUST inject
+       // an IntakeRepository-backed lookup before invoking [draft].
+       _guard = consentGuard ?? ConsentGuard();
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;

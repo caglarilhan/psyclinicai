@@ -82,7 +82,7 @@ class CssrsEscalation {
 /// that band into a workflow action so the UI doesn't have to.
 class CssrsEscalationService {
   CssrsEscalationService({TelemetryService? telemetry})
-      : _telemetry = telemetry ?? TelemetryService.instance;
+    : _telemetry = telemetry ?? TelemetryService.instance;
 
   final TelemetryService _telemetry;
 
@@ -182,40 +182,48 @@ class CssrsEscalationService {
   /// know an escalation happened and at what tier.
   void recordEscalation(CssrsEscalation escalation) {
     if (!escalation.hasAnyRisk) return;
-    unawaited(_telemetry.capture(
-      TelemetryEvents.cssrsRiskEscalated,
-      properties: {
-        'tier': escalation.tier.name,
-        'severity': escalation.severity.name,
-        'requires_immediate_action': escalation.requiresImmediateAction,
-        'requires_safety_plan': escalation.requiresSafetyPlan,
-        'block_patient_release': escalation.blockPatientRelease,
-      },
-    ));
+    unawaited(
+      _telemetry.capture(
+        TelemetryEvents.cssrsRiskEscalated,
+        properties: {
+          'tier': escalation.tier.name,
+          'severity': escalation.severity.name,
+          'requires_immediate_action': escalation.requiresImmediateAction,
+          'requires_safety_plan': escalation.requiresSafetyPlan,
+          'block_patient_release': escalation.blockPatientRelease,
+        },
+      ),
+    );
   }
 
   /// The clinician chose to start a safety plan from the escalation banner.
   void recordSafetyPlanInitiated(CssrsEscalation escalation) {
-    unawaited(_telemetry.capture(
-      TelemetryEvents.safetyPlanInitiatedFromCssrs,
-      properties: {
-        'tier': escalation.tier.name,
-        'severity': escalation.severity.name,
-      },
-    ));
+    unawaited(
+      _telemetry.capture(
+        TelemetryEvents.safetyPlanInitiatedFromCssrs,
+        properties: {
+          'tier': escalation.tier.name,
+          'severity': escalation.severity.name,
+        },
+      ),
+    );
   }
 
   /// The clinician dismissed the high-risk modal without acting. We never
   /// block dismissal — clinical autonomy is intentional — but we count it.
-  void recordModalDismissed(CssrsEscalation escalation,
-      {required String reason}) {
-    unawaited(_telemetry.capture(
-      TelemetryEvents.cssrsEscalationModalDismissed,
-      properties: {
-        'tier': escalation.tier.name,
-        'severity': escalation.severity.name,
-        'reason': reason,
-      },
-    ));
+  void recordModalDismissed(
+    CssrsEscalation escalation, {
+    required String reason,
+  }) {
+    unawaited(
+      _telemetry.capture(
+        TelemetryEvents.cssrsEscalationModalDismissed,
+        properties: {
+          'tier': escalation.tier.name,
+          'severity': escalation.severity.name,
+          'reason': reason,
+        },
+      ),
+    );
   }
 }

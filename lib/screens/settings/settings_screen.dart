@@ -1,3 +1,6 @@
+// ignore_for_file: deprecated_member_use
+// Radio.groupValue / onChanged deprecated after Flutter 3.32; the RadioGroup
+// migration is tracked separately. See Sprint 27 chore.
 import 'package:flutter/material.dart';
 
 import '../../services/data/appearance_preferences.dart';
@@ -295,6 +298,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   Future<void> _confirmDelete(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,

@@ -45,7 +45,7 @@ void main() {
                   'confidence': 0.32,
                   'criteriaMet': ['B excessive worry'],
                   'criteriaMissing': ['C duration ≥ 6 months'],
-                  'differentialFrom': [],
+                  'differentialFrom': <String>[],
                 },
               ],
             },

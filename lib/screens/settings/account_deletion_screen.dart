@@ -129,7 +129,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
               const SizedBox(height: 4),
               Text(
                 hasRequest
-                    ? 'Requested ${request!.requestedAt.toLocal()}. Grace '
+                    ? 'Requested ${request.requestedAt.toLocal()}. Grace '
                         'ends ${request.graceEndsAt.toLocal()}.'
                     : 'No deletion request on file. Your data continues '
                         'under the standard retention policy.',

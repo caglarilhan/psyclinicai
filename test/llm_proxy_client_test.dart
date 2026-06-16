@@ -70,7 +70,7 @@ void main() {
         ),
       );
       expect(c.toolUse, isNotNull);
-      expect(c.toolUse!['candidates'], isA<List>());
+      expect(c.toolUse!['candidates'], isA<List<dynamic>>());
     });
   });
 }

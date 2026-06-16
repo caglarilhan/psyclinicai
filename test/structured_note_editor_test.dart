@@ -105,6 +105,7 @@ void main() {
 
   testWidgets('format switch preserves text typed in the previous format',
       (tester) async {
+    // ignore: unused_local_variable
     StructuredNoteValue? last;
     await tester.pumpWidget(host(
       StructuredNoteEditor(onChanged: (v) => last = v),

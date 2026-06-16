@@ -111,14 +111,28 @@
   <title>PsyClinicAI — AI co-pilot for therapy sessions. Notes drafted in 30 seconds.</title>
   <link rel="manifest" href="manifest.json">
   <script>
-    // Kill any stale service worker + caches from previous builds so the
-    // browser always loads the current main.dart.js. Runs once, fast.
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
-    }
-    if (window.caches) {
-      caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-    }
+    // Sprint 27 / F-009 — register the patient-portal service worker
+    // (web/sw.js) and unregister any legacy / Flutter-auto SW that
+    // would otherwise sit alongside it. Legacy caches are dropped on
+    // every page load so authenticated /portal/** responses cannot
+    // survive across a kiosk session.
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) {
+          var url = (r.active && r.active.scriptURL) || '';
+          if (url.indexOf('/sw.js') === -1) r.unregister();
+        });
+        navigator.serviceWorker.register('/sw.js', {scope: '/'}).catch(function (e) {
+          console.warn('portal SW registration failed', e);
+        });
+      });
+      if (window.caches) {
+        caches.keys().then(function (ks) {
+          ks.forEach(function (k) { caches.delete(k); });
+        });
+      }
+    })();
   </script>
   <style>
     /* Pre-Flutter splash + SSR fallback */

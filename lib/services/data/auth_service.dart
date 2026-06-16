@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../utils/portal_cache_purge.dart';
 import 'firestore_schema.dart';
 import 'telemetry_service.dart';
 
@@ -148,6 +149,9 @@ class FirebaseAuthService extends ChangeNotifier {
     await _auth.signOut();
     _user = null;
     _profile = null;
+    // Sprint 27 / F-009 — ask the service worker (web) to drop every
+    // Cache + broadcast logout to sibling tabs. No-op on mobile.
+    await purgePortalCaches();
     notifyListeners();
   }
 

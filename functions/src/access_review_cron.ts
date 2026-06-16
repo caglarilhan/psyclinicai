@@ -16,6 +16,12 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
+import {
+  AuditChainRow,
+  GENESIS_PREV_HASH,
+  verifyChainSlice,
+} from "./lib/audit_chain";
+
 /**
  * True when the date falls on the first of January, April, July, or
  * October — the quarters used by SOC 2 evidence collection.
@@ -42,6 +48,51 @@ export function nextQuarterStart(d: Date): Date {
 
 const REVIEWS_COLLECTION = "access_reviews";
 const AUDIT_COLLECTION = "audit_logs";
+const CHAIN_INCIDENTS_COLLECTION = "audit_chain_incidents";
+
+/**
+ * Verify the audit chain by walking the oldest [pageSize] rows of
+ * `audit_logs` ordered by `timestamp_utc`. Returns `null` on success,
+ * an incident payload on chain break — caller must abort the cron.
+ *
+ * Only the leading slice is checked per run to keep the cron cheap
+ * even with millions of historical rows; tampered rows in the early
+ * window are the highest-risk class because they would otherwise
+ * silently invalidate every later derivation.
+ */
+export async function verifyAuditChainOrAbort(
+  db: admin.firestore.Firestore,
+  pageSize: number = 500,
+): Promise<{ first_bad_index: number; reason: string; rows_checked: number } | null> {
+  const snap = await db
+    .collection(AUDIT_COLLECTION)
+    .orderBy("timestamp_utc")
+    .limit(pageSize)
+    .get();
+  const rows: AuditChainRow[] = snap.docs.map((d) => {
+    const data = d.data() as Partial<AuditChainRow>;
+    return {
+      id: data.id ?? d.id,
+      kind: String(data.kind ?? ""),
+      action: String(data.action ?? ""),
+      actor: String(data.actor ?? ""),
+      entity: String(data.entity ?? ""),
+      timestamp_utc: String(data.timestamp_utc ?? ""),
+      result: String(data.result ?? ""),
+      user_id: data.user_id ?? null,
+      ip: data.ip ?? null,
+      device: data.device ?? null,
+      hash: data.hash ?? null,
+    };
+  });
+  const res = verifyChainSlice(rows, GENESIS_PREV_HASH);
+  if (res.ok) return null;
+  return {
+    first_bad_index: res.firstBadIndex,
+    reason: res.reason,
+    rows_checked: res.rowsChecked,
+  };
+}
 
 /**
  * Paginate through the `clinicians` collection, emitting only the
@@ -85,6 +136,28 @@ export const accessReviewCron = functions.pubsub
   .onRun(async () => {
     const db = admin.firestore();
     const now = new Date();
+
+    // Sprint 27 / F-008 — abort + page on chain break before we
+    // emit a snapshot that signs over a corrupt audit log.
+    const incident = await verifyAuditChainOrAbort(db);
+    if (incident) {
+      functions.logger.error("access_review.chain_break", incident);
+      try {
+        await db.collection(CHAIN_INCIDENTS_COLLECTION).add({
+          detected_at: admin.firestore.Timestamp.fromDate(now),
+          first_bad_index: incident.first_bad_index,
+          reason: incident.reason,
+          rows_checked: incident.rows_checked,
+          severity: "P0",
+          page_size: 500,
+        });
+      } catch (e) {
+        functions.logger.error("access_review.chain_incident_write_failed", {
+          reason: String(e),
+        });
+      }
+      return {chain_broken: true, ...incident};
+    }
 
     const roster = await snapshotRoster(db);
 

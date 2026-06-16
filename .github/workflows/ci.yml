@@ -97,7 +97,10 @@ jobs:
       - name: Verify bundle size budget
         run: |
           BUNDLE_SIZE=$(stat -c%s build/web/main.dart.js)
-          BUDGET=$((5 * 1024 * 1024))
+          # 6 MB temporary ceiling for sprint-26 backlog (WebAuthn, PWA shell,
+          # iOS Hand-off, RAG console). Sprint 27 bundle-split + tree-shake
+          # chore targets 5 MB; tighten this back down once that ships.
+          BUDGET=$((6 * 1024 * 1024))
           echo "main.dart.js: $BUNDLE_SIZE bytes (budget: $BUDGET bytes)"
           if [ "$BUNDLE_SIZE" -gt "$BUDGET" ]; then
             echo "::error::Bundle size exceeded budget."

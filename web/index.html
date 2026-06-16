@@ -36,11 +36,16 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="permissions-policy" content="camera=(), microphone=(self), geolocation=(), payment=(self)">
 
-  <!-- Typography: Inter (display + body) + JetBrains Mono (code). -->
+  <!-- Typography: Inter (display + body) + JetBrains Mono (code).
+       Sprint 27 W2 Lighthouse pass — narrowed to the four weights the
+       app actually renders (400/600/700/800 for Inter, 500 for mono)
+       so the CSS payload drops by ~60 KB. preconnect/preload kept so
+       the LCP paint can start before the SSR fallback flushes. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="preload" as="image" href="icons/Icon-512.png" fetchpriority="high">
   <link rel="canonical" href="https://psyclinicai.com/">
   <meta name="description" content="Cut session notes from 90 minutes to 5. PsyClinicAI is the AI co-pilot for therapists and psychiatrists — on-device transcription, BYOK, HIPAA-aligned, GDPR Article 28 DPA, EU data residency.">
   <meta name="keywords" content="AI co-pilot therapist, ambient AI clinical notes, SOAP DAP BIRP generator, PHQ-9 GAD-7 dashboard, HIPAA practice management, GDPR therapy software, BYOK clinician AI, on-device transcription, mental health EHR">

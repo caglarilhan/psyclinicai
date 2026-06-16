@@ -34,8 +34,19 @@ class _SplashScreenState extends State<SplashScreen>
     // Hold the brand for a beat after the animation lands, then transition.
     _exit = Timer(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/landing');
+      Navigator.of(context).pushReplacementNamed(_initialTarget());
     });
+  }
+
+  /// Honour a deep-link path passed in the hash fragment (Flutter web ships
+  /// hash routes by default). E.g. `https://psyclinic.ai/#/security` should
+  /// land on `/security`, not `/landing`. Mobile / unknown URLs fall back to
+  /// the marketing landing. Unknown paths still resolve via
+  /// `MaterialApp.onUnknownRoute`, so no extra allowlist is needed.
+  String _initialTarget() {
+    final fragment = Uri.base.fragment;
+    if (fragment.startsWith('/') && fragment.length > 1) return fragment;
+    return '/landing';
   }
 
   @override

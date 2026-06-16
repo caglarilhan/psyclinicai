@@ -12,6 +12,11 @@
     ],
     "rewrites": [
       {
+        "source": "/v1/rag/**",
+        "function": "ragProxy",
+        "region": "europe-west1"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
@@ -27,6 +32,20 @@
         "source": "/index.html",
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/portal/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store, private, must-revalidate" },
+          { "key": "Pragma", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "/api/portal/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store, private, must-revalidate" },
+          { "key": "Pragma", "value": "no-cache" }
         ]
       }
     ]

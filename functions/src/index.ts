@@ -46,6 +46,9 @@ export {
   stripeConnectWebhook,
 } from "./stripe_connect";
 
+// Sprint 27 — server-side Clinical RAG proxy (F-003 close).
+export { ragProxy } from "./rag_proxy";
+
 // Sprint 14 — SOC 2 quarterly access review snapshot cron.
 export { accessReviewCron } from "./access_review_cron";
 

@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 import 'package:psyclinicai/services/ai/rag_client.dart';
 
 void main() {
-  group('RagClient', () {
+  group('RagClient (post-Sprint-27 / F-003 close)', () {
     Map<String, dynamic> sampleAnswer({bool phi = false}) => {
           'answer': 'Use C-SSRS for acute suicide risk screening.',
           'citations': [
@@ -26,18 +26,24 @@ void main() {
           'request_ms': 482,
         };
 
-    test('analyze posts patient_context and parses RagAnswer', () async {
+    Future<String?> tokenProvider() async => 'fake_id_token_xyz';
+
+    test(
+        'analyze posts to /v1/rag/analyze, sends Bearer token, NEVER sends X-Api-Key',
+        () async {
       Map<String, dynamic>? sent;
       final mock = MockClient((req) async {
-        expect(req.url.path, '/api/rag/analyze');
-        expect(req.headers['X-Api-Key'], 'pck_test');
+        expect(req.url.path, '/v1/rag/analyze');
+        expect(req.headers['Authorization'], 'Bearer fake_id_token_xyz');
+        expect(req.headers.containsKey('X-Api-Key'), isFalse,
+            reason: 'F-003: hub key must not leave the Cloud Function.');
         sent = jsonDecode(req.body) as Map<String, dynamic>;
         return http.Response(jsonEncode(sampleAnswer()), 200,
             headers: {'content-type': 'application/json'});
       });
       final c = RagClient(
-        baseUrl: 'https://hub.test',
-        apiKey: 'pck_test',
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: tokenProvider,
         httpClient: mock,
       );
       final ans = await c.analyze(
@@ -56,17 +62,18 @@ void main() {
       expect(ans.citations.single.score, closeTo(0.91, 1e-6));
     });
 
-    test('query omits patient_context and respects topK + omits null docType',
+    test('query hits /v1/rag/query and respects topK + omits null docType',
         () async {
       Map<String, dynamic>? sent;
       final mock = MockClient((req) async {
-        expect(req.url.path, '/api/rag/query');
+        expect(req.url.path, '/v1/rag/query');
+        expect(req.headers['Authorization'], 'Bearer fake_id_token_xyz');
         sent = jsonDecode(req.body) as Map<String, dynamic>;
         return http.Response(jsonEncode(sampleAnswer(phi: true)), 200);
       });
       final c = RagClient(
-        baseUrl: 'https://hub.test',
-        apiKey: 'pck_test',
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: tokenProvider,
         httpClient: mock,
       );
       final ans = await c.query(question: 'PHQ-9 cutoff?', topK: 3);
@@ -77,9 +84,11 @@ void main() {
       expect(ans.phiDetected, isTrue);
     });
 
-    test('feedback returns server-supplied feedback_id', () async {
+    test('feedback hits /v1/rag/feedback and returns server feedback_id',
+        () async {
       final mock = MockClient((req) async {
-        expect(req.url.path, '/api/rag/feedback');
+        expect(req.url.path, '/v1/rag/feedback');
+        expect(req.headers['Authorization'], 'Bearer fake_id_token_xyz');
         final body = jsonDecode(req.body) as Map<String, dynamic>;
         expect(body['audit_id'], 'aud_abc');
         expect(body['score'], 'up');
@@ -87,8 +96,8 @@ void main() {
         return http.Response(jsonEncode({'feedback_id': 'fb_1'}), 200);
       });
       final c = RagClient(
-        baseUrl: 'https://hub.test',
-        apiKey: 'pck_test',
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: tokenProvider,
         httpClient: mock,
       );
       final id = await c.feedback(
@@ -99,15 +108,17 @@ void main() {
       expect(id, 'fb_1');
     });
 
-    test('health returns parsed map', () async {
+    test('health hits /v1/rag/health (GET) with Bearer header', () async {
       final mock = MockClient((req) async {
-        expect(req.url.path, '/api/rag/health');
+        expect(req.url.path, '/v1/rag/health');
+        expect(req.method, 'GET');
+        expect(req.headers['Authorization'], 'Bearer fake_id_token_xyz');
         return http.Response(
             jsonEncode({'status': 'ok', 'version': '1.0.0'}), 200);
       });
       final c = RagClient(
-        baseUrl: 'https://hub.test',
-        apiKey: 'pck_test',
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: tokenProvider,
         httpClient: mock,
       );
       final h = await c.health();
@@ -115,12 +126,32 @@ void main() {
       expect(h['version'], '1.0.0');
     });
 
+    test('missing ID token throws RagException(401) without hitting the network',
+        () async {
+      var called = false;
+      final mock = MockClient((req) async {
+        called = true;
+        return http.Response('{}', 200);
+      });
+      final c = RagClient(
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: () async => null,
+        httpClient: mock,
+      );
+      await expectLater(
+        c.query(question: 'x'),
+        throwsA(isA<RagException>().having((e) => e.statusCode, '401', 401)),
+      );
+      expect(called, isFalse,
+          reason: 'no upstream call should happen without an ID token');
+    });
+
     test('non-2xx throws RagException with status + body', () async {
       final mock = MockClient((req) async =>
           http.Response('{"error":"rate_limited"}', 429));
       final c = RagClient(
-        baseUrl: 'https://hub.test',
-        apiKey: 'pck_test',
+        baseUrl: 'https://api.psyclinic.ai/v1/rag',
+        idTokenProvider: tokenProvider,
         httpClient: mock,
       );
       await expectLater(

@@ -1,20 +1,39 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Thin client for the Clinical RAG Hub.
-/// See ~/psyrag/docs/API.md for the endpoint contract.
+/// Thin client for the Clinical RAG hub, going through the
+/// `ragProxy` Cloud Function (Sprint 27 / F-003 close).
+///
+/// The hub's per-tenant API key NEVER lives in the client; we send a
+/// short-lived Firebase ID token in `Authorization: Bearer` and let
+/// the Cloud Function inject the upstream key from Vault.
+///
+/// `baseUrl` is expected to be `${BuildConfig.backendUrl}/v1/rag`,
+/// rewritten by Firebase Hosting (or direct Cloud Functions URL) to
+/// the `ragProxy` handler.
+typedef IdTokenProvider = Future<String?> Function();
+
 class RagClient {
-  RagClient({required this.baseUrl, required this.apiKey, http.Client? httpClient})
-      : _http = httpClient ?? http.Client();
+  RagClient({
+    required this.baseUrl,
+    required this.idTokenProvider,
+    http.Client? httpClient,
+  }) : _http = httpClient ?? http.Client();
 
   final String baseUrl;
-  final String apiKey;
+  final IdTokenProvider idTokenProvider;
   final http.Client _http;
 
-  Map<String, String> get _headers => {
-        'X-Api-Key': apiKey,
-        'Content-Type': 'application/json',
-      };
+  Future<Map<String, String>> _headers() async {
+    final token = await idTokenProvider();
+    if (token == null || token.isEmpty) {
+      throw RagException(401, 'No Firebase ID token available.');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
 
   Future<RagAnswer> analyze({
     required Map<String, dynamic> patientContext,
@@ -25,8 +44,8 @@ class RagClient {
     int topK = 8,
   }) async {
     final res = await _http.post(
-      Uri.parse('$baseUrl/api/rag/analyze'),
-      headers: _headers,
+      Uri.parse('$baseUrl/analyze'),
+      headers: await _headers(),
       body: jsonEncode({
         'patient_context': patientContext,
         'question': question,
@@ -47,8 +66,8 @@ class RagClient {
     int topK = 8,
   }) async {
     final res = await _http.post(
-      Uri.parse('$baseUrl/api/rag/query'),
-      headers: _headers,
+      Uri.parse('$baseUrl/query'),
+      headers: await _headers(),
       body: jsonEncode({
         'question': question,
         'region': region,
@@ -66,16 +85,21 @@ class RagClient {
     String? note,
   }) async {
     final res = await _http.post(
-      Uri.parse('$baseUrl/api/rag/feedback'),
-      headers: _headers,
-      body: jsonEncode({'audit_id': auditId, 'score': score, if (note != null) 'note': note}),
+      Uri.parse('$baseUrl/feedback'),
+      headers: await _headers(),
+      body: jsonEncode(
+          {'audit_id': auditId, 'score': score, if (note != null) 'note': note}),
     );
     _throwIfError(res);
-    return (jsonDecode(res.body) as Map<String, dynamic>)['feedback_id'] as String;
+    return (jsonDecode(res.body) as Map<String, dynamic>)['feedback_id']
+        as String;
   }
 
   Future<Map<String, dynamic>> health() async {
-    final res = await _http.get(Uri.parse('$baseUrl/api/rag/health'));
+    final res = await _http.get(
+      Uri.parse('$baseUrl/health'),
+      headers: await _headers(),
+    );
     _throwIfError(res);
     return jsonDecode(res.body) as Map<String, dynamic>;
   }

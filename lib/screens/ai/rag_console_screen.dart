@@ -199,8 +199,9 @@ class _DisabledNotice extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Pass RAG_BASE_URL and RAG_API_KEY at build time to enable. '
-                    'See deployment/README for the operator runbook.',
+                    'Pass BACKEND_URL at build time and deploy the ragProxy '
+                    'Cloud Function to enable. See deployment/README for the '
+                    'operator runbook.',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
@@ -244,11 +245,137 @@ class _ResultView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _AnswerCard(answer: ans),
+        const SizedBox(height: 12),
+        _FeedbackBar(auditId: ans.auditId),
         const SizedBox(height: 16),
         _CitationsList(citations: ans.citations),
         const SizedBox(height: 12),
         _MetaRow(answer: ans),
       ],
+    );
+  }
+}
+
+/// Clinician rating bar for the answer above. The audit id is the only
+/// linkage stored — never the question text, never the patient — so
+/// this is safe to ship as a public feedback loop.
+class _FeedbackBar extends StatefulWidget {
+  const _FeedbackBar({required this.auditId});
+  final String auditId;
+
+  @override
+  State<_FeedbackBar> createState() => _FeedbackBarState();
+}
+
+class _FeedbackBarState extends State<_FeedbackBar> {
+  final TextEditingController _note = TextEditingController();
+  bool _submitting = false;
+  String? _submittedScore;
+  String? _error;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send(String score) async {
+    if (_submitting || _submittedScore != null) return;
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    final note = _note.text.trim();
+    final id = await context.read<RagService>().feedback(
+          auditId: widget.auditId,
+          score: score,
+          note: note.isEmpty ? null : note,
+        );
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (id != null) {
+        _submittedScore = score;
+      } else {
+        _error = 'Could not submit feedback. Try again shortly.';
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_submittedScore != null) {
+      return Card(
+        color: AppColors.surface,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                _submittedScore == 'up'
+                    ? Icons.thumb_up
+                    : Icons.thumb_down,
+                color: AppColors.success,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              const Text('Thanks — feedback recorded for model improvement.',
+                  style: TextStyle(color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+      );
+    }
+    return Card(
+      color: AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Was this clinically useful?',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Helpful',
+                  onPressed: _submitting ? null : () => _send('up'),
+                  icon: const Icon(Icons.thumb_up_outlined),
+                  color: AppColors.primary,
+                ),
+                IconButton(
+                  tooltip: 'Not helpful',
+                  onPressed: _submitting ? null : () => _send('down'),
+                  icon: const Icon(Icons.thumb_down_outlined),
+                  color: AppColors.error,
+                ),
+              ],
+            ),
+            TextField(
+              controller: _note,
+              maxLines: 2,
+              minLines: 1,
+              enabled: !_submitting,
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText:
+                    'Optional note (citations missing? guideline outdated?)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(color: AppColors.error, fontSize: 12),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

@@ -35,12 +35,16 @@ class BuildConfig {
   /// webhooks, and the Anthropic relay. Empty ⇒ BYOK / demo paths only.
   static const String backendUrl = String.fromEnvironment('BACKEND_URL');
 
-  /// Base URL of the shared Clinical RAG Hub (psyrag service). Empty ⇒
-  /// the RAG console is hidden and `RagService` no-ops.
+  /// Sprint 27 (F-003): the per-tenant RAG hub key no longer ships in
+  /// the web bundle. The hub URL + key live inside the Cloud Function
+  /// (`functions/src/rag_proxy.ts`); the client only ever sees a
+  /// short-lived Firebase ID token. These two fields are kept as
+  /// `// removed` placeholders for one sprint so external build
+  /// scripts that still pass them do not break the build.
+  @Deprecated('Sprint 27 F-003: RAG key moved to Cloud Functions. Removed Sprint 28.')
   static const String ragBaseUrl = String.fromEnvironment('RAG_BASE_URL');
 
-  /// Per-tenant API key for the RAG hub (hashed server-side via bcrypt +
-  /// sha256 key-lookup). Empty ⇒ RAG is treated as disabled.
+  @Deprecated('Sprint 27 F-003: RAG key moved to Cloud Functions. Removed Sprint 28.')
   static const String ragApiKey = String.fromEnvironment('RAG_API_KEY');
 
   /// True once real telemetry keys are present.
@@ -54,6 +58,7 @@ class BuildConfig {
   static bool get billingConfigured =>
       backendConfigured && stripePublishableKey.isNotEmpty;
 
-  /// True once both RAG hub URL and a tenant key are configured.
-  static bool get ragEnabled => ragBaseUrl.isNotEmpty && ragApiKey.isNotEmpty;
+  /// True once the backend Cloud Functions proxy (`/v1/rag/**`) is
+  /// reachable — that is the only RAG path post-Sprint-27 (F-003).
+  static bool get ragEnabled => backendConfigured;
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/build_config.dart';
@@ -15,16 +16,27 @@ class RagService {
   RagService({RagClient? client}) : _client = client;
 
   /// Build from compile-time config. Returns a disabled instance when no
-  /// RAG hub is wired — every call short-circuits to [RagResult.disabled].
-  factory RagService.fromConfig({http.Client? httpClient}) {
+  /// backend is wired — every call short-circuits to [RagResult.disabled].
+  /// Sprint 27 (F-003): the path is now `${backendUrl}/v1/rag/*`; the
+  /// per-tenant key lives in the Cloud Function, not the client.
+  factory RagService.fromConfig({
+    http.Client? httpClient,
+    IdTokenProvider? idTokenProvider,
+  }) {
     if (!BuildConfig.ragEnabled) return RagService();
     return RagService(
       client: RagClient(
-        baseUrl: BuildConfig.ragBaseUrl,
-        apiKey: BuildConfig.ragApiKey,
+        baseUrl: '${BuildConfig.backendUrl}/v1/rag',
+        idTokenProvider: idTokenProvider ?? _defaultIdTokenProvider,
         httpClient: httpClient,
       ),
     );
+  }
+
+  static Future<String?> _defaultIdTokenProvider() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return user.getIdToken();
   }
 
   final RagClient? _client;

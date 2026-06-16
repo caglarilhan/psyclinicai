@@ -8,6 +8,8 @@ import 'package:psyclinicai/services/ai/rag_service.dart';
 
 void main() {
   group('RagService', () {
+    Future<String?> token() async => 'fake_id_token';
+
     test('disabled service short-circuits to RagResult.disabled', () async {
       final svc = RagService();
       expect(svc.isEnabled, isFalse);
@@ -41,8 +43,8 @@ void main() {
       });
       final svc = RagService(
         client: RagClient(
-          baseUrl: 'https://hub.test',
-          apiKey: 'pck_test',
+          baseUrl: 'https://api.psyclinic.ai/v1/rag',
+          idTokenProvider: token,
           httpClient: mock,
         ),
       );
@@ -58,8 +60,8 @@ void main() {
           (req) async => http.Response('{"error":"hub_down"}', 503));
       final svc = RagService(
         client: RagClient(
-          baseUrl: 'https://hub.test',
-          apiKey: 'pck_test',
+          baseUrl: 'https://api.psyclinic.ai/v1/rag',
+          idTokenProvider: token,
           httpClient: mock,
         ),
       );
@@ -74,8 +76,8 @@ void main() {
           (req) async => http.Response('{"error":"forbidden"}', 403));
       final svc = RagService(
         client: RagClient(
-          baseUrl: 'https://hub.test',
-          apiKey: 'pck_test',
+          baseUrl: 'https://api.psyclinic.ai/v1/rag',
+          idTokenProvider: token,
           httpClient: mock,
         ),
       );

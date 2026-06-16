@@ -1,11 +1,14 @@
 // ignore_for_file: deprecated_member_use
 // Radio.groupValue / onChanged deprecated after Flutter 3.32; the RadioGroup
 // migration is tracked separately. See Sprint 27 chore.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/appearance_preferences.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/shared_device_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -152,6 +155,12 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.verified_user_outlined,
               title: 'Security',
               onTap: () => Navigator.of(context).pushNamed('/security')),
+          _row(context, theme, cs,
+              icon: Icons.devices_other_outlined,
+              title: 'Shared device (kiosk mode)',
+              body:
+                  'Auto-logout after 5 min idle + cache wipe on sign-out.',
+              onTap: () => _openSharedDeviceSheet(context)),
           _row(context, theme, cs,
               icon: Icons.fact_check_outlined,
               title: 'Audit log',
@@ -339,6 +348,60 @@ class SettingsScreen extends StatelessWidget {
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacementNamed('/landing');
+  }
+
+  Future<void> _openSharedDeviceSheet(BuildContext context) async {
+    // Fire-and-forget load — the sheet rebuilds on notify when the
+    // persisted flag arrives. Sprint 27 F-009.
+    if (!SharedDeviceService.instance.isLoaded) {
+      unawaited(SharedDeviceService.instance.load());
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (ctx) {
+        return SafeArea(
+          child: AnimatedBuilder(
+            animation: SharedDeviceService.instance,
+            builder: (_, __) {
+              final shared = SharedDeviceService.instance.isShared;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Shared device (kiosk mode)',
+                        style: Theme.of(ctx)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enable on a clinic kiosk or reception iPad. '
+                      'Active session signs out after 5 minutes of '
+                      'inactivity and clears the browser cache.',
+                      style: Theme.of(ctx).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      value: shared,
+                      title: const Text('Shared device'),
+                      subtitle: const Text(
+                        '5-minute idle auto-logout + post-logout cache wipe.',
+                      ),
+                      onChanged: (v) {
+                        unawaited(SharedDeviceService.instance.setShared(v));
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _openAppearanceSheet(BuildContext context) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/claim_submission.dart';
+import '../../services/billing/carc_mapping.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -184,6 +185,16 @@ class _Lane extends StatelessWidget {
                     Text('Denial · ${c.denialReasonCode}',
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: cs.error)),
+                    if (carcLookup(c.denialReasonCode) != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        carcLookup(c.denialReasonCode)!.hint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.72),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ],
                   if (c.refNumber != null) ...[
                     const SizedBox(height: 4),

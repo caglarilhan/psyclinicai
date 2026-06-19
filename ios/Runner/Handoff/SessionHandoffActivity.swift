@@ -70,10 +70,15 @@ public final class SessionHandoffActivity: NSObject {
                           details: nil))
       return
     }
-    let title = (dict["title"] as? String) ?? "Continue session"
+    // Sprint 28 audit (F-010 close): the title surfaces on the locked
+    // Apple Watch glance + Mac handoff dock. Even an initial like "M.S."
+    // is a soft PHI leak in clinic contexts. Ignore any caller-provided
+    // title and pin a generic one. ctxHash + route still ride along so
+    // the receiving device can resume by id without exposing identity.
+    _ = dict["title"]  // intentionally ignored — see comment above
     let ctxHash = (dict["ctxHash"] as? String) ?? ""
     let activity = NSUserActivity(activityType: activityType)
-    activity.title = title
+    activity.title = "Continue session"
     activity.isEligibleForHandoff = true
     activity.isEligibleForSearch = false
     activity.isEligibleForPublicIndexing = false

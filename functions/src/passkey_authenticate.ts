@@ -263,9 +263,14 @@ export const passkeyAuthVerify = functions.https.onRequest(
       });
       res.json({ ok: true, signCount: result.newSignCount });
     } catch (e) {
+      // Sprint 28 audit (F-005 close): the FIDO2 verification library
+      // sometimes embeds the raw credential id in its error messages.
+      // Strip + cap to 120 chars so a leaking credential id never lands
+      // in Cloud Logging. The uid stays — it is in many other audit
+      // rows already, the credential id is the secret-equivalent here.
       functions.logger.error("passkeyAuthVerify.error", {
         uid,
-        error: e,
+        error: String(e).slice(0, 120),
       });
       res.status(400).json({ error: "verification_error" });
     }

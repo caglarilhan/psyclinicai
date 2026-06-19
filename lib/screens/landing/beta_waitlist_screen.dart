@@ -73,7 +73,7 @@ class _BetaWaitlistScreenState extends State<BetaWaitlistScreen> {
       setState(() {
         _submitting = false;
         _error =
-            'Could not submit. Please try again — or email founders@psyclinicai.com.';
+            'Could not submit. Please try again — or email support@psyclinicai.com.';
       });
     }
   }

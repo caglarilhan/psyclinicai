@@ -37,18 +37,13 @@ class _RagStatusCardState extends State<RagStatusCard> {
       if (mounted) setState(() => _state = _Health.disabled);
       return;
     }
-    final r = await svc.query(question: 'health-probe');
+    // Sprint 28 audit (F8 close): hit the dedicated /health endpoint,
+    // not /query — Trust Center page-loads must not burn LLM tokens.
+    final ok = await svc.healthOk();
     if (!mounted) return;
     setState(() {
-      if (r.isOk) {
-        _state = _Health.healthy;
-        _detail = 'model: ${r.answer!.modelUsed}';
-      } else if (r.isDisabled) {
-        _state = _Health.disabled;
-      } else {
-        _state = _Health.degraded;
-        _detail = r.errorMessage;
-      }
+      _state = ok ? _Health.healthy : _Health.degraded;
+      _detail = ok ? null : 'Hub did not respond — check Caddy / hub logs.';
     });
   }
 

@@ -96,6 +96,21 @@ class RagService {
     }
   }
 
+  /// Cheap, inference-free reachability check (Sprint 28 audit F8): the
+  /// Trust Center health card used to call [query] with a probe string,
+  /// which burned rate-limit tokens AND inference cost on every page
+  /// view. The hub exposes `/api/rag/health` for exactly this case.
+  Future<bool> healthOk() async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.health();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Submit clinician feedback on a prior answer. Returns null when disabled
   /// or on error — the UI treats it as best-effort.
   Future<String?> feedback({

@@ -240,10 +240,14 @@ service cloud.firestore {
     // through tenant_region_changes/{id} resolved by a CISO-approved
     // Cloud Function; clients cannot flip the field directly.
     match /tenants/{tid} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
+      // Sprint 28 audit (F2 close): cross-tenant read was possible because
+      // the previous rule only required `request.auth != null`. Tenant docs
+      // expose region + plan + feature flags, so any authenticated caller
+      // could enumerate competitors. Scope read+update to the owning uid.
+      allow read: if request.auth != null && request.auth.uid == tid;
+      allow create: if request.auth != null && request.auth.uid == tid
         && request.resource.data.region in ['eu-central', 'us-central'];
-      allow update: if request.auth != null
+      allow update: if request.auth != null && request.auth.uid == tid
         && request.resource.data.region == resource.data.region;
       allow delete: if false;
     }

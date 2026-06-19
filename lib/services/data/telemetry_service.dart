@@ -118,10 +118,15 @@ class TelemetryService {
 class TelemetryEvents {
   const TelemetryEvents._();
 
+  // Sprint 29 P-01 — public-funnel taxonomy (snake_case `noun.verb`).
+  // Wired through the existing TelemetryService; PostHog DSN ramps in
+  // via lib/config/build_config.dart once D-07 secrets land.
+  static const String landingVisit = 'landing.visit';
   static const String landingHeroEmailSubmit = 'landing.hero_email_submit';
   static const String landingWatchDemoClick = 'landing.watch_demo_click';
   static const String landingPricingPickTier = 'landing.pricing_pick_tier';
   static const String landingExitIntentSubmit = 'landing.exit_intent_submit';
+  static const String betaWaitlistSubmitted = 'landing.beta_waitlist_submitted';
 
   static const String signUpStarted = 'auth.signup_started';
   static const String signUpCompleted = 'auth.signup_completed';
@@ -138,6 +143,18 @@ class TelemetryEvents {
   static const String sessionNoteSaved = 'session.note_saved';
   static const String superbillGenerated = 'billing.superbill_generated';
   static const String assessmentCompleted = 'assessment.completed';
+
+  // Sprint 29 P-06 — north-star activation. Track when a clinician
+  // produces their first SOAP draft so the D7 activation cohort is
+  // measurable. Properties must NOT include patient identifiers or
+  // note content — only the `time_to_first_soap_sec` from signup.
+  static const String firstSoapGenerated = 'session.first_soap_generated';
+  static const String soapGenerated = 'session.soap_generated';
+
+  // Sprint 29 P-04 — Stripe Reserve-seat funnel.
+  static const String paymentInitiated = 'billing.payment_initiated';
+  static const String paymentSucceeded = 'billing.payment_succeeded';
+  static const String paymentFailed = 'billing.payment_failed';
 
   /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
   /// MUST NOT include item answers or patient identifiers — only the tier

@@ -78,7 +78,14 @@ async function verifyCaller(
   return {uid: decoded.uid, tenantId};
 }
 
-export const ragProxy = functions.https.onRequest(async (req, res) => {
+// Sprint 29 D-10 — minInstances=1 + EU region keeps the RAG hop warm
+// (no 2–5 s cold-start spike on the first call of the day) and locks
+// data residency. ~€8/mo, the only line item that pulls real UX out of
+// cold-start hell on a free-tier deploy.
+export const ragProxy = functions
+  .runWith({minInstances: 1, memory: "512MB", timeoutSeconds: 30})
+  .region("europe-west1")
+  .https.onRequest(async (req, res) => {
   if (applyCors(req, res)) return;
 
   const op = extractOp(req.path);

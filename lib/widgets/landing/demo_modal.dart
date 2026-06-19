@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 
-/// Modal that fronts the product demo experience. Until the recorded Loom
-/// video is published, the modal explains the pre-launch state and offers
-/// two next steps (notify-me / book a 20-min live walkthrough).
+/// Modal that fronts the product demo experience. Until the recorded
+/// 90-sec walkthrough is published, the modal explains the pre-launch
+/// state and offers two next steps (notify-me / book a 20-min live
+/// walkthrough).
+///
+/// Sprint 29 F-01 — the placeholder `TODO` Loom URL was removed so a
+/// pilot clicking through never lands on a 404. The recorded video URL
+/// is wired by the ops shoot (vendor-unlock checklist); until then,
+/// `loomUrl` stays empty and the modal renders the pre-launch CTA pair.
 class DemoModal extends StatelessWidget {
   const DemoModal({
     super.key,
-    this.loomUrl = 'https://www.loom.com/share/TODO',
+    this.loomUrl = '',
     this.bookEmail = 'founders@psyclinicai.com',
   });
 
   final String loomUrl;
   final String bookEmail;
 
+  bool get hasVideo => loomUrl.startsWith('https://');
+
   static Future<void> show(BuildContext context) => showDialog<void>(
-        context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.55),
-        builder: (_) => const DemoModal(),
-      );
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.55),
+    builder: (_) => const DemoModal(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +70,10 @@ class DemoModal extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Live AI Co-Pilot, auto-generated SOAP note, superbill '
-                        'PDF — recorded end-to-end. We will publish the demo '
-                        'here in May 2026. Want it sooner?',
+                        'Live AI co-pilot, auto-generated SOAP note, '
+                        'superbill PDF — recorded end-to-end. The 90-second '
+                        'walkthrough goes live during the public beta. '
+                        'Want it sooner?',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.72),
                           height: 1.55,
@@ -92,9 +101,13 @@ class DemoModal extends StatelessWidget {
                               backgroundColor: cs.primary,
                               foregroundColor: cs.onPrimary,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 22, vertical: 14),
+                                horizontal: 22,
+                                vertical: 14,
+                              ),
                               textStyle: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w600),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           OutlinedButton.icon(
@@ -109,13 +122,16 @@ class DemoModal extends StatelessWidget {
                               );
                             },
                             icon: const Icon(Icons.event, size: 18),
-                            label:
-                                const Text('Book a 20-min live walkthrough'),
+                            label: const Text('Book a 20-min live walkthrough'),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 22, vertical: 14),
+                                horizontal: 22,
+                                vertical: 14,
+                              ),
                               textStyle: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w600),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],

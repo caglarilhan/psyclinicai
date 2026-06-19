@@ -119,7 +119,13 @@ export async function reserveHourlyQuota(
   });
 }
 
-export const llmProxy = functions.https.onRequest(async (req, res) => {
+// Sprint 29 D-10 — minInstances=1 + EU region (cold-start UX + EU
+// residency for LLM proxy). 1024 MB because Anthropic SDK + audit
+// chain hashing peaks ~600 MB on a busy session.
+export const llmProxy = functions
+  .runWith({minInstances: 1, memory: "1GB", timeoutSeconds: 60})
+  .region("europe-west1")
+  .https.onRequest(async (req, res) => {
   if (applyCors(req, res)) return;
   const uid = await authorizeUid(req, "llmProxy");
   if (!uid) {

@@ -3,7 +3,12 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+// Sprint 30 S-06 — SQLCipher-backed SQLite. Same API surface as
+// `package:sqflite/sqflite.dart` but `openDatabase` takes a `password`
+// arg so the on-disk file is AES-256 encrypted. HIPAA §164.312(a)(2)(iv).
+import 'package:sqflite_sqlcipher/sqflite.dart';
+
+import 'security/local_db_key_service.dart';
 
 class OfflineService extends ChangeNotifier {
   factory OfflineService() => _instance;
@@ -37,10 +42,15 @@ class OfflineService extends ChangeNotifier {
 
   Future<void> _initDatabase() async {
     final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, 'psyclinic_offline.db');
+    // Sprint 30 S-06 — v2 filename so the old plaintext DB is never
+    // re-opened as encrypted (which would yield silent corruption).
+    // Plaintext file is best-effort deleted; absence is fine.
+    final path = join(databasesPath, 'psyclinic_offline_v2.db');
+    final passphrase = await LocalDbKeyService().getOrCreatePassphrase();
 
     _database = await openDatabase(
       path,
+      password: passphrase,
       version: 1,
       onCreate: (db, version) async {
         // Patients table

@@ -272,6 +272,10 @@ class _KpiRow extends StatelessWidget {
   }
 }
 
+/// Sprint 29 F-06 — explicit lifecycle for KPI cards. Each card resolves
+/// to exactly one of these so the screen never renders a confused mix.
+enum KpiState { loading, data, error }
+
 class _Kpi {
   _Kpi({
     required this.label,
@@ -279,6 +283,12 @@ class _Kpi {
     required this.icon,
     required this.tint,
     this.emptyText,
+    // Reserved for Firestore-stream wiring; defaults preserve the demo
+    // seed visually until the production stream lands.
+    // ignore: unused_element_parameter
+    this.state = KpiState.data,
+    // ignore: unused_element_parameter
+    this.onRetry,
   });
   final String label;
   // `value` is null while we have no backend data; the card then renders
@@ -287,6 +297,8 @@ class _Kpi {
   final String? emptyText;
   final IconData icon;
   final Color tint;
+  final KpiState state;
+  final VoidCallback? onRetry;
 }
 
 class _KpiCard extends StatelessWidget {
@@ -321,25 +333,32 @@ class _KpiCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (kpi.value != null)
-                  Text(
-                    kpi.value!,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                else
-                  // Empty state: smaller, muted — reads as "ready, no data
-                  // yet" instead of a broken placeholder.
-                  Text(
-                    kpi.emptyText ?? '—',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface.withValues(alpha: 0.85),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                // Sprint 29 F-06 — render exactly one of the 3 lifecycle
+                // states so the dashboard never half-paints.
+                switch (kpi.state) {
+                  KpiState.loading => _KpiLoadingLine(cs: cs),
+                  KpiState.error => _KpiErrorLine(
+                      cs: cs, theme: theme, onRetry: kpi.onRetry),
+                  KpiState.data => kpi.value != null
+                      ? Text(
+                          kpi.value!,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : Text(
+                          // Empty state: smaller, muted — reads as
+                          // "ready, no data yet" instead of a broken
+                          // placeholder.
+                          kpi.emptyText ?? '—',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface.withValues(alpha: 0.85),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                },
                 const SizedBox(height: PsySpacing.xxs),
                 Text(
                   kpi.label,
@@ -350,6 +369,104 @@ class _KpiCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pulsing skeleton line for [KpiState.loading]. Pure CSS-style
+/// pulse so we don't pull in a shimmer dependency.
+class _KpiLoadingLine extends StatefulWidget {
+  const _KpiLoadingLine({required this.cs});
+  final ColorScheme cs;
+
+  @override
+  State<_KpiLoadingLine> createState() => _KpiLoadingLineState();
+}
+
+class _KpiLoadingLineState extends State<_KpiLoadingLine>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _alpha;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _alpha = Tween<double>(begin: 0.35, end: 0.75).animate(_ctrl);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _alpha,
+      builder: (_, __) {
+        return Semantics(
+          label: 'Loading metric',
+          liveRegion: true,
+          child: Container(
+            height: 26,
+            width: 96,
+            decoration: BoxDecoration(
+              color: widget.cs.onSurface.withValues(alpha: _alpha.value * 0.18),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Error row for [KpiState.error] — readable label + actionable retry.
+class _KpiErrorLine extends StatelessWidget {
+  const _KpiErrorLine({
+    required this.cs,
+    required this.theme,
+    required this.onRetry,
+  });
+  final ColorScheme cs;
+  final ThemeData theme;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Failed to load metric',
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: cs.error, size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Unavailable',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: cs.error,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+              ),
+              child: const Text('Retry'),
+            ),
         ],
       ),
     );

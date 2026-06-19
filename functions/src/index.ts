@@ -65,6 +65,30 @@ export {
   passkeyAuthVerify,
 } from "./passkey_authenticate";
 
+// Sprint 29 S-03 — assign tenant_id custom claim on user creation +
+// admin re-bind for group practices. Unblocks DEFAULT_TENANT_ID="" on
+// the psyrag hub.
+export {
+  assignTenantOnCreate,
+  adminSetTenantClaim,
+} from "./setTenantClaim";
+
+// Sprint 29 P-08 — waitlist welcome email triggers (Sendgrid template).
+// No-op until SENDGRID_API_KEY + SENDGRID_TEMPLATE_WAITLIST are set in
+// Cloud Functions secrets; safe to deploy ahead of vendor unlock.
+export {
+  onLandingWaitlistCreate,
+  onBetaSignupCreate,
+} from "./waitlist_email";
+
+// Sprint 30 polish — Slack ping on new beta signup (SLACK_SIGNUP_WEBHOOK).
+export {onBetaSignupSlack} from "./slack_notify";
+
+// Sprint 30 polish — founders@ inbox digest on new beta signup. Sendgrid
+// no-template fallback so it ships value even before the digest template
+// is designed.
+export {onBetaSignupFoundersEmail} from "./founders_email";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

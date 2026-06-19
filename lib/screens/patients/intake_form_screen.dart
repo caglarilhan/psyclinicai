@@ -246,17 +246,22 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
                           hint: 'Self-described'),
                     ),
                     _row2(
-                      child1: _field('Phone', _phone),
+                      child1: _field('Phone', _phone,
+                          keyboardType: TextInputType.phone,
+                          validator: _validatePhone),
                       child2: _field('Email', _email,
-                          keyboardType: TextInputType.emailAddress),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _validateEmail),
                     ),
                     _row2(
                       child1: _field('Emergency contact name',
                           _emergencyName,
                           hint:
                               'Who to call if you cannot reach the patient'),
-                      child2:
-                          _field('Emergency contact phone', _emergencyPhone),
+                      child2: _field('Emergency contact phone',
+                          _emergencyPhone,
+                          keyboardType: TextInputType.phone,
+                          validator: _validatePhone),
                     ),
                   ]),
                 ),
@@ -389,7 +394,15 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
       );
 
   Widget _field(String label, TextEditingController c,
-      {String? hint, TextInputType? keyboardType}) {
+      {String? hint,
+      TextInputType? keyboardType,
+      String? Function(String)? validator}) {
+    // Sprint 29 F-05 — inline validation: error surfaces below the field
+    // as the clinician types, instead of waiting for save. Empty value
+    // never shows an error so optional fields stay quiet.
+    final value = c.text;
+    final error =
+        (validator != null && value.isNotEmpty) ? validator(value) : null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
       child: TextField(
@@ -399,11 +412,28 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          errorText: error,
           border: const OutlineInputBorder(),
           isDense: true,
         ),
       ),
     );
+  }
+
+  // Sprint 29 F-05 — module-local validators. Permissive on email shape
+  // (we still verify deliverability server-side), strict on the
+  // E.164-ish digit count so a missing emergency phone is caught
+  // before submit.
+  static String? _validateEmail(String value) {
+    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
+    return ok ? null : 'Enter a valid email address';
+  }
+
+  static String? _validatePhone(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 7) return 'Phone too short';
+    if (digits.length > 15) return 'Phone too long';
+    return null;
   }
 
   Widget _row2({required Widget child1, required Widget child2}) =>

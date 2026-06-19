@@ -14,7 +14,16 @@ import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import * as functions from "firebase-functions";
 import { applyCors, authorizeUid } from "./lib/auth";
+import { enforceOrReply } from "./lib/rate_limit";
 import { rpIdFor, originFor } from "./lib/webauthn_env";
+
+// Sprint 29 S-01 (F-004 close) — 20 requests / 15 minutes per IP defends
+// the credential-id enumeration timing attack on the assertion endpoints.
+const PASSKEY_AUTH_RATE_LIMIT = {
+  bucketName: "passkey_auth",
+  windowMs: 15 * 60_000,
+  maxRequests: 20,
+} as const;
 
 /**
  * Returns a 16-char SHA-256 hex prefix of the credential id so logs
@@ -83,6 +92,9 @@ function challengeBase64Url(): string {
 export const passkeyAuthOptions = functions.https.onRequest(
   async (req, res) => {
     if (applyCors(req, res)) return;
+    // S-01 — rate-limit BEFORE authorizeUid so an unauthenticated
+    // attacker cannot enumerate credential ids via timing differences.
+    if (await enforceOrReply(req, res, PASSKEY_AUTH_RATE_LIMIT)) return;
     const uid = await authorizeUid(req, "passkeyAuthOptions");
     if (!uid) {
       res.status(401).json({ error: "unauthenticated" });
@@ -132,6 +144,7 @@ export const passkeyAuthOptions = functions.https.onRequest(
 export const passkeyAuthVerify = functions.https.onRequest(
   async (req, res) => {
     if (applyCors(req, res)) return;
+    if (await enforceOrReply(req, res, PASSKEY_AUTH_RATE_LIMIT)) return;
     const uid = await authorizeUid(req, "passkeyAuthVerify");
     if (!uid) {
       res.status(401).json({ error: "unauthenticated" });

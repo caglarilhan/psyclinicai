@@ -56,6 +56,7 @@ import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
 import 'package:psyclinicai/screens/settings/settings_screen.dart';
 import 'package:psyclinicai/screens/static/about_page.dart';
 import 'package:psyclinicai/screens/static/changelog_page.dart';
+import 'package:psyclinicai/screens/static/roadmap_page.dart';
 import 'package:psyclinicai/screens/static/compare_page.dart';
 import 'package:psyclinicai/screens/static/faq_page.dart';
 import 'package:psyclinicai/screens/static/pricing_page.dart';
@@ -86,27 +87,31 @@ import 'package:psyclinicai/utils/document_title.dart';
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
   // façade (no-op in debug, Sentry once a DSN is set). See TelemetryService.
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      TelemetryService.instance
-          .captureError(details.exception, details.stack, hint: 'flutter');
-    };
-    // Async errors escaping the framework (platform channels, Timer
-    // callbacks, etc.) bypass FlutterError.onError. Wire the platform
-    // dispatcher so HIPAA telemetry never misses an uncaught throw.
-    WidgetsBinding.instance.platformDispatcher.onError =
-        (error, stack) {
-      TelemetryService.instance
-          .captureError(error, stack, hint: 'platform');
-      return true;
-    };
-    await _initializeServices();
-    runApp(const PsyClinicAIApp());
-  }, (error, stack) {
-    TelemetryService.instance.captureError(error, stack, hint: 'zone');
-  });
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        TelemetryService.instance.captureError(
+          details.exception,
+          details.stack,
+          hint: 'flutter',
+        );
+      };
+      // Async errors escaping the framework (platform channels, Timer
+      // callbacks, etc.) bypass FlutterError.onError. Wire the platform
+      // dispatcher so HIPAA telemetry never misses an uncaught throw.
+      WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+        TelemetryService.instance.captureError(error, stack, hint: 'platform');
+        return true;
+      };
+      await _initializeServices();
+      runApp(const PsyClinicAIApp());
+    },
+    (error, stack) {
+      TelemetryService.instance.captureError(error, stack, hint: 'zone');
+    },
+  );
 }
 
 Future<void> _initializeServices() async {
@@ -115,12 +120,10 @@ Future<void> _initializeServices() async {
     await ThemeService.setPresetTheme('purple_blue');
     await PsyFirebase.bootstrap();
     await TelemetryService.instance.initialize();
-    debugPrint(
-        'Services initialized (firebase: ${PsyFirebase.isReady})');
+    debugPrint('Services initialized (firebase: ${PsyFirebase.isReady})');
   } catch (e, stack) {
     debugPrint('Error initializing services: $e');
-    await TelemetryService.instance
-        .captureError(e, stack, hint: 'bootstrap');
+    await TelemetryService.instance.captureError(e, stack, hint: 'bootstrap');
   }
 }
 
@@ -149,215 +152,246 @@ class PsyClinicAIApp extends StatelessWidget {
           return AnimatedBuilder(
             animation: AppearancePreferences.instance,
             builder: (ctx, _) => MaterialApp(
-            title: 'PsyClinicAI',
-            theme: PsyTheme.light(),
-            darkTheme: PsyTheme.dark(),
-            themeMode: AppearancePreferences.instance.themeMode,
-            debugShowCheckedModeBanner: false,
-            navigatorObservers: [_PsyTitleObserver()],
-            // B17 (Sprint 8): EN + TR ship today. Remaining EU locales
-            // land once validated translations clear PHQ-9 / GAD-7 /
-            // C-SSRS review.
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            initialRoute: '/',
-            routes: {
-              '/': (context) => const SplashScreen(),
-              '/ai/rag': (context) => const RagConsoleScreen(),
-              '/landing': (context) => const LandingScreen(),
-              '/beta': (context) => const BetaWaitlistScreen(),
-              '/login': (context) => const LoginScreen(),
-              '/auth/password_reset': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as String?;
-                return PasswordResetScreen(prefilledEmail: args);
+              title: 'PsyClinicAI',
+              theme: PsyTheme.light(),
+              darkTheme: PsyTheme.dark(),
+              themeMode: AppearancePreferences.instance.themeMode,
+              debugShowCheckedModeBanner: false,
+              navigatorObservers: [_PsyTitleObserver()],
+              // B17 (Sprint 8): EN + TR ship today. Remaining EU locales
+              // land once validated translations clear PHQ-9 / GAD-7 /
+              // C-SSRS review.
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              initialRoute: '/',
+              routes: {
+                '/': (context) => const SplashScreen(),
+                '/ai/rag': (context) => const RagConsoleScreen(),
+                '/landing': (context) => const LandingScreen(),
+                '/beta': (context) => const BetaWaitlistScreen(),
+                '/login': (context) => const LoginScreen(),
+                '/auth/password_reset': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments as String?;
+                  return PasswordResetScreen(prefilledEmail: args);
+                },
+                '/settings/mfa': (context) => const MfaSetupScreen(),
+                '/settings/profile': (context) =>
+                    const ClinicianProfileScreen(),
+                '/settings/data_export': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments as String?;
+                  return DataExportScreen(patientId: args ?? 'demo-1');
+                },
+                '/settings/account_deletion': (context) =>
+                    const AccountDeletionScreen(),
+                '/settings/telehealth': (context) =>
+                    const TelehealthSetupScreen(),
+                '/settings/payments': (context) => const PaymentSetupScreen(),
+                '/settings/region': (context) => const RegionSettingsScreen(),
+                '/settings/ehr': (context) => const EhrSyncConsoleScreen(),
+                '/billing/claims': (context) =>
+                    const InsuranceClaimBoardScreen(),
+                '/inbox': (context) => const InboxScreen(),
+                '/billing/preauth': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments as String?;
+                  return PreAuthScreen(patientId: args ?? 'demo-1');
+                },
+                '/patients/consents': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return ConsentCenterScreen(
+                    patientId: args?.id ?? 'demo-1',
+                    patientName: args?.name ?? 'John Demo',
+                  );
+                },
+                '/patients/chart': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return PatientChartScreen(
+                    args:
+                        args ??
+                        const PatientDetailArgs(
+                          id: 'demo-1',
+                          name: 'John Demo',
+                        ),
+                  );
+                },
+                '/patients/intake': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return IntakeFormScreen(
+                    args:
+                        args ??
+                        const PatientDetailArgs(
+                          id: 'demo-1',
+                          name: 'John Demo',
+                        ),
+                  );
+                },
+                '/dashboard': (context) => const DashboardScreen(),
+                '/feature_system': (context) => const FeatureSystemScreen(),
+                '/session': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return SessionScreen(
+                    sessionId:
+                        'session-${DateTime.now().millisecondsSinceEpoch}',
+                    clientId: args?.id ?? 'demo-1',
+                    clientName: args?.name ?? 'John Demo',
+                  );
+                },
+                '/session_management': (context) =>
+                    const SessionManagementScreen(),
+                '/e_prescription': (context) => const EPrescriptionScreen(),
+                '/ai_chatbot': (context) => const AIChatbotScreen(),
+                '/mood_tracking': (context) => const MoodTrackingScreen(),
+                '/ai_diagnosis': (context) => const AIDiagnosisScreen(),
+                '/settings': (context) => const SettingsScreen(),
+                '/settings/api_keys': (context) => const ApiKeysScreen(),
+                '/settings/audit_log': (context) => const AuditLogScreen(),
+                '/dpa': (context) => const DpaPage(),
+                '/baa': (context) => const BaaPage(),
+                '/trust': (context) => const TrustCenterScreen(),
+                '/trust/subprocessors': (context) =>
+                    const SubprocessorsScreen(),
+                '/trust/security_controls': (context) =>
+                    const SecurityControlsScreen(),
+                '/trust/incident_response': (context) =>
+                    const IncidentResponseScreen(),
+                '/supervision/queue': (context) =>
+                    const SupervisionQueueScreen(),
+                '/group_session': (context) => const GroupSessionScreen(),
+                '/portal': (context) => const PortalLandingScreen(),
+                '/superbill': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  return SuperbillScreen(
+                    prefill: args is SuperbillPrefill ? args : null,
+                  );
+                },
+                '/assessments/phq9': (context) => const AssessmentScreen(
+                  type: AssessmentType.phq9,
+                  patientName: 'John Demo',
+                ),
+                '/assessments/result': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as AssessmentResultScreenArgs?;
+                  return AssessmentResultScreen(
+                    args:
+                        args ??
+                        const AssessmentResultScreenArgs(
+                          instrument: AssessmentInstrument.phq9,
+                          score: 14,
+                          previousScore: 17,
+                        ),
+                  );
+                },
+                '/assessments/gad7': (context) => const AssessmentScreen(
+                  type: AssessmentType.gad7,
+                  patientName: 'John Demo',
+                ),
+                '/scales/cssrs': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return ClinicalScaleScreen(
+                    scale: ClinicalScales.cssrs,
+                    patientId: args?.id ?? 'demo-1',
+                    patientName: args?.name ?? 'John Demo',
+                  );
+                },
+                '/scales/pcl5': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return ClinicalScaleScreen(
+                    scale: ClinicalScales.pcl5,
+                    patientId: args?.id ?? 'demo-1',
+                    patientName: args?.name ?? 'John Demo',
+                  );
+                },
+                '/scales/audit': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return ClinicalScaleScreen(
+                    scale: ClinicalScales.audit,
+                    patientId: args?.id ?? 'demo-1',
+                    patientName: args?.name ?? 'John Demo',
+                  );
+                },
+                '/security': (context) => const SecurityPage(),
+                '/about': (context) => const AboutPage(),
+                '/pricing': (context) => const PricingPage(),
+                '/compare': (context) => const ComparePage(),
+                '/faq': (context) => const FaqPage(),
+                '/changelog': (context) => const ChangelogPage(),
+                '/roadmap': (context) => const RoadmapPage(),
+                '/status': (context) => const StatusPage(),
+                '/privacy': (context) => const PrivacyPage(),
+                '/tos': (context) => const TosPage(),
+                '/contact': (context) => const ContactPage(),
+                '/press': (context) => const PressPage(),
+                '/patients': (context) => const PatientListScreen(),
+                '/patient/detail': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return PatientDetailScreen(
+                    args:
+                        args ??
+                        const PatientDetailArgs(
+                          id: 'demo-1',
+                          name: 'John Demo',
+                        ),
+                  );
+                },
+                '/outcomes': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return OutcomesDashboardScreen(args: args);
+                },
+                '/onboarding': (context) => const OnboardingScreen(),
+                '/appointments': (context) => const AppointmentsScreen(),
+                '/caseload': (context) => const CaseloadScreen(),
+                '/treatment_plan': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return TreatmentPlanScreen(
+                    args:
+                        args ??
+                        const PatientDetailArgs(
+                          id: 'demo-1',
+                          name: 'John Demo',
+                        ),
+                  );
+                },
+                '/safety_plan': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return SafetyPlanScreen(
+                    args:
+                        args ??
+                        const PatientDetailArgs(
+                          id: 'demo-1',
+                          name: 'John Demo',
+                        ),
+                  );
+                },
               },
-              '/settings/mfa': (context) => const MfaSetupScreen(),
-              '/settings/profile': (context) => const ClinicianProfileScreen(),
-              '/settings/data_export': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as String?;
-                return DataExportScreen(patientId: args ?? 'demo-1');
-              },
-              '/settings/account_deletion': (context) =>
-                  const AccountDeletionScreen(),
-              '/settings/telehealth': (context) =>
-                  const TelehealthSetupScreen(),
-              '/settings/payments': (context) =>
-                  const PaymentSetupScreen(),
-              '/settings/region': (context) => const RegionSettingsScreen(),
-              '/settings/ehr': (context) => const EhrSyncConsoleScreen(),
-              '/billing/claims': (context) =>
-                  const InsuranceClaimBoardScreen(),
-              '/inbox': (context) => const InboxScreen(),
-              '/billing/preauth': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as String?;
-                return PreAuthScreen(patientId: args ?? 'demo-1');
-              },
-              '/patients/consents': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return ConsentCenterScreen(
-                  patientId: args?.id ?? 'demo-1',
-                  patientName: args?.name ?? 'John Demo',
-                );
-              },
-              '/patients/chart': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return PatientChartScreen(
-                  args: args ??
-                      const PatientDetailArgs(
-                          id: 'demo-1', name: 'John Demo'),
-                );
-              },
-              '/patients/intake': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return IntakeFormScreen(
-                  args: args ??
-                      const PatientDetailArgs(
-                          id: 'demo-1', name: 'John Demo'),
-                );
-              },
-              '/dashboard': (context) => const DashboardScreen(),
-              '/feature_system': (context) => const FeatureSystemScreen(),
-              '/session': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return SessionScreen(
-                  sessionId:
-                      'session-${DateTime.now().millisecondsSinceEpoch}',
-                  clientId: args?.id ?? 'demo-1',
-                  clientName: args?.name ?? 'John Demo',
-                );
-              },
-              '/session_management': (context) => const SessionManagementScreen(),
-              '/e_prescription': (context) => const EPrescriptionScreen(),
-              '/ai_chatbot': (context) => const AIChatbotScreen(),
-              '/mood_tracking': (context) => const MoodTrackingScreen(),
-              '/ai_diagnosis': (context) => const AIDiagnosisScreen(),
-              '/settings': (context) => const SettingsScreen(),
-              '/settings/api_keys': (context) => const ApiKeysScreen(),
-              '/settings/audit_log': (context) => const AuditLogScreen(),
-              '/dpa': (context) => const DpaPage(),
-              '/baa': (context) => const BaaPage(),
-              '/trust': (context) => const TrustCenterScreen(),
-              '/trust/subprocessors': (context) =>
-                  const SubprocessorsScreen(),
-              '/trust/security_controls': (context) =>
-                  const SecurityControlsScreen(),
-              '/trust/incident_response': (context) =>
-                  const IncidentResponseScreen(),
-              '/supervision/queue': (context) =>
-                  const SupervisionQueueScreen(),
-              '/group_session': (context) => const GroupSessionScreen(),
-              '/portal': (context) => const PortalLandingScreen(),
-              '/superbill': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments;
-                return SuperbillScreen(
-                    prefill: args is SuperbillPrefill ? args : null);
-              },
-              '/assessments/phq9': (context) => const AssessmentScreen(
-                    type: AssessmentType.phq9,
-                    patientName: 'John Demo',
-                  ),
-              '/assessments/result': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as AssessmentResultScreenArgs?;
-                return AssessmentResultScreen(
-                  args: args ??
-                      const AssessmentResultScreenArgs(
-                        instrument: AssessmentInstrument.phq9,
-                        score: 14,
-                        previousScore: 17,
-                      ),
-                );
-              },
-              '/assessments/gad7': (context) => const AssessmentScreen(
-                    type: AssessmentType.gad7,
-                    patientName: 'John Demo',
-                  ),
-              '/scales/cssrs': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return ClinicalScaleScreen(
-                  scale: ClinicalScales.cssrs,
-                  patientId: args?.id ?? 'demo-1',
-                  patientName: args?.name ?? 'John Demo',
-                );
-              },
-              '/scales/pcl5': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return ClinicalScaleScreen(
-                  scale: ClinicalScales.pcl5,
-                  patientId: args?.id ?? 'demo-1',
-                  patientName: args?.name ?? 'John Demo',
-                );
-              },
-              '/scales/audit': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return ClinicalScaleScreen(
-                  scale: ClinicalScales.audit,
-                  patientId: args?.id ?? 'demo-1',
-                  patientName: args?.name ?? 'John Demo',
-                );
-              },
-              '/security': (context) => const SecurityPage(),
-              '/about': (context) => const AboutPage(),
-              '/pricing': (context) => const PricingPage(),
-              '/compare': (context) => const ComparePage(),
-              '/faq': (context) => const FaqPage(),
-              '/changelog': (context) => const ChangelogPage(),
-              '/status': (context) => const StatusPage(),
-              '/privacy': (context) => const PrivacyPage(),
-              '/tos': (context) => const TosPage(),
-              '/contact': (context) => const ContactPage(),
-              '/press': (context) => const PressPage(),
-              '/patients': (context) => const PatientListScreen(),
-              '/patient/detail': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return PatientDetailScreen(
-                  args: args ??
-                      const PatientDetailArgs(
-                          id: 'demo-1', name: 'John Demo'),
-                );
-              },
-              '/outcomes': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return OutcomesDashboardScreen(args: args);
-              },
-              '/onboarding': (context) => const OnboardingScreen(),
-              '/appointments': (context) => const AppointmentsScreen(),
-              '/caseload': (context) => const CaseloadScreen(),
-              '/treatment_plan': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return TreatmentPlanScreen(
-                  args: args ??
-                      const PatientDetailArgs(
-                          id: 'demo-1', name: 'John Demo'),
-                );
-              },
-              '/safety_plan': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments
-                    as PatientDetailArgs?;
-                return SafetyPlanScreen(
-                  args: args ??
-                      const PatientDetailArgs(
-                          id: 'demo-1', name: 'John Demo'),
-                );
-              },
-            },
-            onUnknownRoute: (settings) => MaterialPageRoute(
-              builder: (_) => NotFoundPage(path: settings.name),
+              onUnknownRoute: (settings) => MaterialPageRoute(
+                builder: (_) => NotFoundPage(path: settings.name),
+              ),
             ),
-          ),
           );
         },
       ),

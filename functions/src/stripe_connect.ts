@@ -151,13 +151,33 @@ export const stripeConnectWebhook = functions.https.onRequest(
         "restricted" :
         "pending";
 
-    await admin
+    // Sprint 29 B-09 — idempotency: Stripe retries up to ~3 d. A racing
+    // replay must not double-write tenant state. Atomic check via
+    // processed_webhooks/{event.id}.
+    const processedRef = admin
+      .firestore()
+      .collection("processed_webhooks")
+      .doc(event.id);
+    const tenantRef = admin
       .firestore()
       .collection("tenants")
       .doc(tenantId)
       .collection("private")
-      .doc("stripe_connect")
-      .set(
+      .doc("stripe_connect");
+
+    const result = await admin.firestore().runTransaction(async (tx) => {
+      const seen = await tx.get(processedRef);
+      if (seen.exists) {
+        return "duplicate";
+      }
+      tx.set(processedRef, {
+        event_id: event.id,
+        event_type: event.type,
+        tenant_id: tenantId,
+        processed_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      tx.set(
+        tenantRef,
         {
           tenant_id: tenantId,
           account_id: account.id,
@@ -169,7 +189,14 @@ export const stripeConnectWebhook = functions.https.onRequest(
         },
         {merge: true}
       );
+      return "applied";
+    });
 
-    res.json({synced: tenantId, status});
+    if (result === "duplicate") {
+      functions.logger.info("stripeConnectWebhook.duplicate", {
+        eventId: event.id,
+      });
+    }
+    res.json({synced: tenantId, status, idempotency: result});
   }
 );

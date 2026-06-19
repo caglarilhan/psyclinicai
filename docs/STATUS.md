@@ -127,3 +127,43 @@
 - **Sprint docs:** `docs/sprints/sprint-<N>-{plan,closeout}.md`
 - **Pentest ledger:** `docs/security/findings.csv` + `docs/security/pentest-2026q3.md`
 - **Eval harness:** `cd ~/psyrag && python3 scripts/eval_vignettes.py --hub-url https://rag.psyclinicai.com --api-key <key>`
+
+---
+
+## Disaster recovery — RTO / RPO (Sprint 29 D-05)
+
+| Tier | Component | RTO | RPO | Failover path |
+|---|---|---|---|---|
+| **T1** | Web (Firebase Hosting) | ≤ 5 min | 0 (immutable releases) | `firebase hosting:clone live:psyclinicai psyclinicai:previous` |
+| **T1** | Auth + Firestore (Google EU multi-region) | ≤ 15 min (Google SLO) | 0 | Managed by Google; status.firebase.google.com |
+| **T2** | Cloud Functions | ≤ 10 min | 0 | `firebase functions:delete <fn> --force` → previous revision via `gcloud functions deploy --source` |
+| **T2** | RAG hub FastAPI (Hetzner CX22, single node) | ≤ 2 h | ≤ 24 h (daily Postgres dump + weekly Qdrant snap) | `ssh ragsvc@46.225.181.130 → cd /opt/rag-service && docker compose up -d` |
+| **T3** | Postgres restore (worst case) | ≤ 4 h | ≤ 24 h | `gunzip < postgres-YYYYMMDD.sql.gz \| docker compose exec -T postgres psql -U ragsvc` |
+| **T3** | Qdrant rebuild (vector re-ingest) | ≤ 6 h | up to 7 d (weekly) | `python3 scripts/ingest_corpus.py --rebuild` |
+
+**Backup posture (after D-02 ships):**
+- Postgres logical dump → restic → Hetzner Storage Box (EU, AES-256 encrypted at rest, password from server `.env` only).
+- Retention: `--keep-daily 7 --keep-weekly 8 --keep-monthly 6 --keep-yearly 6` (6-y satisfies HIPAA §164.316(b) audit-retention).
+- Verification: `restic check` after every push + monthly restore drill into `psyrag-staging` namespace.
+
+**Quarterly DR drill checklist:**
+1. SRE on-call snapshots prod metrics (Sentry release, Firestore doc count, Qdrant chunk count, last successful `accessReviewCron`).
+2. Provision throwaway CX22 (`hcloud server create`) + run `upload-and-install.sh`.
+3. Pull latest restic snapshot → restore Postgres + Qdrant.
+4. Smoke: `/api/rag/health`, `/api/rag/query` against 5 eval vignettes; assert ≥ 80 % chunk overlap with prod.
+5. Tear down throwaway in ≤ 6 h total. Log result in `docs/sprints/sprint-N-closeout.md` § DR drill.
+6. Any drill blocker → file `S-` finding in `docs/security/findings.csv`.
+
+**Comms during incident:**
+- SEV1/SEV2 → status page (when D-08 ships) + email blast via Sendgrid (when P-08 ships) + Slack `#incidents`.
+- Customer notification SLA: HIPAA 60-day max for breach (we target 24 h), GDPR Art. 33 72-h max.
+- Internal post-mortem ≤ 5 working days after closure; published in `docs/security/post-mortems/PM-YYYYMMDD-summary.md`.
+
+---
+
+## Versioning + release process (Sprint 29 D-06)
+
+- **SemVer (semver.org):** `MAJOR.MINOR.PATCH[-prerelease]`. Beta cohort runs on `1.0.0-beta.N`. First public release tag = `v1.0.0`.
+- **Changelog:** `CHANGELOG.md` at repo root, format = Keep a Changelog 1.1.0. Every PR that touches `lib/`, `functions/`, `firestore.rules`, or `web/` adds at least one line under `[Unreleased]`.
+- **Release:** Cut a Git tag (`git tag -a v1.0.0-beta.1 -m '...'`) → `deploy_web.yml` (`workflow_dispatch`) publishes Firestore rules + Hosting → GitHub Release auto-drafts from the `CHANGELOG.md` `[Unreleased]` block.
+- **Rollback:** previous release tag's GitHub Release exposes the `build-web` artifact; redeploy via `firebase hosting:clone`. Firestore rules rollback = `git revert` the rules commit + re-run deploy.

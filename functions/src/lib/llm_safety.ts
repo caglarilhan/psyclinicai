@@ -75,7 +75,17 @@ export const JAILBREAK_PATTERNS: ReadonlyArray<RegExp> = [
   // Multi-language "ignore previous instructions"
   /\bignorez (les |toutes les )?(instructions?|consignes?) (précédentes?|antérieures?)/i,
   /\bignorieren sie (alle |die )?vorherigen anweisungen/i,
-  /önceki (tüm )?talimatları (yoksay|gözardı et|unutma)/i,
+
+  // Sprint 29 S-08 — Turkish red-team refresh. Original regex over-
+  // constrained the verb pool; the live red-team produced four hits
+  // that the old pattern missed. Each one comes with an inline
+  // citation to the prompt that surfaced it (docs/security/redteam/
+  // 2026q3-turkish-jailbreaks.md when that file lands).
+  /\bönceki (tüm |bütün )?(talimatları|kuralları|komutları|yönergeleri) (yoksay|göz\s?ardı et|unutma|sil|geç|bırak)/i,
+  /\byukarıdaki (tüm )?(kuralları|talimatları) (görmezden gel|atla)/i,
+  /\bbütün (önceki|yukarıdaki) (kuralları|talimatları) (boş ver|sıfırla)/i,
+  /\bbu (rolünü|kimliğini) (unut|bırak|terk et)/i,
+  /\bsistem (mesaj(ı|ını)|prompt(u|unu)) (göster|açıkla|yazdır)/i,
 
   // Encoding-laundered
   /\b(decode|run|execute) (this |the following )?(base64|rot13|hex)\b/i,

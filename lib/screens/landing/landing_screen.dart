@@ -54,8 +54,7 @@ class _LandingScreenState extends State<LandingScreen> {
     // pitch — fire when the cursor approaches the browser tab bar.
     if (_scroll.hasClients && _scroll.offset > 1200 && e.position.dy < 8) {
       _exitIntentShown = true;
-      ExitIntentModal.show(
-          context, (email) => _waitlistSubmit(context, email));
+      ExitIntentModal.show(context, (email) => _waitlistSubmit(context, email));
     }
   }
 
@@ -105,16 +104,16 @@ class _LandingScreenState extends State<LandingScreen> {
 
   void _pickTier(BuildContext context, String tier) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Reserving a $tier seat — sign in to continue'),
-      ),
+      SnackBar(content: Text('Reserving a $tier seat — sign in to continue')),
     );
     Navigator.of(context).pushNamed('/login');
   }
 
   Future<void> _waitlistSubmit(BuildContext context, String email) async {
-    TelemetryService.instance.capture(TelemetryEvents.landingHeroEmailSubmit,
-        properties: {'source': 'hero'});
+    TelemetryService.instance.capture(
+      TelemetryEvents.landingHeroEmailSubmit,
+      properties: {'source': 'hero'},
+    );
     // Best-effort Firestore write — if rules deny, the user still gets a
     // success confirmation (we never block conversion on backend ACK).
     if (PsyFirebase.isReady) {
@@ -131,7 +130,9 @@ class _LandingScreenState extends State<LandingScreen> {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("You're in. We'll email $email the moment a founding seat opens."),
+        content: Text(
+          "You're in. We'll email $email the moment a founding seat opens.",
+        ),
       ),
     );
   }
@@ -154,22 +155,26 @@ class _LandingScreenState extends State<LandingScreen> {
       'about' => '/about',
       'changelog' => '/changelog',
       'status' => '/status',
+      'roadmap' => '/roadmap',
       'privacy' => '/privacy',
       'tos' => '/tos',
       'contact' => '/contact',
       'press' => '/press',
-      'help' => '/security',
-      'baa' => '/privacy',
-      'dpa' => '/privacy',
+      // Sprint 29 P-02 — legal pages stand on their own. Pilot clinicians
+      // ask for BAA / DPA links directly from procurement; redirecting
+      // them to /privacy was an audit smell flagged by counsel.
+      'baa' => '/baa',
+      'dpa' => '/dpa',
+      'help' => '/contact',
       _ => null,
     };
     if (route != null) {
       Navigator.of(context).pushNamed(route);
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"$id" page coming soon')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('"$id" page coming soon')));
   }
 
   @override
@@ -194,61 +199,59 @@ class _LandingScreenState extends State<LandingScreen> {
       body: MouseRegion(
         onHover: _onMouseHover,
         child: Stack(
-        children: [
-          ListView(
-            controller: _scroll,
-            padding: EdgeInsets.zero,
-            children: [
-              HeroSection(
-                onPrimaryCta: () => _gotoSignup(context),
-                onSecondaryCta: () => _bookDemo(context),
-                onWaitlistEmail: (email) =>
-                    _waitlistSubmit(context, email),
-              ),
-              const TrustStrip(),
-              const TrustBarSection(),
-              KeyedSubtree(
+          children: [
+            ListView(
+              controller: _scroll,
+              padding: EdgeInsets.zero,
+              children: [
+                HeroSection(
+                  onPrimaryCta: () => _gotoSignup(context),
+                  onSecondaryCta: () => _bookDemo(context),
+                  onWaitlistEmail: (email) => _waitlistSubmit(context, email),
+                ),
+                const TrustStrip(),
+                const TrustBarSection(),
+                KeyedSubtree(
                   key: _anchors['comparison'],
-                  child: const ComparisonTableSection()),
-              const ProductGallerySection(),
-              const HowItWorksSection(),
-              const FeatureGridSection(),
-              const BuiltForSection(),
-              const ProblemSection(),
-              const DenialShieldSection(),
-              KeyedSubtree(
+                  child: const ComparisonTableSection(),
+                ),
+                const ProductGallerySection(),
+                const HowItWorksSection(),
+                const FeatureGridSection(),
+                const BuiltForSection(),
+                const ProblemSection(),
+                const DenialShieldSection(),
+                KeyedSubtree(
                   key: _anchors['pricing'],
                   child: PricingSection(
-                      onPickTier: (t) => _pickTier(context, t))),
-              TestimonialsSection(onCta: () => _gotoSignup(context)),
-              KeyedSubtree(
-                  key: _anchors['faq'], child: const FaqSection()),
-              FinalCtaSection(
+                    onPickTier: (t) => _pickTier(context, t),
+                  ),
+                ),
+                TestimonialsSection(onCta: () => _gotoSignup(context)),
+                KeyedSubtree(key: _anchors['faq'], child: const FaqSection()),
+                FinalCtaSection(
+                  onPrimary: () => _gotoSignup(context),
+                  onSecondary: () => _bookDemo(context),
+                ),
+                FooterSection(onLink: (id) => _footerLink(context, id)),
+                // Leave room for the sticky bar so the footer doesn't hide.
+                const SizedBox(height: 80),
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: StickyCtaBar(
+                visible: _stickyVisible,
                 onPrimary: () => _gotoSignup(context),
-                onSecondary: () => _bookDemo(context),
               ),
-              FooterSection(onLink: (id) => _footerLink(context, id)),
-              // Leave room for the sticky bar so the footer doesn't hide.
-              const SizedBox(height: 80),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: StickyCtaBar(
-              visible: _stickyVisible,
-              onPrimary: () => _gotoSignup(context),
             ),
-          ),
-          const Positioned.fill(
-            child: IgnorePointer(
-              ignoring: false,
-              child: CookieConsent(),
+            const Positioned.fill(
+              child: IgnorePointer(ignoring: false, child: CookieConsent()),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -320,8 +323,7 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
           style: FilledButton.styleFrom(
             backgroundColor: cs.primary,
             foregroundColor: cs.onPrimary,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
           child: const Text('Start free'),
         ),
@@ -344,8 +346,7 @@ class _NavLink extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: cs.onSurface.withValues(alpha: 0.78),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
       child: Text(label),
     );
@@ -353,8 +354,7 @@ class _NavLink extends StatelessWidget {
 }
 
 class _LandingDrawer extends StatelessWidget {
-  const _LandingDrawer(
-      {required this.onScrollTo, required this.onRoute});
+  const _LandingDrawer({required this.onScrollTo, required this.onRoute});
 
   final void Function(String anchor) onScrollTo;
   final void Function(String route) onRoute;
@@ -366,9 +366,12 @@ class _LandingDrawer extends StatelessWidget {
     Widget tile(IconData icon, String label, VoidCallback onTap) {
       return ListTile(
         leading: Icon(icon, color: cs.primary),
-        title: Text(label,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w600)),
+        title: Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         onTap: onTap,
       );
     }
@@ -383,28 +386,33 @@ class _LandingDrawer extends StatelessWidget {
                 children: [
                   Icon(Icons.psychology, color: cs.primary, size: 28),
                   const SizedBox(width: 8),
-                  Text('PsyClinicAI',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      )),
+                  Text(
+                    'PsyClinicAI',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ),
             const Divider(),
-            tile(Icons.attach_money, 'Pricing',
-                () => onScrollTo('pricing')),
-            tile(Icons.compare_arrows, 'Compare',
-                () => onScrollTo('comparison')),
+            tile(Icons.attach_money, 'Pricing', () => onScrollTo('pricing')),
+            tile(
+              Icons.compare_arrows,
+              'Compare',
+              () => onScrollTo('comparison'),
+            ),
             tile(Icons.help_outline, 'FAQ', () => onScrollTo('faq')),
             const Divider(),
-            tile(Icons.verified_user_outlined, 'Security',
-                () => onRoute('/security')),
+            tile(
+              Icons.verified_user_outlined,
+              'Security',
+              () => onRoute('/security'),
+            ),
             tile(Icons.info_outline, 'About', () => onRoute('/about')),
-            tile(Icons.email_outlined, 'Contact',
-                () => onRoute('/contact')),
-            tile(Icons.gavel_outlined, 'Privacy',
-                () => onRoute('/privacy')),
+            tile(Icons.email_outlined, 'Contact', () => onRoute('/contact')),
+            tile(Icons.gavel_outlined, 'Privacy', () => onRoute('/privacy')),
             const Divider(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),

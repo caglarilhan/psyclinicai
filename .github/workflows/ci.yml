@@ -64,8 +64,8 @@ jobs:
         run: flutter pub get
 
       - name: Run tests
+        # Sprint 29 D-01: strict — red tests fail the build.
         run: flutter test --coverage --no-pub --reporter=expanded
-        continue-on-error: true   # Sprint 3 — re-enable strict once coverage stabilizes
 
       - name: Upload coverage artefact
         if: always()

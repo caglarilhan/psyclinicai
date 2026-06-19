@@ -93,10 +93,33 @@ service cloud.firestore {
     // Writes flow only through the admin SDK (Cloud Functions); client
     // writes are denied so the hash chain stays tamper-evident.
     // Reads are scoped to the clinic that owns the row.
+    //
+    // Sprint 29 B-04 — defence-in-depth: the row must (1) belong to the
+    // caller's clinic AND (2) carry the required schema fields so a
+    // malformed row written by a future admin-SDK bug cannot leak
+    // sideways. Solo-practice invariant (clinicId == uid) stays
+    // enforced — if multi-clinician support lands, move this rule to
+    // /clinics/{clinicId}/audit_logs/{logId} and check membership via
+    // /clinics/{cid}/clinicians/{request.auth.uid}.
     match /audit_logs/{logId} {
       allow create, update, delete: if false;
       allow read: if isAuthed()
-          && resource.data.clinic_id == request.auth.uid;
+          && resource.data.clinic_id is string
+          && resource.data.clinic_id == request.auth.uid
+          && resource.data.event_type is string
+          && resource.data.ts is timestamp;
+    }
+
+    // Sprint 29 S-01 — WebAuthn per-IP rate-limit buckets. Written by
+    // the rate_limit lib via admin SDK; clients must never touch them.
+    match /webauthn_rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    // Sprint 29 B-09 — Stripe webhook idempotency ledger. Admin-SDK
+    // only; clients have no business touching processed_webhooks.
+    match /processed_webhooks/{eventId} {
+      allow read, write: if false;
     }
 
     // Consent records — GDPR Art. 7 (lawful basis) + 7(3) (right to

@@ -50,7 +50,29 @@
   <meta name="description" content="Cut session notes from 90 minutes to 5. PsyClinicAI is the AI co-pilot for therapists and psychiatrists — on-device transcription, BYOK, HIPAA-aligned, GDPR Article 28 DPA, EU data residency.">
   <meta name="keywords" content="AI co-pilot therapist, ambient AI clinical notes, SOAP DAP BIRP generator, PHQ-9 GAD-7 dashboard, HIPAA practice management, GDPR therapy software, BYOK clinician AI, on-device transcription, mental health EHR">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#3B82F6">
+  <!-- Sprint 29 polish — distinct theme-color in dark mode keeps the
+       browser chrome readable on iOS Safari + Android Chrome PWA. -->
+  <meta name="theme-color" content="#3B82F6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B1220" media="(prefers-color-scheme: dark)">
+
+  <!-- Sprint 30 S-07 — Content-Security-Policy. Flutter Web is unusual
+       (canvaskit + skia + dynamic font fetch); the directives below are
+       the minimum that lets `main.dart.js` boot while denying inline
+       script and arbitrary remote origins. Any future SDK that ships
+       its own CDN host has to land here too — keep this list tight. -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com https://js.stripe.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com data:;
+    img-src 'self' data: blob: https:;
+    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://rag.psyclinicai.com https://*.sentry.io https://eu.i.posthog.com https://api.stripe.com;
+    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+  ">
   <meta property="og:title" content="PsyClinicAI — Cut session notes from 90 minutes to 5">
   <meta property="og:description" content="AI co-pilot for therapists and psychiatrists. On-device transcription. BYOK. HIPAA-aligned. GDPR Article 28 DPA. EU data residency by default.">
   <meta property="og:url" content="https://psyclinicai.com/">
@@ -84,6 +106,92 @@
       "name": "PsyClinicAI",
       "url": "https://psyclinicai.com"
     }
+  }
+  </script>
+  <!-- Sprint 30 polish — FAQPage rich-result. Mirrors `lib/screens/landing
+       /sections/faq_section.dart`; keep them in sync by hand for now. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does PsyClinicAI record audio?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Transcription runs on-device via native STT; raw audio never leaves the clinician's machine. Only the redacted text transcript reaches our servers, and only if the clinician opts in."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is PsyClinicAI HIPAA-compliant?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We are HIPAA-aligned and sign a BAA on request. Technical, administrative, and physical safeguards are listed in the Trust Center; the BAA template is at /baa."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where is patient data stored?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "EU multi-region for European clinicians (Firebase europe-west1 + Hetzner Germany/Finland). US tenants can opt-in to US data residency. On-device data is AES-256 encrypted via SQLCipher."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which AI model does PsyClinicAI use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "By default we BYOK — the clinician brings their own Anthropic Claude key. For non-PHI clinical Q&A the platform uses Groq Llama 3.x or Gemini fallback. PHI-bearing inference runs on a local Ollama instance inside our EU hub."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How long is the founding-member pilot?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Six months at the founding rate (50 percent off list), then month-to-month at the same locked rate while continuously subscribed. Cancel anytime. Full terms at /pilot-agreement."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you support EHR integration?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "FHIR R4 export ships in Wave B (Sprint 30) with Epic plus Cerner sandbox connectors. Direct EHR write-back is on the Q4 2026 roadmap behind documented audit and retention controls."
+        }
+      }
+    ]
+  }
+  </script>
+  <!-- Sprint 30 polish — Organization schema improves SERP knowledge-
+       panel display + reuse for press / about. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "PsyClinicAI",
+    "url": "https://psyclinicai.com",
+    "logo": "https://psyclinicai.com/icons/Icon-512.png",
+    "sameAs": [
+      "https://github.com/caglarilhan/psyclinicai",
+      "https://twitter.com/psyclinicai"
+    ],
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "support@psyclinicai.com",
+        "availableLanguage": ["English", "German", "French", "Spanish", "Turkish"]
+      },
+      {
+        "@type": "ContactPoint",
+        "contactType": "security",
+        "email": "security@psyclinicai.com"
+      }
+    ]
   }
   </script>
   <!--

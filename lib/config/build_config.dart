@@ -35,17 +35,9 @@ class BuildConfig {
   /// webhooks, and the Anthropic relay. Empty ⇒ BYOK / demo paths only.
   static const String backendUrl = String.fromEnvironment('BACKEND_URL');
 
-  /// Sprint 27 (F-003): the per-tenant RAG hub key no longer ships in
-  /// the web bundle. The hub URL + key live inside the Cloud Function
-  /// (`functions/src/rag_proxy.ts`); the client only ever sees a
-  /// short-lived Firebase ID token. These two fields are kept as
-  /// `// removed` placeholders for one sprint so external build
-  /// scripts that still pass them do not break the build.
-  @Deprecated('Sprint 27 F-003: RAG key moved to Cloud Functions. Removed Sprint 28.')
-  static const String ragBaseUrl = String.fromEnvironment('RAG_BASE_URL');
-
-  @Deprecated('Sprint 27 F-003: RAG key moved to Cloud Functions. Removed Sprint 28.')
-  static const String ragApiKey = String.fromEnvironment('RAG_API_KEY');
+  // Sprint 30 polish — `ragBaseUrl` + `ragApiKey` removed. They were
+  // kept one sprint past the F-003 migration to give external build
+  // scripts a grace window; no consumer remains.
 
   /// True once real telemetry keys are present.
   static bool get telemetryEnabled =>

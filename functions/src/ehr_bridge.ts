@@ -159,16 +159,186 @@ export function outboxIdempotencyKey(args: {
 
 export type OutboxStatus = "queued" | "sent" | "failed";
 
+// Sprint 31 P1 / Sprint 32 P1 — widen the type so Patient + Encounter
+// rides the same outbox plumbing as Observation + DocumentReference.
+export type FhirResourceType =
+  | "Observation"
+  | "DocumentReference"
+  | "Patient"
+  | "Encounter";
+
 export interface OutboxEntry {
   idempotency_key: string;
   tenant_id: string;
   clinician_id: string;
   patient_id: string;
-  resource_type: "Observation" | "DocumentReference";
+  resource_type: FhirResourceType;
   endpoint_id: string;
   payload: Record<string, unknown>;
   status: OutboxStatus;
   attempts: number;
   created_at: string;
   last_attempt_at: string | null;
+}
+
+// ── Sprint 31 P1 — Patient resource ────────────────────────────────
+
+export interface PatientBuilderArgs {
+  /** Local MRN — stamped as Identifier#value. */
+  mrn: string;
+  /** Family name (no PHI in tests; pilot data only). */
+  familyName: string;
+  givenNames: string[];
+  birthDateIso: string; // YYYY-MM-DD
+  /** Patient gender at the FHIR level — administrative, not clinical. */
+  gender?: "male" | "female" | "other" | "unknown";
+  /** Two-letter ISO country code, e.g. "US", "DE". */
+  countryCode?: string;
+}
+
+export function buildPatientResource(
+  args: PatientBuilderArgs,
+): Record<string, unknown> {
+  return {
+    resourceType: "Patient",
+    identifier: [
+      {
+        use: "usual",
+        system: "https://psyclinicai.com/fhir/identifier/mrn",
+        value: args.mrn,
+      },
+    ],
+    active: true,
+    name: [
+      {
+        use: "official",
+        family: args.familyName,
+        given: args.givenNames,
+      },
+    ],
+    gender: args.gender ?? "unknown",
+    birthDate: args.birthDateIso,
+    ...(args.countryCode ?
+      {address: [{country: args.countryCode}]} :
+      {}),
+  };
+}
+
+// ── Sprint 31 P1 — Encounter resource ──────────────────────────────
+
+export type EncounterClass = "AMB" | "VR" | "HH";
+
+export interface EncounterBuilderArgs {
+  /** Local encounter id (uuid v4 from session.id). */
+  encounterId: string;
+  patientFhirRef: string;
+  practitionerFhirRef: string;
+  /** FHIR class. AMB = ambulatory office, VR = virtual telehealth, HH = home health. */
+  class: EncounterClass;
+  /** ICD-10-CM / DSM-5 primary code, e.g. "F32.1". */
+  reasonCode?: string;
+  reasonDisplay?: string;
+  startedAtIso: string;
+  endedAtIso?: string;
+}
+
+const ENCOUNTER_CLASS_DISPLAY: Record<EncounterClass, string> = {
+  AMB: "ambulatory",
+  VR: "virtual",
+  HH: "home health",
+};
+
+export function buildEncounterResource(
+  args: EncounterBuilderArgs,
+): Record<string, unknown> {
+  return {
+    resourceType: "Encounter",
+    identifier: [
+      {
+        system: "https://psyclinicai.com/fhir/identifier/encounter",
+        value: args.encounterId,
+      },
+    ],
+    status: args.endedAtIso ? "finished" : "in-progress",
+    class: {
+      system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+      code: args.class,
+      display: ENCOUNTER_CLASS_DISPLAY[args.class],
+    },
+    subject: {reference: args.patientFhirRef},
+    participant: [
+      {
+        individual: {reference: args.practitionerFhirRef},
+      },
+    ],
+    period: {
+      start: args.startedAtIso,
+      ...(args.endedAtIso ? {end: args.endedAtIso} : {}),
+    },
+    ...(args.reasonCode ?
+      {
+        reasonCode: [
+          {
+            coding: [
+              {
+                system: "http://hl7.org/fhir/sid/icd-10-cm",
+                code: args.reasonCode,
+                ...(args.reasonDisplay ? {display: args.reasonDisplay} : {}),
+              },
+            ],
+          },
+        ],
+      } :
+      {}),
+  };
+}
+
+// ── Sprint 31 P1 — retry helper (HTTPS POST surface stubbed) ────────
+
+export interface SendResult {
+  status: OutboxStatus;
+  attempts: number;
+  finalError?: string;
+}
+
+/**
+ * Pure-logic exponential backoff scheduler. Returns the list of
+ * wait-times (ms) for `maxAttempts` retries; consumers use it with
+ * setTimeout / a real HTTP client. Tested directly so the policy is
+ * locked in: 250 ms, 500 ms, 1 s, 2 s, capped at 4 s.
+ */
+export function backoffSchedule(maxAttempts: number): number[] {
+  const out: number[] = [];
+  let cur = 250;
+  for (let i = 0; i < maxAttempts; i++) {
+    out.push(Math.min(cur, 4000));
+    cur *= 2;
+  }
+  return out;
+}
+
+/**
+ * In-memory retry driver — given a `doSend` callback that resolves to
+ * `true` on success, returns the final SendResult. Lets a Cloud
+ * Function handler keep its real HTTP call surface tiny while still
+ * benefiting from a tested retry policy.
+ */
+export async function retryWithBackoff(
+  doSend: (attempt: number) => Promise<boolean>,
+  maxAttempts: number,
+  sleep: (ms: number) => Promise<void> = (ms) =>
+    new Promise((r) => setTimeout(r, ms)),
+): Promise<SendResult> {
+  const waits = backoffSchedule(maxAttempts);
+  let lastErr: string | undefined;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const ok = await doSend(attempt);
+      if (ok) return {status: "sent", attempts: attempt};
+    } catch (e) {
+      lastErr = String(e).slice(0, 200);
+    }
+    if (attempt < maxAttempts) await sleep(waits[attempt - 1]);
+  }
+  return {status: "failed", attempts: maxAttempts, finalError: lastErr};
 }

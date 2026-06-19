@@ -45,9 +45,9 @@ We will migrate when **any one** of:
 
 ## 4. Recommendation
 
-**Sprint 31 — daily snapshot to Storage Box** (Option 2): zero new
-subprocessors, tightens RPO from 7 d → 1 d, costs nothing extra,
-unblocks the EU pilot SLA without a big migration.
+**Sprint 31 — daily snapshot to Storage Box** (Option 2) — ✅ **shipped**.
+`ragsvc-backup.timer` now fires `OnCalendar=*-*-* 03:00:00 UTC`
+(was Sunday weekly). Zero new subprocessors, RPO tightens 7 d → 1 d.
 
 **Sprint 33 — Qdrant Cloud EU** (Option 4) once a paying customer
 requires < 1 h RTO. Updates `docs/legal/SUBPROCESSORS.md` § 2.

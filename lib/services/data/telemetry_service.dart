@@ -156,6 +156,15 @@ class TelemetryEvents {
   static const String paymentSucceeded = 'billing.payment_succeeded';
   static const String paymentFailed = 'billing.payment_failed';
 
+  // Sprint 32 P2 — BYOK key rotation lifecycle. Properties carry
+  // `provider` (anthropic|openai|cohere), `grace_period_h`, never
+  // the key value itself.
+  static const String byokRotationRequested =
+      'byok.rotation_requested';
+  static const String byokRotationCompleted =
+      'byok.rotation_completed';
+  static const String byokRotationFailed = 'byok.rotation_failed';
+
   /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
   /// MUST NOT include item answers or patient identifiers — only the tier
   /// and severity band so dashboards can monitor escalation volume.

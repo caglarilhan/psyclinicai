@@ -6,10 +6,19 @@ jest.mock("firebase-admin", () => ({
     },
   },
 }));
-jest.mock("firebase-functions", () => ({
-  logger: {warn: jest.fn(), error: jest.fn(), info: jest.fn()},
-  https: {onRequest: (fn: unknown) => fn},
-}));
+// Sprint 31 — mirror the rag_proxy mock: D-10 wrapped the handler with
+// runWith(...).region(...).https.onRequest(fn). Chain has to resolve.
+jest.mock("firebase-functions", () => {
+  const onRequest = (fn: unknown) => fn;
+  const region = () => ({https: {onRequest}});
+  const runWith = () => ({region});
+  return {
+    logger: {warn: jest.fn(), error: jest.fn(), info: jest.fn()},
+    https: {onRequest},
+    runWith,
+    region,
+  };
+});
 
 import {
   hourBucket,

@@ -54,6 +54,22 @@ jobs:
             cd ~/psyclinicai/deployment
             docker compose up -d psyclinicai-web
 
+      # Sprint 32 — Sentry release tracking. Tags the deploy commit with
+      # a release id so crashes after this run are blamed on the right
+      # build. No-op without SENTRY_AUTH_TOKEN, so the workflow stays
+      # green ahead of the vendor unlock (see vendor-unlocks.md §10).
+      - name: Sentry release
+        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: psyclinicai
+          SENTRY_PROJECT: psyclinicai-flutter-web
+        with:
+          environment: production
+          version: ${{ github.sha }}
+          sourcemaps: build/web
+
 
 
 

@@ -81,11 +81,16 @@ export const JAILBREAK_PATTERNS: ReadonlyArray<RegExp> = [
   // that the old pattern missed. Each one comes with an inline
   // citation to the prompt that surfaced it (docs/security/redteam/
   // 2026q3-turkish-jailbreaks.md when that file lands).
-  /\bönceki (tüm |bütün )?(talimatları|kuralları|komutları|yönergeleri) (yoksay|göz\s?ardı et|unutma|sil|geç|bırak)/i,
-  /\byukarıdaki (tüm )?(kuralları|talimatları) (görmezden gel|atla)/i,
-  /\bbütün (önceki|yukarıdaki) (kuralları|talimatları) (boş ver|sıfırla)/i,
-  /\bbu (rolünü|kimliğini) (unut|bırak|terk et)/i,
-  /\bsistem (mesaj(ı|ını)|prompt(u|unu)) (göster|açıkla|yazdır)/i,
+  //
+  // Sprint 31 W1 P0 — `\b` cannot be used before Turkish characters
+  // because JavaScript regex `\w` is ASCII-only; "ö", "ü", "ı" don't
+  // count, so `\bönceki` fails at start-of-input. Use `(?:^|\W)` so
+  // the boundary works for Latin AND Turkish prefixes.
+  /(?:^|\W)önceki (tüm |bütün )?(talimatları|kuralları|komutları|yönergeleri) (yoksay|göz\s?ardı et|unutma|sil|geç|bırak)/i,
+  /(?:^|\W)yukarıdaki (tüm )?(kuralları|talimatları) (görmezden gel|atla)/i,
+  /(?:^|\W)bütün (önceki|yukarıdaki) (kuralları|talimatları) (boş ver|sıfırla)/i,
+  /(?:^|\W)bu (rolünü|kimliğini) (unut|bırak|terk et)/i,
+  /(?:^|\W)sistem (mesaj(ı|ını)|prompt(u|unu)) (göster|açıkla|yazdır)/i,
 
   // Encoding-laundered
   /\b(decode|run|execute) (this |the following )?(base64|rot13|hex)\b/i,

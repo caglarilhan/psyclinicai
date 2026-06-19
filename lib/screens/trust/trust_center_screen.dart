@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/trust/rag_status_card.dart';
 
 /// `/trust` — the enterprise-grade compliance landing.
 ///
@@ -38,6 +39,10 @@ class TrustCenterScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _PostureBar(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.xl),
+          _SectionHeader(theme: theme, cs: cs, label: 'Live infrastructure'),
+          const SizedBox(height: PsySpacing.md),
+          const RagStatusCard(),
           const SizedBox(height: PsySpacing.xl),
           _SectionHeader(theme: theme, cs: cs, label: 'Programs'),
           const SizedBox(height: PsySpacing.md),

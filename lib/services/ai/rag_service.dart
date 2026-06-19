@@ -17,8 +17,11 @@ class RagService {
 
   /// Build from compile-time config. Returns a disabled instance when no
   /// backend is wired — every call short-circuits to [RagResult.disabled].
-  /// Sprint 27 (F-003): the path is now `${backendUrl}/v1/rag/*`; the
-  /// per-tenant key lives in the Cloud Function, not the client.
+  /// Sprint 27 (F-003): `BACKEND_URL` points at the psyrag hub itself
+  /// (e.g. `https://rag.psyclinicai.com`); the hub verifies the Firebase
+  /// ID token in `Authorization: Bearer` and maps the `tenant_id` custom
+  /// claim to its `clients` row. The per-tenant hub API key NEVER ships in
+  /// the web bundle.
   factory RagService.fromConfig({
     http.Client? httpClient,
     IdTokenProvider? idTokenProvider,
@@ -26,7 +29,7 @@ class RagService {
     if (!BuildConfig.ragEnabled) return RagService();
     return RagService(
       client: RagClient(
-        baseUrl: '${BuildConfig.backendUrl}/v1/rag',
+        baseUrl: '${BuildConfig.backendUrl}/api/rag',
         idTokenProvider: idTokenProvider ?? _defaultIdTokenProvider,
         httpClient: httpClient,
       ),

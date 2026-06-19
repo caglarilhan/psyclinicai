@@ -29,12 +29,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions _web = FirebaseOptions(
-    apiKey: 'TODO-flutterfire-configure',
-    appId: 'TODO-flutterfire-configure',
-    messagingSenderId: 'TODO-flutterfire-configure',
-    projectId: 'TODO-flutterfire-configure',
-    authDomain: 'TODO-flutterfire-configure.firebaseapp.com',
-    storageBucket: 'TODO-flutterfire-configure.appspot.com',
+    apiKey: 'AIzaSyA7KvGfyYLgvjFZiOf6ga_YiCGd8RFvyPA',
+    appId: '1:460966332575:web:165aa989d3d5776dbbfaaa',
+    messagingSenderId: '460966332575',
+    projectId: 'psyclinicai',
+    authDomain: 'psyclinicai.firebaseapp.com',
+    storageBucket: 'psyclinicai.firebasestorage.app',
+    measurementId: 'G-6Z14NT269Q',
   );
 
   static const FirebaseOptions _ios = _web;

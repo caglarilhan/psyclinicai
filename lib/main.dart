@@ -33,6 +33,7 @@ import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
 import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
 import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
 import 'package:psyclinicai/screens/group_session/group_session_screen.dart';
+import 'package:psyclinicai/screens/landing/beta_waitlist_screen.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
@@ -164,6 +165,7 @@ class PsyClinicAIApp extends StatelessWidget {
               '/': (context) => const SplashScreen(),
               '/ai/rag': (context) => const RagConsoleScreen(),
               '/landing': (context) => const LandingScreen(),
+              '/beta': (context) => const BetaWaitlistScreen(),
               '/login': (context) => const LoginScreen(),
               '/auth/password_reset': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments

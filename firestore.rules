@@ -64,6 +64,27 @@ service cloud.firestore {
               ['email', 'createdAt', 'source']);
     }
 
+    // Beta pilot signups (Sprint 28). Same shape as landing_waitlist but
+    // richer fields — the cold-outreach pipeline routes by clinic + region
+    // + role to schedule pilot calls. Client may CREATE only; reads happen
+    // server-side via founders@ Cloud Function export.
+    match /beta_signups/{doc} {
+      allow read, update, delete: if false;
+      allow create: if request.resource.data.email is string
+          && request.resource.data.email.size() <= 320
+          && request.resource.data.email.matches('.*@.*[.].*')
+          && request.resource.data.clinic_name is string
+          && request.resource.data.clinic_name.size() <= 200
+          && request.resource.data.country is string
+          && request.resource.data.country.size() <= 100
+          && request.resource.data.region in ['EU', 'US', 'TR']
+          && request.resource.data.role in ['clinician', 'admin', 'researcher']
+          && request.resource.data.source == 'web/beta'
+          && request.resource.data.keys().hasOnly(
+              ['email', 'clinic_name', 'country', 'region', 'role',
+               'source', 'created_at']);
+    }
+
     // ------------------------------------------------------------------
     // Sprint 9 — Compliance-scoped top-level collections
     // ------------------------------------------------------------------

@@ -76,6 +76,20 @@ export const healthcheck = functions.https.onRequest(
     const deep = deepRaw === "true" || deepRaw === "1";
     const dependencies: Dependency[] = [];
     if (deep) {
+      // Sprint 28 / F-011 close: deep probe hits `admin.auth().listUsers(1)`
+      // which is a privileged IAM call. Unauthenticated callers could time
+      // its variance to enumerate the clinician roster. Gate behind a shared
+      // header that statuspage / our SRE on-call holds.
+      const expected = process.env.HEALTHCHECK_TOKEN;
+      const provided = req.headers["x-healthcheck-token"];
+      if (!expected || provided !== expected) {
+        res.set("Cache-Control", "no-store, max-age=0");
+        res.status(401).json({
+          status: "unauthorized",
+          error: "deep_probe_requires_x-healthcheck-token_header",
+        });
+        return;
+      }
       const results = await Promise.all([pingFirestore(), pingAuth()]);
       dependencies.push(...results);
     }

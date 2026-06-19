@@ -20,7 +20,14 @@ export function stripeClient(): Stripe {
 /**
  * Verify a Stripe webhook signature. Throws when the secret env var
  * is absent so a misconfigured deploy refuses events outright.
+ *
+ * Sprint 28 / F-006 close: pin replay tolerance to 300 s (5 min)
+ * explicitly. The Stripe SDK already defaults to 300 but the pentest
+ * ledger asked for the value to be visible in code so reviewers do not
+ * have to trust a vendor default.
  */
+const WEBHOOK_REPLAY_TOLERANCE_SECONDS = 300;
+
 export function verifyWebhook(
   rawBody: Buffer,
   signature: string,
@@ -29,5 +36,6 @@ export function verifyWebhook(
     rawBody,
     signature,
     env.STRIPE_WEBHOOK_SECRET,
+    WEBHOOK_REPLAY_TOLERANCE_SECONDS,
   );
 }

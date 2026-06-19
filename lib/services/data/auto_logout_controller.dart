@@ -22,9 +22,9 @@ class AutoLogoutController {
     Duration sharedIdleTimeout = const Duration(minutes: 5),
     Duration tickInterval = const Duration(seconds: 1),
     DateTime Function()? now,
-  })  : _sharedIdleTimeout = sharedIdleTimeout,
-        _tickInterval = tickInterval,
-        _now = now ?? DateTime.now {
+  }) : _sharedIdleTimeout = sharedIdleTimeout,
+       _tickInterval = tickInterval,
+       _now = now ?? DateTime.now {
     sharedDevice.addListener(_onSharedDeviceChanged);
     _onSharedDeviceChanged();
   }

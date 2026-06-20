@@ -45,5 +45,59 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Sprint 32 P1 — App Store Review privacy usage descriptions.
+	     Every entitlement we request needs a reason string under iOS 14+
+	     or the app is auto-rejected. Each string is clinician-facing copy
+	     (no first-person founder voice, plural "we" per brand-voice). -->
+	<key>NSCameraUsageDescription</key>
+	<string>PsyClinicAI uses the camera so you can attach intake-form photos or scan insurance cards into the chart. Nothing is uploaded without your tap-to-send confirmation.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>PsyClinicAI uses the microphone for live session transcription. Audio is processed on this device — only the redacted transcript text leaves the device.</string>
+
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>PsyClinicAI uses on-device Speech Recognition so session audio never has to be uploaded to a server for transcription.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PsyClinicAI may read images you choose to attach to a clinical note. The app never reads photos in the background.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PsyClinicAI writes the DSAR data-export ZIP (GDPR Article 20) to your Photos so you can keep a personal copy. No PHI is sent to iCloud without your action.</string>
+
+	<key>NSFaceIDUsageDescription</key>
+	<string>PsyClinicAI uses Face ID to unlock your local chart after auto-logout. The biometric template stays in the device Secure Enclave and never reaches our servers.</string>
+
+	<key>NSHealthShareUsageDescription</key>
+	<string>PsyClinicAI reads only the PHQ-9 and GAD-7 mood-screening scores you opt in to share, so clinicians can see trends alongside the session note.</string>
+
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>PsyClinicAI writes PHQ-9 and GAD-7 results back to the Health app when you complete a screener, so the score history travels with you.</string>
+
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>PsyClinicAI uses the local network only during a telehealth session to set up the encrypted WebRTC video call. We never scan the local network outside of an active session.</string>
+
+	<key>NSContactsUsageDescription</key>
+	<string>PsyClinicAI optionally reads your contacts so you can pick an emergency-contact phone number for a patient intake. The intake form is the only place this access is used.</string>
+
+	<!-- Sprint 32 P1 — explicit ATS lockdown. NSAllowsArbitraryLoads is
+	     intentionally false; we only fetch via HTTPS endpoints we own
+	     (Cloud Functions europe-west1, RAG hub Caddy, Firebase
+	     Hosting). TLSv1.2 minimum mirrors what Caddy enforces. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict/>
+	</dict>
+
+	<!-- Sprint 32 P1 — iOS Hand-off + Continuity Camera. The hand-off
+	     activity title is hardcoded to 'Continue session' (F-010 fix
+	     in Sprint 27); the entitlement plumbing lives here. -->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.psyclinicai.session.continue</string>
+	</array>
 </dict>
 </plist>

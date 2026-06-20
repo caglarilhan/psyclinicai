@@ -94,6 +94,10 @@ export {onBetaSignupFoundersEmail} from "./founders_email";
 // STRIPE_SUBSCRIPTION_WEBHOOK_SECRET is set.
 export {stripeSubscriptionWebhook} from "./stripe_subscription";
 
+// Sprint 32 P1 — EHR FHIR R4 Observation submit handler. Outbox-backed
+// + retry-aware; idempotent on (endpoint, instrument, patient, date).
+export {ehrSubmitProm} from "./ehr_observation_handler";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

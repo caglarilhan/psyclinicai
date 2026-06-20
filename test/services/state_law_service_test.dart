@@ -5,8 +5,11 @@ void main() {
   const svc = StateLawService();
 
   group('StateLawService US Phase 1 (Sprint 32)', () {
-    test('supportedStates contains exactly CA + NY + TX', () {
-      expect(StateLawService.supportedStates, {'CA', 'NY', 'TX'});
+    test('supportedStates contains US Phase 1 + Phase 2', () {
+      expect(
+        StateLawService.supportedStates,
+        {'CA', 'NY', 'TX', 'FL', 'IL', 'WA'},
+      );
     });
 
     test('unknown state returns empty list (no exception)', () {
@@ -91,6 +94,59 @@ void main() {
       expect(svc.hasCriticalAlert(svc.alertsForState('NY')), true);
       expect(svc.hasCriticalAlert(svc.alertsForState('TX')), true);
       expect(svc.hasCriticalAlert([]), false);
+    });
+
+    // Sprint 33 P3 — US Phase 2 coverage.
+    group('Florida', () {
+      final alerts = svc.alertsForState('FL');
+      test('5 alerts shipped', () => expect(alerts.length, 5));
+      test('universal-reporter child statute is critical', () {
+        final a =
+            alerts.firstWhere((e) => e.id == 'FL.mandatoryReporting.child');
+        expect(a.severity, AlertSeverity.critical);
+        expect(a.citation, contains('Fla. Stat. §39.201'));
+      });
+      test('Boynton case cited (no Tarasoff)', () {
+        final a = alerts.firstWhere((e) => e.id == 'FL.dutyToWarn.boynton');
+        expect(a.citation, contains('Boynton v. Burglass'));
+        expect(a.severity, AlertSeverity.warning);
+      });
+    });
+
+    group('Illinois', () {
+      final alerts = svc.alertsForState('IL');
+      test('4 alerts shipped', () => expect(alerts.length, 4));
+      test('DCFS reporting cites 325 ILCS 5/4', () {
+        final a =
+            alerts.firstWhere((e) => e.id == 'IL.mandatoryReporting.child');
+        expect(a.citation, contains('325 ILCS 5/4'));
+      });
+      test('MHDDCA disclosure permission is warning', () {
+        final a = alerts.firstWhere((e) => e.id == 'IL.dutyToWarn.mhddca');
+        expect(a.severity, AlertSeverity.warning);
+        expect(a.citation, contains('740 ILCS 110/11'));
+      });
+    });
+
+    group('Washington', () {
+      final alerts = svc.alertsForState('WA');
+      test('4 alerts shipped', () => expect(alerts.length, 4));
+      test('Volk v. DeMeerleer duty is critical', () {
+        final a = alerts.firstWhere((e) => e.id == 'WA.dutyToWarn.volk');
+        expect(a.severity, AlertSeverity.critical);
+        expect(a.citation, contains('Volk v. DeMeerleer'));
+      });
+      test('PSYPACT + Counseling Compact mentioned', () {
+        final a =
+            alerts.firstWhere((e) => e.id == 'WA.telehealthLicensure.compact');
+        expect(a.body, contains('PSYPACT'));
+        expect(a.body, contains('Counseling Compact'));
+      });
+    });
+
+    test('US Phase 2 multi-bundle has the right total length', () {
+      final bundle = svc.alertsForMultipleStates(['FL', 'IL', 'WA']);
+      expect(bundle.length, 5 + 4 + 4);
     });
   });
 }

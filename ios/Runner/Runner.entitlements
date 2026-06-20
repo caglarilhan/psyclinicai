@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sprint 33 P3 — Provisioning entitlements. Add capabilities here
+	     in lock-step with App Store Connect → Certificates, Identifiers
+	     & Profiles. Comment any new entitlement with the use case so the
+	     PHI surface review can be repeated quickly. -->
+
+	<!-- HealthKit: writes PHQ-9 + GAD-7 scores to the patient's iOS
+	     Health app + reads back the history so trends are visible from
+	     the watch glance. Clinical Health Records are intentionally NOT
+	     enabled — we do not read or write EHR records via HealthKit. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<!-- Apple groups PHQ-9 / GAD-7 under State of Mind / Mindfulness
+	     metadata in iOS 17+; we use `mindfulSession` + custom metadata
+	     keys. Clinical Health Records access is deliberately NOT
+	     requested (would imply EHR ingest). Leaving the access array
+	     empty disables every protected sub-type. -->
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+
+	<!-- Hand-off + Continuity. F-010 (Sprint 27) fixed the activity title
+	     so the entitlement here is safe to keep. -->
+	<key>com.apple.developer.user-activity-types</key>
+	<array>
+		<string>com.psyclinicai.session.continue</string>
+	</array>
+
+	<!-- AppGroups: not used today; reserved for future Watch app extension. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.psyclinicai.app</string>
+	</array>
+</dict>
+</plist>

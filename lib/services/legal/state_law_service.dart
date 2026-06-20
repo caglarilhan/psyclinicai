@@ -54,7 +54,15 @@ enum AlertSeverity { info, warning, critical }
 class StateLawService {
   const StateLawService();
 
-  static const Set<String> supportedStates = {'CA', 'NY', 'TX'};
+  static const Set<String> supportedStates = {
+    'CA',
+    'NY',
+    'TX',
+    // Sprint 33 P3 — US Phase 2.
+    'FL',
+    'IL',
+    'WA',
+  };
 
   /// Returns the empty list for unsupported codes so callers can render
   /// "no alerts available for this jurisdiction" without exceptions.
@@ -227,6 +235,180 @@ class StateLawService {
             category: AlertCategory.documentationRetention,
             severity: AlertSeverity.info,
             citation: 'Tex. Occ. Code §501.262; 22 TAC §465.22',
+          ),
+        ];
+      case 'FL':
+        return const [
+          JurisdictionAlert(
+            id: 'FL.mandatoryReporting.child',
+            title: 'Florida — mandatory child abuse reporting',
+            body:
+                'Florida is a universal-reporter state. Any person with '
+                'reasonable suspicion of child abuse, abandonment, or '
+                'neglect must report immediately to the Florida Abuse '
+                'Hotline (1-800-962-2873). No professional exemption.',
+            category: AlertCategory.mandatoryReporting,
+            severity: AlertSeverity.critical,
+            citation: 'Fla. Stat. §39.201',
+          ),
+          JurisdictionAlert(
+            id: 'FL.dutyToWarn.boynton',
+            title: 'Florida — duty-to-warn ambiguity (Boynton)',
+            body:
+                'Florida has not adopted Tarasoff by statute. Boynton v. '
+                'Burglass (Fla. Dist. Ct. App. 1992) rejected a common-law '
+                'duty to warn. Disclosure is permitted under Fla. Stat. '
+                '§456.059(4) when a patient communicates a specific threat '
+                'to a specific identifiable target — permissive only.',
+            category: AlertCategory.dutyToWarn,
+            severity: AlertSeverity.warning,
+            citation:
+                'Boynton v. Burglass, 590 So.2d 446 (Fla. 1992); '
+                'Fla. Stat. §456.059(4)',
+          ),
+          JurisdictionAlert(
+            id: 'FL.telehealthLicensure.outOfState',
+            title: 'Florida — out-of-state telehealth registration',
+            body:
+                'Florida requires an out-of-state provider to register with '
+                'the relevant Florida board (medical, psychology, mental-'
+                'health counseling) before providing telehealth to a '
+                'Florida-located patient. PSYPACT is recognised for '
+                'psychologists.',
+            category: AlertCategory.telehealthLicensure,
+            severity: AlertSeverity.warning,
+            citation: 'Fla. Stat. §456.47',
+          ),
+          JurisdictionAlert(
+            id: 'FL.mandatoryReporting.hiv',
+            title: 'Florida — HIV reporting + disclosure exception',
+            body:
+                'Florida has named-HIV reporting (Fla. Stat. §381.0042) and '
+                'specific consent requirements for disclosing HIV status, '
+                'including a narrow exception for known-contact partner '
+                'notification by the Department of Health.',
+            category: AlertCategory.mandatoryReporting,
+            severity: AlertSeverity.warning,
+            citation: 'Fla. Stat. §§381.0042, 381.004',
+          ),
+          JurisdictionAlert(
+            id: 'FL.documentationRetention',
+            title: 'Florida — record retention',
+            body:
+                'Adult psychotherapy records: at least 7 years after the last '
+                'service per Fla. Admin. Code 64B19-19.005. Minor records: at '
+                'least 7 years after the patient reaches 18.',
+            category: AlertCategory.documentationRetention,
+            severity: AlertSeverity.info,
+            citation: 'Fla. Admin. Code 64B19-19.005',
+          ),
+        ];
+      case 'IL':
+        return const [
+          JurisdictionAlert(
+            id: 'IL.mandatoryReporting.child',
+            title: 'Illinois — DCFS reporting (immediate)',
+            body:
+                'Mental-health professionals are mandated reporters under '
+                'the Abused and Neglected Child Reporting Act. Suspected '
+                'abuse / neglect must be reported immediately to the DCFS '
+                'Hotline (1-800-25-ABUSE) and followed up in writing within '
+                '48 hours.',
+            category: AlertCategory.mandatoryReporting,
+            severity: AlertSeverity.critical,
+            citation: '325 ILCS 5/4',
+          ),
+          JurisdictionAlert(
+            id: 'IL.dutyToWarn.mhddca',
+            title: 'Illinois — Mental Health and Developmental Disabilities '
+                'Confidentiality Act',
+            body:
+                'The MHDDCA strictly limits disclosure of mental-health '
+                'records. Disclosure to a third party threatened with '
+                'imminent serious harm is permitted under § 11 only when '
+                'the patient or therapist makes a "specific and immediate '
+                'threat" — document the determination.',
+            category: AlertCategory.dutyToWarn,
+            severity: AlertSeverity.warning,
+            citation: '740 ILCS 110/11',
+          ),
+          JurisdictionAlert(
+            id: 'IL.telehealthLicensure.psypact',
+            title: 'Illinois — PSYPACT + LCSW licensure',
+            body:
+                'Illinois joined PSYPACT in 2022 — out-of-state PSYPACT '
+                'psychologists may treat IL residents remotely. LCSWs and '
+                'LPCs require full IL licensure; the IDFPR mental-health '
+                'compact for these professions is pending.',
+            category: AlertCategory.telehealthLicensure,
+            severity: AlertSeverity.warning,
+            citation: '225 ILCS 15/3; PSYPACT IL effective 2022',
+          ),
+          JurisdictionAlert(
+            id: 'IL.documentationRetention',
+            title: 'Illinois — record retention',
+            body:
+                'Adult mental-health records: at least 5 years after the '
+                'last service per MHDDCA § 7. Minor records: until the '
+                'patient is 23 or 5 years after the last service, '
+                'whichever is later.',
+            category: AlertCategory.documentationRetention,
+            severity: AlertSeverity.info,
+            citation: '740 ILCS 110/7; 225 ILCS 15/7',
+          ),
+        ];
+      case 'WA':
+        return const [
+          JurisdictionAlert(
+            id: 'WA.mandatoryReporting.child',
+            title: 'Washington — mandatory child abuse reporting',
+            body:
+                'Mental-health professionals are mandated reporters under '
+                'RCW 26.44.030. Reports must be made "at the first '
+                'opportunity but in no case longer than 48 hours" to law '
+                'enforcement or the Department of Children, Youth, and '
+                'Families.',
+            category: AlertCategory.mandatoryReporting,
+            severity: AlertSeverity.critical,
+            citation: 'RCW 26.44.030',
+          ),
+          JurisdictionAlert(
+            id: 'WA.dutyToWarn.volk',
+            title: 'Washington — duty to warn (Volk v. DeMeerleer)',
+            body:
+                'Washington recognises a broad duty to protect: clinicians '
+                'must take reasonable precautions when a patient poses a '
+                'foreseeable risk of serious harm to others — even when no '
+                'specific victim is identified. Document risk assessment + '
+                'protective steps in the chart.',
+            category: AlertCategory.dutyToWarn,
+            severity: AlertSeverity.critical,
+            citation:
+                'Volk v. DeMeerleer, 386 P.3d 254 (Wash. 2016)',
+          ),
+          JurisdictionAlert(
+            id: 'WA.telehealthLicensure.compact',
+            title: 'Washington — PSYPACT + Counseling Compact',
+            body:
+                'Washington is a PSYPACT state effective 2023. Counselors '
+                'travel through the Counseling Compact (effective 2024). '
+                'LCSWs require full WA licensure; the Social Work Compact '
+                'has not yet been enacted in Washington.',
+            category: AlertCategory.telehealthLicensure,
+            severity: AlertSeverity.warning,
+            citation: 'RCW 18.83.200; PSYPACT WA effective 2023',
+          ),
+          JurisdictionAlert(
+            id: 'WA.documentationRetention',
+            title: 'Washington — record retention',
+            body:
+                'Adult mental-health records: at least 7 years after the '
+                "last service. Minor records: until the patient's 21st "
+                "birthday OR 7 years after the last service, whichever is "
+                "later.",
+            category: AlertCategory.documentationRetention,
+            severity: AlertSeverity.info,
+            citation: 'WAC 246-924-354',
           ),
         ];
       default:

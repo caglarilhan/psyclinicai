@@ -98,6 +98,15 @@ export {stripeSubscriptionWebhook} from "./stripe_subscription";
 // + retry-aware; idempotent on (endpoint, instrument, patient, date).
 export {ehrSubmitProm} from "./ehr_observation_handler";
 
+// Sprint 33 P1 — hourly reconciler: sweeps failed outbox rows, retries
+// up to 24 h, then flips to permanently_failed + Slack-visible.
+export {ehrOutboxReconciler} from "./ehr_outbox_reconciler";
+
+// Sprint 33 P2 — Customer Portal session mint. Stripe Portal is the only
+// place card-edits live; the app redirects through this endpoint so we
+// stay outside PCI scope.
+export {stripeCustomerPortalSession} from "./stripe_customer_portal";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

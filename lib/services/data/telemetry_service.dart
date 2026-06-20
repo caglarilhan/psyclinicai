@@ -174,6 +174,12 @@ class TelemetryEvents {
   static const String onboardingTourSkipped =
       'onboarding.tour_skipped';
 
+  // Sprint 33 P2 — Stripe Customer Portal redirect.
+  static const String billingCustomerPortalOpened =
+      'billing.customer_portal_opened';
+  static const String billingInvoiceDownloaded =
+      'billing.invoice_downloaded';
+
   /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
   /// MUST NOT include item answers or patient identifiers — only the tier
   /// and severity band so dashboards can monitor escalation volume.

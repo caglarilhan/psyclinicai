@@ -75,3 +75,6 @@ functions/.env
 
 .firebase/
 firebase.json.bak
+
+# Sprint 33 — Stripe live setup output (paste into firebase functions:secrets:set)
+stripe-secrets.env

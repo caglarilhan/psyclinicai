@@ -31,24 +31,26 @@ Sprint 29 D-day kodu bitti. Kalan iş **vendor hesabı açma, key alma, counsel 
 
 **Niçin:** Reserve-seat CTA'sı çalışsın, Wave A pilot ödeme alabilsin.
 
-**Adımlar:**
-1. https://dashboard.stripe.com → Activate account (Türkiye business KYC). 24–48 saat sürebilir.
+**📘 Türkçe adım-adım rehber:** `~/Downloads/Stripe-Live-Rehber.md` (Phase YY çıktısı, 7 gün).
+**🤖 Otomasyon:** `scripts/stripe-live-setup.sh` — Stripe CLI ile 3 product + 6 price (USD + EUR) + webhook tek komutta. Idempotent (re-run güvenli).
+
+**Özet adımlar:**
+1. https://dashboard.stripe.com → Activate account (KYC). 2–48 saat.
 2. Activation sonrası **Live mode**'a geç.
-3. Products → 3 ürün oluştur:
-   - **Solo Founding Member** $49/ay (recurring monthly, 6-month minimum)
-   - **Practice Founding Member** $149/ay
-   - **Group Founding Member** $299/ay
-4. Her ürün için Payment Link oluştur — `success_url=https://psyclinicai.web.app/onboarding`.
-5. Firebase Functions secret olarak ekle:
+3. `brew install stripe/stripe-cli/stripe && stripe login && stripe config --set workspace.mode live`
+4. `bash scripts/stripe-live-setup.sh` → çıktı `stripe-secrets.env` (gitignored).
+5. Firebase Functions secret'leri ekle (Rehber §D4):
    ```
    firebase functions:secrets:set STRIPE_LIVE_SK
    firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+   firebase functions:secrets:set STRIPE_SUBSCRIPTION_WEBHOOK_SECRET
    firebase functions:secrets:set STRIPE_PRICE_SOLO STRIPE_PRICE_PRACTICE STRIPE_PRICE_GROUP
    ```
-6. Webhook endpoint: `https://europe-west1-psyclinicai.cloudfunctions.net/stripeWebhook` → Stripe Dashboard → Webhooks ekle. Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
-7. $1 test charge → kart numaranla canlı test → refund.
+6. Webhook endpoint script tarafından eklendi: `https://europe-west1-psyclinicai.cloudfunctions.net/stripeSubscriptionWebhook`. Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_*`.
+7. Customer Portal config (Rehber §D3.2) — manuel, dashboard'dan.
+8. $1 test charge → canlı test → refund (Rehber §D5).
 
-**Bekleme süresi:** KYC 24–48 h.
+**Bekleme süresi:** KYC 2–48 h.
 
 ---
 
@@ -142,11 +144,16 @@ Sprint 29 D-day kodu bitti. Kalan iş **vendor hesabı açma, key alma, counsel 
 
 **Niçin:** İlk pilot imzalamadan önce yasal docs onayı.
 
+**📘 Counsel-ready taslaklar Phase XX'te hazırlandı:**
+- `docs/HIPAA-BAA.md` — §164.504(e)(2)(ii) tüm alt-maddeler + HITECH §13402 24-h breach SLA + indemnity + counsel red-line checklist
+- `docs/GDPR-DPA.md` — Art. 28(3)(a-h) tablosu + SCC 2021/914 Module 2 referansı + TOM Annex II + Annex III sub-processor matrisi + counsel red-line checklist
+
 **Adımlar:**
-1. Outside counsel'a 3 doc yolla:
+1. Outside counsel'a 3 doc + 1 schedule yolla:
    - `docs/security/incident-response.md` — IR runbook
-   - `docs/legal/PILOT_AGREEMENT.md` (henüz oluşmadı — P-07 Sprint 29 W2)
-   - `docs/legal/HIPAA-BAA.md` + `docs/legal/GDPR-DPA.md` — counsel revize edecek
+   - `docs/legal/PILOT_AGREEMENT.md` (P-07 Sprint 29 W2)
+   - `docs/HIPAA-BAA.md` — counsel "red-line checklist" başlığı altındaki 8 madde üzerinde revize bekleniyor
+   - `docs/GDPR-DPA.md` — counsel "red-line checklist" başlığı altındaki 8 madde üzerinde revize bekleniyor
 2. Counsel'dan red-line bekle (3–5 iş günü).
 3. Onaylı versiyonu commit'le; landing'in `/baa`, `/dpa` rotalarına bağlı static page content'i güncelle.
 

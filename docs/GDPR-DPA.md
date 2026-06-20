@@ -234,20 +234,22 @@ in accordance with Clause 13 of the SCCs.
 | BYOK option for LLM | Per §6; Controller-held LLM key; no prompt/response retention server-side |
 
 ### Annex III — Approved sub-processors
-The authoritative live list is published at https://psyclinicai.com/dpa and
-maintained in `docs/legal/SUBPROCESSORS.md`. Representative entries:
+
+The authoritative live list is the in-app trust-center page (`/trust/subprocessors`), backed by `lib/services/compliance/subprocessor_registry.dart`. The matrix below mirrors that registry at the Effective Date; any divergence is resolved in favour of the registry.
 
 | Sub-processor | Purpose | Location | Transfer mechanism |
 |---|---|---|---|
-| Hetzner Online GmbH | Hosting / compute (Postgres + Qdrant + Ollama) | DE / FI (EU) | EEA — no transfer |
-| Google Firebase / GCP | Auth + Firestore + Cloud Functions | europe-west1 (EU) | EEA — no transfer |
-| Stripe Payments Europe | Billing (Solo / Practice / Group + Connect) | IE (EU) + US (group company) | SCC 2021/914 Module 2 + UK addendum |
-| Sendgrid (Twilio) | Transactional + waitlist email | US (with EU sub-region option) | SCC 2021/914 Module 2 |
-| PostHog | Funnel + product analytics (no PHI) | EU region (eu.posthog.com) | EEA — no transfer |
-| Sentry | Crash + error monitoring (PHI stripped) | EU region (de.sentry.io) | EEA — no transfer |
-| Slack (Salesforce) | Internal incident routing only | US | SCC 2021/914 Module 2 |
-| Anthropic | LLM inference (BYOK or platform key) | US | SCC 2021/914 Module 2 — no retention beyond request lifecycle |
-| Cohere | Reranker (optional, per Controller setting) | US / CA | SCC 2021/914 Module 2 |
+| Hetzner Online GmbH | Primary application + database hosting (Postgres + Qdrant + Ollama) | Frankfurt (EU) | EEA — no transfer |
+| AWS EMEA SES | Transactional email (password reset, receipts) | eu-west-1 / Ireland | EEA — no transfer |
+| Cloudflare, Inc. | WAF + edge CDN in front of the web app (request metadata, no clinical content) | Global edge, EU routing preferred | SCC 2021/914 Module 2 + Cloudflare EU enterprise data-localisation |
+| Google Firebase (Auth) | Sign-in + password-reset email delivery | EU multi-region | SCC 2021/914 Module 2 |
+| Anthropic, PBC | LLM inference for SOAP drafts + risk co-pilot — BYOK opt-in only | US | SCC 2021/914 Module 2 + 0-day retention |
+| OpenAI Ireland Ltd. | Alternate LLM provider — same BYOK gate as Anthropic | EU + US fallback | SCC 2021/914 Module 2 + zero-retention API mode |
+| Stripe Payments Europe Ltd. | Billing + invoicing + card processing | Ireland (EEA) | EEA — no transfer |
+| Sentry (Functional Software, Inc.) | Crash + error reporting (`sendDefaultPii=false`) | US (EU residency on enterprise) | SCC 2021/914 Module 2 |
+| PostHog, Inc. | Product analytics — funnel events only, no PHI | EU (eu.posthog.com) | EEA — no transfer |
+| Daily.co (Pluot Communications, Inc.) | Telehealth video — clinician ↔ patient sessions (planned Q3 2026) | EU region, no cross-region fallback | SCC 2021/914 Module 2 + EU-only routing flag |
+| Twilio Ireland Ltd. | Appointment-reminder SMS (planned Q3 2026) | Ireland (EEA) | EEA — no transfer |
 
 ---
 

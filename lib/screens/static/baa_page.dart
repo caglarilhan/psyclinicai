@@ -53,7 +53,7 @@ class BaaPage extends StatelessWidget {
             _Fact('Our role', 'Business Associate · 45 CFR §160.103'),
             _Fact('PHI handling', 'AES-256 at rest, TLS 1.3 in transit'),
             _Fact('Access control', 'Role-based + audit-logged'),
-            _Fact('Breach notice', 'Within 60 days (we aim for 72 h)'),
+            _Fact('Breach notice', '≤ 24 h policy (statutory ceiling 60 days)'),
             _Fact('On termination', 'Return or destroy PHI within 30 days'),
           ]),
           const SizedBox(height: PsySpacing.xl),
@@ -79,8 +79,10 @@ class BaaPage extends StatelessWidget {
             cs: cs,
             title: 'Breach notification',
             body:
-                'Within 60 days of discovery (45 CFR §164.410) — we aim for '
-                '72 hours to mirror the GDPR commitment.',
+                'HITECH §13402 / 45 CFR §164.410 sets a 60-day ceiling — our '
+                'policy notifies your team within ≤ 24 hours of discovery, '
+                'with the §164.410(c) content (affected individuals, scope, '
+                'mitigation) and follow-ups as facts develop.',
           ),
           _Section(
             theme: theme,

@@ -35,7 +35,7 @@ class DpaPage extends StatelessWidget {
             _Fact('Processor', 'PsyClinic Software GmbH'),
             _Fact('Data residency', 'Frankfurt, EU-Central'),
             _Fact('Audio handling', 'On-device by default'),
-            _Fact('Breach notice', 'Within 72 hours'),
+            _Fact('Breach notice', '≤ 24 h policy (Art. 33 ceiling 72 h)'),
           ]),
           const SizedBox(height: PsySpacing.xl),
           _Section(
@@ -76,9 +76,11 @@ class DpaPage extends StatelessWidget {
             cs: cs,
             title: 'Breach notification',
             body:
-                'You are notified within 72 hours of a confirmed personal-data '
-                'breach affecting your tenant, with scope, affected data, and '
-                'remediation steps.',
+                'GDPR Art. 33 sets a 72-hour ceiling — our policy notifies you '
+                'within ≤ 24 hours of becoming aware so your team still has '
+                '≥ 48 hours to file with the supervisory authority. Each '
+                'notice carries the Art. 33(3) content (scope, affected data, '
+                'remediation) and follow-ups as facts develop.',
           ),
           _Section(
             theme: theme,

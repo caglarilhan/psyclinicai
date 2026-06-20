@@ -1,0 +1,29 @@
+{
+  "@@locale": "fr",
+  "@@x-review-status": "draft — clinician-validated review pending (Sprint 32 P3). Keys not yet translated fall back to the English template per Flutter intl behaviour.",
+
+  "appName": "PsyClinicAI",
+  "@appName": {
+    "description": "Brand name surfaced on the splash and app bar."
+  },
+
+  "navHome": "Accueil",
+  "navPatients": "Patients",
+  "navCalendar": "Agenda",
+  "navSettings": "Paramètres",
+  "navTrustCenter": "Trust Center",
+
+  "actionSave": "Enregistrer",
+  "actionCancel": "Annuler",
+  "actionConfirm": "Confirmer",
+  "actionBack": "Retour",
+  "actionNext": "Suivant",
+  "actionExport": "Exporter",
+  "actionCopy": "Copier",
+
+  "phiBadge": "PHI",
+
+  "@_clinical_strings_pending_review": {
+    "description": "Risk, consent, DSAR, supervision, and portal copy needs a native-speaker clinician review before shipping. Until then Flutter falls back to the English template (intl_en.arb). Validated translations land in Sprint 33."
+  }
+}

@@ -165,6 +165,15 @@ class TelemetryEvents {
       'byok.rotation_completed';
   static const String byokRotationFailed = 'byok.rotation_failed';
 
+  // Sprint 31 P2 — first-launch session tour. Properties carry
+  // `total_steps`, `last_step_index`. No PHI.
+  static const String onboardingTourStarted =
+      'onboarding.tour_started';
+  static const String onboardingTourCompleted =
+      'onboarding.tour_completed';
+  static const String onboardingTourSkipped =
+      'onboarding.tour_skipped';
+
   /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
   /// MUST NOT include item answers or patient identifiers — only the tier
   /// and severity band so dashboards can monitor escalation volume.

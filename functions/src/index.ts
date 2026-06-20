@@ -89,6 +89,11 @@ export {onBetaSignupSlack} from "./slack_notify";
 // is designed.
 export {onBetaSignupFoundersEmail} from "./founders_email";
 
+// Sprint 32 P0 — Wave A → Wave B billing graduation hook. Idempotent
+// via processed_webhooks/{event.id}; no-op until
+// STRIPE_SUBSCRIPTION_WEBHOOK_SECRET is set.
+export {stripeSubscriptionWebhook} from "./stripe_subscription";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { env } from "./lib/env";
 import { stripeClient, verifyWebhook } from "./lib/stripe";

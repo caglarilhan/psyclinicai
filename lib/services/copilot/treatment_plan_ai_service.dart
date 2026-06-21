@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../models/treatment_plan_models.dart';
 import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
+import 'copilot_endpoint.dart';
 import 'prompt_safety.dart';
 
 /// AI-drafts SMART treatment-plan goals from a diagnosis + clinical
@@ -16,17 +17,22 @@ class TreatmentPlanAiService {
     ApiKeyStorage? keyStorage,
     http.Client? client,
     ConsentGuard? consentGuard,
+    IdTokenProvider? idTokenProvider,
+    String? Function()? patientIdProvider,
   }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
        _client = client ?? http.Client(),
        // Default to fail-closed; production caller injects an
        // IntakeRepository-backed guard.
-       _guard = consentGuard ?? ConsentGuard();
+       _guard = consentGuard ?? ConsentGuard(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
   final ConsentGuard _guard;
+  final IdTokenProvider? _idTokenProvider;
+  final String? Function()? _patientIdProvider;
 
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
   static const String _anthropicVersion = '2023-06-01';
 
@@ -65,6 +71,14 @@ class TreatmentPlanAiService {
         '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('formulation', formulation)}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint so the
+    // relay path (server-side consent gate + PHI scrub) is taken when
+    // BACKEND_URL is configured. In direct/BYOK mode this falls back to the
+    // pre-existing Anthropic-direct call — testers and BYOK users see no
+    // behaviour change. The relay only sees the additional `patientId`
+    // hint when the caller wired a provider; Anthropic's API ignores
+    // extra top-level fields.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 900,
@@ -73,19 +87,30 @@ class TreatmentPlanAiService {
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     http.Response resp;
     try {
       resp = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            CopilotEndpoint.uri,
+            headers: headers,
             body: body,
           )
           .timeout(const Duration(seconds: 40));
@@ -189,6 +214,8 @@ class TreatmentPlanAiService {
         '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('active_goals', goals.map((g) => '- $g').join('\n'))}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 500,
@@ -197,18 +224,29 @@ class TreatmentPlanAiService {
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            CopilotEndpoint.uri,
+            headers: headers,
             body: body,
           )
           .timeout(const Duration(seconds: 30));
@@ -278,6 +316,8 @@ class TreatmentPlanAiService {
         '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
         '${PromptSafety.fence('treatment_goals', goals.map((g) => '- $g').join('\n'))}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 900,
@@ -286,18 +326,29 @@ class TreatmentPlanAiService {
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            CopilotEndpoint.uri,
+            headers: headers,
             body: body,
           )
           .timeout(const Duration(seconds: 40));

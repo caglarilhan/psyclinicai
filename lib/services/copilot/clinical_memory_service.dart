@@ -8,6 +8,7 @@ import '../../models/session_note.dart';
 import '../../models/treatment_plan_models.dart';
 import '../data/telemetry_service.dart';
 import 'api_key_storage.dart';
+import 'copilot_endpoint.dart';
 import 'prompt_safety.dart';
 
 /// Builds the pre-session "Clinical Memory" brief. Two tiers:
@@ -20,14 +21,21 @@ import 'prompt_safety.dart';
 /// richer. Decision-support — it surfaces what to review, it does not direct
 /// care.
 class ClinicalMemoryService {
-  ClinicalMemoryService({ApiKeyStorage? keyStorage, http.Client? client})
-    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-      _client = client ?? http.Client();
+  ClinicalMemoryService({
+    ApiKeyStorage? keyStorage,
+    http.Client? client,
+    IdTokenProvider? idTokenProvider,
+    String? Function()? patientIdProvider,
+  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+        _client = client ?? http.Client(),
+        _idTokenProvider = idTokenProvider,
+        _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
+  final IdTokenProvider? _idTokenProvider;
+  final String? Function()? _patientIdProvider;
 
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
   static const String _anthropicVersion = '2023-06-01';
 
@@ -136,6 +144,14 @@ class ClinicalMemoryService {
         'Recent session notes (most recent first):\n'
         '${PromptSafety.fence('notes', recent)}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint so the
+    // relay path (server-side consent gate + PHI scrub) is taken when
+    // BACKEND_URL is configured. In direct/BYOK mode this falls back to the
+    // pre-existing Anthropic-direct call — testers and BYOK users see no
+    // behaviour change. The relay only sees the additional `patientId`
+    // hint when the caller wired a provider; Anthropic's API ignores
+    // extra top-level fields.
+    final patientId = _patientIdProvider?.call();
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 600,
@@ -144,18 +160,29 @@ class ClinicalMemoryService {
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (patientId != null && patientId.isNotEmpty) 'patientId': patientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
+            CopilotEndpoint.uri,
+            headers: headers,
             body: body,
           )
           .timeout(const Duration(seconds: 40));

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../config/build_config.dart';
 
 /// Single source of truth for where copilot LLM calls go and which headers to
@@ -59,10 +61,21 @@ class CopilotEndpoint {
     IdTokenProvider? idTokenProvider,
   }) async {
     if (!useRelay) return headers(apiKey);
-    final token = idTokenProvider == null ? null : await idTokenProvider();
+    final provider = idTokenProvider ?? defaultFirebaseIdToken;
+    final token = await provider();
     return {
       'Content-Type': 'application/json',
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
+  }
+
+  /// Default ID-token provider — reads the current Firebase user's token.
+  /// Returns null when nobody is signed in; the relay will then 401 and
+  /// the calling service will surface an "unauthorized" error to the UI.
+  /// Exposed so callers (services + tests) can compose / override it.
+  static Future<String?> defaultFirebaseIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return user.getIdToken();
   }
 }

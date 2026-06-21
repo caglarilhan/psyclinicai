@@ -112,6 +112,12 @@ export {stripeCustomerPortalSession} from "./stripe_customer_portal";
 // patient, scoped to the calling clinician's tenancy. Audit-logged.
 export {dsarExport} from "./dsar_export";
 
+// M-11 (audit 2026-06-21) — GDPR Art. 7(3) consent-withdrawal audit
+// trigger. Mirrors every consent_records.withdrawnAt transition into
+// the immutable audit_logs chain so a disputed downstream processing
+// event can be traced back to the withdrawal moment.
+export {consentWithdrawalAudit} from "./consent_withdrawal_audit";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { checkAiConsent, extractPatientId } from "./lib/consent_gate";
 import { env } from "./lib/env";

@@ -118,12 +118,20 @@ export const purgeFanOut: Record<string, Record<string, unknown>> = {
 
 /**
  * Pseudonymise every row in [collection] that points at [patientId].
- * Returns the count of rows touched. Errors are caught and surfaced
- * via the logger so a single bad row never sinks the whole purge.
+ * Returns the total count of rows touched (across all paged batches).
+ * Errors are caught and surfaced via the logger so a single bad row
+ * never sinks the whole purge.
  *
  * Used for the flat top-level collections (`intakes`, `safety_plans`,
  * `session_notes`, `assessments`) that record `patient_id` directly.
  * For nested patient sub-collections, see [pseudonymiseSubcollection].
+ *
+ * M-4 fix (audit 2026-06-21): the previous implementation only ran
+ * one `.limit(500)` batch per (collection, patient) pair. A patient
+ * with >500 session_notes (rare but happens for long-term cases) had
+ * the tail of their notes left intact — a GDPR Art. 17 partial
+ * erasure failure. We now page through with cursor + batch under the
+ * Firestore 500-write cap until the query returns empty.
  */
 async function pseudonymisePatient(
   db: admin.firestore.Firestore,
@@ -132,23 +140,34 @@ async function pseudonymisePatient(
   payload: Record<string, unknown>,
   now: Date
 ): Promise<number> {
-  const snap = await db
-    .collection(collection)
-    .where("patient_id", "==", patientId)
-    .limit(500)
-    .get();
-  if (snap.empty) return 0;
+  const pageSize = 400;
+  let touched = 0;
+  let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let q: admin.firestore.Query = db
+      .collection(collection)
+      .where("patient_id", "==", patientId)
+      .limit(pageSize);
+    if (cursor) q = q.startAfter(cursor);
+    const snap = await q.get();
+    if (snap.empty) break;
 
-  const batch = db.batch();
-  for (const doc of snap.docs) {
-    batch.set(
-      doc.ref,
-      { ...payload, purged_at: admin.firestore.Timestamp.fromDate(now) },
-      { merge: true }
-    );
+    const batch = db.batch();
+    for (const doc of snap.docs) {
+      batch.set(
+        doc.ref,
+        { ...payload, purged_at: admin.firestore.Timestamp.fromDate(now) },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+    touched += snap.size;
+
+    if (snap.size < pageSize) break;
+    cursor = snap.docs[snap.docs.length - 1];
   }
-  await batch.commit();
-  return snap.size;
+  return touched;
 }
 
 /**

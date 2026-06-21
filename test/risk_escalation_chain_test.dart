@@ -119,6 +119,50 @@ void main() {
       );
     });
 
+    // M-8 fix coverage — duplicate event-kind on the same state
+    // pollutes the audit trail. Reject by default.
+    test('duplicate cssrsAdministered on same state is rejected (M-8)',
+        () {
+      final at = DateTime.utc(2026, 6, 2, 10, 5);
+      final c = newChain().advance(RiskEscalationEvent(
+        kind: RiskEscalationEventKind.cssrsAdministered,
+        at: at,
+        clinicianId: 'doc-1',
+      ));
+      expect(
+        () => c.advance(RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: at.add(const Duration(minutes: 1)),
+          clinicianId: 'doc-1',
+        )),
+        throwsStateError,
+      );
+    });
+
+    test('clinicianHandoff can repeat (explicit rollback path)', () {
+      final at = DateTime.utc(2026, 6, 2, 10, 5);
+      final c = newChain()
+          .advance(RiskEscalationEvent(
+            kind: RiskEscalationEventKind.cssrsAdministered,
+            at: at,
+            clinicianId: 'doc-1',
+          ))
+          .advance(RiskEscalationEvent(
+            kind: RiskEscalationEventKind.clinicianHandoff,
+            at: at.add(const Duration(minutes: 1)),
+            clinicianId: 'doc-1',
+          ));
+      // A second handoff is allowed (the rollback semantics permit it).
+      expect(
+        () => c.advance(RiskEscalationEvent(
+          kind: RiskEscalationEventKind.clinicianHandoff,
+          at: at.add(const Duration(minutes: 2)),
+          clinicianId: 'doc-1',
+        )),
+        returnsNormally,
+      );
+    });
+
     test('toJson preserves trigger severity + action chain', () {
       final c = newChain();
       final j = c.toJson();

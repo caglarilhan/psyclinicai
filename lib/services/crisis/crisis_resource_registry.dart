@@ -29,6 +29,17 @@ class CrisisResourceRegistry {
   /// YYYY-MM date the list was last reviewed against official sources.
   static const String lastReviewed = '2026-06';
 
+  /// L-9 fix (audit 2026-06-21): semantic version of the registry's
+  /// content. Bumped when ANY hotline number changes, OR when a new
+  /// region is added. Lets the UI render "Last updated: …" + lets the
+  /// audit log + DSAR export pin the exact registry shape a patient
+  /// saw at the time of a crisis-handoff event. Versioning happens
+  /// here (not in pubspec) so it tracks data changes, not code shape.
+  ///
+  /// Pattern: `YYYY.MM.PATCH` — e.g. `2026.06.0` for the June 2026
+  /// review; `2026.06.1` for the first in-month correction.
+  static const String contentVersion = '2026.06.0';
+
   // ─────────────────────────── United States ───────────────────────────
   static const CrisisResource us988 = CrisisResource(
     id: 'us-988',

@@ -49,6 +49,15 @@ Rules:
   reply unless the clinician explicitly asks for more detail.
 ''';
 
+  /// Maximum number of past turns to send back to the model. Caps
+  /// the rolling history so a long-running session can't blow past
+  /// Anthropic's context window. L-3 fix (audit 2026-06-21): the
+  /// previous implementation sent the entire history every call,
+  /// which silently truncates server-side and bills more tokens for
+  /// the same answer. 40 turns ≈ 20 user/assistant pairs ≈ a
+  /// 60-minute clinical conversation.
+  static const int maxHistoryTurns = 40;
+
   /// Send the rolling [history] (oldest first, alternating user/assistant)
   /// and return the assistant's reply text.
   Future<String> send(List<ChatTurn> history) async {
@@ -60,7 +69,15 @@ Rules:
       );
     }
 
-    final messages = history
+    // L-3 fix — keep only the most recent `maxHistoryTurns` turns.
+    // The oldest turns drop first so the model still sees the
+    // immediate context. The UI continues to show the full history
+    // to the clinician; this only bounds the model-bound payload.
+    final bounded = history.length > maxHistoryTurns
+        ? history.sublist(history.length - maxHistoryTurns)
+        : history;
+
+    final messages = bounded
         .map(
           (t) => {
             'role': t.role == ChatRole.user ? 'user' : 'assistant',

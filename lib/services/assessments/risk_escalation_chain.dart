@@ -52,6 +52,22 @@ class RiskEscalationChain {
         'Use clinicianHandoff to roll back explicitly.',
       );
     }
+    // M-8 fix (audit 2026-06-21): re-firing the same event kind on
+    // an already-reached state used to pass the forward-only check
+    // (equal indices) and pollute the audit trail with duplicates.
+    // Reject the no-op transition unless it's the explicit handoff
+    // rollback, which is allowed to repeat by design.
+    if (event.kind != RiskEscalationEventKind.clinicianHandoff &&
+        next == state &&
+        events.isNotEmpty &&
+        events.last.kind == event.kind) {
+      throw StateError(
+        'Duplicate ${event.kind.name} event for state ${state.name}. '
+        'Drop the second emission instead of polluting the audit '
+        'chain; if you intentionally need to re-record, use a '
+        'distinct event kind.',
+      );
+    }
     return RiskEscalationChain(
       patientId: patientId,
       encounterId: encounterId,

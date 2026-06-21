@@ -45,7 +45,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
-  <link rel="preload" as="image" href="icons/Icon-512.png" fetchpriority="high">
+  <!-- Perf audit 2026-06-21: Icon-512.png (196 KB PWA icon) was being
+       preloaded as image but is NOT in the LCP paint — the SSR fallback
+       hero text + landing/session.png are. The 196 KB was burning
+       critical-path bandwidth before the actual hero asset. Removed.
+       Re-add only if a route renders the PWA icon above the fold. -->
+  <link rel="preload" as="image" href="icons/Icon-192.png">
 
   <!-- Flutter critical path preload — start downloading the Dart bundle and
        CanvasKit binaries in parallel with the document parse so they are

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -18,6 +19,13 @@ class OfflineService extends ChangeNotifier {
   bool _isOnline = true;
   bool _isInitialized = false;
   Database? _database;
+  // KRİTİK-9 (audit 2026-06-21): the Connectivity().onConnectivityChanged
+  // subscription was never stored, so it leaked across hot-reloads and
+  // — worse — kept firing into a disposed ChangeNotifier, raising
+  // "setState called after dispose" crashes. Hold the handle and cancel
+  // it in dispose(). The dynamic-typed sub avoids tying us to a specific
+  // connectivity_plus major (5.x → 6.x changed the payload type).
+  StreamSubscription<dynamic>? _connectivitySub;
   final List<Map<String, dynamic>> _pendingSync = [];
   final List<Map<String, dynamic>> _offlineData = [];
 
@@ -33,8 +41,9 @@ class OfflineService extends ChangeNotifier {
     await _checkConnectivity();
     await _loadOfflineData();
     
-    // Connectivity listener
-    Connectivity().onConnectivityChanged.listen(_updateConnectivityStatus);
+    // Connectivity listener — handle saved so dispose() can cancel it.
+    _connectivitySub =
+        Connectivity().onConnectivityChanged.listen(_updateConnectivityStatus);
 
     _isInitialized = true;
     notifyListeners();
@@ -582,6 +591,10 @@ class OfflineService extends ChangeNotifier {
 
   @override
   void dispose() {
+    // Cancel before super.dispose() so a late connectivity event can't
+    // call notifyListeners() on the disposed notifier.
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
     _database?.close();
     super.dispose();
   }

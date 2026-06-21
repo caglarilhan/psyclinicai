@@ -53,8 +53,9 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.3
-  # Google Fonts for Material 3 typography
-  google_fonts: ^6.1.0
+  # Perf audit 2026-06-21: google_fonts (~300 KB) had zero call sites
+  # in lib/ — Inter is loaded via <link rel=stylesheet> in web/index.html
+  # and bundled directly via system font on mobile. Dependency removed.
   # Material 3 animations
   animations: ^2.0.8
   # Calendar

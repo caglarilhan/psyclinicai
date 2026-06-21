@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:http/http.dart' as http;
 
 import '../data/telemetry_service.dart';
@@ -25,6 +27,14 @@ class RiskSignalService {
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
 
+  /// Exposed so the UI can show an "AI risk classifier offline" banner when
+  /// Tier-2 silently degrades to lexicon-only. `true` after at least one
+  /// successful classifyWindow call; flips to `false` on any error path
+  /// inside [classifyWindow]. Default `true` so the banner only appears
+  /// after we have evidence of degradation, not on cold start with no key.
+  final ValueNotifier<bool> _aiOnline = ValueNotifier<bool>(true);
+  ValueListenable<bool> get aiOnline => _aiOnline;
+
   static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
   static const String _anthropicVersion = '2023-06-01';
@@ -32,8 +42,16 @@ class RiskSignalService {
   /// Curated lexicon. Phrases are matched case-insensitively as substrings on a
   /// space-padded, punctuation-stripped form of the text. Kept deliberately
   /// small and reviewable; expand with clinical input.
+  ///
+  /// **Multilingual**: EN + TR + DE + FR + ES phrases ship by default. The
+  /// punctuation-strip + lowercasing in [scanSegment] handles diacritics by
+  /// matching the ASCII transliteration form a clinician would dictate; the
+  /// most clinically common forms are listed first per language. Both
+  /// diacritic and ASCII-transliterated variants are included so dictation
+  /// engines that strip accents still match.
   static const Map<RiskCategory, List<String>> _lexicon = {
     RiskCategory.suicidalIdeation: [
+      // EN
       'kill myself',
       'end my life',
       'take my own life',
@@ -41,11 +59,43 @@ class RiskSignalService {
       'better off dead',
       'no reason to live',
       'not worth living',
+      'thinking about ending things',
+      'ready to go',
       'suicidal',
       'suicide',
       'ending it all',
+      // TR
+      'kendimi oldurmek',
+      'kendimi öldürmek',
+      'intihar',
+      'olmek istiyorum',
+      'ölmek istiyorum',
+      'yasamak istemiyorum',
+      'yaşamak istemiyorum',
+      'hayatima son',
+      'hayatıma son',
+      // DE
+      'mich umbringen',
+      'mich toten',
+      'mich töten',
+      'selbstmord',
+      'suizid',
+      'nicht mehr leben',
+      'will sterben',
+      // FR
+      'me tuer',
+      'me suicider',
+      'envie de mourir',
+      'ne plus vivre',
+      // ES
+      'matarme',
+      'suicidarme',
+      'suicidio',
+      'quiero morir',
+      'no quiero vivir',
     ],
     RiskCategory.selfHarm: [
+      // EN
       'cut myself',
       'hurt myself',
       'harm myself',
@@ -53,8 +103,28 @@ class RiskSignalService {
       'self harm',
       'burning myself',
       'cutting again',
+      // TR
+      'kendime zarar',
+      'kendimi kesmek',
+      'kendimi yaktim',
+      'kendimi yaktım',
+      // DE
+      'mich verletzen',
+      'mich ritzen',
+      'selbstverletzung',
+      // FR
+      'me blesser',
+      'me couper',
+      'automutilation',
+      // ES
+      'hacerme dano',
+      'hacerme daño',
+      'cortarme',
+      'autolesion',
+      'autolesión',
     ],
     RiskCategory.harmToOthers: [
+      // EN
       'kill him',
       'kill her',
       'kill them',
@@ -63,8 +133,27 @@ class RiskSignalService {
       'want to hurt',
       'homicidal',
       'make them pay',
+      // TR
+      'onu oldurmek',
+      'onu öldürmek',
+      'onu vurmak',
+      // DE
+      'ihn umbringen',
+      'sie umbringen',
+      'jemanden toten',
+      'jemanden töten',
+      // FR
+      'le tuer',
+      'la tuer',
+      'les tuer',
+      // ES
+      'matarlo',
+      'matarla',
+      'hacerle dano',
+      'hacerle daño',
     ],
     RiskCategory.substanceUse: [
+      // EN
       'overdose',
       'using again',
       'relapsed',
@@ -74,8 +163,30 @@ class RiskSignalService {
       'high every day',
       'pills to cope',
       'blackout',
+      // TR
+      'tekrar kullanmaya basladim',
+      'tekrar kullanmaya başladım',
+      'cok iciyorum',
+      'çok içiyorum',
+      'asiri doz',
+      'aşırı doz',
+      // DE
+      'wieder konsumiert',
+      'überdosis',
+      'uberdosis',
+      'rückfall',
+      'ruckfall',
+      // FR
+      'rechute',
+      'trop bois',
+      // ES
+      'recaida',
+      'recaída',
+      'sobredosis',
+      'bebiendo demasiado',
     ],
     RiskCategory.hopelessness: [
+      // EN
       'hopeless',
       'no way out',
       'nothing matters',
@@ -83,6 +194,28 @@ class RiskSignalService {
       'give up on everything',
       'trapped',
       'no future',
+      // TR
+      'umutsuzum',
+      'cikis yok',
+      'çıkış yok',
+      'devam edemem',
+      'gelecegim yok',
+      'geleceğim yok',
+      // DE
+      'hoffnungslos',
+      'keinen ausweg',
+      'keine zukunft',
+      'kann nicht mehr',
+      // FR
+      'sans espoir',
+      'aucune issue',
+      'pas davenir',
+      // ES
+      'sin esperanza',
+      'sin salida',
+      'sin futuro',
+      'no puedo mas',
+      'no puedo más',
     ],
   };
 
@@ -94,9 +227,18 @@ class RiskSignalService {
   };
 
   /// Tier 1 — scan a final transcript segment. Pure & synchronous.
+  ///
+  /// The text is normalized by lowercasing, then stripping any character
+  /// that is NOT a letter (Unicode-aware via the `\p{L}` property), digit,
+  /// or whitespace — punctuation collapses to a single space. This keeps
+  /// non-ASCII alphabets (Turkish, German, French, Spanish diacritics)
+  /// intact so multilingual lexicon entries match dictation output.
   List<RiskSignal> scanSegment(String segment) {
-    final normalized =
-        ' ${segment.toLowerCase().replaceAll(RegExp(r'[^a-z0-9\s]'), ' ').replaceAll(RegExp(r'\s+'), ' ')} ';
+    final stripped = segment
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\s]', unicode: true), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    final normalized = ' $stripped ';
     final out = <RiskSignal>[];
     for (final entry in _lexicon.entries) {
       for (final phrase in entry.value) {
@@ -179,6 +321,7 @@ class RiskSignalService {
       if (resp.statusCode != 200) {
         // Keep the no-throw contract, but record degradation so we can tell
         // when the AI risk layer is silently running on Tier-1 lexicon only.
+        _aiOnline.value = false;
         await TelemetryService.instance.captureError(
           StateError('risk classifyWindow HTTP ${resp.statusCode}'),
           StackTrace.current,
@@ -192,8 +335,10 @@ class RiskSignalService {
           .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
           .join('\n')
           .trim();
+      _aiOnline.value = true;
       return _parseAiSignals(content);
     } catch (e, st) {
+      _aiOnline.value = false;
       await TelemetryService.instance.captureError(
         e,
         st,
@@ -247,7 +392,10 @@ class RiskSignalService {
     _ => RiskSeverity.elevated,
   };
 
-  void dispose() => _client.close();
+  void dispose() {
+    _aiOnline.dispose();
+    _client.close();
+  }
 }
 
 enum RiskSeverity { info, elevated, high }

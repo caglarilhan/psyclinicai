@@ -61,5 +61,59 @@ void main() {
       final b = svc.scanSegment('I want to die').first;
       expect(a.dedupKey, b.dedupKey);
     });
+
+    // Patient-safety: non-English suicidal ideation MUST trigger.
+    // KRİTİK-5 fix: lexicon was English-only, missing TR/DE/FR/ES patients.
+    group('multilingual coverage', () {
+      test('TR: "kendimi öldürmek istiyorum" flags suicidal ideation', () {
+        final out = svc.scanSegment('Bazen kendimi öldürmek istiyorum.');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.suicidalIdeation));
+        expect(
+          out.firstWhere((s) => s.category == RiskCategory.suicidalIdeation)
+              .severity,
+          RiskSeverity.high,
+        );
+      });
+
+      test('TR ASCII-transliterated also flags', () {
+        final out = svc.scanSegment('artik yasamak istemiyorum');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.suicidalIdeation));
+      });
+
+      test('DE: "ich will mich umbringen" flags suicidal ideation', () {
+        final out = svc.scanSegment('Ich will mich umbringen.');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.suicidalIdeation));
+      });
+
+      test('FR: "je veux me tuer" flags suicidal ideation', () {
+        final out = svc.scanSegment('Je veux me tuer.');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.suicidalIdeation));
+      });
+
+      test('ES: "quiero morir" flags suicidal ideation', () {
+        final out = svc.scanSegment('A veces quiero morir.');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.suicidalIdeation));
+      });
+
+      test('TR self-harm: "kendime zarar veriyorum" flags', () {
+        final out = svc.scanSegment('Kendime zarar veriyorum.');
+        expect(out.map((s) => s.category), contains(RiskCategory.selfHarm));
+      });
+
+      test('DE hopelessness: "ich bin hoffnungslos" flags', () {
+        final out = svc.scanSegment('Ich bin hoffnungslos.');
+        expect(out.map((s) => s.category),
+            contains(RiskCategory.hopelessness));
+      });
+    });
+
+    test('aiOnline starts true (no degradation yet)', () {
+      expect(svc.aiOnline.value, isTrue);
+    });
   });
 }

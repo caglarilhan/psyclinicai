@@ -38,6 +38,23 @@ class _HeroVisualState extends State<HeroVisual>
     super.dispose();
   }
 
+  bool _reduceMotionApplied = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Perf + a11y audit 2026-06-21 (WCAG 2.3.3 Animation from Interactions):
+    // Honour the user's reduce-motion preference. When set, stop the idle
+    // _float controller so the hero doesn't burn CPU and doesn't violate
+    // the OS-level motion preference. Done once after first context resolve.
+    if (_reduceMotionApplied) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _float.stop();
+      _float.value = 0.5; // freeze at the visually neutral midpoint
+    }
+    _reduceMotionApplied = true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

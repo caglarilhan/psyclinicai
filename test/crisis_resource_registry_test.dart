@@ -86,5 +86,60 @@ void main() {
       expect(CrisisResourceRegistry.lastReviewed,
           matches(RegExp(r'^\d{4}-\d{2}$')));
     });
+
+    // KRİTİK-7 safety invariant: a patient in crisis must NEVER see an empty
+    // hotline list. We assert exhaustively across the configured locales +
+    // a sentinel unknown locale.
+    group('invariant: never returns an empty list', () {
+      const supportedCountries = <String?>[
+        'US',
+        'GB',
+        'DE',
+        'FR',
+        'NL',
+        'IT',
+        'ES',
+        'TR',
+        'ZZ',
+        null,
+      ];
+
+      for (final cc in supportedCountries) {
+        test('forCountry(${cc ?? "null"}) is non-empty', () {
+          final list = CrisisResourceRegistry.forCountry(cc);
+          expect(list, isNotEmpty);
+        });
+      }
+
+      const supportedLocales = <Locale?>[
+        Locale('en', 'US'),
+        Locale('en', 'GB'),
+        Locale('de'),
+        Locale('fr'),
+        Locale('nl'),
+        Locale('it'),
+        Locale('es'),
+        Locale('tr'),
+        Locale('xx'),
+        null,
+      ];
+
+      for (final loc in supportedLocales) {
+        test('forLocale($loc) is non-empty', () {
+          final list = CrisisResourceRegistry.forLocale(loc);
+          expect(list, isNotEmpty);
+        });
+      }
+
+      test('universal set is non-empty and includes international directory',
+          () {
+        expect(CrisisResourceRegistry.universal, isNotEmpty);
+        expect(
+          CrisisResourceRegistry.universal
+              .any((r) => r.kind == CrisisResourceKind.directory),
+          isTrue,
+        );
+      });
+    });
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/superbill_prefill.dart';
@@ -90,6 +91,14 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      // HIGH-9 (audit 2026-06-21): default Flutter ErrorWidget renders the
+      // big red error screen with the exception text. For a clinician
+      // mid-session this is catastrophic UX and may expose stack traces.
+      // In release builds we render a calm fallback; debug keeps the red
+      // screen so dev iteration stays loud.
+      if (kReleaseMode) {
+        ErrorWidget.builder = (details) => const _ProductionErrorFallback();
+      }
       FlutterError.onError = (details) {
         FlutterError.presentError(details);
         TelemetryService.instance.captureError(
@@ -419,4 +428,46 @@ class _PsyTitleObserver extends NavigatorObserver {
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
       _apply(previousRoute);
+}
+
+/// Calm release-build fallback that replaces the default red error screen
+/// when a widget throws inside build/layout/paint. The error itself is
+/// already captured by [FlutterError.onError] → TelemetryService, so this
+/// just keeps the UI calm and gives the clinician a way to recover.
+class _ProductionErrorFallback extends StatelessWidget {
+  const _ProductionErrorFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        color: const Color(0xFFF8FAFC),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.warning_amber_rounded, size: 48, color: Color(0xFF0F766E)),
+            SizedBox(height: 12),
+            Text(
+              'Something went wrong rendering this view.',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'The error has been reported. Try going back, or restart the app.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -96,6 +96,24 @@ export const purgeFanOut: Record<string, Record<string, unknown>> = {
     sections: {},
     purged: true,
   },
+  // KRİTİK-6 (audit 2026-06-21): GDPR Art. 17 erasure was not removing
+  // PHQ-9 / GAD-7 / C-SSRS / PCL-5 answers. `answers` is the
+  // patient-reported series; `score`/`severity` are derived and may stay
+  // (clinical evidence) — but we strip the raw response vector and any
+  // free-text notes that could leak identifiers.
+  assessments: {
+    answers: [],
+    notes: "__purged__",
+    self_harm_flag: null,
+    purged: true,
+  },
+  // TODO (KRİTİK-6 follow-up): superbills, treatment_plans, messages,
+  // homework, telehealth_sessions, deposit_charges. These live as
+  // nested subcollections under clinics/{clinicId}/patients/{patientId}
+  // per docs/STATUS.md; pseudonymisePatient() queries flat top-level
+  // collections by patient_id, so the fan-out helper needs a
+  // subcollection-walk variant before we can list them here.
+  // Tracking issue: open before launch.
 };
 
 /**

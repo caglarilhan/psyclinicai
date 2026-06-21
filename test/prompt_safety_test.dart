@@ -76,4 +76,43 @@ void main() {
       );
     });
   });
+
+  group('sanitizeWithReport (L-5 truncation telemetry)', () {
+    test('reports wasTruncated=false for inputs that fit', () {
+      final r = PromptSafety.sanitizeWithReport(
+        'a short transcript',
+        maxChars: 100,
+      );
+      expect(r.wasTruncated, isFalse);
+      expect(r.droppedChars, 0);
+      expect(r.originalLength, 'a short transcript'.length);
+      expect(r.text, 'a short transcript');
+    });
+
+    test('reports wasTruncated=true + dropped char count when over cap',
+        () {
+      final long = 'z' * 50;
+      final r = PromptSafety.sanitizeWithReport(long, maxChars: 10);
+      expect(r.wasTruncated, isTrue);
+      expect(r.droppedChars, 40);
+      expect(r.originalLength, 50);
+      expect(r.text.startsWith('z' * 10), isTrue);
+      expect(r.text, contains('[truncated]'));
+    });
+
+    test('legacy sanitize() returns the same text payload', () {
+      final long = 'z' * 50;
+      final r = PromptSafety.sanitizeWithReport(long, maxChars: 10);
+      expect(PromptSafety.sanitize(long, maxChars: 10), r.text);
+    });
+
+    test('original length reflects raw input — not the stripped form',
+        () {
+      final input = 'a${String.fromCharCode(0)}b';
+      final r = PromptSafety.sanitizeWithReport(input);
+      expect(r.originalLength, input.length);
+      expect(r.text, 'ab');
+      expect(r.wasTruncated, isFalse);
+    });
+  });
 }

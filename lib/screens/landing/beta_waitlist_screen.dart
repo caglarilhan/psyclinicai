@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/waitlist_repository.dart';
 import '../../theme/tokens.dart';
 import '../../utils/theme.dart';
 
@@ -45,37 +44,34 @@ class _BetaWaitlistScreenState extends State<BetaWaitlistScreen> {
       _submitting = true;
       _error = null;
     });
-    if (!PsyFirebase.isReady) {
-      setState(() {
-        _submitting = false;
-        _error =
-            'Backend not configured for this build — try again from production.';
-      });
-      return;
-    }
-    try {
-      await FirebaseFirestore.instance.collection('beta_signups').add({
-        'email': _email.text.trim().toLowerCase(),
+    // KRİTİK-10 fix (audit 2026-06-21): route through WaitlistRepository
+    // so this screen no longer touches Firestore directly. The
+    // `extra` map carries the beta-specific fields the public landing
+    // flow doesn't capture (clinic, country, region, role).
+    final outcome = await WaitlistRepository.instance.recordBetaSignup(
+      email: _email.text,
+      extra: {
         'clinic_name': _clinic.text.trim(),
         'country': _country.text.trim(),
         'region': _region,
         'role': _role,
         'source': 'web/beta',
-        'created_at': FieldValue.serverTimestamp(),
-      });
-      if (!mounted) return;
-      setState(() {
-        _submitting = false;
-        _submitted = true;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _submitting = false;
-        _error =
-            'Could not submit. Please try again — or email support@psyclinicai.com.';
-      });
-    }
+      },
+    );
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      switch (outcome) {
+        case WaitlistOutcome.saved:
+          _submitted = true;
+        case WaitlistOutcome.skipped:
+          _error =
+              'Backend not configured for this build — try again from production.';
+        case WaitlistOutcome.denied:
+          _error =
+              'Could not submit. Please try again — or email support@psyclinicai.com.';
+      }
+    });
   }
 
   @override

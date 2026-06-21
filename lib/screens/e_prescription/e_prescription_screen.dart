@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/waitlist_repository.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -53,43 +52,34 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
       _saving = true;
       _status = null;
     });
-    if (!PsyFirebase.isReady) {
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _ok = true;
-        _status = "Recorded locally (demo mode). We'll email you when "
-            'e-prescribing goes live.';
-        _email.clear();
-      });
-      return;
-    }
-    try {
-      await FirebaseFirestore.instance
-          .collection('landing_waitlist')
-          .add({
-        'email': v,
-        'createdAt': FieldValue.serverTimestamp(),
-        'source': 'eprescribing',
-      });
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _ok = true;
-        _status =
-            "You're on the early-access list. We'll email you when "
-                'e-prescribing goes live.';
-        _email.clear();
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _ok = false;
-        _status = 'Could not save: $e';
-      });
-    }
+    // KRİTİK-10 fix (audit 2026-06-21): repository owns the demo /
+    // saved / denied semantics so the screen no longer reaches
+    // Firestore directly. `WaitlistOutcome.skipped` covers the
+    // "Firebase not ready" branch the legacy demo-mode used.
+    final outcome = await WaitlistRepository.instance.recordLanding(
+      email: v,
+      source: 'eprescribing',
+    );
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      switch (outcome) {
+        case WaitlistOutcome.saved:
+          _ok = true;
+          _status =
+              "You're on the early-access list. We'll email you when "
+              'e-prescribing goes live.';
+          _email.clear();
+        case WaitlistOutcome.skipped:
+          _ok = true;
+          _status = "Recorded locally (demo mode). We'll email you when "
+              'e-prescribing goes live.';
+          _email.clear();
+        case WaitlistOutcome.denied:
+          _ok = false;
+          _status = 'Could not save. Please try again or email us directly.';
+      }
+    });
   }
 
   @override

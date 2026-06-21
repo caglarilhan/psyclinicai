@@ -1,9 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../services/data/waitlist_repository.dart';
 import '../../widgets/landing/cookie_consent.dart';
 import '../../widgets/landing/demo_modal.dart';
 import '../../widgets/landing/exit_intent_modal.dart';
@@ -114,19 +113,14 @@ class _LandingScreenState extends State<LandingScreen> {
       TelemetryEvents.landingHeroEmailSubmit,
       properties: {'source': 'hero'},
     );
-    // Best-effort Firestore write — if rules deny, the user still gets a
-    // success confirmation (we never block conversion on backend ACK).
-    if (PsyFirebase.isReady) {
-      try {
-        await FirebaseFirestore.instance.collection('landing_waitlist').add({
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-          'source': 'hero',
-        });
-      } catch (_) {
-        // Rules deny / network fail — ignore, fall through to UI ack.
-      }
-    }
+    // KRİTİK-10 fix (audit 2026-06-21): direct FirebaseFirestore.add
+    // inline in the screen left no test seam + nowhere to plug
+    // App Check / debounce later. Repository handles the
+    // best-effort semantics (skipped / denied → snackbar still fires).
+    await WaitlistRepository.instance.recordLanding(
+      email: email,
+      source: 'hero',
+    );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

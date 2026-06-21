@@ -16,6 +16,9 @@ class _FakeKeys implements ApiKeyStorage {
   final String? _key;
 
   @override
+  bool get supportsLocalKey => true;
+
+  @override
   Future<String?> getAnthropicKey() async => _key;
 
   @override

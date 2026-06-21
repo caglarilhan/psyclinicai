@@ -6,8 +6,14 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 /// On-device live transcription via `speech_to_text`.
 ///
-/// Uses native APIs (iOS Speech framework, Android SpeechRecognizer, Web Speech
-/// API). No audio leaves the device — HIPAA & GDPR friendly by design.
+/// Uses native APIs (iOS Speech framework, Android SpeechRecognizer).
+/// **M-10 fix (audit 2026-06-21):** the Web Speech API in Chromium
+/// streams audio to Google's cloud servers before returning the
+/// transcript — that is incompatible with our "no audio leaves the
+/// device" HIPAA & GDPR promise. On the web build the service refuses
+/// to initialise: `available` stays false and the UI hides the live
+/// transcription surface. Mobile / desktop targets continue to use the
+/// native engine where audio truly never leaves the device.
 class TranscriptionService extends ChangeNotifier {
   TranscriptionService();
 
@@ -21,20 +27,37 @@ class TranscriptionService extends ChangeNotifier {
   bool _listening = false;
   String _fullTranscript = '';
   String _currentPartial = '';
+  String? _disabledReason;
 
   bool get available => _available;
   bool get isListening => _listening;
   String get fullTranscript => _fullTranscript;
   String get currentPartial => _currentPartial;
 
+  /// Non-null when [initialize] refused to bring the engine up
+  /// (PHI policy on web, missing platform support, etc.). UI uses this
+  /// to render the right "transcription unavailable" copy.
+  String? get disabledReason => _disabledReason;
+
   Future<bool> initialize() async {
+    if (kIsWeb) {
+      _available = false;
+      _disabledReason =
+          'Live transcription is disabled on the web build to keep '
+          'audio off third-party clouds (HIPAA / GDPR). Use the iOS / '
+          'Android app for ambient note dictation.';
+      notifyListeners();
+      return false;
+    }
     try {
       _available = await _engine.initialize(
         onStatus: _onStatus,
         onError: _onError,
       );
+      _disabledReason = _available ? null : 'platform_unavailable';
     } catch (_) {
       _available = false;
+      _disabledReason = 'platform_unavailable';
     }
     notifyListeners();
     return _available;

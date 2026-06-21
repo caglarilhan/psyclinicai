@@ -29,8 +29,22 @@ class PsyFirebase {
       final hasPlaceholder = DefaultFirebaseOptions.currentPlatform.apiKey
           .startsWith('TODO');
       if (hasPlaceholder) {
+        // H-5 fix (audit 2026-06-21): a misconfigured release build
+        // would silently fall into the "demo / unauthenticated"
+        // branch — the app keeps painting screens but every Firestore
+        // call no-ops, so PHI writes are dropped on the floor without
+        // a banner. In release we fail loudly so the build does not
+        // ship and the user reports the broken config immediately;
+        // debug builds keep the soft-fail UX for dev iteration.
         _initError =
             'Firebase not configured yet. Run `flutterfire configure`.';
+        if (kReleaseMode) {
+          throw StateError(
+            'PsyFirebase.bootstrap refused: firebase_options.dart '
+            'still contains placeholder values. Run `flutterfire '
+            'configure` before building for release.',
+          );
+        }
         if (kDebugMode) {
           debugPrint('[PsyFirebase] $_initError');
         }

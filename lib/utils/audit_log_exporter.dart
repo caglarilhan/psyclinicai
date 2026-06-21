@@ -89,14 +89,43 @@ String _truncate(String s, int max) {
 
 /// One JSON object per line — the format Splunk / Datadog / Elastic
 /// ingestors expect on a tailed file or stdout pipe.
+///
+/// L-4 fix (audit 2026-06-21): the previous implementation could
+/// ship raw `actor` (email) into SIEM if the caller forgot to call
+/// [redactForSiem] first. JSON-lines is the most common SIEM path,
+/// so it now redacts UNCONDITIONALLY before serialising. Callers
+/// that need raw values (in-app debug view, internal audit screen)
+/// use [toJsonLinesRaw] explicitly.
 String toJsonLines(Iterable<AuditLogEntry> entries) =>
+    entries.map((e) => jsonEncode(redactForSiem(e).toJson())).join('\n');
+
+/// Raw JSON-lines variant — does NOT redact. Production export paths
+/// (SIEM, customer DSAR download) MUST use [toJsonLines]; this is
+/// only for internal debug screens that stay inside the tenancy
+/// boundary.
+String toJsonLinesRaw(Iterable<AuditLogEntry> entries) =>
     entries.map((e) => jsonEncode(e.toJson())).join('\n');
 
 /// RFC 5424 syslog with structured-data, one row per entry.
 ///
 /// Format: `<PRI>1 TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG`
 /// PRI = 13 (facility=1 user, severity=5 notice).
+///
+/// L-4 fix — actor + ip are scrubbed before emission, same rationale
+/// as [toJsonLines]. Raw export available via [toSyslogRfc5424Raw]
+/// for in-tenancy debug only.
 String toSyslogRfc5424(
+  Iterable<AuditLogEntry> entries, {
+  String hostname = 'psyclinicai',
+  String appName = 'audit',
+}) =>
+    toSyslogRfc5424Raw(
+      entries.map(redactForSiem),
+      hostname: hostname,
+      appName: appName,
+    );
+
+String toSyslogRfc5424Raw(
   Iterable<AuditLogEntry> entries, {
   String hostname = 'psyclinicai',
   String appName = 'audit',
@@ -144,7 +173,7 @@ String toCsv(Iterable<AuditLogEntry> entries) {
   }
 
   final rows = <String>[columns.join(',')];
-  for (final e in entries) {
+  for (final e in entries.map(redactForSiem)) {
     rows.add([
       quote(e.id),
       quote(e.timestampUtc.toUtc().toIso8601String()),

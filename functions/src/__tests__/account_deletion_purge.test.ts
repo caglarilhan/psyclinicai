@@ -17,6 +17,7 @@ jest.mock("firebase-admin", () => ({
 import {
   isReadyToPurge,
   purgeFanOut,
+  subcollectionPurgeFanOut,
 } from "../account_deletion_purge";
 
 const baseRequest = (overrides: Partial<{
@@ -106,5 +107,86 @@ describe("purgeFanOut payloads", () => {
     const p = purgeFanOut.session_notes;
     expect(p.markdown).toBe("__purged__");
     expect(p.sections).toEqual({});
+  });
+
+  // KRİTİK-6 close — added in the same audit as the assessments expansion.
+  it("assessments payload clears answers vector + free-text notes", () => {
+    const p = purgeFanOut.assessments;
+    expect(p.answers).toEqual([]);
+    expect(p.notes).toBe("__purged__");
+    expect(p.self_harm_flag).toBeNull();
+  });
+});
+
+describe("subcollectionPurgeFanOut", () => {
+  it("marks every nested-subcollection payload as purged", () => {
+    for (const sub of Object.keys(subcollectionPurgeFanOut)) {
+      expect(subcollectionPurgeFanOut[sub].payload.purged).toBe(true);
+    }
+  });
+
+  it("sessions payload scrubs transcript and recurses into notes", () => {
+    const entry = subcollectionPurgeFanOut.sessions;
+    expect(entry.payload.transcript).toBe("__purged__");
+    expect(entry.payload.flaggedRisk).toBeNull();
+    expect(entry.nestedSubcollections).toContain("notes");
+  });
+
+  it("superbills payload clears invoice + diagnoses + service lines", () => {
+    const p = subcollectionPurgeFanOut.superbills.payload;
+    expect(p.invoiceNumber).toBeNull();
+    expect(p.diagnoses).toEqual([]);
+    expect(p.serviceLines).toEqual([]);
+    expect(p.pdfUrl).toBeNull();
+  });
+
+  it("treatment_plans payload empties goals / interventions / narrative", () => {
+    const p = subcollectionPurgeFanOut.treatment_plans.payload;
+    expect(p.goals).toEqual([]);
+    expect(p.interventions).toEqual([]);
+    expect(p.narrative).toBe("__purged__");
+  });
+
+  it("telehealth_sessions payload nulls patient name + recording url", () => {
+    const p = subcollectionPurgeFanOut.telehealth_sessions.payload;
+    expect(p.patient_name).toBeNull();
+    expect(p.patientName).toBeNull();
+    expect(p.recordingUrl).toBeNull();
+  });
+
+  it("messages payload empties body + attachments", () => {
+    const p = subcollectionPurgeFanOut.messages.payload;
+    expect(p.body).toBe("__purged__");
+    expect(p.attachments).toEqual([]);
+  });
+
+  it("homework payload empties assignment + response", () => {
+    const p = subcollectionPurgeFanOut.homework.payload;
+    expect(p.assignment).toBe("__purged__");
+    expect(p.response).toBe("__purged__");
+  });
+
+  it("deposit_charges payload scrubs description + receipt", () => {
+    const p = subcollectionPurgeFanOut.deposit_charges.payload;
+    expect(p.description).toBe("__purged__");
+    expect(p.receipt_url).toBeNull();
+  });
+
+  // Patient-safety invariant: GDPR Art. 17 partial-erasure failure mode
+  // we just fixed. Lock the set so future contributors cannot quietly
+  // drop a subcollection out of the purge list.
+  it("covers every PHI-bearing subcollection the audit identified", () => {
+    const expected = [
+      "sessions",
+      "superbills",
+      "treatment_plans",
+      "homework",
+      "telehealth_sessions",
+      "messages",
+      "deposit_charges",
+    ];
+    for (const sub of expected) {
+      expect(subcollectionPurgeFanOut[sub]).toBeDefined();
+    }
   });
 });

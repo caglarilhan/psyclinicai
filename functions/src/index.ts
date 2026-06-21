@@ -108,7 +108,9 @@ export {ehrOutboxReconciler} from "./ehr_outbox_reconciler";
 export {stripeCustomerPortalSession} from "./stripe_customer_portal";
 
 import { applyCors, authorizeUid } from "./lib/auth";
+import { checkAiConsent, extractPatientId } from "./lib/consent_gate";
 import { env } from "./lib/env";
+import { scrubPhiInPayload } from "./lib/phi_scrub";
 import { stripeClient, verifyWebhook } from "./lib/stripe";
 
 const db = admin.firestore();
@@ -134,13 +136,105 @@ function tierByPrice(): Record<string, string> {
     );
 }
 
-/** 1. Anthropic relay — key stays server-side; clients send transcript only. */
+/**
+ * 1. Anthropic relay — key stays server-side; clients send transcript only.
+ *
+ * KRİTİK-2 / KRİTİK-4 (audit 2026-06-21) hardening:
+ *  - Consent gate: a request that mentions a `patientId` must show an
+ *    active `consent_records` row with `aiAssistanceConsent == true`.
+ *    Non-PHI calls (no patientId) skip the gate.
+ *  - PHI scrub: every string field in the forwarded body is walked
+ *    through the server-side detector set; identifiers are replaced
+ *    with tokens before egress. The Anthropic side only sees the
+ *    minimum-necessary text.
+ *  - Body size cap: 256 KB. Anthropic itself caps at 200K tokens but
+ *    we refuse oversize payloads up front so a runaway client cannot
+ *    burn the proxy key.
+ *  - Model allow-list: only the 3 Claude families we have a contract
+ *    for. Defensive against a typo'd or experimental model name
+ *    leaking through. `model` unset → upstream applies its default and
+ *    we let it through, so legacy callers keep working.
+ */
+const ALLOWED_RELAY_MODELS = new Set([
+  "claude-haiku-4-5",
+  "claude-haiku-4-5-20251001",
+  "claude-sonnet-4-6",
+  "claude-opus-4-7",
+]);
+const MAX_RELAY_BODY_BYTES = 256 * 1024;
+
 export const anthropicRelay = functions.https.onRequest(async (req, res) => {
   if (applyCors(req, res)) return;
   if (req.method !== "POST") return void res.status(405).send("POST only");
 
   const uid = await authorizeUid(req, "anthropicRelay");
   if (!uid) return void res.status(401).json({ error: "unauthorized" });
+
+  const body = req.body as Record<string, unknown> | undefined;
+  if (!body || typeof body !== "object") {
+    return void res.status(400).json({ error: "bad_request" });
+  }
+
+  // Model allow-list. `model` is optional on the Anthropic API; only
+  // reject when the caller named something we do not expect.
+  const requestedModel = typeof body.model === "string" ? body.model : "";
+  if (requestedModel && !ALLOWED_RELAY_MODELS.has(requestedModel)) {
+    functions.logger.warn("anthropicRelay.unknown_model", {
+      uid,
+      model: requestedModel.slice(0, 80),
+    });
+    return void res.status(400).json({ error: "unknown_model" });
+  }
+
+  // Size cap. JSON.stringify before the fetch anyway, so do it here
+  // for the budget check and reuse the string.
+  let serialised: string;
+  try {
+    serialised = JSON.stringify(body);
+  } catch (e) {
+    return void res
+      .status(400)
+      .json({ error: "bad_request", detail: String(e) });
+  }
+  if (serialised.length > MAX_RELAY_BODY_BYTES) {
+    functions.logger.warn("anthropicRelay.body_too_large", {
+      uid,
+      bytes: serialised.length,
+      cap: MAX_RELAY_BODY_BYTES,
+    });
+    return void res.status(413).json({ error: "body_too_large" });
+  }
+
+  // Consent gate — only enforced when the caller flagged a patient.
+  const patientId = extractPatientId(body);
+  if (patientId !== null) {
+    const decision = await checkAiConsent({
+      db,
+      clinicId: uid,
+      patientId,
+    });
+    if (!decision.ok) {
+      functions.logger.warn("anthropicRelay.consent_denied", {
+        uid,
+        reason: decision.reason,
+      });
+      return void res
+        .status(403)
+        .json({ error: "consent_required", reason: decision.reason });
+    }
+  }
+
+  // PHI scrub — applied to every string in the payload, including
+  // nested `messages[*].content` and `system` prompts.
+  const { payload: scrubbedBody, totalRemoved, removed } =
+    scrubPhiInPayload(body);
+  if (totalRemoved > 0) {
+    functions.logger.info("anthropicRelay.phi_scrubbed", {
+      uid,
+      total: totalRemoved,
+      removed,
+    });
+  }
 
   try {
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
@@ -150,7 +244,7 @@ export const anthropicRelay = functions.https.onRequest(async (req, res) => {
         "x-api-key": env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(scrubbedBody),
     });
     const text = await upstream.text();
     res

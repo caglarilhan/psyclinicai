@@ -120,6 +120,10 @@ export const purgeFanOut: Record<string, Record<string, unknown>> = {
  * Pseudonymise every row in [collection] that points at [patientId].
  * Returns the count of rows touched. Errors are caught and surfaced
  * via the logger so a single bad row never sinks the whole purge.
+ *
+ * Used for the flat top-level collections (`intakes`, `safety_plans`,
+ * `session_notes`, `assessments`) that record `patient_id` directly.
+ * For nested patient sub-collections, see [pseudonymiseSubcollection].
  */
 async function pseudonymisePatient(
   db: admin.firestore.Firestore,
@@ -146,6 +150,175 @@ async function pseudonymisePatient(
   await batch.commit();
   return snap.size;
 }
+
+/**
+ * Nested patient sub-collection fan-out for KRİTİK-6 (audit 2026-06-21).
+ *
+ * Walks `clinics/{clinicId}/patients/{patientId}/{subcollection}` and
+ * pseudonymises every doc with [payload]. Returns the total number of
+ * docs touched.
+ *
+ * Pagination: Firestore caps batched writes at 500 ops; we page through
+ * the sub-collection in 400-doc windows (leaving headroom for the
+ * `purged_at` merge field). Recurses into the known deeper sub-paths
+ * (sessions → notes) so notes nested under a session also get purged.
+ *
+ * This complements [pseudonymisePatient] which only handles the flat
+ * top-level collections (legacy schema). New chart objects
+ * (superbills, telehealth_sessions, treatment_plans, homework,
+ * messages, deposit_charges) live as patient sub-collections per
+ * `lib/services/data/firestore_schema.dart` and require this walker.
+ */
+export async function pseudonymiseSubcollection(
+  db: admin.firestore.Firestore,
+  clinicId: string,
+  patientId: string,
+  subcollection: string,
+  payload: Record<string, unknown>,
+  now: Date,
+  options: {
+    pageSize?: number;
+    nestedSubcollections?: string[];
+  } = {}
+): Promise<number> {
+  const pageSize = options.pageSize ?? 400;
+  const parentPath = `clinics/${clinicId}/patients/${patientId}/${subcollection}`;
+
+  let touched = 0;
+  let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let q: admin.firestore.Query = db.collection(parentPath).limit(pageSize);
+    if (cursor) q = q.startAfter(cursor);
+    const snap = await q.get();
+    if (snap.empty) break;
+
+    const batch = db.batch();
+    for (const doc of snap.docs) {
+      batch.set(
+        doc.ref,
+        { ...payload, purged_at: admin.firestore.Timestamp.fromDate(now) },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+    touched += snap.size;
+
+    // Recurse into known nested sub-collections (e.g. sessions/{id}/notes).
+    if (options.nestedSubcollections?.length) {
+      for (const doc of snap.docs) {
+        for (const nested of options.nestedSubcollections) {
+          const nestedPath = `${doc.ref.path}/${nested}`;
+          touched += await pseudonymiseNestedPath(db, nestedPath, payload, now);
+        }
+      }
+    }
+
+    if (snap.size < pageSize) break;
+    cursor = snap.docs[snap.docs.length - 1];
+  }
+
+  return touched;
+}
+
+async function pseudonymiseNestedPath(
+  db: admin.firestore.Firestore,
+  path: string,
+  payload: Record<string, unknown>,
+  now: Date
+): Promise<number> {
+  let touched = 0;
+  let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let q: admin.firestore.Query = db.collection(path).limit(400);
+    if (cursor) q = q.startAfter(cursor);
+    const snap = await q.get();
+    if (snap.empty) break;
+    const batch = db.batch();
+    for (const doc of snap.docs) {
+      batch.set(
+        doc.ref,
+        { ...payload, purged_at: admin.firestore.Timestamp.fromDate(now) },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+    touched += snap.size;
+    if (snap.size < 400) break;
+    cursor = snap.docs[snap.docs.length - 1];
+  }
+  return touched;
+}
+
+/**
+ * Per-patient sub-collection purge payloads. Each entry pseudonymises
+ * the PHI-bearing fields while keeping the chart's structural rows
+ * (HIPAA §164.316 retention) intact.
+ *
+ * Field names follow `lib/services/data/firestore_schema.dart`.
+ */
+export const subcollectionPurgeFanOut: Record<
+  string,
+  { payload: Record<string, unknown>; nestedSubcollections?: string[] }
+> = {
+  sessions: {
+    payload: {
+      transcript: "__purged__",
+      flaggedRisk: null,
+      purged: true,
+    },
+    // Notes are nested under each session document.
+    nestedSubcollections: ["notes"],
+  },
+  superbills: {
+    payload: {
+      invoiceNumber: null,
+      diagnoses: [],
+      serviceLines: [],
+      pdfUrl: null,
+      purged: true,
+    },
+  },
+  treatment_plans: {
+    payload: {
+      goals: [],
+      interventions: [],
+      narrative: "__purged__",
+      purged: true,
+    },
+  },
+  homework: {
+    payload: {
+      assignment: "__purged__",
+      response: "__purged__",
+      purged: true,
+    },
+  },
+  telehealth_sessions: {
+    payload: {
+      patient_name: null,
+      patientName: null,
+      recordingUrl: null,
+      notes: "__purged__",
+      purged: true,
+    },
+  },
+  messages: {
+    payload: {
+      body: "__purged__",
+      attachments: [],
+      purged: true,
+    },
+  },
+  deposit_charges: {
+    payload: {
+      description: "__purged__",
+      receipt_url: null,
+      purged: true,
+    },
+  },
+};
 
 /**
  * Top-level scheduled handler. Picks up every ready request, runs the
@@ -204,23 +377,32 @@ export const accountDeletionPurge = functions.pubsub
 
       try {
         let touched = 0;
+        // Phase 1: legacy flat top-level collections (patient_id field).
         for (const collection of Object.keys(purgeFanOut)) {
-          touched += await pseudonymisePatient(
-            db,
-            collection,
-            // intentionally sequential; per-patient × per-collection
-            // batches keep us well under the 500-write cap.
-            patientIds[0],
-            purgeFanOut[collection],
-            now
-          );
-          for (const pid of patientIds.slice(1)) {
+          for (const pid of patientIds) {
             touched += await pseudonymisePatient(
               db,
               collection,
               pid,
               purgeFanOut[collection],
               now
+            );
+          }
+        }
+        // Phase 2 (KRİTİK-6 close): nested patient sub-collections under
+        // `clinics/{clinicId}/patients/{patientId}/*`. The Cloud Function
+        // owner (clinic id) equals `userId` for the solo pilot tenancy.
+        for (const sub of Object.keys(subcollectionPurgeFanOut)) {
+          const entry = subcollectionPurgeFanOut[sub];
+          for (const pid of patientIds) {
+            touched += await pseudonymiseSubcollection(
+              db,
+              userId,
+              pid,
+              sub,
+              entry.payload,
+              now,
+              { nestedSubcollections: entry.nestedSubcollections }
             );
           }
         }

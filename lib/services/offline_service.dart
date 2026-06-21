@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 // arg so the on-disk file is AES-256 encrypted. HIPAA §164.312(a)(2)(iv).
 import 'package:sqflite_sqlcipher/sqflite.dart';
 
+import 'data/telemetry_service.dart';
 import 'security/local_db_key_service.dart';
 
 class OfflineService extends ChangeNotifier {
@@ -162,8 +163,15 @@ class OfflineService extends ChangeNotifier {
     try {
       final result = await Connectivity().checkConnectivity();
       _updateConnectivityStatus(result);
-    } catch (e) {
-      debugPrint('Connectivity check error: $e');
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint hides offline-sync
+      // failures in release. Telemetry surfaces them so a sync that
+      // silently stops can be diagnosed without local repro.
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'offline_connectivity_check',
+      );
       _isOnline = false;
     }
   }
@@ -206,8 +214,12 @@ class OfflineService extends ChangeNotifier {
       _offlineData.addAll(moodEntries.map((m) => {...m, 'table': 'mood_entries'}));
 
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading offline data: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'offline_data_load',
+      );
     }
   }
 
@@ -495,9 +507,13 @@ class OfflineService extends ChangeNotifier {
             p['record_id'] == item['record_id']
           );
           
-        } catch (e) {
-          debugPrint('Sync error for ${item['table_name']}: $e');
-          
+        } catch (e, stack) {
+          await TelemetryService.instance.captureError(
+            e,
+            stack,
+            hint: 'offline_sync_item_${item['table_name']}',
+          );
+
           // Increment retry count
           await _database!.update(
             'sync_queue',
@@ -509,8 +525,12 @@ class OfflineService extends ChangeNotifier {
       }
 
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error syncing pending data: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'offline_sync_pending',
+      );
     }
   }
 

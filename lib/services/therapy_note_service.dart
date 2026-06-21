@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/therapy_note_models.dart';
+import 'data/telemetry_service.dart';
 
 class TherapyNoteService extends ChangeNotifier {
   factory TherapyNoteService() => _instance;
@@ -95,10 +96,17 @@ class TherapyNoteService extends ChangeNotifier {
                   ))
               .toList(),
         );
-    } catch (e) {
-      // Persisted veriler bozuksa sessizce sıfırla
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint is no-op in
+      // release. A corrupt persisted store used to wipe the
+      // therapy entries silently — clinicians would see an empty
+      // history list with no trace of why.
       _entries.clear();
-      debugPrint('TherapyNoteService load error: $e');
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'therapy_note_load',
+      );
     }
   }
 

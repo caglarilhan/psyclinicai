@@ -39,7 +39,7 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|woff2)",
+        "source": "**/*.@(js|css|woff2|wasm|png|jpg|jpeg|webp|svg|ico|otf|ttf|json)",
         "headers": [
           {
             "key": "Cache-Control",

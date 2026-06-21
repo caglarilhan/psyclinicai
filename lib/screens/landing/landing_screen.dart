@@ -293,7 +293,12 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
         alignment: AlignmentDirectional.centerStart,
         child: Row(
           children: [
-            Icon(Icons.psychology, color: cs.primary, size: 26),
+            Image.asset(
+              'assets/branding/logo-master.png',
+              width: 32,
+              height: 32,
+              filterQuality: FilterQuality.high,
+            ),
             const SizedBox(width: 8),
             Text(
               'PsyClinicAI',
@@ -384,7 +389,12 @@ class _LandingDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Row(
                 children: [
-                  Icon(Icons.psychology, color: cs.primary, size: 28),
+                  Image.asset(
+                    'assets/branding/logo-master.png',
+                    width: 36,
+                    height: 36,
+                    filterQuality: FilterQuality.high,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'PsyClinicAI',

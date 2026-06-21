@@ -67,8 +67,12 @@ class FooterSection extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.psychology,
-                                color: cs.primary, size: 28),
+                            Image.asset(
+                              'assets/branding/logo-master.png',
+                              width: 36,
+                              height: 36,
+                              filterQuality: FilterQuality.high,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'PsyClinicAI',

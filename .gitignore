@@ -78,3 +78,6 @@ firebase.json.bak
 
 # Sprint 33 — Stripe live setup output (paste into firebase functions:secrets:set)
 stripe-secrets.env
+
+# Sprint 33 — Flutter default icons backed up locally before V1 logo swap
+web/icons/_flutter_default_backup/

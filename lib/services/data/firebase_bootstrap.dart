@@ -23,6 +23,23 @@ class PsyFirebase {
   /// Initialisation error, if any. Used by the UI to surface a banner.
   static String? get initError => _initError;
 
+  /// L-7 fix (audit 2026-06-21): a clinical write must NOT proceed
+  /// when Firebase is not bootstrapped — otherwise the data lands in
+  /// the in-memory demo store and silently disappears on reload. Any
+  /// repository writing PHI MUST call this assert before the write
+  /// path; the thrown [FirebaseNotReadyException] is caught at the
+  /// UI boundary and re-rendered as the existing init-error banner.
+  ///
+  /// Reads remain best-effort (the UI can still show cached data).
+  /// Writes are the path that loses PHI when no backend exists.
+  static void assertReadyForClinicalWrite() {
+    if (!_ready) {
+      throw FirebaseNotReadyException(
+        _initError ?? 'Firebase has not been initialised.',
+      );
+    }
+  }
+
   static Future<void> bootstrap() async {
     if (_ready) return;
     try {
@@ -70,4 +87,16 @@ class PsyFirebase {
       }
     }
   }
+}
+
+/// Thrown by [PsyFirebase.assertReadyForClinicalWrite]. Carries the
+/// underlying [initError] so the UI banner can render the same
+/// reason the boot path logged.
+class FirebaseNotReadyException implements Exception {
+  const FirebaseNotReadyException(this.reason);
+  final String reason;
+  @override
+  String toString() =>
+      'FirebaseNotReadyException: $reason. Clinical writes are '
+      'blocked until the backend is configured.';
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../models/clinical_decision_support.dart';
 import 'api_key_storage.dart';
 import 'copilot_endpoint.dart';
 
@@ -195,6 +196,37 @@ Return strictly JSON in this shape, no prose:
         .toList(growable: false);
   }
 
+  /// KRİTİK-3 (audit 2026-06-21) — wrap the raw [DxCandidate] list in a
+  /// [ClinicalDecisionSupport] envelope so the disclosure ("not a
+  /// diagnosis, clinician decides") and the model/version metadata
+  /// stay attached to the output across every consumer (UI, audit
+  /// log, exports). Prefer this over [suggest] for new callers; the
+  /// raw method is kept for the legacy AI Diagnosis screen until its
+  /// next UI refresh.
+  ///
+  /// The envelope's `riskClass` defaults to `cdss` (decision support
+  /// informing — not driving — clinical management). When the suggested
+  /// candidate carries `confidence: high`, the wrapping caller MUST
+  /// still gate the commit-to-chart action behind
+  /// `requiresClinicianConfirmation` so AI Act Art. 14 oversight is
+  /// preserved.
+  Future<ClinicalDecisionSupport<List<DxCandidate>>> suggestWithEnvelope({
+    required String vignette,
+    required List<String> selectedSymptoms,
+  }) async {
+    final candidates = await suggest(
+      vignette: vignette,
+      selectedSymptoms: selectedSymptoms,
+    );
+    return ClinicalDecisionSupport<List<DxCandidate>>(
+      suggestion: candidates,
+      modelId: _model,
+      modelVersion: 'pyc-diagnosis-2026-06-21',
+      generatedAt: DateTime.now().toUtc(),
+      riskClass: ClinicalRiskClass.cdss,
+    );
+  }
+
   void dispose() => _client.close();
 }
 
@@ -232,6 +264,16 @@ class DxCandidate {
   final List<String> matchingCriteria;
   final List<String> missingCriteria;
   final List<String> nextSteps;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'icd10': icd10,
+        'dsm5': dsm5,
+        'confidence': confidence,
+        'matchingCriteria': matchingCriteria,
+        'missingCriteria': missingCriteria,
+        'nextSteps': nextSteps,
+      };
 }
 
 enum DiagnosisErrorCode {

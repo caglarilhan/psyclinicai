@@ -98,19 +98,28 @@ class ClinicalDecisionSupport<T> {
         'suggestion': _serialiseSuggestion(),
       };
 
-  dynamic _serialiseSuggestion() {
-    final s = suggestion;
-    if (s is num || s is bool || s is String || s == null) return s;
-    if (s is List) return s;
-    if (s is Map) return s;
+  dynamic _serialiseSuggestion() => _toJsonLike(suggestion);
+
+  static dynamic _toJsonLike(Object? value) {
+    if (value == null || value is num || value is bool || value is String) {
+      return value;
+    }
+    if (value is List) {
+      return value.map(_toJsonLike).toList(growable: false);
+    }
+    if (value is Map) {
+      return value.map<String, dynamic>(
+        (k, v) => MapEntry(k.toString(), _toJsonLike(v)),
+      );
+    }
     // Prefer a toJson() if the wrapped object defines one — otherwise
     // we fall back to toString() so the audit log never silently loses
     // the suggestion content.
     try {
       // ignore: avoid_dynamic_calls
-      return (s as dynamic).toJson();
+      return _toJsonLike((value as dynamic).toJson() as Object?);
     } catch (_) {
-      return s.toString();
+      return value.toString();
     }
   }
 }

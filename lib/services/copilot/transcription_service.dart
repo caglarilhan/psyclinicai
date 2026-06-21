@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../auth/sign_out_scrubbers.dart';
+
 /// On-device live transcription via `speech_to_text`.
 ///
 /// Uses native APIs (iOS Speech framework, Android SpeechRecognizer).
@@ -15,7 +17,19 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 /// transcription surface. Mobile / desktop targets continue to use the
 /// native engine where audio truly never leaves the device.
 class TranscriptionService extends ChangeNotifier {
-  TranscriptionService();
+  TranscriptionService() {
+    // H-8 fix (audit 2026-06-21): in-memory transcript is PHI; on
+    // sign-out it MUST be wiped before the next clinician can land.
+    // Registry-based wire so FirebaseAuthService.signOut triggers
+    // every PHI-bearing service's reset() automatically — no UI
+    // plumbing required.
+    _unregisterScrubber = SignOutScrubbers.register(() async {
+      await cancel();
+      reset();
+    });
+  }
+
+  void Function()? _unregisterScrubber;
 
   final stt.SpeechToText _engine = stt.SpeechToText();
   final StreamController<TranscriptUpdate> _controller =
@@ -150,6 +164,8 @@ class TranscriptionService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _unregisterScrubber?.call();
+    _unregisterScrubber = null;
     _controller.close();
     super.dispose();
   }

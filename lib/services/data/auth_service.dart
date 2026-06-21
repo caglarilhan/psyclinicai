@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../utils/portal_cache_purge.dart';
+import '../auth/sign_out_scrubbers.dart';
 import 'firestore_schema.dart';
 import 'telemetry_service.dart';
 
@@ -146,6 +147,14 @@ class FirebaseAuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    // H-8 fix (audit 2026-06-21): wipe every in-memory PHI scratchpad
+    // BEFORE we drop the auth handle so the next user cannot land on
+    // a screen that re-reads stale state (live transcript, draft SOAP).
+    // Scrubbers are registered by their owning services and run in
+    // order; each one catches its own errors so a misbehaving cleaner
+    // can never block sign-out.
+    await SignOutScrubbers.runAll();
+
     await _auth.signOut();
     _user = null;
     _profile = null;

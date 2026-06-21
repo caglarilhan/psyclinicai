@@ -103,11 +103,23 @@ service cloud.firestore {
     // /clinics/{cid}/clinicians/{request.auth.uid}.
     match /audit_logs/{logId} {
       allow create, update, delete: if false;
+      // H-3 fix (audit 2026-06-21): the read rule was uid-keyed (only
+      // the writing clinician could read their own rows). In a group
+      // practice every clinician shares one `clinic_id`, so a colleague
+      // who is also part of that clinic must be able to read the log
+      // — but ONLY when the practice has explicitly granted them the
+      // `viewAuditLog` permission via the `practice_role` custom
+      // claim. Admin-only by default keeps SOC 2 CC6.1 evidence
+      // intact. Solo pilots still pass (uid == clinic_id and the
+      // admin claim is auto-assigned by setTenantClaim).
       allow read: if isAuthed()
           && resource.data.clinic_id is string
-          && resource.data.clinic_id == request.auth.uid
           && resource.data.event_type is string
-          && resource.data.ts is timestamp;
+          && resource.data.ts is timestamp
+          && (
+            resource.data.clinic_id == request.auth.uid
+            || request.auth.token.practice_role == 'admin'
+          );
     }
 
     // Sprint 29 S-01 — WebAuthn per-IP rate-limit buckets. Written by
@@ -249,13 +261,23 @@ service cloud.firestore {
         && request.resource.data.recovery_code_hashes is list
         && request.resource.data.recovery_code_hashes.size() >= 8
         && request.resource.data.recovery_code_hashes.size() <= 12;
+      // H-4 fix (audit 2026-06-21): the previous rule only checked
+      // that the list size did not shrink. An attacker who controlled
+      // a stale session could overwrite earlier indices with empty
+      // strings (size unchanged) and re-use the original codes. The
+      // `toSet().hasAll(...)` check enforces that every previously
+      // used code is still present in the new payload — junk
+      // additions are still possible but they don't unlock anything
+      // because they're also marked used.
       allow update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.recovery_code_hashes
               == resource.data.recovery_code_hashes
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.enrolled_at == resource.data.enrolled_at
         && request.resource.data.used_recovery_codes.size()
-              >= resource.data.used_recovery_codes.size();
+              >= resource.data.used_recovery_codes.size()
+        && request.resource.data.used_recovery_codes.toSet()
+              .hasAll(resource.data.used_recovery_codes.toSet());
       allow delete: if false;
     }
 

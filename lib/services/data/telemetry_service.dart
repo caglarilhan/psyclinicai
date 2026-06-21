@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../config/build_config.dart';
+import '../../utils/phi_redaction.dart';
 
 /// Telemetry façade — Sentry (errors) + PostHog (funnel events).
 ///
@@ -95,22 +96,55 @@ class TelemetryService {
   }
 
   /// Crash + error reporting (Sentry).
+  ///
+  /// H-7 fix (audit 2026-06-21): Anthropic / HTTP exceptions echo the
+  /// upstream response body in `.toString()`, which can include the
+  /// prompt — and the prompt may carry a transcript line with PHI
+  /// (name, phone, MRN). We never trusted error messages to be PHI-
+  /// free; now we run the same `PhiRedactor` patterns the relay uses
+  /// over the message before sending it to Sentry, and we replace the
+  /// original error with a `SafeReportedError` carrying the scrubbed
+  /// text. Stack traces stay verbatim — they encode code paths, not
+  /// patient data.
   Future<void> captureError(
     Object error,
     StackTrace? stack, {
     String? hint,
   }) async {
+    final scrubber = PhiRedactor();
+    final scrubbedMessage = scrubber.scrub(error.toString()).cleanText;
+    final scrubbedHint =
+        hint == null ? null : scrubber.scrub(hint).cleanText;
+    final reportError = SafeReportedError(scrubbedMessage, error.runtimeType);
+
     if (_sentryReady) {
       await Sentry.captureException(
-        error,
+        reportError,
         stackTrace: stack,
-        hint: hint != null ? Hint.withMap({'hint': hint}) : null,
+        hint: scrubbedHint != null
+            ? Hint.withMap({'hint': scrubbedHint})
+            : null,
       );
     }
     if (kDebugMode) {
-      debugPrint('[telemetry] error${hint != null ? '/$hint' : ''}: $error');
+      debugPrint(
+        '[telemetry] error${scrubbedHint != null ? '/$scrubbedHint' : ''}: '
+        '$scrubbedMessage',
+      );
     }
   }
+}
+
+/// Wrapper used by [TelemetryService.captureError] so Sentry receives
+/// a PHI-scrubbed message + the original runtime type for grouping.
+class SafeReportedError implements Exception {
+  SafeReportedError(this.message, this.originalType);
+
+  final String message;
+  final Type originalType;
+
+  @override
+  String toString() => 'SafeReportedError(type=$originalType): $message';
 }
 
 /// Common funnel event names — centralised so dashboards use a stable

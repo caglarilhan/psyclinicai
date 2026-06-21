@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
 import '../utils/appointment_conflict.dart';
+import 'data/telemetry_service.dart';
 import 'notification_service.dart';
 
 class AppointmentService {
@@ -28,8 +28,17 @@ class AppointmentService {
           .map((json) =>
               Appointment.fromJson(jsonDecode(json) as Map<String, dynamic>))
           .toList();
-    } catch (e) {
-      debugPrint('Error loading appointments: $e');
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint is a no-op in
+      // release, so sync failures here used to disappear silently and
+      // the UI silently presented an empty appointment list. Telemetry
+      // surfaces the exception so a real user-facing problem can be
+      // diagnosed without reproducing locally.
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_load',
+      );
       _appointments = [];
     }
   }
@@ -43,8 +52,12 @@ class AppointmentService {
           .toList();
       
       await prefs.setStringList(_appointmentsKey, appointmentsJson);
-    } catch (e) {
-      debugPrint('Error saving appointments: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_save',
+      );
     }
   }
 
@@ -112,8 +125,12 @@ class AppointmentService {
         startTime: appointment.startTime,
       );
       return true;
-    } catch (e) {
-      debugPrint('Error adding appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_add',
+      );
       return false;
     }
   }
@@ -143,8 +160,12 @@ class AppointmentService {
         startTime: updatedAppointment.startTime,
       );
       return true;
-    } catch (e) {
-      debugPrint('Error updating appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_update',
+      );
       return false;
     }
   }
@@ -161,8 +182,12 @@ class AppointmentService {
       _appointments.removeAt(index);
       await _saveAppointments();
       return true;
-      } catch (e) {
-      debugPrint('Error deleting appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_delete',
+      );
       return false;
     }
   }

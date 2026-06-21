@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/treatment_plan_models.dart';
+import 'data/telemetry_service.dart';
 
 class TreatmentPlanService {
   factory TreatmentPlanService() => _instance;
@@ -29,8 +30,16 @@ class TreatmentPlanService {
             TreatmentPlan.fromJson(jsonDecode(planJson) as Map<String, dynamic>);
         _treatmentPlans.add(plan);
       }
-    } catch (e) {
-      debugPrint('Error loading treatment plans: $e');
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint is a no-op in
+      // release. Treatment plans are clinical-record data — silent
+      // load failures used to leave the chart blank without a
+      // diagnostic. Telemetry catches it.
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'treatment_plans_load',
+      );
       _treatmentPlans.clear();
     }
   }
@@ -43,8 +52,12 @@ class TreatmentPlanService {
           .map((plan) => jsonEncode(plan.toJson()))
           .toList();
       await prefs.setStringList('treatment_plans', plansJson);
-    } catch (e) {
-      debugPrint('Error saving treatment plans: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'treatment_plans_save',
+      );
     }
   }
 
@@ -60,8 +73,12 @@ class TreatmentPlanService {
             jsonDecode(progress) as Map<String, dynamic>);
         _progressRecords.add(progressRecord);
       }
-    } catch (e) {
-      debugPrint('Error loading treatment progress: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'treatment_progress_load',
+      );
       _progressRecords.clear();
     }
   }
@@ -74,8 +91,12 @@ class TreatmentPlanService {
           .map((progress) => jsonEncode(progress.toJson()))
           .toList();
       await prefs.setStringList('treatment_progress', progressJson);
-    } catch (e) {
-      debugPrint('Error saving treatment progress: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'treatment_progress_save',
+      );
     }
   }
 
@@ -241,8 +262,12 @@ class TreatmentPlanService {
       _treatmentPlans[planIndex] = updatedPlan;
       await _saveTreatmentPlans();
       return true;
-    } catch (e) {
-      debugPrint('Error updating goal progress: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'treatment_goal_update',
+      );
       return false;
     }
   }

@@ -37,8 +37,47 @@ service cloud.firestore {
         match /sessions/{sessionId} {
           allow read, write: if isClinicOwner(clinicId);
 
+          // H-12 fix (audit 2026-06-21): clinical notes must satisfy
+          // HIPAA §164.312(c)(1) integrity + Joint Commission
+          // RC.01.01.01 authentication. Once `signed` is true the
+          // body MUST NOT change — corrections go through an
+          // addendum doc that references the signed parent's id.
+          // Unsigned drafts stay freely editable for the author.
           match /notes/{noteId} {
-            allow read, write: if isClinicOwner(clinicId);
+            allow read: if isClinicOwner(clinicId);
+            allow create: if isClinicOwner(clinicId);
+            // Update only when (a) the parent is still unsigned, OR
+            // (b) the write only flips `signed` false → true and
+            // adds the signer metadata. Any edit to `markdown` /
+            // `format` on a signed note is denied — the writer must
+            // create a child addendum instead.
+            allow update: if isClinicOwner(clinicId)
+              && (
+                resource.data.signed != true
+                || (
+                  request.resource.data.signed == true
+                  && request.resource.data.markdown == resource.data.markdown
+                  && request.resource.data.format == resource.data.format
+                  && request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['signed', 'signedAt', 'signedBy'])
+                )
+              );
+            // Hard delete blocked — retention is the audit log's job.
+            allow delete: if false;
+
+            // Addendum subcollection — corrections + extensions to a
+            // signed note. Each addendum carries `addendumOf` ==
+            // parent note id and follows the same sign/lock rules
+            // recursively.
+            match /addenda/{addendumId} {
+              allow read: if isClinicOwner(clinicId);
+              allow create: if isClinicOwner(clinicId)
+                && request.resource.data.addendumOf == noteId
+                && request.resource.data.markdown is string;
+              allow update: if isClinicOwner(clinicId)
+                && resource.data.signed != true;
+              allow delete: if false;
+            }
           }
         }
 

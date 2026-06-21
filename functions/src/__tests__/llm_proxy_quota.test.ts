@@ -23,6 +23,7 @@ jest.mock("firebase-functions", () => {
 import {
   hourBucket,
   reserveHourlyQuota,
+  reserveMonthlyCeiling,
   secondsToNextHour,
 } from "../llm_proxy";
 
@@ -117,5 +118,72 @@ describe("reserveHourlyQuota (F-001 P0 #3 — 1k req/h hard cap)", () => {
     expect([r1.ok, r2.ok, r3.ok, r4.ok]).toEqual([true, true, true, false]);
     expect(r4.used).toBe(3);
     expect(r4.retryAfter).toBeGreaterThan(0);
+  });
+});
+
+// M-3 fix coverage — monthly USD ceiling read-then-write was not
+// transactional. Same fake-tx pattern, but the ledger doc stores
+// `total_usd` (number) instead of `count`.
+function makeFakeLedger(initialUsd: number) {
+  let total = initialUsd;
+  const merges: Array<Record<string, unknown>> = [];
+
+  const tx = {
+    get: async () => ({
+      exists: total > 0,
+      data: () => ({total_usd: total}),
+    }),
+    set: (
+      _ref: unknown,
+      payload: Record<string, unknown>,
+      _opts: unknown,
+    ) => {
+      merges.push(payload);
+      const inc = (payload.total_usd as {__increment?: number} | undefined)
+        ?.__increment ?? 0;
+      total += inc;
+    },
+  };
+  return {
+    db: {
+      collection: () => ({doc: () => ({_path: "tenant_cost_ledger"})}),
+      runTransaction: <T,>(fn: (t: typeof tx) => Promise<T>) => fn(tx),
+    } as unknown as Parameters<typeof reserveMonthlyCeiling>[0],
+    snapshotTotal: () => total,
+    merges,
+  };
+}
+
+describe("reserveMonthlyCeiling (M-3 atomic cap reservation)", () => {
+  const NOW = new Date(Date.UTC(2026, 5, 16, 12, 30, 0));
+
+  it("admits a request when under cap and increments the ledger", async () => {
+    const f = makeFakeLedger(/*total_usd*/ 100);
+    const r = await reserveMonthlyCeiling(f.db, "tenantA", 1.5, 250, NOW);
+    expect(r.ok).toBe(true);
+    expect(r.used).toBe(101.5);
+    expect(r.cap).toBe(250);
+    expect(f.merges).toHaveLength(1);
+    expect(f.merges[0].tenant_id).toBe("tenantA");
+    expect(f.snapshotTotal()).toBe(101.5);
+  });
+
+  it("refuses with ok:false and does NOT increment when over cap", async () => {
+    const f = makeFakeLedger(/*total_usd*/ 249);
+    const r = await reserveMonthlyCeiling(f.db, "tenantA", 5.0, 250, NOW);
+    expect(r.ok).toBe(false);
+    expect(r.used).toBe(249);
+    expect(r.cap).toBe(250);
+    expect(f.merges).toHaveLength(0);
+    expect(f.snapshotTotal()).toBe(249);
+  });
+
+  it("two reservations near cap are serialised by the transaction", async () => {
+    const f = makeFakeLedger(/*total_usd*/ 248);
+    const r1 = await reserveMonthlyCeiling(f.db, "tenantA", 1.0, 250, NOW);
+    const r2 = await reserveMonthlyCeiling(f.db, "tenantA", 1.0, 250, NOW);
+    const r3 = await reserveMonthlyCeiling(f.db, "tenantA", 1.0, 250, NOW);
+    expect([r1.ok, r2.ok, r3.ok]).toEqual([true, true, false]);
+    expect(f.snapshotTotal()).toBe(250);
   });
 });

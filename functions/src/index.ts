@@ -311,6 +311,28 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
     return void res.status(400).send("bad signature");
   }
 
+  // M-5 fix (audit 2026-06-21): Stripe delivers at-least-once, so we
+  // dedupe via processed_webhooks/{event.id}. Without this a retried
+  // event could re-trigger the subscription tier write — fine for
+  // updates, bad for downgrades that race a fresh upgrade. The
+  // transactional set + check matches the pattern in
+  // stripe_subscription.ts so both webhooks share semantics.
+  const processedRef = db.collection("processed_webhooks").doc(event.id);
+  const dedupe = await db.runTransaction(async (tx) => {
+    const seen = await tx.get(processedRef);
+    if (seen.exists) return "duplicate";
+    tx.set(processedRef, {
+      event_id: event.id,
+      event_type: event.type,
+      processed_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return "fresh";
+  });
+  if (dedupe === "duplicate") {
+    res.json({received: true, duplicate: true});
+    return;
+  }
+
   if (
     event.type === "customer.subscription.created" ||
     event.type === "customer.subscription.updated" ||

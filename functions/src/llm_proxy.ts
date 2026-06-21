@@ -119,6 +119,53 @@ export async function reserveHourlyQuota(
   });
 }
 
+interface CeilingReservation {
+  ok: boolean;
+  used: number;
+  cap: number;
+}
+
+/**
+ * M-3 fix (audit 2026-06-21): the monthly USD ceiling was previously
+ * read with `ledger.get()` and then mutated separately, so two
+ * concurrent requests near the cap could both pass the check and both
+ * push the ledger past the cap. This helper runs the check + reserve
+ * in a single Firestore transaction so the total never exceeds [cap].
+ *
+ * Returns `ok: false` (with the current `used`) when the reservation
+ * would breach the cap; callers must then return 402 to the client.
+ * Exposed for unit tests.
+ */
+export async function reserveMonthlyCeiling(
+  db: admin.firestore.Firestore,
+  tenantId: string,
+  cost: number,
+  cap: number,
+  now: Date,
+): Promise<CeilingReservation> {
+  const month = monthKey(now);
+  const ref = db.collection("tenant_cost_ledger").doc(`${tenantId}_${month}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const used = (snap.exists ? snap.data()?.total_usd : 0) ?? 0;
+    if (used + cost > cap) {
+      return {ok: false, used, cap};
+    }
+    tx.set(
+      ref,
+      {
+        tenant_id: tenantId,
+        month,
+        total_usd: admin.firestore.FieldValue.increment(cost),
+        call_count: admin.firestore.FieldValue.increment(1),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true},
+    );
+    return {ok: true, used: used + cost, cap};
+  });
+}
+
 // Sprint 29 D-10 — minInstances=1 + EU region (cold-start UX + EU
 // residency for LLM proxy). 1024 MB because Anthropic SDK + audit
 // chain hashing peaks ~600 MB on a busy session.
@@ -188,21 +235,24 @@ export const llmProxy = functions
     return;
   }
 
-  const ledgerRef = db
-    .collection("tenant_cost_ledger")
-    .doc(`${body.tenantId}_${monthKey(new Date())}`);
-
   const cap = Number(
     env.LLM_PROXY_MONTHLY_CEILING_USD || DEFAULT_MONTHLY_CEILING_USD,
   );
 
-  const ledger = await ledgerRef.get();
-  const used = (ledger.exists ? ledger.data()?.total_usd : 0) ?? 0;
-  if (used + cost > cap) {
+  // M-3 fix (audit 2026-06-21): atomic check-and-reserve so two
+  // concurrent calls near the cap cannot both pass and breach it.
+  const reservation = await reserveMonthlyCeiling(
+    db,
+    body.tenantId,
+    cost,
+    cap,
+    new Date(),
+  );
+  if (!reservation.ok) {
     res.status(402).json({
       error: "monthly_ceiling_exceeded",
-      used,
-      cap,
+      used: reservation.used,
+      cap: reservation.cap,
     });
     return;
   }
@@ -271,16 +321,10 @@ export const llmProxy = functions
   const text = stripFence(rawText);
   const toolUse = contentArr.find((c) => c.type === "tool_use");
 
-  await ledgerRef.set(
-    {
-      tenant_id: body.tenantId,
-      month: monthKey(new Date()),
-      total_usd: admin.firestore.FieldValue.increment(cost),
-      call_count: admin.firestore.FieldValue.increment(1),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    {merge: true},
-  );
+  // M-3 fix: ledger was already incremented inside reserveMonthlyCeiling
+  // above (atomic check + reserve). The double-write that used to live
+  // here would push the total past the cap whenever the cap check was
+  // borderline. Telemetry row below is the per-call audit trail.
 
   await db.collection("llm_proxy_calls").add({
     tenant_id: body.tenantId,

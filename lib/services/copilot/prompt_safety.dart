@@ -30,10 +30,25 @@ class PromptSafety {
   /// Wraps [content] in a delimited, data-only block the system prompt can be
   /// told to treat as data, never as instructions. [label] names the block
   /// (e.g. "transcript", "patient_name"). Content is sanitized first.
+  ///
+  /// M-1 fix (audit 2026-06-21): the previous implementation passed
+  /// [content] straight into the fence. A transcript containing
+  /// `</transcript>` literally closed the data block early, letting any
+  /// trailing characters reach the model as instructions. We now
+  /// neutralise both opening and closing tag occurrences inside the
+  /// content by interposing a zero-width space (U+200B) so the model
+  /// still reads the human-visible text but the regex/lexer driving the
+  /// fence never matches the inner sequence as a delimiter.
   static String fence(String label, String content, {int? maxChars}) {
     final tag = _slug(label);
     final safe = sanitize(content, maxChars: maxChars ?? defaultMaxChars);
-    return '<$tag>\n$safe\n</$tag>';
+    final closeRx = RegExp('</$tag>', caseSensitive: false);
+    final openRx = RegExp('<$tag>', caseSensitive: false);
+    const zwsp = '​';
+    final neutralised = safe
+        .replaceAll(closeRx, '</$tag$zwsp>')
+        .replaceAll(openRx, '<$tag$zwsp>');
+    return '<$tag>\n$neutralised\n</$tag>';
   }
 
   /// A reusable instruction line for system prompts that consume fenced data.

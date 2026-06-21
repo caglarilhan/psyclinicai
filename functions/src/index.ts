@@ -107,6 +107,11 @@ export {ehrOutboxReconciler} from "./ehr_outbox_reconciler";
 // stay outside PCI scope.
 export {stripeCustomerPortalSession} from "./stripe_customer_portal";
 
+// M2 (audit 2026-06-21) — GDPR Art. 15 + 20 patient data export.
+// Returns a structured JSON bundle of every record we hold about the
+// patient, scoped to the calling clinician's tenancy. Audit-logged.
+export {dsarExport} from "./dsar_export";
+
 import { applyCors, authorizeUid } from "./lib/auth";
 import { checkAiConsent, extractPatientId } from "./lib/consent_gate";
 import { env } from "./lib/env";

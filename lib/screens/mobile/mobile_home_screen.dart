@@ -624,6 +624,7 @@ class MobileSearchDelegate extends SearchDelegate<String?> {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
+      tooltip: 'Close search',
       onPressed: () {
         close(context, null);
       },

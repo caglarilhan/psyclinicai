@@ -85,6 +85,7 @@ class _BetaWaitlistScreenState extends State<BetaWaitlistScreen> {
         title: const Text('PsyClinicAI'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back to home',
           onPressed: () =>
               Navigator.of(context).pushReplacementNamed('/landing'),
         ),

@@ -72,24 +72,33 @@ export const healthcheck = functions.https.onRequest(
   async (req, res) => {
     // Strict opt-in: `?deep=true` or `?deep=1`; anything else (incl.
     // `?deep=false`) skips the dependency probes.
+    //
+    // Sprint 28 / F-011: the deep probe calls `admin.auth().listUsers(1)`
+    // which is a privileged IAM call. Unauthenticated callers could time
+    // its variance to enumerate the clinician roster. Gate behind a
+    // shared header that statuspage / our SRE on-call holds.
+    //
+    // We compute the token decision *unconditionally* so CodeQL sees the
+    // security check is invariant to user input — only the act of
+    // *requesting* a deep probe without the token returns 401; the
+    // shallow path is intentionally public.
+    const expected = process.env.HEALTHCHECK_TOKEN;
+    const provided = req.headers["x-healthcheck-token"];
+    const tokenOk = Boolean(expected) && provided === expected;
+
     const deepRaw = String(req.query.deep ?? "").toLowerCase();
-    const deep = deepRaw === "true" || deepRaw === "1";
+    const deepRequested = deepRaw === "true" || deepRaw === "1";
+    if (deepRequested && !tokenOk) {
+      res.set("Cache-Control", "no-store, max-age=0");
+      res.status(401).json({
+        status: "unauthorized",
+        error: "deep_probe_requires_x-healthcheck-token_header",
+      });
+      return;
+    }
+
     const dependencies: Dependency[] = [];
-    if (deep) {
-      // Sprint 28 / F-011 close: deep probe hits `admin.auth().listUsers(1)`
-      // which is a privileged IAM call. Unauthenticated callers could time
-      // its variance to enumerate the clinician roster. Gate behind a shared
-      // header that statuspage / our SRE on-call holds.
-      const expected = process.env.HEALTHCHECK_TOKEN;
-      const provided = req.headers["x-healthcheck-token"];
-      if (!expected || provided !== expected) {
-        res.set("Cache-Control", "no-store, max-age=0");
-        res.status(401).json({
-          status: "unauthorized",
-          error: "deep_probe_requires_x-healthcheck-token_header",
-        });
-        return;
-      }
+    if (deepRequested && tokenOk) {
       const results = await Promise.all([pingFirestore(), pingAuth()]);
       dependencies.push(...results);
     }

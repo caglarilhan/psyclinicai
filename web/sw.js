@@ -55,6 +55,15 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  // Origin check: only accept messages from a client served by this
+  // service worker's own scope. Browsers already restrict
+  // Window→SW postMessage to same-origin, but an explicit check
+  // closes CodeQL "Missing origin verification in postMessage
+  // handler" and is defence in depth.
+  const sourceUrl = event.source && event.source.url;
+  if (!sourceUrl || new URL(sourceUrl).origin !== self.location.origin) {
+    return;
+  }
   const data = event.data || {};
   if (data.type === "logout") {
     event.waitUntil((async () => {

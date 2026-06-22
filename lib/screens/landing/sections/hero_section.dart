@@ -89,7 +89,8 @@ class HeroSection extends StatelessWidget {
         Text(
           'For solo clinicians and small clinics treating anxiety, depression, '
           'trauma, and PTSD. SOAP / DAP / BIRP notes in 30 seconds. CMS-1500 '
-          'superbill in one click. Audio never leaves the device.',
+          'superbill in one click. On iOS and Android, audio never leaves '
+          'the device.',
           style: theme.textTheme.titleMedium?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.78),
             height: 1.5,
@@ -123,7 +124,7 @@ class HeroSection extends StatelessWidget {
             _TrustChip(icon: Icons.public_outlined, label: 'EU data residency'),
             _TrustChip(
               icon: Icons.mic_off_outlined,
-              label: 'Audio stays on-device',
+              label: 'Audio on-device (iOS/Android)',
             ),
             _TrustChip(icon: Icons.lock_outline, label: 'AES-256 + TLS 1.3'),
           ],

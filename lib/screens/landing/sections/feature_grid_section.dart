@@ -16,7 +16,7 @@ class FeatureGridSection extends StatelessWidget {
         icon: Icons.graphic_eq,
         title: 'Ambient AI Co-Pilot',
         body:
-            'On-device transcription + Claude Haiku 3.5 drafts SOAP / DAP / BIRP. No audio leaves the device.',
+            'On-device transcription on iOS / Android via the platform speech engine; Claude Haiku 4.5 drafts SOAP / DAP / BIRP. No audio leaves the device on mobile.',
       ),
       _Feature(
         icon: Icons.receipt_long,

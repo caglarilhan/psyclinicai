@@ -15,16 +15,16 @@ class HowItWorksSection extends StatelessWidget {
       _Step(
         number: 1,
         icon: Icons.mic_none,
-        title: 'Open a session, press Start',
+        title: 'Open a session on iPhone or Android, press Start',
         body:
-            "PsyClinicAI uses your operating system's speech-to-text — no audio leaves the device. The Live AI panel shows the running transcript in real time.",
+            "On the iOS and Android apps, PsyClinicAI uses your operating system's on-device speech-to-text — no audio leaves the device. The Live AI panel shows the running transcript in real time. The web app is for review and manual entry.",
       ),
       _Step(
         number: 2,
         icon: Icons.auto_awesome,
         title: 'AI drafts your clinical note',
         body:
-            'Press Stop. Claude Haiku 3.5 turns the transcript into a SOAP, DAP, or BIRP note in under 30 seconds, with risk language flagged.',
+            'Press Stop. Claude Haiku 4.5 turns the transcript into a SOAP, DAP, or BIRP note in under 30 seconds, with risk language flagged.',
       ),
       _Step(
         number: 3,

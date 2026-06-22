@@ -13,6 +13,7 @@ import '../../widgets/clinical_brief_card.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import 'patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/patient/detail` — single-patient chart: header + assessments timeline.
@@ -216,9 +217,18 @@ class _AssessmentList extends StatelessWidget {
       ),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(PsySpacing.xxl),
-            child: Center(child: CircularProgressIndicator()),
+          return const PsySkeletonGroup(
+            child: Padding(
+              padding: EdgeInsets.all(PsySpacing.xxl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PsySkeletonLine(width: 140),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(height: 180),
+                ],
+              ),
+            ),
           );
         }
         final list = snap.data ?? const <AssessmentDoc>[];
@@ -462,9 +472,20 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.all(PsySpacing.md),
-        child: Center(child: CircularProgressIndicator()),
+      return const PsySkeletonGroup(
+        child: Padding(
+          padding: EdgeInsets.all(PsySpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PsySkeletonBlock(height: 60),
+              SizedBox(height: PsySpacing.sm),
+              PsySkeletonBlock(height: 60),
+              SizedBox(height: PsySpacing.sm),
+              PsySkeletonBlock(height: 60),
+            ],
+          ),
+        ),
       );
     }
     return Column(

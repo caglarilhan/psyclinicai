@@ -13,6 +13,7 @@ import '../../utils/dsar_export.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 
 /// `/settings/data_export` — Patient Subject Access Request (DSAR)
 /// portal under GDPR Articles 15 + 20.
@@ -118,9 +119,17 @@ class _DataExportScreenState extends State<DataExportScreen> {
         ),
       ),
       child: _loading
-          ? const Padding(
-              padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
+          ? const PsySkeletonGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PsySkeletonBlock(height: 110),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(height: 140),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(height: 96),
+                ],
+              ),
             )
           : ListView(
               padding: EdgeInsets.zero,

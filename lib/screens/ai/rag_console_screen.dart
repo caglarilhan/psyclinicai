@@ -6,6 +6,7 @@ import '../../services/ai/rag_client.dart';
 import '../../services/ai/rag_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 
 /// Clinical RAG console — query the shared evidence hub for guideline-grounded
 /// answers with citations. Decision-support only; never autonomous treatment
@@ -146,9 +147,20 @@ class _BusyState extends StatelessWidget {
   const _BusyState();
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 32),
-      child: Center(child: CircularProgressIndicator()),
+    return const PsySkeletonGroup(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PsySkeletonBlock(height: 56),
+            SizedBox(height: 8),
+            PsySkeletonBlock(height: 56),
+            SizedBox(height: 8),
+            PsySkeletonBlock(height: 56),
+          ],
+        ),
+      ),
     );
   }
 }

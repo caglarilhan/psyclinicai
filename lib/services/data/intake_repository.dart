@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -43,23 +44,29 @@ class IntakeRepository {
             _byPatient[intake.patientId] = intake;
           } catch (err, st) {
             dropped++;
-            TelemetryService.instance.captureError(
-              err,
-              st,
-              hint: 'intake_decode_record',
+            unawaited(
+              TelemetryService.instance.captureError(
+                err,
+                st,
+                hint: 'intake_decode_record',
+              ),
             );
           }
         }
         if (dropped > 0) {
-          TelemetryService.instance.captureError(
-            StateError('Dropped $dropped corrupt intake record(s) on load'),
-            StackTrace.current,
-            hint: 'intake_init',
+          unawaited(
+            TelemetryService.instance.captureError(
+              StateError('Dropped $dropped corrupt intake record(s) on load'),
+              StackTrace.current,
+              hint: 'intake_init',
+            ),
           );
         }
       }
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'intake_init');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'intake_init'),
+      );
     }
     _loaded = true;
   }
@@ -79,7 +86,9 @@ class IntakeRepository {
       );
       await _storage.write(key: _key, value: raw);
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'intake_save');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'intake_save'),
+      );
       rethrow;
     }
   }

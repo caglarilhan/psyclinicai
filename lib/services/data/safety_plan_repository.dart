@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -43,24 +44,30 @@ class SafetyPlanRepository {
             _byPatient[plan.patientId] = plan;
           } catch (err, st) {
             dropped++;
-            TelemetryService.instance.captureError(
-              err,
-              st,
-              hint: 'safety_plan_decode_record',
+            unawaited(
+              TelemetryService.instance.captureError(
+                err,
+                st,
+                hint: 'safety_plan_decode_record',
+              ),
             );
           }
         }
         if (dropped > 0) {
-          TelemetryService.instance.captureError(
-            StateError('Dropped $dropped corrupt safety plan(s) on load'),
-            StackTrace.current,
-            hint: 'safety_plan_init',
+          unawaited(
+            TelemetryService.instance.captureError(
+              StateError('Dropped $dropped corrupt safety plan(s) on load'),
+              StackTrace.current,
+              hint: 'safety_plan_init',
+            ),
           );
         }
       }
     } catch (e, st) {
       // Surface the read/decode failure; keep whatever parsed so far.
-      TelemetryService.instance.captureError(e, st, hint: 'safety_plan_init');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'safety_plan_init'),
+      );
     }
     _loaded = true;
   }
@@ -80,7 +87,9 @@ class SafetyPlanRepository {
       );
       await _storage.write(key: _key, value: raw);
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'safety_plan_save');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'safety_plan_save'),
+      );
       rethrow;
     }
   }

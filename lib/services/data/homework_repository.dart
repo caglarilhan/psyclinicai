@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,22 +29,28 @@ class HomeworkRepository {
           );
         } catch (err, st) {
           dropped++;
-          TelemetryService.instance.captureError(
-            err,
-            st,
-            hint: 'homework_decode_record',
+          unawaited(
+            TelemetryService.instance.captureError(
+              err,
+              st,
+              hint: 'homework_decode_record',
+            ),
           );
         }
       }
       if (dropped > 0) {
-        TelemetryService.instance.captureError(
-          StateError('Dropped $dropped corrupt homework record(s) on load'),
-          StackTrace.current,
-          hint: 'homework_init',
+        unawaited(
+          TelemetryService.instance.captureError(
+            StateError('Dropped $dropped corrupt homework record(s) on load'),
+            StackTrace.current,
+            hint: 'homework_init',
+          ),
         );
       }
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'homework_init');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'homework_init'),
+      );
     }
     _loaded = true;
   }
@@ -56,7 +63,9 @@ class HomeworkRepository {
         _items.map((i) => jsonEncode(i.toJson())).toList(),
       );
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'homework_save');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'homework_save'),
+      );
     }
   }
 

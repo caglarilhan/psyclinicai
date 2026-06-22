@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/build_config.dart';
+import '../../services/auth/clinician_role.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
-import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
 import '../../services/data/security_settings_service.dart';
 import '../../services/data/telemetry_service.dart';

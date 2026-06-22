@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../services/auth/clinician_role.dart';
 import '../../services/copilot/api_key_storage.dart';
 import '../../services/data/auth_service.dart';
-import '../../services/data/firestore_schema.dart';
 import '../../services/data/onboarding_service.dart';
 import '../../services/data/seed_service.dart';
 import '../../services/data/telemetry_service.dart';

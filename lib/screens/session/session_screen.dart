@@ -15,6 +15,7 @@ import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
+import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/structured_note_editor.dart';
 
@@ -188,11 +189,7 @@ class _SessionScreenState extends State<SessionScreen> {
       );
 
       if (!mounted) return;
-      PsySnack.success(
-        context,
-        'Session note saved.',
-        hint: 'session.save',
-      );
+      PsySnack.success(context, 'Session note saved.', hint: 'session.save');
     } catch (e, st) {
       // Bare catch was swallowing the error to a generic snackbar.
       // Capture for telemetry so prod failures are diagnosable and
@@ -328,46 +325,49 @@ class _SessionScreenState extends State<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      routeName: '/session',
-      title: widget.clientName,
-      subtitle: 'Session ID: ${widget.sessionId}',
-      scrollable: false,
-      child: Column(
-        children: [
-          _SessionControlBar(
-            active: _isSessionActive,
-            durationLabel: _formatDuration(_sessionDuration),
-            onStartStop: _isSessionActive ? _endSession : _startSession,
-            onExport: _exportToPDF,
-          ),
-          const SizedBox(height: PsySpacing.md),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Reflow below ~900px / at high zoom (WCAG 1.4.10): the three
-                // panels stack instead of crushing into unreadable slivers.
-                if (constraints.maxWidth >= 900) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PsySaveShortcut(
+      onSave: _saveSessionNotes,
+      child: AppShell(
+        routeName: '/session',
+        title: widget.clientName,
+        subtitle: 'Session ID: ${widget.sessionId}',
+        scrollable: false,
+        child: Column(
+          children: [
+            _SessionControlBar(
+              active: _isSessionActive,
+              durationLabel: _formatDuration(_sessionDuration),
+              onStartStop: _isSessionActive ? _endSession : _startSession,
+              onExport: _exportToPDF,
+            ),
+            const SizedBox(height: PsySpacing.md),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Reflow below ~900px / at high zoom (WCAG 1.4.10): the three
+                  // panels stack instead of crushing into unreadable slivers.
+                  if (constraints.maxWidth >= 900) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 2, child: _buildNotesPanel()),
+                        Expanded(child: _buildAIPanel()),
+                        Expanded(child: _buildClientInfoPanel()),
+                      ],
+                    );
+                  }
+                  return Column(
                     children: [
-                      Expanded(flex: 2, child: _buildNotesPanel()),
-                      Expanded(child: _buildAIPanel()),
-                      Expanded(child: _buildClientInfoPanel()),
+                      Expanded(flex: 3, child: _buildNotesPanel()),
+                      Expanded(flex: 2, child: _buildAIPanel()),
+                      Expanded(flex: 2, child: _buildClientInfoPanel()),
                     ],
                   );
-                }
-                return Column(
-                  children: [
-                    Expanded(flex: 3, child: _buildNotesPanel()),
-                    Expanded(flex: 2, child: _buildAIPanel()),
-                    Expanded(flex: 2, child: _buildClientInfoPanel()),
-                  ],
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

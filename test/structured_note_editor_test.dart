@@ -6,21 +6,15 @@ import 'package:psyclinicai/widgets/structured_note_editor.dart';
 void main() {
   Widget host(Widget child) {
     return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          height: 800,
-          width: 600,
-          child: child,
-        ),
-      ),
+      home: Scaffold(body: SizedBox(height: 800, width: 600, child: child)),
     );
   }
 
   testWidgets('renders all SOAP section labels by default', (tester) async {
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(onChanged: (v) => last = v),
-    ));
+    await tester.pumpWidget(
+      host(StructuredNoteEditor(onChanged: (v) => last = v)),
+    );
     expect(find.text('Subjective'), findsOneWidget);
     expect(find.text('Objective'), findsOneWidget);
     expect(find.text('Assessment'), findsOneWidget);
@@ -28,12 +22,13 @@ void main() {
     expect(last, isNull, reason: 'no emission until the user types');
   });
 
-  testWidgets('typing emits a snapshot with markdown and sections',
-      (tester) async {
+  testWidgets('typing emits a snapshot with markdown and sections', (
+    tester,
+  ) async {
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(onChanged: (v) => last = v),
-    ));
+    await tester.pumpWidget(
+      host(StructuredNoteEditor(onChanged: (v) => last = v)),
+    );
 
     // Find the Subjective field (first TextField in SOAP order).
     final fields = find.byType(TextField);
@@ -49,12 +44,13 @@ void main() {
     expect(last!.isEmpty, isFalse);
   });
 
-  testWidgets('switching to BIRP renders 4 different section labels',
-      (tester) async {
+  testWidgets('switching to BIRP renders 4 different section labels', (
+    tester,
+  ) async {
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(onChanged: (v) => last = v),
-    ));
+    await tester.pumpWidget(
+      host(StructuredNoteEditor(onChanged: (v) => last = v)),
+    );
     expect(find.text('Subjective'), findsOneWidget);
 
     await tester.tap(find.text('BIRP'));
@@ -71,16 +67,18 @@ void main() {
 
   testWidgets('initialSections pre-populate the editor', (tester) async {
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(
-        initialFormat: NoteFormat.dap,
-        initialSections: const {
-          'data': 'Pre-existing data text',
-          'assessment': 'Pre-existing assessment',
-        },
-        onChanged: (v) => last = v,
+    await tester.pumpWidget(
+      host(
+        StructuredNoteEditor(
+          initialFormat: NoteFormat.dap,
+          initialSections: const {
+            'data': 'Pre-existing data text',
+            'assessment': 'Pre-existing assessment',
+          },
+          onChanged: (v) => last = v,
+        ),
       ),
-    ));
+    );
     await tester.pump();
     expect(find.text('Pre-existing data text'), findsOneWidget);
     expect(find.text('Pre-existing assessment'), findsOneWidget);
@@ -90,9 +88,9 @@ void main() {
 
   testWidgets('isEmpty is true when every section is blank', (tester) async {
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(onChanged: (v) => last = v),
-    ));
+    await tester.pumpWidget(
+      host(StructuredNoteEditor(onChanged: (v) => last = v)),
+    );
     final fields = find.byType(TextField);
     await tester.enterText(fields.first, 'hello');
     await tester.pump();
@@ -103,13 +101,14 @@ void main() {
     expect(last!.isEmpty, isTrue);
   });
 
-  testWidgets('format switch preserves text typed in the previous format',
-      (tester) async {
+  testWidgets('format switch preserves text typed in the previous format', (
+    tester,
+  ) async {
     // ignore: unused_local_variable
     StructuredNoteValue? last;
-    await tester.pumpWidget(host(
-      StructuredNoteEditor(onChanged: (v) => last = v),
-    ));
+    await tester.pumpWidget(
+      host(StructuredNoteEditor(onChanged: (v) => last = v)),
+    );
 
     await tester.enterText(find.byType(TextField).first, 'SOAP subjective');
     await tester.pump();

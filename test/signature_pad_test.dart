@@ -41,11 +41,12 @@ void main() {
   });
 
   group('SignaturePad widget', () {
-    testWidgets('renders empty hint when controller is empty',
-        (tester) async {
+    testWidgets('renders empty hint when controller is empty', (tester) async {
       final c = SignaturePadController();
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: SignaturePad(controller: c))),
+        MaterialApp(
+          home: Scaffold(body: SignaturePad(controller: c)),
+        ),
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('Sign with Apple Pencil'), findsOneWidget);
@@ -54,7 +55,9 @@ void main() {
     testWidgets('drag generates strokes', (tester) async {
       final c = SignaturePadController();
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: SignaturePad(controller: c))),
+        MaterialApp(
+          home: Scaffold(body: SignaturePad(controller: c)),
+        ),
       );
       await tester.pumpAndSettle();
       await tester.drag(find.byType(SignaturePad), const Offset(100, 50));

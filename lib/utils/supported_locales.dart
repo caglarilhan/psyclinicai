@@ -37,17 +37,35 @@ const SupportedLocale english = SupportedLocale(
 const List<SupportedLocale> supportedLocales = [
   english,
   SupportedLocale(
-      languageCode: 'tr', englishName: 'Turkish', nativeName: 'Türkçe'),
+    languageCode: 'tr',
+    englishName: 'Turkish',
+    nativeName: 'Türkçe',
+  ),
   SupportedLocale(
-      languageCode: 'de', englishName: 'German', nativeName: 'Deutsch'),
+    languageCode: 'de',
+    englishName: 'German',
+    nativeName: 'Deutsch',
+  ),
   SupportedLocale(
-      languageCode: 'fr', englishName: 'French', nativeName: 'Français'),
+    languageCode: 'fr',
+    englishName: 'French',
+    nativeName: 'Français',
+  ),
   SupportedLocale(
-      languageCode: 'nl', englishName: 'Dutch', nativeName: 'Nederlands'),
+    languageCode: 'nl',
+    englishName: 'Dutch',
+    nativeName: 'Nederlands',
+  ),
   SupportedLocale(
-      languageCode: 'it', englishName: 'Italian', nativeName: 'Italiano'),
+    languageCode: 'it',
+    englishName: 'Italian',
+    nativeName: 'Italiano',
+  ),
   SupportedLocale(
-      languageCode: 'es', englishName: 'Spanish', nativeName: 'Español'),
+    languageCode: 'es',
+    englishName: 'Spanish',
+    nativeName: 'Español',
+  ),
 ];
 
 /// Returns the [SupportedLocale] whose [SupportedLocale.languageCode]

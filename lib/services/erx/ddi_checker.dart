@@ -94,7 +94,7 @@ class DdiChecker {
     ),
     _Rule(
       'N05BA', // benzodiazepines
-      'N02A',  // opioids
+      'N02A', // opioids
       DdiSeverity.severe,
       'Benzodiazepine + opioid → respiratory depression (FDA black box).',
     ),
@@ -143,12 +143,14 @@ class DdiChecker {
           final pairKey = ([a, b]..sort()).join('::');
           if (seenPairs.contains(pairKey)) continue;
           seenPairs.add(pairKey);
-          matches.add(DdiInteraction(
-            left: a,
-            right: b,
-            severity: rule.severity,
-            summary: rule.summary,
-          ));
+          matches.add(
+            DdiInteraction(
+              left: a,
+              right: b,
+              severity: rule.severity,
+              summary: rule.summary,
+            ),
+          );
         }
       }
     }
@@ -164,8 +166,9 @@ class DdiChecker {
   /// the gate the e-Rx adapter actually uses to block transmission;
   /// a CDC / FDA boxed-warning pair (benzo + opioid) must NOT slip
   /// through with a "warn only" label.
-  bool hasBlockingInteraction(List<String> drugCodes) => check(drugCodes)
-      .any((m) =>
-          m.severity == DdiSeverity.contraindicated ||
-          m.severity == DdiSeverity.severe);
+  bool hasBlockingInteraction(List<String> drugCodes) => check(drugCodes).any(
+    (m) =>
+        m.severity == DdiSeverity.contraindicated ||
+        m.severity == DdiSeverity.severe,
+  );
 }

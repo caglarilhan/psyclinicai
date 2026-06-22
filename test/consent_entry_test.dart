@@ -6,14 +6,13 @@ ConsentEntry _entry({
   String id = 'ce-1',
   String patientId = 'p-1',
   ConsentKind kind = ConsentKind.aiProcessing,
-}) =>
-    ConsentEntry(
-      id: id,
-      patientId: patientId,
-      kind: kind,
-      policyVersion: '2026-06',
-      signature: 'typed:John Demo',
-    );
+}) => ConsentEntry(
+  id: id,
+  patientId: patientId,
+  kind: kind,
+  policyVersion: '2026-06',
+  signature: 'typed:John Demo',
+);
 
 void main() {
   group('ConsentEntry', () {
@@ -90,8 +89,7 @@ void main() {
       final repo = InMemoryConsentEntryRepository.instance;
       final first = repo.record(_entry(id: 'ce-1'));
       final second = repo.record(_entry(id: 'ce-2'));
-      expect(repo.activeOf('p-1', ConsentKind.aiProcessing)?.id,
-          second.id);
+      expect(repo.activeOf('p-1', ConsentKind.aiProcessing)?.id, second.id);
       final firstRows = repo
           .forPatient('p-1')
           .where((e) => e.id == first.id)
@@ -103,10 +101,7 @@ void main() {
       final repo = InMemoryConsentEntryRepository.instance;
       final e = repo.record(_entry());
       repo.revoke(e.id);
-      expect(
-        repo.activeOf('p-1', ConsentKind.aiProcessing),
-        isNull,
-      );
+      expect(repo.activeOf('p-1', ConsentKind.aiProcessing), isNull);
     });
 
     test('revoke unknown id throws StateError', () {

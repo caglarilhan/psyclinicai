@@ -70,9 +70,10 @@ class AppTheme {
   // Tema modunu değiştir
   static Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
-    _isDarkMode = mode == ThemeMode.dark || 
-                  (mode == ThemeMode.system && _isSystemDarkMode());
-    
+    _isDarkMode =
+        mode == ThemeMode.dark ||
+        (mode == ThemeMode.system && _isSystemDarkMode());
+
     // SharedPreferences'a kaydet
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('theme_mode', mode.name);
@@ -93,8 +94,9 @@ class AppTheme {
         (mode) => mode.name == savedMode,
         orElse: () => ThemeMode.system,
       );
-      _isDarkMode = _themeMode == ThemeMode.dark || 
-                    (_themeMode == ThemeMode.system && _isSystemDarkMode());
+      _isDarkMode =
+          _themeMode == ThemeMode.dark ||
+          (_themeMode == ThemeMode.system && _isSystemDarkMode());
     }
   }
 
@@ -124,9 +126,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: const Color(0xFFFFFFFF),
         shadowColor: const Color(0xFF1F2937).withValues(alpha: 0.1),
       ),
@@ -139,10 +139,7 @@ class AppTheme {
           ),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -160,8 +157,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -209,18 +208,9 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: Color(0xFF6B7280),
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: Color(0xFF374151),
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Color(0xFF374151),
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: Color(0xFF6B7280),
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF374151)),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF374151)),
+        bodySmall: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
       ),
     );
   }
@@ -252,9 +242,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: const Color(0xFF1F2937),
         shadowColor: Colors.black.withValues(alpha: 0.3),
       ),
@@ -267,10 +255,7 @@ class AppTheme {
           ),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -288,8 +273,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -337,18 +324,9 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: Color(0xFF9CA3AF),
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: Color(0xFFD1D5DB),
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Color(0xFFD1D5DB),
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: Color(0xFF9CA3AF),
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFD1D5DB)),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFD1D5DB)),
+        bodySmall: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
       ),
     );
   }
@@ -380,9 +358,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: darkSurface,
         shadowColor: const Color(0xFF000000).withValues(alpha: 0.3),
       ),
@@ -395,10 +371,7 @@ class AppTheme {
           ),
           backgroundColor: darkPrimaryColor,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -450,23 +423,11 @@ class AppTheme {
           fontWeight: FontWeight.w600,
           color: darkTextPrimary,
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: darkTextPrimary,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: darkTextPrimary,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          color: darkTextSecondary,
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: darkTextPrimary),
+        bodyMedium: TextStyle(fontSize: 14, color: darkTextPrimary),
+        bodySmall: TextStyle(fontSize: 12, color: darkTextSecondary),
       ),
-      iconTheme: const IconThemeData(
-        color: darkTextPrimary,
-        size: 24,
-      ),
+      iconTheme: const IconThemeData(color: darkTextPrimary, size: 24),
       dividerTheme: const DividerThemeData(
         color: Color(0xFF4B5563),
         thickness: 1,
@@ -493,16 +454,24 @@ class AppTheme {
   }
 
   // Renk getter'ları (dark mode desteği ile)
-  static Color getPrimaryColor() => _isDarkMode ? darkPrimaryColor : primaryColor;
-  static Color getSecondaryColor() => _isDarkMode ? darkSecondaryColor : secondaryColor;
+  static Color getPrimaryColor() =>
+      _isDarkMode ? darkPrimaryColor : primaryColor;
+  static Color getSecondaryColor() =>
+      _isDarkMode ? darkSecondaryColor : secondaryColor;
   static Color getAccentColor() => _isDarkMode ? darkAccentColor : accentColor;
-  static Color getWarningColor() => _isDarkMode ? darkWarningColor : warningColor;
+  static Color getWarningColor() =>
+      _isDarkMode ? darkWarningColor : warningColor;
   static Color getErrorColor() => _isDarkMode ? darkErrorColor : errorColor;
-  static Color getSuccessColor() => _isDarkMode ? darkSuccessColor : successColor;
+  static Color getSuccessColor() =>
+      _isDarkMode ? darkSuccessColor : successColor;
   static Color getInfoColor() => _isDarkMode ? darkInfoColor : infoColor;
   static Color getTextPrimary() => _isDarkMode ? darkTextPrimary : textPrimary;
-  static Color getTextSecondary() => _isDarkMode ? darkTextSecondary : textSecondary;
-  static Color getTextTertiary() => _isDarkMode ? darkTextTertiary : textTertiary;
-  static Color getBackground() => _isDarkMode ? darkBackground : const Color(0xFFFAFAFA);
-  static Color getSurface() => _isDarkMode ? darkSurface : const Color(0xFFFFFFFF);
+  static Color getTextSecondary() =>
+      _isDarkMode ? darkTextSecondary : textSecondary;
+  static Color getTextTertiary() =>
+      _isDarkMode ? darkTextTertiary : textTertiary;
+  static Color getBackground() =>
+      _isDarkMode ? darkBackground : const Color(0xFFFAFAFA);
+  static Color getSurface() =>
+      _isDarkMode ? darkSurface : const Color(0xFFFFFFFF);
 }

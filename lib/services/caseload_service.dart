@@ -39,10 +39,10 @@ class CaseloadAttention {
       reasons.fold(0, (s, r) => s + _weight(r.level)) * 100 + reasons.length;
 
   static int _weight(AttentionLevel l) => switch (l) {
-        AttentionLevel.high => 10000,
-        AttentionLevel.medium => 100,
-        AttentionLevel.low => 1,
-      };
+    AttentionLevel.high => 10000,
+    AttentionLevel.medium => 100,
+    AttentionLevel.low => 1,
+  };
 }
 
 /// Aggregates per-patient clinical state across the local repositories into a
@@ -77,17 +77,22 @@ class CaseloadService {
       // 1 — overdue homework (assigned, past due, not done).
       final overdue = homework
           .where(
-              (h) => h.patientId == id && !h.done && h.dueDate.isBefore(clock))
+            (h) => h.patientId == id && !h.done && h.dueDate.isBefore(clock),
+          )
           .length;
       if (overdue > 0) {
-        reasons.add(AttentionReason(
+        reasons.add(
+          AttentionReason(
             '$overdue homework ${overdue == 1 ? 'task' : 'tasks'} overdue',
-            AttentionLevel.high));
+            AttentionLevel.high,
+          ),
+        );
       }
 
       // 2 — active treatment plan signals.
       final activePlans = plans.where(
-          (p) => p.patientId == id && p.status == TreatmentPlanStatus.active);
+        (p) => p.patientId == id && p.status == TreatmentPlanStatus.active,
+      );
       final plan = activePlans.isEmpty ? null : activePlans.first;
       if (plan != null) {
         final ageDays = clock.difference(plan.createdAt).inDays;
@@ -95,14 +100,22 @@ class CaseloadService {
         if (plan.activeGoals.isNotEmpty &&
             plan.overallProgress < 20 &&
             ageDays > 14) {
-          reasons.add(AttentionReason(
-              'Treatment plan stalled ($pct%)', AttentionLevel.medium));
+          reasons.add(
+            AttentionReason(
+              'Treatment plan stalled ($pct%)',
+              AttentionLevel.medium,
+            ),
+          );
         }
         final reviewed = plan.updatedAt ?? plan.createdAt;
         final sinceReview = clock.difference(reviewed).inDays;
         if (sinceReview >= 30) {
-          reasons.add(AttentionReason(
-              'Plan not reviewed in ${sinceReview}d', AttentionLevel.medium));
+          reasons.add(
+            AttentionReason(
+              'Plan not reviewed in ${sinceReview}d',
+              AttentionLevel.medium,
+            ),
+          );
         }
       }
 
@@ -110,16 +123,19 @@ class CaseloadService {
       final safetyList = safetyPlans.where((s) => s.patientId == id);
       final hasSafety = safetyList.isNotEmpty && !safetyList.first.isEmpty;
       if (!hasSafety && plan != null) {
-        reasons.add(const AttentionReason(
-            'No safety plan on file', AttentionLevel.low));
+        reasons.add(
+          const AttentionReason('No safety plan on file', AttentionLevel.low),
+        );
       }
 
       if (reasons.isNotEmpty) {
-        out.add(CaseloadAttention(
-          patientId: id,
-          patientName: names[id] ?? id,
-          reasons: reasons,
-        ));
+        out.add(
+          CaseloadAttention(
+            patientId: id,
+            patientName: names[id] ?? id,
+            reasons: reasons,
+          ),
+        );
       }
     }
 

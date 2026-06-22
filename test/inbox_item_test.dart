@@ -16,8 +16,10 @@ void main() {
   group('InboxItemKind', () {
     test('fromId fallback is team_note (least-privilege default)', () {
       expect(InboxItemKind.fromId('mystery'), InboxItemKind.teamNote);
-      expect(InboxItemKind.fromId('patient_message'),
-          InboxItemKind.patientMessage);
+      expect(
+        InboxItemKind.fromId('patient_message'),
+        InboxItemKind.patientMessage,
+      );
     });
   });
 

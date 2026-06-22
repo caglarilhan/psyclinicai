@@ -14,8 +14,7 @@ class AiDiagnosisService {
 
   static const Map<String, dynamic> toolSchema = {
     'name': 'submit_differential',
-    'description':
-        'Return a structured list of DSM-5 differential candidates.',
+    'description': 'Return a structured list of DSM-5 differential candidates.',
     'input_schema': {
       'type': 'object',
       'properties': {
@@ -27,11 +26,7 @@ class AiDiagnosisService {
             'properties': {
               'code': {'type': 'string'},
               'name': {'type': 'string'},
-              'confidence': {
-                'type': 'number',
-                'minimum': 0,
-                'maximum': 1,
-              },
+              'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
               'criteriaMet': {
                 'type': 'array',
                 'items': {'type': 'string'},
@@ -77,21 +72,24 @@ class AiDiagnosisService {
       patientNames: patientNames,
       tools: const [toolSchema],
     ).redacted();
-    final completion = await _client.complete(request: request).timeout(
+    final completion = await _client
+        .complete(request: request)
+        .timeout(
           timeout,
           onTimeout: () => throw TimeoutException(
-              'LLM proxy did not respond within ${timeout.inSeconds}s',
-              timeout),
+            'LLM proxy did not respond within ${timeout.inSeconds}s',
+            timeout,
+          ),
         );
     final payload = completion.toolUse;
     if (payload == null) {
-      throw const FormatException(
-          'Model did not return a tool-use payload.');
+      throw const FormatException('Model did not return a tool-use payload.');
     }
     final raw = payload['candidates'];
     if (raw is! List) {
       throw const FormatException(
-          'Tool-use payload missing "candidates" array.');
+        'Tool-use payload missing "candidates" array.',
+      );
     }
     return raw
         .whereType<Map<String, dynamic>>()
@@ -117,9 +115,11 @@ class AiDiagnosisService {
     }
     buffer
       ..writeln()
-      ..writeln('Return at most five candidates ranked by confidence. '
-          'Each candidate must list the DSM-5 criteria met and the '
-          'criteria still missing for a confident call.');
+      ..writeln(
+        'Return at most five candidates ranked by confidence. '
+        'Each candidate must list the DSM-5 criteria met and the '
+        'criteria still missing for a confident call.',
+      );
     return buffer.toString();
   }
 }

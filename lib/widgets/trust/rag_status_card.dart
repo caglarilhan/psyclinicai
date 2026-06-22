@@ -59,11 +59,9 @@ class _RagStatusCardState extends State<RagStatusCard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.psychology_outlined,
-                    color: AppColors.primary),
+                const Icon(Icons.psychology_outlined, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('Clinical RAG hub',
-                    style: theme.textTheme.titleMedium),
+                Text('Clinical RAG hub', style: theme.textTheme.titleMedium),
                 const Spacer(),
                 _StatusChip(state: _state),
               ],
@@ -100,17 +98,17 @@ class _RagStatusCardState extends State<RagStatusCard> {
   }
 
   String _description() => switch (_state) {
-        _Health.loading => 'Checking hub reachability…',
-        _Health.disabled =>
-          'Hub not wired into this build. Configure BACKEND_URL and '
-              'deploy the ragProxy Cloud Function to bring it online.',
-        _Health.healthy =>
-          'Hub reachable. Guideline-grounded answers with citations are '
-              'live for this region.',
-        _Health.degraded =>
-          'Hub unreachable or returned an error. Clinicians fall back '
-              'to BYOK paths; investigate immediately.',
-      };
+    _Health.loading => 'Checking hub reachability…',
+    _Health.disabled =>
+      'Hub not wired into this build. Configure BACKEND_URL and '
+          'deploy the ragProxy Cloud Function to bring it online.',
+    _Health.healthy =>
+      'Hub reachable. Guideline-grounded answers with citations are '
+          'live for this region.',
+    _Health.degraded =>
+      'Hub unreachable or returned an error. Clinicians fall back '
+          'to BYOK paths; investigate immediately.',
+  };
 }
 
 class _StatusChip extends StatelessWidget {
@@ -133,7 +131,10 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontSize: 12, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -75,9 +75,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
       return _emptyState(
-          icon: Icons.lock_outline,
-          title: 'Sign in to see patients',
-          body: 'Your roster lives in your tenant — log in to load it.');
+        icon: Icons.lock_outline,
+        title: 'Sign in to see patients',
+        body: 'Your roster lives in your tenant — log in to load it.',
+      );
     }
     return StreamBuilder<List<PatientDoc>>(
       stream: PatientRepository.instance.watch(profile.clinicId),
@@ -109,12 +110,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
           itemCount: patients.length,
-          separatorBuilder: (_, __) =>
-              const SizedBox(height: PsySpacing.md),
+          separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
           itemBuilder: (_, i) => _PatientTile(
-              patient: patients[i],
-              onOpen: () =>
-                  _openDetail(patients[i].id, patients[i].fullName)),
+            patient: patients[i],
+            onOpen: () => _openDetail(patients[i].id, patients[i].fullName),
+          ),
         );
       },
     );
@@ -123,54 +123,64 @@ class _PatientListScreenState extends State<PatientListScreen> {
   Widget _demoList(ThemeData theme, ColorScheme cs) {
     const demos = <_DemoPatient>[
       _DemoPatient(
-          id: 'demo-1',
-          name: 'John Demo',
-          insurer: 'BCBS',
-          memberId: 'BCBS-INS-001',
-          lastSeen: 'Yesterday',
-          tone: PsyBadgeTone.brand,
-          status: 'Active'),
+        id: 'demo-1',
+        name: 'John Demo',
+        insurer: 'BCBS',
+        memberId: 'BCBS-INS-001',
+        lastSeen: 'Yesterday',
+        tone: PsyBadgeTone.brand,
+        status: 'Active',
+      ),
       _DemoPatient(
-          id: 'demo-2',
-          name: 'Maria Sample',
-          insurer: 'Aetna',
-          memberId: 'AET-9981-002',
-          lastSeen: 'Last week',
-          tone: PsyBadgeTone.success,
-          status: 'Stable'),
+        id: 'demo-2',
+        name: 'Maria Sample',
+        insurer: 'Aetna',
+        memberId: 'AET-9981-002',
+        lastSeen: 'Last week',
+        tone: PsyBadgeTone.success,
+        status: 'Stable',
+      ),
       _DemoPatient(
-          id: 'demo-3',
-          name: 'Sven Müller',
-          insurer: 'TK',
-          memberId: 'TK-EU-301',
-          lastSeen: '3 weeks ago',
-          tone: PsyBadgeTone.warning,
-          status: 'Follow-up'),
+        id: 'demo-3',
+        name: 'Sven Müller',
+        insurer: 'TK',
+        memberId: 'TK-EU-301',
+        lastSeen: '3 weeks ago',
+        tone: PsyBadgeTone.warning,
+        status: 'Follow-up',
+      ),
     ];
-    final filtered = demos.where((d) {
-      if (_query.isNotEmpty) {
-        final q = _query.toLowerCase();
-        final matchQuery = d.name.toLowerCase().contains(q) ||
-            d.memberId.toLowerCase().contains(q) ||
-            d.insurer.toLowerCase().contains(q);
-        if (!matchQuery) return false;
-      }
-      if (_filter.statuses.isNotEmpty) {
-        final statusId = d.status.toLowerCase().replaceAll(RegExp(r'\s+'), '-');
-        final matchStatus = _filter.statuses
-            .any((s) => s.id == statusId || s.name == statusId);
-        if (!matchStatus) return false;
-      }
-      if (_filter.risks.isNotEmpty) {
-        final risk = d.tone == PsyBadgeTone.warning
-            ? PatientRiskFilter.medium
-            : (d.tone == PsyBadgeTone.danger
-                ? PatientRiskFilter.high
-                : PatientRiskFilter.low);
-        if (!_filter.risks.contains(risk)) return false;
-      }
-      return true;
-    }).toList(growable: false);
+    final filtered = demos
+        .where((d) {
+          if (_query.isNotEmpty) {
+            final q = _query.toLowerCase();
+            final matchQuery =
+                d.name.toLowerCase().contains(q) ||
+                d.memberId.toLowerCase().contains(q) ||
+                d.insurer.toLowerCase().contains(q);
+            if (!matchQuery) return false;
+          }
+          if (_filter.statuses.isNotEmpty) {
+            final statusId = d.status.toLowerCase().replaceAll(
+              RegExp(r'\s+'),
+              '-',
+            );
+            final matchStatus = _filter.statuses.any(
+              (s) => s.id == statusId || s.name == statusId,
+            );
+            if (!matchStatus) return false;
+          }
+          if (_filter.risks.isNotEmpty) {
+            final risk = d.tone == PsyBadgeTone.warning
+                ? PatientRiskFilter.medium
+                : (d.tone == PsyBadgeTone.danger
+                      ? PatientRiskFilter.high
+                      : PatientRiskFilter.low);
+            if (!_filter.risks.contains(risk)) return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
     if (filtered.isEmpty) {
       return _emptyState(
         icon: Icons.search_off,
@@ -181,8 +191,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
       itemCount: filtered.length,
-      separatorBuilder: (_, __) =>
-          const SizedBox(height: PsySpacing.md),
+      separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
       itemBuilder: (_, i) => PsyCard(
         onTap: () => _openDetail(filtered[i].id, filtered[i].name),
         child: Row(
@@ -203,9 +212,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(filtered[i].name,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    filtered[i].name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: PsySpacing.xxs),
                   Text(
                     '${filtered[i].insurer} · ${filtered[i].memberId} · last seen ${filtered[i].lastSeen}',
@@ -223,10 +235,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
-  Widget _emptyState(
-      {required IconData icon,
-      required String title,
-      required String body}) {
+  Widget _emptyState({
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     return Center(
@@ -235,18 +248,22 @@ class _PatientListScreenState extends State<PatientListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                color: cs.onSurface.withValues(alpha: 0.45), size: 44),
+            Icon(icon, color: cs.onSurface.withValues(alpha: 0.45), size: 44),
             const SizedBox(height: PsySpacing.lg),
-            Text(title,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: PsySpacing.sm),
-            Text(body,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.6),
-                )),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
           ],
         ),
       ),
@@ -314,8 +331,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.')),
+          content: Text(
+            'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.',
+          ),
+        ),
       );
       return;
     }
@@ -330,9 +349,9 @@ class _PatientListScreenState extends State<PatientListScreen> {
       await PatientRepository.instance.create(profile.clinicId, draft);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not add patient: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not add patient: $e')));
     }
   }
 
@@ -385,10 +404,7 @@ class _PatientTile extends StatelessWidget {
             backgroundColor: cs.primaryContainer,
             child: Text(
               initial,
-              style: TextStyle(
-                color: cs.primary,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: PsySpacing.lg),
@@ -396,15 +412,17 @@ class _PatientTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(patient.fullName,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  patient.fullName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.xxs),
                 Text(
                   [
                     if (patient.insurer.isNotEmpty) patient.insurer,
-                    if (patient.memberId.isNotEmpty)
-                      'ID ${patient.memberId}',
+                    if (patient.memberId.isNotEmpty) 'ID ${patient.memberId}',
                     if (updated != null) 'added ${_fmtDate(updated)}',
                   ].join(' · '),
                   style: theme.textTheme.bodySmall?.copyWith(

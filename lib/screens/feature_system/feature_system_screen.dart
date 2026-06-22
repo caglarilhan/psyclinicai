@@ -14,7 +14,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PsyClinicAI — Feature System'),
@@ -26,7 +26,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
         children: [
           // Role and Category Filters
           _buildFilters(theme),
-          
+
           // Feature System Content
           Expanded(
             child: SingleChildScrollView(
@@ -37,11 +37,11 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
                   // System Overview
                   _buildSystemOverview(theme),
                   const SizedBox(height: 24),
-                  
+
                   // Main Categories
                   _buildMainCategories(theme),
                   const SizedBox(height: 24),
-                  
+
                   // Detailed Features
                   _buildDetailedFeatures(theme),
                 ],
@@ -74,13 +74,25 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
               decoration: const InputDecoration(
                 labelText: 'Role',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: const [
-                DropdownMenuItem(value: 'Psychiatrist', child: Text('Psychiatrist')),
-                DropdownMenuItem(value: 'Psychologist', child: Text('Psychologist')),
+                DropdownMenuItem(
+                  value: 'Psychiatrist',
+                  child: Text('Psychiatrist'),
+                ),
+                DropdownMenuItem(
+                  value: 'Psychologist',
+                  child: Text('Psychologist'),
+                ),
                 DropdownMenuItem(value: 'Nurse', child: Text('Nurse')),
-                DropdownMenuItem(value: 'Receptionist', child: Text('Receptionist')),
+                DropdownMenuItem(
+                  value: 'Receptionist',
+                  child: Text('Receptionist'),
+                ),
                 DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                 DropdownMenuItem(value: 'Patient', child: Text('Patient')),
               ],
@@ -98,14 +110,29 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
               decoration: const InputDecoration(
                 labelText: 'Category',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               items: const [
                 DropdownMenuItem(value: 'All', child: Text('All')),
-                DropdownMenuItem(value: 'Patient management', child: Text('Patient management')),
-                DropdownMenuItem(value: 'AI & analytics', child: Text('AI & analytics')),
-                DropdownMenuItem(value: 'Communication', child: Text('Communication')),
-                DropdownMenuItem(value: 'Operations', child: Text('Operations')),
+                DropdownMenuItem(
+                  value: 'Patient management',
+                  child: Text('Patient management'),
+                ),
+                DropdownMenuItem(
+                  value: 'AI & analytics',
+                  child: Text('AI & analytics'),
+                ),
+                DropdownMenuItem(
+                  value: 'Communication',
+                  child: Text('Communication'),
+                ),
+                DropdownMenuItem(
+                  value: 'Operations',
+                  child: Text('Operations'),
+                ),
                 DropdownMenuItem(value: 'Security', child: Text('Security')),
               ],
               onChanged: (value) {
@@ -164,7 +191,12 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
     );
   }
 
-  Widget _buildStatCard(ThemeData theme, String value, String label, IconData icon) {
+  Widget _buildStatCard(
+    ThemeData theme,
+    String value,
+    String label,
+    IconData icon,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12.0),
@@ -197,7 +229,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
 
   Widget _buildMainCategories(ThemeData theme) {
     final categories = _getMainCategories();
-    
+
     return LayoutBuilder(
       builder: (context, c) {
         // Phones: 2-col grid so "Patient management" / "Communication"
@@ -292,7 +324,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
 
   Widget _buildDetailedFeatures(ThemeData theme) {
     final features = _getDetailedFeatures(_selectedRole, _selectedCategory);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -370,7 +402,10 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -386,7 +421,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
               ],
             ),
           ),
-          
+
           // Features List
           Padding(
             padding: const EdgeInsets.all(20),
@@ -450,7 +485,9 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getStatusColor(feature['status'] as String).withValues(alpha: 0.1),
+                color: _getStatusColor(
+                  feature['status'] as String,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -525,7 +562,10 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
     ];
   }
 
-  List<Map<String, dynamic>> _getDetailedFeatures(String role, String category) {
+  List<Map<String, dynamic>> _getDetailedFeatures(
+    String role,
+    String category,
+  ) {
     final allFeatures = {
       'Patient management': {
         'name': 'Patient management',

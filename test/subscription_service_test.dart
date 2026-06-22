@@ -61,11 +61,13 @@ void main() {
         'price_group': SubscriptionTier.group,
       };
       expect(
-          SubscriptionService.tierFromPriceId('price_solo', priceMap: map),
-          SubscriptionTier.solo);
+        SubscriptionService.tierFromPriceId('price_solo', priceMap: map),
+        SubscriptionTier.solo,
+      );
       expect(
-          SubscriptionService.tierFromPriceId('price_unknown', priceMap: map),
-          SubscriptionTier.free);
+        SubscriptionService.tierFromPriceId('price_unknown', priceMap: map),
+        SubscriptionTier.free,
+      );
     });
 
     test('isActiveStatus maps Stripe statuses', () {

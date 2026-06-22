@@ -100,47 +100,55 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
   }
 
   Widget _statusCard(
-      ThemeData theme, ColorScheme cs, AccountDeletionRequest? request) {
+    ThemeData theme,
+    ColorScheme cs,
+    AccountDeletionRequest? request,
+  ) {
     final now = DateTime.now();
-    final status =
-        request?.statusAt(now) ?? DeletionStatus.pendingGrace;
+    final status = request?.statusAt(now) ?? DeletionStatus.pendingGrace;
     final hasRequest = request != null;
     return PsyCard(
       tinted: true,
-      child: Row(children: [
-        Icon(
-          hasRequest
-              ? Icons.hourglass_top_outlined
-              : Icons.shield_outlined,
-          color: cs.primary,
-        ),
-        const SizedBox(width: PsySpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Text('Status',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
-                const SizedBox(width: PsySpacing.sm),
-                _statusBadge(status, hasRequest),
-              ]),
-              const SizedBox(height: 4),
-              Text(
-                hasRequest
-                    ? 'Requested ${request.requestedAt.toLocal()}. Grace '
-                        'ends ${request.graceEndsAt.toLocal()}.'
-                    : 'No deletion request on file. Your data continues '
-                        'under the standard retention policy.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72),
-                    height: 1.45),
-              ),
-            ],
+      child: Row(
+        children: [
+          Icon(
+            hasRequest ? Icons.hourglass_top_outlined : Icons.shield_outlined,
+            color: cs.primary,
           ),
-        ),
-      ]),
+          const SizedBox(width: PsySpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Status',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: PsySpacing.sm),
+                    _statusBadge(status, hasRequest),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasRequest
+                      ? 'Requested ${request.requestedAt.toLocal()}. Grace '
+                            'ends ${request.graceEndsAt.toLocal()}.'
+                      : 'No deletion request on file. Your data continues '
+                            'under the standard retention policy.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.72),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -151,7 +159,9 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
     switch (s) {
       case DeletionStatus.pendingGrace:
         return const PsyBadge(
-            label: 'Grace period', tone: PsyBadgeTone.warning);
+          label: 'Grace period',
+          tone: PsyBadgeTone.warning,
+        );
       case DeletionStatus.cancelled:
         return const PsyBadge(label: 'Cancelled', tone: PsyBadgeTone.neutral);
       case DeletionStatus.completed:
@@ -164,16 +174,21 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Request deletion',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Request deletion',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
             'We hold the request for 30 days so you can undo. After that '
             'a scheduled job removes every record we control. Audit log '
             'entries are pseudonymised but retained per HIPAA §164.316.',
             style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72), height: 1.5),
+              color: cs.onSurface.withValues(alpha: 0.72),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: PsySpacing.lg),
           DropdownButtonFormField<String>(
@@ -208,36 +223,47 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
   }
 
   Widget _activeRequestActions(
-      ThemeData theme, ColorScheme cs, AccountDeletionRequest request) {
+    ThemeData theme,
+    ColorScheme cs,
+    AccountDeletionRequest request,
+  ) {
     final now = DateTime.now();
     final remaining = request.graceEndsAt.difference(now);
     return PsyCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Grace period active',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Grace period active',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.xs),
           Text(
             '${remaining.inDays} day(s) left before purge. Cancelling now '
             'restores normal access and clears the pending request.',
             style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72), height: 1.5),
+              color: cs.onSurface.withValues(alpha: 0.72),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: PsySpacing.lg),
-          Row(children: [
-            FilledButton.icon(
-              onPressed: _onCancel,
-              icon: const Icon(Icons.undo),
-              label: const Text('Cancel deletion'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: _onCancel,
+                icon: const Icon(Icons.undo),
+                label: const Text('Cancel deletion'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: PsySpacing.xl,
+                  ),
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ],
       ),
     );
@@ -264,19 +290,28 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
       userId: user?.userId ?? 'demo-user',
       reasonCode: _reason,
     );
-    unawaited(TelemetryService.instance.capture(
-      'compliance.account_deletion_requested',
-      properties: {'reason': _reason},
-    ));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Deletion requested — 30-day grace started.')));
+    unawaited(
+      TelemetryService.instance.capture(
+        'compliance.account_deletion_requested',
+        properties: {'reason': _reason},
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Deletion requested — 30-day grace started.'),
+      ),
+    );
   }
 
   void _onCancel() {
     AccountDeletionState.instance.cancel();
-    unawaited(TelemetryService.instance.capture(
-        'compliance.account_deletion_cancelled'));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Deletion cancelled. Account restored.')));
+    unawaited(
+      TelemetryService.instance.capture(
+        'compliance.account_deletion_cancelled',
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Deletion cancelled. Account restored.')),
+    );
   }
 }

@@ -11,8 +11,7 @@ import 'package:flutter/services.dart';
 /// no-ops, so callers don't need a platform guard.
 class LiveActivityChannel {
   LiveActivityChannel({MethodChannel? channel})
-      : _channel = channel ??
-            const MethodChannel('psyclinicai/live_activity');
+    : _channel = channel ?? const MethodChannel('psyclinicai/live_activity');
 
   final MethodChannel _channel;
 
@@ -60,13 +59,13 @@ class LiveActivityHandle {
   const LiveActivityHandle._({
     required this.activityId,
     required MethodChannel channel,
-  })  : _channel = channel,
-        _active = true;
+  }) : _channel = channel,
+       _active = true;
 
   const LiveActivityHandle._noop()
-      : activityId = '',
-        _channel = null,
-        _active = false;
+    : activityId = '',
+      _channel = null,
+      _active = false;
 
   final String activityId;
   final MethodChannel? _channel;

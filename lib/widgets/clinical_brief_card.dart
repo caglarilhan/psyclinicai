@@ -15,8 +15,11 @@ import '../theme/tokens.dart';
 /// Tier-1 brief offline, and offers a Tier-2 (BYOK Claude) narrative + "today,
 /// focus on" suggestions. Decision-support, not a directive.
 class ClinicalBriefCard extends StatefulWidget {
-  const ClinicalBriefCard(
-      {super.key, required this.patientId, required this.patientName});
+  const ClinicalBriefCard({
+    super.key,
+    required this.patientId,
+    required this.patientName,
+  });
 
   final String patientId;
   final String patientName;
@@ -83,20 +86,26 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
     if (brief == null) return;
     setState(() => _aiBusy = true);
     try {
-      final updated =
-          await _service.synthesize(brief, notes: _notesList, plan: _plan);
+      final updated = await _service.synthesize(
+        brief,
+        notes: _notesList,
+        plan: _plan,
+      );
       if (mounted) setState(() => _brief = updated);
     } on ClinicalMemoryException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _aiBusy = false);
     }
@@ -129,9 +138,13 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
             children: [
               Icon(Icons.auto_awesome, size: 18, color: cs.primary),
               const SizedBox(width: PsySpacing.sm),
-              Text('Session prep',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700, color: cs.primary)),
+              Text(
+                'Session prep',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: cs.primary,
+                ),
+              ),
               const SizedBox(width: PsySpacing.sm),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -139,9 +152,13 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
                   color: cs.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(PsyRadius.full),
                 ),
-                child: Text('Clinical Memory',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        color: cs.primary, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Clinical Memory',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               const Spacer(),
               if (!_loading && brief != null && !brief.isFirstSession)
@@ -151,15 +168,21 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
                       ? const SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : Icon(brief.narrative == null
-                          ? Icons.auto_awesome_outlined
-                          : Icons.refresh),
-                  label: Text(brief.narrative == null
-                      ? 'Generate AI brief'
-                      : 'Regenerate'),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          brief.narrative == null
+                              ? Icons.auto_awesome_outlined
+                              : Icons.refresh,
+                        ),
+                  label: Text(
+                    brief.narrative == null
+                        ? 'Generate AI brief'
+                        : 'Regenerate',
+                  ),
                   style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
             ],
           ),
@@ -173,8 +196,9 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
             Text(
               'First session — no history yet. Your brief builds itself as you '
               'log sessions, goals, and homework here.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
             )
           else
             _body(theme, cs, brief),
@@ -191,8 +215,10 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
         Text(
           '${b.sessionCount} prior ${b.sessionCount == 1 ? 'session' : 'sessions'}'
           '${b.lastSessionAt != null ? ' · last ${_ago(b.lastSessionAt!)}' : ''}',
-          style: theme.textTheme.labelMedium
-              ?.copyWith(color: muted, fontWeight: FontWeight.w600),
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: muted,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: PsySpacing.sm),
 
@@ -206,13 +232,19 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
               borderRadius: BorderRadius.circular(PsyRadius.md),
               border: Border.all(color: cs.outlineVariant),
             ),
-            child: Text(b.narrative!,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+            child: Text(
+              b.narrative!,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+            ),
           )
         else if (b.lastRecap != null)
-          Text('Last session: ${b.lastRecap}',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: muted, height: 1.45)),
+          Text(
+            'Last session: ${b.lastRecap}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: muted,
+              height: 1.45,
+            ),
+          ),
 
         const SizedBox(height: PsySpacing.md),
 
@@ -223,66 +255,96 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
           children: [
             if (b.activeGoals.isNotEmpty)
               _chip(
-                  theme,
-                  cs,
-                  Icons.flag_outlined,
-                  '${b.activeGoals.length} active ${b.activeGoals.length == 1 ? 'goal' : 'goals'}',
-                  cs.primary),
-            if (b.homeworkOverdue > 0)
-              _chip(theme, cs, Icons.assignment_late_outlined,
-                  '${b.homeworkOverdue} homework overdue', cs.error),
-            if (b.homeworkPending > 0)
-              _chip(theme, cs, Icons.assignment_outlined,
-                  '${b.homeworkPending} homework pending',
-                  const Color(0xFFD97706)),
-            if (b.riskNote != null)
-              _chip(theme, cs, Icons.warning_amber_rounded, 'Risk flagged',
-                  cs.error),
-            _chip(
                 theme,
                 cs,
-                b.hasSafetyPlan
-                    ? Icons.health_and_safety
-                    : Icons.health_and_safety_outlined,
-                b.hasSafetyPlan ? 'Safety plan on file' : 'No safety plan',
-                b.hasSafetyPlan ? cs.primary : const Color(0xFFD97706)),
+                Icons.flag_outlined,
+                '${b.activeGoals.length} active ${b.activeGoals.length == 1 ? 'goal' : 'goals'}',
+                cs.primary,
+              ),
+            if (b.homeworkOverdue > 0)
+              _chip(
+                theme,
+                cs,
+                Icons.assignment_late_outlined,
+                '${b.homeworkOverdue} homework overdue',
+                cs.error,
+              ),
+            if (b.homeworkPending > 0)
+              _chip(
+                theme,
+                cs,
+                Icons.assignment_outlined,
+                '${b.homeworkPending} homework pending',
+                const Color(0xFFD97706),
+              ),
+            if (b.riskNote != null)
+              _chip(
+                theme,
+                cs,
+                Icons.warning_amber_rounded,
+                'Risk flagged',
+                cs.error,
+              ),
+            _chip(
+              theme,
+              cs,
+              b.hasSafetyPlan
+                  ? Icons.health_and_safety
+                  : Icons.health_and_safety_outlined,
+              b.hasSafetyPlan ? 'Safety plan on file' : 'No safety plan',
+              b.hasSafetyPlan ? cs.primary : const Color(0xFFD97706),
+            ),
           ],
         ),
 
         if (b.todos.isNotEmpty) ...[
           const SizedBox(height: PsySpacing.md),
-          Text('Today, focus on',
-              style: theme.textTheme.labelMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.6),
-                  letterSpacing: 0.6)),
+          Text(
+            'Today, focus on',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.6),
+              letterSpacing: 0.6,
+            ),
+          ),
           const SizedBox(height: 4),
-          ...b.todos.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.arrow_right, size: 18, color: cs.primary),
-                    Expanded(
-                        child: Text(t, style: theme.textTheme.bodyMedium)),
-                  ],
-                ),
-              )),
+          ...b.todos.map(
+            (t) => Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.arrow_right, size: 18, color: cs.primary),
+                  Expanded(child: Text(t, style: theme.textTheme.bodyMedium)),
+                ],
+              ),
+            ),
+          ),
         ],
 
         const SizedBox(height: PsySpacing.sm),
-        Text('Decision-support — review clinically.',
-            style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.5),
-                fontStyle: FontStyle.italic)),
+        Text(
+          'Decision-support — review clinically.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.5),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _chip(ThemeData theme, ColorScheme cs, IconData icon, String label,
-      Color color) {
+  Widget _chip(
+    ThemeData theme,
+    ColorScheme cs,
+    IconData icon,
+    String label,
+    Color color,
+  ) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: PsySpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: PsySpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(PsyRadius.full),
@@ -293,9 +355,13 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
         children: [
           Icon(icon, size: 13, color: color),
           const SizedBox(width: 4),
-          Text(label,
-              style: theme.textTheme.labelSmall
-                  ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

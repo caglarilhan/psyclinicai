@@ -4,9 +4,7 @@ import 'package:psyclinicai/widgets/onboarding/session_tour_overlay.dart';
 void main() {
   group('SessionTourController (Sprint 31 P2)', () {
     test('shouldShow returns true on a fresh persistence', () async {
-      final c = SessionTourController(
-        persistence: InMemoryTourPersistence(),
-      );
+      final c = SessionTourController(persistence: InMemoryTourPersistence());
       expect(await c.shouldShow(), true);
     });
 

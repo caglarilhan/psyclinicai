@@ -32,35 +32,35 @@ class _InboxScreenState extends State<InboxScreen> {
     return AppShell(
       routeName: '/inbox',
       title: 'Inbox',
-      subtitle: 'Patient messages, lab results, team notes, tasks — '
+      subtitle:
+          'Patient messages, lab results, team notes, tasks — '
           'everything that needs you in one queue.',
       scrollable: false,
-      breadcrumbs: const [
-        Crumb('Home', '/dashboard'),
-        Crumb('Inbox', null),
-      ],
+      breadcrumbs: const [Crumb('Home', '/dashboard'), Crumb('Inbox', null)],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            _StatChip(
-              label: 'Unread',
-              value: '$unread',
-              tone: PsyBadgeTone.info,
-              cs: cs,
-              theme: theme,
-            ),
-            const SizedBox(width: PsySpacing.sm),
-            _StatChip(
-              label: 'Overdue',
-              value: '$overdue',
-              tone: overdue == 0
-                  ? PsyBadgeTone.success
-                  : PsyBadgeTone.warning,
-              cs: cs,
-              theme: theme,
-            ),
-          ]),
+          Row(
+            children: [
+              _StatChip(
+                label: 'Unread',
+                value: '$unread',
+                tone: PsyBadgeTone.info,
+                cs: cs,
+                theme: theme,
+              ),
+              const SizedBox(width: PsySpacing.sm),
+              _StatChip(
+                label: 'Overdue',
+                value: '$overdue',
+                tone: overdue == 0
+                    ? PsyBadgeTone.success
+                    : PsyBadgeTone.warning,
+                cs: cs,
+                theme: theme,
+              ),
+            ],
+          ),
           const SizedBox(height: PsySpacing.md),
           _FilterBar(
             current: _filter,
@@ -71,9 +71,12 @@ class _InboxScreenState extends State<InboxScreen> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Text('No items in this view.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6))),
+                    child: Text(
+                      'No items in this view.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
                   )
                 : ListView.separated(
                     itemCount: filtered.length,
@@ -157,18 +160,25 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(PsyRadius.md),
       ),
-      child: Row(children: [
-        Text(label,
+      child: Row(
+        children: [
+          Text(
+            label,
             style: theme.textTheme.labelMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.6))),
-        const SizedBox(width: PsySpacing.sm),
-        PsyBadge(label: value, tone: tone),
-      ]),
+              color: cs.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          PsyBadge(label: value, tone: tone),
+        ],
+      ),
     );
   }
 }
@@ -232,54 +242,66 @@ class _ItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final overdue = item.isOverdue(at: now);
     return PsyCard(
-      child: Row(children: [
-        CircleAvatar(
-          backgroundColor: cs.primaryContainer,
-          child: Icon(_iconFor(item.kind),
-              color: cs.onPrimaryContainer, size: 18),
-        ),
-        const SizedBox(width: PsySpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Expanded(
-                  child: Text(
-                    item.subject,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: item.unread
-                            ? FontWeight.w700
-                            : FontWeight.w500),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: cs.primaryContainer,
+            child: Icon(
+              _iconFor(item.kind),
+              color: cs.onPrimaryContainer,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: PsySpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.subject,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: item.unread
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (item.unread)
+                      const PsyBadge(label: 'New', tone: PsyBadgeTone.info),
+                    if (overdue) ...[
+                      const SizedBox(width: 4),
+                      const PsyBadge(
+                        label: 'Overdue',
+                        tone: PsyBadgeTone.warning,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.bodyPreview,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.kind.label} · '
+                  '${item.receivedAt.toIso8601String().split("T").first}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
-                if (item.unread)
-                  const PsyBadge(label: 'New', tone: PsyBadgeTone.info),
-                if (overdue) ...[
-                  const SizedBox(width: 4),
-                  const PsyBadge(
-                      label: 'Overdue', tone: PsyBadgeTone.warning),
-                ],
-              ]),
-              const SizedBox(height: 4),
-              Text(
-                item.bodyPreview,
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.7)),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${item.kind.label} · '
-                '${item.receivedAt.toIso8601String().split("T").first}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.5)),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }

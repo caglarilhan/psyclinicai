@@ -31,8 +31,11 @@ void main() {
     SharedDeviceService.setTestInstance(SharedPreferences.getInstance);
     final svc2 = SharedDeviceService.instance;
     await svc2.load();
-    expect(svc2.isShared, isTrue,
-        reason: 'shared-device flag must survive a restart');
+    expect(
+      svc2.isShared,
+      isTrue,
+      reason: 'shared-device flag must survive a restart',
+    );
   });
 
   test('setShared notifies listeners', () async {

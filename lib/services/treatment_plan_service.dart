@@ -7,7 +7,8 @@ import 'data/telemetry_service.dart';
 class TreatmentPlanService {
   factory TreatmentPlanService() => _instance;
   TreatmentPlanService._internal();
-  static final TreatmentPlanService _instance = TreatmentPlanService._internal();
+  static final TreatmentPlanService _instance =
+      TreatmentPlanService._internal();
 
   final List<TreatmentPlan> _treatmentPlans = [];
   final List<TreatmentProgress> _progressRecords = [];
@@ -24,10 +25,11 @@ class TreatmentPlanService {
       final prefs = await SharedPreferences.getInstance();
       final plansJson = prefs.getStringList('treatment_plans') ?? [];
       _treatmentPlans.clear();
-      
+
       for (final planJson in plansJson) {
-        final plan =
-            TreatmentPlan.fromJson(jsonDecode(planJson) as Map<String, dynamic>);
+        final plan = TreatmentPlan.fromJson(
+          jsonDecode(planJson) as Map<String, dynamic>,
+        );
         _treatmentPlans.add(plan);
       }
     } catch (e, stack) {
@@ -67,10 +69,11 @@ class TreatmentPlanService {
       final prefs = await SharedPreferences.getInstance();
       final progressJson = prefs.getStringList('treatment_progress') ?? [];
       _progressRecords.clear();
-      
+
       for (final progress in progressJson) {
         final progressRecord = TreatmentProgress.fromJson(
-            jsonDecode(progress) as Map<String, dynamic>);
+          jsonDecode(progress) as Map<String, dynamic>,
+        );
         _progressRecords.add(progressRecord);
       }
     } catch (e, stack) {
@@ -134,7 +137,11 @@ class TreatmentPlanService {
   // Get treatment plan for patient
   TreatmentPlan? getTreatmentPlanForPatient(String patientId) {
     return _treatmentPlans
-        .where((plan) => plan.patientId == patientId && plan.status == TreatmentPlanStatus.active)
+        .where(
+          (plan) =>
+              plan.patientId == patientId &&
+              plan.status == TreatmentPlanStatus.active,
+        )
         .firstOrNull;
   }
 
@@ -149,10 +156,8 @@ class TreatmentPlanService {
 
   // Get all treatment plans for patient
   List<TreatmentPlan> getAllTreatmentPlansForPatient(String patientId) {
-    return _treatmentPlans
-        .where((plan) => plan.patientId == patientId)
-        .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return _treatmentPlans.where((plan) => plan.patientId == patientId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   // Add treatment goal
@@ -178,7 +183,9 @@ class TreatmentPlanService {
       measurementMethod: measurementMethod,
     );
 
-    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    final planIndex = _treatmentPlans.indexWhere(
+      (plan) => plan.id == treatmentPlanId,
+    );
     if (planIndex != -1) {
       final plan = _treatmentPlans[planIndex];
       final updatedGoals = [...plan.goals, goal];
@@ -215,7 +222,9 @@ class TreatmentPlanService {
     String? notes,
   }) async {
     try {
-      final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+      final planIndex = _treatmentPlans.indexWhere(
+        (plan) => plan.id == treatmentPlanId,
+      );
       if (planIndex == -1) return false;
 
       final plan = _treatmentPlans[planIndex];
@@ -299,7 +308,9 @@ class TreatmentPlanService {
       contraindications: contraindications ?? [],
     );
 
-    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    final planIndex = _treatmentPlans.indexWhere(
+      (plan) => plan.id == treatmentPlanId,
+    );
     if (planIndex != -1) {
       final plan = _treatmentPlans[planIndex];
       final updatedInterventions = [...plan.interventions, intervention];
@@ -349,14 +360,17 @@ class TreatmentPlanService {
       overallAssessment: overallAssessment,
       recommendations: recommendations,
       notes: notes,
-      nextReviewDate: nextReviewDate ?? DateTime.now().add(const Duration(days: 30)),
+      nextReviewDate:
+          nextReviewDate ?? DateTime.now().add(const Duration(days: 30)),
     );
 
     _progressRecords.add(progress);
     await _saveProgressRecords();
 
     // Update treatment plan review date
-    final planIndex = _treatmentPlans.indexWhere((plan) => plan.id == treatmentPlanId);
+    final planIndex = _treatmentPlans.indexWhere(
+      (plan) => plan.id == treatmentPlanId,
+    );
     if (planIndex != -1) {
       final plan = _treatmentPlans[planIndex];
       final updatedPlan = TreatmentPlan(
@@ -389,7 +403,7 @@ class TreatmentPlanService {
     return _progressRecords
         .where((progress) => progress.treatmentPlanId == treatmentPlanId)
         .toList()
-        ..sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
+      ..sort((a, b) => b.assessmentDate.compareTo(a.assessmentDate));
   }
 
   // Get overdue goals
@@ -428,11 +442,11 @@ class TreatmentPlanService {
     final completedGoals = allGoals
         .where((goal) => goal.status == GoalStatus.completed)
         .length;
-    final overdueGoals = allGoals
-        .where((goal) => goal.isOverdue)
-        .length;
+    final overdueGoals = allGoals.where((goal) => goal.isOverdue).length;
 
-    final allInterventions = _treatmentPlans.expand((plan) => plan.interventions).toList();
+    final allInterventions = _treatmentPlans
+        .expand((plan) => plan.interventions)
+        .toList();
     final totalInterventions = allInterventions.length;
     final activeInterventions = allInterventions
         .where((intervention) => intervention.isActive)
@@ -466,7 +480,8 @@ class TreatmentPlanService {
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
         primaryDiagnosis: 'Major Depresif Bozukluk',
         secondaryDiagnoses: ['Uyku Bozukluğu'],
-        clinicalFormulation: 'Stres faktörleri ile tetiklenen depresif epizod. Hasta iş stresi ve aile sorunları yaşıyor.',
+        clinicalFormulation:
+            'Stres faktörleri ile tetiklenen depresif epizod. Hasta iş stresi ve aile sorunları yaşıyor.',
         prognosis: 'İyi. Uygun tedavi ile 6-12 ay içinde düzelme bekleniyor.',
         notes: 'Hasta tedaviye uyumlu, motivasyonu yüksek.',
         reviewDate: DateTime.now().add(const Duration(days: 30)),
@@ -479,7 +494,11 @@ class TreatmentPlanService {
             targetDate: DateTime.now().add(const Duration(days: 90)),
             createdAt: DateTime.now().subtract(const Duration(days: 30)),
             progress: 30,
-            milestones: ['İlk 4 hafta: %20 azalma', '8. hafta: %40 azalma', '12. hafta: %50 azalma'],
+            milestones: [
+              'İlk 4 hafta: %20 azalma',
+              '8. hafta: %40 azalma',
+              '12. hafta: %50 azalma',
+            ],
             measurementMethod: 'BDI-II ölçeği',
           ),
           TreatmentGoal(
@@ -490,8 +509,13 @@ class TreatmentPlanService {
             targetDate: DateTime.now().add(const Duration(days: 60)),
             createdAt: DateTime.now().subtract(const Duration(days: 30)),
             progress: 50,
-            milestones: ['Uyku hijyeni eğitimi', 'Düzenli uyku saatleri', 'Uyku günlüğü tutma'],
-            measurementMethod: 'Uyku günlüğü ve Pittsburgh Uyku Kalitesi İndeksi',
+            milestones: [
+              'Uyku hijyeni eğitimi',
+              'Düzenli uyku saatleri',
+              'Uyku günlüğü tutma',
+            ],
+            measurementMethod:
+                'Uyku günlüğü ve Pittsburgh Uyku Kalitesi İndeksi',
           ),
         ],
         interventions: [
@@ -537,13 +561,20 @@ class TreatmentPlanService {
         assessedBy: 'psychiatrist_001',
         goalProgress: {
           'goal_001': {'progress': 20, 'notes': 'Hafif iyileşme görülüyor'},
-          'goal_002': {'progress': 30, 'notes': 'Uyku hijyeni eğitimi tamamlandı'},
+          'goal_002': {
+            'progress': 30,
+            'notes': 'Uyku hijyeni eğitimi tamamlandı',
+          },
         },
         interventionEffectiveness: {
-          'intervention_001': {'effectiveness': 'Orta', 'sideEffects': 'Minimal'},
+          'intervention_001': {
+            'effectiveness': 'Orta',
+            'sideEffects': 'Minimal',
+          },
           'intervention_002': {'effectiveness': 'İyi', 'compliance': 'Yüksek'},
         },
-        overallAssessment: 'Tedavi planı başarılı şekilde ilerliyor. Hasta uyumlu.',
+        overallAssessment:
+            'Tedavi planı başarılı şekilde ilerliyor. Hasta uyumlu.',
         recommendations: 'İlaç dozunu artırmayı düşünülebilir.',
         nextReviewDate: DateTime.now().add(const Duration(days: 15)),
       ),

@@ -19,8 +19,9 @@ class LandingTokens {
     final w = MediaQuery.sizeOf(context).width;
     final wide = w >= 768;
     return EdgeInsets.symmetric(
-      horizontal:
-          wide ? sectionHorizontalPaddingDesktop : sectionHorizontalPaddingMobile,
+      horizontal: wide
+          ? sectionHorizontalPaddingDesktop
+          : sectionHorizontalPaddingMobile,
       vertical: wide ? sectionVerticalPadding : sectionVerticalPaddingMobile,
     );
   }
@@ -55,10 +56,10 @@ class SectionEyebrow extends StatelessWidget {
     return Text(
       text.toUpperCase(),
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: cs.primary,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.4,
-          ),
+        color: cs.primary,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 2.4,
+      ),
     );
   }
 }
@@ -77,10 +78,10 @@ class SectionTitle extends StatelessWidget {
       text,
       textAlign: textAlign,
       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            fontSize: size,
-            fontWeight: FontWeight.bold,
-            height: 1.15,
-          ),
+        fontSize: size,
+        fontWeight: FontWeight.bold,
+        height: 1.15,
+      ),
     );
   }
 }
@@ -98,9 +99,9 @@ class SectionSubtitle extends StatelessWidget {
       text,
       textAlign: textAlign,
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: cs.onSurface.withValues(alpha: 0.7),
-            height: 1.55,
-          ),
+        color: cs.onSurface.withValues(alpha: 0.7),
+        height: 1.55,
+      ),
     );
   }
 }
@@ -143,10 +144,11 @@ class _HoverLiftState extends State<HoverLift> {
         transform: Matrix4.identity()
           ..translateByDouble(0.0, _hover ? -widget.lift : 0.0, 0.0, 1.0)
           ..scaleByDouble(
-              _hover ? widget.scale : 1.0,
-              _hover ? widget.scale : 1.0,
-              _hover ? widget.scale : 1.0,
-              1.0),
+            _hover ? widget.scale : 1.0,
+            _hover ? widget.scale : 1.0,
+            _hover ? widget.scale : 1.0,
+            1.0,
+          ),
         transformAlignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.borderRadius),

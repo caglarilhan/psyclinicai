@@ -29,10 +29,10 @@ class ComplianceCheckService {
     http.Client? client,
     IdTokenProvider? idTokenProvider,
     String? Function()? patientIdProvider,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        _idTokenProvider = idTokenProvider,
-        _patientIdProvider = patientIdProvider;
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -245,11 +245,7 @@ class ComplianceCheckService {
 
     try {
       final resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 30));
       if (resp.statusCode != 200) return base;
 

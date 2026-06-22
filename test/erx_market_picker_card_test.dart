@@ -40,8 +40,9 @@ void main() {
       expect(captured, PrescriptionMarket.tr);
     });
 
-    testWidgets('US market shows the Sprint 16 placeholder note',
-        (tester) async {
+    testWidgets('US market shows the Sprint 16 placeholder note', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

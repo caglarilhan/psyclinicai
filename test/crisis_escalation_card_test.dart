@@ -9,19 +9,24 @@ void main() {
   final service = CssrsEscalationService();
   const scale = ClinicalScales.cssrs;
 
-  Future<void> pump(WidgetTester tester, CssrsEscalation escalation,
-      {VoidCallback? onInitiate}) {
-    return tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: CrisisEscalationCard(
-            escalation: escalation,
-            resources: CrisisResourceRegistry.forCountry('US'),
-            onInitiateSafetyPlan: onInitiate ?? () {},
+  Future<void> pump(
+    WidgetTester tester,
+    CssrsEscalation escalation, {
+    VoidCallback? onInitiate,
+  }) {
+    return tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: CrisisEscalationCard(
+              escalation: escalation,
+              resources: CrisisResourceRegistry.forCountry('US'),
+              onInitiateSafetyPlan: onInitiate ?? () {},
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   testWidgets('renders nothing when there is no risk', (tester) async {
@@ -34,8 +39,7 @@ void main() {
     expect(find.text('Crisis resources'), findsNothing);
   });
 
-  testWidgets('initiate-safety-plan tier shows non-urgent CTA',
-      (tester) async {
+  testWidgets('initiate-safety-plan tier shows non-urgent CTA', (tester) async {
     final e = service.evaluate(scale.score([0, 0, 1, 0, 0, 0]));
     await pump(tester, e);
 
@@ -46,8 +50,9 @@ void main() {
     expect(find.text('988'), findsOneWidget);
   });
 
-  testWidgets('imminent tier shows urgent CTA and dispatches callback',
-      (tester) async {
+  testWidgets('imminent tier shows urgent CTA and dispatches callback', (
+    tester,
+  ) async {
     final e = service.evaluate(scale.score([0, 0, 0, 0, 0, 1]));
     var initiated = false;
     await pump(tester, e, onInitiate: () => initiated = true);
@@ -61,8 +66,9 @@ void main() {
     expect(initiated, isTrue);
   });
 
-  testWidgets('monitor tier shows the card but no safety-plan CTA',
-      (tester) async {
+  testWidgets('monitor tier shows the card but no safety-plan CTA', (
+    tester,
+  ) async {
     final e = service.evaluate(scale.score([1, 0, 0, 0, 0, 0]));
     await pump(tester, e);
 

@@ -30,19 +30,33 @@ void main() {
 
     test('every entry has a non-empty hint (no blanks on the chip)', () {
       for (final e in carcAllEntries()) {
-        expect(e.hint.trim(), isNotEmpty,
-            reason: 'code ${e.code} has an empty hint');
+        expect(
+          e.hint.trim(),
+          isNotEmpty,
+          reason: 'code ${e.code} has an empty hint',
+        );
         expect(e.reason.trim(), isNotEmpty);
       }
     });
 
     test('common authorisation + medical necessity codes are mapped', () {
       for (final code in const [
-        'CO-15', 'CO-39', 'CO-62', 'CO-197', 'CO-252',
-        'CO-49', 'CO-50', 'CO-150', 'CO-151', 'CO-152',
+        'CO-15',
+        'CO-39',
+        'CO-62',
+        'CO-197',
+        'CO-252',
+        'CO-49',
+        'CO-50',
+        'CO-150',
+        'CO-151',
+        'CO-152',
       ]) {
-        expect(carcLookup(code), isNotNull,
-            reason: 'expected $code in the top-50 mental-health set');
+        expect(
+          carcLookup(code),
+          isNotNull,
+          reason: 'expected $code in the top-50 mental-health set',
+        );
       }
     });
   });

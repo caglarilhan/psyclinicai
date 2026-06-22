@@ -16,14 +16,13 @@ void main() {
 
   group('SsoConfiguration', () {
     SsoConfiguration base() => SsoConfiguration(
-          tenantId: 't-1',
-          provider: SsoProvider.workspace,
-          protocol: SsoProtocol.saml,
-          idpEntityId: 'https://accounts.google.com/o/saml2?idpid=ABC',
-          acsUrl: 'https://psyclinicai.com/saml/acs',
-          metadataUrl:
-              'https://accounts.google.com/o/saml2/idp-meta?idpid=ABC',
-        );
+      tenantId: 't-1',
+      provider: SsoProvider.workspace,
+      protocol: SsoProtocol.saml,
+      idpEntityId: 'https://accounts.google.com/o/saml2?idpid=ABC',
+      acsUrl: 'https://psyclinicai.com/saml/acs',
+      metadataUrl: 'https://accounts.google.com/o/saml2/idp-meta?idpid=ABC',
+    );
 
     test('hasBeenTested false until lastTestAt set', () {
       expect(base().hasBeenTested, isFalse);

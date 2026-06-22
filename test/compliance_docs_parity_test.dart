@@ -45,10 +45,16 @@ void main() {
       ];
       for (final p in paths) {
         final body = File(p).readAsStringSync();
-        expect(body, contains('Next review'),
-            reason: '$p missing a Next review line');
-        expect(body, contains('dpo@psyclinicai.com'),
-            reason: '$p missing the DPO contact');
+        expect(
+          body,
+          contains('Next review'),
+          reason: '$p missing a Next review line',
+        );
+        expect(
+          body,
+          contains('dpo@psyclinicai.com'),
+          reason: '$p missing the DPO contact',
+        );
       }
     });
   });

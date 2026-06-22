@@ -6,19 +6,18 @@ import 'package:psyclinicai/widgets/audit_log_detail_sheet.dart';
 AuditLogEntry _entry({
   AuditResult result = AuditResult.success,
   String? hash,
-}) =>
-    AuditLogEntry(
-      id: 'evt-1',
-      kind: 'read',
-      action: 'patient.read',
-      actor: 'sarah@example.com',
-      entity: 'patient/PSY-00417',
-      timestampUtc: DateTime.utc(2026, 6, 1, 18, 24, 13),
-      result: result,
-      ip: '203.0.113.10',
-      device: 'macOS 14 / Safari',
-      hash: hash ?? 'aabbccddeeff112233445566',
-    );
+}) => AuditLogEntry(
+  id: 'evt-1',
+  kind: 'read',
+  action: 'patient.read',
+  actor: 'sarah@example.com',
+  entity: 'patient/PSY-00417',
+  timestampUtc: DateTime.utc(2026, 6, 1, 18, 24, 13),
+  result: result,
+  ip: '203.0.113.10',
+  device: 'macOS 14 / Safari',
+  hash: hash ?? 'aabbccddeeff112233445566',
+);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -44,8 +43,9 @@ Future<void> _pump(
 
 void main() {
   group('AuditLogDetailSheet', () {
-    testWidgets('renders action, actor, entity and a verify CTA',
-        (tester) async {
+    testWidgets('renders action, actor, entity and a verify CTA', (
+      tester,
+    ) async {
       await _pump(tester, entry: _entry());
       expect(find.text('patient.read'), findsOneWidget);
       expect(find.text('sarah@example.com'), findsOneWidget);
@@ -69,22 +69,14 @@ void main() {
     });
 
     testWidgets('payload diff block renders when supplied', (tester) async {
-      await _pump(
-        tester,
-        entry: _entry(),
-        payloadDiff: '{"viewed":"dob"}',
-      );
+      await _pump(tester, entry: _entry(), payloadDiff: '{"viewed":"dob"}');
       expect(find.text('Payload diff'), findsOneWidget);
       expect(find.text('{"viewed":"dob"}'), findsOneWidget);
     });
 
     testWidgets('verify CTA fires the callback', (tester) async {
       var called = false;
-      await _pump(
-        tester,
-        entry: _entry(),
-        onVerify: () => called = true,
-      );
+      await _pump(tester, entry: _entry(), onVerify: () => called = true);
       await tester.tap(find.text('Verify chain from here'));
       await tester.pumpAndSettle();
       expect(called, isTrue);

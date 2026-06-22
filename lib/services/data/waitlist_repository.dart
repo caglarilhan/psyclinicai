@@ -39,8 +39,7 @@ enum WaitlistOutcome {
 }
 
 class WaitlistRepository {
-  WaitlistRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore;
+  WaitlistRepository({FirebaseFirestore? firestore}) : _firestore = firestore;
 
   /// Default production singleton — uses the live Firestore handle
   /// only when [PsyFirebase.isReady]. Tests should construct their

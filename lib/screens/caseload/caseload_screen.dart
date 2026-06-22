@@ -95,36 +95,40 @@ class _CaseloadScreenState extends State<CaseloadScreen> {
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: CircularProgressIndicator()),
+            )
           : _items.isEmpty
-              ? _AllClear(theme: theme)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Triaged across your caseload — overdue work, stalled '
-                      'plans, and missing safety plans. Decision-support, not '
-                      'an alert system.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7)),
-                    ),
-                    const SizedBox(height: PsySpacing.xl),
-                    ..._items.map((a) => Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: PsySpacing.md),
-                          child: _AttentionCard(
-                            item: a,
-                            onOpen: () => Navigator.of(context).pushNamed(
-                              '/patient/detail',
-                              arguments: PatientDetailArgs(
-                                  id: a.patientId, name: a.patientName),
-                            ),
-                          ),
-                        )),
-                    const SizedBox(height: PsySpacing.huge),
-                  ],
+          ? _AllClear(theme: theme)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Triaged across your caseload — overdue work, stalled '
+                  'plans, and missing safety plans. Decision-support, not '
+                  'an alert system.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
+                const SizedBox(height: PsySpacing.xl),
+                ..._items.map(
+                  (a) => Padding(
+                    padding: const EdgeInsets.only(bottom: PsySpacing.md),
+                    child: _AttentionCard(
+                      item: a,
+                      onOpen: () => Navigator.of(context).pushNamed(
+                        '/patient/detail',
+                        arguments: PatientDetailArgs(
+                          id: a.patientId,
+                          name: a.patientName,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: PsySpacing.huge),
+              ],
+            ),
     );
   }
 }
@@ -157,9 +161,12 @@ class _AttentionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.patientName,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    item.patientName,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: PsySpacing.sm),
                   Wrap(
                     spacing: PsySpacing.sm,
@@ -172,8 +179,10 @@ class _AttentionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: PsySpacing.md),
-            Icon(Icons.chevron_right,
-                color: cs.onSurface.withValues(alpha: 0.4)),
+            Icon(
+              Icons.chevron_right,
+              color: cs.onSurface.withValues(alpha: 0.4),
+            ),
           ],
         ),
       ),
@@ -191,16 +200,22 @@ class _ReasonChip extends StatelessWidget {
     final cs = theme.colorScheme;
     final c = _levelColor(reason.level, cs);
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: PsySpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: PsySpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(PsyRadius.full),
         border: Border.all(color: c.withValues(alpha: 0.30)),
       ),
-      child: Text(reason.label,
-          style: theme.textTheme.labelSmall
-              ?.copyWith(color: c, fontWeight: FontWeight.w600)),
+      child: Text(
+        reason.label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: c,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -220,21 +235,26 @@ class _AllClear extends StatelessWidget {
           children: [
             Icon(Icons.check_circle_outline, size: 48, color: cs.primary),
             const SizedBox(height: PsySpacing.md),
-            Text('All clear',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              'All clear',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: PsySpacing.xs),
-            Text('No patients need attention right now.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6))),
+            Text(
+              'No patients need attention right now.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
             const SizedBox(height: PsySpacing.lg),
             Wrap(
               spacing: PsySpacing.sm,
               alignment: WrapAlignment.center,
               children: [
                 FilledButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/patients'),
+                  onPressed: () => Navigator.of(context).pushNamed('/patients'),
                   icon: const Icon(Icons.group_outlined),
                   label: const Text('Open roster'),
                 ),
@@ -254,7 +274,7 @@ class _AllClear extends StatelessWidget {
 }
 
 Color _levelColor(AttentionLevel level, ColorScheme cs) => switch (level) {
-      AttentionLevel.high => cs.error,
-      AttentionLevel.medium => const Color(0xFFD97706), // amber-600
-      AttentionLevel.low => cs.primary,
-    };
+  AttentionLevel.high => cs.error,
+  AttentionLevel.medium => const Color(0xFFD97706), // amber-600
+  AttentionLevel.low => cs.primary,
+};

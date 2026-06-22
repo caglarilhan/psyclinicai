@@ -42,19 +42,18 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
   /// pure exporter pipeline can format it. Demo rows already use the
   /// production Firestore shape, so the adapter is mechanical.
   AuditLogEntry _toPublicEntry(_AuditEntry e) => AuditLogEntry(
-        id: e.id.toString(),
-        kind: e.kind.name,
-        action: e.action,
-        actor: e.actor,
-        entity: e.entity,
-        timestampUtc:
-            DateTime.tryParse(e.timestampUtc) ?? DateTime.now().toUtc(),
-        result: AuditResult.fromId(e.result),
-        userId: e.userId,
-        ip: e.ip,
-        device: e.device,
-        hash: e.hash,
-      );
+    id: e.id.toString(),
+    kind: e.kind.name,
+    action: e.action,
+    actor: e.actor,
+    entity: e.entity,
+    timestampUtc: DateTime.tryParse(e.timestampUtc) ?? DateTime.now().toUtc(),
+    result: AuditResult.fromId(e.result),
+    userId: e.userId,
+    ip: e.ip,
+    device: e.device,
+    hash: e.hash,
+  );
 
   Future<void> _exportInFormat(
     List<_AuditEntry> rows,
@@ -80,23 +79,24 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
     // Unredacted exports are still allowed — auditors sometimes need
     // the raw row — but the event is split so dashboards can flag the
     // unredacted leg for review.
-    unawaited(TelemetryService.instance.capture(
-      redact
-          ? 'compliance.audit_log_export'
-          : 'compliance.audit_log_export_unredacted',
-      properties: {
-        'format': format,
-        'rows': rows.length,
-        'redacted': redact,
-      },
-    ));
+    unawaited(
+      TelemetryService.instance.capture(
+        redact
+            ? 'compliance.audit_log_export'
+            : 'compliance.audit_log_export_unredacted',
+        properties: {'format': format, 'rows': rows.length, 'redacted': redact},
+      ),
+    );
     if (!mounted) return;
     Navigator.of(context).maybePop();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
           '${rows.length} rows copied as ${format.toUpperCase()} '
-          '${redact ? '(PHI redacted)' : '(RAW — PHI included)'}.'),
-    ));
+          '${redact ? '(PHI redacted)' : '(RAW — PHI included)'}.',
+        ),
+      ),
+    );
   }
 
   void _showExportSheet(BuildContext context, List<_AuditEntry> rows) {
@@ -105,71 +105,81 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
       context: context,
       showDragHandle: true,
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setSheetState) {
-          final theme = Theme.of(ctx);
-          final cs = theme.colorScheme;
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  PsySpacing.xl, 0, PsySpacing.xl, PsySpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Export audit log',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: PsySpacing.xs),
-                  Text(
-                    'With redaction on, email-shaped actors and the last '
-                    'two IP octets are masked before the bundle leaves '
-                    'your device. The export itself is logged on this '
-                    'trail either way.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.4),
-                  ),
-                  const SizedBox(height: PsySpacing.md),
-                  SwitchListTile.adaptive(
-                    value: redact,
-                    onChanged: (v) => setSheetState(() => redact = v),
-                    title: const Text('Redact PHI (recommended)'),
-                    subtitle: Text(
-                      redact
-                          ? 'Emails and last two IP octets are masked.'
-                          : 'RAW export — file contains PHI. Audit log '
-                              'flags this leg for compliance review.',
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final theme = Theme.of(ctx);
+            final cs = theme.colorScheme;
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  PsySpacing.xl,
+                  0,
+                  PsySpacing.xl,
+                  PsySpacing.xl,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Export audit log',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: PsySpacing.xs),
+                    Text(
+                      'With redaction on, email-shaped actors and the last '
+                      'two IP octets are masked before the bundle leaves '
+                      'your device. The export itself is logged on this '
+                      'trail either way.',
                       style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: PsySpacing.md),
+                    SwitchListTile.adaptive(
+                      value: redact,
+                      onChanged: (v) => setSheetState(() => redact = v),
+                      title: const Text('Redact PHI (recommended)'),
+                      subtitle: Text(
+                        redact
+                            ? 'Emails and last two IP octets are masked.'
+                            : 'RAW export — file contains PHI. Audit log '
+                                  'flags this leg for compliance review.',
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: redact
                               ? cs.onSurface.withValues(alpha: 0.6)
-                              : cs.error),
+                              : cs.error,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.zero,
                     ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(height: PsySpacing.sm),
-                  _ExportTile(
-                    label: 'JSONL · for Splunk / Datadog',
-                    icon: Icons.data_object,
-                    onTap: () =>
-                        _exportInFormat(rows, 'jsonl', redact: redact),
-                  ),
-                  _ExportTile(
-                    label: 'CSV · for compliance review',
-                    icon: Icons.table_chart_outlined,
-                    onTap: () =>
-                        _exportInFormat(rows, 'csv', redact: redact),
-                  ),
-                  _ExportTile(
-                    label: 'Syslog RFC 5424 · for ELK',
-                    icon: Icons.dns_outlined,
-                    onTap: () =>
-                        _exportInFormat(rows, 'syslog', redact: redact),
-                  ),
-                ],
+                    const SizedBox(height: PsySpacing.sm),
+                    _ExportTile(
+                      label: 'JSONL · for Splunk / Datadog',
+                      icon: Icons.data_object,
+                      onTap: () =>
+                          _exportInFormat(rows, 'jsonl', redact: redact),
+                    ),
+                    _ExportTile(
+                      label: 'CSV · for compliance review',
+                      icon: Icons.table_chart_outlined,
+                      onTap: () => _exportInFormat(rows, 'csv', redact: redact),
+                    ),
+                    _ExportTile(
+                      label: 'Syslog RFC 5424 · for ELK',
+                      icon: Icons.dns_outlined,
+                      onTap: () =>
+                          _exportInFormat(rows, 'syslog', redact: redact),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
@@ -214,22 +224,23 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: entries.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: PsySpacing.sm),
+            separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.sm),
             itemBuilder: (_, i) {
               // Use the entry id (not list index) so filtering doesn't
               // confuse which row is expanded.
               final isOpen = _expandedIndex == entries[i].id;
               final publicEntry = _toPublicEntry(entries[i]);
-              final previousHash =
-                  i == 0 ? null : _toPublicEntry(entries[i - 1]).hash;
+              final previousHash = i == 0
+                  ? null
+                  : _toPublicEntry(entries[i - 1]).hash;
               return _AuditRow(
                 entry: entries[i],
                 theme: theme,
                 cs: cs,
                 expanded: isOpen,
-                onTap: () => setState(() =>
-                    _expandedIndex = isOpen ? null : entries[i].id),
+                onTap: () => setState(
+                  () => _expandedIndex = isOpen ? null : entries[i].id,
+                ),
                 onOpenDetail: () => AuditLogDetailSheet.show(
                   context,
                   entry: publicEntry,
@@ -276,21 +287,28 @@ class _ExportTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(PsyRadius.md),
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+            horizontal: PsySpacing.lg,
+            vertical: PsySpacing.md,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(PsyRadius.md),
             border: Border.all(color: cs.outlineVariant),
           ),
-          child: Row(children: [
-            Icon(icon, color: cs.primary, size: 22),
-            const SizedBox(width: PsySpacing.md),
-            Expanded(
-              child: Text(label,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
-            ),
-            const Icon(Icons.copy_outlined, size: 18),
-          ]),
+          child: Row(
+            children: [
+              Icon(icon, color: cs.primary, size: 22),
+              const SizedBox(width: PsySpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Icon(Icons.copy_outlined, size: 18),
+            ],
+          ),
         ),
       ),
     );
@@ -305,16 +323,27 @@ class _IntegrityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const attestations = [
-      _Attest(Icons.add_box_outlined, 'Append-only',
-          'No row update or delete is possible — only new entries.'),
-      _Attest(Icons.link, 'Hash-chained',
-          'Every entry stores SHA-256 of the previous row.'),
-      _Attest(Icons.fingerprint, 'Tamper-evident',
-          'Any retroactive change invalidates the downstream chain.'),
+      _Attest(
+        Icons.add_box_outlined,
+        'Append-only',
+        'No row update or delete is possible — only new entries.',
+      ),
+      _Attest(
+        Icons.link,
+        'Hash-chained',
+        'Every entry stores SHA-256 of the previous row.',
+      ),
+      _Attest(
+        Icons.fingerprint,
+        'Tamper-evident',
+        'Any retroactive change invalidates the downstream chain.',
+      ),
     ];
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -324,8 +353,9 @@ class _IntegrityCard extends StatelessWidget {
               const SizedBox(width: PsySpacing.sm),
               Text(
                 'Integrity attestation',
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const Spacer(),
               Text(
@@ -349,9 +379,12 @@ class _IntegrityCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(attestations[i].title,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        attestations[i].title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       Text(
                         attestations[i].body,
@@ -448,7 +481,9 @@ class _FilterChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(PsyRadius.full),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.md, vertical: 7),
+            horizontal: PsySpacing.md,
+            vertical: 7,
+          ),
           child: Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
@@ -487,7 +522,9 @@ class _AuditRow extends StatelessWidget {
     return PsyCard(
       onTap: onOpenDetail ?? onTap,
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -509,9 +546,12 @@ class _AuditRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(entry.action,
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      entry.action,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${entry.actor} · ${entry.entity}',
@@ -545,8 +585,7 @@ class _AuditRow extends StatelessWidget {
           ),
           if (expanded) ...[
             const SizedBox(height: PsySpacing.md),
-            Divider(
-                height: 1, color: cs.outlineVariant.withValues(alpha: 0.6)),
+            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.6)),
             const SizedBox(height: PsySpacing.sm),
             _detailRow(theme, cs, 'Timestamp (UTC)', entry.timestampUtc),
             _detailRow(theme, cs, 'User ID', entry.userId),
@@ -554,16 +593,20 @@ class _AuditRow extends StatelessWidget {
             _detailRow(theme, cs, 'Device', entry.device),
             _detailRow(theme, cs, 'Affected record', entry.entity),
             _detailRow(theme, cs, 'Result', entry.result),
-            _detailRow(theme, cs, 'Chain hash', entry.hash,
-                monospace: true),
+            _detailRow(theme, cs, 'Chain hash', entry.hash, monospace: true),
           ],
         ],
       ),
     );
   }
 
-  Widget _detailRow(ThemeData theme, ColorScheme cs, String k, String v,
-      {bool monospace = false}) {
+  Widget _detailRow(
+    ThemeData theme,
+    ColorScheme cs,
+    String k,
+    String v, {
+    bool monospace = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -571,11 +614,13 @@ class _AuditRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(k,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontWeight: FontWeight.w600,
-                )),
+            child: Text(
+              k,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Expanded(
             child: Text(
@@ -597,12 +642,12 @@ enum _AuditKind { read, write, export, signin, delete }
 
 extension on _AuditKind {
   IconData get icon => switch (this) {
-        _AuditKind.read => Icons.visibility_outlined,
-        _AuditKind.write => Icons.edit_outlined,
-        _AuditKind.export => Icons.download_outlined,
-        _AuditKind.signin => Icons.login_outlined,
-        _AuditKind.delete => Icons.delete_outlined,
-      };
+    _AuditKind.read => Icons.visibility_outlined,
+    _AuditKind.write => Icons.edit_outlined,
+    _AuditKind.export => Icons.download_outlined,
+    _AuditKind.signin => Icons.login_outlined,
+    _AuditKind.delete => Icons.delete_outlined,
+  };
   // Arch M3 fix (audit 2026-06-21): the previous palette hard-coded
   // light-mode hex values that washed out / clashed on Material 3
   // dark surfaces. We now branch on the ColorScheme brightness so
@@ -655,116 +700,116 @@ class _AuditEntry {
 // Demo data — mirrors the production Firestore audit_logs schema.
 // IP redacted with U+00B7 dots so the demo doesn't leak a public IP.
 List<_AuditEntry> _demoEntries() => const [
-      _AuditEntry(
-        id: 1,
-        kind: _AuditKind.signin,
-        action: 'Signed in',
-        actor: 'demo@psyclinicai.com',
-        entity: 'IP 92.184.··.··· · macOS · Safari',
-        relativeTime: 'just now',
-        timestampUtc: '2026-06-01T12:00:42Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'a1f2…7c4d',
-      ),
-      _AuditEntry(
-        id: 2,
-        kind: _AuditKind.read,
-        action: 'Opened patient chart',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Patient #demo-001',
-        relativeTime: '2 min ago',
-        timestampUtc: '2026-06-01T11:58:09Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'b2e7…9c1a',
-      ),
-      _AuditEntry(
-        id: 3,
-        kind: _AuditKind.write,
-        action: 'Saved SOAP note',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Session session-1780310462846',
-        relativeTime: '7 min ago',
-        timestampUtc: '2026-06-01T11:53:31Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'c4d1…0e8b',
-      ),
-      _AuditEntry(
-        id: 4,
-        kind: _AuditKind.export,
-        action: 'Generated superbill PDF',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Invoice INV-2026-0014',
-        relativeTime: '24 min ago',
-        timestampUtc: '2026-06-01T11:36:55Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'd9a3…6f02',
-      ),
-      _AuditEntry(
-        id: 5,
-        kind: _AuditKind.export,
-        action: 'Audit log exported (CSV)',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Range 2026-05-25 → 2026-06-01',
-        relativeTime: '35 min ago',
-        timestampUtc: '2026-06-01T11:25:01Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'e5b4…2a17',
-      ),
-      _AuditEntry(
-        id: 6,
-        kind: _AuditKind.write,
-        action: 'Updated safety plan',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Patient #demo-001',
-        relativeTime: '1 h ago',
-        timestampUtc: '2026-06-01T11:00:18Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: 'f7c8…b32d',
-      ),
-      _AuditEntry(
-        id: 7,
-        kind: _AuditKind.read,
-        action: 'Opened outcomes dashboard',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Cohort all',
-        relativeTime: '2 h ago',
-        timestampUtc: '2026-06-01T10:02:47Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: '08e1…4c69',
-      ),
-      _AuditEntry(
-        id: 8,
-        kind: _AuditKind.signin,
-        action: 'Signed out',
-        actor: 'demo@psyclinicai.com',
-        entity: 'Manual',
-        relativeTime: '14 h ago',
-        timestampUtc: '2026-05-31T22:01:09Z',
-        userId: 'usr_3F8h2K9aQ7vMnLp4',
-        ip: '92.184.··.···',
-        device: 'macOS 14 · Safari 17',
-        result: 'success',
-        hash: '193a…7fe2',
-      ),
-    ];
+  _AuditEntry(
+    id: 1,
+    kind: _AuditKind.signin,
+    action: 'Signed in',
+    actor: 'demo@psyclinicai.com',
+    entity: 'IP 92.184.··.··· · macOS · Safari',
+    relativeTime: 'just now',
+    timestampUtc: '2026-06-01T12:00:42Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'a1f2…7c4d',
+  ),
+  _AuditEntry(
+    id: 2,
+    kind: _AuditKind.read,
+    action: 'Opened patient chart',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Patient #demo-001',
+    relativeTime: '2 min ago',
+    timestampUtc: '2026-06-01T11:58:09Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'b2e7…9c1a',
+  ),
+  _AuditEntry(
+    id: 3,
+    kind: _AuditKind.write,
+    action: 'Saved SOAP note',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Session session-1780310462846',
+    relativeTime: '7 min ago',
+    timestampUtc: '2026-06-01T11:53:31Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'c4d1…0e8b',
+  ),
+  _AuditEntry(
+    id: 4,
+    kind: _AuditKind.export,
+    action: 'Generated superbill PDF',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Invoice INV-2026-0014',
+    relativeTime: '24 min ago',
+    timestampUtc: '2026-06-01T11:36:55Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'd9a3…6f02',
+  ),
+  _AuditEntry(
+    id: 5,
+    kind: _AuditKind.export,
+    action: 'Audit log exported (CSV)',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Range 2026-05-25 → 2026-06-01',
+    relativeTime: '35 min ago',
+    timestampUtc: '2026-06-01T11:25:01Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'e5b4…2a17',
+  ),
+  _AuditEntry(
+    id: 6,
+    kind: _AuditKind.write,
+    action: 'Updated safety plan',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Patient #demo-001',
+    relativeTime: '1 h ago',
+    timestampUtc: '2026-06-01T11:00:18Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: 'f7c8…b32d',
+  ),
+  _AuditEntry(
+    id: 7,
+    kind: _AuditKind.read,
+    action: 'Opened outcomes dashboard',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Cohort all',
+    relativeTime: '2 h ago',
+    timestampUtc: '2026-06-01T10:02:47Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: '08e1…4c69',
+  ),
+  _AuditEntry(
+    id: 8,
+    kind: _AuditKind.signin,
+    action: 'Signed out',
+    actor: 'demo@psyclinicai.com',
+    entity: 'Manual',
+    relativeTime: '14 h ago',
+    timestampUtc: '2026-05-31T22:01:09Z',
+    userId: 'usr_3F8h2K9aQ7vMnLp4',
+    ip: '92.184.··.···',
+    device: 'macOS 14 · Safari 17',
+    result: 'success',
+    hash: '193a…7fe2',
+  ),
+];

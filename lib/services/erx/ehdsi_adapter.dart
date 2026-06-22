@@ -23,8 +23,9 @@ class EhdsiAdapter implements ErxAdapter {
       // eHDSI expects ATC codes (Anatomical Therapeutic Chemical).
       // We normalise to uppercase before checking so casing typos
       // upstream do not silently fail validation.
-      if (!RegExp(r'^[A-Z]\d{2}[A-Z]{2}\d{2}$')
-          .hasMatch(item.drugCode.toUpperCase())) {
+      if (!RegExp(
+        r'^[A-Z]\d{2}[A-Z]{2}\d{2}$',
+      ).hasMatch(item.drugCode.toUpperCase())) {
         return 'Item ${item.drugName} drugCode "${item.drugCode}" is not '
             'a valid ATC code (expected e.g. N06AB04).';
       }
@@ -35,10 +36,12 @@ class EhdsiAdapter implements ErxAdapter {
   @override
   String buildPayload(Prescription rx) {
     final items = rx.items
-        .map((i) =>
-            '<item code="${xmlEscape(i.drugCode)}" '
-            'dose="${xmlEscape(i.dose)}" '
-            'duration="${i.durationDays}d"/>')
+        .map(
+          (i) =>
+              '<item code="${xmlEscape(i.drugCode)}" '
+              'dose="${xmlEscape(i.dose)}" '
+              'duration="${i.durationDays}d"/>',
+        )
         .join();
     return '<eHDSI version="2.4" market="eu">'
         '<patient id="${xmlEscape(rx.patientId)}"/>'

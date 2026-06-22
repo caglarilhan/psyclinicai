@@ -30,17 +30,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify formatting on owned code
-        run: |
-          dart format --set-exit-if-changed --output=none \
-            lib/services/copilot/ \
-            lib/services/billing/ \
-            lib/services/assessments/ \
-            lib/services/data/ \
-            lib/widgets/copilot/ \
-            lib/screens/settings/api_keys_screen.dart \
-            lib/screens/billing/superbill_screen.dart \
-            lib/screens/assessments/assessment_screen.dart
+      - name: Verify formatting (whole tree)
+        # Audit 2026-06-21 / CI item 8 close: the previous list of 8
+        # paths covered ~7% of lib/ and let formatter drift accumulate
+        # on the other 93%. After the 2026-06-22 sweep we now enforce
+        # `dart format` on the full lib/ + test/ surface so PRs cannot
+        # reintroduce drift.
+        run: dart format --set-exit-if-changed --output=none lib/ test/
 
       - name: Analyze
         # Fails on errors + warnings (0 tolerated on owned code). Info-level

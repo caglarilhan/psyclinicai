@@ -291,10 +291,11 @@ class _ProviderCard extends StatelessWidget {
                     // dark-mode surface. Use a brightness-aware
                     // success swatch with adequate WCAG-AA contrast
                     // for both themes.
-                    color: (theme.brightness == Brightness.dark
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFF15803D))
-                        .withValues(alpha: 0.16),
+                    color:
+                        (theme.brightness == Brightness.dark
+                                ? const Color(0xFF34D399)
+                                : const Color(0xFF15803D))
+                            .withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(

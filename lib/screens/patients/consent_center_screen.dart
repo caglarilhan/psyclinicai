@@ -154,17 +154,13 @@ class _ConsentCard extends StatelessWidget {
                 vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: isActive
-                    ? cs.primaryContainer
-                    : cs.surfaceContainerHigh,
+                color: isActive ? cs.primaryContainer : cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 isActive ? 'Active' : 'Not given',
                 style: t.labelSmall?.copyWith(
-                  color: isActive
-                      ? cs.onPrimaryContainer
-                      : cs.onSurfaceVariant,
+                  color: isActive ? cs.onPrimaryContainer : cs.onSurfaceVariant,
                 ),
               ),
             ),

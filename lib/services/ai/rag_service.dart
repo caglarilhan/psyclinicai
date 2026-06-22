@@ -121,11 +121,7 @@ class RagService {
     final client = _client;
     if (client == null) return null;
     try {
-      return await client.feedback(
-        auditId: auditId,
-        score: score,
-        note: note,
-      );
+      return await client.feedback(auditId: auditId, score: score, note: note);
     } catch (_) {
       return null;
     }
@@ -140,12 +136,10 @@ class RagService {
 /// Three-state result the UI can pattern-match on without try/catch.
 class RagResult {
   const RagResult._({this.answer, this.errorMessage, required this.state});
-  const RagResult.disabled()
-      : this._(state: RagState.disabled);
-  const RagResult.ok(RagAnswer ans)
-      : this._(answer: ans, state: RagState.ok);
+  const RagResult.disabled() : this._(state: RagState.disabled);
+  const RagResult.ok(RagAnswer ans) : this._(answer: ans, state: RagState.ok);
   const RagResult.error(String message)
-      : this._(errorMessage: message, state: RagState.error);
+    : this._(errorMessage: message, state: RagState.error);
 
   final RagAnswer? answer;
   final String? errorMessage;

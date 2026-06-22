@@ -24,20 +24,18 @@ class PromSubmission {
     }
   }
 
-  factory PromSubmission.fromJson(Map<String, dynamic> json) =>
-      PromSubmission(
-        id: json['id'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        instrument: json['instrument'] as String? ?? '',
-        score: (json['score'] as num? ?? 0).toInt(),
-        severity: json['severity'] as String? ?? '',
-        requestedByClinicianId:
-            json['requestedByClinicianId'] as String?,
-        responses: (json['responses'] as Map<String, dynamic>?)
-            ?.map((k, v) => MapEntry(k, (v as num).toInt())),
-        completedAt:
-            DateTime.tryParse(json['completedAt'] as String? ?? ''),
-      );
+  factory PromSubmission.fromJson(Map<String, dynamic> json) => PromSubmission(
+    id: json['id'] as String? ?? '',
+    patientId: json['patientId'] as String? ?? '',
+    instrument: json['instrument'] as String? ?? '',
+    score: (json['score'] as num? ?? 0).toInt(),
+    severity: json['severity'] as String? ?? '',
+    requestedByClinicianId: json['requestedByClinicianId'] as String?,
+    responses: (json['responses'] as Map<String, dynamic>?)?.map(
+      (k, v) => MapEntry(k, (v as num).toInt()),
+    ),
+    completedAt: DateTime.tryParse(json['completedAt'] as String? ?? ''),
+  );
 
   final String id;
   final String patientId;
@@ -82,14 +80,14 @@ class PromSubmission {
   bool get triggersHighRiskFollowUp => phq9Item9Positive == true;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'instrument': instrument,
-        'score': score,
-        'severity': severity,
-        if (requestedByClinicianId != null)
-          'requestedByClinicianId': requestedByClinicianId,
-        if (responses != null) 'responses': responses,
-        'completedAt': completedAt.toIso8601String(),
-      };
+    'id': id,
+    'patientId': patientId,
+    'instrument': instrument,
+    'score': score,
+    'severity': severity,
+    if (requestedByClinicianId != null)
+      'requestedByClinicianId': requestedByClinicianId,
+    if (responses != null) 'responses': responses,
+    'completedAt': completedAt.toIso8601String(),
+  };
 }

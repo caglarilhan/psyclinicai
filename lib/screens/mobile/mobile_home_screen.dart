@@ -9,7 +9,8 @@ class MobileHomeScreen extends StatefulWidget {
   State<MobileHomeScreen> createState() => _MobileHomeScreenState();
 }
 
-class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProviderStateMixin {
+class _MobileHomeScreenState extends State<MobileHomeScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final PageController _pageController = PageController();
   int _currentPage = 0;
@@ -18,7 +19,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    
+
     // Auto-scroll for featured content
     _startAutoScroll();
   }
@@ -358,7 +359,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -380,10 +386,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
           ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
         ],
@@ -391,7 +394,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildFeaturedCard(String title, String subtitle, IconData icon, Color color) {
+  Widget _buildFeaturedCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
@@ -438,7 +446,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -467,7 +480,13 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildActivityItem(String action, String patient, String time, IconData icon, Color color) {
+  Widget _buildActivityItem(
+    String action,
+    String patient,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -483,31 +502,22 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
         subtitle: Text(patient),
         trailing: Text(
           time,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
         ),
       ),
     );
   }
 
   Widget _buildPatientsTab() {
-    return const Center(
-      child: Text('Hastalar sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Hastalar sekmesi - Mobil optimizasyon'));
   }
 
   Widget _buildAppointmentsTab() {
-    return const Center(
-      child: Text('Randevular sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Randevular sekmesi - Mobil optimizasyon'));
   }
 
   Widget _buildProfileTab() {
-    return const Center(
-      child: Text('Profil sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Profil sekmesi - Mobil optimizasyon'));
   }
 
   void _showNotifications() {
@@ -521,17 +531,29 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
           children: [
             Text(
               'Bildirimler',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: [
-                  _buildNotificationItem('Yeni randevu talebi', 'Ahmet Yılmaz', '2 saat önce'),
-                  _buildNotificationItem('Reçete onayı', 'Dr. Mehmet Kaya', '4 saat önce'),
-                  _buildNotificationItem('Sistem güncellemesi', 'Sistem', '1 gün önce'),
+                  _buildNotificationItem(
+                    'Yeni randevu talebi',
+                    'Ahmet Yılmaz',
+                    '2 saat önce',
+                  ),
+                  _buildNotificationItem(
+                    'Reçete onayı',
+                    'Dr. Mehmet Kaya',
+                    '4 saat önce',
+                  ),
+                  _buildNotificationItem(
+                    'Sistem güncellemesi',
+                    'Sistem',
+                    '1 gün önce',
+                  ),
                 ],
               ),
             ),
@@ -551,19 +573,13 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
       subtitle: Text(subtitle),
       trailing: Text(
         time,
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 12,
-        ),
+        style: TextStyle(color: Colors.grey[600], fontSize: 12),
       ),
     );
   }
 
   void _showSearch() {
-    showSearch(
-      context: context,
-      delegate: MobileSearchDelegate(),
-    );
+    showSearch(context: context, delegate: MobileSearchDelegate());
   }
 
   void _addPatient() {
@@ -616,9 +632,7 @@ class MobileSearchDelegate extends SearchDelegate<String?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return Center(
-      child: Text('Arama sonuçları: $query'),
-    );
+    return Center(child: Text('Arama sonuçları: $query'));
   }
 
   @override

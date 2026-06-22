@@ -36,8 +36,9 @@ void main() {
 
     test('ordering does not matter (commutative)', () {
       expect(
-          contrastRatio(teal500, white),
-          closeTo(contrastRatio(white, teal500), 1e-9));
+        contrastRatio(teal500, white),
+        closeTo(contrastRatio(white, teal500), 1e-9),
+      );
     });
   });
 
@@ -54,8 +55,11 @@ void main() {
     });
 
     test('muted grey on white fails AA-small (caption-only colour)', () {
-      expect(passesWcagAa(muted, surface), isFalse,
-          reason: 'PsyColors.n400 is meant for captions, not body text');
+      expect(
+        passesWcagAa(muted, surface),
+        isFalse,
+        reason: 'PsyColors.n400 is meant for captions, not body text',
+      );
     });
 
     test('passesWcagAaa never holds when passesWcagAa is false', () {
@@ -67,8 +71,7 @@ void main() {
       if (aaa) expect(aa, isTrue);
     });
 
-    test('AAA thresholds are correctly numbered (7.0 small, 4.5 large)',
-        () {
+    test('AAA thresholds are correctly numbered (7.0 small, 4.5 large)', () {
       expect(wcagAaaSmallText, 7.0);
       expect(wcagAaSmallText, 4.5);
       expect(wcagAaLargeText, 3.0);

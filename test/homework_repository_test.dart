@@ -10,25 +10,27 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   HomeworkItem item(String id, String pid, String due) => HomeworkItem(
-        id: id,
-        patientId: pid,
-        title: 'task $id',
-        dueDate: DateTime.parse(due),
-      );
+    id: id,
+    patientId: pid,
+    title: 'task $id',
+    dueDate: DateTime.parse(due),
+  );
 
-  test('forPatient filters by patient and sorts by dueDate ascending',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final repo = HomeworkRepository();
-    await repo.initialize();
-    await repo.add(item('a', 'p1', '2026-06-10T00:00:00.000'));
-    await repo.add(item('b', 'p1', '2026-06-01T00:00:00.000'));
-    await repo.add(item('c', 'p2', '2026-06-05T00:00:00.000'));
+  test(
+    'forPatient filters by patient and sorts by dueDate ascending',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final repo = HomeworkRepository();
+      await repo.initialize();
+      await repo.add(item('a', 'p1', '2026-06-10T00:00:00.000'));
+      await repo.add(item('b', 'p1', '2026-06-01T00:00:00.000'));
+      await repo.add(item('c', 'p2', '2026-06-05T00:00:00.000'));
 
-    final p1 = repo.forPatient('p1');
-    expect(p1.map((i) => i.id), ['b', 'a']); // earliest due first
-    expect(repo.forPatient('p2').map((i) => i.id), ['c']); // isolation
-  });
+      final p1 = repo.forPatient('p1');
+      expect(p1.map((i) => i.id), ['b', 'a']); // earliest due first
+      expect(repo.forPatient('p2').map((i) => i.id), ['c']); // isolation
+    },
+  );
 
   test('toggleDone flips the target only', () async {
     SharedPreferences.setMockInitialValues({});

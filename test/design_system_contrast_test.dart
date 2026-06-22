@@ -27,19 +27,24 @@ void main() {
   group('Light scheme — body text', () {
     test('onSurface on surface passes AA-small (slate on white)', () {
       final ratio = contrastRatio(lightOnSurface, lightSurface);
-      expect(ratio, greaterThanOrEqualTo(wcagAaSmallText),
-          reason: 'Body slate must clear 4.5 against a white card');
+      expect(
+        ratio,
+        greaterThanOrEqualTo(wcagAaSmallText),
+        reason: 'Body slate must clear 4.5 against a white card',
+      );
       expect(passesWcagAa(lightOnSurface, lightSurface), isTrue);
     });
 
     test('onSurface on tinted card surface still passes AA-small', () {
-      expect(
-          passesWcagAa(lightOnSurface, lightSurfaceContainerLow), isTrue);
+      expect(passesWcagAa(lightOnSurface, lightSurfaceContainerLow), isTrue);
     });
 
     test('AAA-small holds for slate body on white (≥ 7.0)', () {
-      expect(passesWcagAaa(lightOnSurface, lightSurface), isTrue,
-          reason: 'Premium tier — body text should beat 7.0 too');
+      expect(
+        passesWcagAaa(lightOnSurface, lightSurface),
+        isTrue,
+        reason: 'Premium tier — body text should beat 7.0 too',
+      );
     });
   });
 
@@ -54,8 +59,7 @@ void main() {
 
   group('Light scheme — primary actions', () {
     test('primary teal on white passes AA-large (button label)', () {
-      expect(passesWcagAa(lightPrimary, lightSurface, largeText: true),
-          isTrue);
+      expect(passesWcagAa(lightPrimary, lightSurface, largeText: true), isTrue);
     });
   });
 
@@ -64,22 +68,18 @@ void main() {
       expect(passesWcagAa(darkOnSurface, darkSurface), isTrue);
     });
 
-    test('dark primary teal-300 still legible on dark slate (AA-large)',
-        () {
-      expect(passesWcagAa(darkPrimary, darkSurface, largeText: true),
-          isTrue);
+    test('dark primary teal-300 still legible on dark slate (AA-large)', () {
+      expect(passesWcagAa(darkPrimary, darkSurface, largeText: true), isTrue);
     });
   });
 
   group('Risk band chips (white background)', () {
     test('riskMinimal green passes AA-large on white', () {
-      expect(passesWcagAa(riskMinimal, lightSurface, largeText: true),
-          isTrue);
+      expect(passesWcagAa(riskMinimal, lightSurface, largeText: true), isTrue);
     });
 
     test('riskSevere red passes AA-large on white', () {
-      expect(passesWcagAa(riskSevere, lightSurface, largeText: true),
-          isTrue);
+      expect(passesWcagAa(riskSevere, lightSurface, largeText: true), isTrue);
     });
   });
 }

@@ -18,8 +18,7 @@ class _StubFirestore implements FirebaseFirestore {
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _Write {
@@ -44,16 +43,14 @@ class _StubCollection implements CollectionReference<Map<String, dynamic>> {
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _StubDoc implements DocumentReference<Map<String, dynamic>> {
   @override
   String get id => 'stub';
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -87,10 +84,7 @@ void main() {
     test('returns denied (not throws) when Firestore raises', () async {
       final stub = _StubFirestore()..nextThrows = true;
       final repo = WaitlistRepository(firestore: stub);
-      final r = await repo.recordLanding(
-        email: 'a@b.co',
-        source: 'hero',
-      );
+      final r = await repo.recordLanding(email: 'a@b.co', source: 'hero');
       expect(r, WaitlistOutcome.denied);
       // Best-effort capture: NO row was written.
       expect(stub.writes, isEmpty);
@@ -101,10 +95,7 @@ void main() {
       // is false in the test runner so the resolver returns null →
       // skipped.
       final repo = WaitlistRepository();
-      final r = await repo.recordLanding(
-        email: 'a@b.co',
-        source: 'hero',
-      );
+      final r = await repo.recordLanding(email: 'a@b.co', source: 'hero');
       expect(r, WaitlistOutcome.skipped);
     });
   });

@@ -33,30 +33,35 @@ class TrustBarSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
       child: Center(
         child: ConstrainedBox(
-          constraints:
-              const BoxConstraints(maxWidth: LandingTokens.maxContentWidth),
+          constraints: const BoxConstraints(
+            maxWidth: LandingTokens.maxContentWidth,
+          ),
           child: Wrap(
             spacing: 36,
             runSpacing: 14,
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: items
-                .map((it) => Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(it.icon,
-                            size: 18,
-                            color: cs.onSurface.withValues(alpha: 0.65)),
-                        const SizedBox(width: 8),
-                        Text(
-                          it.label,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.75),
-                            fontWeight: FontWeight.w600,
-                          ),
+                .map(
+                  (it) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        it.icon,
+                        size: 18,
+                        color: cs.onSurface.withValues(alpha: 0.65),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        it.label,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ))
+                      ),
+                    ],
+                  ),
+                )
                 .toList(),
           ),
         ),

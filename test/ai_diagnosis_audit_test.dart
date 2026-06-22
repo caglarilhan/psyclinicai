@@ -12,23 +12,22 @@ void main() {
     ],
     AiSuggestionDisposition disposition = AiSuggestionDisposition.pending,
     String consentPolicyVersion = '2026-06',
-  }) =>
-      AiDiagnosisAudit(
-        id: 'evt1',
-        patientId: 'demo-1',
-        clinicianId: 'usr_demo',
-        model: 'claude-haiku-4-5-20251001',
-        temperature: 0.2,
-        candidateLabel: candidateLabel,
-        dsm5Code: dsm5Code,
-        icd10Code: icd10Code,
-        criteriaMatched: 6,
-        criteriaMissing: 1,
-        citations: citations,
-        disposition: disposition,
-        consentPolicyVersion: consentPolicyVersion,
-        createdAt: DateTime.utc(2026, 6, 1, 12),
-      );
+  }) => AiDiagnosisAudit(
+    id: 'evt1',
+    patientId: 'demo-1',
+    clinicianId: 'usr_demo',
+    model: 'claude-haiku-4-5-20251001',
+    temperature: 0.2,
+    candidateLabel: candidateLabel,
+    dsm5Code: dsm5Code,
+    icd10Code: icd10Code,
+    criteriaMatched: 6,
+    criteriaMissing: 1,
+    citations: citations,
+    disposition: disposition,
+    consentPolicyVersion: consentPolicyVersion,
+    createdAt: DateTime.utc(2026, 6, 1, 12),
+  );
 
   group('AiDiagnosisAudit round-trip', () {
     test('toJson + fromJson preserve every field', () {
@@ -74,8 +73,7 @@ void main() {
   });
 
   group('isWellFormed (provenance guard)', () {
-    test('true when citations + candidate + at least one code are present',
-        () {
+    test('true when citations + candidate + at least one code are present', () {
       expect(build().isWellFormed, isTrue);
     });
 
@@ -93,8 +91,7 @@ void main() {
   });
 
   group('copyWith / disposition', () {
-    test('copyWith updates only disposition, leaves the rest unchanged',
-        () {
+    test('copyWith updates only disposition, leaves the rest unchanged', () {
       final a = build();
       final b = a.copyWith(disposition: AiSuggestionDisposition.accepted);
       expect(b.disposition, AiSuggestionDisposition.accepted);
@@ -104,29 +101,32 @@ void main() {
       expect(b.citations, a.citations);
     });
 
-    test('AiSuggestionDisposition.fromId round-trips, defaults to pending',
-        () {
+    test('AiSuggestionDisposition.fromId round-trips, defaults to pending', () {
       for (final d in AiSuggestionDisposition.values) {
         expect(AiSuggestionDisposition.fromId(d.name), d);
       }
       expect(
-          AiSuggestionDisposition.fromId('garbage'),
-          AiSuggestionDisposition.pending);
-      expect(AiSuggestionDisposition.fromId(null),
-          AiSuggestionDisposition.pending);
+        AiSuggestionDisposition.fromId('garbage'),
+        AiSuggestionDisposition.pending,
+      );
+      expect(
+        AiSuggestionDisposition.fromId(null),
+        AiSuggestionDisposition.pending,
+      );
     });
   });
 
   group('PHI guard', () {
-    test('a candidate label longer than 120 chars asserts in debug mode',
-        () {
+    test('a candidate label longer than 120 chars asserts in debug mode', () {
       final tooLong = 'x' * 121;
       expect(() => build(candidateLabel: tooLong), throwsA(isA<Error>()));
     });
 
     test('empty consentPolicyVersion asserts (GDPR Art. 7 trace)', () {
-      expect(() => build(consentPolicyVersion: ''),
-          throwsA(isA<AssertionError>()));
+      expect(
+        () => build(consentPolicyVersion: ''),
+        throwsA(isA<AssertionError>()),
+      );
     });
   });
 

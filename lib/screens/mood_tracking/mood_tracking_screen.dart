@@ -121,28 +121,34 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Today's check-in",
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  "Today's check-in",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.lg),
                 _Slider(
-                    label: 'Mood',
-                    value: _mood,
-                    onChanged: (v) => setState(() => _mood = v),
-                    theme: theme,
-                    color: PsyColors.success),
+                  label: 'Mood',
+                  value: _mood,
+                  onChanged: (v) => setState(() => _mood = v),
+                  theme: theme,
+                  color: PsyColors.success,
+                ),
                 _Slider(
-                    label: 'Sleep quality',
-                    value: _sleep,
-                    onChanged: (v) => setState(() => _sleep = v),
-                    theme: theme,
-                    color: PsyColors.info),
+                  label: 'Sleep quality',
+                  value: _sleep,
+                  onChanged: (v) => setState(() => _sleep = v),
+                  theme: theme,
+                  color: PsyColors.info,
+                ),
                 _Slider(
-                    label: 'Anxiety (lower is better)',
-                    value: _anxiety,
-                    onChanged: (v) => setState(() => _anxiety = v),
-                    theme: theme,
-                    color: PsyColors.warning),
+                  label: 'Anxiety (lower is better)',
+                  value: _anxiety,
+                  onChanged: (v) => setState(() => _anxiety = v),
+                  theme: theme,
+                  color: PsyColors.warning,
+                ),
                 const SizedBox(height: PsySpacing.md),
                 TextField(
                   controller: _notes,
@@ -165,11 +171,13 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
                     if (_msg != null) ...[
                       const SizedBox(width: PsySpacing.lg),
                       Expanded(
-                        child: Text(_msg!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.primary,
-                              fontWeight: FontWeight.w600,
-                            )),
+                        child: Text(
+                          _msg!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -178,15 +186,21 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.xxl),
-          Text('30-day trend',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '30-day trend',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.md),
           _TrendCard(patientId: _patientId, demoEntries: _demoEntries),
           const SizedBox(height: PsySpacing.xxl),
-          Text('Recent entries',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Recent entries',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.md),
           _EntryList(patientId: _patientId, demoEntries: _demoEntries),
         ],
@@ -219,30 +233,33 @@ class _Slider extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(label,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: PsySpacing.md, vertical: 2),
+                  horizontal: PsySpacing.md,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(PsyRadius.full),
                 ),
-                child: Text('$value / 5',
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.w700,
-                    )),
+                child: Text(
+                  '$value / 5',
+                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
           SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: color,
-              thumbColor: color,
-            ),
+            data: SliderTheme.of(
+              context,
+            ).copyWith(activeTrackColor: color, thumbColor: color),
             child: Slider(
               value: value.toDouble(),
               min: 1,
@@ -270,8 +287,7 @@ class _TrendCard extends StatelessWidget {
       return _empty(context, 'Sign in to load your patient roster.');
     }
     return StreamBuilder<List<MoodEntry>>(
-      stream:
-          MoodRepository.instance.watch(profile.clinicId, patientId),
+      stream: MoodRepository.instance.watch(profile.clinicId, patientId),
       builder: (ctx, snap) {
         final entries = snap.data ?? const <MoodEntry>[];
         if (entries.isEmpty) {
@@ -287,9 +303,7 @@ class _TrendCard extends StatelessWidget {
     return PsyCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
-        child: Center(
-          child: Text(body, style: theme.textTheme.bodyMedium),
-        ),
+        child: Center(child: Text(body, style: theme.textTheme.bodyMedium)),
       ),
     );
   }
@@ -298,8 +312,11 @@ class _TrendCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final ordered = entries.toList()
-      ..sort((a, b) => (a.completedAt ?? DateTime(0))
-          .compareTo(b.completedAt ?? DateTime(0)));
+      ..sort(
+        (a, b) => (a.completedAt ?? DateTime(0)).compareTo(
+          b.completedAt ?? DateTime(0),
+        ),
+      );
     final mood = <FlSpot>[];
     final sleep = <FlSpot>[];
     final anxiety = <FlSpot>[];
@@ -308,21 +325,20 @@ class _TrendCard extends StatelessWidget {
       sleep.add(FlSpot(i.toDouble(), ordered[i].sleep.toDouble()));
       anxiety.add(FlSpot(i.toDouble(), ordered[i].anxiety.toDouble()));
     }
-    LineChartBarData line(List<FlSpot> spots, Color c) =>
-        LineChartBarData(
-          spots: spots,
-          isCurved: true,
+    LineChartBarData line(List<FlSpot> spots, Color c) => LineChartBarData(
+      spots: spots,
+      isCurved: true,
+      color: c,
+      barWidth: 2.4,
+      dotData: FlDotData(
+        getDotPainter: (s, p, b, i) => FlDotCirclePainter(
+          radius: 3,
           color: c,
-          barWidth: 2.4,
-          dotData: FlDotData(
-            getDotPainter: (s, p, b, i) => FlDotCirclePainter(
-              radius: 3,
-              color: c,
-              strokeWidth: 2,
-              strokeColor: Colors.white,
-            ),
-          ),
-        );
+          strokeWidth: 2,
+          strokeColor: Colors.white,
+        ),
+      ),
+    );
     return PsyCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,10 +351,12 @@ class _TrendCard extends StatelessWidget {
               const SizedBox(width: PsySpacing.lg),
               _legend('Anxiety', PsyColors.warning),
               const Spacer(),
-              Text('${ordered.length} entries',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6),
-                  )),
+              Text(
+                '${ordered.length} entries',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.lg),
@@ -351,12 +369,9 @@ class _TrendCard extends StatelessWidget {
                 gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: const FlTitlesData(
-                  rightTitles: AxisTitles(
-                      ),
-                  topTitles: AxisTitles(
-                      ),
-                  bottomTitles: AxisTitles(
-                      ),
+                  rightTitles: AxisTitles(),
+                  topTitles: AxisTitles(),
+                  bottomTitles: AxisTitles(),
                 ),
                 lineBarsData: [
                   line(mood, PsyColors.success),
@@ -372,19 +387,20 @@ class _TrendCard extends StatelessWidget {
   }
 
   Widget _legend(String label, Color c) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-              width: 10,
-              height: 10,
-              decoration:
-                  BoxDecoration(color: c, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 6),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    ],
+  );
 }
 
 class _EntryList extends StatelessWidget {
@@ -408,8 +424,7 @@ class _EntryList extends StatelessWidget {
       );
     }
     return StreamBuilder<List<MoodEntry>>(
-      stream:
-          MoodRepository.instance.watch(profile.clinicId, patientId),
+      stream: MoodRepository.instance.watch(profile.clinicId, patientId),
       builder: (ctx, snap) {
         final entries = snap.data ?? const <MoodEntry>[];
         return _list(context, entries);
@@ -430,40 +445,38 @@ class _EntryList extends StatelessWidget {
     final cs = theme.colorScheme;
     return Column(
       children: entries
-          .map((e) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                child: PsyCard(
-                  child: Row(
-                    children: [
-                      _stat('Mood', e.mood, PsyColors.success),
-                      const SizedBox(width: PsySpacing.lg),
-                      _stat('Sleep', e.sleep, PsyColors.info),
-                      const SizedBox(width: PsySpacing.lg),
-                      _stat('Anxiety', e.anxiety, PsyColors.warning),
-                      const SizedBox(width: PsySpacing.xl),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            if (e.notes.isNotEmpty)
-                              Text(e.notes,
-                                  style: theme.textTheme.bodyMedium),
-                            Text(
-                                e.completedAt == null
-                                    ? '—'
-                                    : _fmt(e.completedAt!),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: cs.onSurface
-                                      .withValues(alpha: 0.55),
-                                )),
-                          ],
-                        ),
+          .map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.md),
+              child: PsyCard(
+                child: Row(
+                  children: [
+                    _stat('Mood', e.mood, PsyColors.success),
+                    const SizedBox(width: PsySpacing.lg),
+                    _stat('Sleep', e.sleep, PsyColors.info),
+                    const SizedBox(width: PsySpacing.lg),
+                    _stat('Anxiety', e.anxiety, PsyColors.warning),
+                    const SizedBox(width: PsySpacing.xl),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (e.notes.isNotEmpty)
+                            Text(e.notes, style: theme.textTheme.bodyMedium),
+                          Text(
+                            e.completedAt == null ? '—' : _fmt(e.completedAt!),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -479,14 +492,20 @@ class _EntryList extends StatelessWidget {
             color: color.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: Text('$v',
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.w700)),
+          child: Text(
+            '$v',
+            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+          ),
         ),
         const SizedBox(height: 2),
-        Text(label,
-            style: TextStyle(
-                fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }

@@ -46,7 +46,8 @@ class HowItWorksSection extends StatelessWidget {
           const SectionTitle('Three steps. One workflow.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'From a live session to an insurance-ready document, without leaving the app.'),
+            'From a live session to an insurance-ready document, without leaving the app.',
+          ),
           const SizedBox(height: 48),
           LayoutBuilder(
             builder: (ctx, c) {
@@ -55,11 +56,12 @@ class HowItWorksSection extends StatelessWidget {
                 spacing: LandingTokens.gridGap,
                 runSpacing: LandingTokens.gridGap,
                 children: steps
-                    .map((s) => SizedBox(
-                          width:
-                              isWide ? (c.maxWidth - 48) / 3 : c.maxWidth,
-                          child: _StepTile(step: s, theme: theme, cs: cs),
-                        ))
+                    .map(
+                      (s) => SizedBox(
+                        width: isWide ? (c.maxWidth - 48) / 3 : c.maxWidth,
+                        child: _StepTile(step: s, theme: theme, cs: cs),
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -84,8 +86,7 @@ class _Step {
 }
 
 class _StepTile extends StatelessWidget {
-  const _StepTile(
-      {required this.step, required this.theme, required this.cs});
+  const _StepTile({required this.step, required this.theme, required this.cs});
   final _Step step;
   final ThemeData theme;
   final ColorScheme cs;
@@ -115,7 +116,9 @@ class _StepTile extends StatelessWidget {
                 child: Text(
                   '${step.number}',
                   style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -123,15 +126,21 @@ class _StepTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text(step.title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600, height: 1.3)),
+          Text(
+            step.title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
           const SizedBox(height: 10),
-          Text(step.body,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72),
-                height: 1.55,
-              )),
+          Text(
+            step.body,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.72),
+              height: 1.55,
+            ),
+          ),
         ],
       ),
     );

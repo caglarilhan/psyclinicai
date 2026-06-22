@@ -5,13 +5,13 @@ import 'package:psyclinicai/services/data/firestore_schema.dart';
 void main() {
   group('ClinicianProfile.licenseExpiringSoon', () {
     ClinicianProfile build({DateTime? expiry}) => ClinicianProfile(
-          userId: 'u1',
-          clinicId: 'c1',
-          email: 'jane@example.com',
-          fullName: 'Jane Doe',
-          role: ClinicianRole.therapist,
-          licenseExpiry: expiry,
-        );
+      userId: 'u1',
+      clinicId: 'c1',
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+      role: ClinicianRole.therapist,
+      licenseExpiry: expiry,
+    );
 
     test('is false when no expiry is on file', () {
       expect(build().licenseExpiringSoon, isFalse);

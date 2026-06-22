@@ -32,7 +32,8 @@ class InsuranceClaimBoardScreen extends StatelessWidget {
     return AppShell(
       routeName: '/billing/claims',
       title: 'Insurance claim board',
-      subtitle: 'X12 837P submissions tracked through the payer '
+      subtitle:
+          'X12 837P submissions tracked through the payer '
           'lifecycle. Click a card to drill into the audit chain.',
       scrollable: false,
       breadcrumbs: const [
@@ -153,38 +154,52 @@ class _Lane extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(children: [
-            Expanded(
-              child: Text(status.label,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ),
-            PsyBadge(label: '${claims.length}', tone: _tone()),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  status.label,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              PsyBadge(label: '${claims.length}', tone: _tone()),
+            ],
+          ),
           const SizedBox(height: PsySpacing.sm),
           for (final c in claims) ...[
             PsyCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(c.id,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    c.id,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('${c.payerId} · ${c.cptCodes.join(", ")}',
-                      style: theme.textTheme.bodySmall),
+                  Text(
+                    '${c.payerId} · ${c.cptCodes.join(", ")}',
+                    style: theme.textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '\$${(c.amountCents / 100).toStringAsFixed(2)}',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(color: cs.primary),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: cs.primary,
+                    ),
                   ),
                   if (c.denialReasonCode != null) ...[
                     const SizedBox(height: 4),
-                    Text('Denial · ${c.denialReasonCode}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: cs.error)),
+                    Text(
+                      'Denial · ${c.denialReasonCode}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.error,
+                      ),
+                    ),
                     if (carcLookup(c.denialReasonCode) != null) ...[
                       const SizedBox(height: 2),
                       Text(
@@ -198,8 +213,10 @@ class _Lane extends StatelessWidget {
                   ],
                   if (c.refNumber != null) ...[
                     const SizedBox(height: 4),
-                    Text('Ref · ${c.refNumber}',
-                        style: theme.textTheme.bodySmall),
+                    Text(
+                      'Ref · ${c.refNumber}',
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ],
                 ],
               ),
@@ -208,12 +225,12 @@ class _Lane extends StatelessWidget {
           ],
           if (claims.isEmpty)
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: PsySpacing.lg),
+              padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
               child: Text(
                 'No ${status.label.toLowerCase()} claims.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.5)),
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
               ),
             ),
         ],

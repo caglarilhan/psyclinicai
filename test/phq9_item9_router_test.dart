@@ -63,10 +63,7 @@ void main() {
     });
 
     test('negative input is treated as none (defensive)', () {
-      expect(
-        router.evaluate({'phq9_9': -1}).severity,
-        Phq9Item9Severity.none,
-      );
+      expect(router.evaluate({'phq9_9': -1}).severity, Phq9Item9Severity.none);
     });
   });
 }

@@ -12,15 +12,14 @@ void main() {
     String severity = 'critical',
     String reason = 'family_present',
     DateTime? dismissedAt,
-  }) =>
-      EscalationSoftLockEntry(
-        patientId: patientId,
-        patientName: 'Test Patient',
-        severity: severity,
-        tier: tier,
-        reason: reason,
-        dismissedAt: dismissedAt ?? DateTime.utc(2026, 6, 1, 12),
-      );
+  }) => EscalationSoftLockEntry(
+    patientId: patientId,
+    patientName: 'Test Patient',
+    severity: severity,
+    tier: tier,
+    reason: reason,
+    dismissedAt: dismissedAt ?? DateTime.utc(2026, 6, 1, 12),
+  );
 
   group('EscalationSoftLockEntry.isActiveAt', () {
     test('true within the 24-hour follow-up window', () {
@@ -49,8 +48,7 @@ void main() {
       var notified = 0;
       void listener() => notified++;
       EscalationSoftLock.instance.addListener(listener);
-      addTearDown(() =>
-          EscalationSoftLock.instance.removeListener(listener));
+      addTearDown(() => EscalationSoftLock.instance.removeListener(listener));
 
       EscalationSoftLock.instance.record(entry());
       expect(EscalationSoftLock.instance.entries, hasLength(1));
@@ -59,22 +57,26 @@ void main() {
 
     test('isLocked is true within the 24-hour window', () {
       final now = DateTime.utc(2026, 6, 1, 12);
-      EscalationSoftLock.instance
-          .record(entry(dismissedAt: now));
+      EscalationSoftLock.instance.record(entry(dismissedAt: now));
       expect(
-          EscalationSoftLock.instance
-              .isLocked('p1', now: now.add(const Duration(hours: 6))),
-          isTrue);
+        EscalationSoftLock.instance.isLocked(
+          'p1',
+          now: now.add(const Duration(hours: 6)),
+        ),
+        isTrue,
+      );
     });
 
     test('isLocked is false after the window closes', () {
       final now = DateTime.utc(2026, 6, 1, 12);
-      EscalationSoftLock.instance
-          .record(entry(dismissedAt: now));
+      EscalationSoftLock.instance.record(entry(dismissedAt: now));
       expect(
-          EscalationSoftLock.instance.isLocked('p1',
-              now: now.add(const Duration(hours: 25))),
-          isFalse);
+        EscalationSoftLock.instance.isLocked(
+          'p1',
+          now: now.add(const Duration(hours: 25)),
+        ),
+        isFalse,
+      );
     });
 
     test('isLocked scopes to the right patient', () {
@@ -84,14 +86,18 @@ void main() {
 
     test('activeAt only returns rows still inside the window', () {
       final now = DateTime.utc(2026, 6, 1, 12);
-      EscalationSoftLock.instance.record(entry(
-        patientId: 'recent',
-        dismissedAt: now.subtract(const Duration(hours: 4)),
-      ));
-      EscalationSoftLock.instance.record(entry(
-        patientId: 'stale',
-        dismissedAt: now.subtract(const Duration(days: 2)),
-      ));
+      EscalationSoftLock.instance.record(
+        entry(
+          patientId: 'recent',
+          dismissedAt: now.subtract(const Duration(hours: 4)),
+        ),
+      );
+      EscalationSoftLock.instance.record(
+        entry(
+          patientId: 'stale',
+          dismissedAt: now.subtract(const Duration(days: 2)),
+        ),
+      );
       final active = EscalationSoftLock.instance.activeAt(now);
       expect(active, hasLength(1));
       expect(active.single.patientId, 'recent');

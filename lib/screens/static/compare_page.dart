@@ -13,7 +13,8 @@ class ComparePage extends StatelessWidget {
     return StaticPageShell(
       eyebrow: 'Compare',
       title: 'How PsyClinicAI compares.',
-      lede: 'Honest, structured trade-offs against the EHRs and AI scribes '
+      lede:
+          'Honest, structured trade-offs against the EHRs and AI scribes '
           'mental-health practices already evaluate. We list where the '
           'competitor wins so you do not have to dig for it.',
       lastUpdated: DateTime(2026, 6, 2),
@@ -94,19 +95,28 @@ class _Comparison extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(name,
-              style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            name,
+            style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: PsySpacing.md),
-          Text('Where we win',
-              style: t.titleSmall?.copyWith(
-                  color: cs.primary, fontWeight: FontWeight.w700)),
+          Text(
+            'Where we win',
+            style: t.titleSmall?.copyWith(
+              color: cs.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
           for (final w in wins) StaticBullet(w),
           const SizedBox(height: PsySpacing.md),
-          Text('Where they win',
-              style: t.titleSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w700)),
+          Text(
+            'Where they win',
+            style: t.titleSmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
           for (final w in theyWin) StaticBullet(w),
         ],

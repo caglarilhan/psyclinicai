@@ -22,23 +22,24 @@ Future<void> _pump(WidgetTester tester) async {
 void main() {
   group('PortalLandingScreen', () {
     testWidgets(
-        'no clinician session — patient view renders transparency cards',
-        (tester) async {
-      // FirebaseAuthService.instance.profile is null when Firebase has
-      // not been bootstrapped (test runtime). That maps to the
-      // "patient view" branch of the gate.
-      await _pump(tester);
-      expect(find.text('Welcome'), findsOneWidget);
-      expect(find.text('First-visit questionnaire'), findsOneWidget);
-      expect(find.text('Progress questionnaires'), findsOneWidget);
-      expect(find.text('Upcoming sessions'), findsOneWidget);
-      expect(find.text('Request your data'), findsOneWidget);
-      expect(find.text('Close your account'), findsOneWidget);
+      'no clinician session — patient view renders transparency cards',
+      (tester) async {
+        // FirebaseAuthService.instance.profile is null when Firebase has
+        // not been bootstrapped (test runtime). That maps to the
+        // "patient view" branch of the gate.
+        await _pump(tester);
+        expect(find.text('Welcome'), findsOneWidget);
+        expect(find.text('First-visit questionnaire'), findsOneWidget);
+        expect(find.text('Progress questionnaires'), findsOneWidget);
+        expect(find.text('Upcoming sessions'), findsOneWidget);
+        expect(find.text('Request your data'), findsOneWidget);
+        expect(find.text('Close your account'), findsOneWidget);
 
-      // The legal-rights chips should surface so the patient learns
-      // which GDPR article each card maps to.
-      expect(find.textContaining('GDPR Art. 7'), findsOneWidget);
-      expect(find.textContaining('GDPR Art. 17'), findsOneWidget);
-    });
+        // The legal-rights chips should surface so the patient learns
+        // which GDPR article each card maps to.
+        expect(find.textContaining('GDPR Art. 7'), findsOneWidget);
+        expect(find.textContaining('GDPR Art. 17'), findsOneWidget);
+      },
+    );
   });
 }

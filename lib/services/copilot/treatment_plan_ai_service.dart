@@ -108,11 +108,7 @@ class TreatmentPlanAiService {
     http.Response resp;
     try {
       resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 40));
     } catch (e) {
       throw TreatmentPlanAiException('Network error reaching Anthropic. $e');
@@ -244,11 +240,7 @@ class TreatmentPlanAiService {
 
     try {
       final resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 30));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(
@@ -346,11 +338,7 @@ class TreatmentPlanAiService {
 
     try {
       final resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(

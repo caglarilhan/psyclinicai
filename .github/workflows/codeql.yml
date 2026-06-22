@@ -1,0 +1,59 @@
+# CodeQL static analysis — closes CI item 2 from the 2026-06-21 audit
+# (zero SAST coverage). Targets TypeScript / JavaScript because the
+# clinical safety surface lives in functions/ (Stripe webhooks, PHI
+# relay, WebAuthn, account-deletion purge). Dart is not yet supported
+# by CodeQL; flutter analyze remains the primary gate for the client.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly drift catcher (Tuesdays 03:17 UTC, off-peak for the team).
+    - cron: '17 3 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # `javascript-typescript` covers both .ts and .js — the functions/
+        # workspace is the priority target. Add `python` if/when the
+        # background data pipelines move under version control.
+        language: [javascript-typescript]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use the security-extended pack so OWASP Top 10 + supply-chain
+          # checks fire (default `security-and-quality` would drown the
+          # signal in style hints).
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

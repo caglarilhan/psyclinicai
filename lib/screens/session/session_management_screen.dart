@@ -6,15 +6,12 @@ import '../../utils/theme.dart';
 import '../../widgets/desktop/desktop_layout.dart';
 
 class SessionManagementScreen extends StatefulWidget {
-  
-  const SessionManagementScreen({
-    super.key,
-    this.clientId,
-  });
+  const SessionManagementScreen({super.key, this.clientId});
   final String? clientId;
 
   @override
-  State<SessionManagementScreen> createState() => _SessionManagementScreenState();
+  State<SessionManagementScreen> createState() =>
+      _SessionManagementScreenState();
 }
 
 class _SessionManagementScreenState extends State<SessionManagementScreen> {
@@ -81,21 +78,13 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
         ),
       ],
       sidebarItems: [
-        DesktopSidebarItem(
-          title: 'Yeni Seans',
-          icon: Icons.add,
-          onTap: () {},
-        ),
+        DesktopSidebarItem(title: 'Yeni Seans', icon: Icons.add, onTap: () {}),
         DesktopSidebarItem(
           title: 'Seans Geçmişi',
           icon: Icons.history,
           onTap: () {},
         ),
-        DesktopSidebarItem(
-          title: 'Notlar',
-          icon: Icons.note,
-          onTap: () {},
-        ),
+        DesktopSidebarItem(title: 'Notlar', icon: Icons.note, onTap: () {}),
         DesktopSidebarItem(
           title: 'AI Özet',
           icon: Icons.summarize,
@@ -123,10 +112,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
             SizedBox(height: 8),
             Text(
               'Seans yönetimi bileşenleri yakında eklenecek',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),

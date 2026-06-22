@@ -38,17 +38,20 @@ void main() {
 
       final entries = [
         CommandPaletteEntry(
-            label: 'Open dashboard',
-            section: 'Workspace',
-            onSelect: () {}),
+          label: 'Open dashboard',
+          section: 'Workspace',
+          onSelect: () {},
+        ),
         CommandPaletteEntry(
-            label: 'Schedule appointment',
-            section: 'Calendar',
-            onSelect: () {}),
+          label: 'Schedule appointment',
+          section: 'Calendar',
+          onSelect: () {},
+        ),
         CommandPaletteEntry(
-            label: 'Send PHQ-9',
-            section: 'Assessments',
-            onSelect: () {}),
+          label: 'Send PHQ-9',
+          section: 'Assessments',
+          onSelect: () {},
+        ),
       ];
 
       await tester.pumpWidget(
@@ -75,12 +78,15 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: CommandPalette(entries: [
-              CommandPaletteEntry(
+            body: CommandPalette(
+              entries: [
+                CommandPaletteEntry(
                   label: 'Open dashboard',
                   section: 'Workspace',
-                  onSelect: () {}),
-            ]),
+                  onSelect: () {},
+                ),
+              ],
+            ),
           ),
         ),
       );

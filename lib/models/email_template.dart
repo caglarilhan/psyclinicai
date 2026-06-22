@@ -13,9 +13,10 @@ enum EmailTemplateKind {
   final String id;
   final String label;
 
-  static EmailTemplateKind fromId(String id) =>
-      values.firstWhere((k) => k.id == id,
-          orElse: () => EmailTemplateKind.reminder24h);
+  static EmailTemplateKind fromId(String id) => values.firstWhere(
+    (k) => k.id == id,
+    orElse: () => EmailTemplateKind.reminder24h,
+  );
 }
 
 const Set<String> kEmailTemplateTokens = {
@@ -72,17 +73,9 @@ const Map<EmailTemplateKind, Set<String>> kPerKindTokenAllowList = {
     'crisis_hotline_local',
     'safety_plan_link',
   },
-  EmailTemplateKind.reviewRequest: {
-    'patient_first_name',
-    'review_link',
-  },
-  EmailTemplateKind.birthday: {
-    'patient_first_name',
-  },
-  EmailTemplateKind.reactivation: {
-    'patient_first_name',
-    'reactivation_offer',
-  },
+  EmailTemplateKind.reviewRequest: {'patient_first_name', 'review_link'},
+  EmailTemplateKind.birthday: {'patient_first_name'},
+  EmailTemplateKind.reactivation: {'patient_first_name', 'reactivation_offer'},
 };
 
 class EmailTemplate {
@@ -130,36 +123,35 @@ class EmailTemplate {
     bool? enabled,
     String? abVariantId,
     DateTime? updatedAt,
-  }) =>
-      EmailTemplate(
-        id: id,
-        kind: kind,
-        subject: subject ?? this.subject,
-        bodyMarkdown: bodyMarkdown ?? this.bodyMarkdown,
-        enabled: enabled ?? this.enabled,
-        abVariantId: abVariantId ?? this.abVariantId,
-        updatedAt: updatedAt ?? DateTime.now().toUtc(),
-      );
+  }) => EmailTemplate(
+    id: id,
+    kind: kind,
+    subject: subject ?? this.subject,
+    bodyMarkdown: bodyMarkdown ?? this.bodyMarkdown,
+    enabled: enabled ?? this.enabled,
+    abVariantId: abVariantId ?? this.abVariantId,
+    updatedAt: updatedAt ?? DateTime.now().toUtc(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind.id,
-        'subject': subject,
-        'body_md': bodyMarkdown,
-        'enabled': enabled,
-        if (abVariantId != null) 'ab_variant_id': abVariantId,
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'kind': kind.id,
+    'subject': subject,
+    'body_md': bodyMarkdown,
+    'enabled': enabled,
+    if (abVariantId != null) 'ab_variant_id': abVariantId,
+    'updated_at': updatedAt.toIso8601String(),
+  };
 
   factory EmailTemplate.fromJson(Map<String, dynamic> json) => EmailTemplate(
-        id: json['id'] as String,
-        kind: EmailTemplateKind.fromId(json['kind'] as String),
-        subject: json['subject'] as String,
-        bodyMarkdown: json['body_md'] as String,
-        enabled: json['enabled'] as bool? ?? true,
-        abVariantId: json['ab_variant_id'] as String?,
-        updatedAt: DateTime.parse(json['updated_at'] as String),
-      );
+    id: json['id'] as String,
+    kind: EmailTemplateKind.fromId(json['kind'] as String),
+    subject: json['subject'] as String,
+    bodyMarkdown: json['body_md'] as String,
+    enabled: json['enabled'] as bool? ?? true,
+    abVariantId: json['ab_variant_id'] as String?,
+    updatedAt: DateTime.parse(json['updated_at'] as String),
+  );
 }
 
 class EmailSequence {
@@ -183,35 +175,32 @@ class EmailSequence {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'enabled': enabled,
-        'steps': steps.map((s) => s.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'enabled': enabled,
+    'steps': steps.map((s) => s.toJson()).toList(),
+  };
 
   factory EmailSequence.fromJson(Map<String, dynamic> json) => EmailSequence(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        enabled: json['enabled'] as bool? ?? true,
-        steps: (json['steps'] as List)
-            .map((s) => EmailSequenceStep.fromJson(s as Map<String, dynamic>))
-            .toList(),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    enabled: json['enabled'] as bool? ?? true,
+    steps: (json['steps'] as List)
+        .map((s) => EmailSequenceStep.fromJson(s as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 class EmailSequenceStep {
-  const EmailSequenceStep({
-    required this.kind,
-    required this.offset,
-  });
+  const EmailSequenceStep({required this.kind, required this.offset});
 
   final Duration offset;
   final EmailTemplateKind kind;
 
   Map<String, dynamic> toJson() => {
-        'offset_minutes': offset.inMinutes,
-        'kind': kind.id,
-      };
+    'offset_minutes': offset.inMinutes,
+    'kind': kind.id,
+  };
 
   factory EmailSequenceStep.fromJson(Map<String, dynamic> json) =>
       EmailSequenceStep(

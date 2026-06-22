@@ -31,13 +31,15 @@ void main() {
   });
 
   group('lookup', () {
-    test('byCode returns the right code with its CMS average, null when absent',
-        () {
-      expect(svc.byCode('90837')?.nationalAverageUsd, 175);
-      expect(svc.byCode('90834')?.nationalAverageUsd, 125);
-      expect(svc.byCode('90832')?.nationalAverageUsd, 95);
-      expect(svc.byCode('00000'), isNull);
-    });
+    test(
+      'byCode returns the right code with its CMS average, null when absent',
+      () {
+        expect(svc.byCode('90837')?.nationalAverageUsd, 175);
+        expect(svc.byCode('90834')?.nationalAverageUsd, 125);
+        expect(svc.byCode('90832')?.nationalAverageUsd, 95);
+        expect(svc.byCode('00000'), isNull);
+      },
+    );
 
     test('byCategory(crisis) returns exactly the crisis pair', () {
       final crisis = svc.byCategory(CptCategory.crisis);

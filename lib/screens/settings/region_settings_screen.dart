@@ -25,7 +25,8 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _pin = widget.initialPin ??
+    _pin =
+        widget.initialPin ??
         TenantRegionPin(
           tenantId: 'demo-tenant',
           region: TenantRegion.euCentral,
@@ -44,8 +45,9 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-            'Change request logged. Our CISO replies within one business '
-            'day — no data is moved until you confirm.'),
+          'Change request logged. Our CISO replies within one business '
+          'day — no data is moved until you confirm.',
+        ),
       ),
     );
   }
@@ -57,7 +59,8 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
     return AppShell(
       routeName: '/settings',
       title: 'Data residency',
-      subtitle: 'Per-tenant Firestore region — no cross-region '
+      subtitle:
+          'Per-tenant Firestore region — no cross-region '
           'replication of clinical records.',
       scrollable: false,
       breadcrumbs: const [
@@ -70,9 +73,12 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
         children: [
           _StatusCard(pin: _pin, theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xl),
-          Text('What this region pin covers',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'What this region pin covers',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           PsyCard(
             child: Column(
@@ -80,7 +86,8 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
                 _Bullet(
                   icon: Icons.storage_outlined,
                   title: 'Firestore documents',
-                  body: 'All clinical records (patients, sessions, '
+                  body:
+                      'All clinical records (patients, sessions, '
                       'assessments, superbills, audit logs) live in '
                       '${_pin.region.firestoreRegion}.',
                   cs: cs,
@@ -89,7 +96,8 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
                 _Bullet(
                   icon: Icons.key_outlined,
                   title: 'KMS envelope keys',
-                  body: 'Encryption keys are rotated in the same region; '
+                  body:
+                      'Encryption keys are rotated in the same region; '
                       'no cross-region key escrow.',
                   cs: cs,
                 ),
@@ -99,16 +107,17 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
                   title: 'Transactional email',
                   body: _pin.region == TenantRegion.euCentral
                       ? 'AWS SES eu-west-1 (Ireland) — TLS 1.3 in transit, '
-                          'opportunistic STARTTLS at the recipient edge.'
+                            'opportunistic STARTTLS at the recipient edge.'
                       : 'AWS SES us-east-1 (Virginia) — TLS 1.3 in transit, '
-                          'opportunistic STARTTLS at the recipient edge.',
+                            'opportunistic STARTTLS at the recipient edge.',
                   cs: cs,
                 ),
                 _Divider(cs: cs),
                 _Bullet(
                   icon: Icons.history_outlined,
                   title: 'Audit log retention',
-                  body: '6 years (HIPAA §164.316). Append-only, '
+                  body:
+                      '6 years (HIPAA §164.316). Append-only, '
                       'hash-chained, regional.',
                   cs: cs,
                 ),
@@ -116,9 +125,12 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.xl),
-          Text('Compliance bundle for this region',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Compliance bundle for this region',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           PsyCard(
             child: Wrap(
@@ -134,20 +146,21 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
           if (_pin.hasPendingChange) ...[
             PsyCard(
               tinted: true,
-              child: Row(children: [
-                Icon(Icons.hourglass_top_outlined,
-                    color: PsyColors.warning),
-                const SizedBox(width: PsySpacing.sm),
-                Expanded(
-                  child: Text(
-                    'Migration to ${_pin.changeRequestedTo!.displayLabel} '
-                    'requested ${_pin.changeRequestedAt!.toIso8601String()} '
-                    '— awaiting CISO approval. Your data is still in '
-                    '${_pin.region.displayLabel}.',
-                    style: theme.textTheme.bodyMedium,
+              child: Row(
+                children: [
+                  Icon(Icons.hourglass_top_outlined, color: PsyColors.warning),
+                  const SizedBox(width: PsySpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Migration to ${_pin.changeRequestedTo!.displayLabel} '
+                      'requested ${_pin.changeRequestedAt!.toIso8601String()} '
+                      '— awaiting CISO approval. Your data is still in '
+                      '${_pin.region.displayLabel}.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
             const SizedBox(height: PsySpacing.xl),
           ],
@@ -165,11 +178,7 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
 }
 
 class _StatusCard extends StatelessWidget {
-  const _StatusCard({
-    required this.pin,
-    required this.theme,
-    required this.cs,
-  });
+  const _StatusCard({required this.pin, required this.theme, required this.cs});
   final TenantRegionPin pin;
   final ThemeData theme;
   final ColorScheme cs;
@@ -178,42 +187,50 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       tinted: true,
-      child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(PsySpacing.md),
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(PsyRadius.md),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(PsySpacing.md),
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(PsyRadius.md),
+            ),
+            child: Icon(Icons.public, color: cs.primary, size: 24),
           ),
-          child: Icon(Icons.public, color: cs.primary, size: 24),
-        ),
-        const SizedBox(width: PsySpacing.lg),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Text('Active pin',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
-                const SizedBox(width: PsySpacing.sm),
-                PsyBadge(
-                  label: pin.region.displayLabel,
-                  tone: PsyBadgeTone.success,
+          const SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Active pin',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: PsySpacing.sm),
+                    PsyBadge(
+                      label: pin.region.displayLabel,
+                      tone: PsyBadgeTone.success,
+                    ),
+                  ],
                 ),
-              ]),
-              const SizedBox(height: 4),
-              Text(
-                'Pinned ${pin.pinnedAt.toIso8601String().split("T").first} · '
-                '${pin.region.jurisdiction} jurisdiction. Tenant id '
-                '${pin.tenantId}.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72)),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'Pinned ${pin.pinnedAt.toIso8601String().split("T").first} · '
+                  '${pin.region.jurisdiction} jurisdiction. Tenant id '
+                  '${pin.tenantId}.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.72),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -244,13 +261,17 @@ class _Bullet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: t.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: t.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 2),
-                Text(body,
-                    style: t.bodyMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.72))),
+                Text(
+                  body,
+                  style: t.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.72),
+                  ),
+                ),
               ],
             ),
           ),
@@ -265,7 +286,7 @@ class _Divider extends StatelessWidget {
   final ColorScheme cs;
   @override
   Widget build(BuildContext context) => Divider(
-        height: PsySpacing.lg,
-        color: cs.onSurface.withValues(alpha: 0.08),
-      );
+    height: PsySpacing.lg,
+    color: cs.onSurface.withValues(alpha: 0.08),
+  );
 }

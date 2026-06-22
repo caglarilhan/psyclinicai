@@ -30,7 +30,8 @@ class _PreAuthScreenState extends State<PreAuthScreen> {
     return AppShell(
       routeName: '/billing/preauth',
       title: 'Insurance pre-auth',
-      subtitle: 'Track payer approvals before billing — request, status, '
+      subtitle:
+          'Track payer approvals before billing — request, status, '
           'reference numbers.',
       breadcrumbs: const [
         Crumb('Home', '/dashboard'),
@@ -49,16 +50,16 @@ class _PreAuthScreenState extends State<PreAuthScreen> {
       child: AnimatedBuilder(
         animation: PreAuthRepository.instance,
         builder: (context, _) {
-          final entries =
-              PreAuthRepository.instance.forPatient(widget.patientId);
+          final entries = PreAuthRepository.instance.forPatient(
+            widget.patientId,
+          );
           if (entries.isEmpty) {
             return _EmptyState(theme: theme, cs: cs);
           }
           return ListView.separated(
             padding: EdgeInsets.zero,
             itemCount: entries.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: PsySpacing.sm),
+            separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.sm),
             itemBuilder: (_, i) =>
                 _PreAuthCard(entry: entries[i], theme: theme, cs: cs),
           );
@@ -88,29 +89,42 @@ class _EmptyState extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 60),
       child: Center(
-        child: Column(children: [
-          Icon(Icons.fact_check_outlined,
-              size: 44, color: cs.onSurface.withValues(alpha: 0.4)),
-          const SizedBox(height: PsySpacing.md),
-          Text('No pre-authorisation requests yet',
+        child: Column(
+          children: [
+            Icon(
+              Icons.fact_check_outlined,
+              size: 44,
+              color: cs.onSurface.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: PsySpacing.md),
+            Text(
+              'No pre-authorisation requests yet',
               style: theme.textTheme.titleMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7))),
-          const SizedBox(height: PsySpacing.xs),
-          Text(
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: PsySpacing.xs),
+            Text(
               'Tap "New request" once the payer has been called or the '
               'portal has been submitted.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55))),
-        ]),
+                color: cs.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _PreAuthCard extends StatelessWidget {
-  const _PreAuthCard(
-      {required this.entry, required this.theme, required this.cs});
+  const _PreAuthCard({
+    required this.entry,
+    required this.theme,
+    required this.cs,
+  });
   final InsurancePreAuth entry;
   final ThemeData theme;
   final ColorScheme cs;
@@ -121,28 +135,35 @@ class _PreAuthCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Expanded(
-              child: Text(entry.payer,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ),
-            _statusBadge(entry.status),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  entry.payer,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _statusBadge(entry.status),
+            ],
+          ),
           const SizedBox(height: PsySpacing.xs),
           _kv('Member', entry.memberId),
           _kv('Service code', entry.serviceCode),
           _kv('Units', entry.requestedUnits.toString()),
           if (entry.referenceNumber != null)
             _kv('Reference', entry.referenceNumber!),
-          if (entry.expiresAt != null)
-            _kv('Expires', _date(entry.expiresAt!)),
+          if (entry.expiresAt != null) _kv('Expires', _date(entry.expiresAt!)),
           if (entry.denialReason != null && entry.denialReason!.isNotEmpty)
             _kv('Denial reason', entry.denialReason!),
           const SizedBox(height: 2),
-          Text('Submitted ${_date(entry.requestedAt)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5))),
+          Text(
+            'Submitted ${_date(entry.requestedAt)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
         ],
       ),
     );
@@ -162,20 +183,31 @@ class _PreAuthCard extends StatelessWidget {
   }
 
   Widget _kv(String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-              width: 120,
-              child: Text(k,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.55),
-                      fontWeight: FontWeight.w600))),
-          Expanded(
-              child: Text(v,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.88)))),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            k,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.55),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            v,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.88),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 
   String _date(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -236,17 +268,24 @@ class _NewPreAuthDialogState extends State<_NewPreAuthDialog> {
           children: [
             _field('Payer', _payer, hint: 'e.g. Aetna, Techniker Krankenkasse'),
             _field('Member ID', _memberId, hint: 'As printed on the card'),
-            _field('Service code (CPT)', _serviceCode,
-                hint: '90837 = 60-min psychotherapy'),
-            _field('Requested units / sessions', _units,
-                keyboardType: TextInputType.number),
+            _field(
+              'Service code (CPT)',
+              _serviceCode,
+              hint: '90837 = 60-min psychotherapy',
+            ),
+            _field(
+              'Requested units / sessions',
+              _units,
+              keyboardType: TextInputType.number,
+            ),
           ],
         ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: _canSubmit ? _submit : null,
           child: const Text('Submit'),
@@ -255,8 +294,12 @@ class _NewPreAuthDialogState extends State<_NewPreAuthDialog> {
     );
   }
 
-  Widget _field(String label, TextEditingController c,
-      {String? hint, TextInputType? keyboardType}) {
+  Widget _field(
+    String label,
+    TextEditingController c, {
+    String? hint,
+    TextInputType? keyboardType,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
       child: TextField(

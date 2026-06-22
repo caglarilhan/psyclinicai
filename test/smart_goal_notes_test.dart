@@ -6,12 +6,14 @@ void main() {
     test('returns an empty string when every field is blank', () {
       expect(formatSmartGoalNotes(), '');
       expect(
-          formatSmartGoalNotes(
-              baseline: '   ',
-              target: '\n',
-              achievability: '',
-              relevance: ' '),
-          '');
+        formatSmartGoalNotes(
+          baseline: '   ',
+          target: '\n',
+          achievability: '',
+          relevance: ' ',
+        ),
+        '',
+      );
     });
 
     test('emits only the populated lines, in canonical order', () {
@@ -22,8 +24,7 @@ void main() {
       expect(md, '**Baseline:** PHQ-9 = 18\n**Target:** PHQ-9 ≤ 9');
     });
 
-    test('canonical order is Baseline · Target · Achievable · Relevant',
-        () {
+    test('canonical order is Baseline · Target · Achievable · Relevant', () {
       final md = formatSmartGoalNotes(
         relevance: 'r',
         achievability: 'a',
@@ -44,14 +45,12 @@ void main() {
       expect(md, '**Baseline:** start');
     });
 
-    test('uses bold markdown for the label (compatible with PDF export)',
-        () {
+    test('uses bold markdown for the label (compatible with PDF export)', () {
       final md = formatSmartGoalNotes(target: 'PHQ-9 ≤ 9');
       expect(md, contains('**Target:**'));
     });
 
-    test('a single field populates exactly one line — no trailing newline',
-        () {
+    test('a single field populates exactly one line — no trailing newline', () {
       final md = formatSmartGoalNotes(achievability: 'Realistic');
       expect(md, '**Achievable:** Realistic');
       expect(md.endsWith('\n'), isFalse);

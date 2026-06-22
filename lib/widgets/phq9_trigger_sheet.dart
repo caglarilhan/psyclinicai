@@ -71,14 +71,12 @@ class Phq9TriggerSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded,
-                    color: PsyColors.warning),
+                Icon(Icons.warning_amber_rounded, color: PsyColors.warning),
                 const SizedBox(width: PsySpacing.sm),
                 Expanded(
                   child: Text(
                     'PHQ-9 item 9 flagged',
-                    style: t.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],

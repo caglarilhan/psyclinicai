@@ -35,10 +35,14 @@ class InsurancePreAuth {
     this.expiresAt,
     this.referenceNumber,
     this.denialReason,
-  })  : assert(requestedUnits > 0,
-            'requestedUnits must be positive — payers reject 0 / negative'),
-        assert(serviceCode.length <= 16,
-            'CPT/HCPCS service codes are short — guard against PHI smuggling');
+  }) : assert(
+         requestedUnits > 0,
+         'requestedUnits must be positive — payers reject 0 / negative',
+       ),
+       assert(
+         serviceCode.length <= 16,
+         'CPT/HCPCS service codes are short — guard against PHI smuggling',
+       );
 
   factory InsurancePreAuth.fromJson(Map<String, dynamic> json) =>
       InsurancePreAuth(
@@ -51,11 +55,9 @@ class InsurancePreAuth {
         status: PreAuthStatus.fromId(json['status'] as String?),
         requestedAt:
             DateTime.tryParse(json['requested_at'] as String? ?? '') ??
-                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-        decisionAt:
-            DateTime.tryParse(json['decision_at'] as String? ?? ''),
-        expiresAt:
-            DateTime.tryParse(json['expires_at'] as String? ?? ''),
+            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        decisionAt: DateTime.tryParse(json['decision_at'] as String? ?? ''),
+        expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? ''),
         referenceNumber: json['reference_number'] as String?,
         denialReason: json['denial_reason'] as String?,
       );
@@ -105,19 +107,18 @@ class InsurancePreAuth {
   bool get awaitingDecision => status == PreAuthStatus.submitted;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patient_id': patientId,
-        'payer': payer,
-        'member_id': memberId,
-        'service_code': serviceCode,
-        'requested_units': requestedUnits,
-        'status': status.name,
-        'requested_at': requestedAt.toUtc().toIso8601String(),
-        if (decisionAt != null)
-          'decision_at': decisionAt!.toUtc().toIso8601String(),
-        if (expiresAt != null)
-          'expires_at': expiresAt!.toUtc().toIso8601String(),
-        if (referenceNumber != null) 'reference_number': referenceNumber,
-        if (denialReason != null) 'denial_reason': denialReason,
-      };
+    'id': id,
+    'patient_id': patientId,
+    'payer': payer,
+    'member_id': memberId,
+    'service_code': serviceCode,
+    'requested_units': requestedUnits,
+    'status': status.name,
+    'requested_at': requestedAt.toUtc().toIso8601String(),
+    if (decisionAt != null)
+      'decision_at': decisionAt!.toUtc().toIso8601String(),
+    if (expiresAt != null) 'expires_at': expiresAt!.toUtc().toIso8601String(),
+    if (referenceNumber != null) 'reference_number': referenceNumber,
+    if (denialReason != null) 'denial_reason': denialReason,
+  };
 }

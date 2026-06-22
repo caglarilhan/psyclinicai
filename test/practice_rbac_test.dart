@@ -15,17 +15,26 @@ void main() {
 
     test('intern cannot sign a progress note (supervision wedge)', () {
       expect(
-        PracticeRbac.has(PracticeRole.intern, PracticePermission.signProgressNote),
+        PracticeRbac.has(
+          PracticeRole.intern,
+          PracticePermission.signProgressNote,
+        ),
         isFalse,
       );
       // But interns can draft + submit AI requests — that is the
       // supervision touchpoint.
       expect(
-        PracticeRbac.has(PracticeRole.intern, PracticePermission.editClinicalNote),
+        PracticeRbac.has(
+          PracticeRole.intern,
+          PracticePermission.editClinicalNote,
+        ),
         isTrue,
       );
       expect(
-        PracticeRbac.has(PracticeRole.intern, PracticePermission.submitAiRequest),
+        PracticeRbac.has(
+          PracticeRole.intern,
+          PracticePermission.submitAiRequest,
+        ),
         isTrue,
       );
     });
@@ -44,7 +53,10 @@ void main() {
         isTrue,
       );
       expect(
-        PracticeRbac.has(PracticeRole.biller, PracticePermission.viewFinancials),
+        PracticeRbac.has(
+          PracticeRole.biller,
+          PracticePermission.viewFinancials,
+        ),
         isTrue,
       );
     });
@@ -153,17 +165,18 @@ void main() {
   // at least one fully-enumerated role. Locks the matrix so future
   // edits can't accidentally orphan a permission.
   test(
-      'every permission is granted to at least one role (no orphan permissions)',
-      () {
-    for (final perm in PracticePermission.values) {
-      final grantedTo = PracticeRole.values
-          .where((r) => PracticeRbac.has(r, perm))
-          .toList();
-      expect(
-        grantedTo,
-        isNotEmpty,
-        reason: 'permission $perm is granted to nobody',
-      );
-    }
-  });
+    'every permission is granted to at least one role (no orphan permissions)',
+    () {
+      for (final perm in PracticePermission.values) {
+        final grantedTo = PracticeRole.values
+            .where((r) => PracticeRbac.has(r, perm))
+            .toList();
+        expect(
+          grantedTo,
+          isNotEmpty,
+          reason: 'permission $perm is granted to nobody',
+        );
+      }
+    },
+  );
 }

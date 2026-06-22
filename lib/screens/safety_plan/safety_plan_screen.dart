@@ -85,16 +85,16 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   }
 
   SafetyPlan _current() => SafetyPlan(
-        patientId: widget.args.id,
-        warningSigns: List.of(_warning),
-        copingStrategies: List.of(_coping),
-        socialDistractions: List.of(_social),
-        supportContacts: List.of(_support),
-        professionals: List.of(_pros),
-        crisisLines: List.of(_crisis),
-        reasonsForLiving: List.of(_reasons),
-        meansSafety: _means.text.trim(),
-      );
+    patientId: widget.args.id,
+    warningSigns: List.of(_warning),
+    copingStrategies: List.of(_coping),
+    socialDistractions: List.of(_social),
+    supportContacts: List.of(_support),
+    professionals: List.of(_pros),
+    crisisLines: List.of(_crisis),
+    reasonsForLiving: List.of(_reasons),
+    meansSafety: _means.text.trim(),
+  );
 
   /// Pre-fill the crisis lines list with the locale-appropriate hotlines.
   /// Never overwrites items the clinician already entered; only appends ones
@@ -106,28 +106,37 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
         .where((line) => !_crisis.contains(line))
         .toList();
     if (suggestions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('No new suggestions for this locale.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No new suggestions for this locale.')),
+      );
       return;
     }
     setState(() => _crisis.addAll(suggestions));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(
-            'Added ${suggestions.length} regional crisis lines — review and '
-            'edit as needed.')));
+          'Added ${suggestions.length} regional crisis lines — review and '
+          'edit as needed.',
+        ),
+      ),
+    );
   }
 
   Future<void> _save() async {
     try {
       await _repo.save(_current());
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Safety plan saved')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Safety plan saved')));
     } catch (_) {
       // A crisis plan that failed to persist must NOT report success.
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Could not save the safety plan — please retry.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save the safety plan — please retry.'),
+        ),
+      );
     }
   }
 
@@ -136,38 +145,50 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
     try {
       final p = await _ai.draft(
         patientId: widget.args.id,
-        context: 'Patient ${widget.args.name}. Draft starter items for a '
+        context:
+            'Patient ${widget.args.name}. Draft starter items for a '
             'collaborative crisis safety plan.',
       );
       setState(() => _apply(p));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
             content: Text(
-                'Starter plan drafted — review and edit WITH the client.')));
+              'Starter plan drafted — review and edit WITH the client.',
+            ),
+          ),
+        );
       }
     } on ConsentDeniedException catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
             'AI assistance is not consented for this patient. Update '
-            'the intake form before drafting with AI.'),
-        action: SnackBarAction(
-          label: 'Intake',
-          onPressed: () => Navigator.of(context)
-              .pushNamed('/patients/intake', arguments: widget.args),
+            'the intake form before drafting with AI.',
+          ),
+          action: SnackBarAction(
+            label: 'Intake',
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed('/patients/intake', arguments: widget.args),
+          ),
         ),
-      ));
+      );
     } on SafetyPlanAiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -201,7 +222,8 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: CircularProgressIndicator()),
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -211,115 +233,142 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
                 // with AI" steps down to TextButton — pure secondary.
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+                    horizontal: PsySpacing.md,
+                    vertical: PsySpacing.sm,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(PsyRadius.md),
                     border: Border.all(color: cs.outlineVariant),
                   ),
-                  child: LayoutBuilder(builder: (context, c) {
-                    final compact = c.maxWidth < 560;
-                    final icon = const Icon(Icons.health_and_safety_outlined,
-                        color: Color(0xFFDC2626), size: 20);
-                    final body = Text(
-                      'Complete this WITH the client. Decision-support '
-                      'scaffold — not a clinical risk assessment.',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                  child: LayoutBuilder(
+                    builder: (context, c) {
+                      final compact = c.maxWidth < 560;
+                      final icon = const Icon(
+                        Icons.health_and_safety_outlined,
+                        color: Color(0xFFDC2626),
+                        size: 20,
+                      );
+                      final body = Text(
+                        'Complete this WITH the client. Decision-support '
+                        'scaffold — not a clinical risk assessment.',
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.78),
-                          height: 1.4),
-                    );
-                    final draftButton = TextButton.icon(
-                      onPressed: _busy ? null : _draftAi,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.auto_awesome, size: 16),
-                      label: const Text('Draft with AI'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: cs.primary,
-                        textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    );
-                    if (compact) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            icon,
-                            const SizedBox(width: PsySpacing.sm),
-                            Expanded(child: body),
-                          ]),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: draftButton,
+                          height: 1.4,
+                        ),
+                      );
+                      final draftButton = TextButton.icon(
+                        onPressed: _busy ? null : _draftAi,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.auto_awesome, size: 16),
+                        label: const Text('Draft with AI'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: cs.primary,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                      );
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                icon,
+                                const SizedBox(width: PsySpacing.sm),
+                                Expanded(child: body),
+                              ],
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: draftButton,
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          icon,
+                          const SizedBox(width: PsySpacing.md),
+                          Expanded(child: body),
+                          const SizedBox(width: PsySpacing.sm),
+                          draftButton,
                         ],
                       );
-                    }
-                    return Row(children: [
-                      icon,
-                      const SizedBox(width: PsySpacing.md),
-                      Expanded(child: body),
-                      const SizedBox(width: PsySpacing.sm),
-                      draftButton,
-                    ]);
-                  }),
+                    },
+                  ),
                 ),
                 const SizedBox(height: PsySpacing.xl),
                 _Section(
-                    title: '1 · Warning signs',
-                    items: _warning,
-                    onChanged: () => setState(() {})),
+                  title: '1 · Warning signs',
+                  items: _warning,
+                  onChanged: () => setState(() {}),
+                ),
                 _Section(
-                    title: '2 · Coping strategies (on my own)',
-                    items: _coping,
-                    onChanged: () => setState(() {})),
+                  title: '2 · Coping strategies (on my own)',
+                  items: _coping,
+                  onChanged: () => setState(() {}),
+                ),
                 _Section(
-                    title: '3 · Social distractions (people & places)',
-                    items: _social,
-                    onChanged: () => setState(() {})),
+                  title: '3 · Social distractions (people & places)',
+                  items: _social,
+                  onChanged: () => setState(() {}),
+                ),
                 _Section(
-                    title: '4 · People I can ask for help',
-                    items: _support,
-                    onChanged: () => setState(() {})),
+                  title: '4 · People I can ask for help',
+                  items: _support,
+                  onChanged: () => setState(() {}),
+                ),
                 _Section(
-                    title: '5 · Professionals / agencies',
-                    items: _pros,
-                    onChanged: () => setState(() {})),
+                  title: '5 · Professionals / agencies',
+                  items: _pros,
+                  onChanged: () => setState(() {}),
+                ),
                 _Section(
-                    title: '6 · Crisis lines / emergency',
-                    items: _crisis,
-                    onChanged: () => setState(() {}),
-                    trailing: TextButton.icon(
-                      onPressed: _suggestCrisisLines,
-                      icon: const Icon(Icons.add_location_outlined, size: 16),
-                      label: const Text('Suggest for this region'),
-                      style: TextButton.styleFrom(
-                        textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13),
+                  title: '6 · Crisis lines / emergency',
+                  items: _crisis,
+                  onChanged: () => setState(() {}),
+                  trailing: TextButton.icon(
+                    onPressed: _suggestCrisisLines,
+                    icon: const Icon(Icons.add_location_outlined, size: 16),
+                    label: const Text('Suggest for this region'),
+                    style: TextButton.styleFrom(
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
-                    )),
+                    ),
+                  ),
+                ),
                 _Section(
-                    title: '7 · Reasons to keep living',
-                    items: _reasons,
-                    onChanged: () => setState(() {})),
+                  title: '7 · Reasons to keep living',
+                  items: _reasons,
+                  onChanged: () => setState(() {}),
+                ),
                 const SizedBox(height: PsySpacing.md),
-                Text('8 · Making the environment safe',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  '8 · Making the environment safe',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.sm),
                 TextField(
                   controller: _means,
                   minLines: 2,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText:
-                        'Means-restriction steps agreed with the client…',
+                    hintText: 'Means-restriction steps agreed with the client…',
                   ),
                 ),
                 const SizedBox(height: PsySpacing.huge),
@@ -371,35 +420,45 @@ class _SectionState extends State<_Section> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Expanded(
-              child: Text(widget.title,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ),
-            if (widget.trailing != null) widget.trailing!,
-          ]),
-          const SizedBox(height: PsySpacing.sm),
-          ...widget.items.asMap().entries.map((e) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.chevron_right,
-                        size: 16, color: cs.onSurface.withValues(alpha: 0.5)),
-                    Expanded(
-                        child:
-                            Text(e.value, style: theme.textTheme.bodyMedium)),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close, size: 16),
-                      onPressed: () {
-                        widget.items.removeAt(e.key);
-                        widget.onChanged();
-                      },
-                    ),
-                  ],
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              )),
+              ),
+              if (widget.trailing != null) widget.trailing!,
+            ],
+          ),
+          const SizedBox(height: PsySpacing.sm),
+          ...widget.items.asMap().entries.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                  Expanded(
+                    child: Text(e.value, style: theme.textTheme.bodyMedium),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.close, size: 16),
+                    onPressed: () {
+                      widget.items.removeAt(e.key);
+                      widget.onChanged();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
           Row(
             children: [
               Expanded(
@@ -407,12 +466,16 @@ class _SectionState extends State<_Section> {
                   controller: _ctl,
                   onSubmitted: (_) => _add(),
                   decoration: const InputDecoration(
-                      isDense: true, hintText: 'Add an item…'),
+                    isDense: true,
+                    hintText: 'Add an item…',
+                  ),
                 ),
               ),
               const SizedBox(width: PsySpacing.sm),
               IconButton.filledTonal(
-                  onPressed: _add, icon: const Icon(Icons.add)),
+                onPressed: _add,
+                icon: const Icon(Icons.add),
+              ),
             ],
           ),
         ],

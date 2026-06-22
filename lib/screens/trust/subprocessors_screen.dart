@@ -35,7 +35,8 @@ class SubprocessorsScreen extends StatelessWidget {
         onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Subscribe to subprocessor change notices at legal@psyclinicai.com.'),
+              'Subscribe to subprocessor change notices at legal@psyclinicai.com.',
+            ),
           ),
         ),
         icon: const Icon(Icons.notifications_active_outlined, size: 18),
@@ -100,16 +101,21 @@ class _SubRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Text(sub.name,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                child: Text(
+                  sub.name,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               PsyBadge(label: _riskLabel(sub.risk), tone: _riskTone(sub.risk)),
             ],
@@ -132,18 +138,22 @@ class _SubRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(k,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontWeight: FontWeight.w600,
-                )),
+            child: Text(
+              k,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(v,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.88),
-                  height: 1.45,
-                )),
+            child: Text(
+              v,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.88),
+                height: 1.45,
+              ),
+            ),
           ),
         ],
       ),
@@ -152,13 +162,13 @@ class _SubRow extends StatelessWidget {
 }
 
 String _riskLabel(SubprocessorRisk r) => switch (r) {
-      SubprocessorRisk.low => 'Low risk',
-      SubprocessorRisk.medium => 'Medium risk',
-      SubprocessorRisk.high => 'High risk',
-    };
+  SubprocessorRisk.low => 'Low risk',
+  SubprocessorRisk.medium => 'Medium risk',
+  SubprocessorRisk.high => 'High risk',
+};
 
 PsyBadgeTone _riskTone(SubprocessorRisk r) => switch (r) {
-      SubprocessorRisk.low => PsyBadgeTone.success,
-      SubprocessorRisk.medium => PsyBadgeTone.warning,
-      SubprocessorRisk.high => PsyBadgeTone.danger,
-    };
+  SubprocessorRisk.low => PsyBadgeTone.success,
+  SubprocessorRisk.medium => PsyBadgeTone.warning,
+  SubprocessorRisk.high => PsyBadgeTone.danger,
+};

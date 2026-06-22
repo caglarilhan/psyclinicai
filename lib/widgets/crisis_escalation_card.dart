@@ -55,8 +55,10 @@ class CrisisEscalationCard extends StatelessWidget {
           children: [
             _Header(escalation: escalation, accent: accent),
             const SizedBox(height: PsySpacing.md),
-            Text(escalation.guidance,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+            Text(
+              escalation.guidance,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+            ),
             if (escalation.requiresSafetyPlan) ...[
               const SizedBox(height: PsySpacing.lg),
               SizedBox(
@@ -64,9 +66,11 @@ class CrisisEscalationCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onInitiateSafetyPlan,
                   icon: const Icon(Icons.health_and_safety_outlined),
-                  label: Text(escalation.requiresImmediateAction
-                      ? 'Start safety plan now'
-                      : 'Build safety plan with the client'),
+                  label: Text(
+                    escalation.requiresImmediateAction
+                        ? 'Start safety plan now'
+                        : 'Build safety plan with the client',
+                  ),
                   style: FilledButton.styleFrom(
                     backgroundColor: accent,
                     foregroundColor: Colors.white,
@@ -114,14 +118,10 @@ Future<CrisisModalResult> showCrisisEscalationModal({
 /// case stable ids so analytics + audit log can aggregate without
 /// translating display labels.
 const Map<String, String> _dismissReasonLabels = {
-  'hospitalized':
-      'Patient is on the way to / already at an inpatient setting',
-  'family_present':
-      'Family or trusted adult is with the patient and informed',
-  'supervisor_handoff':
-      'Handed off to a supervisor / on-call psychiatrist',
-  'in_session_plan':
-      'Completing a safety plan inside this session instead',
+  'hospitalized': 'Patient is on the way to / already at an inpatient setting',
+  'family_present': 'Family or trusted adult is with the patient and informed',
+  'supervisor_handoff': 'Handed off to a supervisor / on-call psychiatrist',
+  'in_session_plan': 'Completing a safety plan inside this session instead',
   'other': 'Other (documented in the session note)',
 };
 
@@ -159,7 +159,9 @@ class _DismissReasonPickerState extends State<_DismissReasonPicker> {
             'C-SSRS escalation dismissal is logged with a reason so a '
             'supervisor can follow up. Pick the closest match.',
             style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.7), height: 1.45),
+              color: cs.onSurface.withValues(alpha: 0.7),
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: PsySpacing.md),
           for (final entry in _dismissReasonLabels.entries)
@@ -169,8 +171,7 @@ class _DismissReasonPickerState extends State<_DismissReasonPicker> {
               onChanged: (v) => setState(() => _picked = v),
               dense: true,
               contentPadding: EdgeInsets.zero,
-              title: Text(entry.value,
-                  style: theme.textTheme.bodyMedium),
+              title: Text(entry.value, style: theme.textTheme.bodyMedium),
             ),
         ],
       ),
@@ -239,29 +240,33 @@ class _CrisisModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.all(PsySpacing.sm),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(PsyRadius.md),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(PsySpacing.sm),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(PsyRadius.md),
+                    ),
+                    child: Icon(Icons.warning_amber_rounded, color: accent),
                   ),
-                  child: Icon(Icons.warning_amber_rounded, color: accent),
-                ),
-                const SizedBox(width: PsySpacing.md),
-                Expanded(
-                  child: Text(
-                    escalation.headline,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: accent,
+                  const SizedBox(width: PsySpacing.md),
+                  Expanded(
+                    child: Text(
+                      escalation.headline,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ),
                     ),
                   ),
-                ),
-              ]),
+                ],
+              ),
               const SizedBox(height: PsySpacing.lg),
-              Text(escalation.guidance,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+              Text(
+                escalation.guidance,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
               if (escalation.blockPatientRelease) ...[
                 const SizedBox(height: PsySpacing.md),
                 Container(
@@ -271,74 +276,82 @@ class _CrisisModal extends StatelessWidget {
                     borderRadius: BorderRadius.circular(PsyRadius.md),
                     border: Border.all(color: accent.withValues(alpha: 0.35)),
                   ),
-                  child: Row(children: [
-                    Icon(Icons.person_off_outlined, color: accent, size: 20),
-                    const SizedBox(width: PsySpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Do not let the patient leave until acute safety is '
-                        'established.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface,
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_off_outlined, color: accent, size: 20),
+                      const SizedBox(width: PsySpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Do not let the patient leave until acute safety is '
+                          'established.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                          ),
                         ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
                 ),
               ],
               const SizedBox(height: PsySpacing.xl),
               _CrisisResourceList(resources: resources, compact: true),
               const SizedBox(height: PsySpacing.xl),
-              LayoutBuilder(builder: (context, c) {
-                final stack = c.maxWidth < 420;
-                final primary = FilledButton.icon(
-                  onPressed: () => Navigator.of(context).pop(
+              LayoutBuilder(
+                builder: (context, c) {
+                  final stack = c.maxWidth < 420;
+                  final primary = FilledButton.icon(
+                    onPressed: () => Navigator.of(context).pop(
                       const CrisisModalResult(
-                          outcome: CrisisModalOutcome.initiateSafetyPlan)),
-                  icon: const Icon(Icons.health_and_safety_outlined),
-                  label: const Text('Start safety plan now'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 48),
-                  ),
-                );
-                final secondary = TextButton(
-                  onPressed: () async {
-                    // Immediate + imminent tiers MUST capture a reason
-                    // code before the modal goes away. Lower tiers can
-                    // dismiss without one.
-                    if (escalation.requiresImmediateAction) {
-                      final reason = await _pickDismissReason(context);
-                      if (reason == null) return; // clinician cancelled
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop(CrisisModalResult(
-                          outcome: CrisisModalOutcome.dismissed,
-                          dismissReason: reason));
-                    } else {
-                      Navigator.of(context).pop(const CrisisModalResult(
-                          outcome: CrisisModalOutcome.dismissed));
-                    }
-                  },
-                  child: const Text("I'll handle this manually"),
-                );
-                if (stack) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      primary,
-                      const SizedBox(height: PsySpacing.sm),
-                      secondary,
-                    ],
+                        outcome: CrisisModalOutcome.initiateSafetyPlan,
+                      ),
+                    ),
+                    icon: const Icon(Icons.health_and_safety_outlined),
+                    label: const Text('Start safety plan now'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 48),
+                    ),
                   );
-                }
-                return Row(children: [
-                  secondary,
-                  const Spacer(),
-                  primary,
-                ]);
-              }),
+                  final secondary = TextButton(
+                    onPressed: () async {
+                      // Immediate + imminent tiers MUST capture a reason
+                      // code before the modal goes away. Lower tiers can
+                      // dismiss without one.
+                      if (escalation.requiresImmediateAction) {
+                        final reason = await _pickDismissReason(context);
+                        if (reason == null) return; // clinician cancelled
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop(
+                          CrisisModalResult(
+                            outcome: CrisisModalOutcome.dismissed,
+                            dismissReason: reason,
+                          ),
+                        );
+                      } else {
+                        Navigator.of(context).pop(
+                          const CrisisModalResult(
+                            outcome: CrisisModalOutcome.dismissed,
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text("I'll handle this manually"),
+                  );
+                  if (stack) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        primary,
+                        const SizedBox(height: PsySpacing.sm),
+                        secondary,
+                      ],
+                    );
+                  }
+                  return Row(children: [secondary, const Spacer(), primary]);
+                },
+              ),
             ],
           ),
         ),
@@ -355,34 +368,38 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.sm, vertical: 4),
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(PsyRadius.full),
-        ),
-        child: Text(
-          escalation.tier.name.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: accent,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.sm,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(PsyRadius.full),
+          ),
+          child: Text(
+            escalation.tier.name.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
           ),
         ),
-      ),
-      const SizedBox(width: PsySpacing.sm),
-      Expanded(
-        child: Text(
-          escalation.headline,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: accent,
+        const SizedBox(width: PsySpacing.sm),
+        Expanded(
+          child: Text(
+            escalation.headline,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: accent,
+            ),
           ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -396,23 +413,33 @@ class _SupervisorHint extends StatelessWidget {
     final cs = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(PsyRadius.md),
         border: Border.all(color: cs.outlineVariant),
       ),
-      child: Row(children: [
-        Icon(Icons.supervisor_account_outlined,
-            size: 18, color: cs.onSurface.withValues(alpha: 0.65)),
-        const SizedBox(width: PsySpacing.sm),
-        Expanded(
-          child: Text(text,
+      child: Row(
+        children: [
+          Icon(
+            Icons.supervisor_account_outlined,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.65),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Text(
+              text,
               style: theme.textTheme.bodySmall?.copyWith(
-                  height: 1.4,
-                  color: cs.onSurface.withValues(alpha: 0.8))),
-        ),
-      ]),
+                height: 1.4,
+                color: cs.onSurface.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -473,7 +500,8 @@ class _ResourceTile extends StatelessWidget {
 
     return Semantics(
       button: dialable || webOnly,
-      label: '${resource.name}, ${resource.displayNumber}, '
+      label:
+          '${resource.name}, ${resource.displayNumber}, '
           '${resource.availability}',
       child: InkWell(
         onTap: dialable
@@ -482,59 +510,77 @@ class _ResourceTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(PsyRadius.md),
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+            horizontal: PsySpacing.md,
+            vertical: PsySpacing.sm,
+          ),
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(PsyRadius.md),
             border: Border.all(color: cs.outlineVariant),
           ),
-          child: Row(children: [
-            _KindBadge(kind: resource.kind),
-            const SizedBox(width: PsySpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(resource.name,
+          child: Row(
+            children: [
+              _KindBadge(kind: resource.kind),
+              const SizedBox(width: PsySpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      resource.name,
                       style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600)),
-                  if (!compact && resource.description.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(resource.description,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (!compact && resource.description.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        resource.description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.65))),
-                  ],
-                  const SizedBox(height: 2),
-                  Text(resource.availability,
+                          color: cs.onSurface.withValues(alpha: 0.65),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                    Text(
+                      resource.availability,
                       style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.5))),
-                ],
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: PsySpacing.sm),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: PsySpacing.sm, vertical: 4),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(PsyRadius.full),
-              ),
-              child: Text(resource.displayNumber,
+              const SizedBox(width: PsySpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PsySpacing.sm,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(PsyRadius.full),
+                ),
+                child: Text(
+                  resource.displayNumber,
                   style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: cs.onSurface.withValues(alpha: 0.85))),
-            ),
-            if (dialable || webOnly) ...[
-              const SizedBox(width: PsySpacing.xs),
-              Icon(
-                dialable ? Icons.call_outlined : Icons.open_in_new,
-                size: 18,
-                color: cs.primary,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: cs.onSurface.withValues(alpha: 0.85),
+                  ),
+                ),
               ),
+              if (dialable || webOnly) ...[
+                const SizedBox(width: PsySpacing.xs),
+                Icon(
+                  dialable ? Icons.call_outlined : Icons.open_in_new,
+                  size: 18,
+                  color: cs.primary,
+                ),
+              ],
             ],
-          ]),
+          ),
         ),
       ),
     );
@@ -557,15 +603,15 @@ class _KindBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (IconData icon, Color color) = switch (kind) {
       CrisisResourceKind.emergency => (
-          Icons.local_hospital,
-          PsyColors.riskSevere,
-        ),
+        Icons.local_hospital,
+        PsyColors.riskSevere,
+      ),
       CrisisResourceKind.hotline => (Icons.call, PsyColors.riskModerate),
       CrisisResourceKind.textLine => (Icons.sms_outlined, PsyColors.riskMild),
       CrisisResourceKind.directory => (
-          Icons.travel_explore,
-          const Color(0xFF0F766E),
-        ),
+        Icons.travel_explore,
+        const Color(0xFF0F766E),
+      ),
     };
     return Container(
       width: 32,
@@ -580,9 +626,9 @@ class _KindBadge extends StatelessWidget {
 }
 
 Color _tierAccent(CssrsEscalationTier tier) => switch (tier) {
-      CssrsEscalationTier.imminent => PsyColors.riskSevere,
-      CssrsEscalationTier.immediate => PsyColors.riskSevere,
-      CssrsEscalationTier.initiateSafetyPlan => PsyColors.riskModerate,
-      CssrsEscalationTier.monitor => PsyColors.riskMild,
-      CssrsEscalationTier.none => PsyColors.riskMinimal,
-    };
+  CssrsEscalationTier.imminent => PsyColors.riskSevere,
+  CssrsEscalationTier.immediate => PsyColors.riskSevere,
+  CssrsEscalationTier.initiateSafetyPlan => PsyColors.riskModerate,
+  CssrsEscalationTier.monitor => PsyColors.riskMild,
+  CssrsEscalationTier.none => PsyColors.riskMinimal,
+};

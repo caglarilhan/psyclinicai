@@ -12,18 +12,17 @@ Future<void> _pump(WidgetTester tester, {GroupSession? session}) async {
 
 void main() {
   group('GroupSessionScreen', () {
-    testWidgets('renders the demo facilitator note when no session passed',
-        (tester) async {
+    testWidgets('renders the demo facilitator note when no session passed', (
+      tester,
+    ) async {
       await _pump(tester);
       expect(find.text('Facilitator note'), findsOneWidget);
-      expect(
-        find.textContaining('grounding exercise'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('grounding exercise'), findsOneWidget);
     });
 
-    testWidgets('roster rows expose patient id + attendance tag',
-        (tester) async {
+    testWidgets('roster rows expose patient id + attendance tag', (
+      tester,
+    ) async {
       await _pump(tester);
       expect(find.text('p-001'), findsOneWidget);
       expect(find.text('p-002'), findsOneWidget);
@@ -39,22 +38,21 @@ void main() {
         scheduledAt: DateTime.utc(2026, 6, 11, 17),
         roster: List.generate(
           GroupSession.maxRosterSize,
-          (i) => GroupSessionAttendance(
-            patientId: 'p-$i',
-            subNoteId: 'n-$i',
-          ),
+          (i) => GroupSessionAttendance(patientId: 'p-$i', subNoteId: 'n-$i'),
         ),
       );
       await _pump(tester, session: atCap);
       expect(find.textContaining('cap'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('HIPAA note surfaces the per-patient sub-note rule',
-        (tester) async {
+    testWidgets('HIPAA note surfaces the per-patient sub-note rule', (
+      tester,
+    ) async {
       await _pump(tester);
       expect(
-        find.textContaining(RegExp('per-patient subjective notes',
-            caseSensitive: false)),
+        find.textContaining(
+          RegExp('per-patient subjective notes', caseSensitive: false),
+        ),
         findsOneWidget,
       );
     });

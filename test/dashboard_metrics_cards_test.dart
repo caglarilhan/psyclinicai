@@ -10,18 +10,20 @@ DashboardMetrics _metrics({
   int outstandingCents = 124000,
   int oldestAge = 22,
   DashboardAppointment? next,
-}) =>
-    DashboardMetrics(
-      todaysSessionCount: sessions,
-      nextAppointment: next,
-      pendingNotesCount: pending,
-      atRiskCount: atRisk,
-      outstandingTotalCents: outstandingCents,
-      oldestOutstandingAgeDays: oldestAge,
-    );
+}) => DashboardMetrics(
+  todaysSessionCount: sessions,
+  nextAppointment: next,
+  pendingNotesCount: pending,
+  atRiskCount: atRisk,
+  outstandingTotalCents: outstandingCents,
+  oldestOutstandingAgeDays: oldestAge,
+);
 
-Future<void> _pump(WidgetTester tester, DashboardMetrics m,
-    {ValueChanged<DashboardCardKind>? onTap}) async {
+Future<void> _pump(
+  WidgetTester tester,
+  DashboardMetrics m, {
+  ValueChanged<DashboardCardKind>? onTap,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -65,25 +67,20 @@ void main() {
       expect(find.textContaining('John Demo'), findsOneWidget);
     });
 
-    testWidgets('tapping a card fires onTap with the card kind',
-        (tester) async {
+    testWidgets('tapping a card fires onTap with the card kind', (
+      tester,
+    ) async {
       DashboardCardKind? captured;
-      await _pump(
-        tester,
-        _metrics(),
-        onTap: (k) => captured = k,
-      );
+      await _pump(tester, _metrics(), onTap: (k) => captured = k);
       await tester.tap(find.text('Pending notes'));
       await tester.pumpAndSettle();
       expect(captured, DashboardCardKind.pendingNotes);
     });
 
-    testWidgets('outstanding fallback hint when nothing is outstanding',
-        (tester) async {
-      await _pump(
-        tester,
-        _metrics(outstandingCents: 0, oldestAge: 0),
-      );
+    testWidgets('outstanding fallback hint when nothing is outstanding', (
+      tester,
+    ) async {
+      await _pump(tester, _metrics(outstandingCents: 0, oldestAge: 0));
       expect(find.text('None outstanding'), findsOneWidget);
     });
   });

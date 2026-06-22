@@ -188,8 +188,7 @@ class RopaRegistry {
           '7 years (statutory tax retention, EU); supersedes the clinical '
           'rule when longer.',
       recipients: ['Stripe (US, BAA + SCC)', 'Clinician (controller)'],
-      transferMechanism:
-          'SCC (2021/914) + Stripe Data Processing Addendum.',
+      transferMechanism: 'SCC (2021/914) + Stripe Data Processing Addendum.',
       securityMeasures: [
         'Server-side Stripe webhook signing',
         'No payment card data persisted in app',
@@ -258,9 +257,11 @@ class RopaRegistry {
 
   /// Activities that touch Art. 9 special category (health) data.
   static List<RopaActivity> get specialCategory => activities
-      .where((a) =>
-          a.dataCategories.any((c) => c.toLowerCase().contains('art. 9')) ||
-          a.lawfulBasis.contains('Art. 9'))
+      .where(
+        (a) =>
+            a.dataCategories.any((c) => c.toLowerCase().contains('art. 9')) ||
+            a.lawfulBasis.contains('Art. 9'),
+      )
       .toList(growable: false);
 
   static RopaActivity? byId(String id) {

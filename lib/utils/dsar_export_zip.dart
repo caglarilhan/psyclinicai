@@ -37,11 +37,9 @@ Uint8List? buildPatientExportZip({
 
   final archive = Archive();
   final jsonBytes = utf8.encode(jsonText);
-  archive.addFile(ArchiveFile(
-    'patient-export.json',
-    jsonBytes.length,
-    jsonBytes,
-  ));
+  archive.addFile(
+    ArchiveFile('patient-export.json', jsonBytes.length, jsonBytes),
+  );
   final readme = _readme(patientId, generatedAt, jsonBytes.length);
   final readmeBytes = utf8.encode(readme);
   archive.addFile(ArchiveFile('README.txt', readmeBytes.length, readmeBytes));

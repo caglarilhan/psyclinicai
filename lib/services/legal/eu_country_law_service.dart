@@ -16,9 +16,11 @@
 /// (country selector wiring), senior-fullstack (data shape).
 library;
 
-import 'state_law_service.dart' show JurisdictionAlert, AlertCategory, AlertSeverity;
+import 'state_law_service.dart'
+    show JurisdictionAlert, AlertCategory, AlertSeverity;
 
-export 'state_law_service.dart' show JurisdictionAlert, AlertCategory, AlertSeverity;
+export 'state_law_service.dart'
+    show JurisdictionAlert, AlertCategory, AlertSeverity;
 
 /// Public surface. Stateless; safe to instantiate at the call site.
 class EuCountryLawService {
@@ -83,8 +85,7 @@ class EuCountryLawService {
                 'justifiable.',
             category: AlertCategory.telehealthLicensure,
             severity: AlertSeverity.warning,
-            citation:
-                '§ 7 Abs. 4 MBO-Ä; § 11 PsychThG; Telematikinfrastruktur',
+            citation: '§ 7 Abs. 4 MBO-Ä; § 11 PsychThG; Telematikinfrastruktur',
           ),
           JurisdictionAlert(
             id: 'DE.documentationRetention.psychthg',
@@ -249,7 +250,8 @@ class EuCountryLawService {
 
   /// Bundle alerts across a multi-country license set.
   List<JurisdictionAlert> alertsForMultipleCountries(
-      Iterable<String> countryCodes) {
+    Iterable<String> countryCodes,
+  ) {
     final out = <JurisdictionAlert>[];
     for (final code in countryCodes) {
       out.addAll(alertsForCountry(code));

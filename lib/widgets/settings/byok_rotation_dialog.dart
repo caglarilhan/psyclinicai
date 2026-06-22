@@ -100,8 +100,7 @@ class _ByokRotationDialogState extends State<ByokRotationDialog> {
           TelemetryEvents.byokRotationCompleted,
           properties: {
             'provider': providerName,
-            'grace_period_h':
-                ByokRotationService.defaultGraceWindow.inHours,
+            'grace_period_h': ByokRotationService.defaultGraceWindow.inHours,
           },
         );
         Navigator.of(context).pop(result);

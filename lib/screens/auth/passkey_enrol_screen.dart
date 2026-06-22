@@ -109,9 +109,7 @@ class _PasskeyEnrolScreenState extends State<PasskeyEnrolScreen> {
                     tone: PsyBadgeTone.warning,
                   ),
                   const SizedBox(height: PsySpacing.xs),
-                  const Text(
-                    'Open this page on a supported browser to enrol.',
-                  ),
+                  const Text('Open this page on a supported browser to enrol.'),
                 ],
                 const SizedBox(height: PsySpacing.md),
                 Row(
@@ -129,8 +127,8 @@ class _PasskeyEnrolScreenState extends State<PasskeyEnrolScreen> {
                     const SizedBox(width: PsySpacing.md),
                     FilledButton.icon(
                       key: const Key('passkey_add_button'),
-                      onPressed: _enrolling ||
-                              !widget.service.isPlatformSupported
+                      onPressed:
+                          _enrolling || !widget.service.isPlatformSupported
                           ? null
                           : _enrol,
                       icon: const Icon(Icons.fingerprint),
@@ -140,27 +138,25 @@ class _PasskeyEnrolScreenState extends State<PasskeyEnrolScreen> {
                 ),
                 if (_flash != null) ...[
                   const SizedBox(height: PsySpacing.sm),
-                  Text(_flash!,
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(_flash!, style: Theme.of(context).textTheme.bodySmall),
                 ],
               ],
             ),
           ),
           const SizedBox(height: PsySpacing.lg),
-          Text('Enrolled keys',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Enrolled keys', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: PsySpacing.sm),
           if (passkeys.isEmpty)
             const PsyCard(
-              child: Text(
-                'No passkeys yet. Add your first one above.',
-              ),
+              child: Text('No passkeys yet. Add your first one above.'),
             )
           else
-            ...passkeys.map((c) => _PasskeyRow(
-                  cred: c,
-                  onRemove: () => widget.service.revoke(c.credentialId),
-                )),
+            ...passkeys.map(
+              (c) => _PasskeyRow(
+                cred: c,
+                onRemove: () => widget.service.revoke(c.credentialId),
+              ),
+            ),
         ],
       ),
     );
@@ -191,17 +187,20 @@ class _PasskeyRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cred.deviceLabel,
-                      style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    cred.deviceLabel,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitleBits.join(' · '),
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    subtitleBits.join(' · '),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
             if (!cred.isActive)
-              const PsyBadge(
-                  label: 'Revoked', tone: PsyBadgeTone.warning)
+              const PsyBadge(label: 'Revoked', tone: PsyBadgeTone.warning)
             else
               TextButton.icon(
                 onPressed: onRemove,

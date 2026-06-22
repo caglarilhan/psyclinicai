@@ -20,8 +20,7 @@ void main() {
       expect(e.blockPatientRelease, isFalse);
     });
 
-    test('death-wish only (item 1) is monitor — flag, no immediate action',
-        () {
+    test('death-wish only (item 1) is monitor — flag, no immediate action', () {
       final result = scale.score([1, 0, 0, 0, 0, 0]);
       final e = service.evaluate(result);
 
@@ -47,8 +46,11 @@ void main() {
 
       expect(e.tier, CssrsEscalationTier.initiateSafetyPlan);
       expect(e.requiresSafetyPlan, isTrue);
-      expect(e.requiresImmediateAction, isFalse,
-          reason: 'Method alone does not block release.');
+      expect(
+        e.requiresImmediateAction,
+        isFalse,
+        reason: 'Method alone does not block release.',
+      );
       expect(e.blockPatientRelease, isFalse);
     });
 
@@ -100,10 +102,16 @@ void main() {
         [0, 0, 0, 0, 0, 1],
       ]) {
         final e = service.evaluate(scale.score(answers));
-        expect(e.headline, isNotEmpty,
-            reason: 'tier ${e.tier} must have a headline');
-        expect(e.guidance, isNotEmpty,
-            reason: 'tier ${e.tier} must have guidance text');
+        expect(
+          e.headline,
+          isNotEmpty,
+          reason: 'tier ${e.tier} must have a headline',
+        );
+        expect(
+          e.guidance,
+          isNotEmpty,
+          reason: 'tier ${e.tier} must have guidance text',
+        );
       }
     });
   });
@@ -124,8 +132,10 @@ void main() {
     test('initiated + dismissed recorders are safe to call', () {
       final e = service.evaluate(scale.score([0, 0, 0, 1, 0, 0]));
       expect(() => service.recordSafetyPlanInitiated(e), returnsNormally);
-      expect(() => service.recordModalDismissed(e, reason: 'test'),
-          returnsNormally);
+      expect(
+        () => service.recordModalDismissed(e, reason: 'test'),
+        returnsNormally,
+      );
     });
   });
 }

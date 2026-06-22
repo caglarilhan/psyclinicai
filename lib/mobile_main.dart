@@ -11,18 +11,19 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final languageService = LanguageService();
   final offlineService = OfflineService();
-  
+
   await languageService.initialize();
   await offlineService.initialize();
-  
-  runApp(PsyClinicAIMobileApp(
-    languageService: languageService,
-    offlineService: offlineService,
-  ));
+
+  runApp(
+    PsyClinicAIMobileApp(
+      languageService: languageService,
+      offlineService: offlineService,
+    ),
+  );
 }
 
 class PsyClinicAIMobileApp extends StatelessWidget {
-  
   const PsyClinicAIMobileApp({
     super.key,
     required this.languageService,
@@ -48,10 +49,7 @@ class PsyClinicAIMobileApp extends StatelessWidget {
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
               // Mobil optimizasyonlar
-              appBarTheme: const AppBarTheme(
-                centerTitle: true,
-                elevation: 0,
-              ),
+              appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
               bottomNavigationBarTheme: const BottomNavigationBarThemeData(
                 type: BottomNavigationBarType.fixed,
                 elevation: 8,
@@ -103,7 +101,6 @@ class PsyClinicAIMobileApp extends StatelessWidget {
 }
 
 class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
-
   const MobileAppBar({
     super.key,
     required this.title,
@@ -122,12 +119,7 @@ class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
     final colorScheme = theme.colorScheme;
 
     return AppBar(
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       backgroundColor: colorScheme.primary,
       foregroundColor: Colors.white,
       elevation: 0,
@@ -152,7 +144,6 @@ class MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class MobileCard extends StatelessWidget {
-
   const MobileCard({
     super.key,
     required this.child,
@@ -175,9 +166,7 @@ class MobileCard extends StatelessWidget {
       elevation: elevation ?? 4,
       margin: margin ?? const EdgeInsets.all(8),
       color: color,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -191,7 +180,6 @@ class MobileCard extends StatelessWidget {
 }
 
 class MobileButton extends StatelessWidget {
-
   const MobileButton({
     super.key,
     required this.text,
@@ -218,24 +206,13 @@ class MobileButton extends StatelessWidget {
     Widget buttonChild = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-        ],
-        Text(
-          text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 8)],
+        Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
 
     if (width != null) {
-      buttonChild = SizedBox(
-        width: width,
-        child: buttonChild,
-      );
+      buttonChild = SizedBox(width: width, child: buttonChild);
     }
 
     return ElevatedButton(
@@ -248,9 +225,7 @@ class MobileButton extends StatelessWidget {
           horizontal: 24,
           vertical: height != null ? (height! - 32) / 2 : 12,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: buttonChild,
     );
@@ -258,7 +233,6 @@ class MobileButton extends StatelessWidget {
 }
 
 class MobileTextField extends StatelessWidget {
-
   const MobileTextField({
     super.key,
     this.labelText,
@@ -302,14 +276,9 @@ class MobileTextField extends StatelessWidget {
         hintText: hintText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
         suffixIcon: suffixIcon != null
-            ? IconButton(
-                icon: Icon(suffixIcon),
-                onPressed: onSuffixIconTap,
-              )
+            ? IconButton(icon: Icon(suffixIcon), onPressed: onSuffixIconTap)
             : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 12,
@@ -320,7 +289,6 @@ class MobileTextField extends StatelessWidget {
 }
 
 class MobileListTile extends StatelessWidget {
-
   const MobileListTile({
     super.key,
     required this.title,
@@ -362,7 +330,9 @@ class MobileListTile extends StatelessWidget {
             ? Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (leadingColor ?? colorScheme.primary).withValues(alpha: 0.1),
+                  color: (leadingColor ?? colorScheme.primary).withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -372,32 +342,22 @@ class MobileListTile extends StatelessWidget {
                 ),
               )
             : null,
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               )
             : null,
         trailing: trailing,
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 }
 
 class MobileFloatingActionButton extends StatelessWidget {
-
   const MobileFloatingActionButton({
     super.key,
     this.onPressed,
@@ -423,9 +383,7 @@ class MobileFloatingActionButton extends StatelessWidget {
       backgroundColor: backgroundColor ?? colorScheme.primary,
       foregroundColor: foregroundColor ?? colorScheme.onPrimary,
       elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Icon(icon),
     );
   }

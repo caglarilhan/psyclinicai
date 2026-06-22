@@ -45,11 +45,13 @@ void main() {
     });
 
     test('delta is the signed change from earliest to latest sample', () {
-      final m = buildCaseloadMetrics(samples: [
-        OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
-        OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 3, 1)),
-        OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
-      ]);
+      final m = buildCaseloadMetrics(
+        samples: [
+          OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
+          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 3, 1)),
+          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
+        ],
+      );
       expect(m.totalSamples, 3);
       expect(m.firstSample!.score, 18);
       expect(m.latestSample!.score, 8);
@@ -58,39 +60,40 @@ void main() {
     });
 
     test('reorders samples chronologically before computing delta', () {
-      final m = buildCaseloadMetrics(samples: [
-        OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
-        OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
-      ]);
+      final m = buildCaseloadMetrics(
+        samples: [
+          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
+          OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
+        ],
+      );
       expect(m.firstSample!.score, 18);
       expect(m.latestSample!.score, 8);
       expect(m.delta, -10);
     });
 
     test('single sample reports null delta and false improvement', () {
-      final m = buildCaseloadMetrics(samples: [
-        OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 4, 1)),
-      ]);
+      final m = buildCaseloadMetrics(
+        samples: [OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 4, 1))],
+      );
       expect(m.delta, isNull);
       expect(m.hasReliableImprovement, isFalse);
     });
 
     test('hasReliableImprovement requires at least a -5 delta', () {
-      final small = buildCaseloadMetrics(samples: [
-        OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 1, 1)),
-        OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 5, 1)),
-      ]);
+      final small = buildCaseloadMetrics(
+        samples: [
+          OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 1, 1)),
+          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 5, 1)),
+        ],
+      );
       expect(small.delta, -2);
       expect(small.hasReliableImprovement, isFalse);
     });
 
-    test('no-show rate denominator excludes pending future appointments',
-        () {
-      final m = buildCaseloadMetrics(appointments: [
-        appt('Scheduled'),
-        appt('Completed'),
-        appt('No-Show'),
-      ]);
+    test('no-show rate denominator excludes pending future appointments', () {
+      final m = buildCaseloadMetrics(
+        appointments: [appt('Scheduled'), appt('Completed'), appt('No-Show')],
+      );
       expect(m.totalAppointments, 3);
       expect(m.finalisedAppointments, 2);
       expect(m.noShowCount, 1);

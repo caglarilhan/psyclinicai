@@ -23,23 +23,26 @@ void main() {
 
   group('SupervisionQueueScreen', () {
     testWidgets(
-        'empty open + closed state — both sections show the no-data hint',
-        (tester) async {
-      await _pump(tester);
-      expect(find.text('No notes are waiting on you.'), findsOneWidget);
-      expect(find.text('No decisions on the record yet.'), findsOneWidget);
-    });
+      'empty open + closed state — both sections show the no-data hint',
+      (tester) async {
+        await _pump(tester);
+        expect(find.text('No notes are waiting on you.'), findsOneWidget);
+        expect(find.text('No decisions on the record yet.'), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'co-sign disclaimer is always visible (legal binding warning)',
-        (tester) async {
-      await _pump(tester);
-      expect(
-          find.textContaining('NOT yet a legally binding'), findsOneWidget);
-    });
+      'co-sign disclaimer is always visible (legal binding warning)',
+      (tester) async {
+        await _pump(tester);
+        expect(
+          find.textContaining('NOT yet a legally binding'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('submitted review appears in the open section',
-        (tester) async {
+    testWidgets('submitted review appears in the open section', (tester) async {
       InMemorySupervisionReviewRepository.instance.submit(
         clinicId: 'c1',
         traineeId: 't1',
@@ -53,10 +56,8 @@ void main() {
       expect(find.text('Co-sign'), findsOneWidget);
     });
 
-    testWidgets('co-signed reviews move to the closed section',
-        (tester) async {
-      final row =
-          InMemorySupervisionReviewRepository.instance.submit(
+    testWidgets('co-signed reviews move to the closed section', (tester) async {
+      final row = InMemorySupervisionReviewRepository.instance.submit(
         clinicId: 'c1',
         traineeId: 't1',
         supervisorId: 'sup-1',

@@ -14,8 +14,7 @@ enum SsoProvider {
   final SsoProtocol defaultProtocol;
 
   static SsoProvider fromId(String id) =>
-      values.firstWhere((p) => p.id == id,
-          orElse: () => SsoProvider.workspace);
+      values.firstWhere((p) => p.id == id, orElse: () => SsoProvider.workspace);
 }
 
 enum SsoProtocol { saml, oidc }
@@ -52,33 +51,32 @@ class SsoConfiguration {
     bool? requireSso,
     DateTime? lastTestAt,
     bool? lastTestOk,
-  }) =>
-      SsoConfiguration(
-        tenantId: tenantId,
-        provider: provider,
-        protocol: protocol,
-        idpEntityId: idpEntityId,
-        acsUrl: acsUrl,
-        metadataUrl: metadataUrl,
-        jitProvisioning: jitProvisioning ?? this.jitProvisioning,
-        requireSso: requireSso ?? this.requireSso,
-        lastTestAt: lastTestAt ?? this.lastTestAt,
-        lastTestOk: lastTestOk ?? this.lastTestOk,
-      );
+  }) => SsoConfiguration(
+    tenantId: tenantId,
+    provider: provider,
+    protocol: protocol,
+    idpEntityId: idpEntityId,
+    acsUrl: acsUrl,
+    metadataUrl: metadataUrl,
+    jitProvisioning: jitProvisioning ?? this.jitProvisioning,
+    requireSso: requireSso ?? this.requireSso,
+    lastTestAt: lastTestAt ?? this.lastTestAt,
+    lastTestOk: lastTestOk ?? this.lastTestOk,
+  );
 
   Map<String, dynamic> toJson() => {
-        'tenant_id': tenantId,
-        'provider': provider.id,
-        'protocol': protocol.name,
-        'idp_entity_id': idpEntityId,
-        'acs_url': acsUrl,
-        if (metadataUrl != null) 'metadata_url': metadataUrl,
-        'jit_provisioning': jitProvisioning,
-        'require_sso': requireSso,
-        if (lastTestAt != null)
-          'last_test_at': lastTestAt!.toUtc().toIso8601String(),
-        'last_test_ok': lastTestOk,
-      };
+    'tenant_id': tenantId,
+    'provider': provider.id,
+    'protocol': protocol.name,
+    'idp_entity_id': idpEntityId,
+    'acs_url': acsUrl,
+    if (metadataUrl != null) 'metadata_url': metadataUrl,
+    'jit_provisioning': jitProvisioning,
+    'require_sso': requireSso,
+    if (lastTestAt != null)
+      'last_test_at': lastTestAt!.toUtc().toIso8601String(),
+    'last_test_ok': lastTestOk,
+  };
 
   factory SsoConfiguration.fromJson(Map<String, dynamic> json) =>
       SsoConfiguration(

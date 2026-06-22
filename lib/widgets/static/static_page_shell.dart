@@ -29,8 +29,7 @@ class StaticPageShell extends StatelessWidget {
 
     return Scaffold(
       appBar: _ShellAppBar(
-        onHome: () =>
-            Navigator.of(context).pushReplacementNamed('/landing'),
+        onHome: () => Navigator.of(context).pushReplacementNamed('/landing'),
         onDemo: () => DemoModal.show(context),
         onStart: () => Navigator.of(context).pushNamed('/login'),
       ),
@@ -38,11 +37,12 @@ class StaticPageShell extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           _Header(
-              title: title,
-              eyebrow: eyebrow,
-              lede: lede,
-              theme: theme,
-              cs: cs),
+            title: title,
+            eyebrow: eyebrow,
+            lede: lede,
+            theme: theme,
+            cs: cs,
+          ),
           Container(
             color: cs.surface,
             padding: EdgeInsets.symmetric(
@@ -85,18 +85,19 @@ class StaticPageShell extends StatelessWidget {
 
   static double _hPadding(BuildContext c) =>
       MediaQuery.of(c).size.width >= PsyBreakpoints.md
-          ? PsySpacing.huge
-          : PsySpacing.xl;
+      ? PsySpacing.huge
+      : PsySpacing.xl;
 
   static String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
 class _ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _ShellAppBar(
-      {required this.onHome,
-      required this.onDemo,
-      required this.onStart});
+  const _ShellAppBar({
+    required this.onHome,
+    required this.onDemo,
+    required this.onStart,
+  });
 
   final VoidCallback onHome;
   final VoidCallback onDemo;
@@ -130,8 +131,7 @@ class _ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         TextButton(
           onPressed: onDemo,
-          child: Text('Watch demo',
-              style: TextStyle(color: cs.onSurface)),
+          child: Text('Watch demo', style: TextStyle(color: cs.onSurface)),
         ),
         const SizedBox(width: PsySpacing.sm),
         FilledButton(onPressed: onStart, child: const Text('Start free')),
@@ -162,17 +162,18 @@ class _Header extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            cs.primary.withValues(alpha: 0.06),
-            cs.surface,
-          ],
+          colors: [cs.primary.withValues(alpha: 0.06), cs.surface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: Border(bottom: BorderSide(color: cs.outlineVariant)),
       ),
       padding: EdgeInsets.fromLTRB(
-          hPad, PsySpacing.huge, hPad, PsySpacing.xxxl),
+        hPad,
+        PsySpacing.huge,
+        hPad,
+        PsySpacing.xxxl,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 880),
@@ -226,7 +227,9 @@ class _MiniFooter extends StatelessWidget {
     return Container(
       color: cs.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xl, vertical: PsySpacing.xxl),
+        horizontal: PsySpacing.xl,
+        vertical: PsySpacing.xxl,
+      ),
       child: Column(
         children: [
           InkWell(
@@ -267,8 +270,10 @@ class StaticH2 extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     return Padding(
-      padding:
-          const EdgeInsets.only(top: PsySpacing.xxl, bottom: PsySpacing.md),
+      padding: const EdgeInsets.only(
+        top: PsySpacing.xxl,
+        bottom: PsySpacing.md,
+      ),
       child: Text(
         text,
         style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w700),

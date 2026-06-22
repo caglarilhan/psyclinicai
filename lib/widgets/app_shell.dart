@@ -62,15 +62,35 @@ class AppShell extends StatelessWidget {
   static const _maxContentWidth = 1200.0;
 
   static const List<_NavDest> _dests = [
-    _NavDest('/dashboard', Icons.dashboard_outlined, Icons.dashboard, 'Dashboard'),
+    _NavDest(
+      '/dashboard',
+      Icons.dashboard_outlined,
+      Icons.dashboard,
+      'Dashboard',
+    ),
     _NavDest('/patients', Icons.group_outlined, Icons.group, 'Patients'),
     _NavDest('/appointments', Icons.event_outlined, Icons.event, 'Calendar'),
     _NavDest('/session', Icons.graphic_eq, Icons.graphic_eq, 'Session'),
-    _NavDest('/ai_chatbot', Icons.smart_toy_outlined, Icons.smart_toy, 'Assistant'),
-    _NavDest('/ai_diagnosis', Icons.biotech_outlined, Icons.biotech, 'Diagnosis'),
+    _NavDest(
+      '/ai_chatbot',
+      Icons.smart_toy_outlined,
+      Icons.smart_toy,
+      'Assistant',
+    ),
+    _NavDest(
+      '/ai_diagnosis',
+      Icons.biotech_outlined,
+      Icons.biotech,
+      'Diagnosis',
+    ),
     _NavDest('/mood_tracking', Icons.mood_outlined, Icons.mood, 'Mood'),
     _NavDest('/outcomes', Icons.insights_outlined, Icons.insights, 'Outcomes'),
-    _NavDest('/superbill', Icons.receipt_long_outlined, Icons.receipt_long, 'Superbill'),
+    _NavDest(
+      '/superbill',
+      Icons.receipt_long_outlined,
+      Icons.receipt_long,
+      'Superbill',
+    ),
     _NavDest('/settings', Icons.settings_outlined, Icons.settings, 'Settings'),
   ];
 
@@ -183,7 +203,10 @@ class AppShell extends StatelessWidget {
     );
   }
 
-  List<Crumb> _defaultCrumbs() => [const Crumb('Home', '/dashboard'), Crumb(title, null)];
+  List<Crumb> _defaultCrumbs() => [
+    const Crumb('Home', '/dashboard'),
+    Crumb(title, null),
+  ];
 }
 
 /// A breadcrumb segment. A null [route] marks the current (non-tappable) page.
@@ -224,10 +247,14 @@ class _Content extends StatelessWidget {
     // Mobile titles step down to headlineMedium (-15%) to feel less shouty
     // on a 390px viewport — desktop keeps displaySmall for executive weight.
     final titleStyle = isPhone
-        ? theme.textTheme.headlineMedium
-            ?.copyWith(fontWeight: FontWeight.w700, height: 1.15)
-        : theme.textTheme.displaySmall
-            ?.copyWith(fontWeight: FontWeight.bold, height: 1.1);
+        ? theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1.15,
+          )
+        : theme.textTheme.displaySmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          );
     // Mobile subtitle steps down from bodyMedium → bodySmall (~13px) to
     // feel like a clinical document rather than a marketing hero. Per
     // user critique: 'bazı body metinleri 20px civarı görünüyor —
@@ -248,10 +275,7 @@ class _Content extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Semantics(
-                header: true,
-                child: Text(title, style: titleStyle),
-              ),
+              Semantics(header: true, child: Text(title, style: titleStyle)),
               if (subtitle != null) ...[
                 const SizedBox(height: PsySpacing.sm),
                 Text(subtitle!, style: subtitleStyle),
@@ -281,7 +305,11 @@ class _Content extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: AppShell._maxContentWidth),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-              PsySpacing.xl, PsySpacing.xxl, PsySpacing.xl, PsySpacing.huge),
+            PsySpacing.xl,
+            PsySpacing.xxl,
+            PsySpacing.xl,
+            PsySpacing.huge,
+          ),
           child: column,
         ),
       ),
@@ -366,7 +394,9 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
       child: Row(
         children: [
-          Expanded(child: _Breadcrumb(crumbs: crumbs, onHome: onHome)),
+          Expanded(
+            child: _Breadcrumb(crumbs: crumbs, onHome: onHome),
+          ),
           SizedBox(width: 240, child: _SearchBox(onTap: onSearch)),
           const SizedBox(width: PsySpacing.md),
           const _UserMenu(),
@@ -398,8 +428,11 @@ class _SearchBox extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.search,
-                  size: 18, color: cs.onSurface.withValues(alpha: 0.5)),
+              Icon(
+                Icons.search,
+                size: 18,
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
               const SizedBox(width: PsySpacing.sm),
               Flexible(
                 child: Text(
@@ -451,29 +484,36 @@ class _Breadcrumb extends StatelessWidget {
         fontWeight: isLast ? FontWeight.w600 : FontWeight.w400,
       );
       if (!isLast && c.route != null) {
-        children.add(InkWell(
-          borderRadius: BorderRadius.circular(PsyRadius.xs),
-          onTap: () {
-            if (c.route == '/dashboard') {
-              onHome();
-            } else {
-              Navigator.of(context).pushReplacementNamed(c.route!);
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-            child: Text(c.label, style: style),
+        children.add(
+          InkWell(
+            borderRadius: BorderRadius.circular(PsyRadius.xs),
+            onTap: () {
+              if (c.route == '/dashboard') {
+                onHome();
+              } else {
+                Navigator.of(context).pushReplacementNamed(c.route!);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              child: Text(c.label, style: style),
+            ),
           ),
-        ));
+        );
       } else {
         children.add(Text(c.label, style: style));
       }
       if (!isLast) {
-        children.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xs),
-          child: Icon(Icons.chevron_right,
-              size: 16, color: cs.onSurface.withValues(alpha: 0.4)),
-        ));
+        children.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xs),
+            child: Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: cs.onSurface.withValues(alpha: 0.4),
+            ),
+          ),
+        );
       }
     }
     return SingleChildScrollView(
@@ -600,15 +640,20 @@ class _BrandHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          PsySpacing.lg, PsySpacing.md, PsySpacing.lg, PsySpacing.md),
+        PsySpacing.lg,
+        PsySpacing.md,
+        PsySpacing.lg,
+        PsySpacing.md,
+      ),
       child: Row(
         children: [
           const _BrandMark(),
           const SizedBox(width: PsySpacing.md),
           Text(
             'PsyClinicAI',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -630,7 +675,10 @@ class _DrawerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: PsySpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: PsySpacing.sm,
+        vertical: 2,
+      ),
       child: ListTile(
         selected: selected,
         selectedTileColor: cs.primary.withValues(alpha: 0.12),
@@ -650,7 +698,6 @@ class _DrawerTile extends StatelessWidget {
     );
   }
 }
-
 
 class _MobileTabBar extends StatelessWidget {
   const _MobileTabBar({
@@ -681,9 +728,12 @@ class _MobileTabBar extends StatelessWidget {
       if (found.isNotEmpty) filtered.add(found.first);
     }
     final activeIndex = filtered.indexWhere(
-        (d) => d.route == (selectedIndex >= 0 && selectedIndex < dests.length
-            ? dests[selectedIndex].route
-            : ""));
+      (d) =>
+          d.route ==
+          (selectedIndex >= 0 && selectedIndex < dests.length
+              ? dests[selectedIndex].route
+              : ""),
+    );
     return NavigationBar(
       selectedIndex: activeIndex < 0 ? 0 : activeIndex,
       destinations: [

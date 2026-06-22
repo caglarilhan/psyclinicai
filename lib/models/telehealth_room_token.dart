@@ -37,20 +37,17 @@ class TelehealthRoomToken {
   /// GDPR Art. 5(1)(e) storage limitation. Use [toWireJson] only at
   /// the WebRTC handoff boundary.
   Map<String, dynamic> toJson() => {
-        'room_name': roomName,
-        'expires_at': expiresAt.toUtc().toIso8601String(),
-        'recording_enabled': recordingEnabled,
-        'eu_region': euRegion,
-        'created_at': createdAt.toUtc().toIso8601String(),
-      };
+    'room_name': roomName,
+    'expires_at': expiresAt.toUtc().toIso8601String(),
+    'recording_enabled': recordingEnabled,
+    'eu_region': euRegion,
+    'created_at': createdAt.toUtc().toIso8601String(),
+  };
 
   /// In-process JSON used to hand the live token to the WebRTC SDK.
   /// Caller is responsible for dropping the reference immediately
   /// after `join()` — never persist this map.
-  Map<String, dynamic> toWireJson() => {
-        ...toJson(),
-        'token': token,
-      };
+  Map<String, dynamic> toWireJson() => {...toJson(), 'token': token};
 
   factory TelehealthRoomToken.fromJson(Map<String, dynamic> json) {
     return TelehealthRoomToken(

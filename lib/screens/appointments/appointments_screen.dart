@@ -97,14 +97,21 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final dateLabel = _fmtDate(_selectedDay);
     if (items.isEmpty) {
       return _EmptyDay(
-          theme: theme, cs: cs, dateLabel: dateLabel, onAdd: _openAdd);
+        theme: theme,
+        cs: cs,
+        dateLabel: dateLabel,
+        onAdd: _openAdd,
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(dateLabel,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          dateLabel,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.md),
         Expanded(
           child: ListView.separated(
@@ -130,8 +137,18 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   static String _fmtDate(DateTime d) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
@@ -193,8 +210,11 @@ class _CalendarCard extends StatelessWidget {
 }
 
 class _AppointmentTile extends StatelessWidget {
-  const _AppointmentTile(
-      {required this.appt, required this.theme, required this.cs});
+  const _AppointmentTile({
+    required this.appt,
+    required this.theme,
+    required this.cs,
+  });
   final Appointment appt;
   final ThemeData theme;
   final ColorScheme cs;
@@ -214,47 +234,60 @@ class _AppointmentTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+              horizontal: PsySpacing.md,
+              vertical: PsySpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: cs.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(PsyRadius.md),
             ),
-            child: Text(time,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                )),
+            child: Text(
+              time,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: cs.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           const SizedBox(width: PsySpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(appt.clientName,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  appt.clientName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (appt.notes.isNotEmpty)
-                  Text(appt.notes,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.65),
-                      )),
+                  Text(
+                    appt.notes,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.md, vertical: PsySpacing.xs),
+              horizontal: PsySpacing.md,
+              vertical: PsySpacing.xs,
+            ),
             decoration: BoxDecoration(
               color: cs.secondary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(PsyRadius.full),
             ),
-            child: Text(_typeLabel(appt.type),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.secondary,
-                  fontWeight: FontWeight.w600,
-                )),
+            child: Text(
+              _typeLabel(appt.type),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.secondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -263,11 +296,12 @@ class _AppointmentTile extends StatelessWidget {
 }
 
 class _EmptyDay extends StatelessWidget {
-  const _EmptyDay(
-      {required this.theme,
-      required this.cs,
-      required this.dateLabel,
-      required this.onAdd});
+  const _EmptyDay({
+    required this.theme,
+    required this.cs,
+    required this.dateLabel,
+    required this.onAdd,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final String dateLabel;
@@ -279,17 +313,26 @@ class _EmptyDay extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_available_outlined,
-              size: 40, color: cs.onSurface.withValues(alpha: 0.4)),
+          Icon(
+            Icons.event_available_outlined,
+            size: 40,
+            color: cs.onSurface.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: PsySpacing.md),
-          Text('No appointments on $dateLabel',
-              style: theme.textTheme.titleMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7))),
+          Text(
+            'No appointments on $dateLabel',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
           const SizedBox(height: PsySpacing.xs),
-          Text('Schedule a session — reminders fire 24h and 1h before.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55))),
+          Text(
+            'Schedule a session — reminders fire 24h and 1h before.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.55),
+            ),
+          ),
           const SizedBox(height: PsySpacing.lg),
           OutlinedButton.icon(
             onPressed: onAdd,
@@ -357,7 +400,8 @@ class _AddAppointmentDialogState extends State<_AddAppointmentDialog> {
                     onPressed: _pickDate,
                     icon: const Icon(Icons.calendar_today, size: 16),
                     label: Text(
-                        '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}'),
+                      '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
+                    ),
                   ),
                 ),
                 const SizedBox(width: PsySpacing.md),
@@ -375,8 +419,9 @@ class _AddAppointmentDialogState extends State<_AddAppointmentDialog> {
               initialValue: _type,
               decoration: const InputDecoration(labelText: 'Type'),
               items: _typeLabels.entries
-                  .map((e) =>
-                      DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                  )
                   .toList(),
               onChanged: (v) => setState(() => _type = v ?? _type),
             ),
@@ -412,8 +457,13 @@ class _AddAppointmentDialogState extends State<_AddAppointmentDialog> {
   }
 
   void _save() {
-    final start =
-        DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
+    final start = DateTime(
+      _date.year,
+      _date.month,
+      _date.day,
+      _time.hour,
+      _time.minute,
+    );
     final now = DateTime.now();
     final appt = Appointment(
       id: now.microsecondsSinceEpoch.toString(),

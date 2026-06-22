@@ -73,13 +73,18 @@ void main() {
       expect(next.reasonsForLiving, ['hope']);
     });
 
-    test('isClinicallyComplete demands warning + coping + contact + line',
-        () {
+    test('isClinicallyComplete demands warning + coping + contact + line', () {
       final empty = SafetyPlan(patientId: 'p8');
       expect(empty.isClinicallyComplete, isFalse);
-      expect(empty.missingClinicalSections,
-          containsAll(['warning_signs', 'coping_strategies',
-              'people_to_reach', 'crisis_lines']));
+      expect(
+        empty.missingClinicalSections,
+        containsAll([
+          'warning_signs',
+          'coping_strategies',
+          'people_to_reach',
+          'crisis_lines',
+        ]),
+      );
 
       final partial = SafetyPlan(
         patientId: 'p8',

@@ -36,8 +36,7 @@ class StickyCtaBar extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(
-              horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: SafeArea(
             top: false,
             child: Row(
@@ -69,9 +68,13 @@ class StickyCtaBar extends StatelessWidget {
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                     textStyle: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

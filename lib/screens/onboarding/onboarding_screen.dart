@@ -44,16 +44,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
     setState(() => _step += 1);
     _ctrl.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic);
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _back() {
     if (_step == 0) return;
     setState(() => _step -= 1);
     _ctrl.previousPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic);
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _finish() async {
@@ -68,8 +70,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_seedDemo) {
       // Best-effort — silent no-op in demo mode (Firebase off).
       await SeedService.instance.seedDemoChart();
-      TelemetryService.instance
-          .capture(TelemetryEvents.onboardingSeedRequested);
+      TelemetryService.instance.capture(
+        TelemetryEvents.onboardingSeedRequested,
+      );
     }
 
     // Even without Firebase (demo mode), persist a local 'demo' flag so the
@@ -83,8 +86,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'phq9' => '/assessments/phq9',
       _ => '/dashboard',
     };
-    TelemetryService.instance.capture(TelemetryEvents.onboardingFinished,
-        properties: {'first_action': _firstAction});
+    TelemetryService.instance.capture(
+      TelemetryEvents.onboardingFinished,
+      properties: {'first_action': _firstAction},
+    );
     Navigator.of(context).pushReplacementNamed(route);
   }
 
@@ -115,17 +120,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               Icon(Icons.psychology, color: cs.primary, size: 24),
               const SizedBox(width: 8),
-              Text('Welcome to PsyClinicAI',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Welcome to PsyClinicAI',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _skip,
-            child: const Text('Skip for now'),
-          ),
+          TextButton(onPressed: _skip, child: const Text('Skip for now')),
           const SizedBox(width: 12),
         ],
       ),
@@ -138,10 +143,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _WelcomeStep(
-                    firstName: firstName,
-                    role: roleLabel,
-                    theme: theme,
-                    cs: cs),
+                  firstName: firstName,
+                  role: roleLabel,
+                  theme: theme,
+                  cs: cs,
+                ),
                 _PracticeStep(
                   selected: _practiceType,
                   onChanged: (v) => setState(() => _practiceType = v),
@@ -178,8 +184,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _ProgressBar extends StatelessWidget {
-  const _ProgressBar(
-      {required this.step, required this.total, required this.cs});
+  const _ProgressBar({
+    required this.step,
+    required this.total,
+    required this.cs,
+  });
   final int step;
   final int total;
   final ColorScheme cs;
@@ -187,7 +196,9 @@ class _ProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xxl, vertical: PsySpacing.md),
+        horizontal: PsySpacing.xxl,
+        vertical: PsySpacing.md,
+      ),
       child: Row(
         children: List.generate(total, (i) {
           final active = i <= step;
@@ -230,7 +241,11 @@ class _NavBar extends StatelessWidget {
       // Tighter top + bottom — Continue sits closer to the content instead of
       // hovering ~80px below it on short steps.
       padding: const EdgeInsets.fromLTRB(
-          PsySpacing.xxl, PsySpacing.sm, PsySpacing.xxl, PsySpacing.lg),
+        PsySpacing.xxl,
+        PsySpacing.sm,
+        PsySpacing.xxl,
+        PsySpacing.lg,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
@@ -245,8 +260,9 @@ class _NavBar extends StatelessWidget {
               const Spacer(),
               PsyButton(
                 label: isLast ? 'Finish & start' : 'Continue',
-                trailingIcon:
-                    isLast ? Icons.rocket_launch : Icons.arrow_forward,
+                trailingIcon: isLast
+                    ? Icons.rocket_launch
+                    : Icons.arrow_forward,
                 size: PsyButtonSize.lg,
                 onPressed: onNext,
               ),
@@ -260,11 +276,12 @@ class _NavBar extends StatelessWidget {
 
 // ───────── Step 1 ─────────
 class _WelcomeStep extends StatelessWidget {
-  const _WelcomeStep(
-      {required this.firstName,
-      required this.role,
-      required this.theme,
-      required this.cs});
+  const _WelcomeStep({
+    required this.firstName,
+    required this.role,
+    required this.theme,
+    required this.cs,
+  });
   // null when there's no signed-in profile yet (demo mode) — the card shows
   // the role instead of a placeholder "there" name.
   final String? firstName;
@@ -274,11 +291,15 @@ class _WelcomeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final greeting =
-        (firstName == null || firstName!.isEmpty) ? 'Welcome.' : 'Welcome, ${firstName!}.';
-    final cardPrimary = (firstName == null || firstName!.isEmpty) ? role : firstName!;
-    final cardSecondary =
-        (firstName == null || firstName!.isEmpty) ? 'Licensed clinician' : role;
+    final greeting = (firstName == null || firstName!.isEmpty)
+        ? 'Welcome.'
+        : 'Welcome, ${firstName!}.';
+    final cardPrimary = (firstName == null || firstName!.isEmpty)
+        ? role
+        : firstName!;
+    final cardSecondary = (firstName == null || firstName!.isEmpty)
+        ? 'Licensed clinician'
+        : role;
     return _StepShell(
       eyebrow: 'Step 1 of 5',
       title: greeting,
@@ -293,22 +314,30 @@ class _WelcomeStep extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor: cs.primary,
-                child: Icon(Icons.badge_outlined,
-                    color: cs.onPrimary, size: 28),
+                child: Icon(
+                  Icons.badge_outlined,
+                  color: cs.onPrimary,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: PsySpacing.xl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(cardPrimary,
-                        style: theme.textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      cardPrimary,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(cardSecondary,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.7),
-                        )),
+                    Text(
+                      cardSecondary,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -318,15 +347,14 @@ class _WelcomeStep extends StatelessWidget {
         const SizedBox(height: PsySpacing.xl),
         Text(
           'What happens next:',
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: PsySpacing.md),
         const _Bullet(text: 'Tell us your practice type'),
-        const _Bullet(
-            text: 'Paste your Anthropic BYOK key (or skip for now)'),
-        const _Bullet(
-            text: 'Choose if we seed a synthetic demo patient'),
+        const _Bullet(text: 'Paste your Anthropic BYOK key (or skip for now)'),
+        const _Bullet(text: 'Choose if we seed a synthetic demo patient'),
         const _Bullet(text: 'Pick what you want to do first'),
       ],
     );
@@ -335,11 +363,12 @@ class _WelcomeStep extends StatelessWidget {
 
 // ───────── Step 2 ─────────
 class _PracticeStep extends StatelessWidget {
-  const _PracticeStep(
-      {required this.selected,
-      required this.onChanged,
-      required this.theme,
-      required this.cs});
+  const _PracticeStep({
+    required this.selected,
+    required this.onChanged,
+    required this.theme,
+    required this.cs,
+  });
   final String selected;
   final ValueChanged<String> onChanged;
   final ThemeData theme;
@@ -348,12 +377,24 @@ class _PracticeStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = <(String, IconData, String, String)>[
-      ('solo', Icons.person_outline, 'Solo practice',
-          'One clinician. The most common pilot starting point.'),
-      ('group', Icons.groups_outlined, 'Group practice',
-          '2–10 clinicians sharing patients and superbills.'),
-      ('telehealth', Icons.video_call_outlined, 'Telehealth-first',
-          'All sessions remote. Audio still stays on each device.'),
+      (
+        'solo',
+        Icons.person_outline,
+        'Solo practice',
+        'One clinician. The most common pilot starting point.',
+      ),
+      (
+        'group',
+        Icons.groups_outlined,
+        'Group practice',
+        '2–10 clinicians sharing patients and superbills.',
+      ),
+      (
+        'telehealth',
+        Icons.video_call_outlined,
+        'Telehealth-first',
+        'All sessions remote. Audio still stays on each device.',
+      ),
     ];
     return _StepShell(
       eyebrow: 'Step 2 of 5',
@@ -362,18 +403,20 @@ class _PracticeStep extends StatelessWidget {
           'This shapes which dashboard widgets show up first. You can '
           'change it any time in Settings.',
       children: options
-          .map((o) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                child: _ChoiceCard(
-                  selected: selected == o.$1,
-                  icon: o.$2,
-                  title: o.$3,
-                  body: o.$4,
-                  onTap: () => onChanged(o.$1),
-                  cs: cs,
-                  theme: theme,
-                ),
-              ))
+          .map(
+            (o) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.md),
+              child: _ChoiceCard(
+                selected: selected == o.$1,
+                icon: o.$2,
+                title: o.$3,
+                body: o.$4,
+                onTap: () => onChanged(o.$1),
+                cs: cs,
+                theme: theme,
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -381,8 +424,7 @@ class _PracticeStep extends StatelessWidget {
 
 // ───────── Step 3 ─────────
 class _ByokStep extends StatelessWidget {
-  const _ByokStep(
-      {required this.ctrl, required this.theme, required this.cs});
+  const _ByokStep({required this.ctrl, required this.theme, required this.cs});
   final TextEditingController ctrl;
   final ThemeData theme;
   final ColorScheme cs;
@@ -440,9 +482,11 @@ class _ByokStep extends StatelessWidget {
               const SizedBox(height: PsySpacing.sm),
               Row(
                 children: [
-                  Icon(Icons.lock_outline,
-                      size: 14,
-                      color: cs.onSurface.withValues(alpha: 0.55)),
+                  Icon(
+                    Icons.lock_outline,
+                    size: 14,
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -464,11 +508,12 @@ class _ByokStep extends StatelessWidget {
 
 // ───────── Step 4 ─────────
 class _SampleDataStep extends StatelessWidget {
-  const _SampleDataStep(
-      {required this.seed,
-      required this.onChanged,
-      required this.theme,
-      required this.cs});
+  const _SampleDataStep({
+    required this.seed,
+    required this.onChanged,
+    required this.theme,
+    required this.cs,
+  });
   final bool seed;
   final ValueChanged<bool> onChanged;
   final ThemeData theme;
@@ -488,8 +533,7 @@ class _SampleDataStep extends StatelessWidget {
           selected: seed,
           icon: Icons.auto_awesome,
           title: 'Yes, give me a demo patient',
-          body:
-              'Seed John Demo + 2 sessions + 1 PHQ-9 + 1 superbill draft.',
+          body: 'Seed John Demo + 2 sessions + 1 PHQ-9 + 1 superbill draft.',
           onTap: () => onChanged(true),
           cs: cs,
           theme: theme,
@@ -513,11 +557,12 @@ class _SampleDataStep extends StatelessWidget {
 
 // ───────── Step 5 ─────────
 class _FirstActionStep extends StatelessWidget {
-  const _FirstActionStep(
-      {required this.selected,
-      required this.onChanged,
-      required this.theme,
-      required this.cs});
+  const _FirstActionStep({
+    required this.selected,
+    required this.onChanged,
+    required this.theme,
+    required this.cs,
+  });
   final String selected;
   final ValueChanged<String> onChanged;
   final ThemeData theme;
@@ -529,31 +574,44 @@ class _FirstActionStep extends StatelessWidget {
     // assessment is the safest demo entry point. Live session next, superbill
     // last (depends on a logged session + diagnosis).
     final options = <(String, IconData, String, String)>[
-      ('phq9', Icons.psychology_outlined, 'Send a PHQ-9',
-          'Try the depression screener to see the outcome dashboard.'),
-      ('session', Icons.mic_none, 'Start a live session',
-          'See the AI Co-Pilot in motion right now.'),
-      ('superbill', Icons.receipt_long_outlined, 'Create a superbill',
-          'CPT + ICD-10 + CMS-1500 PDF in under a minute.'),
+      (
+        'phq9',
+        Icons.psychology_outlined,
+        'Send a PHQ-9',
+        'Try the depression screener to see the outcome dashboard.',
+      ),
+      (
+        'session',
+        Icons.mic_none,
+        'Start a live session',
+        'See the AI Co-Pilot in motion right now.',
+      ),
+      (
+        'superbill',
+        Icons.receipt_long_outlined,
+        'Create a superbill',
+        'CPT + ICD-10 + CMS-1500 PDF in under a minute.',
+      ),
     ];
     return _StepShell(
       eyebrow: 'Step 5 of 5',
       title: 'What do you want to do first?',
-      lede:
-          "We'll drop you straight into that screen when you click Finish.",
+      lede: "We'll drop you straight into that screen when you click Finish.",
       children: options
-          .map((o) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                child: _ChoiceCard(
-                  selected: selected == o.$1,
-                  icon: o.$2,
-                  title: o.$3,
-                  body: o.$4,
-                  onTap: () => onChanged(o.$1),
-                  cs: cs,
-                  theme: theme,
-                ),
-              ))
+          .map(
+            (o) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.md),
+              child: _ChoiceCard(
+                selected: selected == o.$1,
+                icon: o.$2,
+                title: o.$3,
+                body: o.$4,
+                onTap: () => onChanged(o.$1),
+                cs: cs,
+                theme: theme,
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -578,7 +636,9 @@ class _StepShell extends StatelessWidget {
     final cs = theme.colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xxl, vertical: PsySpacing.xl),
+        horizontal: PsySpacing.xxl,
+        vertical: PsySpacing.xl,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
@@ -594,15 +654,21 @@ class _StepShell extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: PsySpacing.md),
-              Text(title,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold, height: 1.1)),
+              Text(
+                title,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  height: 1.1,
+                ),
+              ),
               const SizedBox(height: PsySpacing.lg),
-              Text(lede,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72),
-                    height: 1.55,
-                  )),
+              Text(
+                lede,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.72),
+                  height: 1.55,
+                ),
+              ),
               const SizedBox(height: PsySpacing.xxl),
               ...children,
             ],
@@ -643,9 +709,7 @@ class _ChoiceCard extends StatelessWidget {
         // so all role choices fit above the fold on 390-wide phones.
         padding: const EdgeInsets.all(PsySpacing.md),
         decoration: BoxDecoration(
-          color: selected
-              ? cs.primary.withValues(alpha: 0.08)
-              : cs.surface,
+          color: selected ? cs.primary.withValues(alpha: 0.08) : cs.surface,
           borderRadius: BorderRadius.circular(PsyRadius.lg),
           border: Border.all(
             color: selected ? cs.primary : cs.outlineVariant,
@@ -669,23 +733,31 @@ class _ChoiceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(body,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.4,
-                      )),
+                  Text(
+                    body,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.7),
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ),
             ),
             if (selected)
               Icon(Icons.check_circle, color: cs.primary, size: 22)
             else
-              Icon(Icons.radio_button_unchecked,
-                  color: cs.outlineVariant, size: 20),
+              Icon(
+                Icons.radio_button_unchecked,
+                color: cs.outlineVariant,
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -718,11 +790,13 @@ class _Bullet extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(text,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.78),
-                  height: 1.55,
-                )),
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.78),
+                height: 1.55,
+              ),
+            ),
           ),
         ],
       ),

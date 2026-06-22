@@ -17,8 +17,10 @@ void main() {
     });
 
     test('preserves the full domain, including a subdomain', () {
-      expect(redactEmail('jane@mail.eu.example.com'),
-          'j***@mail.eu.example.com');
+      expect(
+        redactEmail('jane@mail.eu.example.com'),
+        'j***@mail.eu.example.com',
+      );
     });
 
     test('one-character local parts pass through (nothing to mask)', () {

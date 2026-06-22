@@ -12,7 +12,8 @@ class PortalAppointmentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = items ??
+    final rows =
+        items ??
         <PortalAppointmentRow>[
           PortalAppointmentRow(
             title: 'Therapy session',
@@ -46,14 +47,16 @@ class PortalAppointmentsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(r.title,
-                              style:
-                                  Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            r.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 2),
                           Text(
-                              '${r.when.toIso8601String().substring(0, 16)}  ·  '
-                              '${r.location}  ·  ${r.clinician}',
-                              style: Theme.of(context).textTheme.bodySmall),
+                            '${r.when.toIso8601String().substring(0, 16)}  ·  '
+                            '${r.location}  ·  ${r.clinician}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                       ),
                     ),

@@ -6,7 +6,8 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     SecuritySettingsService.setTestInstance(
-        () => SharedPreferences.getInstance());
+      () => SharedPreferences.getInstance(),
+    );
   });
 
   tearDown(SecuritySettingsService.resetTestInstance);

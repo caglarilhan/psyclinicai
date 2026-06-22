@@ -5,14 +5,23 @@ void main() {
   group('Soc2EvidenceRegistry invariants', () {
     test('every control has the cells the auditor expects', () {
       for (final c in Soc2EvidenceRegistry.controls) {
-        expect(c.criterion, isNotEmpty,
-            reason: '${c.title}: missing criterion');
+        expect(
+          c.criterion,
+          isNotEmpty,
+          reason: '${c.title}: missing criterion',
+        );
         expect(c.category, isNotEmpty);
         expect(c.title, isNotEmpty);
-        expect(c.evidence, isNotEmpty,
-            reason: '${c.criterion}: missing evidence link');
-        expect(c.lastReviewed, matches(RegExp(r'^\d{4}-\d{2}$')),
-            reason: '${c.criterion}: lastReviewed must be YYYY-MM');
+        expect(
+          c.evidence,
+          isNotEmpty,
+          reason: '${c.criterion}: missing evidence link',
+        );
+        expect(
+          c.lastReviewed,
+          matches(RegExp(r'^\d{4}-\d{2}$')),
+          reason: '${c.criterion}: lastReviewed must be YYYY-MM',
+        );
       }
     });
 

@@ -56,84 +56,89 @@ enum NoteFormat {
   /// Ordered sections for the format. Order matters — it drives both the
   /// editor layout and the generated markdown.
   List<NoteSection> get sections => switch (this) {
-        NoteFormat.soap => const [
-            NoteSection(
-              id: 'subjective',
-              label: 'Subjective',
-              letter: 'S',
-              hint: 'Client report — chief complaint, mood, sleep, '
-                  'meds, recent stressors.',
-            ),
-            NoteSection(
-              id: 'objective',
-              label: 'Objective',
-              letter: 'O',
-              hint: 'Observable — MSE, affect, vitals, scale scores, '
-                  'attendance.',
-            ),
-            NoteSection(
-              id: 'assessment',
-              label: 'Assessment',
-              letter: 'A',
-              hint: 'Clinical formulation — diagnosis, risk, progress '
-                  'against goals.',
-            ),
-            NoteSection(
-              id: 'plan',
-              label: 'Plan',
-              letter: 'P',
-              hint: 'Next steps — interventions, homework, '
-                  'referrals, next session.',
-            ),
-          ],
-        NoteFormat.birp => const [
-            NoteSection(
-              id: 'behavior',
-              label: 'Behavior',
-              letter: 'B',
-              hint: 'What the client said and did this session.',
-            ),
-            NoteSection(
-              id: 'intervention',
-              label: 'Intervention',
-              letter: 'I',
-              hint: 'Techniques and modalities the clinician used.',
-            ),
-            NoteSection(
-              id: 'response',
-              label: 'Response',
-              letter: 'R',
-              hint: 'How the client responded to the interventions.',
-            ),
-            NoteSection(
-              id: 'plan',
-              label: 'Plan',
-              letter: 'P',
-              hint: 'Next steps, homework, follow-up cadence.',
-            ),
-          ],
-        NoteFormat.dap => const [
-            NoteSection(
-              id: 'data',
-              label: 'Data',
-              letter: 'D',
-              hint: 'Subjective + objective combined — what the client '
-                  'shared and what you observed.',
-            ),
-            NoteSection(
-              id: 'assessment',
-              label: 'Assessment',
-              letter: 'A',
-              hint: 'Clinical impression, progress, risk.',
-            ),
-            NoteSection(
-              id: 'plan',
-              label: 'Plan',
-              letter: 'P',
-              hint: 'Next interventions, referrals, follow-up.',
-            ),
-          ],
-      };
+    NoteFormat.soap => const [
+      NoteSection(
+        id: 'subjective',
+        label: 'Subjective',
+        letter: 'S',
+        hint:
+            'Client report — chief complaint, mood, sleep, '
+            'meds, recent stressors.',
+      ),
+      NoteSection(
+        id: 'objective',
+        label: 'Objective',
+        letter: 'O',
+        hint:
+            'Observable — MSE, affect, vitals, scale scores, '
+            'attendance.',
+      ),
+      NoteSection(
+        id: 'assessment',
+        label: 'Assessment',
+        letter: 'A',
+        hint:
+            'Clinical formulation — diagnosis, risk, progress '
+            'against goals.',
+      ),
+      NoteSection(
+        id: 'plan',
+        label: 'Plan',
+        letter: 'P',
+        hint:
+            'Next steps — interventions, homework, '
+            'referrals, next session.',
+      ),
+    ],
+    NoteFormat.birp => const [
+      NoteSection(
+        id: 'behavior',
+        label: 'Behavior',
+        letter: 'B',
+        hint: 'What the client said and did this session.',
+      ),
+      NoteSection(
+        id: 'intervention',
+        label: 'Intervention',
+        letter: 'I',
+        hint: 'Techniques and modalities the clinician used.',
+      ),
+      NoteSection(
+        id: 'response',
+        label: 'Response',
+        letter: 'R',
+        hint: 'How the client responded to the interventions.',
+      ),
+      NoteSection(
+        id: 'plan',
+        label: 'Plan',
+        letter: 'P',
+        hint: 'Next steps, homework, follow-up cadence.',
+      ),
+    ],
+    NoteFormat.dap => const [
+      NoteSection(
+        id: 'data',
+        label: 'Data',
+        letter: 'D',
+        hint:
+            'Subjective + objective combined — what the client '
+            'shared and what you observed.',
+      ),
+      NoteSection(
+        id: 'assessment',
+        label: 'Assessment',
+        letter: 'A',
+        hint: 'Clinical impression, progress, risk.',
+      ),
+      NoteSection(
+        id: 'plan',
+        label: 'Plan',
+        letter: 'P',
+        hint: 'Next interventions, referrals, follow-up.',
+      ),
+    ],
+  };
 
   /// Look up a format by its stored id. Defaults to SOAP for unknown values
   /// so a corrupt or future format never crashes the editor.

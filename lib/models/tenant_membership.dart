@@ -17,8 +17,7 @@ enum TenantRole {
   bool get canSignNotes => this != TenantRole.trainee;
 
   static TenantRole fromId(String id) =>
-      values.firstWhere((r) => r.id == id,
-          orElse: () => TenantRole.clinician);
+      values.firstWhere((r) => r.id == id, orElse: () => TenantRole.clinician);
 }
 
 class TenantMembership {
@@ -39,13 +38,13 @@ class TenantMembership {
   final bool isDefault;
 
   Map<String, dynamic> toJson() => {
-        'tenant_id': tenantId,
-        'tenant_name': tenantName,
-        'uid': uid,
-        'role': role.id,
-        'joined_at': joinedAt.toUtc().toIso8601String(),
-        'is_default': isDefault,
-      };
+    'tenant_id': tenantId,
+    'tenant_name': tenantName,
+    'uid': uid,
+    'role': role.id,
+    'joined_at': joinedAt.toUtc().toIso8601String(),
+    'is_default': isDefault,
+  };
 
   factory TenantMembership.fromJson(Map<String, dynamic> json) {
     return TenantMembership(

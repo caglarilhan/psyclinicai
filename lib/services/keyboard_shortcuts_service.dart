@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 class KeyboardShortcutsService extends ChangeNotifier {
   factory KeyboardShortcutsService() => _instance;
   KeyboardShortcutsService._internal();
-  static final KeyboardShortcutsService _instance = KeyboardShortcutsService._internal();
+  static final KeyboardShortcutsService _instance =
+      KeyboardShortcutsService._internal();
 
   // Kısayol tanımları
   static const Map<String, String> shortcuts = {
@@ -69,7 +70,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
   bool handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
       final keySet = LogicalKeySet(event.logicalKey);
-      
+
       // Özel kısayollar
       if (_handlers.containsKey(keySet)) {
         _handlers[keySet]!();
@@ -85,30 +86,30 @@ class KeyboardShortcutsService extends ChangeNotifier {
   // Genel kısayol işleme
   bool _handleGeneralShortcuts(KeyDownEvent event) {
     final keySet = LogicalKeySet(event.logicalKey);
-    
+
     // Ctrl+N - Yeni Danışan
-    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyN) && 
+    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyN) &&
         HardwareKeyboard.instance.isControlPressed) {
       _showNewClientDialog();
       return true;
     }
 
     // Ctrl+S - Kaydet
-    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyS) && 
+    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyS) &&
         HardwareKeyboard.instance.isControlPressed) {
       _saveCurrentData();
       return true;
     }
 
     // Ctrl+F - Ara
-    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyF) && 
+    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyF) &&
         HardwareKeyboard.instance.isControlPressed) {
       _showSearchDialog();
       return true;
     }
 
     // Ctrl+P - Yazdır
-    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyP) && 
+    if (keySet == LogicalKeySet(LogicalKeyboardKey.keyP) &&
         HardwareKeyboard.instance.isControlPressed) {
       _printCurrentData();
       return true;
@@ -227,10 +228,7 @@ class KeyboardShortcutsService extends ChangeNotifier {
       icon: const Icon(Icons.keyboard),
       tooltip: 'Klavye Kısayolları',
       onPressed: () {
-        showDialog<void>(
-          context: context,
-          builder: buildShortcutsWidget,
-        );
+        showDialog<void>(context: context, builder: buildShortcutsWidget);
       },
     );
   }
@@ -252,15 +250,9 @@ class KeyboardShortcutsService extends ChangeNotifier {
           const Spacer(),
           TextButton(
             onPressed: () {
-              showDialog<void>(
-                context: context,
-                builder: buildShortcutsWidget,
-              );
+              showDialog<void>(context: context, builder: buildShortcutsWidget);
             },
-            child: const Text(
-              'Tüm Kısayollar',
-              style: TextStyle(fontSize: 12),
-            ),
+            child: const Text('Tüm Kısayollar', style: TextStyle(fontSize: 12)),
           ),
           const SizedBox(width: 16),
         ],

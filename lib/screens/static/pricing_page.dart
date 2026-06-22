@@ -25,7 +25,8 @@ class PricingPage extends StatelessWidget {
           _PlanRow(
             name: 'Solo',
             price: '\$49 / clinician / month',
-            blurb: 'For a single licensed clinician with up to 60 active '
+            blurb:
+                'For a single licensed clinician with up to 60 active '
                 'patients. Includes BYOK Anthropic + Daily.co telehealth '
                 'early access.',
             included: [
@@ -40,7 +41,8 @@ class PricingPage extends StatelessWidget {
           _PlanRow(
             name: 'Practice',
             price: '\$39 / clinician / month (min 3)',
-            blurb: 'Multi-clinician practices with supervision, group '
+            blurb:
+                'Multi-clinician practices with supervision, group '
                 'therapy and pre-authorisation workflows.',
             included: [
               'Everything in Solo',
@@ -66,12 +68,13 @@ class PricingPage extends StatelessWidget {
           SizedBox(height: PsySpacing.xxl),
           StaticH2('What is NOT a hidden cost'),
           StaticBullet(
-              'BYOK: you pay Anthropic directly for AI tokens '
-              '(~\$0.001 per 5-minute session on Haiku 4.5).'),
+            'BYOK: you pay Anthropic directly for AI tokens '
+            '(~\$0.001 per 5-minute session on Haiku 4.5).',
+          ),
+          StaticBullet('Stripe fees pass through; we do not mark them up.'),
           StaticBullet(
-              'Stripe fees pass through; we do not mark them up.'),
-          StaticBullet(
-              'No per-patient, per-note, per-superbill micro-charges.'),
+            'No per-patient, per-note, per-superbill micro-charges.',
+          ),
         ],
       ),
     );
@@ -105,13 +108,16 @@ class _PlanRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Text(name,
-                style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-            const Spacer(),
-            Text(price,
-                style: t.titleMedium?.copyWith(color: cs.primary)),
-          ]),
+          Row(
+            children: [
+              Text(
+                name,
+                style: t.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Text(price, style: t.titleMedium?.copyWith(color: cs.primary)),
+            ],
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(blurb, style: t.bodyMedium),
           const SizedBox(height: PsySpacing.md),

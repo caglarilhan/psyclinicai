@@ -65,8 +65,8 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
   }
 
   String _accountLabel() {
-    final email = FirebaseAuthService.instance.profile?.email ??
-        'demo@psyclinicai.com';
+    final email =
+        FirebaseAuthService.instance.profile?.email ?? 'demo@psyclinicai.com';
     return email;
   }
 
@@ -92,7 +92,8 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       if (!mounted) return;
       setState(() {
         _verifying = false;
-        _error = 'The stored secret could not be read. Restart the '
+        _error =
+            'The stored secret could not be read. Restart the '
             'setup to regenerate one.';
       });
       return;
@@ -101,7 +102,8 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
     if (!ok) {
       setState(() {
         _verifying = false;
-        _error = 'That code did not match. Wait for the next window and '
+        _error =
+            'That code did not match. Wait for the next window and '
             'try again.';
       });
       return;
@@ -122,7 +124,8 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'We verified the code but could not persist your '
+        _error =
+            'We verified the code but could not persist your '
             'enrolment. Try again from the recovery step.';
       });
       TelemetryService.instance.capture('security.mfa_enrol_persist_failed');
@@ -167,25 +170,25 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
           switch (_step) {
             MfaStep.idle => _IdlePane(onStart: _startEnrol),
             MfaStep.scan => _ScanPane(
+              secret: _secret!,
+              uri: _totp.provisioningUri(
+                label: _accountLabel(),
                 secret: _secret!,
-                uri: _totp.provisioningUri(
-                  label: _accountLabel(),
-                  secret: _secret!,
-                ),
-                onContinue: () => setState(() => _step = MfaStep.verify),
-                onCancel: _restart,
               ),
+              onContinue: () => setState(() => _step = MfaStep.verify),
+              onCancel: _restart,
+            ),
             MfaStep.verify => _VerifyPane(
-                controller: _codeCtl,
-                onVerify: _verifying ? null : _verifyCode,
-                onBack: () => setState(() => _step = MfaStep.scan),
-                error: _error,
-                busy: _verifying,
-              ),
+              controller: _codeCtl,
+              onVerify: _verifying ? null : _verifyCode,
+              onBack: () => setState(() => _step = MfaStep.scan),
+              error: _error,
+              busy: _verifying,
+            ),
             MfaStep.recovery => _RecoveryPane(
-                codes: _recoveryCodes,
-                onFinish: () => _finish(),
-              ),
+              codes: _recoveryCodes,
+              onFinish: () => _finish(),
+            ),
             MfaStep.done => _DonePane(onReset: _restart),
           },
           const SizedBox(height: PsySpacing.huge),
@@ -210,51 +213,59 @@ class _StatusCard extends StatelessWidget {
     final enabled = step == MfaStep.done;
     return PsyCard(
       tinted: true,
-      child: Row(children: [
-        Container(
-          padding: const EdgeInsets.all(PsySpacing.md),
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(PsyRadius.md),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(PsySpacing.md),
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(PsyRadius.md),
+            ),
+            child: Icon(
+              enabled ? Icons.verified_user : Icons.shield_outlined,
+              color: cs.primary,
+              size: 24,
+            ),
           ),
-          child: Icon(
-            enabled ? Icons.verified_user : Icons.shield_outlined,
-            color: cs.primary,
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: PsySpacing.lg),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Text('Status',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
-                const SizedBox(width: PsySpacing.sm),
-                PsyBadge(
-                  label: enabled ? 'Enabled' : 'Not enabled',
-                  tone: enabled
-                      ? PsyBadgeTone.success
-                      : PsyBadgeTone.warning,
+          const SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Status',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: PsySpacing.sm),
+                    PsyBadge(
+                      label: enabled ? 'Enabled' : 'Not enabled',
+                      tone: enabled
+                          ? PsyBadgeTone.success
+                          : PsyBadgeTone.warning,
+                    ),
+                  ],
                 ),
-              ]),
-              const SizedBox(height: 4),
-              Text(
-                enabled
-                    ? 'TOTP enrolled on this device. Sign-ins now require a '
-                        '6-digit code from your authenticator app.'
-                    : 'Your account is currently protected by your password '
-                        'and Firebase Auth session controls. HIPAA §164.312(d) '
-                        'requires a second factor before storing ePHI.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72)),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  enabled
+                      ? 'TOTP enrolled on this device. Sign-ins now require a '
+                            '6-digit code from your authenticator app.'
+                      : 'Your account is currently protected by your password '
+                            'and Firebase Auth session controls. HIPAA §164.312(d) '
+                            'requires a second factor before storing ePHI.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.72),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -289,34 +300,45 @@ class _StepIndicator extends StatelessWidget {
         final active = i <= _activeIndex;
         final isLast = i == _labels.length - 1;
         return Expanded(
-          child: Row(children: [
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: active ? cs.primary : cs.surfaceContainerHigh,
-              child: Text('${i + 1}',
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: active ? cs.primary : cs.surfaceContainerHigh,
+                child: Text(
+                  '${i + 1}',
                   style: t.labelSmall?.copyWith(
-                      color: active ? cs.onPrimary : cs.onSurface)),
-            ),
-            const SizedBox(width: PsySpacing.xs),
-            Flexible(
-              child: Text(_labels[i],
+                    color: active ? cs.onPrimary : cs.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(width: PsySpacing.xs),
+              Flexible(
+                child: Text(
+                  _labels[i],
                   overflow: TextOverflow.ellipsis,
                   style: t.labelMedium?.copyWith(
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                      color: active
-                          ? cs.onSurface
-                          : cs.onSurface.withValues(alpha: 0.5))),
-            ),
-            if (!isLast)
-              Expanded(
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                    color: active
+                        ? cs.onSurface
+                        : cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Expanded(
                   child: Container(
-                      height: 2,
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: PsySpacing.sm),
-                      color: active
-                          ? cs.primary.withValues(alpha: 0.4)
-                          : cs.surfaceContainerHigh)),
-          ]),
+                    height: 2,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.sm,
+                    ),
+                    color: active
+                        ? cs.primary.withValues(alpha: 0.4)
+                        : cs.surfaceContainerHigh,
+                  ),
+                ),
+            ],
+          ),
         );
       }),
     );
@@ -333,9 +355,12 @@ class _IdlePane extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Set up an authenticator app',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Set up an authenticator app',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
             'You will scan a QR code with Google Authenticator, Authy, '
@@ -374,14 +399,18 @@ class _ScanPane extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('1 · Scan the QR code',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '1 · Scan the QR code',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
-              'Open your authenticator app and scan this code. If you cannot '
-              'scan, enter the secret manually.',
-              style: theme.textTheme.bodyMedium),
+            'Open your authenticator app and scan this code. If you cannot '
+            'scan, enter the secret manually.',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: PsySpacing.lg),
           Center(
             child: Container(
@@ -400,34 +429,43 @@ class _ScanPane extends StatelessWidget {
             ),
           ),
           const SizedBox(height: PsySpacing.lg),
-          Text('Manual secret',
-              style: theme.textTheme.labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Manual secret',
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          Row(children: [
-            Expanded(
-              child: SelectableText(
-                _grouped(secret),
-                style: theme.textTheme.titleSmall?.copyWith(
-                    fontFamily: 'monospace', letterSpacing: 1.5),
+          Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  _grouped(secret),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: 'monospace',
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
-            ),
-            IconButton(
-              tooltip: 'Copy secret (auto-clears in 60s)',
-              icon: const Icon(Icons.copy, size: 18),
-              onPressed: () => _copyWithAutoClear(secret),
-            ),
-          ]),
+              IconButton(
+                tooltip: 'Copy secret (auto-clears in 60s)',
+                icon: const Icon(Icons.copy, size: 18),
+                onPressed: () => _copyWithAutoClear(secret),
+              ),
+            ],
+          ),
           const SizedBox(height: PsySpacing.lg),
-          Row(children: [
-            FilledButton.icon(
-              onPressed: onContinue,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('I have scanned the code'),
-            ),
-            const SizedBox(width: PsySpacing.sm),
-            TextButton(onPressed: onCancel, child: const Text('Cancel')),
-          ]),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: onContinue,
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('I have scanned the code'),
+              ),
+              const SizedBox(width: PsySpacing.sm),
+              TextButton(onPressed: onCancel, child: const Text('Cancel')),
+            ],
+          ),
         ],
       ),
     );
@@ -464,15 +502,19 @@ class _VerifyPane extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('2 · Verify the 6-digit code',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '2 · Verify the 6-digit code',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
-              'Enter the current code from your authenticator. Codes refresh '
-              'every 30 seconds — we accept the previous window if you are a '
-              'little late.',
-              style: theme.textTheme.bodyMedium),
+            'Enter the current code from your authenticator. Codes refresh '
+            'every 30 seconds — we accept the previous window if you are a '
+            'little late.',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: PsySpacing.lg),
           TextField(
             controller: controller,
@@ -489,26 +531,31 @@ class _VerifyPane extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: PsySpacing.sm),
-            Text(error!,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: PsyColors.warning)),
+            Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: PsyColors.warning,
+              ),
+            ),
           ],
           const SizedBox(height: PsySpacing.md),
-          Row(children: [
-            FilledButton.icon(
-              onPressed: onVerify,
-              icon: busy
-                  ? const SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              label: const Text('Verify'),
-            ),
-            const SizedBox(width: PsySpacing.sm),
-            TextButton(onPressed: onBack, child: const Text('Back')),
-          ]),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: onVerify,
+                icon: busy
+                    ? const SizedBox(
+                        height: 14,
+                        width: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check),
+                label: const Text('Verify'),
+              ),
+              const SizedBox(width: PsySpacing.sm),
+              TextButton(onPressed: onBack, child: const Text('Back')),
+            ],
+          ),
         ],
       ),
     );
@@ -528,15 +575,19 @@ class _RecoveryPane extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('3 · Save your recovery codes',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            '3 · Save your recovery codes',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
-              'Each code can be used once if you lose access to your '
-              'authenticator. Store them in a password manager — we only '
-              'keep a one-way hash on our side.',
-              style: theme.textTheme.bodyMedium),
+            'Each code can be used once if you lose access to your '
+            'authenticator. Store them in a password manager — we only '
+            'keep a one-way hash on our side.',
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: PsySpacing.lg),
           Container(
             padding: const EdgeInsets.all(PsySpacing.md),
@@ -549,27 +600,32 @@ class _RecoveryPane extends StatelessWidget {
               runSpacing: PsySpacing.sm,
               children: [
                 for (final c in codes)
-                  SelectableText(c,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w700)),
+                  SelectableText(
+                    c,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
               ],
             ),
           ),
           const SizedBox(height: PsySpacing.md),
-          Row(children: [
-            FilledButton.icon(
-              onPressed: onFinish,
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text('I saved them — finish'),
-            ),
-            const SizedBox(width: PsySpacing.sm),
-            TextButton.icon(
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy all (auto-clears in 60s)'),
-              onPressed: () => _copyWithAutoClear(codes.join('\n')),
-            ),
-          ]),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: onFinish,
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('I saved them — finish'),
+              ),
+              const SizedBox(width: PsySpacing.sm),
+              TextButton.icon(
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('Copy all (auto-clears in 60s)'),
+                onPressed: () => _copyWithAutoClear(codes.join('\n')),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -588,13 +644,18 @@ class _DonePane extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.verified_user, color: cs.primary),
-            const SizedBox(width: PsySpacing.sm),
-            Text('TOTP enabled on this device',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ]),
+          Row(
+            children: [
+              Icon(Icons.verified_user, color: cs.primary),
+              const SizedBox(width: PsySpacing.sm),
+              Text(
+                'TOTP enabled on this device',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
             'Your next sign-in will ask for the 6-digit code from your '

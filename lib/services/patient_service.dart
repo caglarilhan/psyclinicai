@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 class PatientItem {
-  
   const PatientItem({
-    required this.id, 
-    required this.name, 
-    this.email, 
+    required this.id,
+    required this.name,
+    this.email,
     this.phone,
     this.birthDate,
     this.gender,
@@ -28,7 +27,8 @@ class PatientItem {
   final List<String> diagnosis;
 }
 
-class PatientDoc { // demo: memory
+class PatientDoc {
+  // demo: memory
   const PatientDoc({
     required this.id,
     required this.patientId,
@@ -52,8 +52,8 @@ class PatientService extends ChangeNotifier {
 
   final List<PatientItem> _patients = [
     const PatientItem(
-      id: '1', 
-      name: 'Ahmet Yılmaz', 
+      id: '1',
+      name: 'Ahmet Yılmaz',
       email: 'ahmet@example.com',
       gender: 'Erkek',
       notes: 'Tip 2 Diabetes Mellitus',
@@ -63,8 +63,8 @@ class PatientService extends ChangeNotifier {
       diagnosis: ['Tip 2 Diabetes Mellitus'],
     ),
     const PatientItem(
-      id: '2', 
-      name: 'Ayşe Demir', 
+      id: '2',
+      name: 'Ayşe Demir',
       email: 'ayse@example.com',
       gender: 'Kadın',
       notes: 'Hipertansiyon',
@@ -73,7 +73,7 @@ class PatientService extends ChangeNotifier {
       diagnosis: ['Esansiyel Hipertansiyon'],
     ),
     const PatientItem(
-      id: '3', 
+      id: '3',
       name: 'Mehmet Kaya',
       gender: 'Erkek',
       notes: 'Hipotiroidizm',
@@ -82,7 +82,7 @@ class PatientService extends ChangeNotifier {
       diagnosis: ['Subklinik Hipotiroidizm'],
     ),
     const PatientItem(
-      id: '4', 
+      id: '4',
       name: 'Zeynep Can',
       gender: 'Kadın',
       notes: 'Depresyon',
@@ -91,7 +91,7 @@ class PatientService extends ChangeNotifier {
       diagnosis: ['Major Depresif Bozukluk'],
     ),
     const PatientItem(
-      id: '5', 
+      id: '5',
       name: 'Deniz Ak',
       gender: 'Erkek',
       notes: 'Anksiyete',
@@ -100,7 +100,7 @@ class PatientService extends ChangeNotifier {
       diagnosis: ['Yaygın Anksiyete Bozukluğu'],
     ),
     const PatientItem(
-      id: '6', 
+      id: '6',
       name: 'Efe Kara',
       gender: 'Erkek',
       notes: 'Uyku bozukluğu',
@@ -122,7 +122,11 @@ class PatientService extends ChangeNotifier {
   }
 
   PatientItem? getById(String id) {
-    try { return _patients.firstWhere((e) => e.id == id); } catch (_) { return null; }
+    try {
+      return _patients.firstWhere((e) => e.id == id);
+    } catch (_) {
+      return null;
+    }
   }
 
   // Eksik metod - getPatientById
@@ -152,13 +156,32 @@ class PatientService extends ChangeNotifier {
     if (_docsByPatient.isNotEmpty) return;
     final now = DateTime.now();
     _docsByPatient['1'] = [
-      PatientDoc(id: 'd1', patientId: '1', name: 'Onam_Formu.pdf', mimeType: 'application/pdf', createdAt: now.subtract(const Duration(days: 2)), data: <int>[]),
-      PatientDoc(id: 'd2', patientId: '1', name: 'EKG.png', mimeType: 'image/png', createdAt: now.subtract(const Duration(days: 1)), data: <int>[]),
+      PatientDoc(
+        id: 'd1',
+        patientId: '1',
+        name: 'Onam_Formu.pdf',
+        mimeType: 'application/pdf',
+        createdAt: now.subtract(const Duration(days: 2)),
+        data: <int>[],
+      ),
+      PatientDoc(
+        id: 'd2',
+        patientId: '1',
+        name: 'EKG.png',
+        mimeType: 'image/png',
+        createdAt: now.subtract(const Duration(days: 1)),
+        data: <int>[],
+      ),
     ];
     _docsByPatient['2'] = [
-      PatientDoc(id: 'd3', patientId: '2', name: 'Değerlendirme_Notu.txt', mimeType: 'text/plain', createdAt: now, data: <int>[]),
+      PatientDoc(
+        id: 'd3',
+        patientId: '2',
+        name: 'Değerlendirme_Notu.txt',
+        mimeType: 'text/plain',
+        createdAt: now,
+        data: <int>[],
+      ),
     ];
   }
 }
-
-

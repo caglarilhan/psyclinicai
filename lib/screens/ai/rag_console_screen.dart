@@ -129,8 +129,9 @@ class _QuestionForm extends StatelessWidget {
                     ButtonSegment(value: 'US', label: Text('US')),
                   ],
                   selected: {region},
-                  onSelectionChanged:
-                      busy ? null : (s) => onRegionChanged(s.first),
+                  onSelectionChanged: busy
+                      ? null
+                      : (s) => onRegionChanged(s.first),
                 ),
               ],
             ),
@@ -160,15 +161,18 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          const Icon(Icons.menu_book_outlined,
-              size: 48, color: AppColors.textTertiary),
+          const Icon(
+            Icons.menu_book_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
           const SizedBox(height: 12),
           Text(
             'Ask the hub a clinical question to see grounded evidence.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -287,10 +291,10 @@ class _FeedbackBarState extends State<_FeedbackBar> {
     });
     final note = _note.text.trim();
     final id = await context.read<RagService>().feedback(
-          auditId: widget.auditId,
-          score: score,
-          note: note.isEmpty ? null : note,
-        );
+      auditId: widget.auditId,
+      score: score,
+      note: note.isEmpty ? null : note,
+    );
     if (!mounted) return;
     setState(() {
       _submitting = false;
@@ -312,15 +316,15 @@ class _FeedbackBarState extends State<_FeedbackBar> {
           child: Row(
             children: [
               Icon(
-                _submittedScore == 'up'
-                    ? Icons.thumb_up
-                    : Icons.thumb_down,
+                _submittedScore == 'up' ? Icons.thumb_up : Icons.thumb_down,
                 color: AppColors.success,
                 size: 18,
               ),
               const SizedBox(width: 8),
-              const Text('Thanks — feedback recorded for model improvement.',
-                  style: TextStyle(color: AppColors.textSecondary)),
+              const Text(
+                'Thanks — feedback recorded for model improvement.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             ],
           ),
         ),
@@ -394,17 +398,14 @@ class _AnswerCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.psychology_outlined,
-                    color: AppColors.primary),
+                const Icon(Icons.psychology_outlined, color: AppColors.primary),
                 const SizedBox(width: 8),
-                Text('Answer',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text('Answer', style: Theme.of(context).textTheme.titleMedium),
                 if (answer.phiDetected) ...[
                   const SizedBox(width: 12),
                   Chip(
                     label: const Text('PHI flagged'),
-                    backgroundColor:
-                        AppColors.warning.withValues(alpha: 0.18),
+                    backgroundColor: AppColors.warning.withValues(alpha: 0.18),
                     side: BorderSide.none,
                   ),
                 ],
@@ -429,8 +430,10 @@ class _CitationsList extends StatelessWidget {
         color: AppColors.surface,
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: Text('No citations returned for this answer.',
-              style: TextStyle(color: AppColors.textSecondary)),
+          child: Text(
+            'No citations returned for this answer.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         ),
       );
     }
@@ -441,8 +444,10 @@ class _CitationsList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Citations (${citations.length})',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Citations (${citations.length})',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             ...citations.map((c) => _CitationTile(c: c)),
           ],
@@ -463,17 +468,19 @@ class _CitationTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(c.country,
-                style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600)),
+            child: Text(
+              c.country,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -488,22 +495,34 @@ class _CitationTile extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    Text('score ${c.score.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                            color: AppColors.textTertiary, fontSize: 12)),
+                    Text(
+                      'score ${c.score.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(c.snippet,
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13)),
+                Text(
+                  c.snippet,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
                 if (c.url.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: () => _open(c.url),
-                    child: Text(c.url,
-                        style: const TextStyle(
-                            color: AppColors.accent, fontSize: 12)),
+                    child: Text(
+                      c.url,
+                      style: const TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -529,12 +548,14 @@ class _MetaRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Model: ${answer.modelUsed} · ${answer.requestMs} ms',
-            style: const TextStyle(
-                color: AppColors.textTertiary, fontSize: 12)),
-        SelectableText('Audit ${answer.auditId}',
-            style: const TextStyle(
-                color: AppColors.textTertiary, fontSize: 12)),
+        Text(
+          'Model: ${answer.modelUsed} · ${answer.requestMs} ms',
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
+        ),
+        SelectableText(
+          'Audit ${answer.auditId}',
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
+        ),
       ],
     );
   }

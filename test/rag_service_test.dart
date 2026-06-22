@@ -31,15 +31,16 @@ void main() {
     test('enabled service maps a 200 into RagResult.ok', () async {
       final mock = MockClient((req) async {
         return http.Response(
-            jsonEncode({
-              'answer': 'CBT first-line for moderate MDD.',
-              'citations': const <Map<String, dynamic>>[],
-              'model_used': 'haiku-4.5',
-              'phi_detected': false,
-              'audit_id': 'aud_1',
-              'request_ms': 120,
-            }),
-            200);
+          jsonEncode({
+            'answer': 'CBT first-line for moderate MDD.',
+            'citations': const <Map<String, dynamic>>[],
+            'model_used': 'haiku-4.5',
+            'phi_detected': false,
+            'audit_id': 'aud_1',
+            'request_ms': 120,
+          }),
+          200,
+        );
       });
       final svc = RagService(
         client: RagClient(
@@ -54,26 +55,30 @@ void main() {
       expect(r.answer!.auditId, 'aud_1');
     });
 
-    test('enabled service converts non-2xx into RagResult.error (no throw)',
-        () async {
-      final mock = MockClient(
-          (req) async => http.Response('{"error":"hub_down"}', 503));
-      final svc = RagService(
-        client: RagClient(
-          baseUrl: 'https://api.psyclinic.ai/v1/rag',
-          idTokenProvider: token,
-          httpClient: mock,
-        ),
-      );
-      final r = await svc.query(question: 'x');
-      expect(r.isError, isTrue);
-      expect(r.errorMessage, contains('503'));
-      expect(r.errorMessage, contains('hub_down'));
-    });
+    test(
+      'enabled service converts non-2xx into RagResult.error (no throw)',
+      () async {
+        final mock = MockClient(
+          (req) async => http.Response('{"error":"hub_down"}', 503),
+        );
+        final svc = RagService(
+          client: RagClient(
+            baseUrl: 'https://api.psyclinic.ai/v1/rag',
+            idTokenProvider: token,
+            httpClient: mock,
+          ),
+        );
+        final r = await svc.query(question: 'x');
+        expect(r.isError, isTrue);
+        expect(r.errorMessage, contains('503'));
+        expect(r.errorMessage, contains('hub_down'));
+      },
+    );
 
     test('feedback is best-effort: returns null on HTTP error', () async {
       final mock = MockClient(
-          (req) async => http.Response('{"error":"forbidden"}', 403));
+        (req) async => http.Response('{"error":"forbidden"}', 403),
+      );
       final svc = RagService(
         client: RagClient(
           baseUrl: 'https://api.psyclinic.ai/v1/rag',

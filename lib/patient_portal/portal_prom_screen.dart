@@ -29,7 +29,8 @@ class PortalPromScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rawRows = assignments ??
+    final rawRows =
+        assignments ??
         <PortalPromAssignment>[
           const PortalPromAssignment(
             scaleId: 'phq9',
@@ -66,9 +67,10 @@ class PortalPromScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(r.scaleName,
-                              style:
-                                  Theme.of(context).textTheme.titleMedium),
+                          child: Text(
+                            r.scaleName,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                         ),
                         PsyBadge(
                           label: 'Due in ${r.dueInDays}d',
@@ -79,8 +81,10 @@ class PortalPromScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: PsySpacing.xs),
-                    Text('~${r.estimatedMinutes} min · paced for you',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      '~${r.estimatedMinutes} min · paced for you',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     const SizedBox(height: PsySpacing.sm),
                     Align(
                       alignment: Alignment.centerRight,
@@ -91,8 +95,9 @@ class PortalPromScreen extends StatelessWidget {
                           if (!kPortalSafePromIds.contains(r.scaleId)) {
                             return;
                           }
-                          Navigator.of(context)
-                              .pushNamed('/portal/proms/${r.scaleId}');
+                          Navigator.of(
+                            context,
+                          ).pushNamed('/portal/proms/${r.scaleId}');
                         },
                         child: const Text('Start'),
                       ),

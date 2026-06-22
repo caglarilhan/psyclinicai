@@ -56,16 +56,18 @@ Future<void> _pumpMobile(WidgetTester tester, Widget w) async {
 }
 
 void main() {
-  testWidgets('empty state surfaces the "No passkeys yet" hint',
-      (tester) async {
+  testWidgets('empty state surfaces the "No passkeys yet" hint', (
+    tester,
+  ) async {
     final service = makeService();
     await _pumpMobile(tester, PasskeyEnrolScreen(service: service));
     expect(find.textContaining('No passkeys yet'), findsOneWidget);
     expect(find.text('Add a passkey'), findsOneWidget);
   });
 
-  testWidgets('Add a passkey persists the credential and clears the field',
-      (tester) async {
+  testWidgets('Add a passkey persists the credential and clears the field', (
+    tester,
+  ) async {
     final service = makeService();
     await _pumpMobile(tester, PasskeyEnrolScreen(service: service));
 
@@ -77,15 +79,17 @@ void main() {
     expect(find.text('Passkey added.'), findsOneWidget);
   });
 
-  testWidgets('Unsupported platform disables the Add button',
-      (tester) async {
+  testWidgets('Unsupported platform disables the Add button', (tester) async {
     final service = makeService(supported: false);
     await _pumpMobile(tester, PasskeyEnrolScreen(service: service));
-    final btn = tester
-        .widget<FilledButton>(find.byKey(const Key('passkey_add_button')));
+    final btn = tester.widget<FilledButton>(
+      find.byKey(const Key('passkey_add_button')),
+    );
     expect(btn.onPressed, isNull);
-    expect(find.textContaining('Open this page on a supported browser'),
-        findsOneWidget);
+    expect(
+      find.textContaining('Open this page on a supported browser'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Remove revokes the credential', (tester) async {

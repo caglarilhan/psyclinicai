@@ -35,8 +35,9 @@ void main() {
       expect(find.text('I have scanned the code'), findsOneWidget);
     });
 
-    testWidgets('verify pane rejects an empty code with a helpful error',
-        (tester) async {
+    testWidgets('verify pane rejects an empty code with a helpful error', (
+      tester,
+    ) async {
       await _pump(tester);
       await tester.tap(find.text('Start TOTP setup'));
       await tester.pumpAndSettle();

@@ -29,8 +29,8 @@ class PostHogClient {
     required this.apiKey,
     this.host = 'https://eu.i.posthog.com',
     http.Client? httpClient,
-  })  : _http = httpClient ?? http.Client(),
-        _enabled = apiKey.isNotEmpty;
+  }) : _http = httpClient ?? http.Client(),
+       _enabled = apiKey.isNotEmpty;
 
   final String apiKey;
   final String host;
@@ -53,8 +53,7 @@ class PostHogClient {
       'api_key': apiKey,
       'event': event,
       'distinct_id': distinctId,
-      'timestamp':
-          (timestamp ?? DateTime.now().toUtc()).toIso8601String(),
+      'timestamp': (timestamp ?? DateTime.now().toUtc()).toIso8601String(),
       'properties': {
         ...properties,
         // Always tag the source so dashboards can split by build.
@@ -90,10 +89,7 @@ class PostHogClient {
     return capture(
       event: '\$identify',
       distinctId: distinctId,
-      properties: {
-        '\$anon_distinct_id': anonymousId,
-        '\$set': traits,
-      },
+      properties: {'\$anon_distinct_id': anonymousId, '\$set': traits},
     );
   }
 

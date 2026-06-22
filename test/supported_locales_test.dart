@@ -43,19 +43,19 @@ void main() {
   });
 
   group('bestMatchForDeviceLocale', () {
-    test('matches a known language family even when the country differs',
-        () {
+    test('matches a known language family even when the country differs', () {
       expect(
-          bestMatchForDeviceLocale(const Locale('tr', 'CY')).languageCode,
-          'tr');
+        bestMatchForDeviceLocale(const Locale('tr', 'CY')).languageCode,
+        'tr',
+      );
       expect(
-          bestMatchForDeviceLocale(const Locale('de', 'AT')).languageCode,
-          'de');
+        bestMatchForDeviceLocale(const Locale('de', 'AT')).languageCode,
+        'de',
+      );
     });
 
     test('falls back to English for an unknown locale', () {
-      expect(
-          bestMatchForDeviceLocale(const Locale('xx', 'YY')), english);
+      expect(bestMatchForDeviceLocale(const Locale('xx', 'YY')), english);
       expect(bestMatchForDeviceLocale(null), english);
     });
   });

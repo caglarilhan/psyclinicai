@@ -22,18 +22,23 @@ class PasskeyCredential {
   }) : createdAt = createdAt ?? DateTime.now().toUtc() {
     if (credentialId.trim().isEmpty) {
       throw ArgumentError.value(
-          credentialId, 'credentialId', 'must not be empty');
+        credentialId,
+        'credentialId',
+        'must not be empty',
+      );
     }
     if (publicKey.trim().isEmpty) {
       throw ArgumentError.value(publicKey, 'publicKey', 'must not be empty');
     }
     if (signCount < 0) {
-      throw ArgumentError.value(
-          signCount, 'signCount', 'must be non-negative');
+      throw ArgumentError.value(signCount, 'signCount', 'must be non-negative');
     }
     if (deviceLabel.trim().isEmpty || deviceLabel.length > 80) {
       throw ArgumentError.value(
-          deviceLabel, 'deviceLabel', 'must be 1..80 chars');
+        deviceLabel,
+        'deviceLabel',
+        'must be 1..80 chars',
+      );
     }
   }
 
@@ -54,30 +59,29 @@ class PasskeyCredential {
     String? deviceLabel,
     DateTime? lastUsedAt,
     DateTime? revokedAt,
-  }) =>
-      PasskeyCredential(
-        credentialId: credentialId,
-        publicKey: publicKey,
-        signCount: signCount ?? this.signCount,
-        deviceLabel: deviceLabel ?? this.deviceLabel,
-        transports: transports,
-        aaguid: aaguid,
-        createdAt: createdAt,
-        lastUsedAt: lastUsedAt ?? this.lastUsedAt,
-        revokedAt: revokedAt ?? this.revokedAt,
-      );
+  }) => PasskeyCredential(
+    credentialId: credentialId,
+    publicKey: publicKey,
+    signCount: signCount ?? this.signCount,
+    deviceLabel: deviceLabel ?? this.deviceLabel,
+    transports: transports,
+    aaguid: aaguid,
+    createdAt: createdAt,
+    lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+    revokedAt: revokedAt ?? this.revokedAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'credential_id': credentialId,
-        'public_key': publicKey,
-        'sign_count': signCount,
-        'device_label': deviceLabel,
-        'transports': transports,
-        if (aaguid != null) 'aaguid': aaguid,
-        'created_at': createdAt.toIso8601String(),
-        if (lastUsedAt != null) 'last_used_at': lastUsedAt!.toIso8601String(),
-        if (revokedAt != null) 'revoked_at': revokedAt!.toIso8601String(),
-      };
+    'credential_id': credentialId,
+    'public_key': publicKey,
+    'sign_count': signCount,
+    'device_label': deviceLabel,
+    'transports': transports,
+    if (aaguid != null) 'aaguid': aaguid,
+    'created_at': createdAt.toIso8601String(),
+    if (lastUsedAt != null) 'last_used_at': lastUsedAt!.toIso8601String(),
+    if (revokedAt != null) 'revoked_at': revokedAt!.toIso8601String(),
+  };
 
   factory PasskeyCredential.fromJson(Map<String, dynamic> json) =>
       PasskeyCredential(
@@ -103,7 +107,10 @@ abstract class PasskeyRepository {
   Future<List<PasskeyCredential>> listForUser(String uid);
   Future<void> add(String uid, PasskeyCredential credential);
   Future<void> recordAuthentication(
-      String uid, String credentialId, int newSignCount);
+    String uid,
+    String credentialId,
+    int newSignCount,
+  );
   Future<void> revoke(String uid, String credentialId);
 }
 
@@ -127,14 +134,19 @@ class InMemoryPasskeyRepository implements PasskeyRepository {
 
   @override
   Future<void> recordAuthentication(
-      String uid, String credentialId, int newSignCount) async {
+    String uid,
+    String credentialId,
+    int newSignCount,
+  ) async {
     final existing = _store[uid]?[credentialId];
     if (existing == null) {
       throw StateError('passkey $credentialId not found for $uid');
     }
     if (newSignCount < existing.signCount) {
-      throw StateError('sign-count regression on $credentialId — '
-          'possible cloned authenticator');
+      throw StateError(
+        'sign-count regression on $credentialId — '
+        'possible cloned authenticator',
+      );
     }
     _store[uid]![credentialId] = existing.copyWith(
       signCount: newSignCount,
@@ -146,7 +158,8 @@ class InMemoryPasskeyRepository implements PasskeyRepository {
   Future<void> revoke(String uid, String credentialId) async {
     final existing = _store[uid]?[credentialId];
     if (existing == null) return;
-    _store[uid]![credentialId] =
-        existing.copyWith(revokedAt: DateTime.now().toUtc());
+    _store[uid]![credentialId] = existing.copyWith(
+      revokedAt: DateTime.now().toUtc(),
+    );
   }
 }

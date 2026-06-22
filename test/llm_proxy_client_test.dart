@@ -9,10 +9,14 @@ void main() {
     });
 
     test('cost ramps from haiku to opus', () {
-      expect(LlmModel.haiku45.usdPer5Min,
-          lessThan(LlmModel.sonnet46.usdPer5Min));
-      expect(LlmModel.sonnet46.usdPer5Min,
-          lessThan(LlmModel.opus47.usdPer5Min));
+      expect(
+        LlmModel.haiku45.usdPer5Min,
+        lessThan(LlmModel.sonnet46.usdPer5Min),
+      );
+      expect(
+        LlmModel.sonnet46.usdPer5Min,
+        lessThan(LlmModel.opus47.usdPer5Min),
+      );
     });
   });
 

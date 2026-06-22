@@ -55,8 +55,10 @@ class SupervisionReport {
     section('Strengths', strengths);
     section('Growth areas', growthAreas);
     section('Reflective questions', reflectiveQuestions);
-    b.writeln('Decision-support for supervision — not a competency '
-        'determination. Verify anonymization before sharing.');
+    b.writeln(
+      'Decision-support for supervision — not a competency '
+      'determination. Verify anonymization before sharing.',
+    );
     return b.toString().trimRight();
   }
 }

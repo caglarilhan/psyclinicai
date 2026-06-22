@@ -100,10 +100,11 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: CircularProgressIndicator()),
+            )
           : _plan == null
-              ? _NoPlan(theme: theme, cs: cs, onCreate: _createPlanDialog)
-              : _planView(theme, cs, _plan!),
+          ? _NoPlan(theme: theme, cs: cs, onCreate: _createPlanDialog)
+          : _planView(theme, cs, _plan!),
     );
   }
 
@@ -124,9 +125,12 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         const SizedBox(height: PsySpacing.xl),
         Row(
           children: [
-            Text('Goals (${plan.goals.length})',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              'Goals (${plan.goals.length})',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const Spacer(),
             OutlinedButton.icon(
               onPressed: _busy ? null : _draftWithAi,
@@ -134,7 +138,8 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.auto_awesome, size: 18),
               label: Text(_busy ? 'Drafting…' : 'Draft goals with AI'),
             ),
@@ -144,21 +149,26 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         if (plan.goals.isEmpty)
           _EmptyGoals(theme: theme, cs: cs)
         else
-          ...plan.goals.map((g) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                child: _GoalCard(
-                  goal: g,
-                  theme: theme,
-                  cs: cs,
-                  onUpdate: (p) => _updateProgress(g, p),
-                ),
-              )),
+          ...plan.goals.map(
+            (g) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.md),
+              child: _GoalCard(
+                goal: g,
+                theme: theme,
+                cs: cs,
+                onUpdate: (p) => _updateProgress(g, p),
+              ),
+            ),
+          ),
         const SizedBox(height: PsySpacing.xxl),
         Row(
           children: [
-            Text('Homework (${_homework.length})',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              'Homework (${_homework.length})',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const Spacer(),
             OutlinedButton.icon(
               onPressed: _busy ? null : _suggestHomework,
@@ -177,27 +187,34 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         if (_homework.isEmpty)
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.xl, vertical: PsySpacing.xl),
+              horizontal: PsySpacing.xl,
+              vertical: PsySpacing.xl,
+            ),
             decoration: BoxDecoration(
               color: cs.surface,
               borderRadius: BorderRadius.circular(PsyRadius.lg),
               border: Border.all(color: cs.outlineVariant),
             ),
             alignment: Alignment.center,
-            child: Text('No homework yet — add one or suggest with AI.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+            child: Text(
+              'No homework yet — add one or suggest with AI.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
           )
         else
-          ..._homework.map((h) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.sm),
-                child: _HomeworkTile(
-                  item: h,
-                  theme: theme,
-                  cs: cs,
-                  onToggle: () => _toggleHomework(h),
-                ),
-              )),
+          ..._homework.map(
+            (h) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+              child: _HomeworkTile(
+                item: h,
+                theme: theme,
+                cs: cs,
+                onToggle: () => _toggleHomework(h),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -261,21 +278,26 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       }
       _reload();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text('${drafts.length} goals drafted — review and edit.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${drafts.length} goals drafted — review and edit.'),
+          ),
+        );
       }
     } on TreatmentPlanAiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -297,12 +319,14 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       builder: (_) => const _HomeworkDialog(),
     );
     if (title == null || title.trim().isEmpty) return;
-    await _homeworkRepo.add(HomeworkItem(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      patientId: widget.args.id,
-      title: title.trim(),
-      dueDate: DateTime.now().add(const Duration(days: 7)),
-    ));
+    await _homeworkRepo.add(
+      HomeworkItem(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        patientId: widget.args.id,
+        title: title.trim(),
+        dueDate: DateTime.now().add(const Duration(days: 7)),
+      ),
+    );
     _reload();
   }
 
@@ -316,43 +340,55 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     if (plan == null) return;
     final goals = plan.activeGoals.map((g) => g.description).toList();
     if (goals.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Add a goal first — homework ties to goals.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add a goal first — homework ties to goals.'),
+        ),
+      );
       return;
     }
     setState(() => _busy = true);
     try {
-      final ideas =
-          await _ai.suggestHomework(
-              patientId: widget.args.id,
-              diagnosis: plan.primaryDiagnosis,
-              goals: goals);
+      final ideas = await _ai.suggestHomework(
+        patientId: widget.args.id,
+        diagnosis: plan.primaryDiagnosis,
+        goals: goals,
+      );
       for (final t in ideas) {
-        await _homeworkRepo.add(HomeworkItem(
-          id: '${DateTime.now().microsecondsSinceEpoch}${t.hashCode}',
-          patientId: widget.args.id,
-          title: t,
-          dueDate: DateTime.now().add(const Duration(days: 7)),
-          linkedGoal: goals.first,
-        ));
+        await _homeworkRepo.add(
+          HomeworkItem(
+            id: '${DateTime.now().microsecondsSinceEpoch}${t.hashCode}',
+            patientId: widget.args.id,
+            title: t,
+            dueDate: DateTime.now().add(const Duration(days: 7)),
+            linkedGoal: goals.first,
+          ),
+        );
       }
       _reload();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text('${ideas.length} homework ideas added — review and edit.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${ideas.length} homework ideas added — review and edit.',
+            ),
+          ),
+        );
       }
     } on TreatmentPlanAiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -378,15 +414,18 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       );
     } on TreatmentPlanAiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message),
-        action: e.noKey
-            ? SnackBarAction(
-                label: 'API keys',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/settings/api_keys'))
-            : null,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          action: e.noKey
+              ? SnackBarAction(
+                  label: 'API keys',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/settings/api_keys'),
+                )
+              : null,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -398,30 +437,33 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
 // ---------------------------------------------------------------------------
 
 String goalCategoryLabel(GoalCategory c) => switch (c) {
-      GoalCategory.symptomReduction => 'Symptom reduction',
-      GoalCategory.functionalImprovement => 'Functional',
-      GoalCategory.skillDevelopment => 'Skill-building',
-      GoalCategory.relationshipImprovement => 'Relationships',
-      GoalCategory.medicationCompliance => 'Med adherence',
-      GoalCategory.lifestyleChange => 'Lifestyle',
-      GoalCategory.crisisPrevention => 'Crisis prevention',
-      GoalCategory.other => 'Other',
-    };
+  GoalCategory.symptomReduction => 'Symptom reduction',
+  GoalCategory.functionalImprovement => 'Functional',
+  GoalCategory.skillDevelopment => 'Skill-building',
+  GoalCategory.relationshipImprovement => 'Relationships',
+  GoalCategory.medicationCompliance => 'Med adherence',
+  GoalCategory.lifestyleChange => 'Lifestyle',
+  GoalCategory.crisisPrevention => 'Crisis prevention',
+  GoalCategory.other => 'Other',
+};
 
 String goalPriorityLabel(GoalPriority p) => switch (p) {
-      GoalPriority.critical => 'Critical',
-      GoalPriority.high => 'High',
-      GoalPriority.medium => 'Medium',
-      GoalPriority.low => 'Low',
-    };
+  GoalPriority.critical => 'Critical',
+  GoalPriority.high => 'High',
+  GoalPriority.medium => 'Medium',
+  GoalPriority.low => 'Low',
+};
 
 // ---------------------------------------------------------------------------
 // Views
 // ---------------------------------------------------------------------------
 
 class _DiagnosisCard extends StatelessWidget {
-  const _DiagnosisCard(
-      {required this.theme, required this.cs, required this.plan});
+  const _DiagnosisCard({
+    required this.theme,
+    required this.cs,
+    required this.plan,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final TreatmentPlan plan;
@@ -444,13 +486,20 @@ class _DiagnosisCard extends StatelessWidget {
               Icon(Icons.assignment_outlined, size: 18, color: cs.primary),
               const SizedBox(width: PsySpacing.sm),
               Expanded(
-                child: Text(plan.primaryDiagnosis,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                child: Text(
+                  plan.primaryDiagnosis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-              Text('$pct% overall',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                      color: cs.primary, fontWeight: FontWeight.w700)),
+              Text(
+                '$pct% overall',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.md),
@@ -465,9 +514,13 @@ class _DiagnosisCard extends StatelessWidget {
           ),
           if (plan.clinicalFormulation.isNotEmpty) ...[
             const SizedBox(height: PsySpacing.md),
-            Text(plan.clinicalFormulation,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.75), height: 1.5)),
+            Text(
+              plan.clinicalFormulation,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.75),
+                height: 1.5,
+              ),
+            ),
           ],
         ],
       ),
@@ -476,22 +529,23 @@ class _DiagnosisCard extends StatelessWidget {
 }
 
 class _GoalCard extends StatelessWidget {
-  const _GoalCard(
-      {required this.goal,
-      required this.theme,
-      required this.cs,
-      required this.onUpdate});
+  const _GoalCard({
+    required this.goal,
+    required this.theme,
+    required this.cs,
+    required this.onUpdate,
+  });
   final TreatmentGoal goal;
   final ThemeData theme;
   final ColorScheme cs;
   final ValueChanged<int> onUpdate;
 
   Color get _priorityColor => switch (goal.priority) {
-        GoalPriority.critical => const Color(0xFFDC2626),
-        GoalPriority.high => const Color(0xFFD97706),
-        GoalPriority.medium => cs.primary,
-        GoalPriority.low => cs.onSurface.withValues(alpha: 0.5),
-      };
+    GoalPriority.critical => const Color(0xFFDC2626),
+    GoalPriority.high => const Color(0xFFD97706),
+    GoalPriority.medium => cs.primary,
+    GoalPriority.low => cs.onSurface.withValues(alpha: 0.5),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -509,16 +563,20 @@ class _GoalCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(met ? Icons.check_circle : Icons.flag_outlined,
-                  size: 18,
-                  color: met ? const Color(0xFF16A34A) : _priorityColor),
+              Icon(
+                met ? Icons.check_circle : Icons.flag_outlined,
+                size: 18,
+                color: met ? const Color(0xFF16A34A) : _priorityColor,
+              ),
               const SizedBox(width: PsySpacing.sm),
               Expanded(
-                child: Text(goal.description,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      decoration: met ? TextDecoration.lineThrough : null,
-                    )),
+                child: Text(
+                  goal.description,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    decoration: met ? TextDecoration.lineThrough : null,
+                  ),
+                ),
               ),
             ],
           ),
@@ -532,9 +590,12 @@ class _GoalCard extends StatelessWidget {
               _chip(goalPriorityLabel(goal.priority), _priorityColor),
               if (goal.measurementMethod != null &&
                   goal.measurementMethod!.isNotEmpty)
-                Text('· ${goal.measurementMethod}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
+                Text(
+                  '· ${goal.measurementMethod}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: PsySpacing.md),
@@ -552,9 +613,12 @@ class _GoalCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: PsySpacing.md),
-              Text('${goal.progress}%',
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                '${goal.progress}%',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               IconButton(
                 tooltip: 'Update progress',
                 visualDensity: VisualDensity.compact,
@@ -569,16 +633,19 @@ class _GoalCard extends StatelessWidget {
   }
 
   Widget _chip(String label, Color color) => Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: PsySpacing.sm, vertical: 2),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(PsyRadius.full),
-        ),
-        child: Text(label,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: color, fontWeight: FontWeight.w600)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: PsySpacing.sm, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(PsyRadius.full),
+    ),
+    child: Text(
+      label,
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: color,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 
   Future<void> _editProgress(BuildContext context) async {
     var value = goal.progress.toDouble();
@@ -590,8 +657,10 @@ class _GoalCard extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${value.round()}%',
-                  style: Theme.of(ctx).textTheme.headlineMedium),
+              Text(
+                '${value.round()}%',
+                style: Theme.of(ctx).textTheme.headlineMedium,
+              ),
               Slider(
                 value: value,
                 max: 100,
@@ -603,14 +672,17 @@ class _GoalCard extends StatelessWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
             TextButton(
-                onPressed: () => Navigator.of(ctx).pop(100),
-                child: const Text('Mark met')),
+              onPressed: () => Navigator.of(ctx).pop(100),
+              child: const Text('Mark met'),
+            ),
             FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(value.round()),
-                child: const Text('Save')),
+              onPressed: () => Navigator.of(ctx).pop(value.round()),
+              child: const Text('Save'),
+            ),
           ],
         ),
       ),
@@ -620,8 +692,11 @@ class _GoalCard extends StatelessWidget {
 }
 
 class _NoPlan extends StatelessWidget {
-  const _NoPlan(
-      {required this.theme, required this.cs, required this.onCreate});
+  const _NoPlan({
+    required this.theme,
+    required this.cs,
+    required this.onCreate,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final VoidCallback onCreate;
@@ -633,18 +708,26 @@ class _NoPlan extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.assignment_outlined,
-                size: 44, color: cs.onSurface.withValues(alpha: 0.4)),
+            Icon(
+              Icons.assignment_outlined,
+              size: 44,
+              color: cs.onSurface.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: PsySpacing.md),
-            Text('No treatment plan yet',
-                style: theme.textTheme.titleMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.7))),
+            Text(
+              'No treatment plan yet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
             const SizedBox(height: PsySpacing.xs),
             Text(
-                'Capture the diagnosis and formulation, then draft SMART goals.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.55))),
+              'Capture the diagnosis and formulation, then draft SMART goals.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
             const SizedBox(height: PsySpacing.lg),
             FilledButton.icon(
               onPressed: onCreate,
@@ -668,16 +751,21 @@ class _EmptyGoals extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xl, vertical: PsySpacing.xxl),
+        horizontal: PsySpacing.xl,
+        vertical: PsySpacing.xxl,
+      ),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(PsyRadius.lg),
         border: Border.all(color: cs.outlineVariant),
       ),
       alignment: Alignment.center,
-      child: Text('No goals yet — add one or draft with AI.',
-          style: theme.textTheme.bodyMedium
-              ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+      child: Text(
+        'No goals yet — add one or draft with AI.',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: cs.onSurface.withValues(alpha: 0.6),
+        ),
+      ),
     );
   }
 }
@@ -715,7 +803,8 @@ class _CreatePlanDialogState extends State<_CreatePlanDialog> {
               controller: _dx,
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                  labelText: 'Primary diagnosis (e.g. MDD, F32.1)'),
+                labelText: 'Primary diagnosis (e.g. MDD, F32.1)',
+              ),
             ),
             const SizedBox(height: PsySpacing.md),
             TextField(
@@ -723,21 +812,24 @@ class _CreatePlanDialogState extends State<_CreatePlanDialog> {
               minLines: 3,
               maxLines: 6,
               decoration: const InputDecoration(
-                  labelText: 'Clinical formulation',
-                  alignLabelWithHint: true),
+                labelText: 'Clinical formulation',
+                alignLabelWithHint: true,
+              ),
             ),
           ],
         ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: _dx.text.trim().isEmpty
               ? null
-              : () => Navigator.of(context)
-                  .pop((_dx.text.trim(), _formulation.text.trim())),
+              : () => Navigator.of(
+                  context,
+                ).pop((_dx.text.trim(), _formulation.text.trim())),
           child: const Text('Create'),
         ),
       ],
@@ -781,11 +873,11 @@ class _GoalDraftInput {
   /// SMART markdown stored on [TreatmentGoal.notes]. Delegates to
   /// [formatSmartGoalNotes] so the formatting rule has a single test point.
   String toNotesMarkdown() => formatSmartGoalNotes(
-        baseline: baseline,
-        target: targetValue,
-        achievability: achievability,
-        relevance: relevance,
-      );
+    baseline: baseline,
+    target: targetValue,
+    achievability: achievability,
+    relevance: relevance,
+  );
 }
 
 class _AddGoalDialog extends StatefulWidget {
@@ -822,7 +914,8 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
     final cs = theme.colorScheme;
     return Dialog(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(PsyRadius.lg)),
+        borderRadius: BorderRadius.circular(PsyRadius.lg),
+      ),
       insetPadding: const EdgeInsets.all(PsySpacing.lg),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
@@ -832,20 +925,26 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                Icon(Icons.flag_outlined, color: cs.primary),
-                const SizedBox(width: PsySpacing.sm),
-                Expanded(
-                  child: Text('Add a SMART goal',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700)),
-                ),
-              ]),
+              Row(
+                children: [
+                  Icon(Icons.flag_outlined, color: cs.primary),
+                  const SizedBox(width: PsySpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Add a SMART goal',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: PsySpacing.xs),
               Text(
                 'Specific · Measurable · Achievable · Relevant · Time-bound.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6)),
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
               ),
               const SizedBox(height: PsySpacing.md),
               Expanded(
@@ -878,31 +977,33 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
                         ),
                       ),
                       const SizedBox(height: PsySpacing.sm),
-                      Row(children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _baseline,
-                            decoration: const InputDecoration(
-                              labelText: 'Baseline',
-                              hintText: 'PHQ-9 = 18',
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _baseline,
+                              decoration: const InputDecoration(
+                                labelText: 'Baseline',
+                                hintText: 'PHQ-9 = 18',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: PsySpacing.sm),
-                        Expanded(
-                          child: TextField(
-                            controller: _target,
-                            decoration: const InputDecoration(
-                              labelText: 'Target',
-                              hintText: 'PHQ-9 ≤ 9',
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                          const SizedBox(width: PsySpacing.sm),
+                          Expanded(
+                            child: TextField(
+                              controller: _target,
+                              decoration: const InputDecoration(
+                                labelText: 'Target',
+                                hintText: 'PHQ-9 ≤ 9',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
                             ),
                           ),
-                        ),
-                      ]),
+                        ],
+                      ),
                       const SizedBox(height: PsySpacing.md),
                       _smartHeader(theme, 'A', 'Achievable'),
                       TextField(
@@ -910,7 +1011,8 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
                         minLines: 1,
                         maxLines: 2,
                         decoration: const InputDecoration(
-                          hintText: 'Is this realistic given the patient\'s '
+                          hintText:
+                              'Is this realistic given the patient\'s '
                               'resources and stage of change?',
                           border: OutlineInputBorder(),
                           isDense: true,
@@ -923,7 +1025,8 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
                         minLines: 1,
                         maxLines: 2,
                         decoration: const InputDecoration(
-                          hintText: 'Why does this matter to the patient '
+                          hintText:
+                              'Why does this matter to the patient '
                               'and their diagnosis?',
                           border: OutlineInputBorder(),
                           isDense: true,
@@ -931,92 +1034,109 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
                       ),
                       const SizedBox(height: PsySpacing.md),
                       _smartHeader(theme, 'T', 'Time-bound'),
-                      Row(children: [
-                        Expanded(
-                          child: Slider(
-                            value: _weeks.toDouble(),
-                            min: 1,
-                            max: 52,
-                            divisions: 51,
-                            label: '$_weeks wk',
-                            onChanged: (v) =>
-                                setState(() => _weeks = v.round()),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Slider(
+                              value: _weeks.toDouble(),
+                              min: 1,
+                              max: 52,
+                              divisions: 51,
+                              label: '$_weeks wk',
+                              onChanged: (v) =>
+                                  setState(() => _weeks = v.round()),
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 64,
-                          child: Text('$_weeks wk',
+                          SizedBox(
+                            width: 64,
+                            child: Text(
+                              '$_weeks wk',
                               textAlign: TextAlign.right,
-                              style: theme.textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                        ),
-                      ]),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: PsySpacing.md),
-                      Row(children: [
-                        Expanded(
-                          child: DropdownButtonFormField<GoalCategory>(
-                            initialValue: _cat,
-                            decoration: const InputDecoration(
-                              labelText: 'Category',
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<GoalCategory>(
+                              initialValue: _cat,
+                              decoration: const InputDecoration(
+                                labelText: 'Category',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              items: GoalCategory.values
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(goalCategoryLabel(c)),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _cat = v ?? _cat),
                             ),
-                            items: GoalCategory.values
-                                .map((c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(goalCategoryLabel(c))))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _cat = v ?? _cat),
                           ),
-                        ),
-                        const SizedBox(width: PsySpacing.sm),
-                        Expanded(
-                          child: DropdownButtonFormField<GoalPriority>(
-                            initialValue: _pri,
-                            decoration: const InputDecoration(
-                              labelText: 'Priority',
-                              border: OutlineInputBorder(),
-                              isDense: true,
+                          const SizedBox(width: PsySpacing.sm),
+                          Expanded(
+                            child: DropdownButtonFormField<GoalPriority>(
+                              initialValue: _pri,
+                              decoration: const InputDecoration(
+                                labelText: 'Priority',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              items: GoalPriority.values
+                                  .map(
+                                    (p) => DropdownMenuItem(
+                                      value: p,
+                                      child: Text(goalPriorityLabel(p)),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _pri = v ?? _pri),
                             ),
-                            items: GoalPriority.values
-                                .map((p) => DropdownMenuItem(
-                                    value: p,
-                                    child: Text(goalPriorityLabel(p))))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _pri = v ?? _pri),
                           ),
-                        ),
-                      ]),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: PsySpacing.lg),
-              Row(children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                const Spacer(),
-                FilledButton(
-                  onPressed: _desc.text.trim().isEmpty
-                      ? null
-                      : () => Navigator.of(context).pop(_GoalDraftInput(
-                            description: _desc.text.trim(),
-                            category: _cat,
-                            priority: _pri,
-                            measurement: _measure.text.trim(),
-                            targetWeeks: _weeks,
-                            baseline: _baseline.text,
-                            targetValue: _target.text,
-                            achievability: _achievable.text,
-                            relevance: _relevant.text,
-                          )),
-                  child: const Text('Add'),
-                ),
-              ]),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: _desc.text.trim().isEmpty
+                        ? null
+                        : () => Navigator.of(context).pop(
+                            _GoalDraftInput(
+                              description: _desc.text.trim(),
+                              category: _cat,
+                              priority: _pri,
+                              measurement: _measure.text.trim(),
+                              targetWeeks: _weeks,
+                              baseline: _baseline.text,
+                              targetValue: _target.text,
+                              achievability: _achievable.text,
+                              relevance: _relevant.text,
+                            ),
+                          ),
+                    child: const Text('Add'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -1028,37 +1148,45 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
     final cs = theme.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: PsySpacing.xs),
-      child: Row(children: [
-        Container(
-          width: 22,
-          height: 22,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(PsyRadius.sm),
-          ),
-          child: Text(letter,
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(PsyRadius.sm),
+            ),
+            child: Text(
+              letter,
               style: TextStyle(
                 color: cs.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
-              )),
-        ),
-        const SizedBox(width: PsySpacing.sm),
-        Text(label,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
-      ]),
+              ),
+            ),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          Text(
+            label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _HomeworkTile extends StatelessWidget {
-  const _HomeworkTile(
-      {required this.item,
-      required this.theme,
-      required this.cs,
-      required this.onToggle});
+  const _HomeworkTile({
+    required this.item,
+    required this.theme,
+    required this.cs,
+    required this.onToggle,
+  });
   final HomeworkItem item;
   final ThemeData theme;
   final ColorScheme cs;
@@ -1070,7 +1198,9 @@ class _HomeworkTile extends StatelessWidget {
         '${item.dueDate.year}-${item.dueDate.month.toString().padLeft(2, '0')}-${item.dueDate.day.toString().padLeft(2, '0')}';
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(PsyRadius.lg),
@@ -1093,26 +1223,33 @@ class _HomeworkTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      decoration:
-                          item.done ? TextDecoration.lineThrough : null,
-                      color: item.done
-                          ? cs.onSurface.withValues(alpha: 0.5)
-                          : null,
-                    )),
-                Text('Due $due',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6))),
+                Text(
+                  item.title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    decoration: item.done ? TextDecoration.lineThrough : null,
+                    color: item.done
+                        ? cs.onSurface.withValues(alpha: 0.5)
+                        : null,
+                  ),
+                ),
+                Text(
+                  'Due $due',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ),
           if (item.linkedGoal != null)
             Tooltip(
               message: 'Goal: ${item.linkedGoal}',
-              child: Icon(Icons.link,
-                  size: 16, color: cs.primary.withValues(alpha: 0.7)),
+              child: Icon(
+                Icons.link,
+                size: 16,
+                color: cs.primary.withValues(alpha: 0.7),
+              ),
             ),
         ],
       ),
@@ -1145,13 +1282,15 @@ class _HomeworkDialogState extends State<_HomeworkDialog> {
         minLines: 2,
         maxLines: 4,
         decoration: const InputDecoration(
-            labelText: 'Homework (one actionable task)',
-            alignLabelWithHint: true),
+          labelText: 'Homework (one actionable task)',
+          alignLabelWithHint: true,
+        ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: _ctl.text.trim().isEmpty
               ? null
@@ -1178,18 +1317,25 @@ class _LetterSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(Icons.description_outlined, color: cs.primary),
-              const SizedBox(width: 8),
-              Text('Reimbursement letter (draft)',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w700)),
-            ]),
+            Row(
+              children: [
+                Icon(Icons.description_outlined, color: cs.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Reimbursement letter (draft)',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             Flexible(
               child: SingleChildScrollView(
-                child: SelectableText(letter,
-                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+                child: SelectableText(
+                  letter,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -1197,8 +1343,9 @@ class _LetterSheet extends StatelessWidget {
               'AI-drafted — review, fill the [placeholders], and verify before '
               'sending. Select text to copy.',
               style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic),
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),

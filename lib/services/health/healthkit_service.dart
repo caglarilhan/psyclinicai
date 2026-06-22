@@ -43,11 +43,11 @@ class PromScore {
   final String takenAtIso;
 
   Map<String, Object?> toChannelArgs() => {
-        'instrument': instrument,
-        'score': score,
-        'takenAtIso': takenAtIso,
-        'loinc': kPromLoincMap[instrument],
-      };
+    'instrument': instrument,
+    'score': score,
+    'takenAtIso': takenAtIso,
+    'loinc': kPromLoincMap[instrument],
+  };
 }
 
 /// Validation rules — pure, exported for unit tests.
@@ -67,8 +67,9 @@ class PromValidation {
     if (max == null) return 'unsupported_instrument';
     if (s.score < 0) return 'score_negative';
     if (s.score > max) return 'score_above_max';
-    if (!RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}')
-        .hasMatch(s.takenAtIso)) {
+    if (!RegExp(
+      r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}',
+    ).hasMatch(s.takenAtIso)) {
       return 'taken_at_not_iso';
     }
     return null;
@@ -77,8 +78,7 @@ class PromValidation {
 
 class HealthKitService {
   HealthKitService({MethodChannel? channel})
-      : _channel = channel ??
-            const MethodChannel('psyclinicai.health/healthkit');
+    : _channel = channel ?? const MethodChannel('psyclinicai.health/healthkit');
 
   final MethodChannel _channel;
   bool _platformLoggedAsUnavailable = false;
@@ -131,7 +131,8 @@ class HealthKitService {
     _platformLoggedAsUnavailable = true;
     if (kDebugMode) {
       debugPrint(
-          '[healthkit] platform channel unavailable — no-op for this build.');
+        '[healthkit] platform channel unavailable — no-op for this build.',
+      );
     }
   }
 }

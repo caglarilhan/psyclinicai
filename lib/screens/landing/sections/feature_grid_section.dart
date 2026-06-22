@@ -61,28 +61,30 @@ class FeatureGridSection extends StatelessWidget {
           const SectionTitle('Six things legacy EHRs cannot do today.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'Pick any of them — we built each one from primary clinical research, not 2010 templates.'),
+            'Pick any of them — we built each one from primary clinical research, not 2010 templates.',
+          ),
           const SizedBox(height: 48),
           LayoutBuilder(
             builder: (ctx, c) {
               final cols = c.maxWidth >= 1024
                   ? 3
                   : c.maxWidth >= 640
-                      ? 2
-                      : 1;
+                  ? 2
+                  : 1;
               final cardW = (c.maxWidth - (cols - 1) * 24) / cols;
               return Wrap(
                 spacing: 24,
                 runSpacing: 24,
                 children: features
-                    .map((f) => SizedBox(
-                          width: cardW,
-                          child: HoverLift(
-                            borderRadius: 18,
-                            child: _FeatureTile(
-                                feature: f, theme: theme, cs: cs),
-                          ),
-                        ))
+                    .map(
+                      (f) => SizedBox(
+                        width: cardW,
+                        child: HoverLift(
+                          borderRadius: 18,
+                          child: _FeatureTile(feature: f, theme: theme, cs: cs),
+                        ),
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -101,8 +103,11 @@ class _Feature {
 }
 
 class _FeatureTile extends StatelessWidget {
-  const _FeatureTile(
-      {required this.feature, required this.theme, required this.cs});
+  const _FeatureTile({
+    required this.feature,
+    required this.theme,
+    required this.cs,
+  });
   final _Feature feature;
   final ThemeData theme;
   final ColorScheme cs;
@@ -130,15 +135,21 @@ class _FeatureTile extends StatelessWidget {
             child: Icon(feature.icon, color: cs.primary, size: 22),
           ),
           const SizedBox(height: 18),
-          Text(feature.title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, height: 1.3)),
+          Text(
+            feature.title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(feature.body,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.7),
-                height: 1.55,
-              )),
+          Text(
+            feature.body,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+              height: 1.55,
+            ),
+          ),
         ],
       ),
     );

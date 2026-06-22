@@ -34,19 +34,20 @@ class GroupSession {
   }
 
   factory GroupSession.fromJson(Map<String, dynamic> json) => GroupSession(
-        id: json['id'] as String? ?? '',
-        clinicId: json['clinicId'] as String? ?? '',
-        modalityLabel: json['modalityLabel'] as String? ?? '',
-        scheduledAt: DateTime.tryParse(json['scheduledAt'] as String? ?? '') ??
-            DateTime.now(),
-        roster: (json['roster'] as List<dynamic>? ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .map(GroupSessionAttendance.fromJson)
-            .toList(),
-        facilitatorNote: json['facilitatorNote'] as String? ?? '',
-        status: GroupSessionStatus.fromId(json['status'] as String?),
-        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-      );
+    id: json['id'] as String? ?? '',
+    clinicId: json['clinicId'] as String? ?? '',
+    modalityLabel: json['modalityLabel'] as String? ?? '',
+    scheduledAt:
+        DateTime.tryParse(json['scheduledAt'] as String? ?? '') ??
+        DateTime.now(),
+    roster: (json['roster'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(GroupSessionAttendance.fromJson)
+        .toList(),
+    facilitatorNote: json['facilitatorNote'] as String? ?? '',
+    status: GroupSessionStatus.fromId(json['status'] as String?),
+    updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+  );
 
   static const int maxRosterSize = 8;
 
@@ -81,28 +82,27 @@ class GroupSession {
     List<GroupSessionAttendance>? roster,
     String? facilitatorNote,
     GroupSessionStatus? status,
-  }) =>
-      GroupSession(
-        id: id,
-        clinicId: clinicId,
-        modalityLabel: modalityLabel ?? this.modalityLabel,
-        scheduledAt: scheduledAt ?? this.scheduledAt,
-        roster: roster ?? this.roster,
-        facilitatorNote: facilitatorNote ?? this.facilitatorNote,
-        status: status ?? this.status,
-        updatedAt: DateTime.now(),
-      );
+  }) => GroupSession(
+    id: id,
+    clinicId: clinicId,
+    modalityLabel: modalityLabel ?? this.modalityLabel,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+    roster: roster ?? this.roster,
+    facilitatorNote: facilitatorNote ?? this.facilitatorNote,
+    status: status ?? this.status,
+    updatedAt: DateTime.now(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'modalityLabel': modalityLabel,
-        'scheduledAt': scheduledAt.toIso8601String(),
-        'roster': roster.map((e) => e.toJson()).toList(),
-        'facilitatorNote': facilitatorNote,
-        'status': status.id,
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'modalityLabel': modalityLabel,
+    'scheduledAt': scheduledAt.toIso8601String(),
+    'roster': roster.map((e) => e.toJson()).toList(),
+    'facilitatorNote': facilitatorNote,
+    'status': status.id,
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 /// One roster row inside a [GroupSession]. Kept small — the per-patient
@@ -146,11 +146,11 @@ class GroupSessionAttendance {
       );
 
   Map<String, dynamic> toJson() => {
-        'patientId': patientId,
-        'subNoteId': subNoteId,
-        'attended': attended,
-        'notes': notes,
-      };
+    'patientId': patientId,
+    'subNoteId': subNoteId,
+    'attended': attended,
+    'notes': notes,
+  };
 }
 
 enum GroupSessionStatus {

@@ -8,20 +8,19 @@ void main() {
     required DateTime start,
     required DateTime end,
     String clientName = 'Test',
-  }) =>
-      Appointment(
-        id: id,
-        clientId: 'c-$id',
-        clientName: clientName,
-        startTime: start,
-        endTime: end,
-        type: 'Therapy',
-        status: 'Scheduled',
-        notes: '',
-        location: 'Office',
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 1),
-      );
+  }) => Appointment(
+    id: id,
+    clientId: 'c-$id',
+    clientName: clientName,
+    startTime: start,
+    endTime: end,
+    type: 'Therapy',
+    status: 'Scheduled',
+    notes: '',
+    location: 'Office',
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 1),
+  );
 
   group('Appointment model', () {
     test('round-trips through JSON without losing fields', () {
@@ -79,46 +78,50 @@ void main() {
   group('intervalsOverlap', () {
     test('full overlap returns true', () {
       expect(
-          intervalsOverlap(
-            DateTime(2026, 6, 1, 10),
-            DateTime(2026, 6, 1, 11),
-            DateTime(2026, 6, 1, 10, 30),
-            DateTime(2026, 6, 1, 10, 45),
-          ),
-          isTrue);
+        intervalsOverlap(
+          DateTime(2026, 6, 1, 10),
+          DateTime(2026, 6, 1, 11),
+          DateTime(2026, 6, 1, 10, 30),
+          DateTime(2026, 6, 1, 10, 45),
+        ),
+        isTrue,
+      );
     });
 
     test('partial overlap returns true', () {
       expect(
-          intervalsOverlap(
-            DateTime(2026, 6, 1, 10),
-            DateTime(2026, 6, 1, 11),
-            DateTime(2026, 6, 1, 10, 30),
-            DateTime(2026, 6, 1, 11, 30),
-          ),
-          isTrue);
+        intervalsOverlap(
+          DateTime(2026, 6, 1, 10),
+          DateTime(2026, 6, 1, 11),
+          DateTime(2026, 6, 1, 10, 30),
+          DateTime(2026, 6, 1, 11, 30),
+        ),
+        isTrue,
+      );
     });
 
     test('back-to-back is NOT a conflict (half-open intervals)', () {
       expect(
-          intervalsOverlap(
-            DateTime(2026, 6, 1, 10),
-            DateTime(2026, 6, 1, 11),
-            DateTime(2026, 6, 1, 11),
-            DateTime(2026, 6, 1, 12),
-          ),
-          isFalse);
+        intervalsOverlap(
+          DateTime(2026, 6, 1, 10),
+          DateTime(2026, 6, 1, 11),
+          DateTime(2026, 6, 1, 11),
+          DateTime(2026, 6, 1, 12),
+        ),
+        isFalse,
+      );
     });
 
     test('non-overlapping with a gap returns false', () {
       expect(
-          intervalsOverlap(
-            DateTime(2026, 6, 1, 10),
-            DateTime(2026, 6, 1, 11),
-            DateTime(2026, 6, 1, 13),
-            DateTime(2026, 6, 1, 14),
-          ),
-          isFalse);
+        intervalsOverlap(
+          DateTime(2026, 6, 1, 10),
+          DateTime(2026, 6, 1, 11),
+          DateTime(2026, 6, 1, 13),
+          DateTime(2026, 6, 1, 14),
+        ),
+        isFalse,
+      );
     });
   });
 
@@ -162,8 +165,9 @@ void main() {
       // Edit a1 in place — the same id must not flag itself.
       final edited = existing.first.copyWith(notes: 'edited');
       expect(
-          hasAppointmentConflict(edited, existing, excludeId: edited.id),
-          isFalse);
+        hasAppointmentConflict(edited, existing, excludeId: edited.id),
+        isFalse,
+      );
     });
 
     test('empty existing list yields no conflict', () {

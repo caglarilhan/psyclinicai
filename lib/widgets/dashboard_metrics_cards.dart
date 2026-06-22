@@ -36,7 +36,7 @@ class DashboardMetricsCards extends StatelessWidget {
             hint: metrics.nextAppointment == null
                 ? 'No upcoming today'
                 : 'Next ${_clock(metrics.nextAppointment!.startsAt)} · '
-                    '${metrics.nextAppointment!.patientName}',
+                      '${metrics.nextAppointment!.patientName}',
             color: PsyColors.primary,
             icon: Icons.event,
             onTap: onTap,
@@ -99,12 +99,7 @@ class DashboardMetricsCards extends StatelessWidget {
   }
 }
 
-enum DashboardCardKind {
-  todaysSessions,
-  pendingNotes,
-  atRisk,
-  outstanding,
-}
+enum DashboardCardKind { todaysSessions, pendingNotes, atRisk, outstanding }
 
 class _MetricCard extends StatelessWidget {
   const _MetricCard({
@@ -153,9 +148,10 @@ class _MetricCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(value,
-                  style: t.headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                value,
+                style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 2),
               Text(hint, style: t.bodySmall),
             ],

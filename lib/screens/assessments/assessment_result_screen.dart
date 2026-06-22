@@ -49,10 +49,7 @@ class AssessmentResultScreen extends StatelessWidget {
         children: [
           _ScoreCard(result: result),
           const SizedBox(height: PsySpacing.md),
-          _BandTable(
-            bands: bands,
-            currentLabel: result.band.label,
-          ),
+          _BandTable(bands: bands, currentLabel: result.band.label),
           const SizedBox(height: PsySpacing.md),
           _RecommendationsCard(recommendations: result.recommendations),
         ],
@@ -102,8 +99,10 @@ class _ScoreCard extends StatelessWidget {
               children: [
                 Text(
                   '${result.score}',
-                  style: t.displayMedium
-                      ?.copyWith(fontWeight: FontWeight.w700, color: color),
+                  style: t.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
                 ),
                 const SizedBox(width: PsySpacing.sm),
                 Padding(
@@ -132,13 +131,13 @@ class _ScoreCard extends StatelessWidget {
                     result.isImproving
                         ? Icons.trending_down
                         : result.isWorsening
-                            ? Icons.trending_up
-                            : Icons.trending_flat,
+                        ? Icons.trending_up
+                        : Icons.trending_flat,
                     color: result.isImproving
                         ? PsyColors.success
                         : result.isWorsening
-                            ? PsyColors.warning
-                            : Theme.of(context).colorScheme.outline,
+                        ? PsyColors.warning
+                        : Theme.of(context).colorScheme.outline,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -193,8 +192,9 @@ class _BandTable extends StatelessWidget {
                       child: Text(
                         '${b.label}  (${b.minInclusive}–${b.maxInclusive})',
                         style: b.label == currentLabel
-                            ? t.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)
+                            ? t.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              )
                             : t.bodyMedium,
                       ),
                     ),

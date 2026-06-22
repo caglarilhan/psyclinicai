@@ -34,15 +34,15 @@ class ConsentEntry {
   }
 
   factory ConsentEntry.fromJson(Map<String, dynamic> json) => ConsentEntry(
-        id: json['id'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        kind: ConsentKind.fromId(json['kind'] as String?),
-        policyVersion: json['policyVersion'] as String? ?? '',
-        signature: json['signature'] as String? ?? '',
-        notes: json['notes'] as String? ?? '',
-        signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
-        revokedAt: DateTime.tryParse(json['revokedAt'] as String? ?? ''),
-      );
+    id: json['id'] as String? ?? '',
+    patientId: json['patientId'] as String? ?? '',
+    kind: ConsentKind.fromId(json['kind'] as String?),
+    policyVersion: json['policyVersion'] as String? ?? '',
+    signature: json['signature'] as String? ?? '',
+    notes: json['notes'] as String? ?? '',
+    signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
+    revokedAt: DateTime.tryParse(json['revokedAt'] as String? ?? ''),
+  );
 
   final String id;
   final String patientId;
@@ -89,15 +89,15 @@ class ConsentEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'kind': kind.id,
-        'policyVersion': policyVersion,
-        'signature': signature,
-        if (notes.isNotEmpty) 'notes': notes,
-        'signedAt': signedAt.toIso8601String(),
-        if (revokedAt != null) 'revokedAt': revokedAt!.toIso8601String(),
-      };
+    'id': id,
+    'patientId': patientId,
+    'kind': kind.id,
+    'policyVersion': policyVersion,
+    'signature': signature,
+    if (notes.isNotEmpty) 'notes': notes,
+    'signedAt': signedAt.toIso8601String(),
+    if (revokedAt != null) 'revokedAt': revokedAt!.toIso8601String(),
+  };
 }
 
 /// Six consent categories surfaced in the Consent Center (plan §E).

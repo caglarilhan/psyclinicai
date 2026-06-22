@@ -70,54 +70,56 @@ class _SignaturePadState extends State<SignaturePad> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final color = widget.strokeColor ?? cs.onSurface;
-    return Stack(children: [
-      Container(
-        height: widget.height,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(PsyRadius.md),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onPanStart: (d) => widget.controller.beginStroke(d.localPosition),
-          onPanUpdate: (d) =>
-              widget.controller.appendPoint(d.localPosition),
-          child: CustomPaint(
-            painter: _SignaturePainter(
-              strokes: widget.controller.strokes,
-              color: color,
-              strokeWidth: widget.strokeWidth,
+    return Stack(
+      children: [
+        Container(
+          height: widget.height,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: (d) => widget.controller.beginStroke(d.localPosition),
+            onPanUpdate: (d) => widget.controller.appendPoint(d.localPosition),
+            child: CustomPaint(
+              painter: _SignaturePainter(
+                strokes: widget.controller.strokes,
+                color: color,
+                strokeWidth: widget.strokeWidth,
+              ),
+              size: Size.infinite,
             ),
-            size: Size.infinite,
           ),
         ),
-      ),
-      Positioned(
-        right: 4,
-        bottom: 4,
-        child: TextButton.icon(
-          onPressed:
-              widget.controller.isEmpty ? null : widget.controller.clear,
-          icon: const Icon(Icons.refresh, size: 16),
-          label: const Text('Clear'),
+        Positioned(
+          right: 4,
+          bottom: 4,
+          child: TextButton.icon(
+            onPressed: widget.controller.isEmpty
+                ? null
+                : widget.controller.clear,
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('Clear'),
+          ),
         ),
-      ),
-      if (widget.controller.isEmpty)
-        Positioned.fill(
-          child: IgnorePointer(
-            child: Center(
-              child: Text(
-                'Sign with Apple Pencil or your finger',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.45),
-                    ),
+        if (widget.controller.isEmpty)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: Text(
+                  'Sign with Apple Pencil or your finger',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.45),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-    ]);
+      ],
+    );
   }
 }
 

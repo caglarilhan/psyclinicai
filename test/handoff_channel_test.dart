@@ -14,14 +14,16 @@ void main() {
       channel.dispose();
     });
 
-    test('onContinuation stream is broadcast-safe with multiple listeners',
-        () async {
-      final channel = HandoffChannel();
-      final a = channel.onContinuation.listen((_) {});
-      final b = channel.onContinuation.listen((_) {});
-      await a.cancel();
-      await b.cancel();
-      channel.dispose();
-    });
+    test(
+      'onContinuation stream is broadcast-safe with multiple listeners',
+      () async {
+        final channel = HandoffChannel();
+        final a = channel.onContinuation.listen((_) {});
+        final b = channel.onContinuation.listen((_) {});
+        await a.cancel();
+        await b.cancel();
+        channel.dispose();
+      },
+    );
   });
 }

@@ -7,7 +7,8 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TenantMembershipService.setTestInstance(
-        prefs: SharedPreferences.getInstance);
+      prefs: SharedPreferences.getInstance,
+    );
   });
   tearDown(TenantMembershipService.resetTestInstance);
 
@@ -58,8 +59,10 @@ void main() {
       TenantMembershipService.instance.addListener(() => notified++);
       await TenantMembershipService.instance.switchTo('locum-frankfurt-01');
       expect(notified, 1);
-      expect(TenantMembershipService.instance.currentTenantId,
-          'locum-frankfurt-01');
+      expect(
+        TenantMembershipService.instance.currentTenantId,
+        'locum-frankfurt-01',
+      );
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('tenant.current_id'), 'locum-frankfurt-01');
     });
@@ -77,10 +80,13 @@ void main() {
         'tenant.current_id': 'locum-frankfurt-01',
       });
       TenantMembershipService.setTestInstance(
-          prefs: SharedPreferences.getInstance);
+        prefs: SharedPreferences.getInstance,
+      );
       await TenantMembershipService.instance.load();
-      expect(TenantMembershipService.instance.currentTenantId,
-          'locum-frankfurt-01');
+      expect(
+        TenantMembershipService.instance.currentTenantId,
+        'locum-frankfurt-01',
+      );
     });
   });
 }

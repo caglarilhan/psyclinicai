@@ -1,5 +1,4 @@
 class TreatmentPlan {
-
   const TreatmentPlan({
     required this.id,
     required this.patientId,
@@ -24,26 +23,38 @@ class TreatmentPlan {
       patientId: json['patientId'] as String,
       clinicianId: json['clinicianId'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt'] as String) 
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
           : null,
       primaryDiagnosis: json['primaryDiagnosis'] as String,
-      secondaryDiagnoses: List<String>.from(json['secondaryDiagnoses'] as List? ?? []),
+      secondaryDiagnoses: List<String>.from(
+        json['secondaryDiagnoses'] as List? ?? [],
+      ),
       clinicalFormulation: json['clinicalFormulation'] as String,
-      goals: (json['goals'] as List<dynamic>?)
-          ?.map((goal) => TreatmentGoal.fromJson(goal as Map<String, dynamic>))
-          .toList() ?? [],
-      interventions: (json['interventions'] as List<dynamic>?)
-          ?.map((intervention) => TreatmentIntervention.fromJson(intervention as Map<String, dynamic>))
-          .toList() ?? [],
+      goals:
+          (json['goals'] as List<dynamic>?)
+              ?.map(
+                (goal) => TreatmentGoal.fromJson(goal as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+      interventions:
+          (json['interventions'] as List<dynamic>?)
+              ?.map(
+                (intervention) => TreatmentIntervention.fromJson(
+                  intervention as Map<String, dynamic>,
+                ),
+              )
+              .toList() ??
+          [],
       prognosis: json['prognosis'] as String?,
       notes: json['notes'] as String?,
       status: TreatmentPlanStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => TreatmentPlanStatus.active,
       ),
-      reviewDate: json['reviewDate'] != null 
-          ? DateTime.parse(json['reviewDate'] as String) 
+      reviewDate: json['reviewDate'] != null
+          ? DateTime.parse(json['reviewDate'] as String)
           : null,
       reviewNotes: json['reviewNotes'] as String?,
     );
@@ -75,7 +86,9 @@ class TreatmentPlan {
       'secondaryDiagnoses': secondaryDiagnoses,
       'clinicalFormulation': clinicalFormulation,
       'goals': goals.map((goal) => goal.toJson()).toList(),
-      'interventions': interventions.map((intervention) => intervention.toJson()).toList(),
+      'interventions': interventions
+          .map((intervention) => intervention.toJson())
+          .toList(),
       'prognosis': prognosis,
       'notes': notes,
       'status': status.name,
@@ -87,7 +100,9 @@ class TreatmentPlan {
   // Calculate overall progress
   double get overallProgress {
     if (goals.isEmpty) return 0.0;
-    final totalProgress = goals.map((goal) => goal.progress).reduce((a, b) => a + b);
+    final totalProgress = goals
+        .map((goal) => goal.progress)
+        .reduce((a, b) => a + b);
     return totalProgress / goals.length;
   }
 
@@ -103,7 +118,6 @@ class TreatmentPlan {
 }
 
 class TreatmentGoal {
-
   const TreatmentGoal({
     required this.id,
     required this.description,
@@ -139,8 +153,8 @@ class TreatmentGoal {
       progress: json['progress'] as int? ?? 0,
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      completedAt: json['completedAt'] != null 
-          ? DateTime.parse(json['completedAt'] as String) 
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'] as String)
           : null,
       milestones: List<String>.from(json['milestones'] as List? ?? []),
       measurementMethod: json['measurementMethod'] as String?,
@@ -184,14 +198,13 @@ class TreatmentGoal {
   // Check if goal is due soon (within 7 days)
   bool get isDueSoon {
     final sevenDaysFromNow = DateTime.now().add(const Duration(days: 7));
-    return status == GoalStatus.active && 
-           targetDate.isAfter(DateTime.now()) && 
-           targetDate.isBefore(sevenDaysFromNow);
+    return status == GoalStatus.active &&
+        targetDate.isAfter(DateTime.now()) &&
+        targetDate.isBefore(sevenDaysFromNow);
   }
 }
 
 class TreatmentIntervention {
-
   const TreatmentIntervention({
     required this.id,
     required this.name,
@@ -229,11 +242,13 @@ class TreatmentIntervention {
         orElse: () => InterventionStatus.active,
       ),
       startDate: DateTime.parse(json['startDate'] as String),
-      endDate: json['endDate'] != null 
-          ? DateTime.parse(json['endDate'] as String) 
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'] as String)
           : null,
       notes: json['notes'] as String?,
-      contraindications: List<String>.from(json['contraindications'] as List? ?? []),
+      contraindications: List<String>.from(
+        json['contraindications'] as List? ?? [],
+      ),
     );
   }
   final String id;
@@ -270,13 +285,12 @@ class TreatmentIntervention {
 
   // Check if intervention is active
   bool get isActive {
-    return status == InterventionStatus.active && 
-           (endDate == null || endDate!.isAfter(DateTime.now()));
+    return status == InterventionStatus.active &&
+        (endDate == null || endDate!.isAfter(DateTime.now()));
   }
 }
 
 class TreatmentProgress {
-
   const TreatmentProgress({
     required this.id,
     required this.treatmentPlanId,
@@ -297,7 +311,9 @@ class TreatmentProgress {
       assessmentDate: DateTime.parse(json['assessmentDate'] as String),
       assessedBy: json['assessedBy'] as String,
       goalProgress: Map<String, dynamic>.from(json['goalProgress'] as Map),
-      interventionEffectiveness: Map<String, dynamic>.from(json['interventionEffectiveness'] as Map),
+      interventionEffectiveness: Map<String, dynamic>.from(
+        json['interventionEffectiveness'] as Map,
+      ),
       overallAssessment: json['overallAssessment'] as String,
       recommendations: json['recommendations'] as String?,
       notes: json['notes'] as String?,
@@ -331,13 +347,7 @@ class TreatmentProgress {
   }
 }
 
-enum TreatmentPlanStatus {
-  draft,
-  active,
-  completed,
-  suspended,
-  discontinued,
-}
+enum TreatmentPlanStatus { draft, active, completed, suspended, discontinued }
 
 enum GoalCategory {
   symptomReduction,
@@ -350,20 +360,9 @@ enum GoalCategory {
   other,
 }
 
-enum GoalPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum GoalPriority { low, medium, high, critical }
 
-enum GoalStatus {
-  active,
-  completed,
-  suspended,
-  discontinued,
-  modified,
-}
+enum GoalStatus { active, completed, suspended, discontinued, modified }
 
 enum InterventionType {
   psychotherapy,
@@ -388,10 +387,4 @@ enum InterventionFrequency {
   continuous,
 }
 
-enum InterventionStatus {
-  active,
-  completed,
-  suspended,
-  discontinued,
-  modified,
-}
+enum InterventionStatus { active, completed, suspended, discontinued, modified }

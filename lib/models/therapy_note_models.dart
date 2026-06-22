@@ -1,6 +1,4 @@
-
 class TherapyNoteTemplate {
-
   const TherapyNoteTemplate({
     required this.id,
     required this.name,
@@ -14,7 +12,6 @@ class TherapyNoteTemplate {
 }
 
 class TherapyNoteField {
-
   const TherapyNoteField({
     required this.key,
     required this.label,
@@ -28,7 +25,6 @@ class TherapyNoteField {
 enum NoteFieldType { text, longText, checklist }
 
 class TherapyNoteEntry {
-
   TherapyNoteEntry({
     required this.id,
     required this.sessionId,

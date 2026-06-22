@@ -11,9 +11,10 @@ enum InboxItemKind {
   final String id;
   final String label;
 
-  static InboxItemKind fromId(String id) =>
-      values.firstWhere((k) => k.id == id,
-          orElse: () => InboxItemKind.teamNote);
+  static InboxItemKind fromId(String id) => values.firstWhere(
+    (k) => k.id == id,
+    orElse: () => InboxItemKind.teamNote,
+  );
 }
 
 class InboxItem {
@@ -51,29 +52,28 @@ class InboxItem {
   }
 
   InboxItem markRead(DateTime at) => InboxItem(
-        id: id,
-        kind: kind,
-        fromUid: fromUid,
-        subject: subject,
-        bodyPreview: bodyPreview,
-        receivedAt: receivedAt,
-        subjectPatientId: subjectPatientId,
-        readAt: at,
-        dueAt: dueAt,
-      );
+    id: id,
+    kind: kind,
+    fromUid: fromUid,
+    subject: subject,
+    bodyPreview: bodyPreview,
+    receivedAt: receivedAt,
+    subjectPatientId: subjectPatientId,
+    readAt: at,
+    dueAt: dueAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind.id,
-        'from_uid': fromUid,
-        'subject': subject,
-        'body_preview': bodyPreview,
-        'received_at': receivedAt.toUtc().toIso8601String(),
-        if (subjectPatientId != null)
-          'subject_patient_id': subjectPatientId,
-        if (readAt != null) 'read_at': readAt!.toUtc().toIso8601String(),
-        if (dueAt != null) 'due_at': dueAt!.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'kind': kind.id,
+    'from_uid': fromUid,
+    'subject': subject,
+    'body_preview': bodyPreview,
+    'received_at': receivedAt.toUtc().toIso8601String(),
+    if (subjectPatientId != null) 'subject_patient_id': subjectPatientId,
+    if (readAt != null) 'read_at': readAt!.toUtc().toIso8601String(),
+    if (dueAt != null) 'due_at': dueAt!.toUtc().toIso8601String(),
+  };
 
   factory InboxItem.fromJson(Map<String, dynamic> json) {
     return InboxItem(

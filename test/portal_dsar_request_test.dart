@@ -5,15 +5,14 @@ PortalDsarRequest _row({
   PortalDsarState state = PortalDsarState.submitted,
   PortalDsarKind kind = PortalDsarKind.access,
   DateTime? submittedAt,
-}) =>
-    PortalDsarRequest(
-      id: 'dsar-1',
-      userId: 'u-1',
-      patientId: 'p-1',
-      kind: kind,
-      state: state,
-      submittedAt: submittedAt,
-    );
+}) => PortalDsarRequest(
+  id: 'dsar-1',
+  userId: 'u-1',
+  patientId: 'p-1',
+  kind: kind,
+  state: state,
+  submittedAt: submittedAt,
+);
 
 void main() {
   group('PortalDsarRequest', () {
@@ -22,8 +21,7 @@ void main() {
       expect(r.deadline, DateTime.utc(2026, 7, 1));
     });
 
-    test('isOverdue flips after the 30-day window for an open request',
-        () {
+    test('isOverdue flips after the 30-day window for an open request', () {
       final r = _row(submittedAt: DateTime.utc(2026, 5, 1));
       expect(r.isOverdue(DateTime.utc(2026, 6, 5)), isTrue);
     });
@@ -42,8 +40,9 @@ void main() {
         isNull,
       );
       expect(
-        _row(state: PortalDsarState.underReview)
-            .transitionBlockedReason(PortalDsarState.fulfilled),
+        _row(
+          state: PortalDsarState.underReview,
+        ).transitionBlockedReason(PortalDsarState.fulfilled),
         isNull,
       );
     });
@@ -56,9 +55,7 @@ void main() {
     });
 
     test('JSON round-trip preserves kind + state + notes', () {
-      final row = _row(
-        kind: PortalDsarKind.erasure,
-      ).copyWith(
+      final row = _row(kind: PortalDsarKind.erasure).copyWith(
         state: PortalDsarState.fulfilled,
         notes: 'Patient archive sent',
         fulfilledAt: DateTime.utc(2026, 6, 20),

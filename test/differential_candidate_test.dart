@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/differential_candidate.dart';
 
-DifferentialCandidate _candidate({
-  double confidence = 0.6,
-}) =>
+DifferentialCandidate _candidate({double confidence = 0.6}) =>
     DifferentialCandidate(
       code: 'F32.1',
       name: 'Major depressive disorder, single episode, moderate',
@@ -30,10 +28,7 @@ void main() {
     });
 
     test('rejects confidence outside [0, 1]', () {
-      expect(
-        () => _candidate(confidence: 1.2),
-        throwsA(isA<ArgumentError>()),
-      );
+      expect(() => _candidate(confidence: 1.2), throwsA(isA<ArgumentError>()));
       expect(
         () => _candidate(confidence: -0.01),
         throwsA(isA<ArgumentError>()),

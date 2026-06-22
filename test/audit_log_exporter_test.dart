@@ -14,20 +14,19 @@ void main() {
     String? ip = '92.184.10.20',
     AuditResult result = AuditResult.success,
     DateTime? ts,
-  }) =>
-      AuditLogEntry(
-        id: id,
-        kind: kind,
-        action: action,
-        actor: actor,
-        entity: entity,
-        timestampUtc: (ts ?? DateTime.utc(2026, 6, 1, 12)),
-        result: result,
-        userId: 'u1',
-        ip: ip,
-        device: 'macOS · Safari',
-        hash: 'a1f2…7c4d',
-      );
+  }) => AuditLogEntry(
+    id: id,
+    kind: kind,
+    action: action,
+    actor: actor,
+    entity: entity,
+    timestampUtc: (ts ?? DateTime.utc(2026, 6, 1, 12)),
+    result: result,
+    userId: 'u1',
+    ip: ip,
+    device: 'macOS · Safari',
+    hash: 'a1f2…7c4d',
+  );
 
   group('AuditLogEntry round-trip', () {
     test('toJson + fromJson preserve every field', () {
@@ -60,10 +59,11 @@ void main() {
   group('retention filter', () {
     final now = DateTime.utc(2026, 6, 1, 12);
     final recent = entry(id: 'r', ts: now.subtract(const Duration(days: 30)));
-    final yearOld =
-        entry(id: 'y', ts: now.subtract(const Duration(days: 365)));
-    final ancient =
-        entry(id: 'old', ts: now.subtract(const Duration(days: 365 * 7)));
+    final yearOld = entry(id: 'y', ts: now.subtract(const Duration(days: 365)));
+    final ancient = entry(
+      id: 'old',
+      ts: now.subtract(const Duration(days: 365 * 7)),
+    );
 
     test('filterByRetention keeps rows inside the window', () {
       final kept = filterByRetention(
@@ -101,7 +101,8 @@ void main() {
     });
 
     test('truncates the entity to 24 chars with an ellipsis', () {
-      final long = 'patient demo-1 chart — '
+      final long =
+          'patient demo-1 chart — '
           'long context that should be cut';
       final r = redactForSiem(entry(entity: long));
       expect(r.entity.length, lessThanOrEqualTo(25));

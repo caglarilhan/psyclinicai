@@ -30,9 +30,7 @@ class _PsyCardState extends State<PsyCard> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final bg = widget.tinted
-        ? cs.primary.withValues(alpha: 0.05)
-        : cs.surface;
+    final bg = widget.tinted ? cs.primary.withValues(alpha: 0.05) : cs.surface;
     final canHover = widget.onTap != null;
     final lifted = canHover && _hover;
 
@@ -53,8 +51,7 @@ class _PsyCardState extends State<PsyCard> {
         boxShadow: widget.elevated || lifted
             ? [
                 BoxShadow(
-                  color: cs.primary
-                      .withValues(alpha: lifted ? 0.13 : 0.06),
+                  color: cs.primary.withValues(alpha: lifted ? 0.13 : 0.06),
                   blurRadius: lifted ? 20 : 10,
                   spreadRadius: lifted ? -3 : 0,
                   offset: Offset(0, lifted ? 8 : 4),
@@ -67,10 +64,7 @@ class _PsyCardState extends State<PsyCard> {
         child: InkWell(
           onTap: widget.onTap,
           borderRadius: BorderRadius.circular(PsyRadius.lg),
-          child: Padding(
-            padding: widget.padding,
-            child: widget.child,
-          ),
+          child: Padding(padding: widget.padding, child: widget.child),
         ),
       ),
     );

@@ -78,13 +78,7 @@ enum PracticePermission {
 /// Organisational practice roles. See file header for the verbal
 /// description; this enum is the wire format for Firebase custom claims
 /// (`practice_role` claim) and Firestore membership docs.
-enum PracticeRole {
-  admin,
-  biller,
-  supervisor,
-  clinician,
-  intern,
-}
+enum PracticeRole { admin, biller, supervisor, clinician, intern }
 
 class PracticeRbac {
   const PracticeRbac._();

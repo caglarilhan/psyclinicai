@@ -5,19 +5,18 @@ void main() {
   InsurancePreAuth build({
     PreAuthStatus status = PreAuthStatus.submitted,
     DateTime? expiresAt,
-  }) =>
-      InsurancePreAuth(
-        id: 'pa1',
-        patientId: 'p1',
-        payer: 'Aetna',
-        memberId: 'M-12345',
-        serviceCode: '90837',
-        requestedUnits: 12,
-        status: status,
-        requestedAt: DateTime.utc(2026, 6, 1),
-        expiresAt: expiresAt,
-        referenceNumber: 'REF-001',
-      );
+  }) => InsurancePreAuth(
+    id: 'pa1',
+    patientId: 'p1',
+    payer: 'Aetna',
+    memberId: 'M-12345',
+    serviceCode: '90837',
+    requestedUnits: 12,
+    status: status,
+    requestedAt: DateTime.utc(2026, 6, 1),
+    expiresAt: expiresAt,
+    referenceNumber: 'REF-001',
+  );
 
   group('InsurancePreAuth', () {
     test('round-trips through JSON without losing fields', () {
@@ -64,8 +63,7 @@ void main() {
 
     test('awaitingDecision flips only while submitted', () {
       expect(build().awaitingDecision, isTrue);
-      expect(build(status: PreAuthStatus.approved).awaitingDecision,
-          isFalse);
+      expect(build(status: PreAuthStatus.approved).awaitingDecision, isFalse);
     });
 
     test('PreAuthStatus.fromId round-trips, defaults to submitted', () {
@@ -78,32 +76,34 @@ void main() {
 
     test('assert: requestedUnits must be positive', () {
       expect(
-          () => InsurancePreAuth(
-                id: 'x',
-                patientId: 'p',
-                payer: 'X',
-                memberId: 'm',
-                serviceCode: '90837',
-                requestedUnits: 0,
-                status: PreAuthStatus.submitted,
-                requestedAt: DateTime.utc(2026, 6, 1),
-              ),
-          throwsA(isA<AssertionError>()));
+        () => InsurancePreAuth(
+          id: 'x',
+          patientId: 'p',
+          payer: 'X',
+          memberId: 'm',
+          serviceCode: '90837',
+          requestedUnits: 0,
+          status: PreAuthStatus.submitted,
+          requestedAt: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     test('assert: serviceCode must be short (PHI guard)', () {
       expect(
-          () => InsurancePreAuth(
-                id: 'x',
-                patientId: 'p',
-                payer: 'X',
-                memberId: 'm',
-                serviceCode: 'A' * 17,
-                requestedUnits: 1,
-                status: PreAuthStatus.submitted,
-                requestedAt: DateTime.utc(2026, 6, 1),
-              ),
-          throwsA(isA<AssertionError>()));
+        () => InsurancePreAuth(
+          id: 'x',
+          patientId: 'p',
+          payer: 'X',
+          memberId: 'm',
+          serviceCode: 'A' * 17,
+          requestedUnits: 1,
+          status: PreAuthStatus.submitted,
+          requestedAt: DateTime.utc(2026, 6, 1),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     test('toJson omits decision/expiry/reference when not present', () {

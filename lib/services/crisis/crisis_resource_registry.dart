@@ -48,7 +48,8 @@ class CrisisResourceRegistry {
     displayNumber: '988',
     kind: CrisisResourceKind.hotline,
     availability: '24/7 · free · call or text',
-    description: 'Confidential support for anyone in distress, in English or '
+    description:
+        'Confidential support for anyone in distress, in English or '
         'Spanish.',
     dialUri: 'tel:988',
     webUri: 'https://988lifeline.org',
@@ -179,7 +180,8 @@ class CrisisResourceRegistry {
     displayNumber: '182',
     kind: CrisisResourceKind.hotline,
     availability: '7/24',
-    description: 'Sağlık Bakanlığı danışma hattı — psikiyatrik krizde acil '
+    description:
+        'Sağlık Bakanlığı danışma hattı — psikiyatrik krizde acil '
         'yönlendirme alabilirsiniz.',
     dialUri: 'tel:182',
     webUri: 'https://sabim.saglik.gov.tr',
@@ -193,7 +195,8 @@ class CrisisResourceRegistry {
     displayNumber: 'findahelpline.com',
     kind: CrisisResourceKind.directory,
     availability: 'Vetted lines in 130+ countries',
-    description: 'International directory of verified crisis support, listed '
+    description:
+        'International directory of verified crisis support, listed '
         'by country and topic.',
     webUri: 'https://findahelpline.com',
   );
@@ -231,20 +234,20 @@ class CrisisResourceRegistry {
 
   /// All resources known to the registry (for tests / settings screens).
   static List<CrisisResource> get all => [
-        us988,
-        usTextLine,
-        us911,
-        eu112,
-        uk116123,
-        de0800,
-        fr3114,
-        nl113,
-        itTelefonoAmico,
-        es024,
-        tr112,
-        tr182,
-        intlFindAHelpline,
-      ];
+    us988,
+    usTextLine,
+    us911,
+    eu112,
+    uk116123,
+    de0800,
+    fr3114,
+    nl113,
+    itTelefonoAmico,
+    es024,
+    tr112,
+    tr182,
+    intlFindAHelpline,
+  ];
 
   /// Country-specific list. Falls back to [universal] for unknown codes.
   /// Country code is uppercased ISO 3166-1 alpha-2.

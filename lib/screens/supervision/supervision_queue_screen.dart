@@ -18,8 +18,7 @@ class SupervisionQueueScreen extends StatefulWidget {
   final String supervisorId;
 
   @override
-  State<SupervisionQueueScreen> createState() =>
-      _SupervisionQueueScreenState();
+  State<SupervisionQueueScreen> createState() => _SupervisionQueueScreenState();
 }
 
 class _SupervisionQueueScreenState extends State<SupervisionQueueScreen> {
@@ -92,15 +91,15 @@ class _SupervisionQueueScreenState extends State<SupervisionQueueScreen> {
           if (open.isEmpty)
             _EmptyState(message: l.supervisionEmptyOpen)
           else
-            ...open.map((r) => _ReviewCard(
-                  row: r,
-                  onApprove: () =>
-                      _decide(r, SupervisionReviewStatus.approved),
-                  onChanges: () => _decide(
-                      r, SupervisionReviewStatus.changesRequested),
-                  onCoSign: () =>
-                      _decide(r, SupervisionReviewStatus.coSigned),
-                )),
+            ...open.map(
+              (r) => _ReviewCard(
+                row: r,
+                onApprove: () => _decide(r, SupervisionReviewStatus.approved),
+                onChanges: () =>
+                    _decide(r, SupervisionReviewStatus.changesRequested),
+                onCoSign: () => _decide(r, SupervisionReviewStatus.coSigned),
+              ),
+            ),
           const SizedBox(height: PsySpacing.lg),
           _SectionHeader(
             label: '${l.supervisionClosedSection} (${closed.length})',
@@ -111,12 +110,14 @@ class _SupervisionQueueScreenState extends State<SupervisionQueueScreen> {
           if (closed.isEmpty)
             _EmptyState(message: l.supervisionEmptyClosed)
           else
-            ...closed.map((r) => _ReviewCard(
-                  row: r,
-                  onApprove: null,
-                  onChanges: null,
-                  onCoSign: null,
-                )),
+            ...closed.map(
+              (r) => _ReviewCard(
+                row: r,
+                onApprove: null,
+                onChanges: null,
+                onCoSign: null,
+              ),
+            ),
         ],
       ),
     );
@@ -171,10 +172,7 @@ class _ReviewCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Note ${row.sessionNoteId}',
-                    style: t.titleSmall,
-                  ),
+                  child: Text('Note ${row.sessionNoteId}', style: t.titleSmall),
                 ),
                 _StatusChip(status: row.status),
               ],
@@ -199,29 +197,31 @@ class _ReviewCard extends StatelessWidget {
             ],
             if (onApprove != null) ...[
               const SizedBox(height: PsySpacing.md),
-              Builder(builder: (ctx) {
-                final l = AppLocalizations.of(ctx);
-                return Wrap(
-                  spacing: PsySpacing.sm,
-                  children: [
-                    FilledButton.tonalIcon(
-                      onPressed: onApprove,
-                      icon: const Icon(Icons.check),
-                      label: Text(l.supervisionActionApprove),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onChanges,
-                      icon: const Icon(Icons.edit_note),
-                      label: Text(l.supervisionActionChanges),
-                    ),
-                    FilledButton.icon(
-                      onPressed: onCoSign,
-                      icon: const Icon(Icons.draw),
-                      label: Text(l.supervisionActionCoSign),
-                    ),
-                  ],
-                );
-              }),
+              Builder(
+                builder: (ctx) {
+                  final l = AppLocalizations.of(ctx);
+                  return Wrap(
+                    spacing: PsySpacing.sm,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: onApprove,
+                        icon: const Icon(Icons.check),
+                        label: Text(l.supervisionActionApprove),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: onChanges,
+                        icon: const Icon(Icons.edit_note),
+                        label: Text(l.supervisionActionChanges),
+                      ),
+                      FilledButton.icon(
+                        onPressed: onCoSign,
+                        icon: const Icon(Icons.draw),
+                        label: Text(l.supervisionActionCoSign),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ],
         ),
@@ -245,25 +245,25 @@ class _StatusChip extends StatelessWidget {
     // editorial step, not a clinical alarm.
     final (label, color, icon) = switch (status) {
       SupervisionReviewStatus.pending => (
-          'Pending',
-          cs.secondaryContainer,
-          Icons.hourglass_top_outlined,
-        ),
+        'Pending',
+        cs.secondaryContainer,
+        Icons.hourglass_top_outlined,
+      ),
       SupervisionReviewStatus.changesRequested => (
-          'Changes requested',
-          cs.tertiaryContainer,
-          Icons.edit_note_outlined,
-        ),
+        'Changes requested',
+        cs.tertiaryContainer,
+        Icons.edit_note_outlined,
+      ),
       SupervisionReviewStatus.approved => (
-          'Approved',
-          cs.surfaceContainerHighest,
-          Icons.check_circle_outlined,
-        ),
+        'Approved',
+        cs.surfaceContainerHighest,
+        Icons.check_circle_outlined,
+      ),
       SupervisionReviewStatus.coSigned => (
-          'Co-signed',
-          cs.primaryContainer,
-          Icons.verified_outlined,
-        ),
+        'Co-signed',
+        cs.primaryContainer,
+        Icons.verified_outlined,
+      ),
     };
     return Chip(
       avatar: Icon(icon, size: 16),
@@ -317,8 +317,8 @@ class _EmptyState extends StatelessWidget {
         child: Text(
           message,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );

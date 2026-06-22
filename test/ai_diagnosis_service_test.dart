@@ -6,18 +6,18 @@ void main() {
   group('AiDiagnosisService.toolSchema', () {
     test('declares the submit_differential tool with required fields', () {
       expect(AiDiagnosisService.toolSchema['name'], 'submit_differential');
-      final schema = AiDiagnosisService.toolSchema['input_schema']
-          as Map<String, dynamic>;
+      final schema =
+          AiDiagnosisService.toolSchema['input_schema'] as Map<String, dynamic>;
       expect(schema['required'], contains('candidates'));
-      final items = (schema['properties'] as Map<String, dynamic>)
-          ['candidates']['items'] as Map<String, dynamic>;
+      final items =
+          (schema['properties'] as Map<String, dynamic>)['candidates']['items']
+              as Map<String, dynamic>;
       expect(items['required'], containsAll(['code', 'name', 'confidence']));
     });
   });
 
   group('suggestDifferential', () {
-    test('parses a tool-use payload into DifferentialCandidate list',
-        () async {
+    test('parses a tool-use payload into DifferentialCandidate list', () async {
       final client = LlmProxyClientStub(
         responder: (req) {
           expect(req.prompt, contains('[NAME]'));

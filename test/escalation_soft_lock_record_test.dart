@@ -29,8 +29,10 @@ void main() {
     test('dueAtFromDismissal adds the 24h follow-up window in UTC', () {
       final dismissed = DateTime.utc(2026, 6, 2, 10);
       final due = EscalationSoftLockRecord.dueAtFromDismissal(dismissed);
-      expect(due.difference(dismissed),
-          EscalationSoftLockRecord.followUpWindow);
+      expect(
+        due.difference(dismissed),
+        EscalationSoftLockRecord.followUpWindow,
+      );
       expect(due.isUtc, isTrue);
     });
 
@@ -50,10 +52,7 @@ void main() {
     });
 
     test('JSON round-trip preserves every field, including stale', () {
-      final r = _row(
-        stale: true,
-        supervisorHandoffId: 'rev-42',
-      );
+      final r = _row(stale: true, supervisorHandoffId: 'rev-42');
       final round = EscalationSoftLockRecord.fromJson(r.toJson());
       expect(round.id, r.id);
       expect(round.clinicId, r.clinicId);

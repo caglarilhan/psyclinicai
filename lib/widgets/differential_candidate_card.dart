@@ -77,9 +77,7 @@ class DifferentialCandidateCard extends StatelessWidget {
                   child: Text(candidate.code, style: t.labelLarge),
                 ),
                 const SizedBox(width: PsySpacing.sm),
-                Expanded(
-                  child: Text(candidate.name, style: t.titleSmall),
-                ),
+                Expanded(child: Text(candidate.name, style: t.titleSmall)),
               ],
             ),
             const SizedBox(height: PsySpacing.sm),
@@ -109,8 +107,7 @@ class DifferentialCandidateCard extends StatelessWidget {
               const SizedBox(height: PsySpacing.sm),
               Text(
                 'Rule out: ${candidate.differentialFrom.join(' · ')}',
-                style: t.bodySmall
-                    ?.copyWith(color: cs.onSurfaceVariant),
+                style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ],
             const SizedBox(height: PsySpacing.md),
@@ -242,8 +239,7 @@ class _DisclaimerStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline,
-              size: 16, color: cs.onTertiaryContainer),
+          Icon(Icons.info_outline, size: 16, color: cs.onTertiaryContainer),
           const SizedBox(width: 6),
           Expanded(
             child: Text(

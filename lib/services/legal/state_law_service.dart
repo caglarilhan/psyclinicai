@@ -222,8 +222,7 @@ class StateLawService {
                 'not covered by PSYPACT — full TX licensure required.',
             category: AlertCategory.telehealthLicensure,
             severity: AlertSeverity.warning,
-            citation:
-                'Tex. Occ. Code §501.260; PSYPACT effective 2019',
+            citation: 'Tex. Occ. Code §501.260; PSYPACT effective 2019',
           ),
           JurisdictionAlert(
             id: 'TX.documentationRetention',
@@ -320,7 +319,8 @@ class StateLawService {
           ),
           JurisdictionAlert(
             id: 'IL.dutyToWarn.mhddca',
-            title: 'Illinois — Mental Health and Developmental Disabilities '
+            title:
+                'Illinois — Mental Health and Developmental Disabilities '
                 'Confidentiality Act',
             body:
                 'The MHDDCA strictly limits disclosure of mental-health '
@@ -383,8 +383,7 @@ class StateLawService {
                 'protective steps in the chart.',
             category: AlertCategory.dutyToWarn,
             severity: AlertSeverity.critical,
-            citation:
-                'Volk v. DeMeerleer, 386 P.3d 254 (Wash. 2016)',
+            citation: 'Volk v. DeMeerleer, 386 P.3d 254 (Wash. 2016)',
           ),
           JurisdictionAlert(
             id: 'WA.telehealthLicensure.compact',
@@ -419,8 +418,7 @@ class StateLawService {
   /// Convenience — every alert across the multi-state license set.
   /// Used by the settings screen to render a "select your states"
   /// preview block.
-  List<JurisdictionAlert> alertsForMultipleStates(
-      Iterable<String> stateCodes) {
+  List<JurisdictionAlert> alertsForMultipleStates(Iterable<String> stateCodes) {
     final out = <JurisdictionAlert>[];
     for (final code in stateCodes) {
       out.addAll(alertsForState(code));

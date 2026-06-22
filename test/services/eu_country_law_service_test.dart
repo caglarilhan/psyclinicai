@@ -15,8 +15,10 @@ void main() {
     });
 
     test('case-insensitive lookup', () {
-      expect(svc.alertsForCountry('de').length,
-          svc.alertsForCountry('DE').length);
+      expect(
+        svc.alertsForCountry('de').length,
+        svc.alertsForCountry('DE').length,
+      );
     });
 
     group('Germany', () {
@@ -33,16 +35,15 @@ void main() {
       });
 
       test('DSGVO Art. 9(2)(h) processing basis flagged', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'DE.consentToTreat.dsgvo');
+        final a = alerts.firstWhere((e) => e.id == 'DE.consentToTreat.dsgvo');
         expect(a.citation, contains("Art. 9(2)(h) DSGVO"));
         expect(a.category, AlertCategory.consentToTreat);
       });
 
       test('record retention cites 10-year minimum', () {
-        final a =
-            alerts.firstWhere(
-                (e) => e.id == 'DE.documentationRetention.psychthg');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'DE.documentationRetention.psychthg',
+        );
         expect(a.body, contains('10 years'));
       });
     });
@@ -55,8 +56,7 @@ void main() {
       });
 
       test('FGM mandatory reporting is critical', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'UK.mandatoryReporting.fgm');
+        final a = alerts.firstWhere((e) => e.id == 'UK.mandatoryReporting.fgm');
         expect(a.severity, AlertSeverity.critical);
         expect(a.citation, contains('FGM Act 2003 s.5B'));
       });
@@ -68,8 +68,9 @@ void main() {
       });
 
       test('NHSX adult mental-health retention is 20 years', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'UK.documentationRetention.nhsx');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'UK.documentationRetention.nhsx',
+        );
         expect(a.body, contains('20 years'));
       });
     });
@@ -88,15 +89,17 @@ void main() {
       });
 
       test('B-KJHG child notification is critical + cites § 49 ÄrzteG', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'AT.mandatoryReporting.child');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'AT.mandatoryReporting.child',
+        );
         expect(a.severity, AlertSeverity.critical);
         expect(a.citation, contains('§ 49 ÄrzteG'));
       });
 
       test('ELGA + telemedicine guidance flagged', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'AT.telehealthLicensure.eheilg');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'AT.telehealthLicensure.eheilg',
+        );
         expect(a.body, contains('ELGA'));
       });
     });

@@ -36,8 +36,9 @@ Future<void> _pump(
 
 void main() {
   group('NoShowChargeButton', () {
-    testWidgets('renders amount + status chip + both CTAs when held',
-        (tester) async {
+    testWidgets('renders amount + status chip + both CTAs when held', (
+      tester,
+    ) async {
       await _pump(tester, deposit: _deposit());
       expect(find.text('Deposit · EUR 75.00'), findsOneWidget);
       expect(find.text('held'), findsOneWidget);
@@ -46,23 +47,17 @@ void main() {
     });
 
     testWidgets('captured deposit disables both CTAs', (tester) async {
-      await _pump(
-        tester,
-        deposit: _deposit(status: DepositStatus.captured),
-      );
-      final capture = tester.widgetList<Widget>(
-        find.byWidgetPredicate((w) => w is FilledButton),
-      ).whereType<FilledButton>().first;
+      await _pump(tester, deposit: _deposit(status: DepositStatus.captured));
+      final capture = tester
+          .widgetList<Widget>(find.byWidgetPredicate((w) => w is FilledButton))
+          .whereType<FilledButton>()
+          .first;
       expect(capture.onPressed, isNull);
     });
 
     testWidgets('capture CTA fires the callback when held', (tester) async {
       var called = false;
-      await _pump(
-        tester,
-        deposit: _deposit(),
-        onCapture: () => called = true,
-      );
+      await _pump(tester, deposit: _deposit(), onCapture: () => called = true);
       await tester.tap(find.text('Capture no-show'));
       await tester.pumpAndSettle();
       expect(called, isTrue);

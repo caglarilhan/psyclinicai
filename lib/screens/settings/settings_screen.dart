@@ -42,29 +42,33 @@ class SettingsScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: cs.primary,
-                  child:
-                      Icon(Icons.person, color: cs.onPrimary, size: 26),
+                  child: Icon(Icons.person, color: cs.onPrimary, size: 26),
                 ),
                 const SizedBox(width: PsySpacing.xl),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(profile?.fullName ?? 'Demo user',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        profile?.fullName ?? 'Demo user',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       // Phones can't fit a full email + Demo-mode badge in one
                       // row; truncate cleanly instead of letting the last char
                       // drop to a second line.
-                      Text(profile?.email ?? 'demo@psyclinicai.com',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                          )),
+                      Text(
+                        profile?.email ?? 'demo@psyclinicai.com',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -79,122 +83,196 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Profile'),
-          _row(context, theme, cs,
-              icon: Icons.badge_outlined,
-              title: 'Clinician profile',
-              body: 'Name, credentials, NPI, license — flows into the '
-                  'superbill and PDF exports.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/profile')),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.badge_outlined,
+            title: 'Clinician profile',
+            body:
+                'Name, credentials, NPI, license — flows into the '
+                'superbill and PDF exports.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/profile'),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Workspace'),
-          _row(context, theme, cs,
-              icon: Icons.key_outlined,
-              title: 'API keys',
-              body: 'Bring-your-own Anthropic key.',
-              onTap: () => Navigator.of(context)
-                  .pushNamed('/settings/api_keys')),
-          _row(context, theme, cs,
-              icon: Icons.replay_outlined,
-              title: 'Re-run onboarding',
-              body: 'Walk the 5-step wizard again.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/onboarding')),
-          _row(context, theme, cs,
-              icon: Icons.show_chart,
-              title: 'Outcomes dashboard',
-              body: 'Trend across all your patients.',
-              onTap: () => Navigator.of(context).pushNamed('/outcomes')),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.key_outlined,
+            title: 'API keys',
+            body: 'Bring-your-own Anthropic key.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/api_keys'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.replay_outlined,
+            title: 'Re-run onboarding',
+            body: 'Walk the 5-step wizard again.',
+            onTap: () => Navigator.of(context).pushNamed('/onboarding'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.show_chart,
+            title: 'Outcomes dashboard',
+            body: 'Trend across all your patients.',
+            onTap: () => Navigator.of(context).pushNamed('/outcomes'),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Security'),
-          _row(context, theme, cs,
-              icon: Icons.shield_outlined,
-              title: 'Two-factor authentication',
-              body: 'TOTP + recovery codes — required for ePHI under '
-                  'HIPAA §164.312(d). Status: not enabled.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/mfa')),
-          _row(context, theme, cs,
-              icon: Icons.videocam_outlined,
-              title: 'Telehealth video',
-              body: 'EU-routed WebRTC sessions — early access.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/telehealth')),
-          _row(context, theme, cs,
-              icon: Icons.payments_outlined,
-              title: 'Payments',
-              body: 'Stripe + Mollie (SEPA, iDEAL, SOFORT) — early access.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/payments')),
-          _row(context, theme, cs,
-              icon: Icons.public_outlined,
-              title: 'Data residency',
-              body: 'EU (eur3 · Frankfurt) or US (us-central1 · Iowa) — '
-                  'pinned per tenant, no cross-replication.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/region')),
-          _row(context, theme, cs,
-              icon: Icons.sync_alt_outlined,
-              title: 'EHR sync',
-              body: 'HL7 FHIR R4 connection to Epic / Cerner / Medistar.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/ehr')),
-          _row(context, theme, cs,
-              icon: Icons.dark_mode_outlined,
-              title: 'Appearance',
-              body: 'Light, dark, or follow the operating system.',
-              onTap: () => _openAppearanceSheet(context)),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.shield_outlined,
+            title: 'Two-factor authentication',
+            body:
+                'TOTP + recovery codes — required for ePHI under '
+                'HIPAA §164.312(d). Status: not enabled.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/mfa'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.videocam_outlined,
+            title: 'Telehealth video',
+            body: 'EU-routed WebRTC sessions — early access.',
+            onTap: () =>
+                Navigator.of(context).pushNamed('/settings/telehealth'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.payments_outlined,
+            title: 'Payments',
+            body: 'Stripe + Mollie (SEPA, iDEAL, SOFORT) — early access.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/payments'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.public_outlined,
+            title: 'Data residency',
+            body:
+                'EU (eur3 · Frankfurt) or US (us-central1 · Iowa) — '
+                'pinned per tenant, no cross-replication.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/region'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.sync_alt_outlined,
+            title: 'EHR sync',
+            body: 'HL7 FHIR R4 connection to Epic / Cerner / Medistar.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/ehr'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.dark_mode_outlined,
+            title: 'Appearance',
+            body: 'Light, dark, or follow the operating system.',
+            onTap: () => _openAppearanceSheet(context),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Trust & legal'),
-          _row(context, theme, cs,
-              icon: Icons.shield_outlined,
-              title: 'Trust Center',
-              body: 'HIPAA, GDPR, security controls, subprocessors.',
-              onTap: () => Navigator.of(context).pushNamed('/trust')),
-          _row(context, theme, cs,
-              icon: Icons.verified_user_outlined,
-              title: 'Security',
-              onTap: () => Navigator.of(context).pushNamed('/security')),
-          _row(context, theme, cs,
-              icon: Icons.devices_other_outlined,
-              title: 'Shared device (kiosk mode)',
-              body:
-                  'Auto-logout after 5 min idle + cache wipe on sign-out.',
-              onTap: () => _openSharedDeviceSheet(context)),
-          _row(context, theme, cs,
-              icon: Icons.fact_check_outlined,
-              title: 'Audit log',
-              body: 'Every read, write, and export — last 7 days.',
-              onTap: () =>
-                  Navigator.of(context).pushNamed('/settings/audit_log')),
-          _row(context, theme, cs,
-              icon: Icons.cloud_download_outlined,
-              title: 'Patient data export (DSAR)',
-              body: 'GDPR Art. 15 + 20 portable JSON bundle.',
-              onTap: () => Navigator.of(context)
-                  .pushNamed('/settings/data_export')),
-          _row(context, theme, cs,
-              icon: Icons.assignment_turned_in_outlined,
-              title: 'GDPR DPA',
-              body: 'EU Data Processing Agreement (Article 28).',
-              onTap: () => Navigator.of(context).pushNamed('/dpa')),
-          _row(context, theme, cs,
-              icon: Icons.health_and_safety_outlined,
-              title: 'HIPAA BAA',
-              body: 'US Business Associate Agreement.',
-              onTap: () => Navigator.of(context).pushNamed('/baa')),
-          _row(context, theme, cs,
-              icon: Icons.gavel_outlined,
-              title: 'Privacy policy',
-              onTap: () => Navigator.of(context).pushNamed('/privacy')),
-          _row(context, theme, cs,
-              icon: Icons.description_outlined,
-              title: 'Terms of service',
-              onTap: () => Navigator.of(context).pushNamed('/tos')),
-          _row(context, theme, cs,
-              icon: Icons.email_outlined,
-              title: 'Contact',
-              onTap: () => Navigator.of(context).pushNamed('/contact')),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.shield_outlined,
+            title: 'Trust Center',
+            body: 'HIPAA, GDPR, security controls, subprocessors.',
+            onTap: () => Navigator.of(context).pushNamed('/trust'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.verified_user_outlined,
+            title: 'Security',
+            onTap: () => Navigator.of(context).pushNamed('/security'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.devices_other_outlined,
+            title: 'Shared device (kiosk mode)',
+            body: 'Auto-logout after 5 min idle + cache wipe on sign-out.',
+            onTap: () => _openSharedDeviceSheet(context),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.fact_check_outlined,
+            title: 'Audit log',
+            body: 'Every read, write, and export — last 7 days.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/audit_log'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.cloud_download_outlined,
+            title: 'Patient data export (DSAR)',
+            body: 'GDPR Art. 15 + 20 portable JSON bundle.',
+            onTap: () =>
+                Navigator.of(context).pushNamed('/settings/data_export'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.assignment_turned_in_outlined,
+            title: 'GDPR DPA',
+            body: 'EU Data Processing Agreement (Article 28).',
+            onTap: () => Navigator.of(context).pushNamed('/dpa'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.health_and_safety_outlined,
+            title: 'HIPAA BAA',
+            body: 'US Business Associate Agreement.',
+            onTap: () => Navigator.of(context).pushNamed('/baa'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.gavel_outlined,
+            title: 'Privacy policy',
+            onTap: () => Navigator.of(context).pushNamed('/privacy'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.description_outlined,
+            title: 'Terms of service',
+            onTap: () => Navigator.of(context).pushNamed('/tos'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.email_outlined,
+            title: 'Contact',
+            onTap: () => Navigator.of(context).pushNamed('/contact'),
+          ),
           const SizedBox(height: PsySpacing.xxxl),
           _section(theme, cs, 'Danger zone'),
           PsyCard(
@@ -203,12 +281,18 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: cs.error, size: 20),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: cs.error,
+                      size: 20,
+                    ),
                     const SizedBox(width: PsySpacing.sm),
-                    Text('Delete my account',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'Delete my account',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: PsySpacing.sm),
@@ -226,8 +310,9 @@ class SettingsScreen extends StatelessWidget {
                   label: 'Request deletion',
                   variant: PsyButtonVariant.destructive,
                   icon: Icons.delete_forever_outlined,
-                  onPressed: () => Navigator.of(context)
-                      .pushNamed('/settings/account_deletion'),
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamed('/settings/account_deletion'),
                 ),
               ],
             ),
@@ -250,8 +335,7 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _section(ThemeData theme, ColorScheme cs, String label) {
     return Padding(
-      padding: const EdgeInsets.only(
-          top: PsySpacing.xl, bottom: PsySpacing.md),
+      padding: const EdgeInsets.only(top: PsySpacing.xl, bottom: PsySpacing.md),
       child: Text(
         label.toUpperCase(),
         style: theme.textTheme.labelMedium?.copyWith(
@@ -277,7 +361,9 @@ class SettingsScreen extends StatelessWidget {
       child: PsyCard(
         onTap: onTap,
         padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+          horizontal: PsySpacing.xl,
+          vertical: PsySpacing.lg,
+        ),
         child: Row(
           children: [
             Icon(icon, color: cs.primary, size: 20),
@@ -286,21 +372,28 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   if (body != null) ...[
                     const SizedBox(height: 2),
-                    Text(body,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.6),
-                        )),
+                    Text(
+                      body,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
                   ],
                 ],
               ),
             ),
-            Icon(Icons.chevron_right,
-                color: cs.onSurface.withValues(alpha: 0.5)),
+            Icon(
+              Icons.chevron_right,
+              color: cs.onSurface.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),
@@ -337,7 +430,8 @@ class SettingsScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-            'Deletion request received. We will email a confirmation within 24 h.'),
+          'Deletion request received. We will email a confirmation within 24 h.',
+        ),
       ),
     );
   }
@@ -371,11 +465,12 @@ class SettingsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Shared device (kiosk mode)',
-                        style: Theme.of(ctx)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'Shared device (kiosk mode)',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Enable on a clinic kiosk or reception iPad. '
@@ -418,15 +513,16 @@ class SettingsScreen extends StatelessWidget {
                   RadioListTile<ThemeMode>(
                     value: m,
                     groupValue: mode,
-                    title: Row(children: [
-                      Icon(icon, size: 18),
-                      const SizedBox(width: 8),
-                      Text(label),
-                    ]),
+                    title: Row(
+                      children: [
+                        Icon(icon, size: 18),
+                        const SizedBox(width: 8),
+                        Text(label),
+                      ],
+                    ),
                     onChanged: (v) async {
                       if (v != null) {
-                        await AppearancePreferences.instance
-                            .setThemeMode(v);
+                        await AppearancePreferences.instance.setThemeMode(v);
                       }
                     },
                   );
@@ -436,18 +532,20 @@ class SettingsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Appearance',
-                        style: Theme.of(ctx)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'Appearance',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    tile(ThemeMode.system, 'Follow system',
-                        Icons.brightness_auto_outlined),
-                    tile(ThemeMode.light, 'Light',
-                        Icons.light_mode_outlined),
-                    tile(ThemeMode.dark, 'Dark',
-                        Icons.dark_mode_outlined),
+                    tile(
+                      ThemeMode.system,
+                      'Follow system',
+                      Icons.brightness_auto_outlined,
+                    ),
+                    tile(ThemeMode.light, 'Light', Icons.light_mode_outlined),
+                    tile(ThemeMode.dark, 'Dark', Icons.dark_mode_outlined),
                   ],
                 ),
               );

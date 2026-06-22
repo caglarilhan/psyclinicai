@@ -31,23 +31,24 @@ enum TenantRegion {
 
   /// Display label e.g. "EU · Frankfurt (eur3)".
   String get displayLabel => switch (this) {
-        TenantRegion.euCentral => 'EU · $city ($firestoreRegion)',
-        TenantRegion.usCentral => 'US · $city ($firestoreRegion)',
-      };
+    TenantRegion.euCentral => 'EU · $city ($firestoreRegion)',
+    TenantRegion.usCentral => 'US · $city ($firestoreRegion)',
+  };
 
   /// Compliance frameworks that **must** apply for this region.
   List<String> get mandatoryFrameworks => switch (this) {
-        TenantRegion.euCentral => const ['GDPR', 'KVKK'],
-        TenantRegion.usCentral => const ['HIPAA'],
-      };
+    TenantRegion.euCentral => const ['GDPR', 'KVKK'],
+    TenantRegion.usCentral => const ['HIPAA'],
+  };
 
   static TenantRegion fromId(String id) {
     return values.firstWhere(
       (r) => r.id == id,
       orElse: () => throw ArgumentError(
-          'Unknown TenantRegion id: $id. A silent EU fallback would let '
-          'US tenants accidentally run under GDPR; caller must handle '
-          'this explicitly.'),
+        'Unknown TenantRegion id: $id. A silent EU fallback would let '
+        'US tenants accidentally run under GDPR; caller must handle '
+        'this explicitly.',
+      ),
     );
   }
 
@@ -83,10 +84,7 @@ class TenantRegionPin {
 
   bool get hasPendingChange => changeRequestedTo != null;
 
-  TenantRegionPin requestChangeTo(
-    TenantRegion newRegion, {
-    DateTime? at,
-  }) {
+  TenantRegionPin requestChangeTo(TenantRegion newRegion, {DateTime? at}) {
     if (newRegion == region) {
       throw ArgumentError('Already pinned to ${region.id}');
     }
@@ -100,14 +98,13 @@ class TenantRegionPin {
   }
 
   Map<String, dynamic> toJson() => {
-        'tenant_id': tenantId,
-        'region': region.id,
-        'pinned_at': pinnedAt.toUtc().toIso8601String(),
-        if (changeRequestedAt != null)
-          'change_requested_at': changeRequestedAt!.toUtc().toIso8601String(),
-        if (changeRequestedTo != null)
-          'change_requested_to': changeRequestedTo!.id,
-      };
+    'tenant_id': tenantId,
+    'region': region.id,
+    'pinned_at': pinnedAt.toUtc().toIso8601String(),
+    if (changeRequestedAt != null)
+      'change_requested_at': changeRequestedAt!.toUtc().toIso8601String(),
+    if (changeRequestedTo != null) 'change_requested_to': changeRequestedTo!.id,
+  };
 
   factory TenantRegionPin.fromJson(Map<String, dynamic> json) {
     return TenantRegionPin(

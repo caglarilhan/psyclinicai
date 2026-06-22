@@ -18,31 +18,32 @@ void main() {
       );
 
   HomeworkItem hw({bool done = false, required DateTime due}) => HomeworkItem(
-      id: 'h${due.millisecondsSinceEpoch}',
-      patientId: 'p1',
-      title: 'Task',
-      dueDate: due,
-      done: done);
+    id: 'h${due.millisecondsSinceEpoch}',
+    patientId: 'p1',
+    title: 'Task',
+    dueDate: due,
+    done: done,
+  );
 
   TreatmentPlan planWithGoal(int progress) => TreatmentPlan(
-        id: 'pl1',
-        patientId: 'p1',
-        clinicianId: 'c1',
+    id: 'pl1',
+    patientId: 'p1',
+    clinicianId: 'c1',
+    createdAt: now.subtract(const Duration(days: 30)),
+    primaryDiagnosis: 'F41.1',
+    clinicalFormulation: 'x',
+    goals: [
+      TreatmentGoal(
+        id: 'g1',
+        description: 'Reduce GAD-7 below 10',
+        category: GoalCategory.symptomReduction,
+        priority: GoalPriority.high,
+        targetDate: now.add(const Duration(days: 60)),
+        progress: progress,
         createdAt: now.subtract(const Duration(days: 30)),
-        primaryDiagnosis: 'F41.1',
-        clinicalFormulation: 'x',
-        goals: [
-          TreatmentGoal(
-            id: 'g1',
-            description: 'Reduce GAD-7 below 10',
-            category: GoalCategory.symptomReduction,
-            priority: GoalPriority.high,
-            targetDate: now.add(const Duration(days: 60)),
-            progress: progress,
-            createdAt: now.subtract(const Duration(days: 30)),
-          )
-        ],
-      );
+      ),
+    ],
+  );
 
   test('first session when no notes', () {
     final b = svc.build(patientName: 'Alice', notes: const [], now: now);
@@ -53,7 +54,11 @@ void main() {
   test('summarizes prior sessions + last recap', () {
     final b = svc.build(
       patientName: 'Alice',
-      notes: [note(2, text: 'most recent'), note(9), note(16)],
+      notes: [
+        note(2, text: 'most recent'),
+        note(9),
+        note(16),
+      ],
       now: now,
     );
     expect(b.sessionCount, 3);

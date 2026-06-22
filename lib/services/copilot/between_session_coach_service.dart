@@ -32,11 +32,12 @@ import 'risk_signal_service.dart';
 /// Fires when the risk lexicon flags a patient turn. UI subscribes to
 /// this hook to freeze the input field + surface the safety plan +
 /// page the on-call clinician.
-typedef CoachEscalationHook = FutureOr<void> Function(
-  CoachConversation conversation,
-  CoachMessage triggeringMessage,
-  List<RiskSignal> signals,
-);
+typedef CoachEscalationHook =
+    FutureOr<void> Function(
+      CoachConversation conversation,
+      CoachMessage triggeringMessage,
+      List<RiskSignal> signals,
+    );
 
 /// Outcome of [BetweenSessionCoachService.send]. `escalated: true`
 /// means the assistant reply was NOT requested — the patient hit a
@@ -72,9 +73,9 @@ class BetweenSessionCoachService {
     required this.risk,
     CoachEscalationHook? escalationHook,
     Future<String> Function(String systemPrompt, List<CoachMessage> messages)?
-        relayInvoke,
-  })  : _escalationHook = escalationHook,
-        _relayInvoke = relayInvoke;
+    relayInvoke,
+  }) : _escalationHook = escalationHook,
+       _relayInvoke = relayInvoke;
 
   final RiskSignalService risk;
   final CoachEscalationHook? _escalationHook;
@@ -85,7 +86,8 @@ class BetweenSessionCoachService {
   final Future<String> Function(
     String systemPrompt,
     List<CoachMessage> messages,
-  )? _relayInvoke;
+  )?
+  _relayInvoke;
 
   /// Append the patient's [patientText] to [conversation] and return
   /// either an escalated outcome (no assistant turn) or a fresh

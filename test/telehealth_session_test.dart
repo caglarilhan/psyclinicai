@@ -5,19 +5,18 @@ TelehealthSession _row({
   RecordingConsent consent = RecordingConsent.notAsked,
   DateTime? joinedAt,
   DateTime? endedAt,
-}) =>
-    TelehealthSession(
-      id: 'tx-1',
-      clinicId: 'c1',
-      sessionId: 's-1',
-      patientId: 'p-1',
-      clinicianId: 'doc-1',
-      roomName: 'psy-c1-s-1',
-      scheduledFor: DateTime.utc(2026, 6, 2, 9),
-      joinedAt: joinedAt,
-      endedAt: endedAt,
-      recordingConsent: consent,
-    );
+}) => TelehealthSession(
+  id: 'tx-1',
+  clinicId: 'c1',
+  sessionId: 's-1',
+  patientId: 'p-1',
+  clinicianId: 'doc-1',
+  roomName: 'psy-c1-s-1',
+  scheduledFor: DateTime.utc(2026, 6, 2, 9),
+  joinedAt: joinedAt,
+  endedAt: endedAt,
+  recordingConsent: consent,
+);
 
 void main() {
   group('TelehealthSession', () {
@@ -43,8 +42,7 @@ void main() {
       expect(round.endedAt, row.endedAt);
     });
 
-    test('isLive flips to true once joined and back to false when ended',
-        () {
+    test('isLive flips to true once joined and back to false when ended', () {
       expect(_row().isLive, isFalse);
       expect(_row(joinedAt: DateTime.utc(2026, 6, 2, 9)).isLive, isTrue);
       expect(
@@ -58,24 +56,21 @@ void main() {
 
     test('canRecord is true ONLY when consent is explicitly granted', () {
       expect(_row().canRecord, isFalse);
-      expect(
-          _row(consent: RecordingConsent.declined).canRecord, isFalse);
+      expect(_row(consent: RecordingConsent.declined).canRecord, isFalse);
       expect(_row(consent: RecordingConsent.granted).canRecord, isTrue);
     });
 
     test('RecordingConsent.fromId tolerates unknown / null values', () {
       expect(RecordingConsent.fromId(null), RecordingConsent.notAsked);
-      expect(RecordingConsent.fromId('garbage'),
-          RecordingConsent.notAsked);
-      expect(RecordingConsent.fromId('granted'),
-          RecordingConsent.granted);
+      expect(RecordingConsent.fromId('garbage'), RecordingConsent.notAsked);
+      expect(RecordingConsent.fromId('granted'), RecordingConsent.granted);
     });
 
     test('VisitConsent is separate from RecordingConsent', () {
       // A patient may agree to a video visit but decline recording.
-      final row = _row(consent: RecordingConsent.declined).copyWith(
-        visitConsent: VisitConsent.granted,
-      );
+      final row = _row(
+        consent: RecordingConsent.declined,
+      ).copyWith(visitConsent: VisitConsent.granted);
       expect(row.visitConsent, VisitConsent.granted);
       expect(row.recordingConsent, RecordingConsent.declined);
       expect(row.canRecord, isFalse);
@@ -96,8 +91,7 @@ void main() {
       );
     });
 
-    test('isBillable is true only when the call met the CMS minimum',
-        () {
+    test('isBillable is true only when the call met the CMS minimum', () {
       final tooShort = _row(
         joinedAt: DateTime.utc(2026, 6, 2, 9),
         endedAt: DateTime.utc(2026, 6, 2, 9, 5),

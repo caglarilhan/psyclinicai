@@ -25,11 +25,12 @@ class TestimonialsSection extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
             child: const SectionSubtitle(
-                'We are admitting the first 30 clinicians as founding members. '
-                'You get six months at half price, a permanent founding rate, '
-                'and a direct line to product decisions. We will quote you here '
-                'when you are ready.',
-                textAlign: TextAlign.center),
+              'We are admitting the first 30 clinicians as founding members. '
+              'You get six months at half price, a permanent founding rate, '
+              'and a direct line to product decisions. We will quote you here '
+              'when you are ready.',
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(height: 36),
           Container(
@@ -77,8 +78,7 @@ class TestimonialsSection extends StatelessWidget {
             icon: const Icon(Icons.star_outline, size: 18),
             label: const Text('Claim a founding seat'),
             style: FilledButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
             ),
           ),
         ],

@@ -68,8 +68,8 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
   Future<void> _pickExpiry() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _licenseExpiry ??
-          DateTime.now().add(const Duration(days: 365)),
+      initialDate:
+          _licenseExpiry ?? DateTime.now().add(const Duration(days: 365)),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       helpText: 'License expiry',
@@ -110,7 +110,8 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
     return AppShell(
       routeName: '/settings',
       title: 'Profile',
-      subtitle: 'Identity, credentials, and license — flows into the '
+      subtitle:
+          'Identity, credentials, and license — flows into the '
           'superbill and audit log.',
       scrollable: false,
       breadcrumbs: const [
@@ -137,104 +138,134 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
                 'Showing demo credentials — sign in to load your live '
                 'profile. Edits below are not persisted in demo mode.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.75)),
+                  color: cs.onSurface.withValues(alpha: 0.75),
+                ),
               ),
             ),
             const SizedBox(height: PsySpacing.xl),
           ] else ...[
             PsyCard(
               tinted: true,
-              child: Row(children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: cs.primary,
-                  child:
-                      Icon(Icons.person, color: cs.onPrimary, size: 24),
-                ),
-                const SizedBox(width: PsySpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(profile.email,
-                          style: theme.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text('Role: ${profile.role.id}',
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: cs.primary,
+                    child: Icon(Icons.person, color: cs.onPrimary, size: 24),
+                  ),
+                  const SizedBox(width: PsySpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profile.email,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Role: ${profile.role.id}',
                           style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.6))),
-                    ],
+                            color: cs.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (expiringSoon)
-                  const PsyBadge(
-                    label: 'License expiring',
-                    tone: PsyBadgeTone.warning,
-                  ),
-              ]),
+                  if (expiringSoon)
+                    const PsyBadge(
+                      label: 'License expiring',
+                      tone: PsyBadgeTone.warning,
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: PsySpacing.xl),
           ],
           _section(theme, 'Identity'),
           PsyCard(
-            child: Column(children: [
-              _field('Full legal name', _fullName,
-                  hint: 'Appears on superbills and PDF exports'),
-              _field('Credentials', _credentials,
-                  hint: 'e.g. LCSW, PsyD, MD'),
-              _field('Specialty / modalities', _specialty,
-                  hint: 'e.g. CBT, EMDR, trauma-focused'),
-            ]),
+            child: Column(
+              children: [
+                _field(
+                  'Full legal name',
+                  _fullName,
+                  hint: 'Appears on superbills and PDF exports',
+                ),
+                _field(
+                  'Credentials',
+                  _credentials,
+                  hint: 'e.g. LCSW, PsyD, MD',
+                ),
+                _field(
+                  'Specialty / modalities',
+                  _specialty,
+                  hint: 'e.g. CBT, EMDR, trauma-focused',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: PsySpacing.xl),
           _section(theme, 'Billing'),
           PsyCard(
-            child: Column(children: [
-              _field('NPI', _npi,
-                  hint: '10-digit US National Provider Identifier'),
-              _field('Tax ID', _taxId, hint: 'Employer or individual SSN'),
-            ]),
+            child: Column(
+              children: [
+                _field(
+                  'NPI',
+                  _npi,
+                  hint: '10-digit US National Provider Identifier',
+                ),
+                _field('Tax ID', _taxId, hint: 'Employer or individual SSN'),
+              ],
+            ),
           ),
           const SizedBox(height: PsySpacing.xl),
           _section(theme, 'License'),
           PsyCard(
-            child: Column(children: [
-              _field('License number', _licenseNumber,
-                  hint: 'State / national identifier'),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: PsySpacing.xs),
-                child: InkWell(
-                  onTap: _pickExpiry,
-                  borderRadius: BorderRadius.circular(PsyRadius.md),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'License expiry',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      suffixIcon: Icon(Icons.calendar_today, size: 16),
-                    ),
-                    child: Text(
-                      _licenseExpiry == null
-                          ? 'Tap to pick'
-                          : '${_licenseExpiry!.year}-${_licenseExpiry!.month.toString().padLeft(2, '0')}-'
-                              '${_licenseExpiry!.day.toString().padLeft(2, '0')}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
+            child: Column(
+              children: [
+                _field(
+                  'License number',
+                  _licenseNumber,
+                  hint: 'State / national identifier',
                 ),
-              ),
-              if (expiringSoon)
                 Padding(
-                  padding: const EdgeInsets.only(top: PsySpacing.sm),
-                  child: Text(
-                    'License expires within 60 days. Renew and update '
-                    'this field before continuing to bill.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.error, fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
+                  child: InkWell(
+                    onTap: _pickExpiry,
+                    borderRadius: BorderRadius.circular(PsyRadius.md),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'License expiry',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        suffixIcon: Icon(Icons.calendar_today, size: 16),
+                      ),
+                      child: Text(
+                        _licenseExpiry == null
+                            ? 'Tap to pick'
+                            : '${_licenseExpiry!.year}-${_licenseExpiry!.month.toString().padLeft(2, '0')}-'
+                                  '${_licenseExpiry!.day.toString().padLeft(2, '0')}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
                   ),
                 ),
-            ]),
+                if (expiringSoon)
+                  Padding(
+                    padding: const EdgeInsets.only(top: PsySpacing.sm),
+                    child: Text(
+                      'License expires within 60 days. Renew and update '
+                      'this field before continuing to bill.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           if (_status != null) ...[
             const SizedBox(height: PsySpacing.lg),
@@ -243,12 +274,14 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
               decoration: BoxDecoration(
                 color: cs.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(PsyRadius.md),
-                border:
-                    Border.all(color: cs.primary.withValues(alpha: 0.25)),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
               ),
-              child: Text(_status!,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: cs.onSurface)),
+              child: Text(
+                _status!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface,
+                ),
+              ),
             ),
           ],
           const SizedBox(height: PsySpacing.huge),
@@ -258,14 +291,19 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
   }
 
   Widget _section(ThemeData theme, String title) => Padding(
-        padding: const EdgeInsets.only(bottom: PsySpacing.sm),
-        child: Text(title,
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
-      );
+    padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+    child: Text(
+      title,
+      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    ),
+  );
 
-  Widget _field(String label, TextEditingController c,
-      {String? hint, TextInputType? keyboardType}) {
+  Widget _field(
+    String label,
+    TextEditingController c, {
+    String? hint,
+    TextInputType? keyboardType,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
       child: TextField(

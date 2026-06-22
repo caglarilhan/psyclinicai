@@ -24,14 +24,19 @@ void main() {
 
     test('remaining duration is zero when expired', () {
       expect(tok.remaining(now: now).inMinutes, 60);
-      expect(tok.remaining(now: now.add(const Duration(hours: 2))),
-          Duration.zero);
+      expect(
+        tok.remaining(now: now.add(const Duration(hours: 2))),
+        Duration.zero,
+      );
     });
 
     test('toJson omits the raw token (audit safety)', () {
       final j = tok.toJson();
-      expect(j.containsKey('token'), isFalse,
-          reason: 'Persisting the live token would leak a credential');
+      expect(
+        j.containsKey('token'),
+        isFalse,
+        reason: 'Persisting the live token would leak a credential',
+      );
       expect(j['room_name'], 'psy-t-1-s-1');
       expect(j['recording_enabled'], isTrue);
       expect(j['eu_region'], isTrue);
@@ -43,8 +48,7 @@ void main() {
       expect(w['room_name'], 'psy-t-1-s-1');
     });
 
-    test('fromJson stays compatible with toWireJson at the SDK boundary',
-        () {
+    test('fromJson stays compatible with toWireJson at the SDK boundary', () {
       final restored = TelehealthRoomToken.fromJson(tok.toWireJson());
       expect(restored.token, tok.token);
       expect(restored.expiresAt, tok.expiresAt);
@@ -92,10 +96,11 @@ void main() {
 
     test('recordingEnabled mirrors consent flag', () async {
       final granted = await minter.mint(
-          tenantId: 't',
-          sessionId: 's',
-          recordingConsentGranted: true,
-          euRegion: false);
+        tenantId: 't',
+        sessionId: 's',
+        recordingConsentGranted: true,
+        euRegion: false,
+      );
       expect(granted.recordingEnabled, isTrue);
       expect(granted.euRegion, isFalse);
     });

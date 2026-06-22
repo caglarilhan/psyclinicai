@@ -6,10 +6,7 @@ void main() {
     test('roster cap is enforced at construction', () {
       final tooMany = List.generate(
         9,
-        (i) => GroupSessionAttendance(
-          patientId: 'p$i',
-          subNoteId: 'n$i',
-        ),
+        (i) => GroupSessionAttendance(patientId: 'p$i', subNoteId: 'n$i'),
       );
 
       expect(
@@ -34,10 +31,7 @@ void main() {
         scheduledAt: DateTime(2026, 6, 5),
         roster: List.generate(
           GroupSession.maxRosterSize,
-          (i) => GroupSessionAttendance(
-            patientId: 'p$i',
-            subNoteId: 'n$i',
-          ),
+          (i) => GroupSessionAttendance(patientId: 'p$i', subNoteId: 'n$i'),
         ),
       );
       expect(atCap.isAtCapacity, isTrue);
@@ -90,10 +84,7 @@ void main() {
         GroupSessionStatus.fromId('garbage'),
         GroupSessionStatus.scheduled,
       );
-      expect(
-        GroupSessionStatus.fromId(null),
-        GroupSessionStatus.scheduled,
-      );
+      expect(GroupSessionStatus.fromId(null), GroupSessionStatus.scheduled);
     });
   });
 }

@@ -8,10 +8,7 @@ import 'package:psyclinicai/widgets/risk_escalation_modal.dart';
 const _trigger = Phq9Item9Recommendation(
   severity: Phq9Item9Severity.nearlyEveryDay,
   primaryAction: Phq9Item9Action.showCrisisModal,
-  secondaryActions: [
-    Phq9Item9Action.openCssrs,
-    Phq9Item9Action.openSafetyPlan,
-  ],
+  secondaryActions: [Phq9Item9Action.openCssrs, Phq9Item9Action.openSafetyPlan],
   reason: 'Daily ideation reported',
 );
 
@@ -63,8 +60,9 @@ Future<void> _pump(
 
 void main() {
   group('RiskEscalationModal', () {
-    testWidgets('renders the critical headline + reason + crisis number',
-        (tester) async {
+    testWidgets('renders the critical headline + reason + crisis number', (
+      tester,
+    ) async {
       await _pump(tester);
       expect(find.text('Imminent safety concern detected'), findsOneWidget);
       expect(find.text('Daily ideation reported'), findsOneWidget);
@@ -80,19 +78,19 @@ void main() {
     });
 
     testWidgets('completed CSSRS step disables its CTA', (tester) async {
-      final advanced = _chain.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.cssrsAdministered,
-        at: DateTime.utc(2026, 6, 2, 10, 5),
-        clinicianId: 'doc-1',
-      ));
+      final advanced = _chain.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: DateTime.utc(2026, 6, 2, 10, 5),
+          clinicianId: 'doc-1',
+        ),
+      );
       await _pump(tester, chain: advanced);
       final btn = tester
-          .widgetList<Widget>(
-              find.byWidgetPredicate((w) => w is FilledButton))
+          .widgetList<Widget>(find.byWidgetPredicate((w) => w is FilledButton))
           .whereType<FilledButton>()
           .firstWhere(
-            (b) =>
-                b.child is Text && (b.child as Text).data == 'Open C-SSRS',
+            (b) => b.child is Text && (b.child as Text).data == 'Open C-SSRS',
           );
       expect(btn.onPressed, isNull);
     });

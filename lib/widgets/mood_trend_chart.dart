@@ -41,19 +41,12 @@ class MoodTrendSummary {
 }
 
 class MoodTrendChart extends StatelessWidget {
-  const MoodTrendChart({
-    super.key,
-    required this.samples,
-    required this.now,
-  });
+  const MoodTrendChart({super.key, required this.samples, required this.now});
 
   final List<MoodSample> samples;
   final DateTime now;
 
-  static MoodTrendSummary summarise(
-    List<MoodSample> samples,
-    DateTime now,
-  ) {
+  static MoodTrendSummary summarise(List<MoodSample> samples, DateTime now) {
     if (samples.isEmpty) {
       return const MoodTrendSummary(
         sevenDayMoodAvg: 0,
@@ -80,8 +73,7 @@ class MoodTrendChart extends StatelessWidget {
     return MoodTrendSummary(
       sevenDayMoodAvg: avg(last7),
       thirtyDayMoodAvg: avg(last30),
-      deltaVsPrev30d:
-          prev30.isEmpty ? 0.0 : avg(last30) - avg(prev30),
+      deltaVsPrev30d: prev30.isEmpty ? 0.0 : avg(last30) - avg(prev30),
       sampleCount: samples.length,
     );
   }
@@ -113,12 +105,18 @@ class MoodTrendChart extends StatelessWidget {
               titlesData: const FlTitlesData(show: false),
               borderData: FlBorderData(show: false),
               lineBarsData: [
-                _bar(sorted.map((s) => toSpot(s, s.mood)).toList(),
-                    PsyColors.success),
-                _bar(sorted.map((s) => toSpot(s, s.sleep)).toList(),
-                    PsyColors.info),
-                _bar(sorted.map((s) => toSpot(s, s.anxiety)).toList(),
-                    PsyColors.warning),
+                _bar(
+                  sorted.map((s) => toSpot(s, s.mood)).toList(),
+                  PsyColors.success,
+                ),
+                _bar(
+                  sorted.map((s) => toSpot(s, s.sleep)).toList(),
+                  PsyColors.info,
+                ),
+                _bar(
+                  sorted.map((s) => toSpot(s, s.anxiety)).toList(),
+                  PsyColors.warning,
+                ),
               ],
             ),
           ),
@@ -129,14 +127,13 @@ class MoodTrendChart extends StatelessWidget {
     );
   }
 
-  LineChartBarData _bar(List<FlSpot> spots, Color color) =>
-      LineChartBarData(
-        spots: spots,
-        isCurved: true,
-        color: color,
-        barWidth: 2,
-        dotData: const FlDotData(show: false),
-      );
+  LineChartBarData _bar(List<FlSpot> spots, Color color) => LineChartBarData(
+    spots: spots,
+    isCurved: true,
+    color: color,
+    barWidth: 2,
+    dotData: const FlDotData(show: false),
+  );
 }
 
 class _Empty extends StatelessWidget {
@@ -179,7 +176,8 @@ class _Stats extends StatelessWidget {
         Expanded(
           child: _Stat(
             label: 'vs prev 30d',
-            value: '${summary.deltaVsPrev30d >= 0 ? '+' : ''}'
+            value:
+                '${summary.deltaVsPrev30d >= 0 ? '+' : ''}'
                 '${summary.deltaVsPrev30d.toStringAsFixed(1)}',
             t: t,
             valueColor: summary.deltaVsPrev30d >= 0
@@ -209,8 +207,7 @@ class _Stat extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: t.labelMedium),
-        Text(value,
-            style: t.titleLarge?.copyWith(color: valueColor)),
+        Text(value, style: t.titleLarge?.copyWith(color: valueColor)),
       ],
     );
   }
@@ -235,11 +232,7 @@ class _Legend extends StatelessWidget {
 }
 
 class _LegendDot extends StatelessWidget {
-  const _LegendDot({
-    required this.color,
-    required this.label,
-    required this.t,
-  });
+  const _LegendDot({required this.color, required this.label, required this.t});
   final Color color;
   final String label;
   final TextTheme t;

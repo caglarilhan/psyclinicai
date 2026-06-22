@@ -46,8 +46,9 @@ Map<String, dynamic> buildPatientExport({
     if (intake != null) 'intake': intake.toJson(),
     if (effectiveConsent != null) 'consent': effectiveConsent.toJson(),
     if (safetyPlan != null) 'safety_plan': safetyPlan.toJson(),
-    'session_notes':
-        sessionNotes.map((n) => n.toJson()).toList(growable: false),
+    'session_notes': sessionNotes
+        .map((n) => n.toJson())
+        .toList(growable: false),
     'assessments': assessments,
   };
 }

@@ -55,26 +55,24 @@ class _LoginScreenState extends State<LoginScreen> {
         // silently grant unauthenticated access.
         setState(() {
           _loading = false;
-          _error = 'Service is temporarily unavailable. Please try again later.';
+          _error =
+              'Service is temporarily unavailable. Please try again later.';
         });
         return;
       }
       await Future<void>.delayed(const Duration(milliseconds: 600));
       // Demo mode: returning visitors skip the wizard — first-timers see it.
-      final done =
-          await OnboardingService.instance.isOnboarded('demo');
+      final done = await OnboardingService.instance.isOnboarded('demo');
       if (!mounted) return;
-      Navigator.of(context)
-          .pushReplacementNamed(done ? '/dashboard' : '/onboarding');
+      Navigator.of(
+        context,
+      ).pushReplacementNamed(done ? '/dashboard' : '/onboarding');
       return;
     }
 
     final auth = FirebaseAuthService.instance;
     final result = _mode == _Mode.signIn
-        ? await auth.signIn(
-            email: _email.text,
-            password: _password.text,
-          )
+        ? await auth.signIn(email: _email.text, password: _password.text)
         : await auth.signUp(
             email: _email.text,
             password: _password.text,
@@ -95,10 +93,13 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       // Identify on a SHA-256 fingerprint so analytics never sees a raw
       // PHI-adjacent identifier (GDPR Art. 25 — privacy by design).
-      final emailFingerprint =
-          sha256.convert(utf8.encode(email.toLowerCase())).toString();
-      TelemetryService.instance
-          .identify(emailFingerprint, traits: {'email_hash': emailFingerprint});
+      final emailFingerprint = sha256
+          .convert(utf8.encode(email.toLowerCase()))
+          .toString();
+      TelemetryService.instance.identify(
+        emailFingerprint,
+        traits: {'email_hash': emailFingerprint},
+      );
       // Post-sign-in interceptor (HIPAA §164.312(d)).
       // The UID source MUST match the one the MFA wizard wrote under
       // (`mfa_setup_screen._finish` uses `userId ?? "demo"`). Email-
@@ -106,14 +107,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final uid = auth.profile?.userId ?? 'demo';
       String route;
       try {
-        final mfaOk =
-            await SecuritySettingsService.instance.isMfaEnrolled(uid);
+        final mfaOk = await SecuritySettingsService.instance.isMfaEnrolled(uid);
         if (!mounted) return;
         if (_mode == _Mode.signUp || !mfaOk) {
           route = '/settings/mfa';
         } else {
-          final done =
-              await OnboardingService.instance.isCurrentUserOnboarded();
+          final done = await OnboardingService.instance
+              .isCurrentUserOnboarded();
           if (!mounted) return;
           route = done ? '/dashboard' : '/onboarding';
         }
@@ -226,8 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Demo helper is for developers only — visitors
                           // arriving from the landing page should see a clean
                           // sign-in, not a yellow "debug" callout.
-                          if (!_backendReady && kDebugMode)
-                            _backendBanner(cs),
+                          if (!_backendReady && kDebugMode) _backendBanner(cs),
                           if (!_backendReady) const SizedBox(height: 14),
                           _segmented(),
                           const SizedBox(height: 20),
@@ -236,7 +235,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _fullName,
                               textCapitalization: TextCapitalization.words,
                               decoration: _decoration(
-                                  'Full name', Icons.badge_outlined),
+                                'Full name',
+                                Icons.badge_outlined,
+                              ),
                               validator: (v) => (v ?? '').trim().isEmpty
                                   ? 'Full name is required'
                                   : null,
@@ -245,15 +246,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             DropdownButtonFormField<ClinicianRole>(
                               initialValue: _role,
                               decoration: _decoration(
-                                  'Role', Icons.work_outline_outlined),
+                                'Role',
+                                Icons.work_outline_outlined,
+                              ),
                               items: ClinicianRole.values
-                                  .map((r) => DropdownMenuItem(
-                                        value: r,
-                                        child: Text(r.label),
-                                      ))
+                                  .map(
+                                    (r) => DropdownMenuItem(
+                                      value: r,
+                                      child: Text(r.label),
+                                    ),
+                                  )
                                   .toList(),
-                              onChanged: (v) => setState(() =>
-                                  _role = v ?? ClinicianRole.therapist),
+                              onChanged: (v) => setState(
+                                () => _role = v ?? ClinicianRole.therapist,
+                              ),
                             ),
                             const SizedBox(height: 14),
                           ],
@@ -261,8 +267,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _email,
                             keyboardType: TextInputType.emailAddress,
                             autofillHints: const [AutofillHints.email],
-                            decoration:
-                                _decoration('Email', Icons.email_outlined),
+                            decoration: _decoration(
+                              'Email',
+                              Icons.email_outlined,
+                            ),
                             validator: _emailValidator,
                           ),
                           const SizedBox(height: 14),
@@ -270,20 +278,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _password,
                             obscureText: !_showPassword,
                             autofillHints: const [AutofillHints.password],
-                            decoration: _decoration(
-                                    'Password', Icons.lock_outline)
-                                .copyWith(
-                              suffixIcon: IconButton(
-                                tooltip: _showPassword
-                                    ? 'Hide password'
-                                    : 'Show password',
-                                onPressed: () => setState(
-                                    () => _showPassword = !_showPassword),
-                                icon: Icon(_showPassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility),
-                              ),
-                            ),
+                            decoration:
+                                _decoration(
+                                  'Password',
+                                  Icons.lock_outline,
+                                ).copyWith(
+                                  suffixIcon: IconButton(
+                                    tooltip: _showPassword
+                                        ? 'Hide password'
+                                        : 'Show password',
+                                    onPressed: () => setState(
+                                      () => _showPassword = !_showPassword,
+                                    ),
+                                    icon: Icon(
+                                      _showPassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                  ),
+                                ),
                             validator: _passwordValidator,
                           ),
                           if (!isSignUp)
@@ -293,13 +306,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: _loading ? null : _resetPassword,
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 4, vertical: 4),
+                                    horizontal: 4,
+                                    vertical: 4,
+                                  ),
                                   minimumSize: const Size(0, 32),
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                   textStyle: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                                 child: const Text('Forgot password?'),
                               ),
@@ -316,8 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           FilledButton(
                             onPressed: _loading ? null : _submit,
                             style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -328,9 +343,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                              Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
                                   )
                                 : Text(
@@ -345,21 +360,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(
                                   Icons.shield_outlined,
                                   size: 16,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -368,9 +380,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     'required for HIPAA accounts. '
                                     'Enrol after signing in — Settings '
                                     '› Two-factor authentication.',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 ),
                               ],
@@ -398,14 +410,18 @@ class _LoginScreenState extends State<LoginScreen> {
       showSelectedIcon: false,
       // Selected segment reads clearly as the active state.
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith((states) =>
-            states.contains(WidgetState.selected) ? cs.primary : cs.surface),
-        foregroundColor: WidgetStateProperty.resolveWith((states) =>
-            states.contains(WidgetState.selected)
-                ? cs.onPrimary
-                : cs.onSurfaceVariant),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? cs.primary : cs.surface,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? cs.onPrimary
+              : cs.onSurfaceVariant,
+        ),
         textStyle: const WidgetStatePropertyAll(
-            TextStyle(fontWeight: FontWeight.w600)),
+          TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       segments: const [
         ButtonSegment(value: _Mode.signIn, label: Text('Sign in')),
@@ -419,59 +435,58 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _decoration(String label, IconData icon) =>
-      InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      );
+  InputDecoration _decoration(String label, IconData icon) => InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+  );
 
   Widget _backendBanner(ColorScheme cs) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.cloud_off, color: Colors.amber, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Demo mode — sign in with any email + 8+ char password '
-                '(e.g. demo@psyclinicai.com / demo1234) to enter the app. '
-                'Real accounts require `flutterfire configure`.',
-                style: TextStyle(
-                  color: cs.onSurface.withValues(alpha: 0.8),
-                  fontSize: 12.5,
-                ),
-              ),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.amber.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.cloud_off, color: Colors.amber, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Demo mode — sign in with any email + 8+ char password '
+            '(e.g. demo@psyclinicai.com / demo1234) to enter the app. '
+            'Real accounts require `flutterfire configure`.',
+            style: TextStyle(
+              color: cs.onSurface.withValues(alpha: 0.8),
+              fontSize: 12.5,
             ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _errorBanner(String text) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.red.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.error_outline, color: Colors.red, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.red, fontSize: 13),
+          ),
         ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(text,
-                  style: const TextStyle(color: Colors.red, fontSize: 13)),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 class _Logo extends StatelessWidget {
@@ -497,8 +512,7 @@ class _Logo extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(Icons.psychology,
-            color: cs.onPrimary, size: 34),
+        child: Icon(Icons.psychology, color: cs.onPrimary, size: 34),
       ),
     );
   }

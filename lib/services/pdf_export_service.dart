@@ -47,21 +47,18 @@ class PDFExportService {
             therapistName: therapistName,
             ttf: ttf,
           ),
-          
+
           // Seans notları sayfası
           _buildSessionNotesPage(
             sessionNotes: sessionNotes,
             sessionDuration: sessionDuration,
             ttf: ttf,
           ),
-          
+
           // AI özeti sayfası
           if (aiSummary.isNotEmpty)
-            _buildAISummaryPage(
-              aiSummary: aiSummary,
-              ttf: ttf,
-            ),
-          
+            _buildAISummaryPage(aiSummary: aiSummary, ttf: ttf),
+
           // Ekler sayfası (varsa)
           if ((attachments ?? []).isNotEmpty)
             _buildAttachmentsPage(attachments!, ttf),
@@ -103,10 +100,7 @@ class PDFExportService {
                   shape: pw.BoxShape.circle,
                 ),
                 child: pw.Center(
-                  child: pw.Text(
-                    '🧠',
-                    style: const pw.TextStyle(fontSize: 30),
-                  ),
+                  child: pw.Text('🧠', style: const pw.TextStyle(fontSize: 30)),
                 ),
               ),
               pw.SizedBox(width: 20),
@@ -121,9 +115,9 @@ class PDFExportService {
               ),
             ],
           ),
-          
+
           pw.SizedBox(height: 30),
-          
+
           // Ana başlık
           pw.Text(
             'SEANS RAPORU',
@@ -134,9 +128,9 @@ class PDFExportService {
               color: PdfColors.blue900,
             ),
           ),
-          
+
           pw.SizedBox(height: 40),
-          
+
           // Bilgi tablosu
           pw.Container(
             padding: const pw.EdgeInsets.all(20),
@@ -148,17 +142,23 @@ class PDFExportService {
               children: [
                 _buildInfoRow('Danışan Adı:', clientName, ttf),
                 _buildInfoRow('Seans ID:', sessionId, ttf),
-                _buildInfoRow('Seans Tarihi:', 
-                  '${sessionDate.day}/${sessionDate.month}/${sessionDate.year}', ttf),
-                _buildInfoRow('Seans Saati:', 
-                  '${sessionDate.hour.toString().padLeft(2, '0')}:${sessionDate.minute.toString().padLeft(2, '0')}', ttf),
+                _buildInfoRow(
+                  'Seans Tarihi:',
+                  '${sessionDate.day}/${sessionDate.month}/${sessionDate.year}',
+                  ttf,
+                ),
+                _buildInfoRow(
+                  'Seans Saati:',
+                  '${sessionDate.hour.toString().padLeft(2, '0')}:${sessionDate.minute.toString().padLeft(2, '0')}',
+                  ttf,
+                ),
                 _buildInfoRow('Terapist:', therapistName, ttf),
               ],
             ),
           ),
-          
+
           pw.SizedBox(height: 30),
-          
+
           // Uyarı notu
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
@@ -203,7 +203,10 @@ class PDFExportService {
             ),
             child: pw.Row(
               children: [
-                pw.Icon(const pw.IconData(0xe3b9), color: PdfColors.blue), // edit icon
+                pw.Icon(
+                  const pw.IconData(0xe3b9),
+                  color: PdfColors.blue,
+                ), // edit icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'SEANS NOTLARI',
@@ -217,9 +220,9 @@ class PDFExportService {
               ],
             ),
           ),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // Seans süresi
           pw.Container(
             padding: const pw.EdgeInsets.all(10),
@@ -229,7 +232,10 @@ class PDFExportService {
             ),
             child: pw.Row(
               children: [
-                pw.Icon(const pw.IconData(0xe425), color: PdfColors.grey700), // timer icon
+                pw.Icon(
+                  const pw.IconData(0xe425),
+                  color: PdfColors.grey700,
+                ), // timer icon
                 pw.SizedBox(width: 8),
                 pw.Text(
                   'Seans Süresi: ${_formatDuration(sessionDuration)}',
@@ -243,9 +249,9 @@ class PDFExportService {
               ],
             ),
           ),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // Notlar
           pw.Text(
             'Seans İçeriği:',
@@ -256,9 +262,9 @@ class PDFExportService {
               color: PdfColors.blue900,
             ),
           ),
-          
+
           pw.SizedBox(height: 10),
-          
+
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
             decoration: pw.BoxDecoration(
@@ -282,10 +288,7 @@ class PDFExportService {
   }
 
   /// AI özeti sayfası
-  pw.Widget _buildAISummaryPage({
-    required String aiSummary,
-    pw.Font? ttf,
-  }) {
+  pw.Widget _buildAISummaryPage({required String aiSummary, pw.Font? ttf}) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(20),
       child: pw.Column(
@@ -300,7 +303,10 @@ class PDFExportService {
             ),
             child: pw.Row(
               children: [
-                pw.Icon(const pw.IconData(0xe3b9), color: PdfColors.green), // psychology icon
+                pw.Icon(
+                  const pw.IconData(0xe3b9),
+                  color: PdfColors.green,
+                ), // psychology icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'AI DESTEKLİ ÖZET',
@@ -314,9 +320,9 @@ class PDFExportService {
               ],
             ),
           ),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // AI özeti
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
@@ -335,9 +341,9 @@ class PDFExportService {
               ),
             ),
           ),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // AI uyarısı
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
@@ -370,9 +376,9 @@ class PDFExportService {
       child: pw.Column(
         children: [
           pw.Divider(color: PdfColors.grey, thickness: 1),
-          
+
           pw.SizedBox(height: 20),
-          
+
           // İmza alanı
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -389,14 +395,10 @@ class PDFExportService {
                     ),
                   ),
                   pw.SizedBox(height: 40),
-                  pw.Container(
-                    width: 150,
-                    height: 1,
-                    color: PdfColors.black,
-                  ),
+                  pw.Container(width: 150, height: 1, color: PdfColors.black),
                 ],
               ),
-              
+
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
@@ -409,18 +411,14 @@ class PDFExportService {
                     ),
                   ),
                   pw.SizedBox(height: 40),
-                  pw.Container(
-                    width: 150,
-                    height: 1,
-                    color: PdfColors.black,
-                  ),
+                  pw.Container(width: 150, height: 1, color: PdfColors.black),
                 ],
               ),
             ],
           ),
-          
+
           pw.SizedBox(height: 40),
-          
+
           // Alt bilgi
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
@@ -514,7 +512,10 @@ class PDFExportService {
             ),
             child: pw.Row(
               children: [
-                pw.Icon(const pw.IconData(0xe3b6), color: PdfColors.purple), // attachment icon
+                pw.Icon(
+                  const pw.IconData(0xe3b6),
+                  color: PdfColors.purple,
+                ), // attachment icon
                 pw.SizedBox(width: 10),
                 pw.Text(
                   'EKLER',
@@ -531,17 +532,19 @@ class PDFExportService {
 
           pw.SizedBox(height: 16),
 
-          ...attachments.map((bytes) => pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 12),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.grey300),
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
-                ),
-                child: pw.Padding(
-                  padding: const pw.EdgeInsets.all(8),
-                  child: pw.Image(pw.MemoryImage(bytes), height: 300),
-                ),
-              )),
+          ...attachments.map(
+            (bytes) => pw.Container(
+              margin: const pw.EdgeInsets.only(bottom: 12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Padding(
+                padding: const pw.EdgeInsets.all(8),
+                child: pw.Image(pw.MemoryImage(bytes), height: 300),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -558,9 +561,7 @@ class PDFExportService {
 
   /// PDF'i yazdır
   Future<void> printPDF(Uint8List pdfBytes) async {
-    await Printing.layoutPdf(
-      onLayout: (format) async => pdfBytes,
-    );
+    await Printing.layoutPdf(onLayout: (format) async => pdfBytes);
   }
 
   /// PDF'i dosyaya kaydet

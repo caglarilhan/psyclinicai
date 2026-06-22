@@ -32,8 +32,10 @@ class _PsyRevealState extends State<PsyReveal>
     vsync: this,
     duration: PsyMotion.slow,
   );
-  late final Animation<double> _t =
-      CurvedAnimation(parent: _c, curve: PsyMotion.emphasized);
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _c,
+    curve: PsyMotion.emphasized,
+  );
   Timer? _timer;
   bool _started = false;
 

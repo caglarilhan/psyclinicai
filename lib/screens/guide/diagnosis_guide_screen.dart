@@ -26,7 +26,8 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
   int _pcl5 = -1; // 0-80
 
   // AI sonuç durumu
-  Map<String, dynamic>? _aiResult; // {risk: low/medium/high, diagnoses: [...], notes: ...}
+  Map<String, dynamic>?
+  _aiResult; // {risk: low/medium/high, diagnoses: [...], notes: ...}
 
   final HomeworkRepository _homeworkRepo = HomeworkRepository();
 
@@ -73,7 +74,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
               ),
               const SizedBox(width: 8),
             ],
-          )
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -108,8 +109,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('DSM‑5 / ICD‑11 Kriter Kartları',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'DSM‑5 / ICD‑11 Kriter Kartları',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         _criterionCard('MDD (DSM‑5)', const [
           '≥5 belirti / ≥2 hafta',
@@ -127,8 +130,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
           'Süre > 1 ay',
         ]),
         const SizedBox(height: 12),
-        Text('Şiddet Belirteçleri',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Şiddet Belirteçleri',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const ListTile(
           leading: Icon(Icons.stacked_bar_chart),
           title: Text('PHQ‑9'),
@@ -149,8 +154,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Ölçek Sonuçları',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Ölçek Sonuçları',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         _scaleTile(
           title: 'PHQ‑9 (0‑27)',
@@ -177,7 +184,9 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed: () => setState(() { _phq9 = _gad7 = _pcl5 = -1; }),
+              onPressed: () => setState(() {
+                _phq9 = _gad7 = _pcl5 = -1;
+              }),
               icon: const Icon(Icons.clear),
               label: const Text('Sıfırla'),
             ),
@@ -195,8 +204,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Semptom/Öykü',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Semptom/Öykü',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: _symptoms,
@@ -218,29 +229,51 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
         const SizedBox(height: 12),
         ElevatedButton.icon(
           onPressed: () {
-            final txt = ('${_symptoms.text} ${_history.text} ${_observations.text}').toLowerCase();
+            final txt =
+                ('${_symptoms.text} ${_history.text} ${_observations.text}')
+                    .toLowerCase();
             String risk = 'low';
             if (txt.contains('intihar') || txt.contains('ölüm')) {
               risk = 'high';
-            } else if (txt.contains('anksiyete') || txt.contains('panik') || (_gad7 >= 10 && _gad7 != -1)) {
+            } else if (txt.contains('anksiyete') ||
+                txt.contains('panik') ||
+                (_gad7 >= 10 && _gad7 != -1)) {
               risk = 'medium';
             }
 
             final List<Map<String, dynamic>> diagnoses = [];
-            if ((_phq9 >= 10 && _phq9 != -1) || txt.contains('üzüntü') || txt.contains('umutsuzluk')) {
-              diagnoses.add({'name': 'Depresyon', 'code': 'F32.x', 'confidence': (_phq9 > 0 ? (_phq9 / 27 * 100).round() : 70)});
+            if ((_phq9 >= 10 && _phq9 != -1) ||
+                txt.contains('üzüntü') ||
+                txt.contains('umutsuzluk')) {
+              diagnoses.add({
+                'name': 'Depresyon',
+                'code': 'F32.x',
+                'confidence': (_phq9 > 0 ? (_phq9 / 27 * 100).round() : 70),
+              });
             }
-            if ((_gad7 >= 10 && _gad7 != -1) || txt.contains('anksiyete') || txt.contains('panik')) {
-              diagnoses.add({'name': 'Genel Anksiyete Bozukluğu', 'code': 'F41.1', 'confidence': (_gad7 > 0 ? (_gad7 / 21 * 100).round() : 60)});
+            if ((_gad7 >= 10 && _gad7 != -1) ||
+                txt.contains('anksiyete') ||
+                txt.contains('panik')) {
+              diagnoses.add({
+                'name': 'Genel Anksiyete Bozukluğu',
+                'code': 'F41.1',
+                'confidence': (_gad7 > 0 ? (_gad7 / 21 * 100).round() : 60),
+              });
             }
             if ((_pcl5 >= 33 && _pcl5 != -1) || txt.contains('travma')) {
-              diagnoses.add({'name': 'Travma Sonrası Stres Bozukluğu', 'code': 'F43.1', 'confidence': (_pcl5 > 0 ? (_pcl5 / 80 * 100).round() : 55)});
+              diagnoses.add({
+                'name': 'Travma Sonrası Stres Bozukluğu',
+                'code': 'F43.1',
+                'confidence': (_pcl5 > 0 ? (_pcl5 / 80 * 100).round() : 55),
+              });
             }
             setState(() {
               _aiResult = {
                 'risk': risk,
                 'diagnoses': diagnoses,
-                'notes': risk == 'high' ? 'Güvenlik planı ve acil değerlendirme düşünülmeli.' : 'Klinik değerlendirme ile doğrulayın.'
+                'notes': risk == 'high'
+                    ? 'Güvenlik planı ve acil değerlendirme düşünülmeli.'
+                    : 'Klinik değerlendirme ile doğrulayın.',
               };
             });
           },
@@ -260,14 +293,21 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Tedavi ve İzlem${dx != null ? ' • Odak: $dx' : ''}',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Tedavi ve İzlem${dx != null ? ' • Odak: $dx' : ''}',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         FutureBuilder<List<Widget>>(
           future: _loadGuidelineCards(dx),
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
-              return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                ),
+              );
             }
             final items = snap.data ?? _treatmentCardsFor(dx);
             return Column(children: items);
@@ -281,17 +321,29 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
   Widget _buildCompliance() {
     final t = Theme.of(context);
     final notes = {
-      'TR': ['KVKK ve SGK raporlama notları.', 'Aydınlatma metni ve açık rıza süreçleri.'],
+      'TR': [
+        'KVKK ve SGK raporlama notları.',
+        'Aydınlatma metni ve açık rıza süreçleri.',
+      ],
       'EU': ['GDPR: veri minimizasyonu, amaç sınırlaması, silme hakkı.'],
       'US': ['HIPAA: PHI güvenliği, acil raporlama yükümlülükleri.'],
     }[_region]!;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Bölge: $_region',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Bölge: $_region',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
-        ...notes.map((n) => Row(children: [const Text('• '), Expanded(child: Text(n))])),
+        ...notes.map(
+          (n) => Row(
+            children: [
+              const Text('• '),
+              Expanded(child: Text(n)),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -302,8 +354,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Favoriler ve Ödevler',
-            style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          'Favoriler ve Ödevler',
+          style: t.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         ListTile(
           leading: const Icon(Icons.lightbulb_outline),
@@ -330,7 +384,14 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            ...items.map((e) => Row(children: [const Text('• '), Expanded(child: Text(e))])),
+            ...items.map(
+              (e) => Row(
+                children: [
+                  const Text('• '),
+                  Expanded(child: Text(e)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -362,7 +423,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.black12),
       ),
-      child: SelectableText(txt, style: const TextStyle(fontFamily: 'monospace')),
+      child: SelectableText(
+        txt,
+        style: const TextStyle(fontFamily: 'monospace'),
+      ),
     );
   }
 
@@ -373,28 +437,37 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     // pre-session brief read the same repository.
     try {
       await _homeworkRepo.initialize();
-      await _homeworkRepo.add(HomeworkItem(
-        id: 'hw-${DateTime.now().millisecondsSinceEpoch}',
-        patientId: 'demo-1',
-        title: 'Otomatik düşünce kaydı (CBT)',
-        note: 'Bilişsel yeniden yapılandırma — günlük otomatik düşünce kaydı.',
-        dueDate: DateTime.now().add(const Duration(days: 7)),
-        linkedGoal: 'CBT: Bilişsel Yeniden Yapılandırma',
-      ));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödev eklendi')),
+      await _homeworkRepo.add(
+        HomeworkItem(
+          id: 'hw-${DateTime.now().millisecondsSinceEpoch}',
+          patientId: 'demo-1',
+          title: 'Otomatik düşünce kaydı (CBT)',
+          note:
+              'Bilişsel yeniden yapılandırma — günlük otomatik düşünce kaydı.',
+          dueDate: DateTime.now().add(const Duration(days: 7)),
+          linkedGoal: 'CBT: Bilişsel Yeniden Yapılandırma',
+        ),
       );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ödev eklendi')));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ödev eklenemedi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ödev eklenemedi')));
     }
   }
 
   // Ölçek yardımcıları
-  Widget _scaleTile({required String title, required int value, required int max, required void Function(int) onChanged, required String severityText}) {
+  Widget _scaleTile({
+    required String title,
+    required int value,
+    required int max,
+    required void Function(int) onChanged,
+    required String severityText,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -403,7 +476,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
           children: [
             Row(
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const Spacer(),
                 Chip(label: Text(severityText)),
               ],
@@ -429,45 +505,78 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     );
   }
 
-  String _phq9Severity(int s){
+  String _phq9Severity(int s) {
     if (s >= 20) return 'Ağır';
     if (s >= 15) return 'Orta‑ağır';
     if (s >= 10) return 'Orta';
     if (s >= 5) return 'Hafif';
     return 'Minimal';
   }
-  String _gad7Severity(int s){
+
+  String _gad7Severity(int s) {
     if (s >= 15) return 'Ağır';
     if (s >= 10) return 'Orta';
     if (s >= 5) return 'Hafif';
     return 'Minimal';
   }
-  String _pcl5Severity(int s){
+
+  String _pcl5Severity(int s) {
     if (s >= 50) return 'Yüksek';
     if (s >= 33) return 'Orta';
     return 'Düşük';
   }
-  String _scalesSummary(){
-    final a = _phq9 >= 0 ? 'PHQ‑9: $_phq9 (${_phq9Severity(_phq9)})' : 'PHQ‑9: —';
-    final b = _gad7 >= 0 ? 'GAD‑7: $_gad7 (${_gad7Severity(_gad7)})' : 'GAD‑7: —';
-    final c = _pcl5 >= 0 ? 'PCL‑5: $_pcl5 (${_pcl5Severity(_pcl5)})' : 'PCL‑5: —';
+
+  String _scalesSummary() {
+    final a = _phq9 >= 0
+        ? 'PHQ‑9: $_phq9 (${_phq9Severity(_phq9)})'
+        : 'PHQ‑9: —';
+    final b = _gad7 >= 0
+        ? 'GAD‑7: $_gad7 (${_gad7Severity(_gad7)})'
+        : 'GAD‑7: —';
+    final c = _pcl5 >= 0
+        ? 'PCL‑5: $_pcl5 (${_pcl5Severity(_pcl5)})'
+        : 'PCL‑5: —';
     return '$a | $b | $c';
   }
 
   // AI sonuç paneli
-  Widget _aiResultPanel(Map<String, dynamic> r){
-    final Color col = r['risk'] == 'high' ? Colors.red : r['risk'] == 'medium' ? Colors.orange : Colors.green;
+  Widget _aiResultPanel(Map<String, dynamic> r) {
+    final Color col = r['risk'] == 'high'
+        ? Colors.red
+        : r['risk'] == 'medium'
+        ? Colors.orange
+        : Colors.green;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Icon(Icons.shield, color: col), const SizedBox(width: 8), Text('Risk: ${r['risk']}')]),
+            Row(
+              children: [
+                Icon(Icons.shield, color: col),
+                const SizedBox(width: 8),
+                Text('Risk: ${r['risk']}'),
+              ],
+            ),
             const SizedBox(height: 8),
-            const Text('Olası Tanılar', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Olası Tanılar',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
-            ...((r['diagnoses'] as List).map((d)=> Row(children:[const Text('• '), Expanded(child: Text('${d['name']} (${d['code']}) – ${d['confidence']}%'))]))),
+            ...((r['diagnoses'] as List).map(
+              (d) => Row(
+                children: [
+                  const Text('• '),
+                  Expanded(
+                    child: Text(
+                      '${d['name']} (${d['code']}) – ${d['confidence']}%',
+                    ),
+                  ),
+                ],
+              ),
+            )),
             const SizedBox(height: 8),
             Text(r['notes'] as String? ?? ''),
           ],
@@ -476,7 +585,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     );
   }
 
-  String? _pickDxFromState(){
+  String? _pickDxFromState() {
     if (_aiResult != null && (_aiResult!['diagnoses'] as List).isNotEmpty) {
       return ((_aiResult!['diagnoses'] as List).first)['name'] as String?;
     }
@@ -486,26 +595,53 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
     return null;
   }
 
-  List<Widget> _treatmentCardsFor(String? dx){
+  List<Widget> _treatmentCardsFor(String? dx) {
     if (dx == 'Genel Anksiyete Bozukluğu') {
       return [
-        _guideCard('CBT (GAB odaklı)', 'Maruz bırakma, gevşeme eğitimi, bilişsel yeniden yapılandırma.'),
-        _guideCard('Farmakoterapi', 'SSRI/SNRI; 4‑6 hf yanıt; yan etki izlemi.'),
-        _guideCard('İzlem', 'Haftalık‑iki haftada bir takip, gerekirse işlevsellik değerlendirmesi.'),
+        _guideCard(
+          'CBT (GAB odaklı)',
+          'Maruz bırakma, gevşeme eğitimi, bilişsel yeniden yapılandırma.',
+        ),
+        _guideCard(
+          'Farmakoterapi',
+          'SSRI/SNRI; 4‑6 hf yanıt; yan etki izlemi.',
+        ),
+        _guideCard(
+          'İzlem',
+          'Haftalık‑iki haftada bir takip, gerekirse işlevsellik değerlendirmesi.',
+        ),
       ];
     }
     if (dx == 'PTSD') {
       return [
-        _guideCard('Travma odaklı terapi', 'TF‑CBT/EMDR; güvenlik ve regülasyon becerileri.'),
-        _guideCard('Farmakoterapi', 'SSRI; kabus için prazosin değerlendirilebilir (bölgesel uygulamaya göre).'),
-        _guideCard('İzlem', 'Kriz planı ve tetikleyici yönetimi; komorbid SUD taraması.'),
+        _guideCard(
+          'Travma odaklı terapi',
+          'TF‑CBT/EMDR; güvenlik ve regülasyon becerileri.',
+        ),
+        _guideCard(
+          'Farmakoterapi',
+          'SSRI; kabus için prazosin değerlendirilebilir (bölgesel uygulamaya göre).',
+        ),
+        _guideCard(
+          'İzlem',
+          'Kriz planı ve tetikleyici yönetimi; komorbid SUD taraması.',
+        ),
       ];
     }
     // Varsayılan: Depresyon
     return [
-      _guideCard('CBT (ilk basamak)', '8‑12 seans; ev ödevi ve beceri çalışmaları.'),
-      _guideCard('Farmakoterapi (SSRI)', 'Yan etki izlemi: GI semptomlar, ajitasyon; 4‑6 hf yanıt değerlendirmesi.'),
-      _guideCard('İzlem', 'Gerekirse laboratuvar: TSH, B12; intihar riski için yakın takip.'),
+      _guideCard(
+        'CBT (ilk basamak)',
+        '8‑12 seans; ev ödevi ve beceri çalışmaları.',
+      ),
+      _guideCard(
+        'Farmakoterapi (SSRI)',
+        'Yan etki izlemi: GI semptomlar, ajitasyon; 4‑6 hf yanıt değerlendirmesi.',
+      ),
+      _guideCard(
+        'İzlem',
+        'Gerekirse laboratuvar: TSH, B12; intihar riski için yakın takip.',
+      ),
     ];
   }
 
@@ -514,19 +650,23 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
       final key = (dx == 'Genel Anksiyete Bozukluğu')
           ? 'gad_tr.json'
           : (dx == 'PTSD')
-              ? 'ptsd_tr.json'
-              : 'depression_tr.json';
-      final data = await DefaultAssetBundle.of(context).loadString('assets/guidelines/$key');
+          ? 'ptsd_tr.json'
+          : 'depression_tr.json';
+      final data = await DefaultAssetBundle.of(
+        context,
+      ).loadString('assets/guidelines/$key');
       final map = convert.jsonDecode(data) as Map<String, dynamic>;
       final recs = (map['recommendations'] as List?) ?? [];
       return recs
-          .map<Widget>((r) => _guideCard(
-              r['title'] as String? ?? 'Öneri', r['text'] as String? ?? ''))
+          .map<Widget>(
+            (r) => _guideCard(
+              r['title'] as String? ?? 'Öneri',
+              r['text'] as String? ?? '',
+            ),
+          )
           .toList();
     } catch (_) {
       return _treatmentCardsFor(dx);
     }
   }
 }
-
-

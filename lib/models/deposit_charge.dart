@@ -41,20 +41,20 @@ class DepositCharge {
   }
 
   factory DepositCharge.fromJson(Map<String, dynamic> json) => DepositCharge(
-        id: json['id'] as String? ?? '',
-        clinicId: json['clinicId'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        appointmentId: json['appointmentId'] as String? ?? '',
-        amountCents: (json['amountCents'] as num? ?? 0).toInt(),
-        currency: json['currency'] as String? ?? 'EUR',
-        status: DepositStatus.fromId(json['status'] as String?),
-        paymentIntentId: json['paymentIntentId'] as String?,
-        noShowReasonCode: json['noShowReasonCode'] as String?,
-        refundedCents: (json['refundedCents'] as num?)?.toInt(),
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
-        capturedAt: DateTime.tryParse(json['capturedAt'] as String? ?? ''),
-        refundedAt: DateTime.tryParse(json['refundedAt'] as String? ?? ''),
-      );
+    id: json['id'] as String? ?? '',
+    clinicId: json['clinicId'] as String? ?? '',
+    patientId: json['patientId'] as String? ?? '',
+    appointmentId: json['appointmentId'] as String? ?? '',
+    amountCents: (json['amountCents'] as num? ?? 0).toInt(),
+    currency: json['currency'] as String? ?? 'EUR',
+    status: DepositStatus.fromId(json['status'] as String?),
+    paymentIntentId: json['paymentIntentId'] as String?,
+    noShowReasonCode: json['noShowReasonCode'] as String?,
+    refundedCents: (json['refundedCents'] as num?)?.toInt(),
+    createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+    capturedAt: DateTime.tryParse(json['capturedAt'] as String? ?? ''),
+    refundedAt: DateTime.tryParse(json['refundedAt'] as String? ?? ''),
+  );
 
   final String id;
   final String clinicId;
@@ -86,8 +86,7 @@ class DepositCharge {
     if (status == next) return 'Already in that state';
     switch (status) {
       case DepositStatus.pending:
-        if (next == DepositStatus.held ||
-            next == DepositStatus.cancelled) {
+        if (next == DepositStatus.held || next == DepositStatus.cancelled) {
           return null;
         }
         return 'A pending deposit must be held or cancelled first';
@@ -113,38 +112,37 @@ class DepositCharge {
     int? refundedCents,
     DateTime? capturedAt,
     DateTime? refundedAt,
-  }) =>
-      DepositCharge(
-        id: id,
-        clinicId: clinicId,
-        patientId: patientId,
-        appointmentId: appointmentId,
-        amountCents: amountCents,
-        currency: currency,
-        status: status ?? this.status,
-        paymentIntentId: paymentIntentId ?? this.paymentIntentId,
-        noShowReasonCode: noShowReasonCode ?? this.noShowReasonCode,
-        refundedCents: refundedCents ?? this.refundedCents,
-        createdAt: createdAt,
-        capturedAt: capturedAt ?? this.capturedAt,
-        refundedAt: refundedAt ?? this.refundedAt,
-      );
+  }) => DepositCharge(
+    id: id,
+    clinicId: clinicId,
+    patientId: patientId,
+    appointmentId: appointmentId,
+    amountCents: amountCents,
+    currency: currency,
+    status: status ?? this.status,
+    paymentIntentId: paymentIntentId ?? this.paymentIntentId,
+    noShowReasonCode: noShowReasonCode ?? this.noShowReasonCode,
+    refundedCents: refundedCents ?? this.refundedCents,
+    createdAt: createdAt,
+    capturedAt: capturedAt ?? this.capturedAt,
+    refundedAt: refundedAt ?? this.refundedAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'patientId': patientId,
-        'appointmentId': appointmentId,
-        'amountCents': amountCents,
-        'currency': currency,
-        'status': status.id,
-        if (paymentIntentId != null) 'paymentIntentId': paymentIntentId,
-        if (noShowReasonCode != null) 'noShowReasonCode': noShowReasonCode,
-        if (refundedCents != null) 'refundedCents': refundedCents,
-        'createdAt': createdAt.toIso8601String(),
-        if (capturedAt != null) 'capturedAt': capturedAt!.toIso8601String(),
-        if (refundedAt != null) 'refundedAt': refundedAt!.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'patientId': patientId,
+    'appointmentId': appointmentId,
+    'amountCents': amountCents,
+    'currency': currency,
+    'status': status.id,
+    if (paymentIntentId != null) 'paymentIntentId': paymentIntentId,
+    if (noShowReasonCode != null) 'noShowReasonCode': noShowReasonCode,
+    if (refundedCents != null) 'refundedCents': refundedCents,
+    'createdAt': createdAt.toIso8601String(),
+    if (capturedAt != null) 'capturedAt': capturedAt!.toIso8601String(),
+    if (refundedAt != null) 'refundedAt': refundedAt!.toIso8601String(),
+  };
 }
 
 enum DepositStatus {

@@ -8,8 +8,11 @@ void main() {
     });
 
     test('false on web (isWeb=true)', () {
-      expect(isLocalCacheAllowed(isWeb: true), isFalse,
-          reason: 'localStorage is plain-text — PHI must not land there');
+      expect(
+        isLocalCacheAllowed(isWeb: true),
+        isFalse,
+        reason: 'localStorage is plain-text — PHI must not land there',
+      );
     });
   });
 

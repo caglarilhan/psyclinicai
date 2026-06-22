@@ -246,9 +246,7 @@ class Iso27001AnnexARegistry {
 
   /// Counts per readiness state — drives the trust-center summary chip.
   static Map<AnnexAStatus, int> statusBreakdown() {
-    final out = <AnnexAStatus, int>{
-      for (final s in AnnexAStatus.values) s: 0,
-    };
+    final out = <AnnexAStatus, int>{for (final s in AnnexAStatus.values) s: 0};
     for (final c in controls) {
       out[c.status] = (out[c.status] ?? 0) + 1;
     }

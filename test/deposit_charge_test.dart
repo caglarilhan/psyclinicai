@@ -4,16 +4,15 @@ import 'package:psyclinicai/models/deposit_charge.dart';
 DepositCharge _row({
   DepositStatus status = DepositStatus.pending,
   int amountCents = 2500,
-}) =>
-    DepositCharge(
-      id: 'd-1',
-      clinicId: 'c1',
-      patientId: 'p-1',
-      appointmentId: 'appt-1',
-      amountCents: amountCents,
-      currency: 'EUR',
-      status: status,
-    );
+}) => DepositCharge(
+  id: 'd-1',
+  clinicId: 'c1',
+  patientId: 'p-1',
+  appointmentId: 'appt-1',
+  amountCents: amountCents,
+  currency: 'EUR',
+  status: status,
+);
 
 void main() {
   group('DepositCharge', () {

@@ -41,10 +41,11 @@ class OfflineService extends ChangeNotifier {
     await _initDatabase();
     await _checkConnectivity();
     await _loadOfflineData();
-    
+
     // Connectivity listener — handle saved so dispose() can cancel it.
-    _connectivitySub =
-        Connectivity().onConnectivityChanged.listen(_updateConnectivityStatus);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _updateConnectivityStatus,
+    );
 
     _isInitialized = true;
     notifyListeners();
@@ -179,10 +180,10 @@ class OfflineService extends ChangeNotifier {
   void _updateConnectivityStatus(ConnectivityResult result) {
     final wasOnline = _isOnline;
     _isOnline = result != ConnectivityResult.none;
-    
+
     if (wasOnline != _isOnline) {
       notifyListeners();
-      
+
       if (_isOnline) {
         _syncPendingData();
       }
@@ -199,19 +200,27 @@ class OfflineService extends ChangeNotifier {
 
       // Load appointments
       final appointments = await _database!.query('appointments');
-      _offlineData.addAll(appointments.map((a) => {...a, 'table': 'appointments'}));
+      _offlineData.addAll(
+        appointments.map((a) => {...a, 'table': 'appointments'}),
+      );
 
       // Load prescriptions
       final prescriptions = await _database!.query('prescriptions');
-      _offlineData.addAll(prescriptions.map((p) => {...p, 'table': 'prescriptions'}));
+      _offlineData.addAll(
+        prescriptions.map((p) => {...p, 'table': 'prescriptions'}),
+      );
 
       // Load voice notes
       final voiceNotes = await _database!.query('voice_notes');
-      _offlineData.addAll(voiceNotes.map((v) => {...v, 'table': 'voice_notes'}));
+      _offlineData.addAll(
+        voiceNotes.map((v) => {...v, 'table': 'voice_notes'}),
+      );
 
       // Load mood entries
       final moodEntries = await _database!.query('mood_entries');
-      _offlineData.addAll(moodEntries.map((m) => {...m, 'table': 'mood_entries'}));
+      _offlineData.addAll(
+        moodEntries.map((m) => {...m, 'table': 'mood_entries'}),
+      );
 
       notifyListeners();
     } catch (e, stack) {
@@ -227,7 +236,7 @@ class OfflineService extends ChangeNotifier {
   Future<String> addPatient(Map<String, dynamic> patient) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final now = DateTime.now().toIso8601String();
-    
+
     final patientData = {
       'id': id,
       'name': patient['name'],
@@ -244,7 +253,7 @@ class OfflineService extends ChangeNotifier {
       try {
         await _syncPatient(patientData);
         patientData['sync_status'] = 'synced';
-    } catch (e) {
+      } catch (e) {
         patientData['sync_status'] = 'pending';
         await _addToSyncQueue('patients', id, 'create', patientData);
       }
@@ -287,7 +296,9 @@ class OfflineService extends ChangeNotifier {
     );
 
     // Update offline data
-    final index = _offlineData.indexWhere((item) => item['id'] == id && item['table'] == 'patients');
+    final index = _offlineData.indexWhere(
+      (item) => item['id'] == id && item['table'] == 'patients',
+    );
     if (index != -1) {
       _offlineData[index] = {..._offlineData[index], ...updateData};
     }
@@ -305,13 +316,11 @@ class OfflineService extends ChangeNotifier {
       await _addToSyncQueue('patients', id, 'delete', {'id': id});
     }
 
-    await _database!.delete(
-      'patients',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await _database!.delete('patients', where: 'id = ?', whereArgs: [id]);
 
-    _offlineData.removeWhere((item) => item['id'] == id && item['table'] == 'patients');
+    _offlineData.removeWhere(
+      (item) => item['id'] == id && item['table'] == 'patients',
+    );
     notifyListeners();
   }
 
@@ -319,7 +328,7 @@ class OfflineService extends ChangeNotifier {
   Future<String> addAppointment(Map<String, dynamic> appointment) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final now = DateTime.now().toIso8601String();
-    
+
     final appointmentData = {
       'id': id,
       'patient_id': appointment['patient_id'],
@@ -338,7 +347,7 @@ class OfflineService extends ChangeNotifier {
       try {
         await _syncAppointment(appointmentData);
         appointmentData['sync_status'] = 'synced';
-    } catch (e) {
+      } catch (e) {
         appointmentData['sync_status'] = 'pending';
         await _addToSyncQueue('appointments', id, 'create', appointmentData);
       }
@@ -357,7 +366,7 @@ class OfflineService extends ChangeNotifier {
   Future<String> addVoiceNote(Map<String, dynamic> voiceNote) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final now = DateTime.now().toIso8601String();
-    
+
     final voiceNoteData = {
       'id': id,
       'patient_id': voiceNote['patient_id'],
@@ -394,7 +403,7 @@ class OfflineService extends ChangeNotifier {
   Future<String> addMoodEntry(Map<String, dynamic> moodEntry) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final now = DateTime.now().toIso8601String();
-    
+
     final moodEntryData = {
       'id': id,
       'patient_id': moodEntry['patient_id'],
@@ -413,7 +422,7 @@ class OfflineService extends ChangeNotifier {
       try {
         await _syncMoodEntry(moodEntryData);
         moodEntryData['sync_status'] = 'synced';
-    } catch (e) {
+      } catch (e) {
         moodEntryData['sync_status'] = 'pending';
         await _addToSyncQueue('mood_entries', id, 'create', moodEntryData);
       }
@@ -429,7 +438,12 @@ class OfflineService extends ChangeNotifier {
   }
 
   // Sync queue operations
-  Future<void> _addToSyncQueue(String tableName, String recordId, String operation, Map<String, dynamic> data) async {
+  Future<void> _addToSyncQueue(
+    String tableName,
+    String recordId,
+    String operation,
+    Map<String, dynamic> data,
+  ) async {
     await _database!.insert('sync_queue', {
       'table_name': tableName,
       'record_id': recordId,
@@ -454,11 +468,12 @@ class OfflineService extends ChangeNotifier {
 
     try {
       final pendingItems = await _database!.query('sync_queue');
-      
+
       for (final item in pendingItems) {
         try {
-          final data = jsonDecode(item['data']! as String) as Map<String, dynamic>;
-          
+          final data =
+              jsonDecode(item['data']! as String) as Map<String, dynamic>;
+
           switch (item['table_name']) {
             case 'patients':
               if (item['operation'] == 'create') {
@@ -502,11 +517,11 @@ class OfflineService extends ChangeNotifier {
           );
 
           // Remove from pending sync
-          _pendingSync.removeWhere((p) => 
-            p['table_name'] == item['table_name'] && 
-            p['record_id'] == item['record_id']
+          _pendingSync.removeWhere(
+            (p) =>
+                p['table_name'] == item['table_name'] &&
+                p['record_id'] == item['record_id'],
           );
-          
         } catch (e, stack) {
           await TelemetryService.instance.captureError(
             e,
@@ -579,15 +594,21 @@ class OfflineService extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> getAppointments() {
-    return _offlineData.where((item) => item['table'] == 'appointments').toList();
+    return _offlineData
+        .where((item) => item['table'] == 'appointments')
+        .toList();
   }
 
   List<Map<String, dynamic>> getVoiceNotes() {
-    return _offlineData.where((item) => item['table'] == 'voice_notes').toList();
+    return _offlineData
+        .where((item) => item['table'] == 'voice_notes')
+        .toList();
   }
 
   List<Map<String, dynamic>> getMoodEntries() {
-    return _offlineData.where((item) => item['table'] == 'mood_entries').toList();
+    return _offlineData
+        .where((item) => item['table'] == 'mood_entries')
+        .toList();
   }
 
   int getPendingSyncCount() {

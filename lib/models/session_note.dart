@@ -10,19 +10,18 @@
 /// references this note's id through [addendumOf]. The Firestore rule
 /// (mirrored in `firestore.rules`) enforces the immutability.
 class SessionNote {
-
   factory SessionNote.fromJson(Map<String, dynamic> json) => SessionNote(
-        id: json['id'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        markdown: json['markdown'] as String? ?? '',
-        format: json['format'] as String? ?? 'soap',
-        flaggedRisk: json['flaggedRisk'] as bool? ?? false,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
-        signed: json['signed'] as bool? ?? false,
-        signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
-        signedBy: json['signedBy'] as String?,
-        addendumOf: json['addendumOf'] as String?,
-      );
+    id: json['id'] as String? ?? '',
+    patientId: json['patientId'] as String? ?? '',
+    markdown: json['markdown'] as String? ?? '',
+    format: json['format'] as String? ?? 'soap',
+    flaggedRisk: json['flaggedRisk'] as bool? ?? false,
+    createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+    signed: json['signed'] as bool? ?? false,
+    signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
+    signedBy: json['signedBy'] as String?,
+    addendumOf: json['addendumOf'] as String?,
+  );
   SessionNote({
     required this.id,
     required this.patientId,
@@ -112,15 +111,15 @@ class SessionNote {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'markdown': markdown,
-        'format': format,
-        'flaggedRisk': flaggedRisk,
-        'createdAt': createdAt.toIso8601String(),
-        'signed': signed,
-        if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
-        if (signedBy != null) 'signedBy': signedBy,
-        if (addendumOf != null) 'addendumOf': addendumOf,
-      };
+    'id': id,
+    'patientId': patientId,
+    'markdown': markdown,
+    'format': format,
+    'flaggedRisk': flaggedRisk,
+    'createdAt': createdAt.toIso8601String(),
+    'signed': signed,
+    if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
+    if (signedBy != null) 'signedBy': signedBy,
+    if (addendumOf != null) 'addendumOf': addendumOf,
+  };
 }

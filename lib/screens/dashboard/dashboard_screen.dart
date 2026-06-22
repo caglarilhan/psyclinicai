@@ -51,7 +51,11 @@ class DashboardScreen extends StatelessWidget {
           if (profile?.role.label != null) ...[
             Align(
               alignment: Alignment.centerLeft,
-              child: _RoleChip(label: profile!.role.label, cs: cs, theme: theme),
+              child: _RoleChip(
+                label: profile!.role.label,
+                cs: cs,
+                theme: theme,
+              ),
             ),
             const SizedBox(height: PsySpacing.xl),
           ],
@@ -61,7 +65,9 @@ class DashboardScreen extends StatelessWidget {
             _DemoBanner(cs: cs, theme: theme),
             const SizedBox(height: PsySpacing.xl),
           ],
-          PsyReveal(child: _KpiRow(theme: theme, cs: cs)),
+          PsyReveal(
+            child: _KpiRow(theme: theme, cs: cs),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           PsyReveal(
             delay: const Duration(milliseconds: 40),
@@ -100,7 +106,9 @@ class _RoleChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.xs),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: cs.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(PsyRadius.full),
@@ -147,12 +155,21 @@ class _DemoBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: PsySpacing.sm),
-                _bullet(cs, theme,
-                    'Sign-ups, patients and superbills are stored in memory only.'),
-                _bullet(cs, theme,
-                    'KPI cards show empty-state copy until a real backend is online.'),
-                _bullet(cs, theme,
-                    'Run flutterfire configure with your Firebase project and refresh.'),
+                _bullet(
+                  cs,
+                  theme,
+                  'Sign-ups, patients and superbills are stored in memory only.',
+                ),
+                _bullet(
+                  cs,
+                  theme,
+                  'KPI cards show empty-state copy until a real backend is online.',
+                ),
+                _bullet(
+                  cs,
+                  theme,
+                  'Run flutterfire configure with your Firebase project and refresh.',
+                ),
                 const SizedBox(height: PsySpacing.md),
                 Wrap(
                   spacing: PsySpacing.md,
@@ -224,29 +241,33 @@ class _KpiRow extends StatelessWidget {
     // DashboardMetricsBuilder; surface stays the same.
     final kpis = <_Kpi>[
       _Kpi(
-          label: "Today's sessions",
-          value: '4',
-          emptyText: 'Next at 13:30 · John Demo',
-          icon: Icons.event_available_outlined,
-          tint: cs.primary),
+        label: "Today's sessions",
+        value: '4',
+        emptyText: 'Next at 13:30 · John Demo',
+        icon: Icons.event_available_outlined,
+        tint: cs.primary,
+      ),
       _Kpi(
-          label: 'Pending notes',
-          value: '2',
-          emptyText: 'Both > 24h — sign before billing',
-          icon: Icons.edit_note_outlined,
-          tint: cs.tertiary),
+        label: 'Pending notes',
+        value: '2',
+        emptyText: 'Both > 24h — sign before billing',
+        icon: Icons.edit_note_outlined,
+        tint: cs.tertiary,
+      ),
       _Kpi(
-          label: 'At-risk patients (7d)',
-          value: '1',
-          emptyText: 'PHQ-9 ≥ 15 or C-SSRS flag',
-          icon: Icons.health_and_safety_outlined,
-          tint: cs.error),
+        label: 'At-risk patients (7d)',
+        value: '1',
+        emptyText: 'PHQ-9 ≥ 15 or C-SSRS flag',
+        icon: Icons.health_and_safety_outlined,
+        tint: cs.error,
+      ),
       _Kpi(
-          label: 'Outstanding superbills',
-          value: '\$680',
-          emptyText: 'Oldest 12 days — chase before 30d',
-          icon: Icons.receipt_long_outlined,
-          tint: cs.secondary),
+        label: 'Outstanding superbills',
+        value: '\$680',
+        emptyText: 'Oldest 12 days — chase before 30d',
+        icon: Icons.receipt_long_outlined,
+        tint: cs.secondary,
+      ),
     ];
 
     return LayoutBuilder(
@@ -254,17 +275,19 @@ class _KpiRow extends StatelessWidget {
         final cols = c.maxWidth >= PsyBreakpoints.lg
             ? 4
             : c.maxWidth >= PsyBreakpoints.sm
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         final cardW = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
         return Wrap(
           spacing: PsySpacing.lg,
           runSpacing: PsySpacing.lg,
           children: kpis
-              .map((k) => SizedBox(
-                    width: cardW,
-                    child: _KpiCard(kpi: k, theme: theme, cs: cs),
-                  ))
+              .map(
+                (k) => SizedBox(
+                  width: cardW,
+                  child: _KpiCard(kpi: k, theme: theme, cs: cs),
+                ),
+              )
               .toList(),
         );
       },
@@ -338,26 +361,30 @@ class _KpiCard extends StatelessWidget {
                 switch (kpi.state) {
                   KpiState.loading => _KpiLoadingLine(cs: cs),
                   KpiState.error => _KpiErrorLine(
-                      cs: cs, theme: theme, onRetry: kpi.onRetry),
-                  KpiState.data => kpi.value != null
-                      ? Text(
-                          kpi.value!,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    cs: cs,
+                    theme: theme,
+                    onRetry: kpi.onRetry,
+                  ),
+                  KpiState.data =>
+                    kpi.value != null
+                        ? Text(
+                            kpi.value!,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : Text(
+                            // Empty state: smaller, muted — reads as
+                            // "ready, no data yet" instead of a broken
+                            // placeholder.
+                            kpi.emptyText ?? '—',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface.withValues(alpha: 0.85),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : Text(
-                          // Empty state: smaller, muted — reads as
-                          // "ready, no data yet" instead of a broken
-                          // placeholder.
-                          kpi.emptyText ?? '—',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSurface.withValues(alpha: 0.85),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
                 },
                 const SizedBox(height: PsySpacing.xxs),
                 Text(
@@ -461,8 +488,7 @@ class _KpiErrorLine extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 32),
               ),
               child: const Text('Retry'),
@@ -482,90 +508,107 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = <_Action>[
       _Action(
-          icon: Icons.mic_none,
-          label: 'Start a session',
-          body: 'Live AI Co-Pilot with on-device transcription.',
-          route: '/session'),
+        icon: Icons.mic_none,
+        label: 'Start a session',
+        body: 'Live AI Co-Pilot with on-device transcription.',
+        route: '/session',
+      ),
       _Action(
-          icon: Icons.notifications_active_outlined,
-          label: 'Caseload attention',
-          body: 'Who needs you now — overdue work, stalled plans, risk.',
-          route: '/caseload'),
+        icon: Icons.notifications_active_outlined,
+        label: 'Caseload attention',
+        body: 'Who needs you now — overdue work, stalled plans, risk.',
+        route: '/caseload',
+      ),
       _Action(
-          icon: Icons.group_outlined,
-          label: 'Patients',
-          body: 'Search the roster, add a patient, open a chart.',
-          route: '/patients'),
+        icon: Icons.group_outlined,
+        label: 'Patients',
+        body: 'Search the roster, add a patient, open a chart.',
+        route: '/patients',
+      ),
       _Action(
-          icon: Icons.show_chart,
-          label: 'Outcomes',
-          body: 'PHQ-9 + GAD-7 trend dashboard with severity bands.',
-          route: '/outcomes'),
+        icon: Icons.show_chart,
+        label: 'Outcomes',
+        body: 'PHQ-9 + GAD-7 trend dashboard with severity bands.',
+        route: '/outcomes',
+      ),
       _Action(
-          icon: Icons.receipt_long_outlined,
-          label: 'Create superbill',
-          body: 'CPT + ICD-10 picker, CMS-1500-aligned PDF.',
-          route: '/superbill'),
+        icon: Icons.receipt_long_outlined,
+        label: 'Create superbill',
+        body: 'CPT + ICD-10 picker, CMS-1500-aligned PDF.',
+        route: '/superbill',
+      ),
       _Action(
-          icon: Icons.psychology_outlined,
-          label: 'Send PHQ-9',
-          body: 'Depression screener with severity bands.',
-          route: '/assessments/phq9'),
+        icon: Icons.psychology_outlined,
+        label: 'Send PHQ-9',
+        body: 'Depression screener with severity bands.',
+        route: '/assessments/phq9',
+      ),
       _Action(
-          icon: Icons.spa_outlined,
-          label: 'Send GAD-7',
-          body: 'Anxiety screener with severity bands.',
-          route: '/assessments/gad7'),
+        icon: Icons.spa_outlined,
+        label: 'Send GAD-7',
+        body: 'Anxiety screener with severity bands.',
+        route: '/assessments/gad7',
+      ),
       _Action(
-          icon: Icons.shield_moon_outlined,
-          label: 'C-SSRS suicide screen',
-          body: 'Columbia suicide-risk screener with categorical guidance.',
-          route: '/scales/cssrs'),
+        icon: Icons.shield_moon_outlined,
+        label: 'C-SSRS suicide screen',
+        body: 'Columbia suicide-risk screener with categorical guidance.',
+        route: '/scales/cssrs',
+      ),
       _Action(
-          icon: Icons.bolt_outlined,
-          label: 'PCL-5 (PTSD)',
-          body: '20-item PTSD checklist with provisional threshold.',
-          route: '/scales/pcl5'),
+        icon: Icons.bolt_outlined,
+        label: 'PCL-5 (PTSD)',
+        body: '20-item PTSD checklist with provisional threshold.',
+        route: '/scales/pcl5',
+      ),
       _Action(
-          icon: Icons.local_bar_outlined,
-          label: 'AUDIT (alcohol)',
-          body: 'WHO alcohol-use screener with risk bands.',
-          route: '/scales/audit'),
+        icon: Icons.local_bar_outlined,
+        label: 'AUDIT (alcohol)',
+        body: 'WHO alcohol-use screener with risk bands.',
+        route: '/scales/audit',
+      ),
       _Action(
-          icon: Icons.smart_toy_outlined,
-          label: 'AI assistant',
-          body: 'Chat with the clinical reasoning co-pilot.',
-          route: '/ai_chatbot'),
+        icon: Icons.smart_toy_outlined,
+        label: 'AI assistant',
+        body: 'Chat with the clinical reasoning co-pilot.',
+        route: '/ai_chatbot',
+      ),
       _Action(
-          icon: Icons.help_outline,
-          label: 'Help & docs',
-          body: 'Setup guide, FAQ, security overview.',
-          route: '/security'),
+        icon: Icons.help_outline,
+        label: 'Help & docs',
+        body: 'Setup guide, FAQ, security overview.',
+        route: '/security',
+      ),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick actions',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Quick actions',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.lg),
         LayoutBuilder(
           builder: (ctx, c) {
             final cols = c.maxWidth >= PsyBreakpoints.lg
                 ? 3
                 : c.maxWidth >= PsyBreakpoints.sm
-                    ? 2
-                    : 1;
+                ? 2
+                : 1;
             final cardW = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
             return Wrap(
               spacing: PsySpacing.lg,
               runSpacing: PsySpacing.lg,
               children: actions
-                  .map((a) => SizedBox(
-                        width: cardW,
-                        child: _ActionTile(action: a, theme: theme, cs: cs),
-                      ))
+                  .map(
+                    (a) => SizedBox(
+                      width: cardW,
+                      child: _ActionTile(action: a, theme: theme, cs: cs),
+                    ),
+                  )
                   .toList(),
             );
           },
@@ -576,11 +619,12 @@ class _QuickActions extends StatelessWidget {
 }
 
 class _Action {
-  _Action(
-      {required this.icon,
-      required this.label,
-      required this.body,
-      required this.route});
+  _Action({
+    required this.icon,
+    required this.label,
+    required this.body,
+    required this.route,
+  });
   final IconData icon;
   final String label;
   final String body;
@@ -588,8 +632,11 @@ class _Action {
 }
 
 class _ActionTile extends StatefulWidget {
-  const _ActionTile(
-      {required this.action, required this.theme, required this.cs});
+  const _ActionTile({
+    required this.action,
+    required this.theme,
+    required this.cs,
+  });
   final _Action action;
   final ThemeData theme;
   final ColorScheme cs;
@@ -653,8 +700,7 @@ class _ActionTileState extends State<_ActionTile> {
                     height: 38,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: cs.primary
-                          .withValues(alpha: hover ? 0.18 : 0.12),
+                      color: cs.primary.withValues(alpha: hover ? 0.18 : 0.12),
                       borderRadius: BorderRadius.circular(PsyRadius.sm),
                     ),
                     child: Icon(action.icon, color: cs.primary, size: 20),
@@ -668,22 +714,30 @@ class _ActionTileState extends State<_ActionTile> {
                       duration: PsyMotion.fast,
                       curve: PsyMotion.standard,
                       offset: hover ? Offset.zero : const Offset(-0.3, 0.3),
-                      child: Icon(Icons.arrow_outward,
-                          color: cs.primary, size: 18),
+                      child: Icon(
+                        Icons.arrow_outward,
+                        color: cs.primary,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: PsySpacing.lg),
-              Text(action.label,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                action.label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: PsySpacing.xs),
-              Text(action.body,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.65),
-                    height: 1.5,
-                  )),
+              Text(
+                action.body,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.65),
+                  height: 1.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -702,13 +756,18 @@ class _RecentActivity extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Recent activity',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Recent activity',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.lg),
         Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xxl, vertical: PsySpacing.xxxl),
+            horizontal: PsySpacing.xxl,
+            vertical: PsySpacing.xxxl,
+          ),
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(PsyRadius.lg),
@@ -717,12 +776,18 @@ class _RecentActivity extends StatelessWidget {
           alignment: Alignment.center,
           child: Column(
             children: [
-              Icon(Icons.history_outlined,
-                  color: cs.onSurface.withValues(alpha: 0.45), size: 36),
+              Icon(
+                Icons.history_outlined,
+                color: cs.onSurface.withValues(alpha: 0.45),
+                size: 36,
+              ),
               const SizedBox(height: PsySpacing.md),
-              Text('No activity yet.',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7))),
+              Text(
+                'No activity yet.',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
               const SizedBox(height: PsySpacing.xs),
               Text(
                 'Start a session or send a screener — entries will show up here.',

@@ -48,21 +48,18 @@ void main() {
       expect(kSprint25LandingCatalog.length, 12);
       final slugs = kSprint25LandingCatalog.map((e) => e.slug).toSet();
       expect(slugs.length, 12, reason: 'no duplicate slugs');
-      final countries =
-          kSprint25LandingCatalog.map((e) => e.country).toSet();
+      final countries = kSprint25LandingCatalog.map((e) => e.country).toSet();
       expect(countries, containsAll(['US', 'DE', 'TR', 'GB']));
     });
 
     test('every entry carries a compliance framework string', () {
       for (final l in kSprint25LandingCatalog) {
-        expect(l.framework, isNotEmpty,
-            reason: '${l.slug} missing framework');
+        expect(l.framework, isNotEmpty, reason: '${l.slug} missing framework');
       }
     });
 
     test('TR entry uses KVKK + local board references', () {
-      final tr =
-          kSprint25LandingCatalog.firstWhere((e) => e.country == 'TR');
+      final tr = kSprint25LandingCatalog.firstWhere((e) => e.country == 'TR');
       expect(tr.framework, contains('KVKK'));
       expect(tr.localBoard, contains('Türk Psikologlar'));
       expect(tr.headlinePrice, contains('₺'));

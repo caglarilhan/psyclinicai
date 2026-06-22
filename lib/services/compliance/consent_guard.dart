@@ -36,7 +36,7 @@ class ConsentDeniedException implements Exception {
 /// require an explicit "yes" before any AI service runs.
 class ConsentGuard {
   ConsentGuard({ConsentRecord? Function(String patientId)? consentLookup})
-      : _lookup = consentLookup ?? _denyLookup;
+    : _lookup = consentLookup ?? _denyLookup;
 
   /// Test / production constructor with a map-backed lookup — useful
   /// when the caller already has the consent records in memory and

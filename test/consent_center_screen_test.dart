@@ -17,17 +17,20 @@ void main() {
   });
 
   group('ConsentCenterScreen', () {
-    testWidgets('renders six category cards in not-given state by default',
-        (tester) async {
+    testWidgets('renders six category cards in not-given state by default', (
+      tester,
+    ) async {
       await _pump(tester);
-      expect(find.text('Not given'),
-          findsNWidgets(ConsentKind.values.length));
-      expect(find.text('Record consent'),
-          findsNWidgets(ConsentKind.values.length));
+      expect(find.text('Not given'), findsNWidgets(ConsentKind.values.length));
+      expect(
+        find.text('Record consent'),
+        findsNWidgets(ConsentKind.values.length),
+      );
     });
 
-    testWidgets('recording consent flips the row to active + revoke CTA',
-        (tester) async {
+    testWidgets('recording consent flips the row to active + revoke CTA', (
+      tester,
+    ) async {
       InMemoryConsentEntryRepository.instance.record(
         ConsentEntry(
           id: 'ce-1',
@@ -43,8 +46,9 @@ void main() {
       expect(find.textContaining('AI processing'), findsOneWidget);
     });
 
-    testWidgets('revoke button opens a confirm dialog with effect copy',
-        (tester) async {
+    testWidgets('revoke button opens a confirm dialog with effect copy', (
+      tester,
+    ) async {
       InMemoryConsentEntryRepository.instance.record(
         ConsentEntry(
           id: 'ce-2',
@@ -58,13 +62,14 @@ void main() {
       await tester.tap(find.text('Revoke'));
       await tester.pumpAndSettle();
       expect(find.text('Revoke this consent?'), findsOneWidget);
-      expect(find.textContaining('disable session recording'),
-          findsOneWidget);
+      expect(find.textContaining('disable session recording'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'Revoke'));
       await tester.pumpAndSettle();
       expect(
-        InMemoryConsentEntryRepository.instance
-            .activeOf('p-1', ConsentKind.audioRecording),
+        InMemoryConsentEntryRepository.instance.activeOf(
+          'p-1',
+          ConsentKind.audioRecording,
+        ),
         isNull,
       );
     });

@@ -12,40 +12,62 @@ class ComparisonTableSection extends StatelessWidget {
     final cs = theme.colorScheme;
 
     final rows = <_Row>[
-      _Row('Ambient AI session notes',
-          psy: 'Built-in',
-          simple: 'Care Aide (beta)',
-          therapy: 'TherapyFuel',
-          upheal: 'Built-in'),
-      _Row('On-device transcription on mobile (no audio leaves device)',
-          psy: 'iOS / Android',
-          simple: 'No',
-          therapy: 'No',
-          upheal: 'No'),
-      _Row('BYOK — pick your own AI vendor',
-          psy: 'Yes', simple: 'No', therapy: 'No', upheal: 'No'),
-      _Row('Superbill PDF generator',
-          psy: 'Built-in',
-          simple: 'Add-on',
-          therapy: 'Built-in',
-          upheal: 'Coming 2026'),
-      _Row('PHQ-9 / GAD-7 longitudinal dashboard',
-          psy: 'Built-in',
-          simple: 'Manual',
-          therapy: 'Manual',
-          upheal: 'Built-in'),
-      _Row('Multi-jurisdiction compliance (HIPAA + GDPR + KVKK)',
-          psy: 'Built-in',
-          simple: 'HIPAA only',
-          therapy: 'HIPAA only',
-          upheal: 'HIPAA + GDPR'),
-      _Row('EU data residency by default',
-          psy: 'Yes', simple: 'No', therapy: 'No', upheal: 'Opt-in'),
-      _Row('Founding price (solo)',
-          psy: r'$49 / mo',
-          simple: r'$49–99 / mo',
-          therapy: r'$59–99 / mo',
-          upheal: r'$69 / mo'),
+      _Row(
+        'Ambient AI session notes',
+        psy: 'Built-in',
+        simple: 'Care Aide (beta)',
+        therapy: 'TherapyFuel',
+        upheal: 'Built-in',
+      ),
+      _Row(
+        'On-device transcription on mobile (no audio leaves device)',
+        psy: 'iOS / Android',
+        simple: 'No',
+        therapy: 'No',
+        upheal: 'No',
+      ),
+      _Row(
+        'BYOK — pick your own AI vendor',
+        psy: 'Yes',
+        simple: 'No',
+        therapy: 'No',
+        upheal: 'No',
+      ),
+      _Row(
+        'Superbill PDF generator',
+        psy: 'Built-in',
+        simple: 'Add-on',
+        therapy: 'Built-in',
+        upheal: 'Coming 2026',
+      ),
+      _Row(
+        'PHQ-9 / GAD-7 longitudinal dashboard',
+        psy: 'Built-in',
+        simple: 'Manual',
+        therapy: 'Manual',
+        upheal: 'Built-in',
+      ),
+      _Row(
+        'Multi-jurisdiction compliance (HIPAA + GDPR + KVKK)',
+        psy: 'Built-in',
+        simple: 'HIPAA only',
+        therapy: 'HIPAA only',
+        upheal: 'HIPAA + GDPR',
+      ),
+      _Row(
+        'EU data residency by default',
+        psy: 'Yes',
+        simple: 'No',
+        therapy: 'No',
+        upheal: 'Opt-in',
+      ),
+      _Row(
+        'Founding price (solo)',
+        psy: r'$49 / mo',
+        simple: r'$49–99 / mo',
+        therapy: r'$59–99 / mo',
+        upheal: r'$69 / mo',
+      ),
     ];
 
     return LandingTokens.sectionContainer(
@@ -59,13 +81,15 @@ class ComparisonTableSection extends StatelessWidget {
           const SectionTitle('How we compare.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'Apples-to-apples on the capabilities that move the needle.'),
+            'Apples-to-apples on the capabilities that move the needle.',
+          ),
           const SizedBox(height: 32),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                  minWidth: MediaQuery.sizeOf(context).width - 96),
+                minWidth: MediaQuery.sizeOf(context).width - 96,
+              ),
               child: _Table(rows: rows, theme: theme, cs: cs),
             ),
           ),
@@ -80,17 +104,20 @@ class ComparisonTableSection extends StatelessWidget {
           const SizedBox(height: 28),
           Center(
             child: FilledButton.icon(
-              onPressed: () =>
-                  Navigator.of(context).pushNamed('/login'),
+              onPressed: () => Navigator.of(context).pushNamed('/login'),
               icon: const Icon(Icons.rocket_launch, size: 18),
               label: const Text('Reserve your founding seat'),
               style: FilledButton.styleFrom(
                 backgroundColor: cs.primary,
                 foregroundColor: cs.onPrimary,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 26, vertical: 16),
+                  horizontal: 26,
+                  vertical: 16,
+                ),
                 textStyle: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -101,11 +128,13 @@ class ComparisonTableSection extends StatelessWidget {
 }
 
 class _Row {
-  _Row(this.feature,
-      {required this.psy,
-      required this.simple,
-      required this.therapy,
-      required this.upheal});
+  _Row(
+    this.feature, {
+    required this.psy,
+    required this.simple,
+    required this.therapy,
+    required this.upheal,
+  });
   final String feature;
   final String psy;
   final String simple;
@@ -114,8 +143,7 @@ class _Row {
 }
 
 class _Table extends StatelessWidget {
-  const _Table(
-      {required this.rows, required this.theme, required this.cs});
+  const _Table({required this.rows, required this.theme, required this.cs});
   final List<_Row> rows;
   final ThemeData theme;
   final ColorScheme cs;
@@ -168,8 +196,7 @@ class _Table extends StatelessWidget {
 }
 
 class _HeaderCell extends StatelessWidget {
-  const _HeaderCell(this.text, this.theme, this.cs,
-      {this.highlight = false});
+  const _HeaderCell(this.text, this.theme, this.cs, {this.highlight = false});
   final String text;
   final ThemeData theme;
   final ColorScheme cs;
@@ -196,8 +223,7 @@ class _HeaderCell extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: cs.primary,
                   borderRadius: BorderRadius.circular(20),
@@ -228,8 +254,13 @@ class _HeaderCell extends StatelessWidget {
 }
 
 class _Cell extends StatelessWidget {
-  const _Cell(this.text, this.theme, this.cs,
-      {this.bold = false, this.highlight = false});
+  const _Cell(
+    this.text,
+    this.theme,
+    this.cs, {
+    this.bold = false,
+    this.highlight = false,
+  });
   final String text;
   final ThemeData theme;
   final ColorScheme cs;
@@ -281,13 +312,18 @@ class _Cell extends StatelessWidget {
         v == 'built-in' ||
         v.startsWith('yes') ||
         v == 'included') {
-      return Icon(Icons.check_circle,
-          size: 16, color: highlight ? cs.primary : const Color(0xFF16A34A));
+      return Icon(
+        Icons.check_circle,
+        size: 16,
+        color: highlight ? cs.primary : const Color(0xFF16A34A),
+      );
     }
     if (v == 'no' || v == 'not available') {
-      return Icon(Icons.cancel,
-          size: 16,
-          color: cs.onSurface.withValues(alpha: 0.35));
+      return Icon(
+        Icons.cancel,
+        size: 16,
+        color: cs.onSurface.withValues(alpha: 0.35),
+      );
     }
     if (v.contains('manual') ||
         v.contains('opt-in') ||
@@ -295,8 +331,7 @@ class _Cell extends StatelessWidget {
         v.contains('coming') ||
         v.contains('add-on') ||
         v.contains('hipaa only')) {
-      return const Icon(Icons.schedule,
-          size: 16, color: Color(0xFFEA580C));
+      return const Icon(Icons.schedule, size: 16, color: Color(0xFFEA580C));
     }
     return null;
   }

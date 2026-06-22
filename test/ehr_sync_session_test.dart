@@ -10,8 +10,7 @@ void main() {
   });
 
   group('FhirConflict', () {
-    test('JSON round-trip preserves all fields incl optional field_path',
-        () {
+    test('JSON round-trip preserves all fields incl optional field_path', () {
       final c = FhirConflict(
         resourceType: 'Patient',
         resourceId: 'p-1',

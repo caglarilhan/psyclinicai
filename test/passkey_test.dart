@@ -16,33 +16,46 @@ void main() {
     test('validates empty / overlong fields', () {
       expect(
         () => PasskeyCredential(
-            credentialId: '', publicKey: 'p', signCount: 0, deviceLabel: 'd'),
+          credentialId: '',
+          publicKey: 'p',
+          signCount: 0,
+          deviceLabel: 'd',
+        ),
         throwsArgumentError,
       );
       expect(
         () => PasskeyCredential(
-            credentialId: 'c', publicKey: '', signCount: 0, deviceLabel: 'd'),
+          credentialId: 'c',
+          publicKey: '',
+          signCount: 0,
+          deviceLabel: 'd',
+        ),
         throwsArgumentError,
       );
       expect(
         () => PasskeyCredential(
-            credentialId: 'c', publicKey: 'p', signCount: -1, deviceLabel: 'd'),
+          credentialId: 'c',
+          publicKey: 'p',
+          signCount: -1,
+          deviceLabel: 'd',
+        ),
         throwsArgumentError,
       );
       expect(
         () => PasskeyCredential(
-            credentialId: 'c',
-            publicKey: 'p',
-            signCount: 0,
-            deviceLabel: 'x' * 81),
+          credentialId: 'c',
+          publicKey: 'p',
+          signCount: 0,
+          deviceLabel: 'x' * 81,
+        ),
         throwsArgumentError,
       );
     });
 
     test('JSON round-trip preserves every field', () {
-      final original = sample(signCount: 7).copyWith(
-        lastUsedAt: DateTime.utc(2026, 6, 3, 12),
-      );
+      final original = sample(
+        signCount: 7,
+      ).copyWith(lastUsedAt: DateTime.utc(2026, 6, 3, 12));
       final restored = PasskeyCredential.fromJson(original.toJson());
       expect(restored.credentialId, 'cred-1');
       expect(restored.signCount, 7);

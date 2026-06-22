@@ -11,7 +11,8 @@ class PortalInboxScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = threads ??
+    final rows =
+        threads ??
         <PortalInboxThread>[
           PortalInboxThread(
             subject: 'Pre-session check-in',
@@ -22,8 +23,9 @@ class PortalInboxScreen extends StatelessWidget {
           PortalInboxThread(
             subject: 'Refill request',
             preview: 'I confirmed the request with the pharmacy.',
-            updatedAt:
-                DateTime.now().subtract(const Duration(days: 2, hours: 1)),
+            updatedAt: DateTime.now().subtract(
+              const Duration(days: 2, hours: 1),
+            ),
             unread: false,
           ),
         ];
@@ -50,21 +52,25 @@ class PortalInboxScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(r.subject,
-                              style:
-                                  Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            r.subject,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 2),
-                          Text(r.preview,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            r.preview,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: PsySpacing.sm),
-                    Text(_relative(r.updatedAt),
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      _relative(r.updatedAt),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),

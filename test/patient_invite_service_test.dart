@@ -6,10 +6,7 @@ void main() {
     final t0 = DateTime.utc(2026, 6, 16, 12, 0);
 
     test('notFound when state is null', () {
-      expect(
-        checkInvite(state: null, now: t0),
-        InviteCheckResult.notFound,
-      );
+      expect(checkInvite(state: null, now: t0), InviteCheckResult.notFound);
     });
 
     test('valid on first tap while inside the 24h window', () {
@@ -20,10 +17,7 @@ void main() {
         consumedAt: null,
       );
       expect(
-        checkInvite(
-          state: state,
-          now: t0.add(const Duration(hours: 1)),
-        ),
+        checkInvite(state: state, now: t0.add(const Duration(hours: 1))),
         InviteCheckResult.valid,
       );
     });

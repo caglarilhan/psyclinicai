@@ -15,7 +15,8 @@ void main() {
 
     test('accepts CRLF + tolerates trailing newline', () {
       final r = imp.parse(
-          'name,dob\r\nJane Sample,1990-01-02\r\nSven P.,1985-11-11\r\n');
+        'name,dob\r\nJane Sample,1990-01-02\r\nSven P.,1985-11-11\r\n',
+      );
       expect(r.rows.length, 2);
     });
 
@@ -38,7 +39,8 @@ void main() {
 
     test('handles quoted values with commas', () {
       final r = imp.parse(
-          'name,dob,notes\n"Smith, Jr.",1980-01-01,"Notes, more"\n');
+        'name,dob,notes\n"Smith, Jr.",1980-01-01,"Notes, more"\n',
+      );
       expect(r.rows.first.values['name'], 'Smith, Jr.');
       expect(r.rows.first.values['notes'], 'Notes, more');
     });

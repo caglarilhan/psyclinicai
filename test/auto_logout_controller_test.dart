@@ -33,8 +33,11 @@ void main() {
         clock = clock.add(const Duration(seconds: 1));
         async.elapse(const Duration(seconds: 1));
       }
-      expect(fired, 0,
-          reason: 'auto-logout must NOT fire when shared-device is off');
+      expect(
+        fired,
+        0,
+        reason: 'auto-logout must NOT fire when shared-device is off',
+      );
       ctl.dispose();
     });
   });
@@ -65,8 +68,7 @@ void main() {
         async.elapse(const Duration(seconds: 1));
       }
       async.flushMicrotasks();
-      expect(fired, 1,
-          reason: 'auto-logout must fire once after 5min idle');
+      expect(fired, 1, reason: 'auto-logout must fire once after 5min idle');
 
       ctl.dispose();
     });
@@ -97,8 +99,7 @@ void main() {
         async.elapse(const Duration(seconds: 1));
       }
       async.flushMicrotasks();
-      expect(fired, 0,
-          reason: 'activity must reset the 5min window');
+      expect(fired, 0, reason: 'activity must reset the 5min window');
 
       ctl.dispose();
     });

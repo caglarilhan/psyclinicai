@@ -34,8 +34,7 @@ class _MemoryStore {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel =
-      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
   late _MemoryStore mem;
   late ByokRotationService svc;
 
@@ -52,50 +51,62 @@ void main() {
   });
 
   group('ByokRotationService (Sprint 32 P2)', () {
-    test('first rotation persists key + leaves previous slot empty',
-        () async {
+    test('first rotation persists key + leaves previous slot empty', () async {
       final r = await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-xxxxxxxxxxxxxxxxxxxxxxxx');
+        ByokProvider.anthropic,
+        'sk-ant-xxxxxxxxxxxxxxxxxxxxxxxx',
+      );
       expect(r.status, ByokRotationStatus.completed);
-      expect(await svc.currentKey(ByokProvider.anthropic),
-          'sk-ant-xxxxxxxxxxxxxxxxxxxxxxxx');
+      expect(
+        await svc.currentKey(ByokProvider.anthropic),
+        'sk-ant-xxxxxxxxxxxxxxxxxxxxxxxx',
+      );
       expect(await svc.previousKeyIfValid(ByokProvider.anthropic), isNull);
     });
 
     test('second rotation moves the prior key to previous slot', () async {
       await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-old-old-old-old-old-old');
+        ByokProvider.anthropic,
+        'sk-ant-old-old-old-old-old-old',
+      );
       await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-new-new-new-new-new-new');
-      expect(await svc.currentKey(ByokProvider.anthropic),
-          'sk-ant-new-new-new-new-new-new');
+        ByokProvider.anthropic,
+        'sk-ant-new-new-new-new-new-new',
+      );
       expect(
-          await svc.previousKeyIfValid(ByokProvider.anthropic,
-              now: DateTime.now().toUtc().add(const Duration(hours: 1))),
-          'sk-ant-old-old-old-old-old-old');
+        await svc.currentKey(ByokProvider.anthropic),
+        'sk-ant-new-new-new-new-new-new',
+      );
+      expect(
+        await svc.previousKeyIfValid(
+          ByokProvider.anthropic,
+          now: DateTime.now().toUtc().add(const Duration(hours: 1)),
+        ),
+        'sk-ant-old-old-old-old-old-old',
+      );
     });
 
     test('previous key is wiped after the grace window', () async {
-      await svc.rotate(
-          ByokProvider.openai, 'sk-openai-1111111111111111');
-      await svc.rotate(
-          ByokProvider.openai, 'sk-openai-2222222222222222');
+      await svc.rotate(ByokProvider.openai, 'sk-openai-1111111111111111');
+      await svc.rotate(ByokProvider.openai, 'sk-openai-2222222222222222');
       // Pretend a week passed.
       final future = DateTime.now().toUtc().add(const Duration(days: 7));
       expect(
-          await svc.previousKeyIfValid(ByokProvider.openai, now: future),
-          isNull,
-          reason: 'must wipe previous key after grace window');
+        await svc.previousKeyIfValid(ByokProvider.openai, now: future),
+        isNull,
+        reason: 'must wipe previous key after grace window',
+      );
     });
 
     test('empty key rotation is rejected, current slot untouched', () async {
-      await svc.rotate(
-          ByokProvider.cohere, 'cohere-aaaaaaaaaaaaaaaa');
+      await svc.rotate(ByokProvider.cohere, 'cohere-aaaaaaaaaaaaaaaa');
       final r = await svc.rotate(ByokProvider.cohere, '   ');
       expect(r.status, ByokRotationStatus.rejected);
       expect(r.reason, 'empty_key');
-      expect(await svc.currentKey(ByokProvider.cohere),
-          'cohere-aaaaaaaaaaaaaaaa');
+      expect(
+        await svc.currentKey(ByokProvider.cohere),
+        'cohere-aaaaaaaaaaaaaaaa',
+      );
     });
 
     test('short key rotation is rejected', () async {
@@ -105,24 +116,24 @@ void main() {
     });
 
     test('wipePrevious clears slot even mid-grace', () async {
-      await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-aaaaaaaaaaaaaaaa');
-      await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-bbbbbbbbbbbbbbbb');
-      expect(await svc.previousKeyIfValid(ByokProvider.anthropic),
-          isNotNull);
+      await svc.rotate(ByokProvider.anthropic, 'sk-ant-aaaaaaaaaaaaaaaa');
+      await svc.rotate(ByokProvider.anthropic, 'sk-ant-bbbbbbbbbbbbbbbb');
+      expect(await svc.previousKeyIfValid(ByokProvider.anthropic), isNotNull);
       await svc.wipePrevious(ByokProvider.anthropic);
       expect(await svc.previousKeyIfValid(ByokProvider.anthropic), isNull);
     });
 
     test('slots are namespaced per provider', () async {
-      await svc.rotate(
-          ByokProvider.anthropic, 'sk-ant-aaaaaaaaaaaaaaaa');
+      await svc.rotate(ByokProvider.anthropic, 'sk-ant-aaaaaaaaaaaaaaaa');
       await svc.rotate(ByokProvider.openai, 'sk-openai-bbbbbbbbbbbbbb');
-      expect(await svc.currentKey(ByokProvider.anthropic),
-          'sk-ant-aaaaaaaaaaaaaaaa');
-      expect(await svc.currentKey(ByokProvider.openai),
-          'sk-openai-bbbbbbbbbbbbbb');
+      expect(
+        await svc.currentKey(ByokProvider.anthropic),
+        'sk-ant-aaaaaaaaaaaaaaaa',
+      );
+      expect(
+        await svc.currentKey(ByokProvider.openai),
+        'sk-openai-bbbbbbbbbbbbbb',
+      );
     });
   });
 }

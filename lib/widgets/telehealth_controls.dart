@@ -69,8 +69,7 @@ class TelehealthControls extends StatelessWidget {
                 child: Text(
                   'Both consents must be recorded before the room can '
                   'be opened.',
-                  style:
-                      t.bodySmall?.copyWith(color: PsyColors.warning),
+                  style: t.bodySmall?.copyWith(color: PsyColors.warning),
                 ),
               ),
             const SizedBox(height: PsySpacing.sm),
@@ -82,16 +81,20 @@ class TelehealthControls extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_outline,
-                      size: 16, color: cs.onTertiaryContainer),
+                  Icon(
+                    Icons.lock_outline,
+                    size: 16,
+                    color: cs.onTertiaryContainer,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'The meeting token is minted server-side and '
                       'never persisted. Recording is blocked unless '
                       'consent is explicitly granted.',
-                      style: t.bodySmall
-                          ?.copyWith(color: cs.onTertiaryContainer),
+                      style: t.bodySmall?.copyWith(
+                        color: cs.onTertiaryContainer,
+                      ),
                     ),
                   ),
                 ],

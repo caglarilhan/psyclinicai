@@ -73,8 +73,12 @@ class RiskEscalationModal extends StatelessWidget {
         maxHeight: MediaQuery.sizeOf(context).height * 0.85,
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(PsySpacing.xl, PsySpacing.lg,
-            PsySpacing.xl, PsySpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          PsySpacing.xl,
+          PsySpacing.lg,
+          PsySpacing.xl,
+          PsySpacing.xl,
+        ),
         child: Semantics(
           liveRegion: true,
           container: true,
@@ -83,54 +87,63 @@ class RiskEscalationModal extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.all(PsySpacing.sm),
-                    decoration: BoxDecoration(
-                      color: (_isCritical ? cs.error : PsyColors.warning)
-                          .withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(PsyRadius.md),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(PsySpacing.sm),
+                      decoration: BoxDecoration(
+                        color: (_isCritical ? cs.error : PsyColors.warning)
+                            .withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(PsyRadius.md),
+                      ),
+                      child: Icon(
+                        _isCritical
+                            ? Icons.warning_amber_rounded
+                            : Icons.shield_outlined,
+                        color: _isCritical ? cs.error : PsyColors.warning,
+                        size: 28,
+                      ),
                     ),
-                    child: Icon(
-                      _isCritical
-                          ? Icons.warning_amber_rounded
-                          : Icons.shield_outlined,
-                      color: _isCritical ? cs.error : PsyColors.warning,
-                      size: 28,
+                    const SizedBox(width: PsySpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isCritical
+                                ? 'Imminent safety concern detected'
+                                : 'Safety planning recommended',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            trigger.reason,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: PsySpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isCritical
-                              ? 'Imminent safety concern detected'
-                              : 'Safety planning recommended',
-                          style: theme.textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(trigger.reason,
-                            style: theme.textTheme.bodyMedium),
-                      ],
+                    PsyBadge(
+                      label: trigger.severity.name,
+                      tone: _isCritical
+                          ? PsyBadgeTone.danger
+                          : PsyBadgeTone.warning,
                     ),
-                  ),
-                  PsyBadge(
-                    label: trigger.severity.name,
-                    tone: _isCritical
-                        ? PsyBadgeTone.danger
-                        : PsyBadgeTone.warning,
-                  ),
-                ]),
+                  ],
+                ),
                 const SizedBox(height: PsySpacing.lg),
-                Text('Clinical next steps',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'Clinical next steps',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.sm),
                 _StepRow(
-                  done: chain.state.index >=
+                  done:
+                      chain.state.index >=
                       RiskEscalationState.cssrsAdministered.index,
                   label: 'Administer the C-SSRS now',
                   cta: 'Open C-SSRS',
@@ -139,7 +152,8 @@ class RiskEscalationModal extends StatelessWidget {
                 ),
                 const SizedBox(height: PsySpacing.xs),
                 _StepRow(
-                  done: chain.state.index >=
+                  done:
+                      chain.state.index >=
                       RiskEscalationState.safetyPlanDrafted.index,
                   label: 'Draft a Stanley-Brown safety plan',
                   cta: 'Open safety plan',
@@ -148,7 +162,8 @@ class RiskEscalationModal extends StatelessWidget {
                 ),
                 const SizedBox(height: PsySpacing.xs),
                 _StepRow(
-                  done: chain.state.index >=
+                  done:
+                      chain.state.index >=
                       RiskEscalationState.clinicianAcknowledged.index,
                   label: 'Acknowledge with your clinician signature',
                   cta: 'Acknowledge',
@@ -157,24 +172,35 @@ class RiskEscalationModal extends StatelessWidget {
                 ),
                 const SizedBox(height: PsySpacing.lg),
                 if (crisisResources.isNotEmpty) ...[
-                  Text('Region crisis resources',
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Region crisis resources',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: PsySpacing.sm),
                   for (final r in crisisResources)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(children: [
-                        Icon(Icons.support_agent,
-                            color: cs.primary, size: 18),
-                        const SizedBox(width: PsySpacing.sm),
-                        Expanded(child: Text(r.name)),
-                        SelectableText(r.displayNumber,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.support_agent,
+                            color: cs.primary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: PsySpacing.sm),
+                          Expanded(child: Text(r.name)),
+                          SelectableText(
+                            r.displayNumber,
                             style: theme.textTheme.titleSmall?.copyWith(
-                                fontFamily: 'monospace',
-                                fontWeight: FontWeight.w700,
-                                color: cs.primary)),
-                      ]),
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w700,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   const SizedBox(height: PsySpacing.lg),
                 ],
@@ -184,20 +210,24 @@ class RiskEscalationModal extends StatelessWidget {
                     color: cs.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(PsyRadius.sm),
                   ),
-                  child: Row(children: [
-                    Icon(Icons.lock_outline,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lock_outline,
                         size: 16,
-                        color: cs.onSurface.withValues(alpha: 0.6)),
-                    const SizedBox(width: PsySpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Every action above writes an immutable entry to '
-                        'the risk-escalation chain (HIPAA audit). The '
-                        'chain cannot be deleted once resolved.',
-                        style: theme.textTheme.bodySmall,
+                        color: cs.onSurface.withValues(alpha: 0.6),
                       ),
-                    ),
-                  ]),
+                      const SizedBox(width: PsySpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Every action above writes an immutable entry to '
+                          'the risk-escalation chain (HIPAA audit). The '
+                          'chain cannot be deleted once resolved.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: PsySpacing.lg),
                 if (onClose != null)
@@ -233,18 +263,17 @@ class _StepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Icon(
-        done ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: done ? cs.primary : cs.onSurface.withValues(alpha: 0.4),
-      ),
-      const SizedBox(width: PsySpacing.sm),
-      Expanded(child: Text(label)),
-      const SizedBox(width: PsySpacing.sm),
-      FilledButton.tonal(
-        onPressed: done ? null : onTap,
-        child: Text(cta),
-      ),
-    ]);
+    return Row(
+      children: [
+        Icon(
+          done ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: done ? cs.primary : cs.onSurface.withValues(alpha: 0.4),
+        ),
+        const SizedBox(width: PsySpacing.sm),
+        Expanded(child: Text(label)),
+        const SizedBox(width: PsySpacing.sm),
+        FilledButton.tonal(onPressed: done ? null : onTap, child: Text(cta)),
+      ],
+    );
   }
 }

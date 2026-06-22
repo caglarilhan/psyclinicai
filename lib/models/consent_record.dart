@@ -66,26 +66,25 @@ class ConsentRecord {
     DateTime? signedAt,
     this.withdrawnAt,
     Set<ConsentBasis>? applicableBases,
-  })  : signedAt = signedAt ?? DateTime.now(),
-        applicableBases =
-            Set<ConsentBasis>.unmodifiable(applicableBases ?? const {});
+  }) : signedAt = signedAt ?? DateTime.now(),
+       applicableBases = Set<ConsentBasis>.unmodifiable(
+         applicableBases ?? const {},
+       );
 
   factory ConsentRecord.fromJson(Map<String, dynamic> json) => ConsentRecord(
-        patientId: json['patientId'] as String? ?? '',
-        policyVersion: json['policyVersion'] as String? ?? '',
-        dataProcessingConsent:
-            json['dataProcessingConsent'] as bool? ?? false,
-        aiAssistanceConsent: json['aiAssistanceConsent'] as bool? ?? false,
-        sensitiveDataConsent: json['sensitiveDataConsent'] as bool? ?? false,
-        signedFullName: json['signedFullName'] as String? ?? '',
-        signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
-        withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
-        applicableBases: ((json['applicableBases'] as List<dynamic>?) ??
-                const [])
-            .map((e) => ConsentBasis.fromWire(e.toString()))
-            .whereType<ConsentBasis>()
-            .toSet(),
-      );
+    patientId: json['patientId'] as String? ?? '',
+    policyVersion: json['policyVersion'] as String? ?? '',
+    dataProcessingConsent: json['dataProcessingConsent'] as bool? ?? false,
+    aiAssistanceConsent: json['aiAssistanceConsent'] as bool? ?? false,
+    sensitiveDataConsent: json['sensitiveDataConsent'] as bool? ?? false,
+    signedFullName: json['signedFullName'] as String? ?? '',
+    signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
+    withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
+    applicableBases: ((json['applicableBases'] as List<dynamic>?) ?? const [])
+        .map((e) => ConsentBasis.fromWire(e.toString()))
+        .whereType<ConsentBasis>()
+        .toSet(),
+  );
 
   /// Opaque patient id (same identifier used elsewhere in the chart).
   final String patientId;
@@ -158,19 +157,20 @@ class ConsentRecord {
   bool get isWithdrawn => withdrawnAt != null;
 
   Map<String, dynamic> toJson() => {
-        'patientId': patientId,
-        'policyVersion': policyVersion,
-        'dataProcessingConsent': dataProcessingConsent,
-        'aiAssistanceConsent': aiAssistanceConsent,
-        'sensitiveDataConsent': sensitiveDataConsent,
-        'signedFullName': signedFullName,
-        'signedAt': signedAt.toUtc().toIso8601String(),
-        if (withdrawnAt != null)
-          'withdrawnAt': withdrawnAt!.toUtc().toIso8601String(),
-        if (applicableBases.isNotEmpty)
-          'applicableBases':
-              applicableBases.map((b) => b.wire).toList(growable: false),
-      };
+    'patientId': patientId,
+    'policyVersion': policyVersion,
+    'dataProcessingConsent': dataProcessingConsent,
+    'aiAssistanceConsent': aiAssistanceConsent,
+    'sensitiveDataConsent': sensitiveDataConsent,
+    'signedFullName': signedFullName,
+    'signedAt': signedAt.toUtc().toIso8601String(),
+    if (withdrawnAt != null)
+      'withdrawnAt': withdrawnAt!.toUtc().toIso8601String(),
+    if (applicableBases.isNotEmpty)
+      'applicableBases': applicableBases
+          .map((b) => b.wire)
+          .toList(growable: false),
+  };
 
   ConsentRecord copyWith({
     bool? dataProcessingConsent,
@@ -179,18 +179,15 @@ class ConsentRecord {
     String? signedFullName,
     DateTime? withdrawnAt,
     Set<ConsentBasis>? applicableBases,
-  }) =>
-      ConsentRecord(
-        patientId: patientId,
-        policyVersion: policyVersion,
-        dataProcessingConsent:
-            dataProcessingConsent ?? this.dataProcessingConsent,
-        aiAssistanceConsent: aiAssistanceConsent ?? this.aiAssistanceConsent,
-        sensitiveDataConsent:
-            sensitiveDataConsent ?? this.sensitiveDataConsent,
-        signedFullName: signedFullName ?? this.signedFullName,
-        signedAt: signedAt,
-        withdrawnAt: withdrawnAt ?? this.withdrawnAt,
-        applicableBases: applicableBases ?? this.applicableBases,
-      );
+  }) => ConsentRecord(
+    patientId: patientId,
+    policyVersion: policyVersion,
+    dataProcessingConsent: dataProcessingConsent ?? this.dataProcessingConsent,
+    aiAssistanceConsent: aiAssistanceConsent ?? this.aiAssistanceConsent,
+    sensitiveDataConsent: sensitiveDataConsent ?? this.sensitiveDataConsent,
+    signedFullName: signedFullName ?? this.signedFullName,
+    signedAt: signedAt,
+    withdrawnAt: withdrawnAt ?? this.withdrawnAt,
+    applicableBases: applicableBases ?? this.applicableBases,
+  );
 }

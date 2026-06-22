@@ -13,10 +13,7 @@ DifferentialCandidate _candidate({double confidence = 0.7}) =>
       differentialFrom: const ['F33.1 recurrent MDD'],
     );
 
-Future<void> _pump(
-  WidgetTester tester,
-  DifferentialCandidate c,
-) async {
+Future<void> _pump(WidgetTester tester, DifferentialCandidate c) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -31,14 +28,12 @@ Future<void> _pump(
 
 void main() {
   group('DifferentialCandidateCard', () {
-    testWidgets('renders code + name + confidence + clinician disclaimer',
-        (tester) async {
+    testWidgets('renders code + name + confidence + clinician disclaimer', (
+      tester,
+    ) async {
       await _pump(tester, _candidate());
       expect(find.text('F32.1'), findsOneWidget);
-      expect(
-        find.textContaining('Major depressive disorder'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Major depressive disorder'), findsOneWidget);
       expect(find.textContaining('70%'), findsOneWidget);
       expect(
         find.textContaining('clinician owns the final diagnosis'),
@@ -46,21 +41,24 @@ void main() {
       );
     });
 
-    testWidgets('criteria-met / -missing lists surface their headers',
-        (tester) async {
+    testWidgets('criteria-met / -missing lists surface their headers', (
+      tester,
+    ) async {
       await _pump(tester, _candidate());
       expect(find.text('Criteria met'), findsOneWidget);
       expect(find.text('Still to clarify'), findsOneWidget);
     });
 
-    testWidgets('rule-out row renders when differentialFrom is set',
-        (tester) async {
+    testWidgets('rule-out row renders when differentialFrom is set', (
+      tester,
+    ) async {
       await _pump(tester, _candidate());
       expect(find.textContaining('Rule out'), findsOneWidget);
     });
 
-    testWidgets('action row exposes Accept / Add / Reject CTAs',
-        (tester) async {
+    testWidgets('action row exposes Accept / Add / Reject CTAs', (
+      tester,
+    ) async {
       await _pump(tester, _candidate());
       expect(find.text('Accept as primary'), findsOneWidget);
       expect(find.text('Add to differential'), findsOneWidget);

@@ -18,53 +18,63 @@ void main() {
     test('append preserves immutability + returns a new instance', () {
       final c0 = _seed();
       expect(c0.messages, isEmpty);
-      final c1 = c0.append(CoachMessage(
-        id: 'm1',
-        role: CoachRole.user,
-        text: 'hello',
-        at: DateTime.utc(2026, 6, 21, 9),
-      ));
+      final c1 = c0.append(
+        CoachMessage(
+          id: 'm1',
+          role: CoachRole.user,
+          text: 'hello',
+          at: DateTime.utc(2026, 6, 21, 9),
+        ),
+      );
       expect(c0.messages, isEmpty); // original untouched
       expect(c1.messages, hasLength(1));
       expect(c1.id, c0.id);
     });
 
     test('hasRiskFlag is true when any turn is flagged', () {
-      final c = _seed().append(CoachMessage(
-        id: 'm1',
-        role: CoachRole.user,
-        text: 'I want to die',
-        at: DateTime.utc(2026, 6, 21),
-        riskFlagged: true,
-      ));
+      final c = _seed().append(
+        CoachMessage(
+          id: 'm1',
+          role: CoachRole.user,
+          text: 'I want to die',
+          at: DateTime.utc(2026, 6, 21),
+          riskFlagged: true,
+        ),
+      );
       expect(c.hasRiskFlag, isTrue);
     });
 
     test('lastTurn skips system priming', () {
-      final c = _seed().append(CoachMessage(
-        id: 'sys',
-        role: CoachRole.system,
-        text: 'priming',
-        at: DateTime.utc(2026, 6, 21, 9),
-      ));
+      final c = _seed().append(
+        CoachMessage(
+          id: 'sys',
+          role: CoachRole.system,
+          text: 'priming',
+          at: DateTime.utc(2026, 6, 21, 9),
+        ),
+      );
       expect(c.lastTurn, isNull);
-      final c2 = c.append(CoachMessage(
-        id: 'u1',
-        role: CoachRole.user,
-        text: 'hi',
-        at: DateTime.utc(2026, 6, 21, 10),
-      ));
+      final c2 = c.append(
+        CoachMessage(
+          id: 'u1',
+          role: CoachRole.user,
+          text: 'hi',
+          at: DateTime.utc(2026, 6, 21, 10),
+        ),
+      );
       expect(c2.lastTurn?.id, 'u1');
     });
 
     test('JSON round-trip preserves every field', () {
-      final c = _seed().append(CoachMessage(
-        id: 'm1',
-        role: CoachRole.assistant,
-        text: 'breath',
-        at: DateTime.utc(2026, 6, 21, 9),
-        modality: 'cbt',
-      ));
+      final c = _seed().append(
+        CoachMessage(
+          id: 'm1',
+          role: CoachRole.assistant,
+          text: 'breath',
+          at: DateTime.utc(2026, 6, 21, 9),
+          modality: 'cbt',
+        ),
+      );
       final round = CoachConversation.fromJson(c.toJson());
       expect(round.id, 'conv-1');
       expect(round.patientId, 'p-1');
@@ -91,50 +101,54 @@ void main() {
     setUp(() => risk = RiskSignalService());
     tearDown(() => risk.dispose());
 
-    test('benign turn appends user message + (no relay) no assistant',
-        () async {
-      final svc = BetweenSessionCoachService(risk: risk);
-      final reply = await svc.send(
-        conversation: _seed(),
-        patientText: 'I had a good week and practiced the thought record.',
-        patientMessageId: 'm1',
-        at: DateTime.utc(2026, 6, 21, 9),
-      );
-      expect(reply.escalated, isFalse);
-      expect(reply.signals, isEmpty);
-      expect(reply.assistantTurn, isNull); // no relay wired
-      expect(reply.conversation.messages, hasLength(1));
-      expect(reply.conversation.messages.first.role, CoachRole.user);
-    });
+    test(
+      'benign turn appends user message + (no relay) no assistant',
+      () async {
+        final svc = BetweenSessionCoachService(risk: risk);
+        final reply = await svc.send(
+          conversation: _seed(),
+          patientText: 'I had a good week and practiced the thought record.',
+          patientMessageId: 'm1',
+          at: DateTime.utc(2026, 6, 21, 9),
+        );
+        expect(reply.escalated, isFalse);
+        expect(reply.signals, isEmpty);
+        expect(reply.assistantTurn, isNull); // no relay wired
+        expect(reply.conversation.messages, hasLength(1));
+        expect(reply.conversation.messages.first.role, CoachRole.user);
+      },
+    );
 
-    test('SI lexicon hit escalates + fires the hook + skips the relay',
-        () async {
-      CoachMessage? trigger;
-      List<RiskSignal>? captured;
-      final svc = BetweenSessionCoachService(
-        risk: risk,
-        escalationHook: (conv, msg, sigs) {
-          trigger = msg;
-          captured = sigs;
-        },
-        relayInvoke: (sys, msgs) async => 'should-not-call',
-      );
-      final reply = await svc.send(
-        conversation: _seed(),
-        patientText: 'I want to die.',
-        patientMessageId: 'm1',
-        at: DateTime.utc(2026, 6, 21, 9),
-      );
-      expect(reply.escalated, isTrue);
-      expect(reply.signals, isNotEmpty);
-      expect(reply.assistantTurn, isNull);
-      expect(reply.conversation.messages.first.riskFlagged, isTrue);
-      expect(trigger?.id, 'm1');
-      expect(
-        captured?.any((s) => s.category == RiskCategory.suicidalIdeation),
-        isTrue,
-      );
-    });
+    test(
+      'SI lexicon hit escalates + fires the hook + skips the relay',
+      () async {
+        CoachMessage? trigger;
+        List<RiskSignal>? captured;
+        final svc = BetweenSessionCoachService(
+          risk: risk,
+          escalationHook: (conv, msg, sigs) {
+            trigger = msg;
+            captured = sigs;
+          },
+          relayInvoke: (sys, msgs) async => 'should-not-call',
+        );
+        final reply = await svc.send(
+          conversation: _seed(),
+          patientText: 'I want to die.',
+          patientMessageId: 'm1',
+          at: DateTime.utc(2026, 6, 21, 9),
+        );
+        expect(reply.escalated, isTrue);
+        expect(reply.signals, isNotEmpty);
+        expect(reply.assistantTurn, isNull);
+        expect(reply.conversation.messages.first.riskFlagged, isTrue);
+        expect(trigger?.id, 'm1');
+        expect(
+          captured?.any((s) => s.category == RiskCategory.suicidalIdeation),
+          isTrue,
+        );
+      },
+    );
 
     test('Turkish SI also escalates (multilingual lexicon)', () async {
       final svc = BetweenSessionCoachService(risk: risk);
@@ -147,8 +161,7 @@ void main() {
       expect(reply.escalated, isTrue);
     });
 
-    test('benign turn with relay wired produces an assistant turn',
-        () async {
+    test('benign turn with relay wired produces an assistant turn', () async {
       String? capturedSystem;
       final svc = BetweenSessionCoachService(
         risk: risk,

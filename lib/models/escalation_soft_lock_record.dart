@@ -71,17 +71,16 @@ class EscalationSoftLockRecord {
         id: json['id'] as String? ?? '',
         clinicId: json['clinicId'] as String? ?? '',
         patientId: json['patientId'] as String? ?? '',
-        dismissingClinicianId:
-            json['dismissingClinicianId'] as String? ?? '',
+        dismissingClinicianId: json['dismissingClinicianId'] as String? ?? '',
         severity: json['severity'] as String? ?? '',
         tier: json['tier'] as String? ?? '',
         dismissReasonCode: json['dismissReasonCode'] as String? ?? '',
         dismissedAt:
             DateTime.tryParse(json['dismissedAt'] as String? ?? '') ??
-                DateTime.now().toUtc(),
+            DateTime.now().toUtc(),
         followUpDueAt:
             DateTime.tryParse(json['followUpDueAt'] as String? ?? '') ??
-                DateTime.now().toUtc(),
+            DateTime.now().toUtc(),
         supervisorHandoffId: json['supervisorHandoffId'] as String?,
         stale: json['stale'] as bool? ?? false,
       );
@@ -134,35 +133,33 @@ class EscalationSoftLockRecord {
   EscalationSoftLockRecord copyWith({
     String? supervisorHandoffId,
     bool? stale,
-  }) =>
-      EscalationSoftLockRecord(
-        id: id,
-        clinicId: clinicId,
-        patientId: patientId,
-        dismissingClinicianId: dismissingClinicianId,
-        severity: severity,
-        tier: tier,
-        dismissReasonCode: dismissReasonCode,
-        dismissedAt: dismissedAt,
-        followUpDueAt: followUpDueAt,
-        supervisorHandoffId: supervisorHandoffId ?? this.supervisorHandoffId,
-        stale: stale ?? this.stale,
-      );
+  }) => EscalationSoftLockRecord(
+    id: id,
+    clinicId: clinicId,
+    patientId: patientId,
+    dismissingClinicianId: dismissingClinicianId,
+    severity: severity,
+    tier: tier,
+    dismissReasonCode: dismissReasonCode,
+    dismissedAt: dismissedAt,
+    followUpDueAt: followUpDueAt,
+    supervisorHandoffId: supervisorHandoffId ?? this.supervisorHandoffId,
+    stale: stale ?? this.stale,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'patientId': patientId,
-        'dismissingClinicianId': dismissingClinicianId,
-        'severity': severity,
-        'tier': tier,
-        'dismissReasonCode': dismissReasonCode,
-        'dismissedAt': dismissedAt.toIso8601String(),
-        'followUpDueAt': followUpDueAt.toIso8601String(),
-        if (supervisorHandoffId != null)
-          'supervisorHandoffId': supervisorHandoffId,
-        'stale': stale,
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'patientId': patientId,
+    'dismissingClinicianId': dismissingClinicianId,
+    'severity': severity,
+    'tier': tier,
+    'dismissReasonCode': dismissReasonCode,
+    'dismissedAt': dismissedAt.toIso8601String(),
+    'followUpDueAt': followUpDueAt.toIso8601String(),
+    if (supervisorHandoffId != null) 'supervisorHandoffId': supervisorHandoffId,
+    'stale': stale,
+  };
 
   /// Pure helper — convenience for callers to derive `followUpDueAt`
   /// without duplicating the [followUpWindow] constant.

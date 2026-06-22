@@ -37,8 +37,7 @@ void main() {
       expect(TenantContext.ownsDocClinicId('Tenant-Abc'), isFalse);
     });
 
-    test('TenantNotResolvedException carries a human-readable toString',
-        () {
+    test('TenantNotResolvedException carries a human-readable toString', () {
       const ex = TenantNotResolvedException();
       expect(ex.toString(), contains('TenantNotResolvedException'));
       expect(ex.toString(), contains('no tenant id available'));

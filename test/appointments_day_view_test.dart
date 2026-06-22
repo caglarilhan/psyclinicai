@@ -13,16 +13,15 @@ AppointmentSlot _slot({
   int duration = 50,
   bool cancelled = false,
   bool noShow = false,
-}) =>
-    AppointmentSlot(
-      id: id,
-      patientName: name,
-      startsAt: DateTime.utc(_day.year, _day.month, _day.day, hour, minute),
-      durationMinutes: duration,
-      kind: kind,
-      cancelled: cancelled,
-      noShow: noShow,
-    );
+}) => AppointmentSlot(
+  id: id,
+  patientName: name,
+  startsAt: DateTime.utc(_day.year, _day.month, _day.day, hour, minute),
+  durationMinutes: duration,
+  kind: kind,
+  cancelled: cancelled,
+  noShow: noShow,
+);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -32,11 +31,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: AppointmentsDayView(
-          day: _day,
-          slots: slots,
-          onTap: onTap,
-        ),
+        body: AppointmentsDayView(day: _day, slots: slots, onTap: onTap),
       ),
     ),
   );
@@ -45,18 +40,20 @@ Future<void> _pump(
 
 void main() {
   group('AppointmentsDayView', () {
-    testWidgets('renders hour rows including 08:00 and 14:00',
-        (tester) async {
+    testWidgets('renders hour rows including 08:00 and 14:00', (tester) async {
       await _pump(tester, slots: const []);
       expect(find.text('08:00'), findsOneWidget);
       expect(find.text('14:00'), findsOneWidget);
     });
 
     testWidgets('a slot lands on its own hour row', (tester) async {
-      await _pump(tester, slots: [
-        _slot(hour: 10, name: 'Maria S.'),
-        _slot(hour: 14, name: 'John Demo', kind: 'intake', duration: 90),
-      ]);
+      await _pump(
+        tester,
+        slots: [
+          _slot(hour: 10, name: 'Maria S.'),
+          _slot(hour: 14, name: 'John Demo', kind: 'intake', duration: 90),
+        ],
+      );
       expect(find.text('Maria S.'), findsOneWidget);
       expect(find.text('John Demo'), findsOneWidget);
       expect(find.text('therapy · 50 min'), findsOneWidget);
@@ -64,10 +61,13 @@ void main() {
     });
 
     testWidgets('cancelled / no-show overrides the tag', (tester) async {
-      await _pump(tester, slots: [
-        _slot(hour: 11, name: 'A', cancelled: true),
-        _slot(hour: 12, name: 'B', noShow: true),
-      ]);
+      await _pump(
+        tester,
+        slots: [
+          _slot(hour: 11, name: 'A', cancelled: true),
+          _slot(hour: 12, name: 'B', noShow: true),
+        ],
+      );
       expect(find.text('cancelled · 50 min'), findsOneWidget);
       expect(find.text('no-show · 50 min'), findsOneWidget);
     });

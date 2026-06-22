@@ -11,7 +11,8 @@ void main() {
     });
 
     test('strips DEL and C1 controls', () {
-      final input = 'x${String.fromCharCode(0x7F)}${String.fromCharCode(0x9F)}y';
+      final input =
+          'x${String.fromCharCode(0x7F)}${String.fromCharCode(0x9F)}y';
       expect(PromptSafety.sanitize(input), 'xy');
     });
 
@@ -89,8 +90,7 @@ void main() {
       expect(r.text, 'a short transcript');
     });
 
-    test('reports wasTruncated=true + dropped char count when over cap',
-        () {
+    test('reports wasTruncated=true + dropped char count when over cap', () {
       final long = 'z' * 50;
       final r = PromptSafety.sanitizeWithReport(long, maxChars: 10);
       expect(r.wasTruncated, isTrue);
@@ -106,8 +106,7 @@ void main() {
       expect(PromptSafety.sanitize(long, maxChars: 10), r.text);
     });
 
-    test('original length reflects raw input — not the stripped form',
-        () {
+    test('original length reflects raw input — not the stripped form', () {
       final input = 'a${String.fromCharCode(0)}b';
       final r = PromptSafety.sanitizeWithReport(input);
       expect(r.originalLength, input.length);

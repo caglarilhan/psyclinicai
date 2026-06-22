@@ -33,27 +33,27 @@ class PatientIntake {
   }) : updatedAt = updatedAt ?? DateTime.now();
 
   factory PatientIntake.fromJson(Map<String, dynamic> json) => PatientIntake(
-        patientId: json['patientId'] as String? ?? '',
-        fullName: json['fullName'] as String? ?? '',
-        dateOfBirth: DateTime.tryParse(json['dateOfBirth'] as String? ?? ''),
-        gender: json['gender'] as String?,
-        phone: json['phone'] as String?,
-        email: json['email'] as String?,
-        emergencyContactName: json['emergencyContactName'] as String?,
-        emergencyContactPhone: json['emergencyContactPhone'] as String?,
-        presentingConcern: json['presentingConcern'] as String? ?? '',
-        allergies: _strList(json['allergies']),
-        currentMedications: _strList(json['currentMedications']),
-        medicalHistory: json['medicalHistory'] as String? ?? '',
-        mentalHealthHistory: json['mentalHealthHistory'] as String? ?? '',
-        substanceUse: json['substanceUse'] as String? ?? '',
-        priorSuicideAttempt: json['priorSuicideAttempt'] as bool? ?? false,
-        priorSelfHarm: json['priorSelfHarm'] as bool? ?? false,
-        consent: json['consent'] is Map<String, dynamic>
-            ? ConsentRecord.fromJson(json['consent'] as Map<String, dynamic>)
-            : null,
-        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-      );
+    patientId: json['patientId'] as String? ?? '',
+    fullName: json['fullName'] as String? ?? '',
+    dateOfBirth: DateTime.tryParse(json['dateOfBirth'] as String? ?? ''),
+    gender: json['gender'] as String?,
+    phone: json['phone'] as String?,
+    email: json['email'] as String?,
+    emergencyContactName: json['emergencyContactName'] as String?,
+    emergencyContactPhone: json['emergencyContactPhone'] as String?,
+    presentingConcern: json['presentingConcern'] as String? ?? '',
+    allergies: _strList(json['allergies']),
+    currentMedications: _strList(json['currentMedications']),
+    medicalHistory: json['medicalHistory'] as String? ?? '',
+    mentalHealthHistory: json['mentalHealthHistory'] as String? ?? '',
+    substanceUse: json['substanceUse'] as String? ?? '',
+    priorSuicideAttempt: json['priorSuicideAttempt'] as bool? ?? false,
+    priorSelfHarm: json['priorSelfHarm'] as bool? ?? false,
+    consent: json['consent'] is Map<String, dynamic>
+        ? ConsentRecord.fromJson(json['consent'] as Map<String, dynamic>)
+        : null,
+    updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+  );
 
   final String patientId;
 
@@ -96,28 +96,27 @@ class PatientIntake {
       (consent?.isValid ?? false);
 
   Map<String, dynamic> toJson() => {
-        'patientId': patientId,
-        'fullName': fullName,
-        if (dateOfBirth != null)
-          'dateOfBirth': dateOfBirth!.toIso8601String(),
-        if (gender != null) 'gender': gender,
-        if (phone != null) 'phone': phone,
-        if (email != null) 'email': email,
-        if (emergencyContactName != null)
-          'emergencyContactName': emergencyContactName,
-        if (emergencyContactPhone != null)
-          'emergencyContactPhone': emergencyContactPhone,
-        'presentingConcern': presentingConcern,
-        'allergies': allergies,
-        'currentMedications': currentMedications,
-        'medicalHistory': medicalHistory,
-        'mentalHealthHistory': mentalHealthHistory,
-        'substanceUse': substanceUse,
-        'priorSuicideAttempt': priorSuicideAttempt,
-        'priorSelfHarm': priorSelfHarm,
-        if (consent != null) 'consent': consent!.toJson(),
-        'updatedAt': updatedAt.toUtc().toIso8601String(),
-      };
+    'patientId': patientId,
+    'fullName': fullName,
+    if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
+    if (gender != null) 'gender': gender,
+    if (phone != null) 'phone': phone,
+    if (email != null) 'email': email,
+    if (emergencyContactName != null)
+      'emergencyContactName': emergencyContactName,
+    if (emergencyContactPhone != null)
+      'emergencyContactPhone': emergencyContactPhone,
+    'presentingConcern': presentingConcern,
+    'allergies': allergies,
+    'currentMedications': currentMedications,
+    'medicalHistory': medicalHistory,
+    'mentalHealthHistory': mentalHealthHistory,
+    'substanceUse': substanceUse,
+    'priorSuicideAttempt': priorSuicideAttempt,
+    'priorSelfHarm': priorSelfHarm,
+    if (consent != null) 'consent': consent!.toJson(),
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
 
   PatientIntake copyWith({
     String? fullName,
@@ -136,34 +135,29 @@ class PatientIntake {
     bool? priorSuicideAttempt,
     bool? priorSelfHarm,
     ConsentRecord? consent,
-  }) =>
-      PatientIntake(
-        patientId: patientId,
-        fullName: fullName ?? this.fullName,
-        dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-        gender: gender ?? this.gender,
-        phone: phone ?? this.phone,
-        email: email ?? this.email,
-        emergencyContactName:
-            emergencyContactName ?? this.emergencyContactName,
-        emergencyContactPhone:
-            emergencyContactPhone ?? this.emergencyContactPhone,
-        presentingConcern: presentingConcern ?? this.presentingConcern,
-        allergies: allergies ?? this.allergies,
-        currentMedications: currentMedications ?? this.currentMedications,
-        medicalHistory: medicalHistory ?? this.medicalHistory,
-        mentalHealthHistory: mentalHealthHistory ?? this.mentalHealthHistory,
-        substanceUse: substanceUse ?? this.substanceUse,
-        priorSuicideAttempt:
-            priorSuicideAttempt ?? this.priorSuicideAttempt,
-        priorSelfHarm: priorSelfHarm ?? this.priorSelfHarm,
-        consent: consent ?? this.consent,
-        updatedAt: DateTime.now(),
-      );
+  }) => PatientIntake(
+    patientId: patientId,
+    fullName: fullName ?? this.fullName,
+    dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+    gender: gender ?? this.gender,
+    phone: phone ?? this.phone,
+    email: email ?? this.email,
+    emergencyContactName: emergencyContactName ?? this.emergencyContactName,
+    emergencyContactPhone: emergencyContactPhone ?? this.emergencyContactPhone,
+    presentingConcern: presentingConcern ?? this.presentingConcern,
+    allergies: allergies ?? this.allergies,
+    currentMedications: currentMedications ?? this.currentMedications,
+    medicalHistory: medicalHistory ?? this.medicalHistory,
+    mentalHealthHistory: mentalHealthHistory ?? this.mentalHealthHistory,
+    substanceUse: substanceUse ?? this.substanceUse,
+    priorSuicideAttempt: priorSuicideAttempt ?? this.priorSuicideAttempt,
+    priorSelfHarm: priorSelfHarm ?? this.priorSelfHarm,
+    consent: consent ?? this.consent,
+    updatedAt: DateTime.now(),
+  );
 
-  static List<String> _strList(dynamic v) =>
-      (v as List<dynamic>? ?? const [])
-          .map((e) => e.toString())
-          .where((s) => s.trim().isNotEmpty)
-          .toList();
+  static List<String> _strList(dynamic v) => (v as List<dynamic>? ?? const [])
+      .map((e) => e.toString())
+      .where((s) => s.trim().isNotEmpty)
+      .toList();
 }

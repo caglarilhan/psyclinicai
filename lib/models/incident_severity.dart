@@ -110,15 +110,11 @@ const Duration hipaaBreachInternalTarget = Duration(hours: 72);
 /// Returns the [IncidentTargets] for a severity. Defaults to P3 if the
 /// severity is somehow missing from the table.
 IncidentTargets targetsFor(IncidentSeverity severity) =>
-    incidentTargets[severity] ??
-    incidentTargets[IncidentSeverity.p3]!;
+    incidentTargets[severity] ?? incidentTargets[IncidentSeverity.p3]!;
 
 /// True when [elapsed] since the incident was opened still leaves enough
 /// time to notify the customer within the SLA. Pass this to the banner
 /// that nudges the on-call.
-bool isWithinNotificationWindow(
-  IncidentSeverity severity,
-  Duration elapsed,
-) {
+bool isWithinNotificationWindow(IncidentSeverity severity, Duration elapsed) {
   return elapsed < targetsFor(severity).customerNotifyWithin;
 }

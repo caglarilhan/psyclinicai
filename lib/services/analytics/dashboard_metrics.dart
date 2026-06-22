@@ -111,16 +111,16 @@ class DashboardMetricsBuilder {
   final Duration unsignedWindow;
 
   DashboardMetrics build(DashboardInputs input) {
-    final today = DateTime(
-      input.now.year,
-      input.now.month,
-      input.now.day,
-    );
+    final today = DateTime(input.now.year, input.now.month, input.now.day);
     final liveAppointments = input.appointmentsToday
         .where((a) => !a.cancelled)
-        .where((a) =>
-            DateTime(a.startsAt.year, a.startsAt.month, a.startsAt.day)
-                .isAtSameMomentAs(today))
+        .where(
+          (a) => DateTime(
+            a.startsAt.year,
+            a.startsAt.month,
+            a.startsAt.day,
+          ).isAtSameMomentAs(today),
+        )
         .toList(growable: false);
     liveAppointments.sort((a, b) => a.startsAt.compareTo(b.startsAt));
 
@@ -142,8 +142,8 @@ class DashboardMetricsBuilder {
     final oldestAge = unpaid.isEmpty
         ? 0
         : unpaid
-            .map((s) => input.now.difference(s.issuedAt).inDays)
-            .reduce((a, b) => a > b ? a : b);
+              .map((s) => input.now.difference(s.issuedAt).inDays)
+              .reduce((a, b) => a > b ? a : b);
 
     return DashboardMetrics(
       todaysSessionCount: liveAppointments.length,

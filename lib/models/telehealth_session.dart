@@ -33,13 +33,13 @@ class TelehealthSession {
         roomName: json['roomName'] as String? ?? '',
         scheduledFor:
             DateTime.tryParse(json['scheduledFor'] as String? ?? '') ??
-                DateTime.now().toUtc(),
+            DateTime.now().toUtc(),
         joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? ''),
         endedAt: DateTime.tryParse(json['endedAt'] as String? ?? ''),
-        visitConsent:
-            VisitConsent.fromId(json['visitConsent'] as String?),
-        recordingConsent:
-            RecordingConsent.fromId(json['recordingConsent'] as String?),
+        visitConsent: VisitConsent.fromId(json['visitConsent'] as String?),
+        recordingConsent: RecordingConsent.fromId(
+          json['recordingConsent'] as String?,
+        ),
         consentAt: DateTime.tryParse(json['consentAt'] as String? ?? ''),
       );
 
@@ -102,36 +102,35 @@ class TelehealthSession {
     VisitConsent? visitConsent,
     RecordingConsent? recordingConsent,
     DateTime? consentAt,
-  }) =>
-      TelehealthSession(
-        id: id,
-        clinicId: clinicId,
-        sessionId: sessionId,
-        patientId: patientId,
-        clinicianId: clinicianId,
-        roomName: roomName,
-        scheduledFor: scheduledFor,
-        joinedAt: joinedAt ?? this.joinedAt,
-        endedAt: endedAt ?? this.endedAt,
-        visitConsent: visitConsent ?? this.visitConsent,
-        recordingConsent: recordingConsent ?? this.recordingConsent,
-        consentAt: consentAt ?? this.consentAt,
-      );
+  }) => TelehealthSession(
+    id: id,
+    clinicId: clinicId,
+    sessionId: sessionId,
+    patientId: patientId,
+    clinicianId: clinicianId,
+    roomName: roomName,
+    scheduledFor: scheduledFor,
+    joinedAt: joinedAt ?? this.joinedAt,
+    endedAt: endedAt ?? this.endedAt,
+    visitConsent: visitConsent ?? this.visitConsent,
+    recordingConsent: recordingConsent ?? this.recordingConsent,
+    consentAt: consentAt ?? this.consentAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'sessionId': sessionId,
-        'patientId': patientId,
-        'clinicianId': clinicianId,
-        'roomName': roomName,
-        'scheduledFor': scheduledFor.toIso8601String(),
-        if (joinedAt != null) 'joinedAt': joinedAt!.toIso8601String(),
-        if (endedAt != null) 'endedAt': endedAt!.toIso8601String(),
-        'visitConsent': visitConsent.id,
-        'recordingConsent': recordingConsent.id,
-        if (consentAt != null) 'consentAt': consentAt!.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'sessionId': sessionId,
+    'patientId': patientId,
+    'clinicianId': clinicianId,
+    'roomName': roomName,
+    'scheduledFor': scheduledFor.toIso8601String(),
+    if (joinedAt != null) 'joinedAt': joinedAt!.toIso8601String(),
+    if (endedAt != null) 'endedAt': endedAt!.toIso8601String(),
+    'visitConsent': visitConsent.id,
+    'recordingConsent': recordingConsent.id,
+    if (consentAt != null) 'consentAt': consentAt!.toIso8601String(),
+  };
 }
 
 /// HIPAA §164.510 / GDPR Art. 9 — visit-level consent. Separate

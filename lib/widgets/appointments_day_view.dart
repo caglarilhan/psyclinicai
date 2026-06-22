@@ -50,11 +50,13 @@ class AppointmentsDayView extends StatelessWidget {
 
   List<AppointmentSlot> _slotsForHour(int hour) {
     return slots
-        .where((s) =>
-            s.startsAt.year == day.year &&
-            s.startsAt.month == day.month &&
-            s.startsAt.day == day.day &&
-            s.startsAt.hour == hour)
+        .where(
+          (s) =>
+              s.startsAt.year == day.year &&
+              s.startsAt.month == day.month &&
+              s.startsAt.day == day.day &&
+              s.startsAt.hour == hour,
+        )
         .toList(growable: false)
       ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
   }
@@ -99,8 +101,7 @@ class _HourRow extends StatelessWidget {
             width: 56,
             child: Text(
               '${hour.toString().padLeft(2, '0')}:00',
-              style:
-                  t.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+              style: t.labelMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
           Expanded(
@@ -111,13 +112,11 @@ class _HourRow extends StatelessWidget {
                   Container(
                     height: 40,
                     decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(color: cs.outlineVariant)),
+                      border: Border(top: BorderSide(color: cs.outlineVariant)),
                     ),
                   )
                 else
-                  for (final s in slots)
-                    _SlotCard(slot: s, onTap: onTap),
+                  for (final s in slots) _SlotCard(slot: s, onTap: onTap),
               ],
             ),
           ),
@@ -153,13 +152,13 @@ class _SlotCard extends StatelessWidget {
     final color = slot.cancelled
         ? cs.outlineVariant
         : slot.noShow
-            ? PsyColors.danger
-            : _kindColor();
+        ? PsyColors.danger
+        : _kindColor();
     final tag = slot.cancelled
         ? 'cancelled'
         : slot.noShow
-            ? 'no-show'
-            : slot.kind;
+        ? 'no-show'
+        : slot.kind;
     return InkWell(
       onTap: onTap == null ? null : () => onTap!(slot),
       child: Container(
@@ -181,9 +180,7 @@ class _SlotCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: PsySpacing.sm),
-            Expanded(
-              child: Text(slot.patientName, style: t.bodyMedium),
-            ),
+            Expanded(child: Text(slot.patientName, style: t.bodyMedium)),
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: PsySpacing.sm,

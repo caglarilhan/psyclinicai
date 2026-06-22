@@ -33,22 +33,15 @@ void main() {
 
     test('hasContraindication is the boolean gate', () {
       expect(checker.hasContraindication(['N06AB04', 'N06AF01']), isTrue);
-      expect(checker.hasContraindication(['N06AB04', 'N06AB06']),
-          isFalse);
+      expect(checker.hasContraindication(['N06AB04', 'N06AB06']), isFalse);
     });
 
     test('hasBlockingInteraction includes severe interactions', () {
       // benzo + opioid is severe (FDA black box) and MUST block
       // transmission — not "warn only".
-      expect(
-        checker.hasBlockingInteraction(['N05BA01', 'N02AA01']),
-        isTrue,
-      );
+      expect(checker.hasBlockingInteraction(['N05BA01', 'N02AA01']), isTrue);
       // Moderate-only does NOT block (TCA + SSRI).
-      expect(
-        checker.hasBlockingInteraction(['N06AA09', 'N06AB04']),
-        isFalse,
-      );
+      expect(checker.hasBlockingInteraction(['N06AA09', 'N06AB04']), isFalse);
     });
 
     test('returns moderate severity for TCA + SSRI', () {
@@ -58,10 +51,7 @@ void main() {
     });
 
     test('SSRI + linezolid is contraindicated', () {
-      expect(
-        checker.hasContraindication(['N06AB04', 'J01XX08']),
-        isTrue,
-      );
+      expect(checker.hasContraindication(['N06AB04', 'J01XX08']), isTrue);
     });
 
     test('citalopram + ondansetron raises severe QT warning', () {

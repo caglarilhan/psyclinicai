@@ -31,8 +31,10 @@ class CaseloadOutcomesPanel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
           child: Row(
             children: [
-              Icon(Icons.insights_outlined,
-                  color: cs.onSurface.withValues(alpha: 0.4)),
+              Icon(
+                Icons.insights_outlined,
+                color: cs.onSurface.withValues(alpha: 0.4),
+              ),
               const SizedBox(width: PsySpacing.md),
               Expanded(
                 child: Text(
@@ -48,8 +50,7 @@ class CaseloadOutcomesPanel extends StatelessWidget {
     }
 
     final improving = metrics.avgDelta < 0;
-    final deltaColor =
-        improving ? PsyColors.success : PsyColors.warning;
+    final deltaColor = improving ? PsyColors.success : PsyColors.warning;
 
     return PsyCard(
       padding: const EdgeInsets.all(PsySpacing.lg),
@@ -77,20 +78,17 @@ class CaseloadOutcomesPanel extends StatelessWidget {
                       '${metrics.avgDelta >= 0 ? '+' : ''}${metrics.avgDelta.toStringAsFixed(1)} pts',
                   hint: improving
                       ? '${metrics.avgFirstScore.toStringAsFixed(1)} → '
-                          '${metrics.avgLastScore.toStringAsFixed(1)}'
+                            '${metrics.avgLastScore.toStringAsFixed(1)}'
                       : 'increase across the caseload',
                   color: deltaColor,
-                  icon: improving
-                      ? Icons.trending_down
-                      : Icons.trending_up,
+                  icon: improving ? Icons.trending_down : Icons.trending_up,
                 ),
               ),
               const SizedBox(width: PsySpacing.md),
               Expanded(
                 child: _MetricTile(
                   label: 'Response rate',
-                  value:
-                      '${(metrics.responseRate * 100).toStringAsFixed(0)}%',
+                  value: '${(metrics.responseRate * 100).toStringAsFixed(0)}%',
                   hint: '≥50% drop from baseline',
                   color: cs.tertiary,
                   icon: Icons.workspace_premium_outlined,
@@ -112,8 +110,7 @@ class CaseloadOutcomesPanel extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline,
-                    size: 16, color: cs.onSurfaceVariant),
+                Icon(Icons.info_outline, size: 16, color: cs.onSurfaceVariant),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -168,15 +165,20 @@ class _MetricTile extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: theme.textTheme.labelMedium
-                    ?.copyWith(color: color, fontWeight: FontWeight.w700),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(value,
-              style: theme.textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 2),
           Text(hint, style: theme.textTheme.bodySmall),
         ],

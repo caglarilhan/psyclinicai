@@ -47,11 +47,11 @@ class ClaimSubmission {
     }
     if (cptCodes.isEmpty) {
       throw ArgumentError(
-          'ClaimSubmission needs at least one CPT code (X12 837P).');
+        'ClaimSubmission needs at least one CPT code (X12 837P).',
+      );
     }
     if (icd10Codes.isEmpty) {
-      throw ArgumentError(
-          'ClaimSubmission needs at least one ICD-10 pointer.');
+      throw ArgumentError('ClaimSubmission needs at least one ICD-10 pointer.');
     }
   }
 
@@ -116,7 +116,8 @@ class ClaimSubmission {
       status: to,
       createdAt: createdAt,
       submittedAt: to == ClaimStatus.submitted ? ts : submittedAt,
-      adjudicatedAt: (to == ClaimStatus.accepted ||
+      adjudicatedAt:
+          (to == ClaimStatus.accepted ||
               to == ClaimStatus.denied ||
               to == ClaimStatus.paid)
           ? ts
@@ -127,23 +128,22 @@ class ClaimSubmission {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'superbill_id': superbillId,
-        'payer_id': payerId,
-        'subject_patient_id': subjectPatientId,
-        'cpt_codes': cptCodes,
-        'icd10_codes': icd10Codes,
-        'amount_cents': amountCents,
-        'status': status.id,
-        'created_at': createdAt.toUtc().toIso8601String(),
-        if (submittedAt != null)
-          'submitted_at': submittedAt!.toUtc().toIso8601String(),
-        if (adjudicatedAt != null)
-          'adjudicated_at': adjudicatedAt!.toUtc().toIso8601String(),
-        if (denialReasonCode != null)
-          'denial_reason_code': denialReasonCode,
-        if (refNumber != null) 'ref_number': refNumber,
-      };
+    'id': id,
+    'superbill_id': superbillId,
+    'payer_id': payerId,
+    'subject_patient_id': subjectPatientId,
+    'cpt_codes': cptCodes,
+    'icd10_codes': icd10Codes,
+    'amount_cents': amountCents,
+    'status': status.id,
+    'created_at': createdAt.toUtc().toIso8601String(),
+    if (submittedAt != null)
+      'submitted_at': submittedAt!.toUtc().toIso8601String(),
+    if (adjudicatedAt != null)
+      'adjudicated_at': adjudicatedAt!.toUtc().toIso8601String(),
+    if (denialReasonCode != null) 'denial_reason_code': denialReasonCode,
+    if (refNumber != null) 'ref_number': refNumber,
+  };
 
   factory ClaimSubmission.fromJson(Map<String, dynamic> json) {
     return ClaimSubmission(
@@ -151,10 +151,10 @@ class ClaimSubmission {
       superbillId: json['superbill_id'] as String,
       payerId: json['payer_id'] as String,
       subjectPatientId: json['subject_patient_id'] as String,
-      cptCodes:
-          (json['cpt_codes'] as List).map((e) => e as String).toList(),
-      icd10Codes:
-          (json['icd10_codes'] as List).map((e) => e as String).toList(),
+      cptCodes: (json['cpt_codes'] as List).map((e) => e as String).toList(),
+      icd10Codes: (json['icd10_codes'] as List)
+          .map((e) => e as String)
+          .toList(),
       amountCents: json['amount_cents'] as int,
       status: ClaimStatus.fromId(json['status'] as String? ?? 'draft'),
       createdAt: DateTime.parse(json['created_at'] as String),

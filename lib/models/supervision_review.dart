@@ -78,30 +78,29 @@ class SupervisionReview {
     SupervisionReviewStatus? status,
     String? supervisorComment,
     DateTime? decidedAt,
-  }) =>
-      SupervisionReview(
-        id: id,
-        clinicId: clinicId,
-        traineeId: traineeId,
-        supervisorId: supervisorId,
-        sessionNoteId: sessionNoteId,
-        status: status ?? this.status,
-        supervisorComment: supervisorComment ?? this.supervisorComment,
-        requestedAt: requestedAt,
-        decidedAt: decidedAt ?? this.decidedAt,
-      );
+  }) => SupervisionReview(
+    id: id,
+    clinicId: clinicId,
+    traineeId: traineeId,
+    supervisorId: supervisorId,
+    sessionNoteId: sessionNoteId,
+    status: status ?? this.status,
+    supervisorComment: supervisorComment ?? this.supervisorComment,
+    requestedAt: requestedAt,
+    decidedAt: decidedAt ?? this.decidedAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'traineeId': traineeId,
-        'supervisorId': supervisorId,
-        'sessionNoteId': sessionNoteId,
-        'status': status.id,
-        'supervisorComment': supervisorComment,
-        'requestedAt': requestedAt.toIso8601String(),
-        if (decidedAt != null) 'decidedAt': decidedAt!.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'traineeId': traineeId,
+    'supervisorId': supervisorId,
+    'sessionNoteId': sessionNoteId,
+    'status': status.id,
+    'supervisorComment': supervisorComment,
+    'requestedAt': requestedAt.toIso8601String(),
+    if (decidedAt != null) 'decidedAt': decidedAt!.toIso8601String(),
+  };
 }
 
 enum SupervisionReviewStatus {

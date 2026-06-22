@@ -143,8 +143,7 @@ void main() {
   });
 
   test('AssessmentInstrument.tryFromId tolerates unknown', () {
-    expect(AssessmentInstrument.tryFromId('phq9'),
-        AssessmentInstrument.phq9);
+    expect(AssessmentInstrument.tryFromId('phq9'), AssessmentInstrument.phq9);
     expect(AssessmentInstrument.tryFromId('xx'), isNull);
   });
 }

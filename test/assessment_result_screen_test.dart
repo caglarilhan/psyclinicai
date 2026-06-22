@@ -3,10 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 
-Future<void> _pump(
-  WidgetTester tester,
-  AssessmentResultScreenArgs args,
-) async {
+Future<void> _pump(WidgetTester tester, AssessmentResultScreenArgs args) async {
   await tester.pumpWidget(
     MaterialApp(home: AssessmentResultScreen(args: args)),
   );
@@ -28,8 +25,9 @@ void main() {
       expect(find.textContaining('item 9'), findsOneWidget);
     });
 
-    testWidgets('improving delta surfaces the trending-down chip',
-        (tester) async {
+    testWidgets('improving delta surfaces the trending-down chip', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AssessmentResultScreenArgs(
@@ -42,8 +40,9 @@ void main() {
       expect(find.text('-5'), findsOneWidget);
     });
 
-    testWidgets('non-concern bands show routine monitoring recommendation',
-        (tester) async {
+    testWidgets('non-concern bands show routine monitoring recommendation', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AssessmentResultScreenArgs(
@@ -54,8 +53,9 @@ void main() {
       expect(find.textContaining('routine monitoring'), findsOneWidget);
     });
 
-    testWidgets('PCL-5 boundary score renders the boundary band',
-        (tester) async {
+    testWidgets('PCL-5 boundary score renders the boundary band', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AssessmentResultScreenArgs(

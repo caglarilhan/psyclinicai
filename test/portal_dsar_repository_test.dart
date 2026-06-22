@@ -29,10 +29,7 @@ void main() {
         kind: PortalDsarKind.access,
       );
       expect(
-        () => repo.advance(
-          id: r.id,
-          next: PortalDsarState.fulfilled,
-        ),
+        () => repo.advance(id: r.id, next: PortalDsarState.fulfilled),
         throwsA(isA<StateError>()),
       );
     });
@@ -64,10 +61,7 @@ void main() {
       );
       repo.advance(id: r.id, next: PortalDsarState.rejected);
       expect(
-        () => repo.advance(
-          id: r.id,
-          next: PortalDsarState.underReview,
-        ),
+        () => repo.advance(id: r.id, next: PortalDsarState.underReview),
         throwsA(isA<StateError>()),
       );
     });

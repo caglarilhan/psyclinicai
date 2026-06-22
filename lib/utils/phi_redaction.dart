@@ -5,10 +5,7 @@
 library;
 
 class PhiScrubResult {
-  const PhiScrubResult({
-    required this.cleanText,
-    required this.removed,
-  });
+  const PhiScrubResult({required this.cleanText, required this.removed});
 
   final String cleanText;
   final Map<String, int> removed;
@@ -17,10 +14,7 @@ class PhiScrubResult {
 }
 
 class PhiRedactor {
-  PhiRedactor({
-    this.patientNames = const [],
-    this.dateShift,
-  });
+  PhiRedactor({this.patientNames = const [], this.dateShift});
 
   final List<String> patientNames;
 
@@ -41,16 +35,19 @@ class PhiRedactor {
   static final _phoneE164 = RegExp(r'\+\d{8,15}\b');
   // Two alternations: parens-style (no leading \b) + dash-style with \b.
   // Dart RegExp lookbehind support is unreliable on \b — split instead.
-  static final _phoneUs =
-      RegExp(r'(?:\(\d{3}\)\s*\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]?\d{4})\b');
-  static final _email =
-      RegExp(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b');
+  static final _phoneUs = RegExp(
+    r'(?:\(\d{3}\)\s*\d{3}[-.\s]?\d{4}|\b\d{3}[-.\s]\d{3}[-.\s]?\d{4})\b',
+  );
+  static final _email = RegExp(
+    r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b',
+  );
   static final _dateIso = RegExp(r'\b(19|20)\d{2}-\d{2}-\d{2}\b');
   static final _dateUs = RegExp(r'\b\d{1,2}/\d{1,2}/(19|20)\d{2}\b');
   static final _dateDe = RegExp(r'\b\d{1,2}\.\d{1,2}\.(19|20)\d{2}\b');
-  static final _mrn =
-      RegExp(r'\b(?:MRN|Patient\s*#|Member\s*ID)[:\s-]*[A-Z0-9-]{3,}\b',
-          caseSensitive: false);
+  static final _mrn = RegExp(
+    r'\b(?:MRN|Patient\s*#|Member\s*ID)[:\s-]*[A-Z0-9-]{3,}\b',
+    caseSensitive: false,
+  );
   static final _ssn = RegExp(r'\b\d{3}-\d{2}-\d{4}\b');
   static final _kvnr = RegExp(r'\b[A-Z]\d{9}\b');
   static final _ipV4 = RegExp(r'\b(?:\d{1,3}\.){3}\d{1,3}\b');
@@ -60,8 +57,10 @@ class PhiRedactor {
   // (member id, study code, fax number) doesn't get masked as NPI.
   // False negatives are still preferred over PHI egress — but
   // false positives that destroy clinical text are now avoided.
-  static final _npiCandidate = RegExp(r'\b(?:NPI\s*[:#-]?\s*)?(\d{10})\b',
-      caseSensitive: false);
+  static final _npiCandidate = RegExp(
+    r'\b(?:NPI\s*[:#-]?\s*)?(\d{10})\b',
+    caseSensitive: false,
+  );
 
   PhiScrubResult scrub(String input) {
     final removed = <String, int>{};

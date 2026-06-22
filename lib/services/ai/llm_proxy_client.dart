@@ -24,7 +24,8 @@ enum LlmModel {
     }
     // Loud fallback so cost attribution drift gets caught in QA.
     debugPrint(
-        'LlmModel.fromId: unknown model id "$id", falling back to sonnet46');
+      'LlmModel.fromId: unknown model id "$id", falling back to sonnet46',
+    );
     return LlmModel.sonnet46;
   }
 }
@@ -56,8 +57,9 @@ class LlmRequest {
       tenantId: tenantId,
       model: model,
       prompt: r.scrub(prompt).cleanText,
-      systemPrompt:
-          systemPrompt == null ? null : r.scrub(systemPrompt!).cleanText,
+      systemPrompt: systemPrompt == null
+          ? null
+          : r.scrub(systemPrompt!).cleanText,
       patientNames: patientNames,
       maxTokens: maxTokens,
       temperature: temperature,
@@ -93,7 +95,8 @@ class LlmProxyClientStub implements LlmProxyClient {
   Future<LlmCompletion> complete({required LlmRequest request}) async {
     if (responder != null) return responder!(request);
     return LlmCompletion(
-      text: 'Stub response for tenant ${request.tenantId} using '
+      text:
+          'Stub response for tenant ${request.tenantId} using '
           '${request.model.label}.',
       model: request.model,
       inputTokens: request.prompt.length ~/ 4,

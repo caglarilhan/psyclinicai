@@ -9,8 +9,7 @@ void main() {
       }
     });
 
-    test('defaults to byok when the id is unknown / null (fail-closed)',
-        () {
+    test('defaults to byok when the id is unknown / null (fail-closed)', () {
       // BYOK is the strictest mode, so an unknown value falls back to
       // it instead of accidentally enabling the platform-key path.
       expect(WorkspaceAiMode.fromId(null), WorkspaceAiMode.byok);

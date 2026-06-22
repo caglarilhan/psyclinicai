@@ -9,15 +9,14 @@ void main() {
     bool sensitive = true,
     String signature = 'Jane Doe',
     String version = '2026-06',
-  }) =>
-      ConsentRecord(
-        patientId: 'p1',
-        policyVersion: version,
-        dataProcessingConsent: dataProcessing,
-        aiAssistanceConsent: aiAssistance,
-        sensitiveDataConsent: sensitive,
-        signedFullName: signature,
-      );
+  }) => ConsentRecord(
+    patientId: 'p1',
+    policyVersion: version,
+    dataProcessingConsent: dataProcessing,
+    aiAssistanceConsent: aiAssistance,
+    sensitiveDataConsent: sensitive,
+    signedFullName: signature,
+  );
 
   group('ConsentGuard.aiAllowed', () {
     test('false when the patient has no consent record on file', () {
@@ -31,23 +30,22 @@ void main() {
     });
 
     test('false when AI consent is explicitly withdrawn', () {
-      final guard = ConsentGuard.fromMap(
-          {'p1': build(aiAssistance: false)});
+      final guard = ConsentGuard.fromMap({'p1': build(aiAssistance: false)});
       expect(guard.aiAllowed('p1'), isFalse);
     });
 
-    test('false when the consent record itself is invalid (missing sig)',
-        () {
-      final guard = ConsentGuard.fromMap(
-          {'p1': build(signature: '   ')});
+    test('false when the consent record itself is invalid (missing sig)', () {
+      final guard = ConsentGuard.fromMap({'p1': build(signature: '   ')});
       expect(guard.aiAllowed('p1'), isFalse);
     });
 
     test('false when required data-processing consent is missing', () {
-      final guard = ConsentGuard.fromMap(
-          {'p1': build(dataProcessing: false)});
-      expect(guard.aiAllowed('p1'), isFalse,
-          reason: 'AI is denied unless the base consent stack is valid');
+      final guard = ConsentGuard.fromMap({'p1': build(dataProcessing: false)});
+      expect(
+        guard.aiAllowed('p1'),
+        isFalse,
+        reason: 'AI is denied unless the base consent stack is valid',
+      );
     });
 
     test('default lookup denies every patient (fail-closed)', () {
@@ -57,20 +55,23 @@ void main() {
     });
 
     test('a withdrawn consent denies AI even if AI flag was true', () {
-      final withdrawn = build()
-          .copyWith(withdrawnAt: DateTime.utc(2026, 6, 5));
+      final withdrawn = build().copyWith(withdrawnAt: DateTime.utc(2026, 6, 5));
       final guard = ConsentGuard.fromMap({'p1': withdrawn});
-      expect(guard.aiAllowed('p1'), isFalse,
-          reason: 'GDPR Art. 7(3) — withdrawal must close the AI gate');
+      expect(
+        guard.aiAllowed('p1'),
+        isFalse,
+        reason: 'GDPR Art. 7(3) — withdrawal must close the AI gate',
+      );
     });
   });
 
   group('ConsentGuard.requireAi', () {
     test('throws ConsentDeniedException when AI is denied', () {
-      final guard = ConsentGuard.fromMap(
-          {'p1': build(aiAssistance: false)});
-      expect(() => guard.requireAi('p1'),
-          throwsA(isA<ConsentDeniedException>()));
+      final guard = ConsentGuard.fromMap({'p1': build(aiAssistance: false)});
+      expect(
+        () => guard.requireAi('p1'),
+        throwsA(isA<ConsentDeniedException>()),
+      );
     });
 
     test('returns silently when AI is allowed', () {

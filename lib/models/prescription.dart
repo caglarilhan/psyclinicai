@@ -30,32 +30,30 @@ class Prescription {
     this.externalReference,
     this.supersedesId,
     DateTime? createdAt,
-  })  : items = List<PrescriptionItem>.unmodifiable(items),
-        createdAt = createdAt ?? DateTime.now().toUtc() {
+  }) : items = List<PrescriptionItem>.unmodifiable(items),
+       createdAt = createdAt ?? DateTime.now().toUtc() {
     if (items.isEmpty) {
-      throw ArgumentError(
-        'A prescription must include at least one item.',
-      );
+      throw ArgumentError('A prescription must include at least one item.');
     }
   }
 
   factory Prescription.fromJson(Map<String, dynamic> json) => Prescription(
-        id: json['id'] as String? ?? '',
-        clinicId: json['clinicId'] as String? ?? '',
-        patientId: json['patientId'] as String? ?? '',
-        clinicianId: json['clinicianId'] as String? ?? '',
-        market: PrescriptionMarket.fromId(json['market'] as String?),
-        items: (json['items'] as List<dynamic>? ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .map(PrescriptionItem.fromJson)
-            .toList(),
-        status: PrescriptionStatus.fromId(json['status'] as String?),
-        signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
-        signatureHash: json['signatureHash'] as String?,
-        externalReference: json['externalReference'] as String?,
-        supersedesId: json['supersedesId'] as String?,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
-      );
+    id: json['id'] as String? ?? '',
+    clinicId: json['clinicId'] as String? ?? '',
+    patientId: json['patientId'] as String? ?? '',
+    clinicianId: json['clinicianId'] as String? ?? '',
+    market: PrescriptionMarket.fromId(json['market'] as String?),
+    items: (json['items'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(PrescriptionItem.fromJson)
+        .toList(),
+    status: PrescriptionStatus.fromId(json['status'] as String?),
+    signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
+    signatureHash: json['signatureHash'] as String?,
+    externalReference: json['externalReference'] as String?,
+    supersedesId: json['supersedesId'] as String?,
+    createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+  );
 
   final String id;
   final String clinicId;
@@ -118,21 +116,20 @@ class Prescription {
     DateTime? signedAt,
     String? signatureHash,
     String? externalReference,
-  }) =>
-      Prescription(
-        id: id,
-        clinicId: clinicId,
-        patientId: patientId,
-        clinicianId: clinicianId,
-        market: market,
-        items: items,
-        status: status ?? this.status,
-        signedAt: signedAt ?? this.signedAt,
-        signatureHash: signatureHash ?? this.signatureHash,
-        externalReference: externalReference ?? this.externalReference,
-        supersedesId: supersedesId,
-        createdAt: createdAt,
-      );
+  }) => Prescription(
+    id: id,
+    clinicId: clinicId,
+    patientId: patientId,
+    clinicianId: clinicianId,
+    market: market,
+    items: items,
+    status: status ?? this.status,
+    signedAt: signedAt ?? this.signedAt,
+    signatureHash: signatureHash ?? this.signatureHash,
+    externalReference: externalReference ?? this.externalReference,
+    supersedesId: supersedesId,
+    createdAt: createdAt,
+  );
 
   /// Build a new draft prescription that replaces this row. The new
   /// row points back via [Prescription.supersedesId] so the audit
@@ -159,20 +156,19 @@ class Prescription {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'clinicId': clinicId,
-        'patientId': patientId,
-        'clinicianId': clinicianId,
-        'market': market.id,
-        'items': items.map((e) => e.toJson()).toList(),
-        'status': status.id,
-        if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
-        if (signatureHash != null) 'signatureHash': signatureHash,
-        if (externalReference != null)
-          'externalReference': externalReference,
-        if (supersedesId != null) 'supersedesId': supersedesId,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'patientId': patientId,
+    'clinicianId': clinicianId,
+    'market': market.id,
+    'items': items.map((e) => e.toJson()).toList(),
+    'status': status.id,
+    if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
+    if (signatureHash != null) 'signatureHash': signatureHash,
+    if (externalReference != null) 'externalReference': externalReference,
+    if (supersedesId != null) 'supersedesId': supersedesId,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
 
 /// One drug on a prescription.
@@ -201,8 +197,9 @@ class PrescriptionItem {
         instructions: json['instructions'] as String? ?? '',
         isPrn: json['isPrn'] as bool? ?? false,
         maxDosesPer24h: (json['maxDosesPer24h'] as num?)?.toInt(),
-        controlledSchedule:
-            ControlledSchedule.fromId(json['controlledSchedule'] as String?),
+        controlledSchedule: ControlledSchedule.fromId(
+          json['controlledSchedule'] as String?,
+        ),
       );
 
   /// Market-appropriate code (ATC for EU, MKYS for TR, NDC for US).
@@ -231,21 +228,20 @@ class PrescriptionItem {
 
   /// True when the item is a controlled substance (any schedule
   /// except `none`).
-  bool get isControlled =>
-      controlledSchedule != ControlledSchedule.none;
+  bool get isControlled => controlledSchedule != ControlledSchedule.none;
 
   Map<String, dynamic> toJson() => {
-        'drugCode': drugCode,
-        'drugName': drugName,
-        'dose': dose,
-        'frequency': frequency,
-        'durationDays': durationDays,
-        'route': route,
-        'instructions': instructions,
-        'isPrn': isPrn,
-        if (maxDosesPer24h != null) 'maxDosesPer24h': maxDosesPer24h,
-        'controlledSchedule': controlledSchedule.id,
-      };
+    'drugCode': drugCode,
+    'drugName': drugName,
+    'dose': dose,
+    'frequency': frequency,
+    'durationDays': durationDays,
+    'route': route,
+    'instructions': instructions,
+    'isPrn': isPrn,
+    if (maxDosesPer24h != null) 'maxDosesPer24h': maxDosesPer24h,
+    'controlledSchedule': controlledSchedule.id,
+  };
 }
 
 enum ControlledSchedule {

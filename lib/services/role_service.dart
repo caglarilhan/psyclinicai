@@ -31,5 +31,3 @@ class RoleService extends ChangeNotifier {
     };
   }
 }
-
-

@@ -46,8 +46,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   Future<void> _submit() async {
     if (!_backendReady) {
-      setState(() => _error =
-          'Password reset requires a configured backend. Contact your admin.');
+      setState(
+        () => _error =
+            'Password reset requires a configured backend. Contact your admin.',
+      );
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -57,8 +59,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     });
 
     final started = DateTime.now();
-    final result = await FirebaseAuthService.instance
-        .sendPasswordReset(_email.text.trim());
+    final result = await FirebaseAuthService.instance.sendPasswordReset(
+      _email.text.trim(),
+    );
     final elapsed = DateTime.now().difference(started);
     const floor = Duration(milliseconds: 800);
     if (elapsed < floor) {
@@ -106,7 +109,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl, vertical: PsySpacing.xl),
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.xl,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: Container(
@@ -132,16 +137,20 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Reset your password',
-              style: theme.textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Reset your password',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
             'Enter your email and we will send a reset link if an account '
             'exists for it. Either way you will see the same confirmation, '
             'so account existence is never disclosed.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
           ),
           const SizedBox(height: PsySpacing.xl),
           TextFormField(
@@ -167,15 +176,20 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   borderRadius: BorderRadius.circular(PsyRadius.md),
                   border: Border.all(color: cs.error.withValues(alpha: 0.5)),
                 ),
-                child: Row(children: [
-                  Icon(Icons.error_outline, color: cs.error, size: 18),
-                  const SizedBox(width: PsySpacing.sm),
-                  Expanded(
-                    child: Text(_error!,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: cs.onErrorContainer)),
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: cs.error, size: 18),
+                    const SizedBox(width: PsySpacing.sm),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -184,15 +198,16 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _loading ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-              ),
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
               child: _loading
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Text('Send reset link'),
             ),
           ),
@@ -200,8 +215,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           Align(
             alignment: Alignment.center,
             child: TextButton(
-              onPressed:
-                  _loading ? null : () => Navigator.of(context).maybePop(),
+              onPressed: _loading
+                  ? null
+                  : () => Navigator.of(context).maybePop(),
               child: const Text('Back to sign in'),
             ),
           ),
@@ -225,9 +241,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           child: Icon(Icons.mark_email_read_outlined, color: cs.primary),
         ),
         const SizedBox(height: PsySpacing.md),
-        Text('Check your inbox',
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Check your inbox',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.sm),
         Text(
           'If an account exists for ${_email.text.trim()}, a reset link is '
@@ -236,7 +255,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           'use a constant-time response so account presence cannot be '
           'inferred from timing.',
           style: theme.textTheme.bodyMedium?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.7), height: 1.5),
+            color: cs.onSurface.withValues(alpha: 0.7),
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: PsySpacing.xl),
         SizedBox(

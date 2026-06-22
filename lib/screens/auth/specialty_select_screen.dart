@@ -18,9 +18,7 @@ class SpecialtySelectScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Uzmanlık Seçimi'),
-      ),
+      appBar: AppBar(title: const Text('Uzmanlık Seçimi')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Center(
@@ -31,7 +29,9 @@ class SpecialtySelectScreen extends StatelessWidget {
               children: [
                 Text(
                   'Hangi uzmanlıkla devam etmek istersiniz?',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -45,7 +45,8 @@ class SpecialtySelectScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/dashboard'),
                     icon: const Icon(Icons.arrow_forward),
                     label: const Text('Devam Et'),
                   ),
@@ -75,5 +76,3 @@ class _SpecialtyChip extends StatelessWidget {
     );
   }
 }
-
-

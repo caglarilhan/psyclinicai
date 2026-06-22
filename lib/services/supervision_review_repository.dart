@@ -35,8 +35,7 @@ abstract class SupervisionReviewRepository extends ChangeNotifier {
 }
 
 /// In-memory implementation. Singleton — process-scoped state.
-class InMemorySupervisionReviewRepository
-    extends SupervisionReviewRepository {
+class InMemorySupervisionReviewRepository extends SupervisionReviewRepository {
   InMemorySupervisionReviewRepository._();
   static final InMemorySupervisionReviewRepository instance =
       InMemorySupervisionReviewRepository._();
@@ -107,8 +106,7 @@ class InMemorySupervisionReviewRepository
       throw StateError('Review $id not found');
     }
     if (cur.status != SupervisionReviewStatus.changesRequested) {
-      throw StateError(
-          'Only reviews in changes_requested can be resubmitted');
+      throw StateError('Only reviews in changes_requested can be resubmitted');
     }
     final updated = cur.copyWith(status: SupervisionReviewStatus.pending);
     _byId[id] = updated;

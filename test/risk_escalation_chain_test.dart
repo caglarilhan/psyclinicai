@@ -14,11 +14,11 @@ void main() {
   );
 
   RiskEscalationChain newChain() => RiskEscalationChain(
-        patientId: 'p-1',
-        encounterId: 'enc-1',
-        startedAt: DateTime.utc(2026, 6, 2, 10),
-        trigger: trigger,
-      );
+    patientId: 'p-1',
+    encounterId: 'enc-1',
+    startedAt: DateTime.utc(2026, 6, 2, 10),
+    trigger: trigger,
+  );
 
   group('RiskEscalationChain', () {
     test('starts in triggered state with no events', () {
@@ -29,31 +29,38 @@ void main() {
       expect(c.requiresImmediateAttention, isTrue);
     });
 
-    test('forward chain: triggered → cssrs → safetyPlan → ack → resolved',
-        () {
+    test('forward chain: triggered → cssrs → safetyPlan → ack → resolved', () {
       final start = newChain();
       final at1 = DateTime.utc(2026, 6, 2, 10, 5);
-      final c1 = start.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.cssrsAdministered,
-        at: at1,
-        clinicianId: 'doc-1',
-      ));
-      final c2 = c1.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.safetyPlanDrafted,
-        at: at1.add(const Duration(minutes: 15)),
-        clinicianId: 'doc-1',
-      ));
-      final c3 = c2.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.clinicianAcknowledged,
-        at: at1.add(const Duration(minutes: 20)),
-        clinicianId: 'doc-1',
-      ));
-      final c4 = c3.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.resolved,
-        at: at1.add(const Duration(hours: 1)),
-        clinicianId: 'doc-1',
-        note: 'Safety plan reviewed with patient',
-      ));
+      final c1 = start.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: at1,
+          clinicianId: 'doc-1',
+        ),
+      );
+      final c2 = c1.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.safetyPlanDrafted,
+          at: at1.add(const Duration(minutes: 15)),
+          clinicianId: 'doc-1',
+        ),
+      );
+      final c3 = c2.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.clinicianAcknowledged,
+          at: at1.add(const Duration(minutes: 20)),
+          clinicianId: 'doc-1',
+        ),
+      );
+      final c4 = c3.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.resolved,
+          at: at1.add(const Duration(hours: 1)),
+          clinicianId: 'doc-1',
+          note: 'Safety plan reviewed with patient',
+        ),
+      );
 
       expect(c1.state, RiskEscalationState.cssrsAdministered);
       expect(c2.state, RiskEscalationState.safetyPlanDrafted);
@@ -64,77 +71,100 @@ void main() {
     });
 
     test('clinicianHandoff brings state back to acknowledged', () {
-      final c = newChain().advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.clinicianHandoff,
-        at: DateTime.utc(2026, 6, 2, 10, 10),
-        clinicianId: 'supervisor-1',
-        note: 'Handed off to on-call',
-      ));
+      final c = newChain().advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.clinicianHandoff,
+          at: DateTime.utc(2026, 6, 2, 10, 10),
+          clinicianId: 'supervisor-1',
+          note: 'Handed off to on-call',
+        ),
+      );
       expect(c.state, RiskEscalationState.clinicianAcknowledged);
     });
 
     test('resolved chain refuses further events (audit immutability)', () {
       final at = DateTime.utc(2026, 6, 2, 10, 5);
       final c = newChain()
-          .advance(RiskEscalationEvent(
+          .advance(
+            RiskEscalationEvent(
               kind: RiskEscalationEventKind.cssrsAdministered,
               at: at,
-              clinicianId: 'doc-1'))
-          .advance(RiskEscalationEvent(
+              clinicianId: 'doc-1',
+            ),
+          )
+          .advance(
+            RiskEscalationEvent(
               kind: RiskEscalationEventKind.safetyPlanDrafted,
               at: at.add(const Duration(minutes: 10)),
-              clinicianId: 'doc-1'))
-          .advance(RiskEscalationEvent(
+              clinicianId: 'doc-1',
+            ),
+          )
+          .advance(
+            RiskEscalationEvent(
               kind: RiskEscalationEventKind.clinicianAcknowledged,
               at: at.add(const Duration(minutes: 20)),
-              clinicianId: 'doc-1'))
-          .advance(RiskEscalationEvent(
+              clinicianId: 'doc-1',
+            ),
+          )
+          .advance(
+            RiskEscalationEvent(
               kind: RiskEscalationEventKind.resolved,
               at: at.add(const Duration(hours: 1)),
-              clinicianId: 'doc-1'));
+              clinicianId: 'doc-1',
+            ),
+          );
       expect(
-        () => c.advance(RiskEscalationEvent(
-          kind: RiskEscalationEventKind.cssrsAdministered,
-          at: at.add(const Duration(hours: 2)),
-          clinicianId: 'doc-1',
-        )),
+        () => c.advance(
+          RiskEscalationEvent(
+            kind: RiskEscalationEventKind.cssrsAdministered,
+            at: at.add(const Duration(hours: 2)),
+            clinicianId: 'doc-1',
+          ),
+        ),
         throwsStateError,
       );
     });
 
     test('illegal backward transition is rejected', () {
       final at = DateTime.utc(2026, 6, 2, 10, 5);
-      final c = newChain().advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.safetyPlanDrafted,
-        at: at,
-        clinicianId: 'doc-1',
-      ));
-      expect(
-        () => c.advance(RiskEscalationEvent(
-          kind: RiskEscalationEventKind.cssrsAdministered,
-          at: at.add(const Duration(minutes: 5)),
+      final c = newChain().advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.safetyPlanDrafted,
+          at: at,
           clinicianId: 'doc-1',
-        )),
+        ),
+      );
+      expect(
+        () => c.advance(
+          RiskEscalationEvent(
+            kind: RiskEscalationEventKind.cssrsAdministered,
+            at: at.add(const Duration(minutes: 5)),
+            clinicianId: 'doc-1',
+          ),
+        ),
         throwsStateError,
       );
     });
 
     // M-8 fix coverage — duplicate event-kind on the same state
     // pollutes the audit trail. Reject by default.
-    test('duplicate cssrsAdministered on same state is rejected (M-8)',
-        () {
+    test('duplicate cssrsAdministered on same state is rejected (M-8)', () {
       final at = DateTime.utc(2026, 6, 2, 10, 5);
-      final c = newChain().advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.cssrsAdministered,
-        at: at,
-        clinicianId: 'doc-1',
-      ));
-      expect(
-        () => c.advance(RiskEscalationEvent(
+      final c = newChain().advance(
+        RiskEscalationEvent(
           kind: RiskEscalationEventKind.cssrsAdministered,
-          at: at.add(const Duration(minutes: 1)),
+          at: at,
           clinicianId: 'doc-1',
-        )),
+        ),
+      );
+      expect(
+        () => c.advance(
+          RiskEscalationEvent(
+            kind: RiskEscalationEventKind.cssrsAdministered,
+            at: at.add(const Duration(minutes: 1)),
+            clinicianId: 'doc-1',
+          ),
+        ),
         throwsStateError,
       );
     });
@@ -142,23 +172,29 @@ void main() {
     test('clinicianHandoff can repeat (explicit rollback path)', () {
       final at = DateTime.utc(2026, 6, 2, 10, 5);
       final c = newChain()
-          .advance(RiskEscalationEvent(
-            kind: RiskEscalationEventKind.cssrsAdministered,
-            at: at,
-            clinicianId: 'doc-1',
-          ))
-          .advance(RiskEscalationEvent(
-            kind: RiskEscalationEventKind.clinicianHandoff,
-            at: at.add(const Duration(minutes: 1)),
-            clinicianId: 'doc-1',
-          ));
+          .advance(
+            RiskEscalationEvent(
+              kind: RiskEscalationEventKind.cssrsAdministered,
+              at: at,
+              clinicianId: 'doc-1',
+            ),
+          )
+          .advance(
+            RiskEscalationEvent(
+              kind: RiskEscalationEventKind.clinicianHandoff,
+              at: at.add(const Duration(minutes: 1)),
+              clinicianId: 'doc-1',
+            ),
+          );
       // A second handoff is allowed (the rollback semantics permit it).
       expect(
-        () => c.advance(RiskEscalationEvent(
-          kind: RiskEscalationEventKind.clinicianHandoff,
-          at: at.add(const Duration(minutes: 2)),
-          clinicianId: 'doc-1',
-        )),
+        () => c.advance(
+          RiskEscalationEvent(
+            kind: RiskEscalationEventKind.clinicianHandoff,
+            at: at.add(const Duration(minutes: 2)),
+            clinicianId: 'doc-1',
+          ),
+        ),
         returnsNormally,
       );
     });
@@ -175,20 +211,23 @@ void main() {
       );
     });
 
-    test('events list is immutable after advance (no mutation surprises)',
-        () {
+    test('events list is immutable after advance (no mutation surprises)', () {
       final base = newChain();
-      final advanced = base.advance(RiskEscalationEvent(
-        kind: RiskEscalationEventKind.cssrsAdministered,
-        at: DateTime.utc(2026, 6, 2, 10, 5),
-        clinicianId: 'doc-1',
-      ));
-      expect(
-        () => advanced.events.add(RiskEscalationEvent(
-          kind: RiskEscalationEventKind.resolved,
-          at: DateTime.utc(2026, 6, 2, 11),
+      final advanced = base.advance(
+        RiskEscalationEvent(
+          kind: RiskEscalationEventKind.cssrsAdministered,
+          at: DateTime.utc(2026, 6, 2, 10, 5),
           clinicianId: 'doc-1',
-        )),
+        ),
+      );
+      expect(
+        () => advanced.events.add(
+          RiskEscalationEvent(
+            kind: RiskEscalationEventKind.resolved,
+            at: DateTime.utc(2026, 6, 2, 11),
+            clinicianId: 'doc-1',
+          ),
+        ),
         throwsUnsupportedError,
       );
     });

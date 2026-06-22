@@ -112,10 +112,7 @@ void main() {
         comment: 'Signed off',
       );
       expect(
-        () => repo.decide(
-          id: row.id,
-          next: SupervisionReviewStatus.pending,
-        ),
+        () => repo.decide(id: row.id, next: SupervisionReviewStatus.pending),
         throwsA(isA<StateError>()),
       );
     });
@@ -146,14 +143,8 @@ void main() {
         supervisorId: 'sup1',
         sessionNoteId: 'note-1',
       );
-      repo.decide(
-        id: row.id,
-        next: SupervisionReviewStatus.approved,
-      );
-      expect(
-        () => repo.resubmit(row.id),
-        throwsA(isA<StateError>()),
-      );
+      repo.decide(id: row.id, next: SupervisionReviewStatus.approved);
+      expect(() => repo.resubmit(row.id), throwsA(isA<StateError>()));
     });
   });
 }

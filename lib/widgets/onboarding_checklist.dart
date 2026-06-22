@@ -26,11 +26,7 @@ class OnboardingChecklistItem {
 }
 
 class OnboardingChecklist extends StatelessWidget {
-  const OnboardingChecklist({
-    super.key,
-    required this.items,
-    this.onDismiss,
-  });
+  const OnboardingChecklist({super.key, required this.items, this.onDismiss});
 
   final List<OnboardingChecklistItem> items;
   final VoidCallback? onDismiss;
@@ -47,27 +43,30 @@ class OnboardingChecklist extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.task_alt, color: cs.primary),
-            const SizedBox(width: PsySpacing.sm),
-            Text('Set up your practice',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-            const SizedBox(width: PsySpacing.sm),
-            PsyBadge(
-              label: '$_doneCount / ${items.length}',
-              tone: allDone
-                  ? PsyBadgeTone.success
-                  : PsyBadgeTone.info,
-            ),
-            const Spacer(),
-            if (onDismiss != null)
-              IconButton(
-                tooltip: 'Hide checklist',
-                icon: const Icon(Icons.close, size: 18),
-                onPressed: onDismiss,
+          Row(
+            children: [
+              Icon(Icons.task_alt, color: cs.primary),
+              const SizedBox(width: PsySpacing.sm),
+              Text(
+                'Set up your practice',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-          ]),
+              const SizedBox(width: PsySpacing.sm),
+              PsyBadge(
+                label: '$_doneCount / ${items.length}',
+                tone: allDone ? PsyBadgeTone.success : PsyBadgeTone.info,
+              ),
+              const Spacer(),
+              if (onDismiss != null)
+                IconButton(
+                  tooltip: 'Hide checklist',
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: onDismiss,
+                ),
+            ],
+          ),
           const SizedBox(height: PsySpacing.sm),
           LinearProgressIndicator(
             value: items.isEmpty ? 0 : _doneCount / items.length,
@@ -92,40 +91,45 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.xs),
-      child: Row(children: [
-        Icon(
-          item.done ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: item.done
-              ? cs.primary
-              : cs.onSurface.withValues(alpha: 0.4),
-        ),
-        const SizedBox(width: PsySpacing.sm),
-        Icon(item.icon,
-            size: 18, color: cs.onSurface.withValues(alpha: 0.6)),
-        const SizedBox(width: PsySpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      decoration: item.done
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                      color: item.done
-                          ? cs.onSurface.withValues(alpha: 0.5)
-                          : cs.onSurface)),
-              Text(item.body,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.6))),
-            ],
+      child: Row(
+        children: [
+          Icon(
+            item.done ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: item.done ? cs.primary : cs.onSurface.withValues(alpha: 0.4),
           ),
-        ),
-        TextButton(
-          onPressed: item.done ? null : item.onTap,
-          child: Text(item.done ? 'Done' : 'Open'),
-        ),
-      ]),
+          const SizedBox(width: PsySpacing.sm),
+          Icon(item.icon, size: 18, color: cs.onSurface.withValues(alpha: 0.6)),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    decoration: item.done
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                    color: item.done
+                        ? cs.onSurface.withValues(alpha: 0.5)
+                        : cs.onSurface,
+                  ),
+                ),
+                Text(
+                  item.body,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: item.done ? null : item.onTap,
+            child: Text(item.done ? 'Done' : 'Open'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -43,8 +43,9 @@ class _StructuredNoteEditorState extends State<StructuredNoteEditor> {
     super.initState();
     _format = widget.initialFormat;
     for (final s in _format.sections) {
-      _controllers[s.id] =
-          TextEditingController(text: widget.initialSections[s.id] ?? '');
+      _controllers[s.id] = TextEditingController(
+        text: widget.initialSections[s.id] ?? '',
+      );
     }
   }
 
@@ -58,18 +59,22 @@ class _StructuredNoteEditorState extends State<StructuredNoteEditor> {
 
   TextEditingController _ensureController(String id) {
     return _controllers.putIfAbsent(
-        id, () => TextEditingController(text: widget.initialSections[id] ?? ''));
+      id,
+      () => TextEditingController(text: widget.initialSections[id] ?? ''),
+    );
   }
 
   void _emit() {
     final map = <String, String>{
       for (final s in _format.sections) s.id: _controllers[s.id]?.text ?? '',
     };
-    widget.onChanged(StructuredNoteValue(
-      format: _format,
-      sections: map,
-      markdown: _format.toMarkdown(map),
-    ));
+    widget.onChanged(
+      StructuredNoteValue(
+        format: _format,
+        sections: map,
+        markdown: _format.toMarkdown(map),
+      ),
+    );
   }
 
   void _onFormatChanged(NoteFormat next) {
@@ -91,10 +96,7 @@ class _StructuredNoteEditorState extends State<StructuredNoteEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _FormatPicker(
-          current: _format,
-          onChanged: _onFormatChanged,
-        ),
+        _FormatPicker(current: _format, onChanged: _onFormatChanged),
         const SizedBox(height: PsySpacing.md),
         Expanded(
           child: ListView.separated(
@@ -110,8 +112,7 @@ class _StructuredNoteEditorState extends State<StructuredNoteEditor> {
                 theme: theme,
               );
             },
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: PsySpacing.md),
+            separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
             itemCount: _format.sections.length,
           ),
         ),
@@ -145,38 +146,49 @@ class _FormatPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return Row(children: [
-      Text('Format',
-          style: theme.textTheme.labelMedium
-              ?.copyWith(color: cs.onSurface.withValues(alpha: 0.65))),
-      const SizedBox(width: PsySpacing.md),
-      Expanded(
-        child: SegmentedButton<NoteFormat>(
-          segments: NoteFormat.values
-              .map((f) => ButtonSegment<NoteFormat>(
+    return Row(
+      children: [
+        Text(
+          'Format',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: cs.onSurface.withValues(alpha: 0.65),
+          ),
+        ),
+        const SizedBox(width: PsySpacing.md),
+        Expanded(
+          child: SegmentedButton<NoteFormat>(
+            segments: NoteFormat.values
+                .map(
+                  (f) => ButtonSegment<NoteFormat>(
                     value: f,
                     label: Text(f.shortName),
-                  ))
-              .toList(),
-          selected: {current},
-          onSelectionChanged: (s) => onChanged(s.first),
-          showSelectedIcon: false,
-          style: ButtonStyle(
-            visualDensity: VisualDensity.compact,
-            textStyle: WidgetStateProperty.all(
-              theme.textTheme.labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                )
+                .toList(),
+            selected: {current},
+            onSelectionChanged: (s) => onChanged(s.first),
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              textStyle: WidgetStateProperty.all(
+                theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ),
-      ),
-      const SizedBox(width: PsySpacing.md),
-      Tooltip(
-        message: current.description,
-        child: Icon(Icons.info_outline,
-            size: 18, color: cs.onSurface.withValues(alpha: 0.45)),
-      ),
-    ]);
+        const SizedBox(width: PsySpacing.md),
+        Tooltip(
+          message: current.description,
+          child: Icon(
+            Icons.info_outline,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.45),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -200,27 +212,34 @@ class _SectionField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(PsyRadius.sm),
-            ),
-            child: Text(section.letter,
+        Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(PsyRadius.sm),
+              ),
+              child: Text(
+                section.letter,
                 style: TextStyle(
                   color: cs.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                )),
-          ),
-          const SizedBox(width: PsySpacing.sm),
-          Text(section.label,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-        ]),
+                ),
+              ),
+            ),
+            const SizedBox(width: PsySpacing.sm),
+            Text(
+              section.label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: PsySpacing.xs),
         TextField(
           controller: controller,
@@ -237,7 +256,9 @@ class _SectionField extends StatelessWidget {
             ),
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+              horizontal: PsySpacing.md,
+              vertical: PsySpacing.sm,
+            ),
           ),
         ),
       ],

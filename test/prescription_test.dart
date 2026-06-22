@@ -4,24 +4,23 @@ import 'package:psyclinicai/models/prescription.dart';
 Prescription _rx({
   PrescriptionStatus status = PrescriptionStatus.draft,
   PrescriptionMarket market = PrescriptionMarket.eu,
-}) =>
-    Prescription(
-      id: 'rx-1',
-      clinicId: 'c1',
-      patientId: 'p-1',
-      clinicianId: 'doc-1',
-      market: market,
-      status: status,
-      items: const [
-        PrescriptionItem(
-          drugCode: 'N06AB04',
-          drugName: 'Citalopram',
-          dose: '20 mg',
-          frequency: 'once daily',
-          durationDays: 30,
-        ),
-      ],
-    );
+}) => Prescription(
+  id: 'rx-1',
+  clinicId: 'c1',
+  patientId: 'p-1',
+  clinicianId: 'doc-1',
+  market: market,
+  status: status,
+  items: const [
+    PrescriptionItem(
+      drugCode: 'N06AB04',
+      drugName: 'Citalopram',
+      dose: '20 mg',
+      frequency: 'once daily',
+      durationDays: 30,
+    ),
+  ],
+);
 
 void main() {
   group('Prescription', () {
@@ -55,30 +54,22 @@ void main() {
 
     test('isImmutable flips once signed', () {
       expect(_rx().isImmutable, isFalse);
-      expect(
-        _rx(status: PrescriptionStatus.signed).isImmutable,
-        isTrue,
-      );
-      expect(
-        _rx(status: PrescriptionStatus.dispensed).isImmutable,
-        isTrue,
-      );
+      expect(_rx(status: PrescriptionStatus.signed).isImmutable, isTrue);
+      expect(_rx(status: PrescriptionStatus.dispensed).isImmutable, isTrue);
     });
 
-    test('lifecycle: draft → signed → transmitted → dispensed is allowed',
-        () {
+    test('lifecycle: draft → signed → transmitted → dispensed is allowed', () {
+      expect(_rx().transitionBlockedReason(PrescriptionStatus.signed), isNull);
       expect(
-        _rx().transitionBlockedReason(PrescriptionStatus.signed),
+        _rx(
+          status: PrescriptionStatus.signed,
+        ).transitionBlockedReason(PrescriptionStatus.transmitted),
         isNull,
       );
       expect(
-        _rx(status: PrescriptionStatus.signed)
-            .transitionBlockedReason(PrescriptionStatus.transmitted),
-        isNull,
-      );
-      expect(
-        _rx(status: PrescriptionStatus.transmitted)
-            .transitionBlockedReason(PrescriptionStatus.dispensed),
+        _rx(
+          status: PrescriptionStatus.transmitted,
+        ).transitionBlockedReason(PrescriptionStatus.dispensed),
         isNull,
       );
     });
@@ -92,29 +83,31 @@ void main() {
 
     test('dispensed is a final state', () {
       expect(
-        _rx(status: PrescriptionStatus.dispensed)
-            .transitionBlockedReason(PrescriptionStatus.cancelled),
+        _rx(
+          status: PrescriptionStatus.dispensed,
+        ).transitionBlockedReason(PrescriptionStatus.cancelled),
         contains('final state'),
       );
     });
 
     test('PrescriptionMarket.fromId falls back to eu', () {
       expect(PrescriptionMarket.fromId(null), PrescriptionMarket.eu);
-      expect(PrescriptionMarket.fromId('garbage'),
-          PrescriptionMarket.eu);
+      expect(PrescriptionMarket.fromId('garbage'), PrescriptionMarket.eu);
       expect(PrescriptionMarket.fromId('tr'), PrescriptionMarket.tr);
     });
 
     test('items list is unmodifiable — external mutation is rejected', () {
       final rx = _rx();
       expect(
-        () => rx.items.add(const PrescriptionItem(
-          drugCode: 'N06AB06',
-          drugName: 'Sertraline',
-          dose: '50 mg',
-          frequency: 'once daily',
-          durationDays: 30,
-        )),
+        () => rx.items.add(
+          const PrescriptionItem(
+            drugCode: 'N06AB06',
+            drugName: 'Sertraline',
+            dose: '50 mg',
+            frequency: 'once daily',
+            durationDays: 30,
+          ),
+        ),
         throwsUnsupportedError,
       );
     });

@@ -9,11 +9,7 @@
 /// artefact to exist AND be reviewed within the past 12 months.
 library;
 
-enum Soc2Status {
-  implemented,
-  partial,
-  planned,
-}
+enum Soc2Status { implemented, partial, planned }
 
 class Soc2Control {
   const Soc2Control({

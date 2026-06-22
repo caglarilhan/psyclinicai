@@ -6,23 +6,33 @@ void main() {
     test('SOAP has the canonical 4 sections in order', () {
       final ids = NoteFormat.soap.sections.map((s) => s.id).toList();
       expect(ids, ['subjective', 'objective', 'assessment', 'plan']);
-      expect(NoteFormat.soap.sections.map((s) => s.letter).toList(),
-          ['S', 'O', 'A', 'P']);
+      expect(NoteFormat.soap.sections.map((s) => s.letter).toList(), [
+        'S',
+        'O',
+        'A',
+        'P',
+      ]);
     });
 
-    test('BIRP has 4 sections (Behavior · Intervention · Response · Plan)',
-        () {
+    test('BIRP has 4 sections (Behavior · Intervention · Response · Plan)', () {
       final ids = NoteFormat.birp.sections.map((s) => s.id).toList();
       expect(ids, ['behavior', 'intervention', 'response', 'plan']);
-      expect(NoteFormat.birp.sections.map((s) => s.letter).toList(),
-          ['B', 'I', 'R', 'P']);
+      expect(NoteFormat.birp.sections.map((s) => s.letter).toList(), [
+        'B',
+        'I',
+        'R',
+        'P',
+      ]);
     });
 
     test('DAP has 3 sections (Data · Assessment · Plan)', () {
       final ids = NoteFormat.dap.sections.map((s) => s.id).toList();
       expect(ids, ['data', 'assessment', 'plan']);
-      expect(NoteFormat.dap.sections.map((s) => s.letter).toList(),
-          ['D', 'A', 'P']);
+      expect(NoteFormat.dap.sections.map((s) => s.letter).toList(), [
+        'D',
+        'A',
+        'P',
+      ]);
     });
 
     test('every section has a non-empty label and hint', () {

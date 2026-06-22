@@ -39,9 +39,7 @@ class StripeConnectAccount {
   final bool payoutsEnabled;
 
   bool get isReady =>
-      status == StripeConnectStatus.enabled &&
-      chargesEnabled &&
-      payoutsEnabled;
+      status == StripeConnectStatus.enabled && chargesEnabled && payoutsEnabled;
 
   bool get hasBlockingRequirements => requirementsDue.isNotEmpty;
 
@@ -53,37 +51,36 @@ class StripeConnectAccount {
     String? dashboardUrl,
     bool? chargesEnabled,
     bool? payoutsEnabled,
-  }) =>
-      StripeConnectAccount(
-        tenantId: tenantId,
-        status: status ?? this.status,
-        accountId: accountId ?? this.accountId,
-        requirementsDue: requirementsDue ?? this.requirementsDue,
-        lastSyncAt: lastSyncAt ?? this.lastSyncAt,
-        dashboardUrl: dashboardUrl ?? this.dashboardUrl,
-        chargesEnabled: chargesEnabled ?? this.chargesEnabled,
-        payoutsEnabled: payoutsEnabled ?? this.payoutsEnabled,
-      );
+  }) => StripeConnectAccount(
+    tenantId: tenantId,
+    status: status ?? this.status,
+    accountId: accountId ?? this.accountId,
+    requirementsDue: requirementsDue ?? this.requirementsDue,
+    lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+    dashboardUrl: dashboardUrl ?? this.dashboardUrl,
+    chargesEnabled: chargesEnabled ?? this.chargesEnabled,
+    payoutsEnabled: payoutsEnabled ?? this.payoutsEnabled,
+  );
 
   Map<String, dynamic> toJson() => {
-        'tenant_id': tenantId,
-        'status': status.name,
-        if (accountId != null) 'account_id': accountId,
-        'requirements_due': requirementsDue,
-        if (lastSyncAt != null)
-          'last_sync_at': lastSyncAt!.toUtc().toIso8601String(),
-        if (dashboardUrl != null) 'dashboard_url': dashboardUrl,
-        'charges_enabled': chargesEnabled,
-        'payouts_enabled': payoutsEnabled,
-      };
+    'tenant_id': tenantId,
+    'status': status.name,
+    if (accountId != null) 'account_id': accountId,
+    'requirements_due': requirementsDue,
+    if (lastSyncAt != null)
+      'last_sync_at': lastSyncAt!.toUtc().toIso8601String(),
+    if (dashboardUrl != null) 'dashboard_url': dashboardUrl,
+    'charges_enabled': chargesEnabled,
+    'payouts_enabled': payoutsEnabled,
+  };
 
   factory StripeConnectAccount.fromJson(Map<String, dynamic> json) {
     return StripeConnectAccount(
       tenantId: json['tenant_id'] as String,
-      status: StripeConnectStatus.fromId(
-          json['status'] as String? ?? 'none'),
+      status: StripeConnectStatus.fromId(json['status'] as String? ?? 'none'),
       accountId: json['account_id'] as String?,
-      requirementsDue: (json['requirements_due'] as List?)
+      requirementsDue:
+          (json['requirements_due'] as List?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
@@ -97,17 +94,17 @@ class StripeConnectAccount {
   }
 
   factory StripeConnectAccount.demo(String tenantId) => StripeConnectAccount(
-        tenantId: tenantId,
-        status: StripeConnectStatus.restricted,
-        accountId: 'acct_demo_${tenantId.substring(0, 4).toUpperCase()}',
-        requirementsDue: const [
-          'external_account',
-          'individual.id_number',
-          'tos_acceptance.date',
-        ],
-        lastSyncAt: DateTime.utc(2026, 6, 2, 8, 30),
-        dashboardUrl: 'https://connect.stripe.com/express/demo',
-        chargesEnabled: false,
-        payoutsEnabled: false,
-      );
+    tenantId: tenantId,
+    status: StripeConnectStatus.restricted,
+    accountId: 'acct_demo_${tenantId.substring(0, 4).toUpperCase()}',
+    requirementsDue: const [
+      'external_account',
+      'individual.id_number',
+      'tos_acceptance.date',
+    ],
+    lastSyncAt: DateTime.utc(2026, 6, 2, 8, 30),
+    dashboardUrl: 'https://connect.stripe.com/express/demo',
+    chargesEnabled: false,
+    payoutsEnabled: false,
+  );
 }

@@ -6,10 +6,14 @@ void main() {
 
   group('StateLawService US Phase 1 (Sprint 32)', () {
     test('supportedStates contains US Phase 1 + Phase 2', () {
-      expect(
-        StateLawService.supportedStates,
-        {'CA', 'NY', 'TX', 'FL', 'IL', 'WA'},
-      );
+      expect(StateLawService.supportedStates, {
+        'CA',
+        'NY',
+        'TX',
+        'FL',
+        'IL',
+        'WA',
+      });
     });
 
     test('unknown state returns empty list (no exception)', () {
@@ -18,8 +22,7 @@ void main() {
     });
 
     test('case-insensitive lookup', () {
-      expect(svc.alertsForState('ca').length,
-          svc.alertsForState('CA').length);
+      expect(svc.alertsForState('ca').length, svc.alertsForState('CA').length);
     });
 
     group('California', () {
@@ -30,15 +33,15 @@ void main() {
       });
 
       test('Tarasoff alert is critical and cites Cal. Civ. Code §43.92', () {
-        final t =
-            alerts.firstWhere((a) => a.id == 'CA.dutyToWarn.tarasoff');
+        final t = alerts.firstWhere((a) => a.id == 'CA.dutyToWarn.tarasoff');
         expect(t.severity, AlertSeverity.critical);
         expect(t.citation, contains('43.92'));
       });
 
       test('elder reporting category is mandatoryReporting', () {
         final e = alerts.firstWhere(
-            (a) => a.id == 'CA.mandatoryReporting.elder');
+          (a) => a.id == 'CA.mandatoryReporting.elder',
+        );
         expect(e.category, AlertCategory.mandatoryReporting);
       });
     });
@@ -51,8 +54,7 @@ void main() {
       });
 
       test('duty-to-warn is warning (not critical — no Tarasoff in NY)', () {
-        final dw = alerts.firstWhere(
-            (a) => a.id == 'NY.dutyToWarn.modified');
+        final dw = alerts.firstWhere((a) => a.id == 'NY.dutyToWarn.modified');
         expect(dw.severity, AlertSeverity.warning);
         expect(dw.citation, contains('Mental Hyg'));
       });
@@ -88,21 +90,24 @@ void main() {
       expect(bundle.length, 5 + 4 + 4);
     });
 
-    test('hasCriticalAlert is true for any state with a Tarasoff/reporting',
-        () {
-      expect(svc.hasCriticalAlert(svc.alertsForState('CA')), true);
-      expect(svc.hasCriticalAlert(svc.alertsForState('NY')), true);
-      expect(svc.hasCriticalAlert(svc.alertsForState('TX')), true);
-      expect(svc.hasCriticalAlert([]), false);
-    });
+    test(
+      'hasCriticalAlert is true for any state with a Tarasoff/reporting',
+      () {
+        expect(svc.hasCriticalAlert(svc.alertsForState('CA')), true);
+        expect(svc.hasCriticalAlert(svc.alertsForState('NY')), true);
+        expect(svc.hasCriticalAlert(svc.alertsForState('TX')), true);
+        expect(svc.hasCriticalAlert([]), false);
+      },
+    );
 
     // Sprint 33 P3 — US Phase 2 coverage.
     group('Florida', () {
       final alerts = svc.alertsForState('FL');
       test('5 alerts shipped', () => expect(alerts.length, 5));
       test('universal-reporter child statute is critical', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'FL.mandatoryReporting.child');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'FL.mandatoryReporting.child',
+        );
         expect(a.severity, AlertSeverity.critical);
         expect(a.citation, contains('Fla. Stat. §39.201'));
       });
@@ -117,8 +122,9 @@ void main() {
       final alerts = svc.alertsForState('IL');
       test('4 alerts shipped', () => expect(alerts.length, 4));
       test('DCFS reporting cites 325 ILCS 5/4', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'IL.mandatoryReporting.child');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'IL.mandatoryReporting.child',
+        );
         expect(a.citation, contains('325 ILCS 5/4'));
       });
       test('MHDDCA disclosure permission is warning', () {
@@ -137,8 +143,9 @@ void main() {
         expect(a.citation, contains('Volk v. DeMeerleer'));
       });
       test('PSYPACT + Counseling Compact mentioned', () {
-        final a =
-            alerts.firstWhere((e) => e.id == 'WA.telehealthLicensure.compact');
+        final a = alerts.firstWhere(
+          (e) => e.id == 'WA.telehealthLicensure.compact',
+        );
         expect(a.body, contains('PSYPACT'));
         expect(a.body, contains('Counseling Compact'));
       });

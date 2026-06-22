@@ -4,10 +4,7 @@ import 'package:psyclinicai/screens/patients/patient_chart_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart'
     show PatientDetailArgs;
 
-Future<void> _pump(
-  WidgetTester tester, {
-  PatientChartTab? initialTab,
-}) async {
+Future<void> _pump(WidgetTester tester, {PatientChartTab? initialTab}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: PatientChartScreen(
@@ -21,8 +18,7 @@ Future<void> _pump(
 
 void main() {
   group('PatientChartScreen', () {
-    testWidgets('header renders name + initials + risk chip',
-        (tester) async {
+    testWidgets('header renders name + initials + risk chip', (tester) async {
       await _pump(tester);
       expect(find.text('John Demo'), findsAtLeastNWidgets(1));
       expect(find.text('JD'), findsOneWidget);
@@ -43,13 +39,11 @@ void main() {
       }
     });
 
-    testWidgets('default tab is Timeline — shows the signed-session row',
-        (tester) async {
+    testWidgets('default tab is Timeline — shows the signed-session row', (
+      tester,
+    ) async {
       await _pump(tester);
-      expect(
-        find.textContaining('Session signed'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Session signed'), findsOneWidget);
     });
 
     testWidgets('initialTab respects the deep-link', (tester) async {
@@ -57,8 +51,9 @@ void main() {
       expect(find.textContaining('PHQ-9'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('empty Documents tab shows the placeholder card',
-        (tester) async {
+    testWidgets('empty Documents tab shows the placeholder card', (
+      tester,
+    ) async {
       await _pump(tester);
       await tester.tap(find.text('Documents'));
       await tester.pumpAndSettle();

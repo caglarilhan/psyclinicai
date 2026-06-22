@@ -36,8 +36,7 @@ class _MemoryStore {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel =
-      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
   late _MemoryStore mem;
   late LocalDbKeyService svc;
 
@@ -71,17 +70,21 @@ void main() {
       expect(bytes.length, 32);
     });
 
-    test('two distinct services on a fresh store yield different keys',
-        () async {
-      final firstKey = await svc.getOrCreatePassphrase();
-      mem = _MemoryStore(); // simulate device reset
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(
-              channel, (call) async => mem.handle(call));
-      final fresh = LocalDbKeyService();
-      final newKey = await fresh.getOrCreatePassphrase();
-      expect(firstKey, isNot(equals(newKey)));
-    });
+    test(
+      'two distinct services on a fresh store yield different keys',
+      () async {
+        final firstKey = await svc.getOrCreatePassphrase();
+        mem = _MemoryStore(); // simulate device reset
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              channel,
+              (call) async => mem.handle(call),
+            );
+        final fresh = LocalDbKeyService();
+        final newKey = await fresh.getOrCreatePassphrase();
+        expect(firstKey, isNot(equals(newKey)));
+      },
+    );
 
     test('rotate forces a fresh key on next call', () async {
       final before = await svc.getOrCreatePassphrase();
@@ -93,8 +96,11 @@ void main() {
     test('passphrase uses URL-safe base64 (no + or /)', () async {
       final pass = await svc.getOrCreatePassphrase();
       // base64Url alphabet: A-Z, a-z, 0-9, -, _, and `=` for padding.
-      expect(RegExp(r'^[A-Za-z0-9_\-=]+$').hasMatch(pass), true,
-          reason: 'passphrase contained non-URL-safe characters: $pass');
+      expect(
+        RegExp(r'^[A-Za-z0-9_\-=]+$').hasMatch(pass),
+        true,
+        reason: 'passphrase contained non-URL-safe characters: $pass',
+      );
       expect(pass.contains('+'), false);
       expect(pass.contains('/'), false);
     });
@@ -102,27 +108,30 @@ void main() {
     // L-10 fix coverage — graceful rotation with grace-period
     // recovery slot, matching the BYOK rotation flow.
     group('rotateAndGetNew (L-10)', () {
-      test('archives the previous passphrase + returns a fresh value',
-          () async {
-        final original = await svc.getOrCreatePassphrase();
-        final next = await svc.rotateAndGetNew();
-        expect(next, isNot(equals(original)));
-        // The previous slot now holds the OLD passphrase so the
-        // caller can recover if PRAGMA rekey crashes mid-flight.
-        expect(await svc.readPreviousPassphrase(), original);
-        // getOrCreatePassphrase now returns the new value.
-        expect(await svc.getOrCreatePassphrase(), next);
-      });
+      test(
+        'archives the previous passphrase + returns a fresh value',
+        () async {
+          final original = await svc.getOrCreatePassphrase();
+          final next = await svc.rotateAndGetNew();
+          expect(next, isNot(equals(original)));
+          // The previous slot now holds the OLD passphrase so the
+          // caller can recover if PRAGMA rekey crashes mid-flight.
+          expect(await svc.readPreviousPassphrase(), original);
+          // getOrCreatePassphrase now returns the new value.
+          expect(await svc.getOrCreatePassphrase(), next);
+        },
+      );
 
-      test('rotating from an empty store does not record a previous slot',
-          () async {
-        final next = await svc.rotateAndGetNew();
-        expect(next.isNotEmpty, isTrue);
-        expect(await svc.readPreviousPassphrase(), isNull);
-      });
+      test(
+        'rotating from an empty store does not record a previous slot',
+        () async {
+          final next = await svc.rotateAndGetNew();
+          expect(next.isNotEmpty, isTrue);
+          expect(await svc.readPreviousPassphrase(), isNull);
+        },
+      );
 
-      test('commitRotation drops the previous slot (idempotent)',
-          () async {
+      test('commitRotation drops the previous slot (idempotent)', () async {
         await svc.getOrCreatePassphrase();
         await svc.rotateAndGetNew();
         expect(await svc.readPreviousPassphrase(), isNotNull);

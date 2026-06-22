@@ -51,8 +51,7 @@ void main() {
       expect(SignOutScrubbers.debugCount, 0);
     });
 
-    test(
-        'runAll iterates a snapshot — a scrubber that registers '
+    test('runAll iterates a snapshot — a scrubber that registers '
         'another during runAll does not infinite-loop', () async {
       var calls = 0;
       SignOutScrubbers.register(() {

@@ -102,8 +102,10 @@ class PortalLandingScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.lock_outline,
-                            color: cs.onSecondaryContainer),
+                        Icon(
+                          Icons.lock_outline,
+                          color: cs.onSecondaryContainer,
+                        ),
                         const SizedBox(width: PsySpacing.sm),
                         Expanded(
                           child: Text(
@@ -147,8 +149,7 @@ class _PortalAccessDenied extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock_person_outlined,
-                      size: 56, color: cs.primary),
+                  Icon(Icons.lock_person_outlined, size: 56, color: cs.primary),
                   const SizedBox(height: PsySpacing.md),
                   Text(
                     'This page is the patient portal',
@@ -167,9 +168,9 @@ class _PortalAccessDenied extends StatelessWidget {
                   ),
                   const SizedBox(height: PsySpacing.lg),
                   FilledButton.icon(
-                    onPressed: () =>
-                        Navigator.of(context).pushReplacementNamed(
-                            '/dashboard'),
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed('/dashboard'),
                     icon: const Icon(Icons.dashboard_outlined),
                     label: const Text('Back to dashboard'),
                   ),
@@ -214,7 +215,9 @@ class _PortalCard extends StatelessWidget {
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.sm, vertical: 4),
+            horizontal: PsySpacing.sm,
+            vertical: 4,
+          ),
           decoration: BoxDecoration(
             color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(PsyRadius.sm),

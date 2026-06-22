@@ -5,8 +5,10 @@ void main() {
   group('StripeConnectStatus', () {
     test('fromId falls back to none for unknown values', () {
       expect(StripeConnectStatus.fromId('mystery'), StripeConnectStatus.none);
-      expect(StripeConnectStatus.fromId('enabled'),
-          StripeConnectStatus.enabled);
+      expect(
+        StripeConnectStatus.fromId('enabled'),
+        StripeConnectStatus.enabled,
+      );
     });
   });
 
@@ -21,8 +23,10 @@ void main() {
       expect(a.isReady, isTrue);
       expect(a.copyWith(chargesEnabled: false).isReady, isFalse);
       expect(a.copyWith(payoutsEnabled: false).isReady, isFalse);
-      expect(a.copyWith(status: StripeConnectStatus.restricted).isReady,
-          isFalse);
+      expect(
+        a.copyWith(status: StripeConnectStatus.restricted).isReady,
+        isFalse,
+      );
     });
 
     test('hasBlockingRequirements true when list non-empty', () {
@@ -32,8 +36,10 @@ void main() {
         requirementsDue: ['external_account'],
       );
       expect(a.hasBlockingRequirements, isTrue);
-      expect(a.copyWith(requirementsDue: const []).hasBlockingRequirements,
-          isFalse);
+      expect(
+        a.copyWith(requirementsDue: const []).hasBlockingRequirements,
+        isFalse,
+      );
     });
 
     test('JSON round-trip preserves fields', () {

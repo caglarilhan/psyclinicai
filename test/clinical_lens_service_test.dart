@@ -8,8 +8,11 @@ void main() {
 
   test('every modality has a non-empty construct set', () {
     for (final m in Modality.values) {
-      expect(ClinicalLensService.constructsFor(m), isNotEmpty,
-          reason: '$m has no constructs');
+      expect(
+        ClinicalLensService.constructsFor(m),
+        isNotEmpty,
+        reason: '$m has no constructs',
+      );
     }
   });
 
@@ -20,7 +23,8 @@ void main() {
   });
 
   test('parse keeps allowed sections, drops unknown + empty', () {
-    const json = '{"sections":['
+    const json =
+        '{"sections":['
         '{"title":"Triggered schemas","items":["Defectiveness","Abandonment"]},'
         '{"title":"Active modes","items":["Punitive parent"]},'
         '{"title":"Made up section","items":["x"]},'
@@ -33,23 +37,31 @@ void main() {
     expect(lens.sections.first.items, hasLength(2));
   });
 
-  test('parse tolerates surrounding prose and returns null when nothing valid',
-      () {
-    expect(svc.parse('no json here', Modality.cbt), isNull);
-    expect(
+  test(
+    'parse tolerates surrounding prose and returns null when nothing valid',
+    () {
+      expect(svc.parse('no json here', Modality.cbt), isNull);
+      expect(
         svc.parse(
-            '{"sections":[{"title":"Nope","items":["a"]}]}', Modality.cbt),
-        isNull);
-  });
+          '{"sections":[{"title":"Nope","items":["a"]}]}',
+          Modality.cbt,
+        ),
+        isNull,
+      );
+    },
+  );
 
   test('cbt parse maps its own constructs', () {
-    const json = '{"sections":['
+    const json =
+        '{"sections":['
         '{"title":"Automatic thoughts","items":["I always fail"]},'
         '{"title":"Cognitive distortions","items":["Catastrophizing"]}'
         ']}';
     final lens = svc.parse(json, Modality.cbt)!;
     expect(lens.modalityLabel, 'CBT');
-    expect(lens.sections.map((s) => s.title),
-        containsAll(['Automatic thoughts', 'Cognitive distortions']));
+    expect(
+      lens.sections.map((s) => s.title),
+      containsAll(['Automatic thoughts', 'Cognitive distortions']),
+    );
   });
 }

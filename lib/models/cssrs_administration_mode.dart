@@ -36,11 +36,12 @@ enum CssrsAdministrationMode {
   /// triggers immediate safety planning. Self-rated uses Q3+ because
   /// item 4/5 collateral information is missing.
   int get escalationItem => switch (this) {
-        CssrsAdministrationMode.clinicianAdministered => 4,
-        CssrsAdministrationMode.selfRated => 3,
-      };
+    CssrsAdministrationMode.clinicianAdministered => 4,
+    CssrsAdministrationMode.selfRated => 3,
+  };
 
-  static CssrsAdministrationMode fromId(String id) =>
-      values.firstWhere((m) => m.id == id,
-          orElse: () => CssrsAdministrationMode.clinicianAdministered);
+  static CssrsAdministrationMode fromId(String id) => values.firstWhere(
+    (m) => m.id == id,
+    orElse: () => CssrsAdministrationMode.clinicianAdministered,
+  );
 }

@@ -14,7 +14,11 @@ import '../models/appointment_model.dart';
 /// Returns `false` for back-to-back appointments where one ends at the
 /// moment the next begins.
 bool intervalsOverlap(
-    DateTime startA, DateTime endA, DateTime startB, DateTime endB) {
+  DateTime startA,
+  DateTime endA,
+  DateTime startB,
+  DateTime endB,
+) {
   return startA.isBefore(endB) && endA.isAfter(startB);
 }
 
@@ -31,7 +35,11 @@ Appointment? findConflictingAppointment(
   for (final a in existing) {
     if (excludeId != null && a.id == excludeId) continue;
     if (intervalsOverlap(
-        candidate.startTime, candidate.endTime, a.startTime, a.endTime)) {
+      candidate.startTime,
+      candidate.endTime,
+      a.startTime,
+      a.endTime,
+    )) {
       return a;
     }
   }

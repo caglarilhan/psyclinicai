@@ -59,13 +59,17 @@ void main() {
 
   group('severity → action mapping', () {
     test('minimal: no intervention', () {
-      expect(Gad7Severity.minimal.actionSuggestion.toLowerCase(),
-          contains('no intervention'));
+      expect(
+        Gad7Severity.minimal.actionSuggestion.toLowerCase(),
+        contains('no intervention'),
+      );
     });
 
     test('severe escalates to specialist referral', () {
-      expect(Gad7Severity.severe.actionSuggestion.toLowerCase(),
-          contains('specialist'));
+      expect(
+        Gad7Severity.severe.actionSuggestion.toLowerCase(),
+        contains('specialist'),
+      );
     });
 
     test('all bands have non-empty label', () {
@@ -77,8 +81,14 @@ void main() {
 
   group('input validation', () {
     test('throws on wrong answer length', () {
-      expect(() => svc.score(List.filled(6, 0)), throwsA(isA<AssertionError>()));
-      expect(() => svc.score(List.filled(8, 0)), throwsA(isA<AssertionError>()));
+      expect(
+        () => svc.score(List.filled(6, 0)),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => svc.score(List.filled(8, 0)),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     test('returns immutable answers list', () {

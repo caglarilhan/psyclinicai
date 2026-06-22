@@ -45,10 +45,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
   }
 
   Future<void> _build() async {
-    await Future.wait([
-      _intakes.initialize(),
-      _safetyPlans.initialize(),
-    ]);
+    await Future.wait([_intakes.initialize(), _safetyPlans.initialize()]);
     final intake = _intakes.forPatient(widget.patientId);
     final plan = _safetyPlans.forPatient(widget.patientId);
     final profile = FirebaseAuthService.instance.profile;
@@ -65,8 +62,9 @@ class _DataExportScreenState extends State<DataExportScreen> {
               'specialty': profile.specialty,
               'license_number': profile.licenseNumber,
               if (profile.licenseExpiry != null)
-                'license_expiry':
-                    profile.licenseExpiry!.toUtc().toIso8601String(),
+                'license_expiry': profile.licenseExpiry!
+                    .toUtc()
+                    .toIso8601String(),
             },
     );
     final json = const JsonEncoder.withIndent('  ').convert(bundle);
@@ -84,13 +82,11 @@ class _DataExportScreenState extends State<DataExportScreen> {
     if (!mounted) return;
     TelemetryService.instance.capture(
       'compliance.dsar_export_copied',
-      properties: {
-        'bytes': _byteSize,
-        'schema_version': dsarSchemaVersion,
-      },
+      properties: {'bytes': _byteSize, 'schema_version': dsarSchemaVersion},
     );
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Export bundle copied to clipboard.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Export bundle copied to clipboard.')),
+    );
   }
 
   @override
@@ -100,7 +96,8 @@ class _DataExportScreenState extends State<DataExportScreen> {
     return AppShell(
       routeName: '/settings',
       title: 'Data export (DSAR)',
-      subtitle: 'GDPR Article 15 (access) + Article 20 (portability) — '
+      subtitle:
+          'GDPR Article 15 (access) + Article 20 (portability) — '
           'one bundle, every record we hold.',
       scrollable: false,
       breadcrumbs: const [
@@ -120,62 +117,79 @@ class _DataExportScreenState extends State<DataExportScreen> {
       child: _loading
           ? const Padding(
               padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()))
+              child: Center(child: CircularProgressIndicator()),
+            )
           : ListView(
               padding: EdgeInsets.zero,
               children: [
                 PsyCard(
                   tinted: true,
-                  child: Row(children: [
-                    Icon(Icons.policy_outlined, color: cs.primary),
-                    const SizedBox(width: PsySpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Sharing this file outside the chart is patient '
-                        'authorised under GDPR Art. 15/20. Treat the JSON '
-                        'as PHI — encrypted transport, deletion when no '
-                        'longer needed.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            height: 1.45,
-                            color: cs.onSurface.withValues(alpha: 0.78)),
-                      ),
-                    ),
-                    const SizedBox(width: PsySpacing.sm),
-                    const PsyBadge(label: 'PHI', tone: PsyBadgeTone.info),
-                  ]),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                Row(children: [
-                  Text('Bundle',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(width: PsySpacing.sm),
-                  PsyBadge(
-                    label: 'v$dsarSchemaVersion',
-                    tone: PsyBadgeTone.neutral,
-                  ),
-                  const Spacer(),
-                  Text('${(_byteSize / 1024).toStringAsFixed(1)} KB',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.6))),
-                ]),
-                const SizedBox(height: PsySpacing.sm),
-                if (_empty)
-                  PsyCard(
-                    child: Row(children: [
-                      Icon(Icons.info_outline,
-                          color: cs.onSurface.withValues(alpha: 0.6)),
+                  child: Row(
+                    children: [
+                      Icon(Icons.policy_outlined, color: cs.primary),
                       const SizedBox(width: PsySpacing.md),
                       Expanded(
                         child: Text(
-                          'No patient records on file yet for '
-                          '${widget.patientId}. Complete an intake or open '
-                          'a safety plan and the bundle will populate.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.7)),
+                          'Sharing this file outside the chart is patient '
+                          'authorised under GDPR Art. 15/20. Treat the JSON '
+                          'as PHI — encrypted transport, deletion when no '
+                          'longer needed.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.45,
+                            color: cs.onSurface.withValues(alpha: 0.78),
+                          ),
                         ),
                       ),
-                    ]),
+                      const SizedBox(width: PsySpacing.sm),
+                      const PsyBadge(label: 'PHI', tone: PsyBadgeTone.info),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: PsySpacing.xl),
+                Row(
+                  children: [
+                    Text(
+                      'Bundle',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: PsySpacing.sm),
+                    PsyBadge(
+                      label: 'v$dsarSchemaVersion',
+                      tone: PsyBadgeTone.neutral,
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${(_byteSize / 1024).toStringAsFixed(1)} KB',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: PsySpacing.sm),
+                if (_empty)
+                  PsyCard(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: cs.onSurface.withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(width: PsySpacing.md),
+                        Expanded(
+                          child: Text(
+                            'No patient records on file yet for '
+                            '${widget.patientId}. Complete an intake or open '
+                            'a safety plan and the bundle will populate.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: cs.onSurface.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 else
                   PsyCard(
@@ -183,17 +197,19 @@ class _DataExportScreenState extends State<DataExportScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(PsySpacing.md),
                       decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest
-                            .withValues(alpha: 0.5),
+                        color: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.5,
+                        ),
                         borderRadius: BorderRadius.circular(PsyRadius.md),
                         border: Border.all(color: cs.outlineVariant),
                       ),
                       child: SelectableText(
                         _prettyJson,
                         style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
-                            height: 1.45),
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          height: 1.45,
+                        ),
                       ),
                     ),
                   ),

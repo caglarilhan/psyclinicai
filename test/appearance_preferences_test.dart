@@ -11,14 +11,14 @@ void main() {
   tearDown(AppearancePreferences.resetTestInstance);
 
   group('AppearancePreferences', () {
-    test('defaults to ThemeMode.dark before load (landing parity)',
-        () async {
+    test('defaults to ThemeMode.dark before load (landing parity)', () async {
       expect(AppearancePreferences.instance.themeMode, ThemeMode.dark);
     });
 
     test('load reads persisted value', () async {
-      SharedPreferences.setMockInitialValues(
-          <String, Object>{'appearance.theme_mode': 'dark'});
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'appearance.theme_mode': 'dark',
+      });
       AppearancePreferences.setTestInstance(SharedPreferences.getInstance);
       await AppearancePreferences.instance.load();
       expect(AppearancePreferences.instance.themeMode, ThemeMode.dark);

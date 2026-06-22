@@ -8,7 +8,10 @@ void main() {
         instrument: 'phq9',
         series: const [
           PatientOutcomeSeries(
-              patientId: 'p1', instrument: 'phq9', scores: [12]),
+            patientId: 'p1',
+            instrument: 'phq9',
+            scores: [12],
+          ),
         ],
       );
       expect(m.hasData, isFalse);
@@ -23,9 +26,10 @@ void main() {
         instrument: 'phq9',
         series: const [
           PatientOutcomeSeries(
-              patientId: 'p1',
-              instrument: 'gad7',
-              scores: [16, 14, 10]),
+            patientId: 'p1',
+            instrument: 'gad7',
+            scores: [16, 14, 10],
+          ),
         ],
       );
       expect(m.patientCount, 0);
@@ -36,9 +40,15 @@ void main() {
         instrument: 'phq9',
         series: const [
           PatientOutcomeSeries(
-              patientId: 'p1', instrument: 'phq9', scores: [20, 14, 9]),
+            patientId: 'p1',
+            instrument: 'phq9',
+            scores: [20, 14, 9],
+          ),
           PatientOutcomeSeries(
-              patientId: 'p2', instrument: 'phq9', scores: [10, 8]),
+            patientId: 'p2',
+            instrument: 'phq9',
+            scores: [10, 8],
+          ),
         ],
       );
       expect(m.patientCount, 2);
@@ -53,13 +63,22 @@ void main() {
         series: const [
           // Responder: 20 → 8 (-60%).
           PatientOutcomeSeries(
-              patientId: 'p1', instrument: 'phq9', scores: [20, 8]),
+            patientId: 'p1',
+            instrument: 'phq9',
+            scores: [20, 8],
+          ),
           // Non-responder: 14 → 12 (-14%).
           PatientOutcomeSeries(
-              patientId: 'p2', instrument: 'phq9', scores: [14, 12]),
+            patientId: 'p2',
+            instrument: 'phq9',
+            scores: [14, 12],
+          ),
           // Exact 50% — counts as responder (≤ first/2).
           PatientOutcomeSeries(
-              patientId: 'p3', instrument: 'phq9', scores: [10, 5]),
+            patientId: 'p3',
+            instrument: 'phq9',
+            scores: [10, 5],
+          ),
         ],
       );
       expect(m.responseRate, closeTo(2 / 3, 1e-9));
@@ -70,9 +89,15 @@ void main() {
         instrument: 'phq9',
         series: const [
           PatientOutcomeSeries(
-              patientId: 'p1', instrument: 'phq9', scores: [0, 0]),
+            patientId: 'p1',
+            instrument: 'phq9',
+            scores: [0, 0],
+          ),
           PatientOutcomeSeries(
-              patientId: 'p2', instrument: 'phq9', scores: [20, 8]),
+            patientId: 'p2',
+            instrument: 'phq9',
+            scores: [20, 8],
+          ),
         ],
       );
       expect(m.patientCount, 2);

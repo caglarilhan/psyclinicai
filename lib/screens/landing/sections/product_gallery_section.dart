@@ -56,7 +56,8 @@ class _ProductGallerySectionState extends State<ProductGallerySection> {
           const SectionTitle('Real product. Not mockups.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'Click any tab to see the actual UI a paying clinician will use.'),
+            'Click any tab to see the actual UI a paying clinician will use.',
+          ),
           const SizedBox(height: 32),
           Wrap(
             spacing: 8,
@@ -93,8 +94,7 @@ class _ProductGallerySectionState extends State<ProductGallerySection> {
 }
 
 class _Shot {
-  const _Shot(
-      {required this.tab, required this.caption, required this.asset});
+  const _Shot({required this.tab, required this.caption, required this.asset});
   final String tab;
   final String caption;
   final String asset;
@@ -132,9 +132,10 @@ class _ShotView extends StatelessWidget {
                 height: 320,
                 color: cs.surfaceContainerHighest,
                 alignment: Alignment.center,
-                child: Text(shot.asset,
-                    style: TextStyle(
-                        color: cs.onSurface.withValues(alpha: 0.5))),
+                child: Text(
+                  shot.asset,
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                ),
               ),
             ),
           ),
@@ -149,15 +150,20 @@ class _ShotView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(shot.tab,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                shot.tab,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 10),
-              Text(shot.caption,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72),
-                    height: 1.55,
-                  )),
+              Text(
+                shot.caption,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.72),
+                  height: 1.55,
+                ),
+              ),
             ],
           ),
         );

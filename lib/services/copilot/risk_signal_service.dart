@@ -32,10 +32,10 @@ class RiskSignalService {
     http.Client? client,
     IdTokenProvider? idTokenProvider,
     String? Function()? patientIdProvider,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        _idTokenProvider = idTokenProvider,
-        _patientIdProvider = patientIdProvider;
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -345,11 +345,7 @@ class RiskSignalService {
 
     try {
       final resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 20));
       if (resp.statusCode != 200) {
         // Keep the no-throw contract, but record degradation so we can tell

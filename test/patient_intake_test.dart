@@ -5,13 +5,13 @@ import 'package:psyclinicai/models/patient_intake.dart';
 void main() {
   group('PatientIntake', () {
     ConsentRecord validConsent() => ConsentRecord(
-          patientId: 'p1',
-          policyVersion: '2026-06',
-          dataProcessingConsent: true,
-          aiAssistanceConsent: true,
-          sensitiveDataConsent: true,
-          signedFullName: 'Jane Doe',
-        );
+      patientId: 'p1',
+      policyVersion: '2026-06',
+      dataProcessingConsent: true,
+      aiAssistanceConsent: true,
+      sensitiveDataConsent: true,
+      signedFullName: 'Jane Doe',
+    );
 
     test('round-trips through JSON, preserving all blocks', () {
       final intake = PatientIntake(
@@ -45,15 +45,19 @@ void main() {
       expect(r.consent!.isValid, isTrue);
     });
 
-    test('isComplete requires name + presenting concern + valid consent',
-        () {
+    test('isComplete requires name + presenting concern + valid consent', () {
       final base = PatientIntake(patientId: 'p1');
       expect(base.isComplete, isFalse, reason: 'all blocks empty');
 
-      final withName =
-          base.copyWith(fullName: 'Jane', presentingConcern: 'Stress');
-      expect(withName.isComplete, isFalse,
-          reason: 'consent record still missing');
+      final withName = base.copyWith(
+        fullName: 'Jane',
+        presentingConcern: 'Stress',
+      );
+      expect(
+        withName.isComplete,
+        isFalse,
+        reason: 'consent record still missing',
+      );
 
       final withInvalidConsent = withName.copyWith(
         consent: ConsentRecord(
@@ -72,17 +76,18 @@ void main() {
     });
 
     test(
-        'fromJson tolerates missing keys (returns sparse but valid object)',
-        () {
-      final r = PatientIntake.fromJson(const {'patientId': 'p2'});
-      expect(r.patientId, 'p2');
-      expect(r.fullName, '');
-      expect(r.allergies, isEmpty);
-      expect(r.currentMedications, isEmpty);
-      expect(r.priorSuicideAttempt, isFalse);
-      expect(r.consent, isNull);
-      expect(r.isComplete, isFalse);
-    });
+      'fromJson tolerates missing keys (returns sparse but valid object)',
+      () {
+        final r = PatientIntake.fromJson(const {'patientId': 'p2'});
+        expect(r.patientId, 'p2');
+        expect(r.fullName, '');
+        expect(r.allergies, isEmpty);
+        expect(r.currentMedications, isEmpty);
+        expect(r.priorSuicideAttempt, isFalse);
+        expect(r.consent, isNull);
+        expect(r.isComplete, isFalse);
+      },
+    );
 
     test('allergies and meds strip whitespace-only entries on decode', () {
       final r = PatientIntake.fromJson({
@@ -104,13 +109,14 @@ void main() {
       expect(after.fullName, 'Jane');
       expect(after.priorSuicideAttempt, isTrue);
       expect(after.presentingConcern, 'Stress');
-      expect(after.updatedAt.isAfter(before.updatedAt) ||
-              after.updatedAt.isAtSameMomentAs(before.updatedAt),
-          isTrue);
+      expect(
+        after.updatedAt.isAfter(before.updatedAt) ||
+            after.updatedAt.isAtSameMomentAs(before.updatedAt),
+        isTrue,
+      );
     });
 
-    test('toJson omits null demographic fields to keep the row compact',
-        () {
+    test('toJson omits null demographic fields to keep the row compact', () {
       final intake = PatientIntake(patientId: 'p5', fullName: 'Jane');
       final json = intake.toJson();
       expect(json.containsKey('gender'), isFalse);

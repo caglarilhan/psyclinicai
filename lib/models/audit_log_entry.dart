@@ -41,20 +41,20 @@ class AuditLogEntry {
   });
 
   factory AuditLogEntry.fromJson(Map<String, dynamic> json) => AuditLogEntry(
-        id: json['id'] as String? ?? '',
-        kind: json['kind'] as String? ?? 'unknown',
-        action: json['action'] as String? ?? '',
-        actor: json['actor'] as String? ?? '',
-        entity: json['entity'] as String? ?? '',
-        timestampUtc:
-            DateTime.tryParse(json['timestamp_utc'] as String? ?? '') ??
-                DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-        result: AuditResult.fromId(json['result'] as String?),
-        userId: json['user_id'] as String?,
-        ip: json['ip'] as String?,
-        device: json['device'] as String?,
-        hash: json['hash'] as String?,
-      );
+    id: json['id'] as String? ?? '',
+    kind: json['kind'] as String? ?? 'unknown',
+    action: json['action'] as String? ?? '',
+    actor: json['actor'] as String? ?? '',
+    entity: json['entity'] as String? ?? '',
+    timestampUtc:
+        DateTime.tryParse(json['timestamp_utc'] as String? ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    result: AuditResult.fromId(json['result'] as String?),
+    userId: json['user_id'] as String?,
+    ip: json['ip'] as String?,
+    device: json['device'] as String?,
+    hash: json['hash'] as String?,
+  );
 
   /// Opaque row id (UUIDv4 in production; numeric demo).
   final String id;
@@ -83,16 +83,16 @@ class AuditLogEntry {
   final String? hash;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind,
-        'action': action,
-        'actor': actor,
-        'entity': entity,
-        'timestamp_utc': timestampUtc.toUtc().toIso8601String(),
-        'result': result.name,
-        if (userId != null) 'user_id': userId,
-        if (ip != null) 'ip': ip,
-        if (device != null) 'device': device,
-        if (hash != null) 'hash': hash,
-      };
+    'id': id,
+    'kind': kind,
+    'action': action,
+    'actor': actor,
+    'entity': entity,
+    'timestamp_utc': timestampUtc.toUtc().toIso8601String(),
+    'result': result.name,
+    if (userId != null) 'user_id': userId,
+    if (ip != null) 'ip': ip,
+    if (device != null) 'device': device,
+    if (hash != null) 'hash': hash,
+  };
 }

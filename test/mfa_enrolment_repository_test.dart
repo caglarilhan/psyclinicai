@@ -44,35 +44,40 @@ void main() {
   });
 
   group('InMemoryMfaEnrolmentRepository', () {
-    test('consumeRecoveryCode true for unused, false for replay',
-        () async {
+    test('consumeRecoveryCode true for unused, false for replay', () async {
       final repo = InMemoryMfaEnrolmentRepository();
-      await repo.upsert(MfaEnrolment(
-        uid: 'uid-1',
-        enrolledAt: DateTime.utc(2026, 6, 2, 10),
-        recoveryCodeHashes: [hashRecoveryCode('AAAA-AAAA')],
-      ));
-      expect(await repo.consumeRecoveryCode(
-              uid: 'uid-1', rawCode: 'AAAA-AAAA'),
-          isTrue);
-      expect(await repo.consumeRecoveryCode(
-              uid: 'uid-1', rawCode: 'AAAA-AAAA'),
-          isFalse,
-          reason: 'each code is single-use');
-      expect(await repo.consumeRecoveryCode(
-              uid: 'uid-1', rawCode: 'CCCC-CCCC'),
-          isFalse,
-          reason: 'unknown code');
+      await repo.upsert(
+        MfaEnrolment(
+          uid: 'uid-1',
+          enrolledAt: DateTime.utc(2026, 6, 2, 10),
+          recoveryCodeHashes: [hashRecoveryCode('AAAA-AAAA')],
+        ),
+      );
+      expect(
+        await repo.consumeRecoveryCode(uid: 'uid-1', rawCode: 'AAAA-AAAA'),
+        isTrue,
+      );
+      expect(
+        await repo.consumeRecoveryCode(uid: 'uid-1', rawCode: 'AAAA-AAAA'),
+        isFalse,
+        reason: 'each code is single-use',
+      );
+      expect(
+        await repo.consumeRecoveryCode(uid: 'uid-1', rawCode: 'CCCC-CCCC'),
+        isFalse,
+        reason: 'unknown code',
+      );
     });
 
-    test('consumeRecoveryCode is case-insensitive on the raw code',
-        () async {
+    test('consumeRecoveryCode is case-insensitive on the raw code', () async {
       final repo = InMemoryMfaEnrolmentRepository();
-      await repo.upsert(MfaEnrolment(
-        uid: 'uid-1',
-        enrolledAt: DateTime.utc(2026, 6, 2, 10),
-        recoveryCodeHashes: [hashRecoveryCode('AAAA-AAAA')],
-      ));
+      await repo.upsert(
+        MfaEnrolment(
+          uid: 'uid-1',
+          enrolledAt: DateTime.utc(2026, 6, 2, 10),
+          recoveryCodeHashes: [hashRecoveryCode('AAAA-AAAA')],
+        ),
+      );
       expect(
         await repo.consumeRecoveryCode(uid: 'uid-1', rawCode: 'aaaa-aaaa'),
         isTrue,

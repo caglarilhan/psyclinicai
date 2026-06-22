@@ -15,10 +15,10 @@ class ChatService {
     http.Client? client,
     IdTokenProvider? idTokenProvider,
     String? Function()? patientIdProvider,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        _idTokenProvider = idTokenProvider,
-        _patientIdProvider = patientIdProvider;
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -121,11 +121,7 @@ Rules:
     http.Response resp;
     try {
       resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 45));
     } catch (e) {
       throw ChatException(

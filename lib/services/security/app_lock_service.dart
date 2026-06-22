@@ -18,9 +18,9 @@ class AppLockService extends ChangeNotifier {
     Future<SharedPreferences> Function()? prefs,
     LocalAuthentication? auth,
     DateTime Function()? clock,
-  })  : _prefsFactory = prefs,
-        _auth = auth ?? LocalAuthentication(),
-        _clock = clock ?? DateTime.now;
+  }) : _prefsFactory = prefs,
+       _auth = auth ?? LocalAuthentication(),
+       _clock = clock ?? DateTime.now;
 
   static AppLockService instance = AppLockService._();
 
@@ -83,8 +83,7 @@ class AppLockService extends ChangeNotifier {
     if (!_enabled || _state != AppLockState.armed) return false;
     final last = _lastActivity;
     if (last == null) return true;
-    return _clock().difference(last) >=
-        Duration(minutes: _idleMinutes);
+    return _clock().difference(last) >= Duration(minutes: _idleMinutes);
   }
 
   bool maybeAutoLock() {

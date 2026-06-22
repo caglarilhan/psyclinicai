@@ -113,8 +113,7 @@ class TelemetryService {
   }) async {
     final scrubber = PhiRedactor();
     final scrubbedMessage = scrubber.scrub(error.toString()).cleanText;
-    final scrubbedHint =
-        hint == null ? null : scrubber.scrub(hint).cleanText;
+    final scrubbedHint = hint == null ? null : scrubber.scrub(hint).cleanText;
     final reportError = SafeReportedError(scrubbedMessage, error.runtimeType);
 
     if (_sentryReady) {
@@ -193,26 +192,20 @@ class TelemetryEvents {
   // Sprint 32 P2 — BYOK key rotation lifecycle. Properties carry
   // `provider` (anthropic|openai|cohere), `grace_period_h`, never
   // the key value itself.
-  static const String byokRotationRequested =
-      'byok.rotation_requested';
-  static const String byokRotationCompleted =
-      'byok.rotation_completed';
+  static const String byokRotationRequested = 'byok.rotation_requested';
+  static const String byokRotationCompleted = 'byok.rotation_completed';
   static const String byokRotationFailed = 'byok.rotation_failed';
 
   // Sprint 31 P2 — first-launch session tour. Properties carry
   // `total_steps`, `last_step_index`. No PHI.
-  static const String onboardingTourStarted =
-      'onboarding.tour_started';
-  static const String onboardingTourCompleted =
-      'onboarding.tour_completed';
-  static const String onboardingTourSkipped =
-      'onboarding.tour_skipped';
+  static const String onboardingTourStarted = 'onboarding.tour_started';
+  static const String onboardingTourCompleted = 'onboarding.tour_completed';
+  static const String onboardingTourSkipped = 'onboarding.tour_skipped';
 
   // Sprint 33 P2 — Stripe Customer Portal redirect.
   static const String billingCustomerPortalOpened =
       'billing.customer_portal_opened';
-  static const String billingInvoiceDownloaded =
-      'billing.invoice_downloaded';
+  static const String billingInvoiceDownloaded = 'billing.invoice_downloaded';
 
   /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
   /// MUST NOT include item answers or patient identifiers — only the tier

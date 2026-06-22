@@ -12,19 +12,17 @@ void main() {
     test('returns null for an effectively-empty bundle', () {
       // A truly empty Map is below the 30-byte floor.
       expect(
-          buildPatientExportZip(
-            patientId: 'p',
-            bundle: const {},
-            generatedAt: now,
-          ),
-          isNull);
+        buildPatientExportZip(
+          patientId: 'p',
+          bundle: const {},
+          generatedAt: now,
+        ),
+        isNull,
+      );
     });
 
     test('real (small) bundle still produces bytes', () {
-      final bundle = buildPatientExport(
-        patientId: 'p1',
-        generatedAt: now,
-      );
+      final bundle = buildPatientExport(patientId: 'p1', generatedAt: now);
       final bytes = buildPatientExportZip(
         patientId: 'p1',
         bundle: bundle,
@@ -35,10 +33,7 @@ void main() {
     });
 
     test('zip contains patient-export.json + README.txt', () {
-      final bundle = buildPatientExport(
-        patientId: 'p1',
-        generatedAt: now,
-      );
+      final bundle = buildPatientExport(patientId: 'p1', generatedAt: now);
       final bytes = buildPatientExportZip(
         patientId: 'p1',
         bundle: bundle,
@@ -50,10 +45,7 @@ void main() {
     });
 
     test('JSON entry round-trips back to the original bundle', () {
-      final bundle = buildPatientExport(
-        patientId: 'p1',
-        generatedAt: now,
-      );
+      final bundle = buildPatientExport(patientId: 'p1', generatedAt: now);
       final bytes = buildPatientExportZip(
         patientId: 'p1',
         bundle: bundle,
@@ -69,23 +61,24 @@ void main() {
     });
 
     test('README names patient id and a UTC timestamp', () {
-      final bundle = buildPatientExport(
-        patientId: 'p1',
-        generatedAt: now,
-      );
+      final bundle = buildPatientExport(patientId: 'p1', generatedAt: now);
       final bytes = buildPatientExportZip(
         patientId: 'p1',
         bundle: bundle,
         generatedAt: now,
       )!;
       final archive = ZipDecoder().decodeBytes(bytes);
-      final readme =
-          utf8.decode(archive.findFile('README.txt')!.content as List<int>);
+      final readme = utf8.decode(
+        archive.findFile('README.txt')!.content as List<int>,
+      );
       expect(readme, contains('p1'));
       expect(readme, contains('2026-06-02T12:00:00.000Z'));
       expect(readme, contains('GDPR Articles 15'));
-      expect(readme, contains('NOT password-protected'),
-          reason: 'README must surface the encryption scope honestly');
+      expect(
+        readme,
+        contains('NOT password-protected'),
+        reason: 'README must surface the encryption scope honestly',
+      );
     });
   });
 

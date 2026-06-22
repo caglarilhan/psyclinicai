@@ -37,19 +37,13 @@ abstract class PasskeyBackend {
 }
 
 class PasskeyEnrolmentResult {
-  const PasskeyEnrolmentResult({
-    required this.outcome,
-    this.credential,
-  });
+  const PasskeyEnrolmentResult({required this.outcome, this.credential});
   final PasskeyOutcome outcome;
   final PasskeyCredential? credential;
 }
 
 class PasskeyAssertionResult {
-  const PasskeyAssertionResult({
-    required this.outcome,
-    this.credentialId,
-  });
+  const PasskeyAssertionResult({required this.outcome, this.credentialId});
   final PasskeyOutcome outcome;
   final String? credentialId;
 }
@@ -63,13 +57,15 @@ class _NoopPasskeyBackend implements PasskeyBackend {
   @override
   Future<PasskeyEnrolmentResult> enrol({required String deviceLabel}) async {
     return const PasskeyEnrolmentResult(
-        outcome: PasskeyOutcome.unsupportedPlatform);
+      outcome: PasskeyOutcome.unsupportedPlatform,
+    );
   }
 
   @override
   Future<PasskeyAssertionResult> authenticate() async {
     return const PasskeyAssertionResult(
-        outcome: PasskeyOutcome.unsupportedPlatform);
+      outcome: PasskeyOutcome.unsupportedPlatform,
+    );
   }
 }
 
@@ -79,9 +75,9 @@ class PasskeyService extends ChangeNotifier {
     required PasskeyRepository repository,
     required String uid,
     PasskeyBackend? backend,
-  })  : _repository = repository,
-        _uid = uid,
-        _backend = backend ?? const _NoopPasskeyBackend();
+  }) : _repository = repository,
+       _uid = uid,
+       _backend = backend ?? const _NoopPasskeyBackend();
 
   final PasskeyRepository _repository;
   final String _uid;

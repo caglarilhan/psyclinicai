@@ -4,24 +4,21 @@ import 'package:psyclinicai/models/email_template.dart';
 void main() {
   group('EmailTemplate.render', () {
     EmailTemplate make(String body) => EmailTemplate(
-          id: 't-1',
-          kind: EmailTemplateKind.reminder24h,
-          subject: 'See you tomorrow',
-          bodyMarkdown: body,
-        );
+      id: 't-1',
+      kind: EmailTemplateKind.reminder24h,
+      subject: 'See you tomorrow',
+      bodyMarkdown: body,
+    );
 
     test('substitutes known tokens', () {
-      final out = make('Hi {{patient_first_name}}, see you at '
-              '{{session_time}}.')
-          .render({
-        'patient_first_name': 'John',
-        'session_time': '14:00',
-      });
+      final out = make(
+        'Hi {{patient_first_name}}, see you at '
+        '{{session_time}}.',
+      ).render({'patient_first_name': 'John', 'session_time': '14:00'});
       expect(out, 'Hi John, see you at 14:00.');
     });
 
-    test('unknown token surfaces as [unknown:name] so QA catches typos',
-        () {
+    test('unknown token surfaces as [unknown:name] so QA catches typos', () {
       final out = make('Hi {{patietn_first_name}}.').render({});
       expect(out, contains('[unknown:patietn_first_name]'));
     });
@@ -86,11 +83,13 @@ void main() {
         name: 'Mixed',
         steps: [
           EmailSequenceStep(
-              offset: Duration(hours: -24),
-              kind: EmailTemplateKind.reminder24h),
+            offset: Duration(hours: -24),
+            kind: EmailTemplateKind.reminder24h,
+          ),
           EmailSequenceStep(
-              offset: Duration(hours: -72),
-              kind: EmailTemplateKind.reminder72h),
+            offset: Duration(hours: -72),
+            kind: EmailTemplateKind.reminder72h,
+          ),
         ],
       );
       expect(seq.isCanonicallyOrdered, isFalse);
@@ -102,8 +101,9 @@ void main() {
         name: 'Post-session',
         steps: [
           EmailSequenceStep(
-              offset: Duration(hours: 2),
-              kind: EmailTemplateKind.reviewRequest),
+            offset: Duration(hours: 2),
+            kind: EmailTemplateKind.reviewRequest,
+          ),
         ],
       );
       final restored = EmailSequence.fromJson(seq.toJson());

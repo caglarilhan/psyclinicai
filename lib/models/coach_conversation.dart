@@ -35,13 +35,13 @@ class CoachMessage {
   });
 
   factory CoachMessage.fromJson(Map<String, dynamic> json) => CoachMessage(
-        id: json['id'] as String? ?? '',
-        role: CoachRole.fromWire(json['role'] as String? ?? 'user'),
-        text: json['text'] as String? ?? '',
-        at: DateTime.tryParse(json['at'] as String? ?? '') ?? DateTime.now(),
-        riskFlagged: json['riskFlagged'] as bool? ?? false,
-        modality: json['modality'] as String?,
-      );
+    id: json['id'] as String? ?? '',
+    role: CoachRole.fromWire(json['role'] as String? ?? 'user'),
+    text: json['text'] as String? ?? '',
+    at: DateTime.tryParse(json['at'] as String? ?? '') ?? DateTime.now(),
+    riskFlagged: json['riskFlagged'] as bool? ?? false,
+    modality: json['modality'] as String?,
+  );
 
   /// Opaque message id — Firestore doc id when persisted; UUID v4 in
   /// the test fixtures.
@@ -70,13 +70,13 @@ class CoachMessage {
   final String? modality;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'role': role.wire,
-        'text': text,
-        'at': at.toUtc().toIso8601String(),
-        'riskFlagged': riskFlagged,
-        if (modality != null) 'modality': modality,
-      };
+    'id': id,
+    'role': role.wire,
+    'text': text,
+    'at': at.toUtc().toIso8601String(),
+    'riskFlagged': riskFlagged,
+    if (modality != null) 'modality': modality,
+  };
 }
 
 enum CoachRole {
@@ -116,8 +116,8 @@ class CoachConversation {
     required this.modality,
     DateTime? createdAt,
     List<CoachMessage>? messages,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        messages = List<CoachMessage>.unmodifiable(messages ?? const []);
+  }) : createdAt = createdAt ?? DateTime.now(),
+       messages = List<CoachMessage>.unmodifiable(messages ?? const []);
 
   factory CoachConversation.fromJson(Map<String, dynamic> json) =>
       CoachConversation(
@@ -128,7 +128,7 @@ class CoachConversation {
         modality: json['modality'] as String? ?? 'general',
         createdAt:
             DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-                DateTime.now(),
+            DateTime.now(),
         messages: ((json['messages'] as List<dynamic>?) ?? const [])
             .map((e) => CoachMessage.fromJson(e as Map<String, dynamic>))
             .toList(growable: false),
@@ -183,12 +183,12 @@ class CoachConversation {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'clinicianId': clinicianId,
-        'treatmentPlanId': treatmentPlanId,
-        'modality': modality,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'messages': messages.map((m) => m.toJson()).toList(growable: false),
-      };
+    'id': id,
+    'patientId': patientId,
+    'clinicianId': clinicianId,
+    'treatmentPlanId': treatmentPlanId,
+    'modality': modality,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'messages': messages.map((m) => m.toJson()).toList(growable: false),
+  };
 }

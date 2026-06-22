@@ -7,18 +7,17 @@ import 'package:psyclinicai/utils/dsar_export.dart';
 
 void main() {
   ConsentRecord goodConsent() => ConsentRecord(
-        patientId: 'p1',
-        policyVersion: '2026-06',
-        dataProcessingConsent: true,
-        aiAssistanceConsent: true,
-        sensitiveDataConsent: true,
-        signedFullName: 'Jane Doe',
-        signedAt: DateTime.utc(2026, 6, 1),
-      );
+    patientId: 'p1',
+    policyVersion: '2026-06',
+    dataProcessingConsent: true,
+    aiAssistanceConsent: true,
+    sensitiveDataConsent: true,
+    signedFullName: 'Jane Doe',
+    signedAt: DateTime.utc(2026, 6, 1),
+  );
 
   group('buildPatientExport', () {
-    test('always carries patient_id, schema_version, generated_at, source',
-        () {
+    test('always carries patient_id, schema_version, generated_at, source', () {
       final bundle = buildPatientExport(
         patientId: 'p1',
         generatedAt: DateTime.utc(2026, 6, 1, 12),
@@ -83,23 +82,24 @@ void main() {
     });
 
     test(
-        'falls back to intake.consent when no explicit consent is supplied',
-        () {
-      final intake = PatientIntake(
-        patientId: 'p1',
-        fullName: 'Jane',
-        presentingConcern: 'Anxiety',
-        consent: goodConsent(),
-      );
-      final bundle = buildPatientExport(
-        patientId: 'p1',
-        generatedAt: DateTime.utc(2026, 6, 1),
-        intake: intake,
-      );
-      expect(bundle['consent'], isNotNull);
-      final consent = bundle['consent'] as Map<String, dynamic>;
-      expect(consent['signedFullName'], 'Jane Doe');
-    });
+      'falls back to intake.consent when no explicit consent is supplied',
+      () {
+        final intake = PatientIntake(
+          patientId: 'p1',
+          fullName: 'Jane',
+          presentingConcern: 'Anxiety',
+          consent: goodConsent(),
+        );
+        final bundle = buildPatientExport(
+          patientId: 'p1',
+          generatedAt: DateTime.utc(2026, 6, 1),
+          intake: intake,
+        );
+        expect(bundle['consent'], isNotNull);
+        final consent = bundle['consent'] as Map<String, dynamic>;
+        expect(consent['signedFullName'], 'Jane Doe');
+      },
+    );
 
     test('explicit consent argument wins over intake.consent', () {
       final intake = PatientIntake(

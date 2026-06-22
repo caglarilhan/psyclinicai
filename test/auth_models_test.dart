@@ -23,10 +23,10 @@ void main() {
         organizationId: 'org-1',
       );
       final round = User.fromJson(user.toJson());
-      expect(round.roles, containsAll(<UserRole>[
-        UserRole.admin,
-        UserRole.patient,
-      ]));
+      expect(
+        round.roles,
+        containsAll(<UserRole>[UserRole.admin, UserRole.patient]),
+      );
       expect(round.roles, hasLength(2));
     });
 

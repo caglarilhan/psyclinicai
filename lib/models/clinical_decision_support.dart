@@ -87,16 +87,16 @@ class ClinicalDecisionSupport<T> {
       'Confirm before adding to the chart.';
 
   Map<String, dynamic> toJson() => {
-        'kind': 'clinical_decision_support',
-        'modelId': modelId,
-        'modelVersion': modelVersion,
-        'generatedAt': generatedAt.toUtc().toIso8601String(),
-        'riskClass': riskClass.name,
-        'disclaimer': disclaimer,
-        'evidenceSpans': evidenceSpans,
-        'requiresClinicianConfirmation': requiresClinicianConfirmation,
-        'suggestion': _serialiseSuggestion(),
-      };
+    'kind': 'clinical_decision_support',
+    'modelId': modelId,
+    'modelVersion': modelVersion,
+    'generatedAt': generatedAt.toUtc().toIso8601String(),
+    'riskClass': riskClass.name,
+    'disclaimer': disclaimer,
+    'evidenceSpans': evidenceSpans,
+    'requiresClinicianConfirmation': requiresClinicianConfirmation,
+    'suggestion': _serialiseSuggestion(),
+  };
 
   dynamic _serialiseSuggestion() => _toJsonLike(suggestion);
 

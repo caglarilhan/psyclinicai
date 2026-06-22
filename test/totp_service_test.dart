@@ -47,8 +47,11 @@ void main() {
       final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
       final code = svc.currentCode(secret, forTime: at);
       expect(svc.verify(secret: secret, code: code, at: at), isTrue);
-      expect(svc.verify(secret: secret, code: code, at: at), isFalse,
-          reason: 'second use must be rejected');
+      expect(
+        svc.verify(secret: secret, code: code, at: at),
+        isFalse,
+        reason: 'second use must be rejected',
+      );
     });
 
     test('consume:false allows repeated verifies for tests/preview', () {
@@ -81,8 +84,11 @@ void main() {
       final codes = svc.generateRecoveryCodes(count: 10);
       expect(codes.length, 10);
       for (final c in codes) {
-        expect(RegExp(r'^[A-Z2-9]{4}-[A-Z2-9]{4}$').hasMatch(c), isTrue,
-            reason: 'unexpected format: $c');
+        expect(
+          RegExp(r'^[A-Z2-9]{4}-[A-Z2-9]{4}$').hasMatch(c),
+          isTrue,
+          reason: 'unexpected format: $c',
+        );
       }
       expect(codes.toSet().length, 10, reason: 'recovery codes collided');
     });

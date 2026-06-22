@@ -184,12 +184,15 @@ class _BetaWaitlistScreenState extends State<BetaWaitlistScreen> {
               Expanded(
                 child: SegmentedButton<String>(
                   segments: const [
+                    ButtonSegment(value: 'clinician', label: Text('Clinician')),
                     ButtonSegment(
-                        value: 'clinician', label: Text('Clinician')),
+                      value: 'admin',
+                      label: Text('Practice admin'),
+                    ),
                     ButtonSegment(
-                        value: 'admin', label: Text('Practice admin')),
-                    ButtonSegment(
-                        value: 'researcher', label: Text('Researcher')),
+                      value: 'researcher',
+                      label: Text('Researcher'),
+                    ),
                   ],
                   selected: {_role},
                   onSelectionChanged: _submitting
@@ -237,8 +240,7 @@ class _SuccessCard extends StatelessWidget {
         padding: const EdgeInsets.all(PsySpacing.xl),
         child: Column(
           children: [
-            const Icon(Icons.check_circle,
-                color: AppColors.success, size: 56),
+            const Icon(Icons.check_circle, color: AppColors.success, size: 56),
             const SizedBox(height: 16),
             Text(
               "You're on the list",
@@ -257,8 +259,8 @@ class _SuccessCard extends StatelessWidget {
             ),
             const SizedBox(height: PsySpacing.xl),
             OutlinedButton.icon(
-              onPressed: () => Navigator.of(context)
-                  .pushReplacementNamed('/landing'),
+              onPressed: () =>
+                  Navigator.of(context).pushReplacementNamed('/landing'),
               icon: const Icon(Icons.arrow_back),
               label: const Text('Back to landing'),
             ),

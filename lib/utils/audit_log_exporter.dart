@@ -118,12 +118,11 @@ String toSyslogRfc5424(
   Iterable<AuditLogEntry> entries, {
   String hostname = 'psyclinicai',
   String appName = 'audit',
-}) =>
-    toSyslogRfc5424Raw(
-      entries.map(redactForSiem),
-      hostname: hostname,
-      appName: appName,
-    );
+}) => toSyslogRfc5424Raw(
+  entries.map(redactForSiem),
+  hostname: hostname,
+  appName: appName,
+);
 
 String toSyslogRfc5424Raw(
   Iterable<AuditLogEntry> entries, {
@@ -133,7 +132,8 @@ String toSyslogRfc5424Raw(
   final lines = <String>[];
   for (final e in entries) {
     final ts = e.timestampUtc.toUtc().toIso8601String();
-    final sd = '[audit@53595 '
+    final sd =
+        '[audit@53595 '
         'id="${_escapeSd(e.id)}" '
         'kind="${_escapeSd(e.kind)}" '
         'actor="${_escapeSd(e.actor)}" '
@@ -174,19 +174,21 @@ String toCsv(Iterable<AuditLogEntry> entries) {
 
   final rows = <String>[columns.join(',')];
   for (final e in entries.map(redactForSiem)) {
-    rows.add([
-      quote(e.id),
-      quote(e.timestampUtc.toUtc().toIso8601String()),
-      quote(e.kind),
-      quote(e.action),
-      quote(e.actor),
-      quote(e.entity),
-      quote(e.result.name),
-      quote(e.userId),
-      quote(e.ip),
-      quote(e.device),
-      quote(e.hash),
-    ].join(','));
+    rows.add(
+      [
+        quote(e.id),
+        quote(e.timestampUtc.toUtc().toIso8601String()),
+        quote(e.kind),
+        quote(e.action),
+        quote(e.actor),
+        quote(e.entity),
+        quote(e.result.name),
+        quote(e.userId),
+        quote(e.ip),
+        quote(e.device),
+        quote(e.hash),
+      ].join(','),
+    );
   }
   return rows.join('\n');
 }

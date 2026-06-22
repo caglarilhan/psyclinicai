@@ -49,10 +49,8 @@ class AccountDeletionRequest {
       grace: graceEnds == null
           ? accountDeletionGrace
           : graceEnds.toUtc().difference(requested.toUtc()),
-      cancelledAt:
-          DateTime.tryParse(json['cancelled_at'] as String? ?? ''),
-      completedAt:
-          DateTime.tryParse(json['completed_at'] as String? ?? ''),
+      cancelledAt: DateTime.tryParse(json['cancelled_at'] as String? ?? ''),
+      completedAt: DateTime.tryParse(json['completed_at'] as String? ?? ''),
       reasonCode: json['reason_code'] as String?,
     );
   }
@@ -109,13 +107,13 @@ class AccountDeletionRequest {
   }
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'requested_at': requestedAt.toUtc().toIso8601String(),
-        'grace_ends_at': graceEndsAt.toUtc().toIso8601String(),
-        if (cancelledAt != null)
-          'cancelled_at': cancelledAt!.toUtc().toIso8601String(),
-        if (completedAt != null)
-          'completed_at': completedAt!.toUtc().toIso8601String(),
-        if (reasonCode != null) 'reason_code': reasonCode,
-      };
+    'user_id': userId,
+    'requested_at': requestedAt.toUtc().toIso8601String(),
+    'grace_ends_at': graceEndsAt.toUtc().toIso8601String(),
+    if (cancelledAt != null)
+      'cancelled_at': cancelledAt!.toUtc().toIso8601String(),
+    if (completedAt != null)
+      'completed_at': completedAt!.toUtc().toIso8601String(),
+    if (reasonCode != null) 'reason_code': reasonCode,
+  };
 }

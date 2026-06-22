@@ -16,8 +16,9 @@ void main() {
     });
 
     test('clauses are unique', () {
-      final clauses =
-          Iso27001AnnexARegistry.controls.map((c) => c.clause).toList();
+      final clauses = Iso27001AnnexARegistry.controls
+          .map((c) => c.clause)
+          .toList();
       expect(clauses.length, clauses.toSet().length);
     });
 
@@ -29,13 +30,17 @@ void main() {
     });
 
     test('lastReviewed is a YYYY-MM stamp', () {
-      expect(Iso27001AnnexARegistry.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(
+        Iso27001AnnexARegistry.lastReviewed,
+        matches(RegExp(r'^\d{4}-\d{2}$')),
+      );
     });
 
     test('byClause resolves known controls and returns null otherwise', () {
-      expect(Iso27001AnnexARegistry.byClause('A.5.15')?.title,
-          contains('Access control'));
+      expect(
+        Iso27001AnnexARegistry.byClause('A.5.15')?.title,
+        contains('Access control'),
+      );
       expect(Iso27001AnnexARegistry.byClause('A.99.99'), isNull);
     });
 
@@ -47,10 +52,13 @@ void main() {
     });
 
     test('themes cover the four Annex A blocks', () {
-      final themes =
-          Iso27001AnnexARegistry.controls.map((c) => c.theme).toSet();
-      expect(themes,
-          containsAll(['Organisational', 'People', 'Physical', 'Technological']));
+      final themes = Iso27001AnnexARegistry.controls
+          .map((c) => c.theme)
+          .toSet();
+      expect(
+        themes,
+        containsAll(['Organisational', 'People', 'Physical', 'Technological']),
+      );
     });
   });
 }

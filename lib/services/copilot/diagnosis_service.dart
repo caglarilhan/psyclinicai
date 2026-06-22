@@ -18,10 +18,10 @@ class DiagnosisService {
     http.Client? client,
     IdTokenProvider? idTokenProvider,
     String? Function()? patientIdProvider,
-  })  : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-        _client = client ?? http.Client(),
-        _idTokenProvider = idTokenProvider,
-        _patientIdProvider = patientIdProvider;
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
@@ -124,11 +124,7 @@ Return strictly JSON in this shape, no prose:
     http.Response resp;
     try {
       resp = await _client
-          .post(
-            CopilotEndpoint.uri,
-            headers: headers,
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 45));
     } catch (e) {
       throw DiagnosisException(
@@ -266,14 +262,14 @@ class DxCandidate {
   final List<String> nextSteps;
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'icd10': icd10,
-        'dsm5': dsm5,
-        'confidence': confidence,
-        'matchingCriteria': matchingCriteria,
-        'missingCriteria': missingCriteria,
-        'nextSteps': nextSteps,
-      };
+    'name': name,
+    'icd10': icd10,
+    'dsm5': dsm5,
+    'confidence': confidence,
+    'matchingCriteria': matchingCriteria,
+    'missingCriteria': missingCriteria,
+    'nextSteps': nextSteps,
+  };
 }
 
 enum DiagnosisErrorCode {

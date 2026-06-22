@@ -5,14 +5,17 @@ import 'package:psyclinicai/widgets/outcomes/caseload_outcomes_panel.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child))),
+    MaterialApp(
+      home: Scaffold(body: SingleChildScrollView(child: child)),
+    ),
   );
 }
 
 void main() {
   group('CaseloadOutcomesPanel', () {
-    testWidgets('empty metrics — renders the not-enough-data state',
-        (tester) async {
+    testWidgets('empty metrics — renders the not-enough-data state', (
+      tester,
+    ) async {
       const metrics = CaseloadOutcomeMetrics(
         patientCount: 0,
         avgFirstScore: 0,
@@ -21,10 +24,7 @@ void main() {
       );
       await _pump(
         tester,
-        const CaseloadOutcomesPanel(
-          instrumentLabel: 'PHQ-9',
-          metrics: metrics,
-        ),
+        const CaseloadOutcomesPanel(instrumentLabel: 'PHQ-9', metrics: metrics),
       );
       expect(find.textContaining('not enough datapoints'), findsOneWidget);
       // The 3-card grid must NOT render in the empty state.
@@ -32,8 +32,9 @@ void main() {
       expect(find.text('Response rate'), findsNothing);
     });
 
-    testWidgets('populated metrics — shows three cards + bipolar disclaimer',
-        (tester) async {
+    testWidgets('populated metrics — shows three cards + bipolar disclaimer', (
+      tester,
+    ) async {
       const metrics = CaseloadOutcomeMetrics(
         patientCount: 3,
         avgFirstScore: 18,
@@ -56,8 +57,9 @@ void main() {
       expect(find.textContaining('bipolar spectrum'), findsOneWidget);
     });
 
-    testWidgets('improving caseload shows a negative delta with sign',
-        (tester) async {
+    testWidgets('improving caseload shows a negative delta with sign', (
+      tester,
+    ) async {
       const metrics = CaseloadOutcomeMetrics(
         patientCount: 2,
         avgFirstScore: 20,
@@ -66,10 +68,7 @@ void main() {
       );
       await _pump(
         tester,
-        const CaseloadOutcomesPanel(
-          instrumentLabel: 'PHQ-9',
-          metrics: metrics,
-        ),
+        const CaseloadOutcomesPanel(instrumentLabel: 'PHQ-9', metrics: metrics),
       );
       expect(find.textContaining('-8.0 pts'), findsOneWidget);
     });

@@ -36,11 +36,13 @@ class MedulaAdapter implements ErxAdapter {
   @override
   String buildPayload(Prescription rx) {
     final items = rx.items
-        .map((i) =>
-            '<ilac mkys="${xmlEscape(i.drugCode)}" '
-            'doz="${xmlEscape(i.dose)}" '
-            'sure="${i.durationDays}" '
-            'yol="${xmlEscape(i.route)}"/>')
+        .map(
+          (i) =>
+              '<ilac mkys="${xmlEscape(i.drugCode)}" '
+              'doz="${xmlEscape(i.dose)}" '
+              'sure="${i.durationDays}" '
+              'yol="${xmlEscape(i.route)}"/>',
+        )
         .join();
     return '<recete xmlns="http://medula.sgk.gov.tr">'
         '<hasta tckn="${xmlEscape(rx.patientId)}"/>'

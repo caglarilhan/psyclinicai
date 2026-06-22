@@ -10,15 +10,14 @@ PatientFilterRow _row({
   PatientRiskFilter risk = PatientRiskFilter.low,
   Duration sinceLastSeen = const Duration(hours: 4),
   String? insurer,
-}) =>
-    PatientFilterRow(
-      id: id,
-      name: name,
-      status: status,
-      risk: risk,
-      lastSeenAt: _now.subtract(sinceLastSeen),
-      insurer: insurer,
-    );
+}) => PatientFilterRow(
+  id: id,
+  name: name,
+  status: status,
+  risk: risk,
+  lastSeenAt: _now.subtract(sinceLastSeen),
+  insurer: insurer,
+);
 
 void main() {
   group('PatientFilter', () {
@@ -29,10 +28,8 @@ void main() {
     });
 
     test('status filter narrows to selected statuses', () {
-      final f = PatientFilter.empty
-          .toggleStatus(PatientStatusFilter.active);
-      expect(f.matches(_row(status: PatientStatusFilter.active), _now),
-          isTrue);
+      final f = PatientFilter.empty.toggleStatus(PatientStatusFilter.active);
+      expect(f.matches(_row(status: PatientStatusFilter.active), _now), isTrue);
       expect(
         f.matches(_row(status: PatientStatusFilter.inactive), _now),
         isFalse,
@@ -51,8 +48,7 @@ void main() {
           .toggleRisk(PatientRiskFilter.high)
           .toggleRisk(PatientRiskFilter.medium);
       expect(f.risks, {PatientRiskFilter.high, PatientRiskFilter.medium});
-      expect(
-          f.matches(_row(risk: PatientRiskFilter.low), _now), isFalse);
+      expect(f.matches(_row(risk: PatientRiskFilter.low), _now), isFalse);
     });
 
     test('lastSeen 24h excludes older rows', () {

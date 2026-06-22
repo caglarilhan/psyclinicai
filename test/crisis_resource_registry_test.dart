@@ -16,8 +16,11 @@ void main() {
     test('forCountry("US") surfaces 988 first', () {
       final list = CrisisResourceRegistry.forCountry('US');
       expect(list.first.id, 'us-988');
-      expect(list.any((r) => r.id == 'us-741741'), isTrue,
-          reason: 'Crisis Text Line should be in the US set');
+      expect(
+        list.any((r) => r.id == 'us-741741'),
+        isTrue,
+        reason: 'Crisis Text Line should be in the US set',
+      );
       expect(list.any((r) => r.kind == CrisisResourceKind.emergency), isTrue);
     });
 
@@ -41,12 +44,16 @@ void main() {
       // Universal must always include an international directory so the
       // clinician can find a vetted local line for any country.
       expect(
-          fallback.any((r) => r.kind == CrisisResourceKind.directory), isTrue);
+        fallback.any((r) => r.kind == CrisisResourceKind.directory),
+        isTrue,
+      );
     });
 
     test('null country also returns universal', () {
-      expect(CrisisResourceRegistry.forCountry(null),
-          CrisisResourceRegistry.universal);
+      expect(
+        CrisisResourceRegistry.forCountry(null),
+        CrisisResourceRegistry.universal,
+      );
     });
 
     test('forLocale honors country code when present', () {
@@ -60,15 +67,20 @@ void main() {
     });
 
     test('forLocale with null locale returns universal', () {
-      expect(CrisisResourceRegistry.forLocale(null),
-          CrisisResourceRegistry.universal);
+      expect(
+        CrisisResourceRegistry.forLocale(null),
+        CrisisResourceRegistry.universal,
+      );
     });
 
     test('every dialable resource uses a tel: URI', () {
       for (final r in CrisisResourceRegistry.all) {
         if (r.dialUri != null) {
-          expect(r.dialUri, startsWith('tel:'),
-              reason: '${r.id} should dial via tel: scheme');
+          expect(
+            r.dialUri,
+            startsWith('tel:'),
+            reason: '${r.id} should dial via tel: scheme',
+          );
         }
       }
     });
@@ -76,15 +88,20 @@ void main() {
     test('every directory resource has a web URI', () {
       for (final r in CrisisResourceRegistry.all) {
         if (r.kind == CrisisResourceKind.directory) {
-          expect(r.webUri, isNotNull,
-              reason: '${r.id} is a directory and needs a webUri');
+          expect(
+            r.webUri,
+            isNotNull,
+            reason: '${r.id} is a directory and needs a webUri',
+          );
         }
       }
     });
 
     test('lastReviewed is a YYYY-MM stamp', () {
-      expect(CrisisResourceRegistry.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(
+        CrisisResourceRegistry.lastReviewed,
+        matches(RegExp(r'^\d{4}-\d{2}$')),
+      );
     });
 
     // KRİTİK-7 safety invariant: a patient in crisis must NEVER see an empty
@@ -131,15 +148,18 @@ void main() {
         });
       }
 
-      test('universal set is non-empty and includes international directory',
-          () {
-        expect(CrisisResourceRegistry.universal, isNotEmpty);
-        expect(
-          CrisisResourceRegistry.universal
-              .any((r) => r.kind == CrisisResourceKind.directory),
-          isTrue,
-        );
-      });
+      test(
+        'universal set is non-empty and includes international directory',
+        () {
+          expect(CrisisResourceRegistry.universal, isNotEmpty);
+          expect(
+            CrisisResourceRegistry.universal.any(
+              (r) => r.kind == CrisisResourceKind.directory,
+            ),
+            isTrue,
+          );
+        },
+      );
     });
   });
 }

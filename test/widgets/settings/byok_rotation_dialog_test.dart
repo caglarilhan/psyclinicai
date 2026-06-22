@@ -30,8 +30,7 @@ class _MemoryStore {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const channel =
-      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
   late _MemoryStore mem;
   late ByokRotationService svc;
 
@@ -47,21 +46,15 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  Future<void> openDialog(
-    WidgetTester tester,
-    ByokProvider provider,
-  ) async {
+  Future<void> openDialog(WidgetTester tester, ByokProvider provider) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (ctx) => Center(
               child: ElevatedButton(
-                onPressed: () => showByokRotateDialog(
-                  ctx,
-                  provider,
-                  service: svc,
-                ),
+                onPressed: () =>
+                    showByokRotateDialog(ctx, provider, service: svc),
                 child: const Text('Open'),
               ),
             ),
@@ -73,8 +66,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders title with provider name + grace-window copy',
-      (tester) async {
+  testWidgets('renders title with provider name + grace-window copy', (
+    tester,
+  ) async {
     await openDialog(tester, ByokProvider.anthropic);
     expect(find.text('Rotate Anthropic Claude key'), findsOneWidget);
     expect(find.textContaining('24 hours'), findsOneWidget);
@@ -87,8 +81,9 @@ void main() {
     expect(find.text('Rotate OpenAI key'), findsNothing);
   });
 
-  testWidgets('empty key submission shows inline error, keeps dialog open',
-      (tester) async {
+  testWidgets('empty key submission shows inline error, keeps dialog open', (
+    tester,
+  ) async {
     await openDialog(tester, ByokProvider.anthropic);
     await tester.tap(find.text('Rotate'));
     await tester.pumpAndSettle();
@@ -104,8 +99,9 @@ void main() {
     expect(find.textContaining('Key is too short'), findsOneWidget);
   });
 
-  testWidgets('valid key persists through service + closes dialog',
-      (tester) async {
+  testWidgets('valid key persists through service + closes dialog', (
+    tester,
+  ) async {
     await openDialog(tester, ByokProvider.anthropic);
     await tester.enterText(
       find.byType(TextField),

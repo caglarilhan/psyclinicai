@@ -51,12 +51,16 @@ class AiDiagnosisAudit {
     required this.disposition,
     required this.consentPolicyVersion,
     DateTime? createdAt,
-  })  : assert(candidateLabel.length <= 120,
-            'candidateLabel must be clinician-curated; raw PHI is forbidden'),
-        assert(consentPolicyVersion.length > 0,
-            'consentPolicyVersion must be set — an AI audit row without '
-            'consent context is invalid (GDPR Art. 7).'),
-        createdAt = (createdAt ?? DateTime.now()).toUtc();
+  }) : assert(
+         candidateLabel.length <= 120,
+         'candidateLabel must be clinician-curated; raw PHI is forbidden',
+       ),
+       assert(
+         consentPolicyVersion.length > 0,
+         'consentPolicyVersion must be set — an AI audit row without '
+         'consent context is invalid (GDPR Art. 7).',
+       ),
+       createdAt = (createdAt ?? DateTime.now()).toUtc();
 
   factory AiDiagnosisAudit.fromJson(Map<String, dynamic> json) =>
       AiDiagnosisAudit(
@@ -74,7 +78,8 @@ class AiDiagnosisAudit {
             .map((e) => e.toString())
             .toList(),
         disposition: AiSuggestionDisposition.fromId(
-            json['disposition'] as String?),
+          json['disposition'] as String?,
+        ),
         consentPolicyVersion:
             json['consent_policy_version'] as String? ?? 'unknown',
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
@@ -138,9 +143,7 @@ class AiDiagnosisAudit {
       candidateLabel.trim().isNotEmpty &&
       (dsm5Code.isNotEmpty || icd10Code.isNotEmpty);
 
-  AiDiagnosisAudit copyWith({
-    AiSuggestionDisposition? disposition,
-  }) =>
+  AiDiagnosisAudit copyWith({AiSuggestionDisposition? disposition}) =>
       AiDiagnosisAudit(
         id: id,
         patientId: patientId,
@@ -159,19 +162,19 @@ class AiDiagnosisAudit {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patient_id': patientId,
-        'clinician_id': clinicianId,
-        'model': model,
-        'temperature': double.parse(temperature.toStringAsFixed(2)),
-        'candidate_label': candidateLabel,
-        'dsm5_code': dsm5Code,
-        'icd10_code': icd10Code,
-        'criteria_matched': criteriaMatched,
-        'criteria_missing': criteriaMissing,
-        'citations': citations,
-        'disposition': disposition.name,
-        'consent_policy_version': consentPolicyVersion,
-        'created_at': createdAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'patient_id': patientId,
+    'clinician_id': clinicianId,
+    'model': model,
+    'temperature': double.parse(temperature.toStringAsFixed(2)),
+    'candidate_label': candidateLabel,
+    'dsm5_code': dsm5Code,
+    'icd10_code': icd10Code,
+    'criteria_matched': criteriaMatched,
+    'criteria_missing': criteriaMissing,
+    'citations': citations,
+    'disposition': disposition.name,
+    'consent_policy_version': consentPolicyVersion,
+    'created_at': createdAt.toUtc().toIso8601String(),
+  };
 }

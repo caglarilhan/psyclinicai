@@ -39,5 +39,4 @@ bool isAiDisabled(WorkspaceAiMode mode) => mode == WorkspaceAiMode.disabled;
 /// AI service must verify a key is present BEFORE making the request;
 /// the absence of a key in this mode is a configuration error, not a
 /// silent fallback to a platform key.
-bool requiresByokKey(WorkspaceAiMode mode) =>
-    mode == WorkspaceAiMode.byok;
+bool requiresByokKey(WorkspaceAiMode mode) => mode == WorkspaceAiMode.byok;

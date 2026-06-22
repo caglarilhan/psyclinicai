@@ -66,7 +66,8 @@ class NoShowPredictor {
     var score = x.historicalNoShowRate;
     if (x.historicalNoShowRate > 0.20) {
       reasons.add(
-          'Historical no-show rate ${(x.historicalNoShowRate * 100).round()}%');
+        'Historical no-show rate ${(x.historicalNoShowRate * 100).round()}%',
+      );
     }
 
     if (x.isNewPatient) {
@@ -76,7 +77,8 @@ class NoShowPredictor {
     if (x.daysSinceLastVisit >= 60) {
       score += 0.10;
       reasons.add(
-          'Last visit ${x.daysSinceLastVisit} days ago — engagement drift');
+        'Last visit ${x.daysSinceLastVisit} days ago — engagement drift',
+      );
     }
     if (x.isMonday) {
       score += 0.05;
@@ -96,8 +98,8 @@ class NoShowPredictor {
     final tier = score >= _highCutoff
         ? NoShowRisk.high
         : score >= _mediumCutoff
-            ? NoShowRisk.medium
-            : NoShowRisk.low;
+        ? NoShowRisk.medium
+        : NoShowRisk.low;
     return NoShowPrediction(
       risk: tier,
       score: score,

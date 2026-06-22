@@ -6,22 +6,24 @@ void main() {
     test('refuses empty body + over-2000-char body', () {
       expect(
         () => BetaFeedback(
-            id: 'b-1',
-            kind: BetaFeedbackKind.bug,
-            body: '   ',
-            route: '/dashboard',
-            uid: 'u-1',
-            phiAttestation: true),
+          id: 'b-1',
+          kind: BetaFeedbackKind.bug,
+          body: '   ',
+          route: '/dashboard',
+          uid: 'u-1',
+          phiAttestation: true,
+        ),
         throwsArgumentError,
       );
       expect(
         () => BetaFeedback(
-            id: 'b-1',
-            kind: BetaFeedbackKind.bug,
-            body: 'x' * 2001,
-            route: '/dashboard',
-            uid: 'u-1',
-            phiAttestation: true),
+          id: 'b-1',
+          kind: BetaFeedbackKind.bug,
+          body: 'x' * 2001,
+          route: '/dashboard',
+          uid: 'u-1',
+          phiAttestation: true,
+        ),
         throwsArgumentError,
       );
     });
@@ -47,30 +49,32 @@ void main() {
       expect(praise.severity, BetaFeedbackSeverity.low);
     });
 
-    test('rejects PHI-shaped content (SSN, MRN, ICD, C-SSRS, "session note")',
-        () {
-      const probes = [
-        '123-45-6789',
-        'MRN: 12345',
-        'C-SSRS positive',
-        'I pasted a session note here',
-        'See ICD10 F33',
-      ];
-      for (final body in probes) {
-        expect(
-          () => BetaFeedback(
-            id: 'b-x',
-            kind: BetaFeedbackKind.bug,
-            body: body,
-            route: '/x',
-            uid: 'u-1',
-            phiAttestation: true,
-          ),
-          throwsArgumentError,
-          reason: 'should refuse $body',
-        );
-      }
-    });
+    test(
+      'rejects PHI-shaped content (SSN, MRN, ICD, C-SSRS, "session note")',
+      () {
+        const probes = [
+          '123-45-6789',
+          'MRN: 12345',
+          'C-SSRS positive',
+          'I pasted a session note here',
+          'See ICD10 F33',
+        ];
+        for (final body in probes) {
+          expect(
+            () => BetaFeedback(
+              id: 'b-x',
+              kind: BetaFeedbackKind.bug,
+              body: body,
+              route: '/x',
+              uid: 'u-1',
+              phiAttestation: true,
+            ),
+            throwsArgumentError,
+            reason: 'should refuse $body',
+          );
+        }
+      },
+    );
 
     test('requires phiAttestation == true', () {
       expect(
@@ -108,13 +112,16 @@ void main() {
   group('InMemoryBetaFeedbackRepository', () {
     test('submit + readAll round-trip', () async {
       final repo = InMemoryBetaFeedbackRepository();
-      await repo.submit(BetaFeedback(
+      await repo.submit(
+        BetaFeedback(
           id: 'b-1',
           kind: BetaFeedbackKind.bug,
           body: 'Lost focus on TextField',
           route: '/intake',
           uid: 'u-1',
-          phiAttestation: true));
+          phiAttestation: true,
+        ),
+      );
       final all = await repo.readAll();
       expect(all.length, 1);
       expect(all.first.body, contains('focus'));

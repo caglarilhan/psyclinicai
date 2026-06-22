@@ -80,11 +80,16 @@ class FinalCtaSection extends StatelessWidget {
                     backgroundColor: Colors.white,
                     foregroundColor: cs.primary,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 18),
+                      horizontal: 28,
+                      vertical: 18,
+                    ),
                     textStyle: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
                 OutlinedButton.icon(
@@ -94,14 +99,20 @@ class FinalCtaSection extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        width: 1.5),
+                      color: Colors.white.withValues(alpha: 0.85),
+                      width: 1.5,
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 18),
+                      horizontal: 28,
+                      vertical: 18,
+                    ),
                     textStyle: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 15),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ],
@@ -133,8 +144,7 @@ class _Pill extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.check_circle_outline,
-            color: Colors.white, size: 16),
+        const Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
         const SizedBox(width: 6),
         Text(
           text,

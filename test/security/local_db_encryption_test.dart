@@ -15,8 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('OfflineService SQLCipher contract (Sprint 30 S-06)', () {
-    final source =
-        File('lib/services/offline_service.dart').readAsStringSync();
+    final source = File('lib/services/offline_service.dart').readAsStringSync();
 
     test('imports sqflite_sqlcipher, never plain sqflite', () {
       expect(
@@ -31,7 +30,8 @@ void main() {
       // fine (and we keep one in offline_service.dart so future readers
       // know what was replaced).
       final plainSqfliteImport = RegExp(
-          r'''import\s+["']package:sqflite/sqflite\.dart["']''');
+        r'''import\s+["']package:sqflite/sqflite\.dart["']''',
+      );
       expect(
         plainSqfliteImport.hasMatch(source),
         false,
@@ -41,8 +41,7 @@ void main() {
       );
     });
 
-    test('imports LocalDbKeyService and passes password to openDatabase',
-        () {
+    test('imports LocalDbKeyService and passes password to openDatabase', () {
       expect(
         source.contains("LocalDbKeyService"),
         true,
@@ -71,14 +70,17 @@ void main() {
 
     test('pubspec declares sqflite_sqlcipher', () {
       final pubspec = File('pubspec.yaml').readAsStringSync();
-      expect(pubspec.contains('sqflite_sqlcipher:'), true,
-          reason: 'sqflite_sqlcipher must be a declared dep.');
+      expect(
+        pubspec.contains('sqflite_sqlcipher:'),
+        true,
+        reason: 'sqflite_sqlcipher must be a declared dep.',
+      );
     });
 
     test('LocalDbKeyService source uses Random.secure (no PRNG drift)', () {
-      final keySvc =
-          File('lib/services/security/local_db_key_service.dart')
-              .readAsStringSync();
+      final keySvc = File(
+        'lib/services/security/local_db_key_service.dart',
+      ).readAsStringSync();
       expect(
         keySvc.contains('Random.secure()'),
         true,

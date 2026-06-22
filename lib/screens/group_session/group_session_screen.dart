@@ -20,30 +20,27 @@ class GroupSessionScreen extends StatelessWidget {
   final GroupSession? session;
 
   GroupSession _demo() => GroupSession(
-        id: 'gs-demo',
-        clinicId: 'c-demo',
-        modalityLabel: 'DBT skills group · Thursdays',
-        scheduledAt: DateTime.utc(2026, 6, 11, 17),
-        status: GroupSessionStatus.scheduled,
-        roster: const [
-          GroupSessionAttendance(
-            patientId: 'p-001',
-            subNoteId: 'note-001',
-            attended: true,
-          ),
-          GroupSessionAttendance(
-            patientId: 'p-002',
-            subNoteId: 'note-002',
-            attended: true,
-            notes: 'arrived 10 min late',
-          ),
-          GroupSessionAttendance(
-            patientId: 'p-003',
-            subNoteId: 'note-003',
-          ),
-        ],
-        facilitatorNote: 'opened with grounding exercise',
-      );
+    id: 'gs-demo',
+    clinicId: 'c-demo',
+    modalityLabel: 'DBT skills group · Thursdays',
+    scheduledAt: DateTime.utc(2026, 6, 11, 17),
+    status: GroupSessionStatus.scheduled,
+    roster: const [
+      GroupSessionAttendance(
+        patientId: 'p-001',
+        subNoteId: 'note-001',
+        attended: true,
+      ),
+      GroupSessionAttendance(
+        patientId: 'p-002',
+        subNoteId: 'note-002',
+        attended: true,
+        notes: 'arrived 10 min late',
+      ),
+      GroupSessionAttendance(patientId: 'p-003', subNoteId: 'note-003'),
+    ],
+    facilitatorNote: 'opened with grounding exercise',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +50,12 @@ class GroupSessionScreen extends StatelessWidget {
     return AppShell(
       routeName: '/group_session',
       title: s.modalityLabel,
-      subtitle:
-          'Scheduled ${s.scheduledAt.toIso8601String().substring(0, 16)}',
+      subtitle: 'Scheduled ${s.scheduledAt.toIso8601String().substring(0, 16)}',
       primaryAction: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.sm, vertical: 4),
+          horizontal: PsySpacing.sm,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           color: s.isAtCapacity
               ? PsyColors.warning.withValues(alpha: 0.15)
@@ -68,9 +66,7 @@ class GroupSessionScreen extends StatelessWidget {
           '${s.roster.length} / ${GroupSession.maxRosterSize}'
           '${s.isAtCapacity ? ' · cap' : ''}',
           style: t.labelMedium?.copyWith(
-            color: s.isAtCapacity
-                ? PsyColors.warning
-                : cs.onPrimaryContainer,
+            color: s.isAtCapacity ? PsyColors.warning : cs.onPrimaryContainer,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -85,8 +81,7 @@ class GroupSessionScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.notes_outlined,
-                        color: cs.onSurfaceVariant),
+                    Icon(Icons.notes_outlined, color: cs.onSurfaceVariant),
                     const SizedBox(width: PsySpacing.sm),
                     Expanded(
                       child: Column(
@@ -115,16 +110,18 @@ class GroupSessionScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline,
-                    size: 16, color: cs.onTertiaryContainer),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: cs.onTertiaryContainer,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     "Per-patient subjective notes live in each "
                     "patient's own chart. This roster only carries "
                     "PHI-light operational fields.",
-                    style: t.bodySmall
-                        ?.copyWith(color: cs.onTertiaryContainer),
+                    style: t.bodySmall?.copyWith(color: cs.onTertiaryContainer),
                   ),
                 ),
               ],
@@ -163,9 +160,7 @@ class _RosterRow extends StatelessWidget {
               child: Text(
                 row.attended ? 'attended' : 'absent',
                 style: t.labelSmall?.copyWith(
-                  color: row.attended
-                      ? PsyColors.success
-                      : PsyColors.warning,
+                  color: row.attended ? PsyColors.success : PsyColors.warning,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -179,8 +174,7 @@ class _RosterRow extends StatelessWidget {
                   if (row.notes.isNotEmpty)
                     Text(
                       row.notes,
-                      style: t.bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
+                      style: t.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
                 ],
               ),

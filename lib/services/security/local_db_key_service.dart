@@ -11,15 +11,16 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// client.
 class LocalDbKeyService {
   LocalDbKeyService({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              // Bind the key to the device biometric/lock-screen so a
-              // stolen-and-jailbroken device cannot read it offline.
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock_this_device,
-              ),
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            // Bind the key to the device biometric/lock-screen so a
+            // stolen-and-jailbroken device cannot read it offline.
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          );
 
   final FlutterSecureStorage _storage;
 

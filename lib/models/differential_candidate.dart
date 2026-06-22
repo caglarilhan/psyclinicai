@@ -75,13 +75,13 @@ class DifferentialCandidate {
   }
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'name': name,
-        'confidence': confidence,
-        'criteriaMet': criteriaMet,
-        'criteriaMissing': criteriaMissing,
-        'differentialFrom': differentialFrom,
-      };
+    'code': code,
+    'name': name,
+    'confidence': confidence,
+    'criteriaMet': criteriaMet,
+    'criteriaMissing': criteriaMissing,
+    'differentialFrom': differentialFrom,
+  };
 
   static List<String> _strList(dynamic v) {
     if (v is! List) return const [];
@@ -89,9 +89,4 @@ class DifferentialCandidate {
   }
 }
 
-enum ConfidenceBand {
-  low,
-  moderate,
-  high,
-  veryHigh,
-}
+enum ConfidenceBand { low, moderate, high, veryHigh }

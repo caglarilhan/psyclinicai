@@ -18,7 +18,7 @@ import 'package:flutter/services.dart';
 /// session id. On non-iOS / non-macOS this class is a no-op.
 class HandoffChannel {
   HandoffChannel({MethodChannel? channel})
-      : _channel = channel ?? const MethodChannel('psyclinicai/handoff') {
+    : _channel = channel ?? const MethodChannel('psyclinicai/handoff') {
     _channel.setMethodCallHandler(_handleIncoming);
   }
 
@@ -72,10 +72,12 @@ class HandoffChannel {
     if (args is! Map) return null;
     final route = args['route'];
     if (route is! String || !route.startsWith('/')) return null;
-    _continuations.add(HandoffContinuation(
-      route: route,
-      ctxHash: (args['ctxHash'] as String?) ?? '',
-    ));
+    _continuations.add(
+      HandoffContinuation(
+        route: route,
+        ctxHash: (args['ctxHash'] as String?) ?? '',
+      ),
+    );
     return null;
   }
 

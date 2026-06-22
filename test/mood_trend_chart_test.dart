@@ -9,13 +9,12 @@ MoodSample _sample({
   int mood = 5,
   int sleep = 6,
   int anxiety = 4,
-}) =>
-    MoodSample(
-      day: _now.subtract(Duration(days: daysAgo)),
-      mood: mood,
-      sleep: sleep,
-      anxiety: anxiety,
-    );
+}) => MoodSample(
+  day: _now.subtract(Duration(days: daysAgo)),
+  mood: mood,
+  sleep: sleep,
+  anxiety: anxiety,
+);
 
 void main() {
   group('MoodTrendChart.summarise', () {
@@ -37,8 +36,7 @@ void main() {
       expect(s.thirtyDayMoodAvg, closeTo(4.93, 0.1));
     });
 
-    test('deltaVsPrev30d is positive when current 30d > previous 30d',
-        () {
+    test('deltaVsPrev30d is positive when current 30d > previous 30d', () {
       final samples = <MoodSample>[
         for (var i = 0; i < 30; i++) _sample(daysAgo: i, mood: 7),
         for (var i = 31; i < 60; i++) _sample(daysAgo: i, mood: 4),

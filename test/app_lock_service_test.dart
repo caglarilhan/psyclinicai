@@ -24,10 +24,14 @@ void main() {
 
     test('enable rejects short / non-digit PIN', () async {
       await AppLockService.instance.load();
-      expect(() => AppLockService.instance.enable(pin: '12'),
-          throwsArgumentError);
-      expect(() => AppLockService.instance.enable(pin: 'abcd'),
-          throwsArgumentError);
+      expect(
+        () => AppLockService.instance.enable(pin: '12'),
+        throwsArgumentError,
+      );
+      expect(
+        () => AppLockService.instance.enable(pin: 'abcd'),
+        throwsArgumentError,
+      );
     });
 
     test('enable persists + arms the lock', () async {

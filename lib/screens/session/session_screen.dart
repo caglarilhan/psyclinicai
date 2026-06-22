@@ -18,7 +18,6 @@ import '../../widgets/copilot/live_ai_panel.dart';
 import '../../widgets/structured_note_editor.dart';
 
 class SessionScreen extends StatefulWidget {
-
   const SessionScreen({
     super.key,
     required this.sessionId,
@@ -45,7 +44,7 @@ class _SessionScreenState extends State<SessionScreen> {
   bool _isSessionActive = false;
   DateTime? _sessionStartTime;
   Duration _sessionDuration = Duration.zero;
-  
+
   // Session clock — a no-op sentinel until _startSession installs the real
   // periodic timer, so dispose() can always cancel safely (no late-init crash
   // if start ever fails before assignment).
@@ -65,8 +64,11 @@ class _SessionScreenState extends State<SessionScreen> {
     await svc.initialize();
     final plan = svc.getTreatmentPlanForPatient(widget.clientId);
     if (plan != null && mounted) {
-      setState(() => _treatmentGoals =
-          plan.activeGoals.map((g) => g.description).toList());
+      setState(
+        () => _treatmentGoals = plan.activeGoals
+            .map((g) => g.description)
+            .toList(),
+      );
     }
   }
 
@@ -98,7 +100,7 @@ class _SessionScreenState extends State<SessionScreen> {
       _isSessionActive = false;
     });
     _sessionTimer.cancel();
-    
+
     // Seans sonlandırma dialog'u
     _showSessionEndDialog();
   }
@@ -170,21 +172,23 @@ class _SessionScreenState extends State<SessionScreen> {
       );
 
       await _persistToFirestore(markdown, snapshot.format);
-      TelemetryService.instance.capture(TelemetryEvents.sessionNoteSaved,
-          properties: {
-            'duration_s': _sessionDuration.inSeconds,
-            'format': snapshot.format.id,
-          });
+      TelemetryService.instance.capture(
+        TelemetryEvents.sessionNoteSaved,
+        properties: {
+          'duration_s': _sessionDuration.inSeconds,
+          'format': snapshot.format.id,
+        },
+      );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Session note saved')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Session note saved')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save note: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not save note: $e')));
     }
   }
 
@@ -192,13 +196,12 @@ class _SessionScreenState extends State<SessionScreen> {
   /// [SoapFormat] the persistence layer accepts (which also includes GIRP
   /// and a psychiatry variant managed by the AI generator).
   SoapFormat _toSoapFormat(NoteFormat f) => switch (f) {
-        NoteFormat.soap => SoapFormat.soap,
-        NoteFormat.birp => SoapFormat.birp,
-        NoteFormat.dap => SoapFormat.dap,
-      };
+    NoteFormat.soap => SoapFormat.soap,
+    NoteFormat.birp => SoapFormat.birp,
+    NoteFormat.dap => SoapFormat.dap,
+  };
 
-  Future<void> _persistToFirestore(
-      String noteText, NoteFormat format) async {
+  Future<void> _persistToFirestore(String noteText, NoteFormat format) async {
     if (!PsyFirebase.isReady) return;
     final auth = FirebaseAuthService.instance;
     final profile = auth.profile;
@@ -265,7 +268,7 @@ class _SessionScreenState extends State<SessionScreen> {
         sessionDuration: _sessionDuration,
         therapistName: _therapistDisplayName,
       );
-      
+
       // PDF'i yazdır
       await pdfService.printPDF(pdfBytes);
 
@@ -350,7 +353,9 @@ class _SessionScreenState extends State<SessionScreen> {
           // açık teal olsun.'
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+              horizontal: PsySpacing.lg,
+              vertical: PsySpacing.md,
+            ),
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
               borderRadius: const BorderRadius.only(
@@ -359,13 +364,17 @@ class _SessionScreenState extends State<SessionScreen> {
               ),
               border: Border(
                 bottom: BorderSide(
-                    color: cs.outlineVariant.withValues(alpha: 0.7)),
+                  color: cs.outlineVariant.withValues(alpha: 0.7),
+                ),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.edit_note,
-                    color: cs.onSurface.withValues(alpha: 0.75), size: 20),
+                Icon(
+                  Icons.edit_note,
+                  color: cs.onSurface.withValues(alpha: 0.75),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Session Note',
@@ -386,7 +395,9 @@ class _SessionScreenState extends State<SessionScreen> {
                     minimumSize: const Size(0, 32),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     textStyle: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
@@ -400,8 +411,7 @@ class _SessionScreenState extends State<SessionScreen> {
               child: Semantics(
                 label: 'Structured session notes',
                 child: StructuredNoteEditor(
-                  initialFormat:
-                      _noteValue?.format ?? NoteFormat.soap,
+                  initialFormat: _noteValue?.format ?? NoteFormat.soap,
                   initialSections: _noteValue?.sections ?? const {},
                   onChanged: (v) => setState(() => _noteValue = v),
                 ),
@@ -420,7 +430,6 @@ class _SessionScreenState extends State<SessionScreen> {
       treatmentGoals: _treatmentGoals,
     );
   }
-
 
   Widget _buildClientInfoPanel() {
     final cs = Theme.of(context).colorScheme;
@@ -507,24 +516,19 @@ class _SessionScreenState extends State<SessionScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              '• $item',
-              style: const TextStyle(fontSize: 12),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('• $item', style: const TextStyle(fontSize: 12)),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
-
 }
 
 /// Session control bar: timer state, start/stop, export, and quick nav —
@@ -546,123 +550,129 @@ class _SessionControlBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final timerTint = active ? cs.primary : cs.onSurfaceVariant;
-    return LayoutBuilder(builder: (context, c) {
-      // Mobile (<560): timer + primary action + overflow menu (Export PDF,
-      // Appointments, Prescriptions). Stops Export PDF from being cut off
-      // at the right edge and calms the secondary actions, per feedback.
-      final compact = c.maxWidth < 560;
-      final timer = Semantics(
-        label: active ? 'Session live, $durationLabel' : 'Session ended',
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(active ? Icons.timer : Icons.timer_off,
-                size: 18, color: timerTint),
-            const SizedBox(width: PsySpacing.xs),
-            Text(
-              '${active ? 'Live' : 'Ended'} · $durationLabel',
-              style:
-                  TextStyle(fontWeight: FontWeight.w700, color: timerTint),
-            ),
-          ],
-        ),
-      );
-      final startStop = FilledButton.icon(
-        onPressed: onStartStop,
-        icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
-        label: Text(active ? 'End session' : 'Start session'),
-        style: FilledButton.styleFrom(
-          backgroundColor: active ? cs.error : cs.primary,
-          // Slightly tighter on mobile so the red CTA reads as "important"
-          // without dominating the toolbar width.
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 14 : 18,
-            vertical: compact ? 10 : 12,
-          ),
-        ),
-      );
-      return Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.md, vertical: PsySpacing.sm),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(PsyRadius.md),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            timer,
-            const Spacer(),
-            startStop,
-            const SizedBox(width: PsySpacing.sm),
-            if (compact)
-              PopupMenuButton<_SessionAction>(
-                tooltip: 'More',
-                icon: const Icon(Icons.more_vert),
-                onSelected: (a) {
-                  switch (a) {
-                    case _SessionAction.export:
-                      onExport();
-                      break;
-                    case _SessionAction.appointments:
-                      Navigator.of(context).pushNamed('/appointments');
-                      break;
-                    case _SessionAction.prescriptions:
-                      Navigator.of(context).pushNamed('/e_prescription');
-                      break;
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: _SessionAction.export,
-                    child: ListTile(
-                      leading: Icon(Icons.picture_as_pdf),
-                      title: Text('Export PDF'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _SessionAction.appointments,
-                    child: ListTile(
-                      leading: Icon(Icons.calendar_today),
-                      title: Text('Appointments'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _SessionAction.prescriptions,
-                    child: ListTile(
-                      leading: Icon(Icons.medical_services),
-                      title: Text('Prescriptions'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              )
-            else ...[
-              OutlinedButton.icon(
-                onPressed: onExport,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Export PDF'),
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Mobile (<560): timer + primary action + overflow menu (Export PDF,
+        // Appointments, Prescriptions). Stops Export PDF from being cut off
+        // at the right edge and calms the secondary actions, per feedback.
+        final compact = c.maxWidth < 560;
+        final timer = Semantics(
+          label: active ? 'Session live, $durationLabel' : 'Session ended',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                active ? Icons.timer : Icons.timer_off,
+                size: 18,
+                color: timerTint,
               ),
-              const SizedBox(width: PsySpacing.sm),
-              IconButton(
-                tooltip: 'Appointments',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/appointments'),
-                icon: const Icon(Icons.calendar_today),
-              ),
-              IconButton(
-                tooltip: 'Prescriptions',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/e_prescription'),
-                icon: const Icon(Icons.medical_services),
+              const SizedBox(width: PsySpacing.xs),
+              Text(
+                '${active ? 'Live' : 'Ended'} · $durationLabel',
+                style: TextStyle(fontWeight: FontWeight.w700, color: timerTint),
               ),
             ],
-          ],
-        ),
-      );
-    });
+          ),
+        );
+        final startStop = FilledButton.icon(
+          onPressed: onStartStop,
+          icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
+          label: Text(active ? 'End session' : 'Start session'),
+          style: FilledButton.styleFrom(
+            backgroundColor: active ? cs.error : cs.primary,
+            // Slightly tighter on mobile so the red CTA reads as "important"
+            // without dominating the toolbar width.
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 14 : 18,
+              vertical: compact ? 10 : 12,
+            ),
+          ),
+        );
+        return Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.md,
+            vertical: PsySpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              timer,
+              const Spacer(),
+              startStop,
+              const SizedBox(width: PsySpacing.sm),
+              if (compact)
+                PopupMenuButton<_SessionAction>(
+                  tooltip: 'More',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (a) {
+                    switch (a) {
+                      case _SessionAction.export:
+                        onExport();
+                        break;
+                      case _SessionAction.appointments:
+                        Navigator.of(context).pushNamed('/appointments');
+                        break;
+                      case _SessionAction.prescriptions:
+                        Navigator.of(context).pushNamed('/e_prescription');
+                        break;
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: _SessionAction.export,
+                      child: ListTile(
+                        leading: Icon(Icons.picture_as_pdf),
+                        title: Text('Export PDF'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _SessionAction.appointments,
+                      child: ListTile(
+                        leading: Icon(Icons.calendar_today),
+                        title: Text('Appointments'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _SessionAction.prescriptions,
+                      child: ListTile(
+                        leading: Icon(Icons.medical_services),
+                        title: Text('Prescriptions'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                OutlinedButton.icon(
+                  onPressed: onExport,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Export PDF'),
+                ),
+                const SizedBox(width: PsySpacing.sm),
+                IconButton(
+                  tooltip: 'Appointments',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/appointments'),
+                  icon: const Icon(Icons.calendar_today),
+                ),
+                IconButton(
+                  tooltip: 'Prescriptions',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/e_prescription'),
+                  icon: const Icon(Icons.medical_services),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

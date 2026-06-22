@@ -29,17 +29,17 @@ class StateLanding {
       : 'https://psyclinicai.com/eu/$slug';
 
   Map<String, dynamic> toJson() => {
-        'slug': slug,
-        'country': country,
-        'region': region,
-        'display_name': displayName,
-        'therapist_estimate': therapistEstimate,
-        'headline_price': headlinePrice,
-        'framework': framework,
-        if (timezoneHint != null) 'timezone_hint': timezoneHint,
-        if (localBoard != null) 'local_board': localBoard,
-        'canonical_url': canonicalUrl,
-      };
+    'slug': slug,
+    'country': country,
+    'region': region,
+    'display_name': displayName,
+    'therapist_estimate': therapistEstimate,
+    'headline_price': headlinePrice,
+    'framework': framework,
+    if (timezoneHint != null) 'timezone_hint': timezoneHint,
+    if (localBoard != null) 'local_board': localBoard,
+    'canonical_url': canonicalUrl,
+  };
 }
 
 const List<StateLanding> kSprint25LandingCatalog = [

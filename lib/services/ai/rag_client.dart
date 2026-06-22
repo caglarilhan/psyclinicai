@@ -87,8 +87,11 @@ class RagClient {
     final res = await _http.post(
       Uri.parse('$baseUrl/feedback'),
       headers: await _headers(),
-      body: jsonEncode(
-          {'audit_id': auditId, 'score': score, if (note != null) 'note': note}),
+      body: jsonEncode({
+        'audit_id': auditId,
+        'score': score,
+        if (note != null) 'note': note,
+      }),
     );
     _throwIfError(res);
     return (jsonDecode(res.body) as Map<String, dynamic>)['feedback_id']
@@ -124,15 +127,15 @@ class RagAnswer {
   });
 
   factory RagAnswer.fromJson(Map<String, dynamic> j) => RagAnswer(
-        answer: j['answer'] as String,
-        citations: (j['citations'] as List)
-            .map((c) => RagCitation.fromJson(c as Map<String, dynamic>))
-            .toList(),
-        modelUsed: j['model_used'] as String,
-        phiDetected: j['phi_detected'] as bool,
-        auditId: j['audit_id'] as String,
-        requestMs: j['request_ms'] as int,
-      );
+    answer: j['answer'] as String,
+    citations: (j['citations'] as List)
+        .map((c) => RagCitation.fromJson(c as Map<String, dynamic>))
+        .toList(),
+    modelUsed: j['model_used'] as String,
+    phiDetected: j['phi_detected'] as bool,
+    auditId: j['audit_id'] as String,
+    requestMs: j['request_ms'] as int,
+  );
 
   final String answer;
   final List<RagCitation> citations;
@@ -154,14 +157,14 @@ class RagCitation {
   });
 
   factory RagCitation.fromJson(Map<String, dynamic> j) => RagCitation(
-        id: j['id'] as String,
-        source: j['source'] as String,
-        country: j['country'] as String,
-        docType: j['doc_type'] as String,
-        url: j['url'] as String,
-        score: (j['score'] as num).toDouble(),
-        snippet: j['snippet'] as String,
-      );
+    id: j['id'] as String,
+    source: j['source'] as String,
+    country: j['country'] as String,
+    docType: j['doc_type'] as String,
+    url: j['url'] as String,
+    score: (j['score'] as num).toDouble(),
+    snippet: j['snippet'] as String,
+  );
 
   final String id;
   final String source;

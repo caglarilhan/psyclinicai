@@ -33,10 +33,8 @@ class PortalDsarRequest {
         state: PortalDsarState.fromId(json['state'] as String?),
         notes: json['notes'] as String? ?? '',
         rejectionReason: json['rejectionReason'] as String? ?? '',
-        submittedAt:
-            DateTime.tryParse(json['submittedAt'] as String? ?? ''),
-        fulfilledAt:
-            DateTime.tryParse(json['fulfilledAt'] as String? ?? ''),
+        submittedAt: DateTime.tryParse(json['submittedAt'] as String? ?? ''),
+        fulfilledAt: DateTime.tryParse(json['fulfilledAt'] as String? ?? ''),
       );
 
   /// GDPR Art. 12(3) standard window.
@@ -92,30 +90,29 @@ class PortalDsarRequest {
     String? notes,
     String? rejectionReason,
     DateTime? fulfilledAt,
-  }) =>
-      PortalDsarRequest(
-        id: id,
-        userId: userId,
-        patientId: patientId,
-        kind: kind,
-        state: state ?? this.state,
-        notes: notes ?? this.notes,
-        rejectionReason: rejectionReason ?? this.rejectionReason,
-        submittedAt: submittedAt,
-        fulfilledAt: fulfilledAt ?? this.fulfilledAt,
-      );
+  }) => PortalDsarRequest(
+    id: id,
+    userId: userId,
+    patientId: patientId,
+    kind: kind,
+    state: state ?? this.state,
+    notes: notes ?? this.notes,
+    rejectionReason: rejectionReason ?? this.rejectionReason,
+    submittedAt: submittedAt,
+    fulfilledAt: fulfilledAt ?? this.fulfilledAt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'patientId': patientId,
-        'kind': kind.id,
-        'state': state.id,
-        'notes': notes,
-        if (rejectionReason.isNotEmpty) 'rejectionReason': rejectionReason,
-        'submittedAt': submittedAt.toIso8601String(),
-        if (fulfilledAt != null) 'fulfilledAt': fulfilledAt!.toIso8601String(),
-      };
+    'id': id,
+    'userId': userId,
+    'patientId': patientId,
+    'kind': kind.id,
+    'state': state.id,
+    'notes': notes,
+    if (rejectionReason.isNotEmpty) 'rejectionReason': rejectionReason,
+    'submittedAt': submittedAt.toIso8601String(),
+    if (fulfilledAt != null) 'fulfilledAt': fulfilledAt!.toIso8601String(),
+  };
 }
 
 enum PortalDsarKind {

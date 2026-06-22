@@ -7,24 +7,23 @@ Prescription _signed({
   PrescriptionMarket market = PrescriptionMarket.eu,
   String drugCode = 'N06AB04',
   int durationDays = 30,
-}) =>
-    Prescription(
-      id: 'rx-${market.id}',
-      clinicId: 'c1',
-      patientId: 'p-1',
-      clinicianId: 'doc-1',
-      market: market,
-      status: PrescriptionStatus.signed,
-      items: [
-        PrescriptionItem(
-          drugCode: drugCode,
-          drugName: 'Citalopram',
-          dose: '20 mg',
-          frequency: 'once daily',
-          durationDays: durationDays,
-        ),
-      ],
-    );
+}) => Prescription(
+  id: 'rx-${market.id}',
+  clinicId: 'c1',
+  patientId: 'p-1',
+  clinicianId: 'doc-1',
+  market: market,
+  status: PrescriptionStatus.signed,
+  items: [
+    PrescriptionItem(
+      drugCode: drugCode,
+      drugName: 'Citalopram',
+      dose: '20 mg',
+      frequency: 'once daily',
+      durationDays: durationDays,
+    ),
+  ],
+);
 
 void main() {
   group('EhdsiAdapter', () {
@@ -70,18 +69,12 @@ void main() {
     const adapter = MedulaAdapter();
 
     test('accepts an 8-digit MKYS code, 30-day duration', () {
-      final rx = _signed(
-        market: PrescriptionMarket.tr,
-        drugCode: '87654321',
-      );
+      final rx = _signed(market: PrescriptionMarket.tr, drugCode: '87654321');
       expect(adapter.validateForMarket(rx), isNull);
     });
 
     test('rejects an EU prescription', () {
-      expect(
-        adapter.validateForMarket(_signed()),
-        contains('rejected'),
-      );
+      expect(adapter.validateForMarket(_signed()), contains('rejected'));
     });
 
     test('rejects > 90-day prescriptions', () {
@@ -90,27 +83,18 @@ void main() {
         drugCode: '12345678',
         durationDays: 120,
       );
-      expect(
-        adapter.validateForMarket(rx),
-        contains('1-90 day'),
-      );
+      expect(adapter.validateForMarket(rx), contains('1-90 day'));
     });
 
     test('payload is SOAP-shaped with namespace', () {
-      final rx = _signed(
-        market: PrescriptionMarket.tr,
-        drugCode: '12345678',
-      );
+      final rx = _signed(market: PrescriptionMarket.tr, drugCode: '12345678');
       final payload = adapter.buildPayload(rx);
       expect(payload, contains('xmlns="http://medula.sgk.gov.tr"'));
       expect(payload, contains('mkys="12345678"'));
     });
 
     test('transmit returns the deterministic MEDULA id', () async {
-      final rx = _signed(
-        market: PrescriptionMarket.tr,
-        drugCode: '12345678',
-      );
+      final rx = _signed(market: PrescriptionMarket.tr, drugCode: '12345678');
       final result = await adapter.transmit(rx);
       expect(result.externalReference, 'MEDULA-STUB-${rx.id}');
     });

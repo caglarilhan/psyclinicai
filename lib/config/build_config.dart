@@ -18,8 +18,10 @@ class BuildConfig {
 
   /// Demo mode: no real backend/auth required. Defaults to TRUE so the app
   /// always runs locally; production release builds MUST pass IS_DEMO=false.
-  static const bool isDemo =
-      bool.fromEnvironment('IS_DEMO', defaultValue: true);
+  static const bool isDemo = bool.fromEnvironment(
+    'IS_DEMO',
+    defaultValue: true,
+  );
 
   /// Sentry DSN for crash/error reporting. Empty ⇒ telemetry stays a no-op.
   static const String sentryDsn = String.fromEnvironment('SENTRY_DSN');
@@ -28,8 +30,9 @@ class BuildConfig {
   static const String posthogKey = String.fromEnvironment('POSTHOG_KEY');
 
   /// Stripe publishable (client) key. Empty ⇒ checkout shows "not configured".
-  static const String stripePublishableKey =
-      String.fromEnvironment('STRIPE_PUBLISHABLE_KEY');
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+  );
 
   /// Base URL of our backend (Cloud Functions): Stripe checkout sessions,
   /// webhooks, and the Anthropic relay. Empty ⇒ BYOK / demo paths only.

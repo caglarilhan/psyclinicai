@@ -26,8 +26,9 @@ Future<PatientFilter?> _pumpAndCapture(
 
 void main() {
   group('PatientListFilterBar', () {
-    testWidgets('renders one chip per status / risk / lastSeen value',
-        (tester) async {
+    testWidgets('renders one chip per status / risk / lastSeen value', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -43,8 +44,9 @@ void main() {
       expect(find.text('Seen ≤ 24h'), findsOneWidget);
     });
 
-    testWidgets('tapping a status chip emits a new filter with that set',
-        (tester) async {
+    testWidgets('tapping a status chip emits a new filter with that set', (
+      tester,
+    ) async {
       final out = await _pumpAndCapture(
         tester,
         initial: PatientFilter.empty,
@@ -56,8 +58,9 @@ void main() {
       expect(out!.statuses, contains(PatientStatusFilter.active));
     });
 
-    testWidgets('Clear filters chip only renders when filter is non-empty',
-        (tester) async {
+    testWidgets('Clear filters chip only renders when filter is non-empty', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -74,8 +77,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: PatientListFilterBar(
-              filter: PatientFilter.empty
-                  .toggleRisk(PatientRiskFilter.high),
+              filter: PatientFilter.empty.toggleRisk(PatientRiskFilter.high),
               onChanged: (_) {},
             ),
           ),

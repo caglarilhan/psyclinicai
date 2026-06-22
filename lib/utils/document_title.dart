@@ -2,7 +2,8 @@
 // build clean (no-op) while the web build sets the browser tab title.
 
 import 'document_title_stub.dart'
-    if (dart.library.html) 'document_title_web.dart' as impl;
+    if (dart.library.html) 'document_title_web.dart'
+    as impl;
 
 /// Update the browser tab title. No-op on mobile/desktop platforms.
 void setDocumentTitle(String title) => impl.setDocumentTitle(title);
@@ -11,8 +12,10 @@ void setDocumentTitle(String title) => impl.setDocumentTitle(title);
 String titleForRoute(String? routeName) {
   const baseSuffix = ' · PsyClinicAI';
   return switch (routeName) {
-    null || '' || '/' || '/landing' =>
-      'PsyClinicAI — AI co-pilot for therapy sessions',
+    null ||
+    '' ||
+    '/' ||
+    '/landing' => 'PsyClinicAI — AI co-pilot for therapy sessions',
     '/login' => 'Sign in$baseSuffix',
     '/onboarding' => 'Welcome$baseSuffix',
     '/dashboard' => 'Dashboard$baseSuffix',

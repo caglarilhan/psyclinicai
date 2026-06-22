@@ -2,19 +2,18 @@
 /// Intervention structure). Decision-support scaffold the clinician completes
 /// WITH the client — not a substitute for clinical risk assessment.
 class SafetyPlan {
-
   factory SafetyPlan.fromJson(Map<String, dynamic> json) => SafetyPlan(
-        patientId: json['patientId'] as String? ?? '',
-        warningSigns: _strList(json['warningSigns']),
-        copingStrategies: _strList(json['copingStrategies']),
-        socialDistractions: _strList(json['socialDistractions']),
-        supportContacts: _strList(json['supportContacts']),
-        professionals: _strList(json['professionals']),
-        crisisLines: _strList(json['crisisLines']),
-        reasonsForLiving: _strList(json['reasonsForLiving']),
-        meansSafety: json['meansSafety'] as String? ?? '',
-        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-      );
+    patientId: json['patientId'] as String? ?? '',
+    warningSigns: _strList(json['warningSigns']),
+    copingStrategies: _strList(json['copingStrategies']),
+    socialDistractions: _strList(json['socialDistractions']),
+    supportContacts: _strList(json['supportContacts']),
+    professionals: _strList(json['professionals']),
+    crisisLines: _strList(json['crisisLines']),
+    reasonsForLiving: _strList(json['reasonsForLiving']),
+    meansSafety: json['meansSafety'] as String? ?? '',
+    updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
+  );
   SafetyPlan({
     required this.patientId,
     this.warningSigns = const [],
@@ -112,32 +111,31 @@ class SafetyPlan {
     List<String>? crisisLines,
     List<String>? reasonsForLiving,
     String? meansSafety,
-  }) =>
-      SafetyPlan(
-        patientId: patientId,
-        warningSigns: warningSigns ?? this.warningSigns,
-        copingStrategies: copingStrategies ?? this.copingStrategies,
-        socialDistractions: socialDistractions ?? this.socialDistractions,
-        supportContacts: supportContacts ?? this.supportContacts,
-        professionals: professionals ?? this.professionals,
-        crisisLines: crisisLines ?? this.crisisLines,
-        reasonsForLiving: reasonsForLiving ?? this.reasonsForLiving,
-        meansSafety: meansSafety ?? this.meansSafety,
-        updatedAt: DateTime.now(),
-      );
+  }) => SafetyPlan(
+    patientId: patientId,
+    warningSigns: warningSigns ?? this.warningSigns,
+    copingStrategies: copingStrategies ?? this.copingStrategies,
+    socialDistractions: socialDistractions ?? this.socialDistractions,
+    supportContacts: supportContacts ?? this.supportContacts,
+    professionals: professionals ?? this.professionals,
+    crisisLines: crisisLines ?? this.crisisLines,
+    reasonsForLiving: reasonsForLiving ?? this.reasonsForLiving,
+    meansSafety: meansSafety ?? this.meansSafety,
+    updatedAt: DateTime.now(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'patientId': patientId,
-        'warningSigns': warningSigns,
-        'copingStrategies': copingStrategies,
-        'socialDistractions': socialDistractions,
-        'supportContacts': supportContacts,
-        'professionals': professionals,
-        'crisisLines': crisisLines,
-        'reasonsForLiving': reasonsForLiving,
-        'meansSafety': meansSafety,
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'patientId': patientId,
+    'warningSigns': warningSigns,
+    'copingStrategies': copingStrategies,
+    'socialDistractions': socialDistractions,
+    'supportContacts': supportContacts,
+    'professionals': professionals,
+    'crisisLines': crisisLines,
+    'reasonsForLiving': reasonsForLiving,
+    'meansSafety': meansSafety,
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   static List<String> _strList(dynamic v) =>
       (v as List<dynamic>? ?? const []).map((e) => e.toString()).toList();

@@ -35,11 +35,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.language,
-                      color: colorScheme.primary,
-                      size: 32,
-                    ),
+                    Icon(Icons.language, color: colorScheme.primary, size: 32),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -54,8 +50,11 @@ class LanguageSettingsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            languageService.supportedLanguages[languageService.currentLocale.languageCode] ?? 
-                            languageService.currentLocale.languageCode.toUpperCase(),
+                            languageService.supportedLanguages[languageService
+                                    .currentLocale
+                                    .languageCode] ??
+                                languageService.currentLocale.languageCode
+                                    .toUpperCase(),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: colorScheme.onPrimaryContainer,
                             ),
@@ -64,13 +63,17 @@ class LanguageSettingsScreen extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        languageService.currentLocale.languageCode.toUpperCase(),
+                        languageService.currentLocale.languageCode
+                            .toUpperCase(),
                         style: TextStyle(
                           color: colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
@@ -91,12 +94,13 @@ class LanguageSettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             ...languageService.supportedLocales.map((locale) {
               final isSelected = locale == languageService.currentLocale;
-              final languageName = languageService.supportedLanguages[locale.languageCode] ?? 
-                                 locale.languageCode.toUpperCase();
-              
+              final languageName =
+                  languageService.supportedLanguages[locale.languageCode] ??
+                  locale.languageCode.toUpperCase();
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
@@ -104,8 +108,8 @@ class LanguageSettingsScreen extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isSelected 
-                          ? colorScheme.primary 
+                      color: isSelected
+                          ? colorScheme.primary
                           : colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -113,8 +117,8 @@ class LanguageSettingsScreen extends StatelessWidget {
                       child: Text(
                         locale.languageCode.toUpperCase(),
                         style: TextStyle(
-                          color: isSelected 
-                              ? colorScheme.onPrimary 
+                          color: isSelected
+                              ? colorScheme.onPrimary
                               : colorScheme.onSurface,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -125,15 +129,14 @@ class LanguageSettingsScreen extends StatelessWidget {
                   title: Text(
                     languageName,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                   subtitle: Text(_getLanguageDescription(locale.languageCode)),
-                  trailing: isSelected 
-                      ? Icon(
-                          Icons.check_circle,
-                          color: colorScheme.primary,
-                        )
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle, color: colorScheme.primary)
                       : null,
                   onTap: () => _changeLanguage(context, locale),
                 ),
@@ -151,10 +154,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: colorScheme.primary,
-                        ),
+                        Icon(Icons.info_outline, color: colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
                           languageService.translate('info'),
@@ -197,12 +197,36 @@ class LanguageSettingsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTranslationCoverageItem('Türkçe', '100%', Colors.green),
-                    _buildTranslationCoverageItem('English', '100%', Colors.green),
-                    _buildTranslationCoverageItem('Deutsch', '95%', Colors.orange),
-                    _buildTranslationCoverageItem('Français', '90%', Colors.orange),
-                    _buildTranslationCoverageItem('Español', '85%', Colors.orange),
-                    _buildTranslationCoverageItem('العربية', '80%', Colors.orange),
+                    _buildTranslationCoverageItem(
+                      'Türkçe',
+                      '100%',
+                      Colors.green,
+                    ),
+                    _buildTranslationCoverageItem(
+                      'English',
+                      '100%',
+                      Colors.green,
+                    ),
+                    _buildTranslationCoverageItem(
+                      'Deutsch',
+                      '95%',
+                      Colors.orange,
+                    ),
+                    _buildTranslationCoverageItem(
+                      'Français',
+                      '90%',
+                      Colors.orange,
+                    ),
+                    _buildTranslationCoverageItem(
+                      'Español',
+                      '85%',
+                      Colors.orange,
+                    ),
+                    _buildTranslationCoverageItem(
+                      'العربية',
+                      '80%',
+                      Colors.orange,
+                    ),
                   ],
                 ),
               ),
@@ -254,14 +278,16 @@ class LanguageSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTranslationCoverageItem(String language, String coverage, Color color) {
+  Widget _buildTranslationCoverageItem(
+    String language,
+    String coverage,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(language),
-          ),
+          Expanded(child: Text(language)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -282,7 +308,12 @@ class LanguageSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -295,17 +326,9 @@ class LanguageSettingsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-            ),
-          ),
+          Text(title, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
@@ -336,8 +359,11 @@ class LanguageSettingsScreen extends StatelessWidget {
   }
 
   void _changeLanguage(BuildContext context, Locale locale) {
-    final languageService = Provider.of<LanguageService>(context, listen: false);
-    
+    final languageService = Provider.of<LanguageService>(
+      context,
+      listen: false,
+    );
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -357,10 +383,7 @@ class LanguageSettingsScreen extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(languageService.translate('language_changed')),
-                  action: SnackBarAction(
-                    label: 'Tamam',
-                    onPressed: () {},
-                  ),
+                  action: SnackBarAction(label: 'Tamam', onPressed: () {}),
                 ),
               );
             },
@@ -373,7 +396,7 @@ class LanguageSettingsScreen extends StatelessWidget {
 
   void _showLanguageInfo(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
-    
+
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

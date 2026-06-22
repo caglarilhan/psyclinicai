@@ -15,8 +15,7 @@ class EPrescriptionScreen extends StatefulWidget {
   const EPrescriptionScreen({super.key});
 
   @override
-  State<EPrescriptionScreen> createState() =>
-      _EPrescriptionScreenState();
+  State<EPrescriptionScreen> createState() => _EPrescriptionScreenState();
 }
 
 class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
@@ -72,7 +71,8 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
           _email.clear();
         case WaitlistOutcome.skipped:
           _ok = true;
-          _status = "Recorded locally (demo mode). We'll email you when "
+          _status =
+              "Recorded locally (demo mode). We'll email you when "
               'e-prescribing goes live.';
           _email.clear();
         case WaitlistOutcome.denied:
@@ -97,11 +97,13 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: PsySpacing.xl),
             children: [
-              Text('US e-prescribing, built right.',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                  )),
+              Text(
+                'US e-prescribing, built right.',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
               const SizedBox(height: PsySpacing.md),
               Text(
                 "We won't ship a prescription pad that isn't certified. "
@@ -121,9 +123,12 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Get early access',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      'Get early access',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: PsySpacing.sm),
                     Text(
                       'We email each milestone. No newsletter, no '
@@ -163,22 +168,19 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
                       Row(
                         children: [
                           Icon(
-                            _ok
-                                ? Icons.check_circle
-                                : Icons.error_outline,
+                            _ok ? Icons.check_circle : Icons.error_outline,
                             color: _ok ? PsyColors.success : cs.error,
                             size: 18,
                           ),
                           const SizedBox(width: PsySpacing.sm),
                           Expanded(
-                            child: Text(_status!,
-                                style: theme.textTheme.bodyMedium
-                                    ?.copyWith(
-                                  color: _ok
-                                      ? PsyColors.success
-                                      : cs.error,
-                                  fontWeight: FontWeight.w600,
-                                )),
+                            child: Text(
+                              _status!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: _ok ? PsyColors.success : cs.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -187,30 +189,41 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
                 ),
               ),
               const SizedBox(height: PsySpacing.xxxl),
-              Text('Roadmap',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Roadmap',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: PsySpacing.lg),
               const _Step(
-                  done: true,
-                  title: 'SureScripts onboarding application',
-                  detail: 'Software-vendor agreement submitted; '
-                      'integration discovery in progress.'),
+                done: true,
+                title: 'SureScripts onboarding application',
+                detail:
+                    'Software-vendor agreement submitted; '
+                    'integration discovery in progress.',
+              ),
               const _Step(
-                  done: false,
-                  title: 'DEA EPCS audit (Identrust / Symantec)',
-                  detail: 'Two-factor identity proofing + audited '
-                      'prescription signing for controlled substances.'),
+                done: false,
+                title: 'DEA EPCS audit (Identrust / Symantec)',
+                detail:
+                    'Two-factor identity proofing + audited '
+                    'prescription signing for controlled substances.',
+              ),
               const _Step(
-                  done: false,
-                  title: 'Closed beta — 25 US prescribers',
-                  detail: 'Non-controlled substances first; controlled '
-                      'unlocks after EPCS audit passes.'),
+                done: false,
+                title: 'Closed beta — 25 US prescribers',
+                detail:
+                    'Non-controlled substances first; controlled '
+                    'unlocks after EPCS audit passes.',
+              ),
               const _Step(
-                  done: false,
-                  title: 'General availability (Q4 2026)',
-                  detail: 'SureScripts certified, EPCS-ready, '
-                      'state-by-state PDMP integrations live.'),
+                done: false,
+                title: 'General availability (Q4 2026)',
+                detail:
+                    'SureScripts certified, EPCS-ready, '
+                    'state-by-state PDMP integrations live.',
+              ),
               const SizedBox(height: PsySpacing.xxl),
               PsyCard(
                 child: Column(
@@ -220,9 +233,12 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
                       children: [
                         Icon(Icons.shield_outlined, color: cs.primary),
                         const SizedBox(width: PsySpacing.sm),
-                        Text('Why we wait',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700)),
+                        Text(
+                          'Why we wait',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: PsySpacing.md),
@@ -250,8 +266,7 @@ class _EPrescriptionScreenState extends State<EPrescriptionScreen> {
 }
 
 class _Step extends StatelessWidget {
-  const _Step(
-      {required this.done, required this.title, required this.detail});
+  const _Step({required this.done, required this.title, required this.detail});
   final bool done;
   final String title;
   final String detail;
@@ -283,8 +298,7 @@ class _Step extends StatelessWidget {
               ),
             ),
             child: done
-                ? const Icon(Icons.check,
-                    size: 14, color: PsyColors.success)
+                ? const Icon(Icons.check, size: 14, color: PsyColors.success)
                 : null,
           ),
           const SizedBox(width: PsySpacing.md),
@@ -292,17 +306,21 @@ class _Step extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                    )),
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(detail,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      height: 1.45,
-                    )),
+                Text(
+                  detail,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                    height: 1.45,
+                  ),
+                ),
               ],
             ),
           ),

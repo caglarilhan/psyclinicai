@@ -41,13 +41,14 @@ class ByokRotationResult {
 
 class ByokRotationService {
   ByokRotationService({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock_this_device,
-              ),
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          );
 
   final FlutterSecureStorage _storage;
 
@@ -86,12 +87,12 @@ class ByokRotationService {
     try {
       final existing = await _storage.read(key: _currentSlot(provider));
       if (existing != null && existing.isNotEmpty) {
-        await _storage.write(
-            key: _previousSlot(provider), value: existing);
-        final expiresAt =
-            DateTime.now().toUtc().add(graceWindow).toIso8601String();
-        await _storage.write(
-            key: _expirySlot(provider), value: expiresAt);
+        await _storage.write(key: _previousSlot(provider), value: existing);
+        final expiresAt = DateTime.now()
+            .toUtc()
+            .add(graceWindow)
+            .toIso8601String();
+        await _storage.write(key: _expirySlot(provider), value: expiresAt);
       }
       await _storage.write(key: _currentSlot(provider), value: newKey);
       return ByokRotationResult(
@@ -116,8 +117,10 @@ class ByokRotationService {
   /// otherwise wipes the slots and returns `null`. Callers fall back to
   /// the previous key when the current key throws an auth error and
   /// retry-once succeeds.
-  Future<String?> previousKeyIfValid(ByokProvider provider,
-      {DateTime? now}) async {
+  Future<String?> previousKeyIfValid(
+    ByokProvider provider, {
+    DateTime? now,
+  }) async {
     final expiry = await _storage.read(key: _expirySlot(provider));
     if (expiry == null) return null;
     final ts = DateTime.tryParse(expiry);

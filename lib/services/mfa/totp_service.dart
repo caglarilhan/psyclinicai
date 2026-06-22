@@ -117,10 +117,8 @@ class TotpService {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final codes = <String>[];
     for (var i = 0; i < count; i++) {
-      String chunk(int n) => List.generate(
-            n,
-            (_) => chars[_random.nextInt(chars.length)],
-          ).join();
+      String chunk(int n) =>
+          List.generate(n, (_) => chars[_random.nextInt(chars.length)]).join();
       codes.add('${chunk(4)}-${chunk(4)}');
     }
     return codes;
@@ -132,7 +130,8 @@ class TotpService {
     final hmac = Hmac(sha1, key).convert(counterBytes.buffer.asUint8List());
     final bytes = hmac.bytes;
     final offset = bytes[bytes.length - 1] & 0x0f;
-    final binary = ((bytes[offset] & 0x7f) << 24) |
+    final binary =
+        ((bytes[offset] & 0x7f) << 24) |
         ((bytes[offset + 1] & 0xff) << 16) |
         ((bytes[offset + 2] & 0xff) << 8) |
         (bytes[offset + 3] & 0xff);
@@ -167,7 +166,8 @@ class TotpService {
       final idx = _base32Alphabet.indexOf(String.fromCharCode(ch));
       if (idx < 0) {
         throw FormatException(
-            'Invalid base32 character: ${String.fromCharCode(ch)}');
+          'Invalid base32 character: ${String.fromCharCode(ch)}',
+        );
       }
       value = (value << 5) | idx;
       bits += 5;

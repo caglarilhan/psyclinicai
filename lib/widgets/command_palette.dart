@@ -23,8 +23,7 @@ class CommandPaletteEntry {
 
   int score(String query) {
     if (query.isEmpty) return 1;
-    final hay =
-        ('$label ${subtitle ?? ''} $section').toLowerCase();
+    final hay = ('$label ${subtitle ?? ''} $section').toLowerCase();
     final q = query.toLowerCase();
     if (hay.startsWith(q)) return 1000;
     if (label.toLowerCase().contains(q)) return 500;
@@ -60,8 +59,7 @@ class CommandPalette extends StatefulWidget {
       transitionDuration: const Duration(milliseconds: 180),
       pageBuilder: (ctx, a, b) => CommandPalette(entries: entries),
       transitionBuilder: (ctx, anim, _, child) {
-        final fade =
-            CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        final fade = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
         return FadeTransition(
           opacity: fade,
           child: ScaleTransition(
@@ -85,8 +83,7 @@ class _CommandPaletteState extends State<CommandPalette> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _focus.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
   }
 
   @override
@@ -98,11 +95,12 @@ class _CommandPaletteState extends State<CommandPalette> {
 
   List<CommandPaletteEntry> get _filtered {
     final q = _ctl.text.trim();
-    final scored = widget.entries
-        .map((e) => MapEntry(e, e.score(q)))
-        .where((e) => e.value > 0)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final scored =
+        widget.entries
+            .map((e) => MapEntry(e, e.score(q)))
+            .where((e) => e.value > 0)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
     return scored.map((e) => e.key).take(12).toList(growable: false);
   }
 
@@ -144,13 +142,15 @@ class _CommandPaletteState extends State<CommandPalette> {
               return KeyEventResult.handled;
             }
             if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-              setState(() => _selected =
-                  (_selected + 1).clamp(0, results.length - 1));
+              setState(
+                () => _selected = (_selected + 1).clamp(0, results.length - 1),
+              );
               return KeyEventResult.handled;
             }
             if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              setState(() => _selected =
-                  (_selected - 1).clamp(0, results.length - 1));
+              setState(
+                () => _selected = (_selected - 1).clamp(0, results.length - 1),
+              );
               return KeyEventResult.handled;
             }
             if (event.logicalKey == LogicalKeyboardKey.enter) {
@@ -177,18 +177,20 @@ class _CommandPaletteState extends State<CommandPalette> {
                     focusedBorder: InputBorder.none,
                     suffixIcon: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: PsySpacing.sm),
+                        horizontal: PsySpacing.sm,
+                      ),
                       child: Container(
                         alignment: Alignment.center,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: cs.outlineVariant),
                         ),
-                        child: Text('ESC',
-                            style: theme.textTheme.labelSmall),
+                        child: Text('ESC', style: theme.textTheme.labelSmall),
                       ),
                     ),
                   ),
@@ -203,13 +205,12 @@ class _CommandPaletteState extends State<CommandPalette> {
                           'No match. Try a route, patient name, or '
                           'action verb.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                              color:
-                                  cs.onSurface.withValues(alpha: 0.6)),
+                            color: cs.onSurface.withValues(alpha: 0.6),
+                          ),
                         ),
                       )
                     : ListView.builder(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         itemCount: results.length,
                         itemBuilder: (_, i) {
                           final e = results[i];
@@ -221,61 +222,75 @@ class _CommandPaletteState extends State<CommandPalette> {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: PsySpacing.md,
-                                  vertical: PsySpacing.sm),
+                                horizontal: PsySpacing.md,
+                                vertical: PsySpacing.sm,
+                              ),
                               color: selected
                                   ? cs.primary.withValues(alpha: 0.12)
                                   : null,
-                              child: Row(children: [
-                                Icon(e.icon ?? Icons.arrow_forward,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    e.icon ?? Icons.arrow_forward,
                                     size: 18,
                                     color: selected
                                         ? cs.primary
-                                        : cs.onSurface
-                                            .withValues(alpha: 0.6)),
-                                const SizedBox(width: PsySpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(e.label,
+                                        : cs.onSurface.withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: PsySpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          e.label,
                                           style: theme.textTheme.bodyLarge
                                               ?.copyWith(
-                                                  fontWeight: selected
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w500)),
-                                      if (e.subtitle != null)
-                                        Text(e.subtitle!,
-                                            style: theme
-                                                .textTheme.bodySmall
+                                                fontWeight: selected
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500,
+                                              ),
+                                        ),
+                                        if (e.subtitle != null)
+                                          Text(
+                                            e.subtitle!,
+                                            style: theme.textTheme.bodySmall
                                                 ?.copyWith(
-                                                    color: cs.onSurface
-                                                        .withValues(
-                                                            alpha: 0.55))),
-                                    ],
-                                  ),
-                                ),
-                                Text(e.section,
-                                    style: theme.textTheme.labelSmall
-                                        ?.copyWith(
-                                            color: cs.onSurface
-                                                .withValues(alpha: 0.5))),
-                                if (e.shortcut != null) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: cs.surfaceContainerHigh,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                                  color: cs.onSurface
+                                                      .withValues(alpha: 0.55),
+                                                ),
+                                          ),
+                                      ],
                                     ),
-                                    child: Text(e.shortcut!,
-                                        style: theme.textTheme.labelSmall),
                                   ),
+                                  Text(
+                                    e.section,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  if (e.shortcut != null) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: cs.surfaceContainerHigh,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        e.shortcut!,
+                                        style: theme.textTheme.labelSmall,
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ]),
+                              ),
                             ),
                           );
                         },
@@ -286,18 +301,23 @@ class _CommandPaletteState extends State<CommandPalette> {
                 padding: const EdgeInsets.all(PsySpacing.sm),
                 child: Row(
                   children: [
-                    Icon(Icons.keyboard_arrow_up,
-                        size: 14,
-                        color: cs.onSurface.withValues(alpha: 0.5)),
-                    Icon(Icons.keyboard_arrow_down,
-                        size: 14,
-                        color: cs.onSurface.withValues(alpha: 0.5)),
+                    Icon(
+                      Icons.keyboard_arrow_up,
+                      size: 14,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 14,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
                     const SizedBox(width: 4),
-                    Text('navigate',
-                        style: theme.textTheme.labelSmall),
+                    Text('navigate', style: theme.textTheme.labelSmall),
                     const SizedBox(width: PsySpacing.md),
-                    Text('↵ open · ESC close',
-                        style: theme.textTheme.labelSmall),
+                    Text(
+                      '↵ open · ESC close',
+                      style: theme.textTheme.labelSmall,
+                    ),
                   ],
                 ),
               ),

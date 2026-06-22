@@ -104,11 +104,11 @@ class _Header extends StatelessWidget {
     final initials = args.name.isEmpty
         ? '?'
         : args.name
-            .split(' ')
-            .where((p) => p.isNotEmpty)
-            .map((p) => p[0].toUpperCase())
-            .take(2)
-            .join();
+              .split(' ')
+              .where((p) => p.isNotEmpty)
+              .map((p) => p[0].toUpperCase())
+              .take(2)
+              .join();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(PsySpacing.md),
@@ -122,8 +122,9 @@ class _Header extends StatelessWidget {
                   backgroundColor: cs.primaryContainer,
                   child: Text(
                     initials,
-                    style: t.titleMedium
-                        ?.copyWith(color: cs.onPrimaryContainer),
+                    style: t.titleMedium?.copyWith(
+                      color: cs.onPrimaryContainer,
+                    ),
                   ),
                 ),
                 const SizedBox(width: PsySpacing.md),
@@ -143,14 +144,14 @@ class _Header extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: PsyColors.warning
-                                  .withValues(alpha: 0.15),
+                              color: PsyColors.warning.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               'Risk · medium',
-                              style: t.labelSmall
-                                  ?.copyWith(color: PsyColors.warning),
+                              style: t.labelSmall?.copyWith(
+                                color: PsyColors.warning,
+                              ),
                             ),
                           ),
                         ],
@@ -161,8 +162,9 @@ class _Header extends StatelessWidget {
                       ),
                       Text(
                         'Last seen yesterday',
-                        style: t.bodySmall
-                            ?.copyWith(color: cs.onSurfaceVariant),
+                        style: t.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -175,10 +177,9 @@ class _Header extends StatelessWidget {
               runSpacing: PsySpacing.xs,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).pushNamed(
-                    '/session',
-                    arguments: args,
-                  ),
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamed('/session', arguments: args),
                   icon: const Icon(Icons.mic_none),
                   label: const Text('New session'),
                 ),
@@ -324,11 +325,7 @@ class _BillingTab extends StatelessWidget {
 }
 
 class _Empty extends StatelessWidget {
-  const _Empty({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+  const _Empty({required this.icon, required this.title, required this.body});
   final IconData icon;
   final String title;
   final String body;

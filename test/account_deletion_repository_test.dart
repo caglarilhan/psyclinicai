@@ -6,8 +6,7 @@ void main() {
   late InMemoryAccountDeletionRepository repo;
 
   setUp(() {
-    repo = InMemoryAccountDeletionRepository.instance
-      ..clearForTesting();
+    repo = InMemoryAccountDeletionRepository.instance..clearForTesting();
   });
 
   group('request / current', () {

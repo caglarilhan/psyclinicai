@@ -122,8 +122,7 @@ CaseloadOutcomeMetrics buildCaseloadMetrics({
   final finalised = appointments.where((a) => a.isFinalised).length;
   final noShow = appointments.where((a) => a.isNoShow).length;
 
-  final completedGoals =
-      goalProgressValues.where((p) => p >= 100).length;
+  final completedGoals = goalProgressValues.where((p) => p >= 100).length;
   final ratio = goalProgressValues.isEmpty
       ? 0.0
       : completedGoals / goalProgressValues.length;

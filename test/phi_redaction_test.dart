@@ -41,9 +41,9 @@ void main() {
     });
 
     test('patient name list redacts case-insensitively', () {
-      final r = PhiRedactor(patientNames: ['John Demo', 'Jane Sample']).scrub(
-        'John Demo arrived 5 min late. jane sample sent the form.',
-      );
+      final r = PhiRedactor(
+        patientNames: ['John Demo', 'Jane Sample'],
+      ).scrub('John Demo arrived 5 min late. jane sample sent the form.');
       expect(r.cleanText, contains('[NAME]'));
       expect(r.cleanText, isNot(contains('John Demo')));
       expect(r.cleanText, isNot(contains('jane sample')));
@@ -83,9 +83,9 @@ void main() {
       });
 
       test('dateShift preserves relative offsets between ISO dates', () {
-        final r = PhiRedactor(dateShift: const Duration(days: 30)).scrub(
-          'Symptom onset 2026-06-01, follow-up 2026-06-15.',
-        );
+        final r = PhiRedactor(
+          dateShift: const Duration(days: 30),
+        ).scrub('Symptom onset 2026-06-01, follow-up 2026-06-15.');
         // Both dates shift by exactly +30d so the gap stays 14 days.
         expect(r.cleanText, contains('2026-07-01'));
         expect(r.cleanText, contains('2026-07-15'));
@@ -93,23 +93,23 @@ void main() {
       });
 
       test('US date format round-trips through the shifter', () {
-        final r = PhiRedactor(dateShift: const Duration(days: 7)).scrub(
-          'Booked 05/14/2024 for review.',
-        );
+        final r = PhiRedactor(
+          dateShift: const Duration(days: 7),
+        ).scrub('Booked 05/14/2024 for review.');
         expect(r.cleanText, contains('5/21/2024'));
       });
 
       test('DE date format round-trips through the shifter', () {
-        final r = PhiRedactor(dateShift: const Duration(days: -3)).scrub(
-          'Termin am 14.05.2024.',
-        );
+        final r = PhiRedactor(
+          dateShift: const Duration(days: -3),
+        ).scrub('Termin am 14.05.2024.');
         expect(r.cleanText, contains('11.5.2024'));
       });
 
       test('counter still records every shifted date for telemetry', () {
-        final r = PhiRedactor(dateShift: const Duration(days: 1)).scrub(
-          '2026-06-01 and 2026-06-15 and 05/14/2024',
-        );
+        final r = PhiRedactor(
+          dateShift: const Duration(days: 1),
+        ).scrub('2026-06-01 and 2026-06-15 and 05/14/2024');
         expect(r.removed['date_iso'], 2);
         expect(r.removed['date_us'], 1);
       });

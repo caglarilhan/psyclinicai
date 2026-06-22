@@ -39,11 +39,7 @@ class InMemoryTourPersistence implements TourPersistence {
 
 @immutable
 class TourStep {
-  const TourStep({
-    required this.title,
-    required this.body,
-    required this.icon,
-  });
+  const TourStep({required this.title, required this.body, required this.icon});
 
   final String title;
   final String body;
@@ -87,8 +83,8 @@ class SessionTourController extends ChangeNotifier {
   SessionTourController({
     List<TourStep> steps = kDefaultSessionTour,
     TourPersistence? persistence,
-  })  : _steps = steps,
-        _persistence = persistence ?? InMemoryTourPersistence();
+  }) : _steps = steps,
+       _persistence = persistence ?? InMemoryTourPersistence();
 
   final List<TourStep> _steps;
   final TourPersistence _persistence;
@@ -143,10 +139,7 @@ class SessionTourController extends ChangeNotifier {
       reason == 'completed'
           ? TelemetryEvents.onboardingTourCompleted
           : TelemetryEvents.onboardingTourSkipped,
-      properties: {
-        'last_step_index': _index,
-        'total_steps': _steps.length,
-      },
+      properties: {'last_step_index': _index, 'total_steps': _steps.length},
     );
     notifyListeners();
   }
@@ -193,28 +186,37 @@ class SessionTourOverlay extends StatelessWidget {
                               color: cs.primaryContainer,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(step.icon,
-                                color: cs.onPrimaryContainer, size: 22),
+                            child: Icon(
+                              step.icon,
+                              color: cs.onPrimaryContainer,
+                              size: 22,
+                            ),
                           ),
                           const Spacer(),
                           Text(
                             '${controller.currentIndex + 1}'
                             ' / ${controller.totalSteps}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurface.withValues(alpha: 0.6)),
+                              color: cs.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Text(step.title,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        step.title,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text(step.body,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                              height: 1.5,
-                              color:
-                                  cs.onSurface.withValues(alpha: 0.78))),
+                      Text(
+                        step.body,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.5,
+                          color: cs.onSurface.withValues(alpha: 0.78),
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       Row(
                         children: [
@@ -231,9 +233,9 @@ class SessionTourOverlay extends StatelessWidget {
                           const SizedBox(width: 4),
                           FilledButton(
                             onPressed: () => controller.next(),
-                            child: Text(controller.isLastStep
-                                ? 'Done'
-                                : 'Next'),
+                            child: Text(
+                              controller.isLastStep ? 'Done' : 'Next',
+                            ),
                           ),
                         ],
                       ),

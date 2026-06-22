@@ -31,10 +31,13 @@ void main() {
       for (var i = 0; i < IncidentSeverity.values.length - 1; i++) {
         final tighter = targetsFor(IncidentSeverity.values[i]);
         final looser = targetsFor(IncidentSeverity.values[i + 1]);
-        expect(tighter.rto, lessThan(looser.rto),
-            reason:
-                '${tighter.severity.name} should have a tighter RTO than '
-                '${looser.severity.name}');
+        expect(
+          tighter.rto,
+          lessThan(looser.rto),
+          reason:
+              '${tighter.severity.name} should have a tighter RTO than '
+              '${looser.severity.name}',
+        );
       }
     });
 
@@ -56,16 +59,22 @@ void main() {
   group('isWithinNotificationWindow', () {
     test('true when elapsed < SLA', () {
       expect(
-          isWithinNotificationWindow(
-              IncidentSeverity.p1, const Duration(hours: 1)),
-          isTrue);
+        isWithinNotificationWindow(
+          IncidentSeverity.p1,
+          const Duration(hours: 1),
+        ),
+        isTrue,
+      );
     });
 
     test('false when elapsed exceeds the SLA', () {
       expect(
-          isWithinNotificationWindow(
-              IncidentSeverity.p0, const Duration(hours: 5)),
-          isFalse);
+        isWithinNotificationWindow(
+          IncidentSeverity.p0,
+          const Duration(hours: 5),
+        ),
+        isFalse,
+      );
     });
   });
 
@@ -74,20 +83,26 @@ void main() {
       expect(hipaaBreachStatutoryDeadline.inDays, 60);
     });
 
-    test('internal target gives at least 5x slack on the statutory deadline',
-        () {
-      expect(hipaaBreachInternalTarget,
-          lessThan(hipaaBreachStatutoryDeadline));
-      expect(
+    test(
+      'internal target gives at least 5x slack on the statutory deadline',
+      () {
+        expect(
+          hipaaBreachInternalTarget,
+          lessThan(hipaaBreachStatutoryDeadline),
+        );
+        expect(
           hipaaBreachStatutoryDeadline.inHours /
               hipaaBreachInternalTarget.inHours,
-          greaterThanOrEqualTo(5));
-    });
+          greaterThanOrEqualTo(5),
+        );
+      },
+    );
 
     test('P0 customer notification beats the HIPAA target', () {
       expect(
-          targetsFor(IncidentSeverity.p0).customerNotifyWithin,
-          lessThan(hipaaBreachInternalTarget));
+        targetsFor(IncidentSeverity.p0).customerNotifyWithin,
+        lessThan(hipaaBreachInternalTarget),
+      );
     });
   });
 }

@@ -34,9 +34,8 @@ class InMemoryPortalDsarRepository extends PortalDsarRepository {
   final Map<String, PortalDsarRequest> _byId = {};
 
   @override
-  List<PortalDsarRequest> forUser(String userId) => _byId.values
-      .where((r) => r.userId == userId)
-      .toList(growable: false);
+  List<PortalDsarRequest> forUser(String userId) =>
+      _byId.values.where((r) => r.userId == userId).toList(growable: false);
 
   @override
   PortalDsarRequest? byId(String id) => _byId[id];

@@ -68,7 +68,8 @@ class SubprocessorRegistry {
     Subprocessor(
       id: 'anthropic',
       name: 'Anthropic, PBC',
-      purpose: 'AI inference for SOAP drafts and risk co-pilot — BYOK '
+      purpose:
+          'AI inference for SOAP drafts and risk co-pilot — BYOK '
           'opt-in only; routes through the clinician-supplied API key.',
       data: 'Session transcript text (no audio)',
       location: 'US',
@@ -128,7 +129,8 @@ class SubprocessorRegistry {
     Subprocessor(
       id: 'daily-co',
       name: 'Daily.co (Pluot Communications, Inc.)',
-      purpose: 'Telehealth video — clinician ↔ patient sessions '
+      purpose:
+          'Telehealth video — clinician ↔ patient sessions '
           '(planned, Q3 2026)',
       data: 'Real-time A/V stream, room metadata; no recording by default',
       location: 'EU region, no cross-region fallback',
@@ -163,7 +165,8 @@ class SubprocessorRegistry {
   /// instruments (SCC / IDTA). Used by the trust center to highlight
   /// vendors that need the customer's attention.
   static Iterable<Subprocessor> get withCrossBorderTransfer => entries.where(
-      (s) =>
-          s.transferMechanism.toLowerCase().contains('scc') ||
-          s.transferMechanism.toLowerCase().contains('idta'));
+    (s) =>
+        s.transferMechanism.toLowerCase().contains('scc') ||
+        s.transferMechanism.toLowerCase().contains('idta'),
+  );
 }

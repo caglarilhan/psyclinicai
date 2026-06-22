@@ -10,8 +10,7 @@ enum BetaFeedbackKind {
   final String label;
 
   static BetaFeedbackKind fromId(String id) =>
-      values.firstWhere((k) => k.id == id,
-          orElse: () => BetaFeedbackKind.idea);
+      values.firstWhere((k) => k.id == id, orElse: () => BetaFeedbackKind.idea);
 }
 
 enum BetaFeedbackSeverity {
@@ -59,8 +58,8 @@ class BetaFeedback {
     required this.phiAttestation,
     DateTime? submittedAt,
     BetaFeedbackSeverity? severity,
-  })  : submittedAt = submittedAt ?? DateTime.now().toUtc(),
-        severity = severity ?? BetaFeedbackSeverity.forKind(kind) {
+  }) : submittedAt = submittedAt ?? DateTime.now().toUtc(),
+       severity = severity ?? BetaFeedbackSeverity.forKind(kind) {
     if (body.trim().isEmpty) {
       throw ArgumentError('BetaFeedback.body cannot be empty.');
     }
@@ -97,29 +96,29 @@ class BetaFeedback {
   final BetaFeedbackSeverity severity;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind.id,
-        'body': body,
-        'route': route,
-        'uid': uid,
-        'severity': severity.name,
-        'phi_attested': phiAttestation,
-        'submitted_at': submittedAt.toUtc().toIso8601String(),
-      };
+    'id': id,
+    'kind': kind.id,
+    'body': body,
+    'route': route,
+    'uid': uid,
+    'severity': severity.name,
+    'phi_attested': phiAttestation,
+    'submitted_at': submittedAt.toUtc().toIso8601String(),
+  };
 
   factory BetaFeedback.fromJson(Map<String, dynamic> json) => BetaFeedback(
-        id: json['id'] as String,
-        kind: BetaFeedbackKind.fromId(json['kind'] as String),
-        body: json['body'] as String,
-        route: json['route'] as String,
-        uid: json['uid'] as String,
-        phiAttestation: json['phi_attested'] as bool? ?? false,
-        submittedAt: DateTime.parse(json['submitted_at'] as String),
-        severity: BetaFeedbackSeverity.values.firstWhere(
-          (s) => s.name == json['severity'],
-          orElse: () => BetaFeedbackSeverity.medium,
-        ),
-      );
+    id: json['id'] as String,
+    kind: BetaFeedbackKind.fromId(json['kind'] as String),
+    body: json['body'] as String,
+    route: json['route'] as String,
+    uid: json['uid'] as String,
+    phiAttestation: json['phi_attested'] as bool? ?? false,
+    submittedAt: DateTime.parse(json['submitted_at'] as String),
+    severity: BetaFeedbackSeverity.values.firstWhere(
+      (s) => s.name == json['severity'],
+      orElse: () => BetaFeedbackSeverity.medium,
+    ),
+  );
 }
 
 abstract class BetaFeedbackRepository {
@@ -136,6 +135,5 @@ class InMemoryBetaFeedbackRepository implements BetaFeedbackRepository {
   }
 
   @override
-  Future<List<BetaFeedback>> readAll() async =>
-      List.unmodifiable(_store);
+  Future<List<BetaFeedback>> readAll() async => List.unmodifiable(_store);
 }

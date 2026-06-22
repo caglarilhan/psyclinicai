@@ -39,17 +39,16 @@ class AuditLogDetailSheet extends StatelessWidget {
     String? previousHash,
     String? payloadDiff,
     VoidCallback? onVerifyChain,
-  }) =>
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => AuditLogDetailSheet(
-          entry: entry,
-          previousHash: previousHash,
-          payloadDiff: payloadDiff,
-          onVerifyChain: onVerifyChain,
-        ),
-      );
+  }) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => AuditLogDetailSheet(
+      entry: entry,
+      previousHash: previousHash,
+      payloadDiff: payloadDiff,
+      onVerifyChain: onVerifyChain,
+    ),
+  );
 
   String _short(String? h) {
     if (h == null || h.isEmpty) return '—';
@@ -103,8 +102,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: _resultColor(entry.result)
-                          .withValues(alpha: 0.15),
+                      color: _resultColor(entry.result).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -127,11 +125,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                 value: entry.timestampUtc.toIso8601String(),
                 t: t,
               ),
-              _Row(
-                label: 'Local',
-                value: local.toIso8601String(),
-                t: t,
-              ),
+              _Row(label: 'Local', value: local.toIso8601String(), t: t),
               if (entry.ip != null) _Row(label: 'IP', value: entry.ip!, t: t),
               if (entry.device != null)
                 _Row(label: 'Device', value: entry.device!, t: t),
@@ -159,8 +153,7 @@ class AuditLogDetailSheet extends StatelessWidget {
                   ),
                   child: Text(
                     payloadDiff!,
-                    style: t.bodySmall
-                        ?.copyWith(fontFamily: 'monospace'),
+                    style: t.bodySmall?.copyWith(fontFamily: 'monospace'),
                   ),
                 ),
               ],
@@ -184,13 +177,8 @@ class _Row extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 110,
-            child: Text(label, style: t.labelMedium),
-          ),
-          Expanded(
-            child: Text(value, style: t.bodySmall),
-          ),
+          SizedBox(width: 110, child: Text(label, style: t.labelMedium)),
+          Expanded(child: Text(value, style: t.bodySmall)),
         ],
       ),
     );

@@ -84,8 +84,7 @@ class _CookieConsentState extends State<CookieConsent> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/privacy'),
+                  onPressed: () => Navigator.of(context).pushNamed('/privacy'),
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, 36),
                     padding: const EdgeInsets.symmetric(horizontal: 8),

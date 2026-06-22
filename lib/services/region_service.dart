@@ -21,6 +21,3 @@ class RegionService extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-
-

@@ -78,10 +78,7 @@ class NoShowChargeButton extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Deposit · ${_money()}',
-                    style: t.titleSmall,
-                  ),
+                  child: Text('Deposit · ${_money()}', style: t.titleSmall),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -121,9 +118,7 @@ class NoShowChargeButton extends StatelessWidget {
             if (!canCapture && !canRefund) ...[
               const SizedBox(height: PsySpacing.xs),
               Text(
-                deposit
-                        .transitionBlockedReason(DepositStatus.captured) ??
-                    '',
+                deposit.transitionBlockedReason(DepositStatus.captured) ?? '',
                 style: t.bodySmall,
               ),
             ],

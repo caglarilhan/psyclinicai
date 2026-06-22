@@ -11,23 +11,25 @@ class StatusPage extends StatelessWidget {
   const StatusPage({super.key});
 
   static const List<_System> _systems = [
-    _System(
-        name: 'Public web (psyclinicai.com)',
-        status: _Status.operational),
+    _System(name: 'Public web (psyclinicai.com)', status: _Status.operational),
     _System(name: 'Firebase Authentication', status: _Status.operational),
     _System(
-        name: 'Firestore — EU tenants (eur3, Frankfurt)',
-        status: _Status.operational),
+      name: 'Firestore — EU tenants (eur3, Frankfurt)',
+      status: _Status.operational,
+    ),
     _System(
-        name: 'Firestore — US tenants (us-central1, Iowa)',
-        status: _Status.operational),
+      name: 'Firestore — US tenants (us-central1, Iowa)',
+      status: _Status.operational,
+    ),
     _System(name: 'Anthropic API (BYOK)', status: _Status.operational),
     _System(
-        name: 'Hetzner static host (Frankfurt)',
-        status: _Status.operational),
+      name: 'Hetzner static host (Frankfurt)',
+      status: _Status.operational,
+    ),
     _System(
-        name: 'Outbound email (Firebase / Postmark)',
-        status: _Status.operational),
+      name: 'Outbound email (Firebase / Postmark)',
+      status: _Status.operational,
+    ),
   ];
 
   @override
@@ -50,11 +52,12 @@ class StatusPage extends StatelessWidget {
           const SizedBox(height: PsySpacing.xxl),
           const StaticH2('Data residency'),
           const StaticP(
-              'Each tenant is pinned to a single Firestore region — EU '
-              'tenants stay in eur3 (Frankfurt), US tenants stay in '
-              'us-central1 (Iowa). We do not cross-replicate clinical '
-              'records between regions. KMS keys, audit logs and '
-              'transactional email pipelines follow the tenant region.'),
+            'Each tenant is pinned to a single Firestore region — EU '
+            'tenants stay in eur3 (Frankfurt), US tenants stay in '
+            'us-central1 (Iowa). We do not cross-replicate clinical '
+            'records between regions. KMS keys, audit logs and '
+            'transactional email pipelines follow the tenant region.',
+          ),
           const SizedBox(height: PsySpacing.xxl),
           const StaticH2('Recent incidents'),
           const StaticP('No incidents in the last 90 days.'),
@@ -72,16 +75,16 @@ class _System {
   final _Status status;
 
   Color color(ColorScheme cs) => switch (status) {
-        _Status.operational => PsyColors.success,
-        _Status.degraded => PsyColors.warning,
-        _Status.outage => cs.error,
-      };
+    _Status.operational => PsyColors.success,
+    _Status.degraded => PsyColors.warning,
+    _Status.outage => cs.error,
+  };
 
   String label() => switch (status) {
-        _Status.operational => 'Operational',
-        _Status.degraded => 'Degraded',
-        _Status.outage => 'Outage',
-      };
+    _Status.operational => 'Operational',
+    _Status.degraded => 'Degraded',
+    _Status.outage => 'Outage',
+  };
 }
 
 class _SummaryBanner extends StatelessWidget {
@@ -111,9 +114,9 @@ class _SummaryBanner extends StatelessWidget {
               allGreen
                   ? 'Every system is green. No active incidents.'
                   : 'At least one system is degraded. See list below for detail.',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -133,7 +136,9 @@ class _SystemRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: PsySpacing.sm),
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+        horizontal: PsySpacing.xl,
+        vertical: PsySpacing.lg,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(PsyRadius.md),
@@ -144,8 +149,7 @@ class _SystemRow extends StatelessWidget {
           Container(
             width: 10,
             height: 10,
-            decoration:
-                BoxDecoration(color: color, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: PsySpacing.lg),
           Expanded(

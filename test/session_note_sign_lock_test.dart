@@ -55,16 +55,9 @@ void main() {
     });
 
     test('addendum() throws when the parent is not yet signed', () {
-      final draft = SessionNote(
-        id: 'n1',
-        patientId: 'p1',
-        markdown: 'draft',
-      );
+      final draft = SessionNote(id: 'n1', patientId: 'p1', markdown: 'draft');
       expect(
-        () => draft.addendum(
-          addendumId: 'a1',
-          body: 'correction',
-        ),
+        () => draft.addendum(addendumId: 'a1', body: 'correction'),
         throwsStateError,
       );
     });
@@ -98,11 +91,7 @@ void main() {
       expect(json['signedBy'], 'c1');
       // Unsigned note should not surface a null signedAt — keys are
       // conditional on presence so the audit log stays tight.
-      final draft = SessionNote(
-        id: 'n2',
-        patientId: 'p1',
-        markdown: 'draft',
-      );
+      final draft = SessionNote(id: 'n2', patientId: 'p1', markdown: 'draft');
       final draftJson = draft.toJson();
       expect(draftJson.containsKey('signedAt'), isFalse);
       expect(draftJson.containsKey('signedBy'), isFalse);

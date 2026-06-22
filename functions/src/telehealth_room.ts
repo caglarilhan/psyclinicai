@@ -39,8 +39,16 @@ const SCHEDULE_HORIZON_MS = 7 * 24 * 60 * 60 * 1000;
  * patient.
  */
 export function deriveRoomName(clinicId: string, sessionId: string): string {
+  // Bound the pre-regex length so an attacker-controlled clinicId
+  // can't trigger pathological backtracking (CodeQL "Polynomial
+  // regular expression on uncontrolled data" PR #2 finding).
+  // Real IDs are <64 chars; cap at 256 for defence in depth.
   const sanitize = (s: string) =>
-    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    s
+      .slice(0, 256)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   const c = sanitize(clinicId).slice(0, 14);
   const s = sanitize(sessionId).slice(0, 20);
   return `psy-${c}-${s}`.slice(0, 41);

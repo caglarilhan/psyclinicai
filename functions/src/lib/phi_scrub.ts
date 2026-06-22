@@ -96,8 +96,15 @@ export function scrubPhiInPayload(input: unknown): {
       return node.map(walk);
     }
     if (node && typeof node === "object") {
-      const out: Record<string, unknown> = {};
+      // Object.create(null) + explicit dangerous-key filter so an
+      // attacker-controlled payload key (`__proto__`, `constructor`,
+      // `prototype`) cannot pollute the cloned object's prototype
+      // chain. CodeQL "Remote property injection" PR #2 finding.
+      const out: Record<string, unknown> = Object.create(null);
       for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+        if (k === "__proto__" || k === "constructor" || k === "prototype") {
+          continue;
+        }
         out[k] = walk(v);
       }
       return out;

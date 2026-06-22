@@ -8,15 +8,33 @@ import { resolveCorsOrigin } from "./env";
  * success, `null` when the token is missing or invalid. Logged with
  * [logTag] so every handler keeps a clear telemetry namespace.
  */
+/**
+ * Pull the bearer token off the Authorization header without a regex
+ * (CodeQL flagged the prior `/^Bearer\s+(.+)$/i` as polynomial on
+ * uncontrolled input). The HTTP/1.1 grammar permits one or more spaces
+ * after the scheme; a tight `startsWith` + `slice` covers the common
+ * case while bounding the worst-case cost to O(n).
+ */
+function extractBearerToken(req: functions.https.Request): string | null {
+  const header = (req.headers.authorization as string | undefined) ?? "";
+  // Cap so a 10 MB header can't even start the comparison.
+  if (header.length === 0 || header.length > 8 * 1024) return null;
+  const prefix = "bearer ";
+  if (header.length <= prefix.length) return null;
+  if (header.slice(0, prefix.length).toLowerCase() !== prefix) return null;
+  // Tokens have no whitespace; collapse the rare double-space header.
+  const token = header.slice(prefix.length).trim();
+  return token.length > 0 ? token : null;
+}
+
 export async function authorizeUid(
   req: functions.https.Request,
   logTag: string,
 ): Promise<string | null> {
-  const header = (req.headers.authorization as string | undefined) ?? "";
-  const m = header.match(/^Bearer\s+(.+)$/i);
-  if (!m) return null;
+  const token = extractBearerToken(req);
+  if (!token) return null;
   try {
-    const decoded = await admin.auth().verifyIdToken(m[1]);
+    const decoded = await admin.auth().verifyIdToken(token);
     return decoded.uid;
   } catch (e) {
     functions.logger.warn(`${logTag}.bad_token`, { reason: String(e) });
@@ -34,11 +52,10 @@ export async function authorizeClinicianUid(
   req: functions.https.Request,
   logTag: string,
 ): Promise<string | null> {
-  const header = (req.headers.authorization as string | undefined) ?? "";
-  const m = header.match(/^Bearer\s+(.+)$/i);
-  if (!m) return null;
+  const token = extractBearerToken(req);
+  if (!token) return null;
   try {
-    const decoded = await admin.auth().verifyIdToken(m[1]);
+    const decoded = await admin.auth().verifyIdToken(token);
     if (decoded.clinician !== true) {
       functions.logger.warn(`${logTag}.non_clinician`, {
         uid: decoded.uid,

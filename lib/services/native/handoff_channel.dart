@@ -40,10 +40,15 @@ class HandoffChannel {
     String? title,
     String? ctxHash,
   }) async {
-    if (!_supported) return false;
+    // Input validation runs unconditionally — a malformed route is
+    // always an argument bug, regardless of whether the host platform
+    // ships Handoff. (Previously this check sat behind `!_supported`
+    // and short-circuited to `false` on Linux CI, which made the
+    // handoff_channel_test pass on macOS and fail on the CI runner.)
     if (!route.startsWith('/')) {
       throw ArgumentError.value(route, 'route', 'must start with "/"');
     }
+    if (!_supported) return false;
     try {
       final ok = await _channel.invokeMethod<bool>('publish', {
         'route': route,

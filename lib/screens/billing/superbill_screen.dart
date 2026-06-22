@@ -16,6 +16,7 @@ import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
+import 'superbill_pickers.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
 /// the PDF. Material 3 design, two-column on wide layouts.
@@ -268,7 +269,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   Future<void> _pickDiagnosis() async {
     final picked = await showDialog<Icd10Code>(
       context: context,
-      builder: (_) => _DiagnosisPicker(service: _icdService),
+      builder: (_) => DiagnosisPicker(service: _icdService),
     );
     if (picked != null && !_diagnoses.any((d) => d.code == picked.code)) {
       setState(() => _diagnoses.add(picked));
@@ -278,7 +279,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   Future<void> _pickCptForLine() async {
     final picked = await showDialog<CptCode>(
       context: context,
-      builder: (_) => _CptPicker(service: _cptService),
+      builder: (_) => CptPicker(service: _cptService),
     );
     if (picked != null) {
       setState(() {
@@ -1022,218 +1023,5 @@ class _InvoiceMetaCard extends StatelessWidget {
     );
   }
 }
-
-class _DiagnosisPicker extends StatefulWidget {
-  const _DiagnosisPicker({required this.service});
-  final Icd10LookupService service;
-
-  @override
-  State<_DiagnosisPicker> createState() => _DiagnosisPickerState();
-}
-
-class _DiagnosisPickerState extends State<_DiagnosisPicker> {
-  String _query = '';
-  late List<Icd10Code> _results = widget.service.all();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Dialog(
-      child: SizedBox(
-        width: 600,
-        height: 540,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pick ICD-10 diagnosis',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                autofocus: true,
-                onChanged: (v) => setState(() {
-                  _query = v;
-                  _results = widget.service.search(v);
-                }),
-                decoration: InputDecoration(
-                  hintText: 'Search by code, label, or synonym…',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _results.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No diagnoses match "$_query"',
-                          style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: _results.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(color: cs.outlineVariant, height: 1),
-                        itemBuilder: (_, i) {
-                          final c = _results[i];
-                          return ListTile(
-                            dense: true,
-                            leading: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cs.primary.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                c.code,
-                                style: TextStyle(
-                                  color: cs.primary,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              c.label,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            subtitle: Text(
-                              c.category.label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurface.withValues(alpha: 0.55),
-                              ),
-                            ),
-                            onTap: () => Navigator.of(context).pop(c),
-                          );
-                        },
-                      ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CptPicker extends StatefulWidget {
-  const _CptPicker({required this.service});
-  final CptLookupService service;
-
-  @override
-  State<_CptPicker> createState() => _CptPickerState();
-}
-
-class _CptPickerState extends State<_CptPicker> {
-  CptCategory? _filter;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final codes = _filter == null
-        ? widget.service.all()
-        : widget.service.byCategory(_filter!);
-    return Dialog(
-      child: SizedBox(
-        width: 620,
-        height: 580,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pick CPT code',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _filter == null,
-                    onSelected: (_) => setState(() => _filter = null),
-                  ),
-                  for (final c in CptCategory.values)
-                    FilterChip(
-                      label: Text(c.label),
-                      selected: _filter == c,
-                      onSelected: (_) => setState(() => _filter = c),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: codes.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(color: cs.outlineVariant, height: 1),
-                  itemBuilder: (_, i) {
-                    final c = codes[i];
-                    return ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          c.code,
-                          style: TextStyle(
-                            color: cs.primary,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      title: Text(c.shortLabel),
-                      subtitle: Text(
-                        '${c.typicalDurationMinutes} min · \$${c.nationalAverageUsd.toStringAsFixed(0)} avg',
-                      ),
-                      onTap: () => Navigator.of(context).pop(c),
-                    );
-                  },
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// DiagnosisPicker + CptPicker moved to superbill_pickers.dart
+// (HIGH-4 god-file split).

@@ -185,7 +185,7 @@ class OfflineService extends ChangeNotifier {
       notifyListeners();
 
       if (_isOnline) {
-        _syncPendingData();
+        unawaited(_syncPendingData());
       }
     }
   }
@@ -634,9 +634,9 @@ class OfflineService extends ChangeNotifier {
   void dispose() {
     // Cancel before super.dispose() so a late connectivity event can't
     // call notifyListeners() on the disposed notifier.
-    _connectivitySub?.cancel();
+    unawaited(_connectivitySub?.cancel());
     _connectivitySub = null;
-    _database?.close();
+    unawaited(_database?.close());
     super.dispose();
   }
 }

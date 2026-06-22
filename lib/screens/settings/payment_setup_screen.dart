@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/stripe_connect_account.dart';
@@ -27,14 +29,16 @@ class _PaymentSetupScreenState extends State<PaymentSetupScreen> {
   bool _requested = false;
 
   void _requestEarlyAccess() {
-    TelemetryService.instance.capture(
-      'payments.early_access_requested',
-      properties: {
-        // PHI redaction (B4).
-        'email':
-            redactEmail(FirebaseAuthService.instance.profile?.email) ??
-            'anonymous',
-      },
+    unawaited(
+      TelemetryService.instance.capture(
+        'payments.early_access_requested',
+        properties: {
+          // PHI redaction (B4).
+          'email':
+              redactEmail(FirebaseAuthService.instance.profile?.email) ??
+              'anonymous',
+        },
+      ),
     );
     setState(() => _requested = true);
   }
@@ -411,8 +415,10 @@ class _ConnectAccountPanel extends StatelessWidget {
             children: [
               FilledButton.icon(
                 onPressed: () {
-                  TelemetryService.instance.capture(
-                    'billing.stripe_onboarding_link_opened',
+                  unawaited(
+                    TelemetryService.instance.capture(
+                      'billing.stripe_onboarding_link_opened',
+                    ),
                   );
                 },
                 icon: const Icon(Icons.open_in_new),
@@ -422,8 +428,10 @@ class _ConnectAccountPanel extends StatelessWidget {
               if (account.dashboardUrl != null)
                 TextButton.icon(
                   onPressed: () {
-                    TelemetryService.instance.capture(
-                      'billing.stripe_dashboard_opened',
+                    unawaited(
+                      TelemetryService.instance.capture(
+                        'billing.stripe_dashboard_opened',
+                      ),
                     );
                   },
                   icon: const Icon(Icons.dashboard_outlined, size: 16),

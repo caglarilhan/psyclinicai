@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../services/language_service.dart';
 
 class LanguageSettingsScreen extends StatelessWidget {
@@ -364,32 +367,36 @@ class LanguageSettingsScreen extends StatelessWidget {
       listen: false,
     );
 
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(languageService.translate('select_language')),
-        content: Text(
-          '${languageService.supportedLanguages[locale.languageCode]} diline geçmek istediğinizden emin misiniz?',
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(languageService.translate('select_language')),
+          content: Text(
+            '${languageService.supportedLanguages[locale.languageCode]} diline geçmek istediğinizden emin misiniz?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(languageService.translate('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                unawaited(languageService.changeLanguage(locale));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      languageService.translate('language_changed'),
+                    ),
+                    action: SnackBarAction(label: 'Tamam', onPressed: () {}),
+                  ),
+                );
+              },
+              child: Text(languageService.translate('ok')),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(languageService.translate('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              languageService.changeLanguage(locale);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(languageService.translate('language_changed')),
-                  action: SnackBarAction(label: 'Tamam', onPressed: () {}),
-                ),
-              );
-            },
-            child: Text(languageService.translate('ok')),
-          ),
-        ],
       ),
     );
   }
@@ -397,27 +404,29 @@ class LanguageSettingsScreen extends StatelessWidget {
   void _showLanguageInfo(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
 
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(languageService.translate('language_settings')),
-        content: const Text(
-          'PsyClinic AI çoklu dil desteği ile kullanıcıların tercih ettikleri dilde sistemi kullanabilmelerini sağlar.\n\n'
-          'Desteklenen diller:\n'
-          '• Türkçe (Tam destek)\n'
-          '• English (Full support)\n'
-          '• Deutsch (95% destek)\n'
-          '• Français (90% destek)\n'
-          '• Español (85% destek)\n'
-          '• العربية (80% destek)\n\n'
-          'Dil değişiklikleri anında uygulanır ve kullanıcı tercihleri kaydedilir.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(languageService.translate('ok')),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(languageService.translate('language_settings')),
+          content: const Text(
+            'PsyClinic AI çoklu dil desteği ile kullanıcıların tercih ettikleri dilde sistemi kullanabilmelerini sağlar.\n\n'
+            'Desteklenen diller:\n'
+            '• Türkçe (Tam destek)\n'
+            '• English (Full support)\n'
+            '• Deutsch (95% destek)\n'
+            '• Français (90% destek)\n'
+            '• Español (85% destek)\n'
+            '• العربية (80% destek)\n\n'
+            'Dil değişiklikleri anında uygulanır ve kullanıcı tercihleri kaydedilir.',
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(languageService.translate('ok')),
+            ),
+          ],
+        ),
       ),
     );
   }

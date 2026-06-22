@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/medication.dart';
@@ -427,7 +429,7 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
   @override
   void initState() {
     super.initState();
-    _init();
+    unawaited(_init());
   }
 
   Future<void> _init() async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -211,9 +213,11 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         serviceLines: List.of(_lines),
       );
       await _pdfService.printOrShare(data);
-      TelemetryService.instance.capture(
-        TelemetryEvents.superbillGenerated,
-        properties: {'lines': _lines.length, 'dx': _diagnoses.length},
+      unawaited(
+        TelemetryService.instance.capture(
+          TelemetryEvents.superbillGenerated,
+          properties: {'lines': _lines.length, 'dx': _diagnoses.length},
+        ),
       );
       await _persistToFirestore(data);
     } catch (e) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -168,7 +169,13 @@ class SupervisionService {
           report.fidelityNotes.isEmpty;
       return empty ? null : report;
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'supervision_parse');
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'supervision_parse',
+        ),
+      );
       return null;
     }
   }

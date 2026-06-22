@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
@@ -71,7 +73,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     setState(() => _loading = false);
 
     if (result.success || _isEnumerationProbe(result.error)) {
-      TelemetryService.instance.capture(TelemetryEvents.passwordResetSent);
+      unawaited(
+        TelemetryService.instance.capture(TelemetryEvents.passwordResetSent),
+      );
       setState(() => _sent = true);
     } else {
       setState(() => _error = 'Could not send reset link. Try again.');

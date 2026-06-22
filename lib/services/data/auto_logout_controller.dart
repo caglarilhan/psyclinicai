@@ -65,14 +65,14 @@ class AutoLogoutController {
     if (!sharedDevice.isShared) return;
     if (_now().difference(_lastActivity) < _sharedIdleTimeout) return;
     _firing = true;
-    () async {
+    unawaited(() async {
       try {
         await onLogout();
       } finally {
         _lastActivity = _now();
         _firing = false;
       }
-    }();
+    }());
   }
 
   void dispose() {

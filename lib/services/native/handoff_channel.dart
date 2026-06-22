@@ -82,7 +82,7 @@ class HandoffChannel {
   }
 
   void dispose() {
-    _continuations.close();
+    unawaited(_continuations.close());
   }
 }
 

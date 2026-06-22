@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -423,7 +425,8 @@ class _KpiLoadingLineState extends State<_KpiLoadingLine>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
+    );
+    unawaited(_ctrl.repeat(reverse: true));
     _alpha = Tween<double>(begin: 0.35, end: 0.75).animate(_ctrl);
   }
 

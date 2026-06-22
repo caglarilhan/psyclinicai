@@ -441,7 +441,7 @@ class SettingsScreen extends StatelessWidget {
       await FirebaseAuthService.instance.signOut();
     }
     if (!context.mounted) return;
-    Navigator.of(context).pushReplacementNamed('/landing');
+    unawaited(Navigator.of(context).pushReplacementNamed('/landing'));
   }
 
   Future<void> _openSharedDeviceSheet(BuildContext context) async {

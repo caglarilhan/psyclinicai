@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +30,7 @@ class _RagStatusCardState extends State<RagStatusCard> {
   @override
   void initState() {
     super.initState();
-    _probe();
+    unawaited(_probe());
   }
 
   Future<void> _probe() async {

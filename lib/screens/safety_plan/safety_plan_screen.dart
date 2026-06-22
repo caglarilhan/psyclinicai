@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/safety_plan.dart';
@@ -47,7 +49,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   @override
   void initState() {
     super.initState();
-    _init();
+    unawaited(_init());
   }
 
   @override

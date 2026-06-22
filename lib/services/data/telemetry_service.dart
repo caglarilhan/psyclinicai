@@ -76,8 +76,8 @@ class TelemetryService {
     Map<String, Object?> traits = const {},
   }) async {
     if (_sentryReady) {
-      await Sentry.configureScope((scope) {
-        scope.setUser(SentryUser(id: userId));
+      await Sentry.configureScope((scope) async {
+        await scope.setUser(SentryUser(id: userId));
       });
     }
     if (kDebugMode) {

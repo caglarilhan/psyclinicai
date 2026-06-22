@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
@@ -26,14 +28,16 @@ class _TelehealthSetupScreenState extends State<TelehealthSetupScreen> {
   bool _requested = false;
 
   void _requestEarlyAccess() {
-    TelemetryService.instance.capture(
-      'telehealth.early_access_requested',
-      properties: {
-        // PHI redaction (B4).
-        'email':
-            redactEmail(FirebaseAuthService.instance.profile?.email) ??
-            'anonymous',
-      },
+    unawaited(
+      TelemetryService.instance.capture(
+        'telehealth.early_access_requested',
+        properties: {
+          // PHI redaction (B4).
+          'email':
+              redactEmail(FirebaseAuthService.instance.profile?.email) ??
+              'anonymous',
+        },
+      ),
     );
     setState(() => _requested = true);
   }

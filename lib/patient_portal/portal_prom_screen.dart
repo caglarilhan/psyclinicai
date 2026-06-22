@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
@@ -95,9 +97,11 @@ class PortalPromScreen extends StatelessWidget {
                           if (!kPortalSafePromIds.contains(r.scaleId)) {
                             return;
                           }
-                          Navigator.of(
-                            context,
-                          ).pushNamed('/portal/proms/${r.scaleId}');
+                          unawaited(
+                            Navigator.of(
+                              context,
+                            ).pushNamed('/portal/proms/${r.scaleId}'),
+                          );
                         },
                         child: const Text('Start'),
                       ),

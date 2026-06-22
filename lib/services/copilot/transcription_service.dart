@@ -166,7 +166,7 @@ class TranscriptionService extends ChangeNotifier {
   void dispose() {
     _unregisterScrubber?.call();
     _unregisterScrubber = null;
-    _controller.close();
+    unawaited(_controller.close());
     super.dispose();
   }
 }

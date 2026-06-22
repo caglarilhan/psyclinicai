@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -229,10 +230,12 @@ class ClinicalMemoryService {
       if (narrative.isEmpty && todos.isEmpty) return null;
       return (narrative, todos);
     } catch (e, st) {
-      TelemetryService.instance.captureError(
-        e,
-        st,
-        hint: 'clinical_memory_parse',
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'clinical_memory_parse',
+        ),
       );
       return null;
     }

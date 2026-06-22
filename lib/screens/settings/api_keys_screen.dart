@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,7 +30,7 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
   @override
   void initState() {
     super.initState();
-    _hydrate();
+    unawaited(_hydrate());
   }
 
   Future<void> _hydrate() async {

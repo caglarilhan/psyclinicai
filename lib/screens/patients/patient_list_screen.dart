@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
@@ -356,9 +358,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
   }
 
   void _openDetail(String patientId, String patientName) {
-    Navigator.of(context).pushNamed(
-      '/patient/detail',
-      arguments: PatientDetailArgs(id: patientId, name: patientName),
+    unawaited(
+      Navigator.of(context).pushNamed(
+        '/patient/detail',
+        arguments: PatientDetailArgs(id: patientId, name: patientName),
+      ),
     );
   }
 }

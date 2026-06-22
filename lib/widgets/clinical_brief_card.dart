@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/clinical_brief.dart';
@@ -44,7 +46,7 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_load());
   }
 
   @override

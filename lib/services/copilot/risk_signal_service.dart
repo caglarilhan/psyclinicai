@@ -402,7 +402,9 @@ class RiskSignalService {
     } catch (e, st) {
       // Malformed AI JSON — Tier-1 lexicon still ran, but log so prompt/format
       // drift is detectable rather than silently dropping AI signals.
-      TelemetryService.instance.captureError(e, st, hint: 'risk_parse');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'risk_parse'),
+      );
       return const [];
     }
   }

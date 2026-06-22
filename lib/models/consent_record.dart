@@ -18,6 +18,43 @@
 ///   "signedAt": "2026-06-01T10:23:00.000Z"
 /// }
 /// ```
+/// Lawful processing bases recorded with each consent. L-8 fix
+/// (audit 2026-06-21): the previous record only tracked GDPR
+/// implicitly via [ConsentRecord.dataProcessingConsent]. KVKK Md. 5
+/// distinguishes "açık rıza" (explicit consent) from other bases
+/// (sağlık verisi için Md. 6 — sır saklama yükümlülüğü altındaki
+/// sağlık çalışanı). This enum lets the consent record state, per
+/// row, which legal frameworks the patient agreed under so a Turkish
+/// patient is no longer silently folded into the GDPR-only shape.
+enum ConsentBasis {
+  /// GDPR Art. 6(1)(a) general personal-data consent.
+  gdprArt6Consent('gdpr_art_6_consent'),
+
+  /// GDPR Art. 9(2)(a) explicit consent for special-category data.
+  gdprArt9Explicit('gdpr_art_9_explicit'),
+
+  /// KVKK Md. 5(2)(a) — açık rıza (explicit consent).
+  kvkkMd5Explicit('kvkk_md_5_explicit'),
+
+  /// KVKK Md. 6 — sağlık + cinsel hayata ilişkin özel nitelikli veri.
+  kvkkMd6Health('kvkk_md_6_health'),
+
+  /// HIPAA §164.508 authorisation for non-TPO disclosure.
+  hipaaAuthorisation('hipaa_authorisation');
+
+  const ConsentBasis(this.wire);
+
+  /// Stable wire encoding used in Firestore + audit log.
+  final String wire;
+
+  static ConsentBasis? fromWire(String value) {
+    for (final b in ConsentBasis.values) {
+      if (b.wire == value) return b;
+    }
+    return null;
+  }
+}
+
 class ConsentRecord {
   ConsentRecord({
     required this.patientId,
@@ -28,7 +65,10 @@ class ConsentRecord {
     required this.signedFullName,
     DateTime? signedAt,
     this.withdrawnAt,
-  }) : signedAt = signedAt ?? DateTime.now();
+    Set<ConsentBasis>? applicableBases,
+  })  : signedAt = signedAt ?? DateTime.now(),
+        applicableBases =
+            Set<ConsentBasis>.unmodifiable(applicableBases ?? const {});
 
   factory ConsentRecord.fromJson(Map<String, dynamic> json) => ConsentRecord(
         patientId: json['patientId'] as String? ?? '',
@@ -40,6 +80,11 @@ class ConsentRecord {
         signedFullName: json['signedFullName'] as String? ?? '',
         signedAt: DateTime.tryParse(json['signedAt'] as String? ?? ''),
         withdrawnAt: DateTime.tryParse(json['withdrawnAt'] as String? ?? ''),
+        applicableBases: ((json['applicableBases'] as List<dynamic>?) ??
+                const [])
+            .map((e) => ConsentBasis.fromWire(e.toString()))
+            .whereType<ConsentBasis>()
+            .toSet(),
       );
 
   /// Opaque patient id (same identifier used elsewhere in the chart).
@@ -74,6 +119,27 @@ class ConsentRecord {
   /// ([ConsentGuard]) must deny. Null on a fresh signature.
   final DateTime? withdrawnAt;
 
+  /// Lawful bases the patient agreed under. Empty set on records
+  /// created before the L-8 fix; UI defaults new TR signatures to
+  /// `{kvkkMd5Explicit, kvkkMd6Health}` and EU/US to the
+  /// equivalent GDPR/HIPAA combinations.
+  final Set<ConsentBasis> applicableBases;
+
+  /// True when ANY KVKK basis is recorded — useful for the
+  /// Turkey-locale UI flow to render KVKK-specific copy.
+  bool get coversKvkk =>
+      applicableBases.contains(ConsentBasis.kvkkMd5Explicit) ||
+      applicableBases.contains(ConsentBasis.kvkkMd6Health);
+
+  /// True when ANY GDPR basis is recorded.
+  bool get coversGdpr =>
+      applicableBases.contains(ConsentBasis.gdprArt6Consent) ||
+      applicableBases.contains(ConsentBasis.gdprArt9Explicit);
+
+  /// True when HIPAA §164.508 authorisation is on the record.
+  bool get coversHipaa =>
+      applicableBases.contains(ConsentBasis.hipaaAuthorisation);
+
   /// True only when the legally required consents are granted, the
   /// signature line is non-empty, AND the patient has not subsequently
   /// withdrawn. AI assistance consent is granular — the patient can
@@ -101,6 +167,9 @@ class ConsentRecord {
         'signedAt': signedAt.toUtc().toIso8601String(),
         if (withdrawnAt != null)
           'withdrawnAt': withdrawnAt!.toUtc().toIso8601String(),
+        if (applicableBases.isNotEmpty)
+          'applicableBases':
+              applicableBases.map((b) => b.wire).toList(growable: false),
       };
 
   ConsentRecord copyWith({
@@ -109,6 +178,7 @@ class ConsentRecord {
     bool? sensitiveDataConsent,
     String? signedFullName,
     DateTime? withdrawnAt,
+    Set<ConsentBasis>? applicableBases,
   }) =>
       ConsentRecord(
         patientId: patientId,
@@ -121,5 +191,6 @@ class ConsentRecord {
         signedFullName: signedFullName ?? this.signedFullName,
         signedAt: signedAt,
         withdrawnAt: withdrawnAt ?? this.withdrawnAt,
+        applicableBases: applicableBases ?? this.applicableBases,
       );
 }

@@ -16,6 +16,7 @@ import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
+import 'superbill_chrome.dart';
 import 'superbill_pickers.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
@@ -350,7 +351,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                 _buildDenialCard(theme, cs),
                 const SizedBox(height: 16),
               ],
-              _InvoiceMetaCard(
+              InvoiceMetaCard(
                 cs: cs,
                 theme: theme,
                 invoiceNumber: _invoiceNumber,
@@ -517,25 +518,25 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   }
 
   Widget _buildProviderCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Provider',
       cs: cs,
       theme: theme,
       child: Column(
         children: [
-          _Field(controller: _providerName, label: 'Full name'),
-          _Field(
+          SuperbillField(controller: _providerName, label: 'Full name'),
+          SuperbillField(
             controller: _providerCreds,
             label: 'Credentials (e.g. LCSW, PhD)',
           ),
           Row(
             children: [
               Expanded(
-                child: _Field(controller: _providerNpi, label: 'NPI'),
+                child: SuperbillField(controller: _providerNpi, label: 'NPI'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(
+                child: SuperbillField(
                   controller: _providerTaxId,
                   label: 'Tax ID / EIN',
                 ),
@@ -545,33 +546,33 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           Row(
             children: [
               Expanded(
-                child: _Field(controller: _providerPhone, label: 'Phone'),
+                child: SuperbillField(controller: _providerPhone, label: 'Phone'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(controller: _providerEmail, label: 'Email'),
+                child: SuperbillField(controller: _providerEmail, label: 'Email'),
               ),
             ],
           ),
-          _Field(controller: _providerAddr, label: 'Address line 1'),
-          _Field(controller: _providerAddr2, label: 'Address line 2'),
+          SuperbillField(controller: _providerAddr, label: 'Address line 1'),
+          SuperbillField(controller: _providerAddr2, label: 'Address line 2'),
         ],
       ),
     );
   }
 
   Widget _buildPatientCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Patient',
       cs: cs,
       theme: theme,
       child: Column(
         children: [
-          _Field(controller: _patientName, label: 'Full name'),
+          SuperbillField(controller: _patientName, label: 'Full name'),
           Row(
             children: [
               Expanded(
-                child: _DateField(
+                child: SuperbillDateField(
                   label: 'Date of birth',
                   value: _patientDob,
                   onPick: () async {
@@ -587,20 +588,20 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(controller: _patientMemberId, label: 'Member ID'),
+                child: SuperbillField(controller: _patientMemberId, label: 'Member ID'),
               ),
             ],
           ),
-          _Field(controller: _patientInsurer, label: 'Insurer'),
-          _Field(controller: _patientAddr, label: 'Address line 1'),
-          _Field(controller: _patientAddr2, label: 'Address line 2'),
+          SuperbillField(controller: _patientInsurer, label: 'Insurer'),
+          SuperbillField(controller: _patientAddr, label: 'Address line 1'),
+          SuperbillField(controller: _patientAddr2, label: 'Address line 2'),
         ],
       ),
     );
   }
 
   Widget _buildDiagnosisCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Diagnoses',
       trailing: TextButton.icon(
         onPressed: _pickDiagnosis,
@@ -689,7 +690,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
 
   Widget _buildServiceLinesCard(ThemeData theme, ColorScheme cs) {
     final total = _lines.fold<double>(0, (s, l) => s + l.totalCharge);
-    return _SectionCard(
+    return SectionCard(
       title: 'Service lines',
       trailing: TextButton.icon(
         onPressed: _pickCptForLine,
@@ -808,220 +809,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    required this.cs,
-    required this.theme,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget child;
-  final ColorScheme cs;
-  final ThemeData theme;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              if (trailing != null) trailing!,
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({required this.controller, required this.label});
-  final TextEditingController controller;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 14,
-          ),
-          isDense: true,
-        ),
-      ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onPick,
-  });
-
-  final String label;
-  final DateTime? value;
-  final VoidCallback onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
-          isDense: true,
-        ),
-        child: InkWell(
-          onTap: onPick,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value == null ? '—' : DateFormat('yyyy-MM-dd').format(value!),
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ),
-              const Icon(Icons.calendar_today, size: 18),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InvoiceMetaCard extends StatelessWidget {
-  const _InvoiceMetaCard({
-    required this.cs,
-    required this.theme,
-    required this.invoiceNumber,
-    required this.serviceDate,
-    required this.onPickDate,
-  });
-
-  final ColorScheme cs;
-  final ThemeData theme;
-  final TextEditingController invoiceNumber;
-  final DateTime serviceDate;
-  final VoidCallback onPickDate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            cs.primaryContainer.withValues(alpha: 0.4),
-            cs.primaryContainer.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final wide = c.maxWidth > 560;
-          final header = Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.receipt_long, color: cs.primary, size: 28),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Superbill Draft',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Out-of-network insurance reimbursement receipt. '
-                      'Provider must verify codes before submission.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-          final fields = Column(
-            children: [
-              _Field(controller: invoiceNumber, label: 'Invoice #'),
-              _DateField(
-                label: 'Service date',
-                value: serviceDate,
-                onPick: onPickDate,
-              ),
-            ],
-          );
-          // Below ~560 px the fixed-220 sidecar starved the title to 34 px
-          // and the text rendered one letter per line — stack on mobile.
-          if (wide) {
-            return Row(
-              children: [
-                Expanded(child: header),
-                const SizedBox(width: 20),
-                SizedBox(width: 220, child: fields),
-              ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [header, const SizedBox(height: 16), fields],
-          );
-        },
-      ),
-    );
-  }
-}
-// DiagnosisPicker + CptPicker moved to superbill_pickers.dart
-// (HIGH-4 god-file split).
+// Layout widgets (SectionCard / SuperbillField / SuperbillDateField /
+// InvoiceMetaCard) moved to superbill_chrome.dart.
+// DiagnosisPicker + CptPicker moved to superbill_pickers.dart.
+// (HIGH-4 god-file split, audit 2026-06-21.)

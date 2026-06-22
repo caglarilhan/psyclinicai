@@ -8,6 +8,7 @@ import '../../services/copilot/safety_plan_ai_service.dart';
 import '../../services/crisis/crisis_resource_registry.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/safety_plan_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
@@ -131,8 +132,20 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Safety plan saved')));
-    } catch (_) {
+    } catch (e, st) {
       // A crisis plan that failed to persist must NOT report success.
+      // Silent-fail fix (audit 2026-06-21): clinical-critical path, so
+      // capture the underlying error to telemetry — a quietly-broken
+      // Stanley-Brown save during an active suicidality flag is the
+      // worst place to lose diagnostics. PHI scrubbing happens inside
+      // captureError; user-facing copy is unchanged.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'safety_plan.save',
+        ),
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

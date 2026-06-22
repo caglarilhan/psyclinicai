@@ -17,6 +17,7 @@ import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
 import 'superbill_chrome.dart';
+import 'superbill_denial_card.dart';
 import 'superbill_pickers.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
@@ -348,7 +349,16 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             padding: const EdgeInsets.only(bottom: 48),
             children: [
               if (_denial != null) ...[
-                _buildDenialCard(theme, cs),
+                DenialShieldCard(
+                  denial: _denial!,
+                  payer: _payer,
+                  onPayerChanged: (p) => setState(() {
+                    _payer = p;
+                    _computeDenial();
+                  }),
+                  theme: theme,
+                  cs: cs,
+                ),
                 const SizedBox(height: 16),
               ],
               InvoiceMetaCard(
@@ -380,139 +390,6 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildDenialCard(ThemeData theme, ColorScheme cs) {
-    final d = _denial!;
-    final color = switch (d.level) {
-      DenialLevel.high => cs.error,
-      DenialLevel.medium => const Color(0xFFD97706),
-      DenialLevel.low => const Color(0xFF16A34A),
-    };
-    final risk = d.revenueAtRisk;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.verified_user_outlined, color: color, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Denial Shield · ${d.level.label}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-              ),
-              DropdownButton<Payer>(
-                value: _payer,
-                isDense: true,
-                underline: const SizedBox.shrink(),
-                items: [
-                  for (final p in Payer.values)
-                    DropdownMenuItem(value: p, child: Text(p.short)),
-                ],
-                onChanged: (p) {
-                  if (p == null) return;
-                  setState(() {
-                    _payer = p;
-                    _computeDenial();
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${d.cptCode} · ${d.cptLabel}'
-            '${risk != null ? ' · ~\$${risk.round()} at risk if denied' : ''}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (d.reasons.isEmpty)
-            Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  size: 18,
-                  color: Color(0xFF16A34A),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Documentation supports billing — no denial drivers for '
-                    '${_payer.short}.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            )
-          else
-            ...d.reasons.map(
-              (r) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          r.critical
-                              ? Icons.error_outline
-                              : Icons.warning_amber_rounded,
-                          size: 16,
-                          color: r.critical
-                              ? cs.error
-                              : const Color(0xFFD97706),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            r.title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 22, top: 4),
-                      child: Text(
-                        '+ ${r.fixSentence}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.primary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Text(
-            DenialShieldService.payerFocus(_payer),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.55),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
       ),
     );
   }

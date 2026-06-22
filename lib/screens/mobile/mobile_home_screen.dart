@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/language_service.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   const MobileHomeScreen({super.key});
@@ -592,26 +593,34 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
   }
 
   void _addPatient() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yeni hasta ekleme özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Yeni hasta ekleme özelliği açılıyor…',
+      hint: 'mobile_home.add_patient',
     );
   }
 
   void _createAppointment() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Randevu oluşturma özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Randevu oluşturma özelliği açılıyor…',
+      hint: 'mobile_home.create_appointment',
     );
   }
 
   void _recordVoiceNote() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sesli not alma özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Sesli not alma özelliği açılıyor…',
+      hint: 'mobile_home.voice_note',
     );
   }
 
   void _startAIDiagnosis() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('AI tanı özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'AI tanı özelliği açılıyor…',
+      hint: 'mobile_home.ai_diagnosis',
     );
   }
 }

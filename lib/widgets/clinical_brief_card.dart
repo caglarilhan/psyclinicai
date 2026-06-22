@@ -11,6 +11,7 @@ import '../services/data/safety_plan_repository.dart';
 import '../services/data/session_note_repository.dart';
 import '../services/treatment_plan_service.dart';
 import '../theme/tokens.dart';
+import 'ds/psy_snack.dart';
 
 /// "Session prep" card — the Clinical Memory pre-session brief. Self-contained:
 /// loads the patient's notes, goals, homework, and safety plan, builds the
@@ -96,17 +97,17 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
       if (mounted) setState(() => _brief = updated);
     } on ClinicalMemoryException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey ? 'clinical_brief.no_key' : 'clinical_brief.failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _aiBusy = false);

@@ -14,6 +14,7 @@ import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 import 'treatment_plan_cards.dart';
 import 'treatment_plan_dialogs.dart';
@@ -43,6 +44,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     ),
   );
   final _homeworkRepo = HomeworkRepository();
+  final _saveCtrl = SavingIndicatorController();
   bool _loading = true;
   bool _busy = false;
   TreatmentPlan? _plan;
@@ -57,6 +59,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   @override
   void dispose() {
     _ai.dispose();
+    _saveCtrl.dispose();
     super.dispose();
   }
 
@@ -94,14 +97,23 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       ],
       primaryAction: (_plan == null || _busy)
           ? null
-          : FilledButton.icon(
-              onPressed: _addGoalDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('Add goal'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SavingIndicator(controller: _saveCtrl),
+                const SizedBox(width: PsySpacing.md),
+                FilledButton.icon(
+                  onPressed: _addGoalDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add goal'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.xl,
+                    ),
+                  ),
+                ),
+              ],
             ),
       child: _loading
           ? const Padding(
@@ -251,15 +263,22 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     );
     if (res == null || _plan == null) return;
     final notes = res.toNotesMarkdown();
-    await _svc.addTreatmentGoal(
-      treatmentPlanId: _plan!.id,
-      description: res.description,
-      category: res.category,
-      priority: res.priority,
-      targetDate: DateTime.now().add(Duration(days: res.targetWeeks * 7)),
-      measurementMethod: res.measurement,
-      notes: notes.isEmpty ? null : notes,
-    );
+    _saveCtrl.startSaving();
+    try {
+      await _svc.addTreatmentGoal(
+        treatmentPlanId: _plan!.id,
+        description: res.description,
+        category: res.category,
+        priority: res.priority,
+        targetDate: DateTime.now().add(Duration(days: res.targetWeeks * 7)),
+        measurementMethod: res.measurement,
+        notes: notes.isEmpty ? null : notes,
+      );
+      _saveCtrl.markSaved();
+    } catch (_) {
+      _saveCtrl.markError(onRetry: _addGoalDialog);
+      rethrow;
+    }
     _reload();
   }
 
@@ -325,11 +344,18 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
 
   Future<void> _updateProgress(TreatmentGoal goal, int progress) async {
     if (_plan == null) return;
-    await _svc.updateGoalProgress(
-      treatmentPlanId: _plan!.id,
-      goalId: goal.id,
-      progress: progress,
-    );
+    _saveCtrl.startSaving();
+    try {
+      await _svc.updateGoalProgress(
+        treatmentPlanId: _plan!.id,
+        goalId: goal.id,
+        progress: progress,
+      );
+      _saveCtrl.markSaved();
+    } catch (_) {
+      _saveCtrl.markError(onRetry: () => _updateProgress(goal, progress));
+      rethrow;
+    }
     _reload();
   }
 
@@ -339,19 +365,33 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       builder: (_) => const HomeworkDialog(),
     );
     if (title == null || title.trim().isEmpty) return;
-    await _homeworkRepo.add(
-      HomeworkItem(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        patientId: widget.args.id,
-        title: title.trim(),
-        dueDate: DateTime.now().add(const Duration(days: 7)),
-      ),
-    );
+    _saveCtrl.startSaving();
+    try {
+      await _homeworkRepo.add(
+        HomeworkItem(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          patientId: widget.args.id,
+          title: title.trim(),
+          dueDate: DateTime.now().add(const Duration(days: 7)),
+        ),
+      );
+      _saveCtrl.markSaved();
+    } catch (_) {
+      _saveCtrl.markError(onRetry: _addHomework);
+      rethrow;
+    }
     _reload();
   }
 
   Future<void> _toggleHomework(HomeworkItem h) async {
-    await _homeworkRepo.toggleDone(h.id);
+    _saveCtrl.startSaving();
+    try {
+      await _homeworkRepo.toggleDone(h.id);
+      _saveCtrl.markSaved();
+    } catch (_) {
+      _saveCtrl.markError(onRetry: () => _toggleHomework(h));
+      rethrow;
+    }
     _reload();
   }
 

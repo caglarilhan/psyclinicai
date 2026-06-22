@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/language_service.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 class LanguageSettingsScreen extends StatelessWidget {
   const LanguageSettingsScreen({super.key});
@@ -384,13 +385,10 @@ class LanguageSettingsScreen extends StatelessWidget {
               onPressed: () {
                 unawaited(languageService.changeLanguage(locale));
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      languageService.translate('language_changed'),
-                    ),
-                    action: SnackBarAction(label: 'Tamam', onPressed: () {}),
-                  ),
+                PsySnack.success(
+                  context,
+                  languageService.translate('language_changed'),
+                  hint: 'language.changed',
                 );
               },
               child: Text(languageService.translate('ok')),

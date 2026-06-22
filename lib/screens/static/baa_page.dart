@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/baa` — HIPAA Business Associate Agreement summary + request CTA.
 /// Mirrors the structure of [DpaPage]; the binding contract is the
@@ -137,12 +138,10 @@ class BaaPage extends StatelessWidget {
                 PsyButton(
                   label: 'Email legal@psyclinicai.com',
                   icon: Icons.email_outlined,
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Email client opens in your local mail handler — demo skips this in web.',
-                      ),
-                    ),
+                  onPressed: () => PsySnack.info(
+                    context,
+                    'Email client opens in your local mail handler — demo skips this in web.',
+                    hint: 'baa.email_demo',
                   ),
                 ),
               ],

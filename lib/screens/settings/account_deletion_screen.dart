@@ -9,6 +9,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// In-memory singleton that holds the user's current deletion request.
 /// A durable repository (Firestore + scheduled purge job) lands in
@@ -296,10 +297,10 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
         properties: {'reason': _reason},
       ),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Deletion requested — 30-day grace started.'),
-      ),
+    PsySnack.warning(
+      context,
+      'Deletion requested — 30-day grace started.',
+      hint: 'account_deletion.requested',
     );
   }
 
@@ -310,8 +311,10 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
         'compliance.account_deletion_cancelled',
       ),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Deletion cancelled. Account restored.')),
+    PsySnack.success(
+      context,
+      'Deletion cancelled. Account restored.',
+      hint: 'account_deletion.cancelled',
     );
   }
 }

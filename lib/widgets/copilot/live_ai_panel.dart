@@ -15,6 +15,7 @@ import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/supervision_service.dart';
 import '../../services/copilot/transcription_service.dart';
 import '../../services/data/session_note_repository.dart';
+import '../ds/psy_snack.dart';
 import 'audit_feedback.dart';
 import 'compliance_rail.dart';
 import 'insights_sheet.dart';
@@ -366,17 +367,17 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       );
     } on SessionInsightsException catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey ? 'live_ai.insights_no_key' : 'live_ai.insights_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _loadingInsights = false);
@@ -417,17 +418,19 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       showSupervisionSheet(context, report);
     } on SupervisionException catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey
+            ? 'live_ai.supervision_no_key'
+            : 'live_ai.supervision_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _loadingSupervision = false);
@@ -450,17 +453,17 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       showClinicalLensSheet(context, lens);
     } on ClinicalLensException catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey ? 'live_ai.lens_no_key' : 'live_ai.lens_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _loadingLens = false);

@@ -6,6 +6,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/settings/region` — Per-tenant Firestore region surface (closes
 /// the N-11 finding from the Sprint-17 audit).
@@ -42,13 +43,11 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
     setState(() {
       _pin = _pin.requestChangeTo(_other);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Change request logged. Our CISO replies within one business '
-          'day — no data is moved until you confirm.',
-        ),
-      ),
+    PsySnack.info(
+      context,
+      'Change request logged. Our CISO replies within one business '
+      'day — no data is moved until you confirm.',
+      hint: 'region_settings.change_request',
     );
   }
 

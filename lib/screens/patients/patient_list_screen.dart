@@ -11,7 +11,9 @@ import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/ds/psy_skeleton.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/patient_list_filter_bar.dart';
 
 /// `/patients` — searchable patient roster.
@@ -113,6 +115,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
             body: _query.isEmpty
                 ? 'Add your first patient to get started.'
                 : 'Try a different keyword or clear the search.',
+            action: _query.isEmpty
+                ? PsyEmptyStateAction(
+                    label: 'Add patient',
+                    icon: Icons.person_add_alt_1,
+                    onTap: _openAddPatient,
+                  )
+                : null,
           );
         }
         return ListView.separated(
@@ -247,34 +256,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
     required IconData icon,
     required String title,
     required String body,
+    PsyEmptyStateAction? action,
   }) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(PsySpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: cs.onSurface.withValues(alpha: 0.45), size: 44),
-            const SizedBox(height: PsySpacing.lg),
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: PsySpacing.sm),
-            Text(
-              body,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return PsyEmptyState(
+      icon: icon,
+      title: title,
+      body: body,
+      action: action,
     );
   }
 
@@ -337,12 +325,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     if (!PsyFirebase.isReady) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.',
-          ),
-        ),
+      PsySnack.warning(
+        context,
+        'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.',
+        hint: 'patient_list.add_demo_no_persist',
       );
       return;
     }
@@ -357,9 +343,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
       await PatientRepository.instance.create(profile.clinicId, draft);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not add patient: $e')));
+        'Could not add patient: $e',
+        hint: 'patient_list.add_failed',
+      );
     }
   }
 

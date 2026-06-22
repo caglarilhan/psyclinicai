@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/dpa` — GDPR Article 28 Data Processing Agreement summary + the
 /// "request your signed copy" CTA. Renders an executive abstract of
@@ -602,12 +603,10 @@ class _DownloadCard extends StatelessWidget {
           PsyButton(
             label: 'Email legal@psyclinicai.com',
             icon: Icons.email_outlined,
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Email client opens in your local mail handler — demo skips this in web.',
-                ),
-              ),
+            onPressed: () => PsySnack.info(
+              context,
+              'Email client opens in your local mail handler — demo skips this in web.',
+              hint: 'dpa.email_demo',
             ),
           ),
         ],

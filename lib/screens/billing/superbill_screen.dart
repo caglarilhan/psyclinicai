@@ -16,6 +16,7 @@ import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_tooltip.dart';
 import 'superbill_chrome.dart';
 import 'superbill_denial_card.dart';
 import 'superbill_pickers.dart';
@@ -540,21 +541,25 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          dx.code,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.primary,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
+                      PsyTooltip(
+                        label: dx.code,
+                        description: dx.label,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            dx.code,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: cs.primary,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -614,21 +619,25 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        line.cpt.code,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: cs.primary,
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w600,
+                    PsyTooltip(
+                      label: line.cpt.code,
+                      description: line.cpt.shortLabel,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          line.cpt.code,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: cs.primary,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

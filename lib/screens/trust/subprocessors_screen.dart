@@ -6,6 +6,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/trust/subprocessors` — the live GDPR Article 28(2) list.
 ///
@@ -32,12 +33,10 @@ class SubprocessorsScreen extends StatelessWidget {
         Crumb('Subprocessors', null),
       ],
       primaryAction: OutlinedButton.icon(
-        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Subscribe to subprocessor change notices at legal@psyclinicai.com.',
-            ),
-          ),
+        onPressed: () => PsySnack.info(
+          context,
+          'Subscribe to subprocessor change notices at legal@psyclinicai.com.',
+          hint: 'trust.subprocessors_subscribe',
         ),
         icon: const Icon(Icons.notifications_active_outlined, size: 18),
         label: const Text('Subscribe'),

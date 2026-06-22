@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../services/copilot/api_key_storage.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// Settings page where clinicians provide their own AI provider API keys
 /// (BYOK — Bring Your Own Key).
@@ -67,18 +68,19 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
         _hasOpenAi = openai.isNotEmpty;
         _saving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('API keys saved securely on device'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      PsySnack.success(
+        context,
+        'API keys saved securely on device.',
+        hint: 'api_keys.save',
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+        'Failed to save: $e',
+        hint: 'api_keys.save_failed',
+      );
     }
   }
 

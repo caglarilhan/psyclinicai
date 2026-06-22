@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ds/psy_snack.dart';
+
 /// Modal that fronts the product demo experience. Until the recorded
 /// 90-sec walkthrough is published, the modal explains the pre-launch
 /// state and offers two next steps (notify-me / book a 20-min live
@@ -87,12 +89,10 @@ class DemoModal extends StatelessWidget {
                           FilledButton.icon(
                             onPressed: () {
                               Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Thanks — we'll email you the moment the demo is live.",
-                                  ),
-                                ),
+                              PsySnack.success(
+                                context,
+                                "Thanks — we'll email you the moment the demo is live.",
+                                hint: 'landing.demo_notify',
                               );
                             },
                             icon: const Icon(Icons.play_arrow, size: 18),
@@ -113,12 +113,10 @@ class DemoModal extends StatelessWidget {
                           OutlinedButton.icon(
                             onPressed: () {
                               Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Email $bookEmail with the subject "Demo" and we will reply within 24 h.',
-                                  ),
-                                ),
+                              PsySnack.info(
+                                context,
+                                'Email $bookEmail with the subject "Demo" and we will reply within 24 h.',
+                                hint: 'landing.demo_book_walkthrough',
                               );
                             },
                             icon: const Icon(Icons.event, size: 18),

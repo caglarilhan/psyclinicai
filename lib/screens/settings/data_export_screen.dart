@@ -14,6 +14,7 @@ import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_skeleton.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/settings/data_export` — Patient Subject Access Request (DSAR)
 /// portal under GDPR Articles 15 + 20.
@@ -88,8 +89,10 @@ class _DataExportScreenState extends State<DataExportScreen> {
         properties: {'bytes': _byteSize, 'schema_version': dsarSchemaVersion},
       ),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Export bundle copied to clipboard.')),
+    PsySnack.success(
+      context,
+      'Export bundle copied to clipboard.',
+      hint: 'data_export.copy',
     );
   }
 

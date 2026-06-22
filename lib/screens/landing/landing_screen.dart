@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/data/telemetry_service.dart';
 import '../../services/data/waitlist_repository.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/landing/cookie_consent.dart';
 import '../../widgets/landing/demo_modal.dart';
 import '../../widgets/landing/exit_intent_modal.dart';
@@ -111,8 +112,10 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   void _pickTier(BuildContext context, String tier) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Reserving a $tier seat — sign in to continue')),
+    PsySnack.info(
+      context,
+      'Reserving a $tier seat — sign in to continue.',
+      hint: 'landing.tier_pick',
     );
     unawaited(Navigator.of(context).pushNamed('/login'));
   }
@@ -133,12 +136,10 @@ class _LandingScreenState extends State<LandingScreen> {
       source: 'hero',
     );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "You're in. We'll email $email the moment a founding seat opens.",
-        ),
-      ),
+    PsySnack.success(
+      context,
+      "You're in. We'll email $email the moment a founding seat opens.",
+      hint: 'landing.waitlist_confirmed',
     );
   }
 
@@ -182,9 +183,11 @@ class _LandingScreenState extends State<LandingScreen> {
       unawaited(Navigator.of(context).pushNamed(route));
       return;
     }
-    ScaffoldMessenger.of(
+    PsySnack.info(
       context,
-    ).showSnackBar(SnackBar(content: Text('"$id" page coming soon')));
+      '"$id" page coming soon.',
+      hint: 'landing.footer_coming_soon',
+    );
   }
 
   @override

@@ -14,6 +14,7 @@ import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/settings` — clinician settings hub. Surfaces account info,
 /// integration keys, and a danger zone for account deletion.
@@ -427,12 +428,10 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
     if (ok != true || !context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Deletion request received. We will email a confirmation within 24 h.',
-        ),
-      ),
+    PsySnack.info(
+      context,
+      'Deletion request received. We will email a confirmation within 24 h.',
+      hint: 'settings.deletion_request',
     );
   }
 

@@ -9,6 +9,7 @@ import '../../theme/tokens.dart';
 import '../../utils/audit_log_exporter.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/audit_log_detail_sheet.dart';
+import '../../widgets/ds/psy_snack.dart';
 import 'audit_log_entry.dart';
 import 'audit_log_status.dart';
 
@@ -89,13 +90,11 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
     );
     if (!mounted) return;
     unawaited(Navigator.of(context).maybePop());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${rows.length} rows copied as ${format.toUpperCase()} '
-          '${redact ? '(PHI redacted)' : '(RAW — PHI included)'}.',
-        ),
-      ),
+    PsySnack.success(
+      context,
+      '${rows.length} rows copied as ${format.toUpperCase()} '
+      '${redact ? '(PHI redacted)' : '(RAW — PHI included)'}.',
+      hint: 'audit_log.export',
     );
   }
 

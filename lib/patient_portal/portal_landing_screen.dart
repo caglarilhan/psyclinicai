@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 import '../widgets/ds/psy_card.dart';
+import '../widgets/ds/psy_snack.dart';
 
 /// `/portal` — Patient self-service landing.
 ///
@@ -84,14 +85,11 @@ class PortalLandingScreen extends StatelessWidget {
                         // mailto fallback so the legal obligation
                         // (HIPAA Right of Access, GDPR Art. 15-22) is
                         // never a dead button.
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Email privacy@psyclinic.ai to manage '
-                              'your data rights. The in-app portal is '
-                              'launching soon.',
-                            ),
-                          ),
+                        PsySnack.info(
+                          context,
+                          'Email privacy@psyclinic.ai to manage your data '
+                          'rights. The in-app portal is launching soon.',
+                          hint: 'portal.data_rights',
                         );
                       },
                       child: const Text('Manage data rights →'),

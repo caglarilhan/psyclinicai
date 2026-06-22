@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/chat_service.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
@@ -51,13 +52,32 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
         _sending = false;
       });
       _scrollToBottom();
-    } on ChatException catch (e) {
+    } on ChatException catch (e, st) {
+      // Skip the noApiKey case (expected UX); capture everything
+      // else so prod chat failures (network / parse / rate-limit)
+      // are observable.
+      if (e.code != ChatErrorCode.noApiKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'ai_chatbot.send',
+          ),
+        );
+      }
       if (!mounted) return;
       setState(() {
         _error = e.message;
         _sending = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'ai_chatbot.unexpected',
+        ),
+      );
       if (!mounted) return;
       setState(() {
         _error = 'Unexpected error: $e';

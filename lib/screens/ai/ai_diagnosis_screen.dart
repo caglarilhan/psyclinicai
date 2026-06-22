@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/diagnosis_service.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -79,13 +82,35 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
         _result = list;
         _loading = false;
       });
-    } on DiagnosisException catch (e) {
+    } on DiagnosisException catch (e, st) {
+      // Capture non-noApiKey errors so prod diagnosis-AI failures
+      // (network / parse / rate-limit / unauthorized / unknown) are
+      // observable. noApiKey is expected UX — user surfaces an inline
+      // hint and we don't want every "key not configured" page-view
+      // to generate a Sentry event.
+      if (e.code != DiagnosisErrorCode.noApiKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'ai_diagnosis.differential',
+          ),
+        );
+      }
       if (!mounted) return;
       setState(() {
         _error = e.message;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      // Unexpected (non-typed) failure — always capture.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'ai_diagnosis.unexpected',
+        ),
+      );
       if (!mounted) return;
       setState(() {
         _error = 'Unexpected error: $e';

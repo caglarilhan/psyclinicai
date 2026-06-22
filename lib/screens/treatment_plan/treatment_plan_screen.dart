@@ -9,6 +9,7 @@ import '../../services/copilot/treatment_plan_ai_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/homework_repository.dart';
 import '../../services/data/intake_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -288,7 +289,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
           ),
         );
       }
-    } on TreatmentPlanAiException catch (e) {
+    } on TreatmentPlanAiException catch (e, st) {
+      // Capture non-noKey errors so the AI surface is observable in
+      // prod (parse drift, network, quota). noKey is expected UX —
+      // the snackbar still nudges the user to the API-keys screen.
+      if (!e.noKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'treatment_plan.ai_call',
+          ),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -379,7 +392,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
           ),
         );
       }
-    } on TreatmentPlanAiException catch (e) {
+    } on TreatmentPlanAiException catch (e, st) {
+      // Capture non-noKey errors so the AI surface is observable in
+      // prod (parse drift, network, quota). noKey is expected UX —
+      // the snackbar still nudges the user to the API-keys screen.
+      if (!e.noKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'treatment_plan.ai_call',
+          ),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -418,7 +443,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
           builder: (_) => LetterSheet(letter: letter),
         ),
       );
-    } on TreatmentPlanAiException catch (e) {
+    } on TreatmentPlanAiException catch (e, st) {
+      // Capture non-noKey errors so the AI surface is observable in
+      // prod (parse drift, network, quota). noKey is expected UX —
+      // the snackbar still nudges the user to the API-keys screen.
+      if (!e.noKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'treatment_plan.ai_call',
+          ),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

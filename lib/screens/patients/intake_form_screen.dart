@@ -9,6 +9,8 @@ import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/ds/saving_indicator.dart';
 import 'intake_form_widgets.dart';
 import 'patient_list_screen.dart' show PatientDetailArgs;
 
@@ -47,6 +49,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   final _mentalHistory = TextEditingController();
   final _substanceUse = TextEditingController();
   final _signature = TextEditingController();
+  final _saveCtrl = SavingIndicatorController();
 
   DateTime? _dob;
   final List<String> _allergies = [];
@@ -115,6 +118,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
     _mentalHistory.dispose();
     _substanceUse.dispose();
     _signature.dispose();
+    _saveCtrl.dispose();
     super.dispose();
   }
 
@@ -155,17 +159,16 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   Future<void> _save() async {
     final intake = _current();
     if (!intake.isComplete) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Name, presenting concern, signature, and required consents '
-            'must be completed before saving.',
-          ),
-        ),
+      PsySnack.warning(
+        context,
+        'Name, presenting concern, signature, and required consents '
+        'must be completed before saving.',
+        hint: 'patient.intake_incomplete',
       );
       return;
     }
     setState(() => _saving = true);
+    _saveCtrl.startSaving();
     try {
       await _repo.save(intake);
       unawaited(
@@ -181,17 +184,18 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
           },
         ),
       );
+      _saveCtrl.markSaved();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Intake saved — consent recorded.')),
+      PsySnack.success(
+        context,
+        'Intake saved — consent recorded.',
+        hint: 'patient.intake_save',
       );
     } catch (e, st) {
-      // Silent-fail fix (audit 2026-06-21): the previous `catch (_)`
-      // dropped the underlying error on the floor — a Firestore
-      // permission denied, a serialization bug, a quota hit all
-      // looked the same to the clinician AND to support. Capture the
-      // (PHI-scrubbed) error so prod failures can be diagnosed
-      // without local repro; user-facing copy stays the same.
+      // Telemetry capture so a Firestore permission denied / serialization
+      // bug / quota hit is diagnosable in prod; the SavingIndicator gives
+      // the clinician a sticky cue with tap-to-retry, and PsySnack.error
+      // backs that up with an action snackbar.
       unawaited(
         TelemetryService.instance.captureError(
           e,
@@ -199,11 +203,13 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
           hint: 'patient.intake_save',
         ),
       );
+      _saveCtrl.markError(onRetry: _save);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save the intake — please retry.'),
-        ),
+      PsySnack.error(
+        context,
+        'Could not save the intake — please retry.',
+        hint: 'patient.intake_save_failed',
+        action: SnackBarAction(label: 'Retry', onPressed: _save),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -240,14 +246,23 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
       ],
       primaryAction: _loading
           ? null
-          : FilledButton.icon(
-              onPressed: canSave ? _save : null,
-              icon: const Icon(Icons.check),
-              label: const Text('Save intake'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SavingIndicator(controller: _saveCtrl),
+                const SizedBox(width: PsySpacing.md),
+                FilledButton.icon(
+                  onPressed: canSave ? _save : null,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Save intake'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.xl,
+                    ),
+                  ),
+                ),
+              ],
             ),
       child: _loading
           ? const Padding(

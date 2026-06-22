@@ -13,6 +13,7 @@ import '../../services/data/telemetry_service.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 import 'treatment_plan_cards.dart';
 import 'treatment_plan_dialogs.dart';
@@ -283,10 +284,10 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       }
       _reload();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${drafts.length} goals drafted — review and edit.'),
-          ),
+        PsySnack.success(
+          context,
+          '${drafts.length} goals drafted — review and edit.',
+          hint: 'treatment_plan.ai_goals_drafted',
         );
       }
     } on TreatmentPlanAiException catch (e, st) {
@@ -303,17 +304,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey
+            ? 'treatment_plan.ai_draft_no_key'
+            : 'treatment_plan.ai_draft_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -357,10 +360,10 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     if (plan == null) return;
     final goals = plan.activeGoals.map((g) => g.description).toList();
     if (goals.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add a goal first — homework ties to goals.'),
-        ),
+      PsySnack.info(
+        context,
+        'Add a goal first — homework ties to goals.',
+        hint: 'treatment_plan.homework_no_goals',
       );
       return;
     }
@@ -384,12 +387,10 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       }
       _reload();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${ideas.length} homework ideas added — review and edit.',
-            ),
-          ),
+        PsySnack.success(
+          context,
+          '${ideas.length} homework ideas added — review and edit.',
+          hint: 'treatment_plan.homework_suggested',
         );
       }
     } on TreatmentPlanAiException catch (e, st) {
@@ -406,17 +407,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey
+            ? 'treatment_plan.homework_no_key'
+            : 'treatment_plan.homework_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -457,17 +460,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey
+            ? 'treatment_plan.letter_no_key'
+            : 'treatment_plan.letter_failed',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _busy = false);

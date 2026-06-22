@@ -17,6 +17,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../theme/tokens.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/onboarding_checklist.dart';
 
 class RoleChip extends StatelessWidget {
@@ -174,40 +175,17 @@ class RecentActivity extends StatelessWidget {
           ),
         ),
         const SizedBox(height: PsySpacing.lg),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.xxl,
-            vertical: PsySpacing.xxxl,
-          ),
+        DecoratedBox(
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(PsyRadius.lg),
             border: Border.all(color: cs.outlineVariant),
           ),
-          alignment: Alignment.center,
-          child: Column(
-            children: [
-              Icon(
-                Icons.history_outlined,
-                color: cs.onSurface.withValues(alpha: 0.45),
-                size: 36,
-              ),
-              const SizedBox(height: PsySpacing.md),
-              Text(
-                'No activity yet.',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              const SizedBox(height: PsySpacing.xs),
-              Text(
+          child: const PsyEmptyState(
+            icon: Icons.history_outlined,
+            title: 'No activity yet.',
+            body:
                 'Start a session or send a screener — entries will show up here.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                ),
-              ),
-            ],
           ),
         ),
       ],

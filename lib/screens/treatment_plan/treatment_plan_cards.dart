@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/treatment_plan_models.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 
 String goalCategoryLabel(GoalCategory c) => switch (c) {
   GoalCategory.symptomReduction => 'Symptom reduction',
@@ -283,37 +284,14 @@ class NoPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 60),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(
-              Icons.assignment_outlined,
-              size: 44,
-              color: cs.onSurface.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: PsySpacing.md),
-            Text(
-              'No treatment plan yet',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: PsySpacing.xs),
-            Text(
-              'Capture the diagnosis and formulation, then draft SMART goals.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.55),
-              ),
-            ),
-            const SizedBox(height: PsySpacing.lg),
-            FilledButton.icon(
-              onPressed: onCreate,
-              icon: const Icon(Icons.add),
-              label: const Text('Create treatment plan'),
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-            ),
-          ],
+      child: PsyEmptyState(
+        icon: Icons.assignment_outlined,
+        title: 'No treatment plan yet',
+        body: 'Capture the diagnosis and formulation, then draft SMART goals.',
+        action: PsyEmptyStateAction(
+          label: 'Create treatment plan',
+          icon: Icons.add,
+          onTap: onCreate,
         ),
       ),
     );
@@ -327,22 +305,17 @@ class EmptyGoalsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: PsySpacing.xl,
-        vertical: PsySpacing.xxl,
-      ),
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(PsyRadius.lg),
         border: Border.all(color: cs.outlineVariant),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        'No goals yet — add one or draft with AI.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: cs.onSurface.withValues(alpha: 0.6),
-        ),
+      child: const PsyEmptyState(
+        icon: Icons.flag_outlined,
+        title: 'No goals yet',
+        body: 'Add one with the button above — or draft a set with AI.',
+        compact: true,
       ),
     );
   }

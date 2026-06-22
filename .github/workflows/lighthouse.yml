@@ -60,6 +60,13 @@ jobs:
         run: npm install -g @axe-core/cli@4
 
       - name: axe a11y — landing
+        # Audit 2026-06-21 / CI item 9: the `|| true` here was a
+        # rubber-stamp that masked every violation. We now keep the
+        # tolerant run (so the JSON artifact is always produced for
+        # the team to triage in the next step), then a dedicated
+        # gate fails the build when impact==critical violations
+        # surface. Non-critical findings still upload but do not
+        # block — gives the team a backlog without freezing PRs.
         run: |
           axe http://localhost:8000/ \
             --exit \
@@ -71,6 +78,35 @@ jobs:
             --tags wcag2a,wcag2aa,wcag21aa,wcag22aa \
             --reporter v2 \
             --save axe-roadmap.json || true
+
+      - name: Fail on critical a11y violations
+        # Parse each axe report and exit non-zero when any
+        # violation carries impact == "critical". Pure node — no
+        # extra dep, jq behaviour can vary by runner image.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const files = ["axe-landing.json", "axe-roadmap.json"];
+            let critical = 0;
+            for (const f of files) {
+              if (!fs.existsSync(f)) continue;
+              const data = JSON.parse(fs.readFileSync(f, "utf8"));
+              const runs = Array.isArray(data) ? data : [data];
+              for (const r of runs) {
+                for (const v of (r.violations || [])) {
+                  if (v.impact === "critical") {
+                    critical += 1;
+                    console.log(`::error file=${f}::${v.id} (${v.help})`);
+                  }
+                }
+              }
+            }
+            if (critical > 0) {
+              console.error(`axe: ${critical} critical violation(s) — failing the build.`);
+              process.exit(1);
+            }
+            console.log("axe: 0 critical violations.");
+          '
 
       - name: Upload axe reports
         uses: actions/upload-artifact@v4

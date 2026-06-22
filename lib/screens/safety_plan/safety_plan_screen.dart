@@ -11,6 +11,8 @@ import '../../services/data/safety_plan_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/safety_plan` — collaborative Stanley-Brown crisis safety plan. Pairs with
@@ -47,6 +49,12 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   final _reasons = <String>[];
   final _means = TextEditingController();
 
+  /// Save status pill — invisible until the clinician taps Save, then
+  /// cycles through saving → saved (auto-fades) or saving → error
+  /// (sticky with tap-to-retry). Threaded into the AppShell header
+  /// row below the primary CTA.
+  final _saveCtrl = SavingIndicatorController();
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +65,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   void dispose() {
     _ai.dispose();
     _means.dispose();
+    _saveCtrl.dispose();
     super.dispose();
   }
 
@@ -109,44 +118,50 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
         .where((line) => !_crisis.contains(line))
         .toList();
     if (suggestions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No new suggestions for this locale.')),
+      PsySnack.info(
+        context,
+        'No new suggestions for this locale.',
+        hint: 'safety_plan.crisis_suggest_empty',
       );
       return;
     }
     setState(() => _crisis.addAll(suggestions));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Added ${suggestions.length} regional crisis lines — review and '
-          'edit as needed.',
-        ),
-      ),
+    PsySnack.success(
+      context,
+      'Added ${suggestions.length} regional crisis lines — review and '
+      'edit as needed.',
+      hint: 'safety_plan.crisis_suggest_added',
     );
   }
 
   Future<void> _save() async {
+    _saveCtrl.startSaving();
     try {
       await _repo.save(_current());
+      _saveCtrl.markSaved();
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.success(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Safety plan saved')));
+        'Safety plan saved.',
+        hint: 'safety_plan.save',
+      );
     } catch (e, st) {
       // A crisis plan that failed to persist must NOT report success.
-      // Silent-fail fix (audit 2026-06-21): clinical-critical path, so
-      // capture the underlying error to telemetry — a quietly-broken
-      // Stanley-Brown save during an active suicidality flag is the
-      // worst place to lose diagnostics. PHI scrubbing happens inside
-      // captureError; user-facing copy is unchanged.
+      // Telemetry capture (PHI-scrubbed inside captureError) +
+      // sticky SavingIndicator with tap-to-retry + an error PsySnack
+      // give the clinician three layered cues that the write didn't
+      // land — the worst place to be subtle is a Stanley-Brown save
+      // during an active suicidality flag.
       unawaited(
         TelemetryService.instance.captureError(e, st, hint: 'safety_plan.save'),
       );
+      _saveCtrl.markError(onRetry: _save);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save the safety plan — please retry.'),
-        ),
+      PsySnack.error(
+        context,
+        'Could not save the safety plan — please retry.',
+        hint: 'safety_plan.save_failed',
+        action: SnackBarAction(label: 'Retry', onPressed: _save),
       );
     }
   }
@@ -162,28 +177,24 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       );
       setState(() => _apply(p));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Starter plan drafted — review and edit WITH the client.',
-            ),
-          ),
+        PsySnack.success(
+          context,
+          'Starter plan drafted — review and edit WITH the client.',
+          hint: 'safety_plan.ai_draft_ok',
         );
       }
     } on ConsentDeniedException catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'AI assistance is not consented for this patient. Update '
-            'the intake form before drafting with AI.',
-          ),
-          action: SnackBarAction(
-            label: 'Intake',
-            onPressed: () => Navigator.of(
-              context,
-            ).pushNamed('/patients/intake', arguments: widget.args),
-          ),
+      PsySnack.warning(
+        context,
+        'AI assistance is not consented for this patient. Update '
+        'the intake form before drafting with AI.',
+        hint: 'safety_plan.ai_draft_consent_denied',
+        action: SnackBarAction(
+          label: 'Intake',
+          onPressed: () => Navigator.of(
+            context,
+          ).pushNamed('/patients/intake', arguments: widget.args),
         ),
       );
     } on SafetyPlanAiException catch (e, st) {
@@ -201,17 +212,17 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          action: e.noKey
-              ? SnackBarAction(
-                  label: 'API keys',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/settings/api_keys'),
-                )
-              : null,
-        ),
+      PsySnack.error(
+        context,
+        e.message,
+        hint: e.noKey ? 'safety_plan.ai_draft_no_key' : 'safety_plan.ai_draft',
+        action: e.noKey
+            ? SnackBarAction(
+                label: 'API keys',
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/settings/api_keys'),
+              )
+            : null,
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -234,14 +245,23 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       ],
       primaryAction: _loading
           ? null
-          : FilledButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.save_outlined),
-              label: const Text('Save'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: PsySpacing.xl),
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SavingIndicator(controller: _saveCtrl),
+                const SizedBox(width: PsySpacing.md),
+                FilledButton.icon(
+                  onPressed: _save,
+                  icon: const Icon(Icons.save_outlined),
+                  label: const Text('Save'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.xl,
+                    ),
+                  ),
+                ),
+              ],
             ),
       child: _loading
           ? const Padding(

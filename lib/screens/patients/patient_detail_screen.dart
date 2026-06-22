@@ -13,6 +13,7 @@ import '../../widgets/clinical_brief_card.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/ds/psy_skeleton.dart';
 import 'patient_list_screen.dart' show PatientDetailArgs;
 
@@ -208,7 +209,11 @@ class _AssessmentList extends StatelessWidget {
     }
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
-      return _emptyCard(context, 'Sign in to load assessments.');
+      return _emptyCard(
+        context,
+        title: 'Sign in required',
+        body: 'Sign in to load assessments.',
+      );
     }
     return StreamBuilder<List<AssessmentDoc>>(
       stream: AssessmentRepository.instance.watchForPatient(
@@ -235,7 +240,8 @@ class _AssessmentList extends StatelessWidget {
         if (list.isEmpty) {
           return _emptyCard(
             context,
-            'No assessments yet. Send a PHQ-9 or GAD-7 to start the trend.',
+            title: 'No assessments yet',
+            body: 'Send a PHQ-9 or GAD-7 to start the trend.',
           );
         }
         return Column(
@@ -282,19 +288,16 @@ class _AssessmentList extends StatelessWidget {
     );
   }
 
-  Widget _emptyCard(BuildContext context, String body) => PsyCard(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
-      child: Center(
-        child: Text(
-          body,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
-      ),
+  Widget _emptyCard(
+    BuildContext context, {
+    required String title,
+    required String body,
+  }) => PsyCard(
+    child: PsyEmptyState(
+      icon: Icons.assessment_outlined,
+      title: title,
+      body: body,
+      compact: true,
     ),
   );
 }

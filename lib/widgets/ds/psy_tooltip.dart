@@ -50,50 +50,57 @@ class PsyTooltip extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final desc = description?.trim();
-    return Tooltip(
-      // Material's Tooltip composes message with optional richMessage;
-      // we use richMessage so the label/description hierarchy is
-      // visible at a glance.
-      richMessage: WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: cs.onInverseSurface,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (desc != null && desc.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+    // We carry the screen-reader content on the surrounding Semantics
+    // node (Material's Tooltip rejects having both `message` and
+    // `richMessage` set), and use `richMessage` purely for the visual
+    // hierarchy on hover / long-press.
+    return Semantics(
+      label: label,
+      hint: desc,
+      container: true,
+      child: Tooltip(
+        richMessage: WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    desc,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onInverseSurface.withValues(alpha: 0.8),
-                      height: 1.35,
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: cs.onInverseSurface,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (desc != null && desc.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      desc,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onInverseSurface.withValues(alpha: 0.8),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
+        waitDuration: const Duration(milliseconds: 800),
+        showDuration: const Duration(seconds: 6),
+        triggerMode: TooltipTriggerMode.longPress,
+        decoration: BoxDecoration(
+          color: cs.inverseSurface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: ExcludeSemantics(child: child),
       ),
-      waitDuration: const Duration(milliseconds: 800),
-      showDuration: const Duration(seconds: 8),
-      decoration: BoxDecoration(
-        color: cs.inverseSurface,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: child,
     );
   }
 }

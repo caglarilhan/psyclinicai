@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/mood_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 
 /// `/mood_tracking` — daily mood / sleep / anxiety check-in for a
 /// patient. Three 1–5 sliders + free-text note. Persists to Firestore
@@ -78,8 +82,15 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
             notes: _notes.text.trim(),
           );
           _msg = "Saved today's check-in.";
-        } catch (e) {
-          _msg = 'Save failed: $e';
+        } catch (e, st) {
+          unawaited(
+            TelemetryService.instance.captureError(
+              e,
+              st,
+              hint: 'mood_tracking.save_failed',
+            ),
+          );
+          _msg = 'Save failed — please retry.';
         }
       } else {
         _msg = 'Sign in to save check-ins.';
@@ -299,11 +310,12 @@ class _TrendCard extends StatelessWidget {
   }
 
   Widget _empty(BuildContext context, String body) {
-    final theme = Theme.of(context);
     return PsyCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
-        child: Center(child: Text(body, style: theme.textTheme.bodyMedium)),
+      child: PsyEmptyState(
+        icon: Icons.show_chart_outlined,
+        title: 'Mood trend not available yet',
+        body: body,
+        compact: true,
       ),
     );
   }
@@ -417,9 +429,11 @@ class _EntryList extends StatelessWidget {
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
       return const PsyCard(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(child: Text('Sign in to load entries.')),
+        child: PsyEmptyState(
+          icon: Icons.lock_outline,
+          title: 'Sign in required',
+          body: 'Sign in to load entries.',
+          compact: true,
         ),
       );
     }
@@ -435,9 +449,11 @@ class _EntryList extends StatelessWidget {
   Widget _list(BuildContext context, List<MoodEntry> entries) {
     if (entries.isEmpty) {
       return const PsyCard(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(child: Text('No entries yet.')),
+        child: PsyEmptyState(
+          icon: Icons.timeline_outlined,
+          title: 'No entries yet',
+          body: 'Mood check-ins will appear here once the patient submits one.',
+          compact: true,
         ),
       );
     }

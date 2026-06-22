@@ -13,6 +13,9 @@ import '../../services/data/telemetry_service.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
@@ -117,8 +120,19 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
             ),
       child: _loading
           ? const Padding(
-              padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.only(top: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PsySkeletonBlock(height: 96),
+                  SizedBox(height: PsySpacing.lg),
+                  _GoalSkeleton(),
+                  SizedBox(height: PsySpacing.md),
+                  _GoalSkeleton(),
+                  SizedBox(height: PsySpacing.md),
+                  _GoalSkeleton(),
+                ],
+              ),
             )
           : _plan == null
           ? NoPlanCard(theme: theme, cs: cs, onCreate: _createPlanDialog)
@@ -203,21 +217,21 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         ),
         const SizedBox(height: PsySpacing.md),
         if (_homework.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl,
-              vertical: PsySpacing.xl,
-            ),
+          DecoratedBox(
             decoration: BoxDecoration(
               color: cs.surface,
               borderRadius: BorderRadius.circular(PsyRadius.lg),
               border: Border.all(color: cs.outlineVariant),
             ),
-            alignment: Alignment.center,
-            child: Text(
-              'No homework yet — add one or suggest with AI.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.6),
+            child: PsyEmptyState(
+              icon: Icons.assignment_outlined,
+              title: 'No homework yet',
+              body: 'Add a task above or suggest a set with AI.',
+              compact: true,
+              action: PsyEmptyStateAction(
+                label: 'Add homework',
+                icon: Icons.add,
+                onTap: _addHomework,
               ),
             ),
           )
@@ -275,9 +289,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         notes: notes.isEmpty ? null : notes,
       );
       _saveCtrl.markSaved();
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'treatment_plan.add_goal_failed',
+        ),
+      );
       _saveCtrl.markError(onRetry: _addGoalDialog);
-      rethrow;
     }
     _reload();
   }
@@ -352,9 +372,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         progress: progress,
       );
       _saveCtrl.markSaved();
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'treatment_plan.update_progress_failed',
+        ),
+      );
       _saveCtrl.markError(onRetry: () => _updateProgress(goal, progress));
-      rethrow;
     }
     _reload();
   }
@@ -376,9 +402,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         ),
       );
       _saveCtrl.markSaved();
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'treatment_plan.add_homework_failed',
+        ),
+      );
       _saveCtrl.markError(onRetry: _addHomework);
-      rethrow;
     }
     _reload();
   }
@@ -388,9 +420,15 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     try {
       await _homeworkRepo.toggleDone(h.id);
       _saveCtrl.markSaved();
-    } catch (_) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'treatment_plan.toggle_homework_failed',
+        ),
+      );
       _saveCtrl.markError(onRetry: () => _toggleHomework(h));
-      rethrow;
     }
     _reload();
   }
@@ -517,5 +555,25 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+class _GoalSkeleton extends StatelessWidget {
+  const _GoalSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PsySkeletonLine(width: 220),
+          SizedBox(height: PsySpacing.sm),
+          PsySkeletonLine(width: 320),
+          SizedBox(height: PsySpacing.md),
+          PsySkeletonBlock(height: 12),
+        ],
+      ),
+    );
   }
 }

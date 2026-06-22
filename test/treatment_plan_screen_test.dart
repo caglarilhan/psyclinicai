@@ -63,9 +63,14 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: TreatmentPlanScreen(
-          args: PatientDetailArgs(id: 'demo-1', name: 'John Demo'),
+      const MediaQuery(
+        // PsySkeleton freezes its pulse when reduce-motion is on, so
+        // pumpAndSettle can terminate during the initial loading frame.
+        data: MediaQueryData(disableAnimations: true),
+        child: MaterialApp(
+          home: TreatmentPlanScreen(
+            args: PatientDetailArgs(id: 'demo-1', name: 'John Demo'),
+          ),
         ),
       ),
     );

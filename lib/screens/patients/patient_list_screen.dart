@@ -6,6 +6,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_filter.dart';
 import '../../services/data/patient_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -278,7 +279,20 @@ class _PatientListScreenState extends State<PatientListScreen> {
     final nameCtrl = TextEditingController();
     final insurerCtrl = TextEditingController();
     final memberCtrl = TextEditingController();
+    try {
+      await _addPatientFlow(nameCtrl, insurerCtrl, memberCtrl);
+    } finally {
+      nameCtrl.dispose();
+      insurerCtrl.dispose();
+      memberCtrl.dispose();
+    }
+  }
 
+  Future<void> _addPatientFlow(
+    TextEditingController nameCtrl,
+    TextEditingController insurerCtrl,
+    TextEditingController memberCtrl,
+  ) async {
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -341,11 +355,18 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
     try {
       await PatientRepository.instance.create(profile.clinicId, draft);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'patient_list.add_failed',
+        ),
+      );
       if (!mounted) return;
       PsySnack.error(
         context,
-        'Could not add patient: $e',
+        'Could not add patient — please retry.',
         hint: 'patient_list.add_failed',
       );
     }

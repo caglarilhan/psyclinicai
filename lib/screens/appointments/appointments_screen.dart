@@ -7,6 +7,7 @@ import '../../models/appointment_model.dart';
 import '../../services/appointment_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/ds/psy_skeleton.dart';
 
 /// `/appointments` — month calendar + day agenda + quick scheduling.
@@ -115,11 +116,15 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final items = _forSelected();
     final dateLabel = _fmtDate(_selectedDay);
     if (items.isEmpty) {
-      return _EmptyDay(
-        theme: theme,
-        cs: cs,
-        dateLabel: dateLabel,
-        onAdd: _openAdd,
+      return PsyEmptyState(
+        icon: Icons.event_available_outlined,
+        title: 'No appointments on $dateLabel',
+        body: 'Schedule a session — reminders fire 24h and 1h before.',
+        action: PsyEmptyStateAction(
+          label: 'New appointment',
+          icon: Icons.add,
+          onTap: _openAdd,
+        ),
       );
     }
     return Column(
@@ -307,56 +312,6 @@ class _AppointmentTile extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyDay extends StatelessWidget {
-  const _EmptyDay({
-    required this.theme,
-    required this.cs,
-    required this.dateLabel,
-    required this.onAdd,
-  });
-  final ThemeData theme;
-  final ColorScheme cs;
-  final String dateLabel;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_available_outlined,
-            size: 40,
-            color: cs.onSurface.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: PsySpacing.md),
-          Text(
-            'No appointments on $dateLabel',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: PsySpacing.xs),
-          Text(
-            'Schedule a session — reminders fire 24h and 1h before.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.55),
-            ),
-          ),
-          const SizedBox(height: PsySpacing.lg),
-          OutlinedButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('New appointment'),
           ),
         ],
       ),

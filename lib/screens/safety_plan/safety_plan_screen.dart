@@ -12,6 +12,7 @@ import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_save_shortcut.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
@@ -266,8 +267,19 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
               ),
         child: _loading
             ? const Padding(
-                padding: EdgeInsets.only(top: 80),
-                child: Center(child: CircularProgressIndicator()),
+                padding: EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    PsySkeletonBlock(height: 64),
+                    SizedBox(height: PsySpacing.lg),
+                    PsySkeletonBlock(height: 120),
+                    SizedBox(height: PsySpacing.lg),
+                    PsySkeletonBlock(height: 120),
+                    SizedBox(height: PsySpacing.lg),
+                    PsySkeletonBlock(height: 96),
+                  ],
+                ),
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

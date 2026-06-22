@@ -5,6 +5,7 @@ import '../../models/supervision_review.dart';
 import '../../services/supervision_review_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_empty_state.dart';
 
 /// `/supervision/queue` — trainee → supervisor co-sign queue (Sprint 9).
 ///
@@ -89,7 +90,10 @@ class _SupervisionQueueScreenState extends State<SupervisionQueueScreen> {
                 'countersigned clinical record.',
           ),
           if (open.isEmpty)
-            _EmptyState(message: l.supervisionEmptyOpen)
+            _EmptyState(
+              title: l.supervisionEmptyOpen,
+              body: 'Newly submitted notes will appear here for co-sign.',
+            )
           else
             ...open.map(
               (r) => _ReviewCard(
@@ -108,7 +112,10 @@ class _SupervisionQueueScreenState extends State<SupervisionQueueScreen> {
                 'open a new review if anything changes.',
           ),
           if (closed.isEmpty)
-            _EmptyState(message: l.supervisionEmptyClosed)
+            _EmptyState(
+              title: l.supervisionEmptyClosed,
+              body: 'Approved or returned reviews will move here once you act.',
+            )
           else
             ...closed.map(
               (r) => _ReviewCard(
@@ -306,21 +313,17 @@ class _CoSignDisclaimerBanner extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message});
-  final String message;
+  const _EmptyState({required this.title, required this.body});
+  final String title;
+  final String body;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
-      child: Center(
-        child: Text(
-          message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
+    return PsyEmptyState(
+      icon: Icons.inbox_outlined,
+      title: title,
+      body: body,
+      compact: true,
     );
   }
 }

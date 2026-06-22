@@ -37,6 +37,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 enum SavingState { idle, saving, saved, error }
 
@@ -99,29 +100,86 @@ class SavingIndicatorController extends ChangeNotifier {
   }
 }
 
-class SavingIndicator extends StatelessWidget {
+class SavingIndicator extends StatefulWidget {
   const SavingIndicator({super.key, required this.controller});
   final SavingIndicatorController controller;
 
   @override
+  State<SavingIndicator> createState() => _SavingIndicatorState();
+}
+
+class _SavingIndicatorState extends State<SavingIndicator> {
+  SavingState? _lastAnnounced;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_maybeAnnounce);
+  }
+
+  @override
+  void didUpdateWidget(covariant SavingIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_maybeAnnounce);
+      widget.controller.addListener(_maybeAnnounce);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_maybeAnnounce);
+    super.dispose();
+  }
+
+  void _maybeAnnounce() {
+    final state = widget.controller.state;
+    if (state == _lastAnnounced) return;
+    _lastAnnounced = state;
+    if (!mounted) return;
+    final message = switch (state) {
+      SavingState.saving => null,
+      SavingState.saved => 'Saved.',
+      SavingState.error => 'Save failed — tap to retry.',
+      SavingState.idle => null,
+    };
+    if (message == null) return;
+    final view = View.maybeOf(context);
+    if (view == null) return;
+    unawaited(
+      SemanticsService.sendAnnouncement(
+        view,
+        message,
+        Directionality.of(context),
+        assertiveness: state == SavingState.error
+            ? Assertiveness.assertive
+            : Assertiveness.polite,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: controller,
+      animation: widget.controller,
       builder: (context, _) {
         final theme = Theme.of(context);
         final cs = theme.colorScheme;
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          child: _buildPill(theme, cs),
+        return Semantics(
+          liveRegion: true,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: _buildPill(theme, cs),
+          ),
         );
       },
     );
   }
 
   Widget _buildPill(ThemeData theme, ColorScheme cs) {
-    switch (controller.state) {
+    switch (widget.controller.state) {
       case SavingState.idle:
         return const SizedBox.shrink(key: ValueKey('idle'));
       case SavingState.saving:
@@ -151,21 +209,24 @@ class SavingIndicator extends StatelessWidget {
           border: const Color(0xFF16A34A).withValues(alpha: 0.30),
         );
       case SavingState.error:
-        final retry = controller.onRetry;
+        final retry = widget.controller.onRetry;
         return Material(
           key: const ValueKey('error'),
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(999),
             onTap: retry,
-            child: _Pill(
-              icon: Icon(Icons.error_outline, size: 14, color: cs.error),
-              label: retry != null
-                  ? 'Save failed — tap to retry'
-                  : 'Save failed',
-              background: cs.error.withValues(alpha: 0.10),
-              foreground: cs.error,
-              border: cs.error.withValues(alpha: 0.30),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 32),
+              child: _Pill(
+                icon: Icon(Icons.error_outline, size: 14, color: cs.error),
+                label: retry != null
+                    ? 'Save failed — tap to retry'
+                    : 'Save failed',
+                background: cs.error.withValues(alpha: 0.10),
+                foreground: cs.error,
+                border: cs.error.withValues(alpha: 0.30),
+              ),
             ),
           ),
         );

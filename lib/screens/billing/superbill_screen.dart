@@ -16,6 +16,7 @@ import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/psy_tooltip.dart';
 import 'superbill_chrome.dart';
 import 'superbill_denial_card.dart';
@@ -224,11 +225,20 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         ),
       );
       await _persistToFirestore(data);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'superbill.generate_failed',
+        ),
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to generate PDF: $e')));
+        'PDF generation failed — please retry.',
+        hint: 'superbill.generate_failed',
+      );
     } finally {
       if (mounted) setState(() => _generating = false);
     }

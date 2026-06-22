@@ -59,7 +59,7 @@ class PsySnack {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    final (icon, tint, fg) = _palette(level, cs);
+    final (icon, tint, fg) = _palette(level, cs, theme.brightness);
 
     unawaited(
       TelemetryService.instance.capture(
@@ -76,19 +76,24 @@ class PsySnack {
         backgroundColor: cs.inverseSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Semantics(
-          liveRegion:
-              level == PsySnackLevel.error || level == PsySnackLevel.warning,
+          // All four levels are user-relevant in a clinical workflow —
+          // success confirms that a save landed, info gives a
+          // non-urgent status. Polite is the right register; assertive
+          // is reserved for runtime errors / safety alerts.
+          liveRegion: true,
           child: Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(8),
+              ExcludeSemantics(
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 18, color: tint),
                 ),
-                child: Icon(icon, size: 18, color: tint),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -167,30 +172,44 @@ class PsySnack {
     hint: hint,
   );
 
-  /// Per-level (icon, accent, foreground). Foreground is the
-  /// `onInverseSurface` colour so the body text reads on the dark
-  /// floating SnackBar surface used by Material 3 by default.
+  /// Per-level (icon, accent, foreground). The accent is tuned per
+  /// brightness because the SnackBar surface uses `cs.inverseSurface`
+  /// — that swatch flips between near-black (light theme) and
+  /// near-white (dark theme). The same tint can't satisfy WCAG
+  /// 1.4.11 non-text contrast (3:1) on both, so we branch.
   static (IconData, Color, Color) _palette(
     PsySnackLevel level,
     ColorScheme cs,
+    Brightness themeBrightness,
   ) {
+    // On a light app theme the snackbar surface is DARK, so we need
+    // lighter accents to reach 3:1; on a dark theme it inverts.
+    final lighter = themeBrightness == Brightness.light;
     switch (level) {
       case PsySnackLevel.info:
-        return (Icons.info_outline, cs.primary, cs.onInverseSurface);
+        return (
+          Icons.info_outline,
+          lighter ? const Color(0xFF7DD3FC) : const Color(0xFF0369A1),
+          cs.onInverseSurface,
+        );
       case PsySnackLevel.success:
         return (
           Icons.check_circle_outline,
-          const Color(0xFF16A34A),
+          lighter ? const Color(0xFF6EE7B7) : const Color(0xFF15803D),
           cs.onInverseSurface,
         );
       case PsySnackLevel.warning:
         return (
           Icons.warning_amber_rounded,
-          const Color(0xFFF59E0B),
+          lighter ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
           cs.onInverseSurface,
         );
       case PsySnackLevel.error:
-        return (Icons.error_outline, cs.error, cs.onInverseSurface);
+        return (
+          Icons.error_outline,
+          lighter ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+          cs.onInverseSurface,
+        );
     }
   }
 }

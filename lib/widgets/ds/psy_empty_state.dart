@@ -72,6 +72,10 @@ class PsyEmptyState extends StatelessWidget {
 
     return Semantics(
       container: true,
+      // `explicitChildNodes: true` keeps the action button as its own
+      // semantic node so TalkBack/VoiceOver name it correctly instead
+      // of merging it into the parent description.
+      explicitChildNodes: true,
       label: title,
       hint: body,
       child: Padding(
@@ -82,48 +86,72 @@ class PsyEmptyState extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: cs.primary.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
+                ExcludeSemantics(
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 28, color: cs.primary),
                   ),
-                  child: Icon(icon, size: 28, color: cs.primary),
                 ),
                 const SizedBox(height: PsySpacing.lg),
                 Text(
                   title,
                   textAlign: TextAlign.center,
+                  softWrap: true,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: PsySpacing.xs),
-                Text(
-                  body,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.65),
-                    height: 1.5,
-                  ),
-                ),
-                if (action != null) ...[
-                  const SizedBox(height: PsySpacing.lg),
-                  FilledButton.icon(
-                    onPressed: action!.onTap,
-                    icon: action!.icon != null
-                        ? Icon(action!.icon, size: 18)
-                        : const SizedBox.shrink(),
-                    label: Text(action!.label),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: PsySpacing.xl,
-                      ),
+                if (body.isNotEmpty) ...[
+                  const SizedBox(height: PsySpacing.xs),
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.65),
+                      height: 1.5,
                     ),
                   ),
+                ],
+                if (action != null) ...[
+                  const SizedBox(height: PsySpacing.lg),
+                  if (action!.icon != null)
+                    FilledButton.icon(
+                      onPressed: action!.onTap,
+                      icon: Icon(action!.icon, size: 18),
+                      label: Text(
+                        action!.label,
+                        softWrap: true,
+                        textAlign: TextAlign.center,
+                      ),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: PsySpacing.xl,
+                        ),
+                      ),
+                    )
+                  else
+                    FilledButton(
+                      onPressed: action!.onTap,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: PsySpacing.xl,
+                        ),
+                      ),
+                      child: Text(
+                        action!.label,
+                        softWrap: true,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                 ],
               ],
             ),

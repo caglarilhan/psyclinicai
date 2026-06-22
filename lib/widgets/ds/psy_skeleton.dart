@@ -95,11 +95,15 @@ class _PsySkeletonGroupState extends State<PsySkeletonGroup>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (_, __) => _PsySkeletonPulseScope(
-        alpha: _frozen ? 0.6 : _pulse.value,
-        child: widget.child,
+    return Semantics(
+      label: 'Loading content',
+      container: true,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (_, __) => _PsySkeletonPulseScope(
+          alpha: _frozen ? 0.6 : _pulse.value,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -131,11 +135,14 @@ class _SkeletonShape extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final alpha = PsySkeletonGroup.alphaOf(context) ?? 0.6;
+    // Pulse opacity range bumped from 0.18 to 0.28 so a fully-skeleton
+    // screen is still perceivable for low-vision clinicians (WCAG
+    // 1.3.1 — loading state must remain detectable).
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: cs.onSurface.withValues(alpha: alpha * 0.18),
+        color: cs.onSurface.withValues(alpha: alpha * 0.28),
         shape: shape,
         borderRadius: shape == BoxShape.rectangle
             ? BorderRadius.circular(6)

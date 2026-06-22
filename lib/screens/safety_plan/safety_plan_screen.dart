@@ -186,7 +186,20 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
           ),
         ),
       );
-    } on SafetyPlanAiException catch (e) {
+    } on SafetyPlanAiException catch (e, st) {
+      // Capture network / parse / model-shape-drift errors so the AI
+      // surface is observable in prod. `noKey` is intentionally
+      // skipped — that's expected UX (user just hasn't configured a
+      // key) and would be reporting noise.
+      if (!e.noKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'safety_plan.ai_draft',
+          ),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

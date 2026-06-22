@@ -1647,6 +1647,9 @@ class _RiskStrip extends StatelessWidget {
   final ColorScheme cs;
 
   Color _color(RiskSeverity s) => switch (s) {
+    // L-2 (audit 2026-06-21): imminent = deepest red, distinct from
+    // high so the clinician can spot acute intent at a glance.
+    RiskSeverity.imminent => const Color(0xFFB91C1C),
     RiskSeverity.high => const Color(0xFFDC2626),
     RiskSeverity.elevated => const Color(0xFFD97706),
     RiskSeverity.info => cs.primary,

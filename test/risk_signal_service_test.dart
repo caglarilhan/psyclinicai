@@ -116,4 +116,24 @@ void main() {
       expect(svc.aiOnline.value, isTrue);
     });
   });
+
+  // L-2 fix coverage — imminent tier is distinct from high.
+  group('RiskSeverity.imminent (L-2)', () {
+    test('enum ordering keeps existing threshold filters intact', () {
+      expect(RiskSeverity.info.index, lessThan(RiskSeverity.elevated.index));
+      expect(RiskSeverity.elevated.index, lessThan(RiskSeverity.high.index));
+      expect(RiskSeverity.high.index, lessThan(RiskSeverity.imminent.index));
+    });
+
+    test('triggersImmediateHandoff is true only for imminent', () {
+      expect(RiskSeverity.imminent.triggersImmediateHandoff, isTrue);
+      expect(RiskSeverity.high.triggersImmediateHandoff, isFalse);
+      expect(RiskSeverity.elevated.triggersImmediateHandoff, isFalse);
+      expect(RiskSeverity.info.triggersImmediateHandoff, isFalse);
+    });
+
+    test('label is "Imminent" for the new tier', () {
+      expect(RiskSeverity.imminent.label, 'Imminent');
+    });
+  });
 }

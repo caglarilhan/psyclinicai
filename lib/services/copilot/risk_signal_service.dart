@@ -420,6 +420,7 @@ class RiskSignalService {
   };
 
   static RiskSeverity _severityFrom(String s) => switch (s.trim()) {
+    'imminent' => RiskSeverity.imminent,
     'high' => RiskSeverity.high,
     'info' => RiskSeverity.info,
     _ => RiskSeverity.elevated,
@@ -431,7 +432,17 @@ class RiskSignalService {
   }
 }
 
-enum RiskSeverity { info, elevated, high }
+/// Severity tier of a risk signal.
+///
+/// L-2 fix (audit 2026-06-21): added [imminent] for C-SSRS Item 6
+/// (acute suicidal intent — actively engaging in preparation or
+/// acquired means). The old enum collapsed acute intent into the
+/// same `high` bucket as ideation, which prevented the UI from
+/// rendering the imminent-tier crisis pipeline (988/112 hard handoff
+/// + on-call alert). Numerical order matters for `.index` comparison
+/// — `info < elevated < high < imminent`, so consumers that filter
+/// by severity threshold keep working without code changes.
+enum RiskSeverity { info, elevated, high, imminent }
 
 enum RiskCategory {
   suicidalIdeation,
@@ -455,10 +466,18 @@ extension RiskCategoryX on RiskCategory {
 
 extension RiskSeverityX on RiskSeverity {
   String get label => switch (this) {
+    RiskSeverity.imminent => 'Imminent',
     RiskSeverity.high => 'High',
     RiskSeverity.elevated => 'Elevated',
     RiskSeverity.info => 'Info',
   };
+
+  /// True when the UI must run the hard-handoff crisis pipeline
+  /// (region crisis line dial + on-call clinician alert), not just
+  /// surface the risk-bar. `imminent` always triggers; `high`
+  /// triggers when the source is the AI Tier-2 classifier (the
+  /// lexicon stays at `high` for review-bias safety).
+  bool get triggersImmediateHandoff => this == RiskSeverity.imminent;
 }
 
 /// A single surfaced risk signal. [matchedText] is the trigger; [snippet] is a

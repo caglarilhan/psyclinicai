@@ -304,7 +304,7 @@ class _IntegrityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final attestations = const [
+    const attestations = [
       _Attest(Icons.add_box_outlined, 'Append-only',
           'No row update or delete is possible — only new entries.'),
       _Attest(Icons.link, 'Hash-chained',

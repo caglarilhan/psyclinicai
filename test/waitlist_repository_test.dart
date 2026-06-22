@@ -27,6 +27,11 @@ class _Write {
   final Map<String, Object?> data;
 }
 
+// CollectionReference is sealed in cloud_firestore 5+ to discourage
+// production subclassing; for a noSuchMethod-driven test stub the
+// pattern is the standard escape hatch, so the warning is silenced
+// at the implements line only.
+// ignore: subtype_of_sealed_class
 class _StubCollection implements CollectionReference<Map<String, dynamic>> {
   _StubCollection(this.path, this._owner);
   @override
@@ -46,6 +51,7 @@ class _StubCollection implements CollectionReference<Map<String, dynamic>> {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+// ignore: subtype_of_sealed_class
 class _StubDoc implements DocumentReference<Map<String, dynamic>> {
   @override
   String get id => 'stub';

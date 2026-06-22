@@ -88,38 +88,52 @@ import 'package:psyclinicai/utils/document_title.dart';
 void main() {
   // Route every uncaught error — framework and async — through the telemetry
   // façade (no-op in debug, Sentry once a DSN is set). See TelemetryService.
-  runZonedGuarded(
-    () async {
-      WidgetsFlutterBinding.ensureInitialized();
-      // HIGH-9 (audit 2026-06-21): default Flutter ErrorWidget renders the
-      // big red error screen with the exception text. For a clinician
-      // mid-session this is catastrophic UX and may expose stack traces.
-      // In release builds we render a calm fallback; debug keeps the red
-      // screen so dev iteration stays loud.
-      if (kReleaseMode) {
-        ErrorWidget.builder = (details) => const _ProductionErrorFallback();
-      }
-      FlutterError.onError = (details) {
-        FlutterError.presentError(details);
-        TelemetryService.instance.captureError(
-          details.exception,
-          details.stack,
-          hint: 'flutter',
+  // runZonedGuarded returns a Future but main() is intentionally synchronous,
+  // so the top-level call is fire-and-forget.
+  unawaited(
+    runZonedGuarded(
+      () async {
+        WidgetsFlutterBinding.ensureInitialized();
+        // HIGH-9 (audit 2026-06-21): default Flutter ErrorWidget renders the
+        // big red error screen with the exception text. For a clinician
+        // mid-session this is catastrophic UX and may expose stack traces.
+        // In release builds we render a calm fallback; debug keeps the red
+        // screen so dev iteration stays loud.
+        if (kReleaseMode) {
+          ErrorWidget.builder = (details) => const _ProductionErrorFallback();
+        }
+        FlutterError.onError = (details) {
+          FlutterError.presentError(details);
+          unawaited(
+            TelemetryService.instance.captureError(
+              details.exception,
+              details.stack,
+              hint: 'flutter',
+            ),
+          );
+        };
+        // Async errors escaping the framework (platform channels, Timer
+        // callbacks, etc.) bypass FlutterError.onError. Wire the platform
+        // dispatcher so HIPAA telemetry never misses an uncaught throw.
+        WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+          unawaited(
+            TelemetryService.instance.captureError(
+              error,
+              stack,
+              hint: 'platform',
+            ),
+          );
+          return true;
+        };
+        await _initializeServices();
+        runApp(const PsyClinicAIApp());
+      },
+      (error, stack) {
+        unawaited(
+          TelemetryService.instance.captureError(error, stack, hint: 'zone'),
         );
-      };
-      // Async errors escaping the framework (platform channels, Timer
-      // callbacks, etc.) bypass FlutterError.onError. Wire the platform
-      // dispatcher so HIPAA telemetry never misses an uncaught throw.
-      WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
-        TelemetryService.instance.captureError(error, stack, hint: 'platform');
-        return true;
-      };
-      await _initializeServices();
-      runApp(const PsyClinicAIApp());
-    },
-    (error, stack) {
-      TelemetryService.instance.captureError(error, stack, hint: 'zone');
-    },
+      },
+    ),
   );
 }
 

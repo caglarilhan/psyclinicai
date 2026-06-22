@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../services/language_service.dart';
 
 class MobileHomeScreen extends StatefulWidget {
@@ -35,15 +38,19 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         if (_currentPage < 2) {
-          _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+          unawaited(
+            _pageController.nextPage(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
           );
         } else {
-          _pageController.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+          unawaited(
+            _pageController.animateToPage(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
           );
         }
         _startAutoScroll();
@@ -521,43 +528,45 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
   }
 
   void _showNotifications() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) => Container(
-        height: 400,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bildirimler',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildNotificationItem(
-                    'Yeni randevu talebi',
-                    'Ahmet Yılmaz',
-                    '2 saat önce',
-                  ),
-                  _buildNotificationItem(
-                    'Reçete onayı',
-                    'Dr. Mehmet Kaya',
-                    '4 saat önce',
-                  ),
-                  _buildNotificationItem(
-                    'Sistem güncellemesi',
-                    'Sistem',
-                    '1 gün önce',
-                  ),
-                ],
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (context) => Container(
+          height: 400,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bildirimler',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildNotificationItem(
+                      'Yeni randevu talebi',
+                      'Ahmet Yılmaz',
+                      '2 saat önce',
+                    ),
+                    _buildNotificationItem(
+                      'Reçete onayı',
+                      'Dr. Mehmet Kaya',
+                      '4 saat önce',
+                    ),
+                    _buildNotificationItem(
+                      'Sistem güncellemesi',
+                      'Sistem',
+                      '1 gün önce',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -579,7 +588,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen>
   }
 
   void _showSearch() {
-    showSearch(context: context, delegate: MobileSearchDelegate());
+    unawaited(showSearch(context: context, delegate: MobileSearchDelegate()));
   }
 
   void _addPatient() {

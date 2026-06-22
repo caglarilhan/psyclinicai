@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -76,7 +78,7 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       _step = MfaStep.scan;
       _error = null;
     });
-    TelemetryService.instance.capture('security.mfa_enrol_started');
+    unawaited(TelemetryService.instance.capture('security.mfa_enrol_started'));
   }
 
   Future<void> _verifyCode() async {
@@ -114,7 +116,7 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
       _recoveryCodes = codes;
       _step = MfaStep.recovery;
     });
-    TelemetryService.instance.capture('security.mfa_enrol_verified');
+    unawaited(TelemetryService.instance.capture('security.mfa_enrol_verified'));
   }
 
   Future<void> _finish() async {
@@ -128,12 +130,16 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
             'We verified the code but could not persist your '
             'enrolment. Try again from the recovery step.';
       });
-      TelemetryService.instance.capture('security.mfa_enrol_persist_failed');
+      unawaited(
+        TelemetryService.instance.capture('security.mfa_enrol_persist_failed'),
+      );
       return;
     }
     if (!mounted) return;
     setState(() => _step = MfaStep.done);
-    TelemetryService.instance.capture('security.mfa_enrol_completed');
+    unawaited(
+      TelemetryService.instance.capture('security.mfa_enrol_completed'),
+    );
   }
 
   void _restart() {

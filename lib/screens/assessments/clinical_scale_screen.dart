@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/clinical_scale.dart';
@@ -62,9 +64,11 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
       values.add(widget.scale.questions[i].choices[_answers[i]!].value);
     }
     final result = widget.scale.score(values);
-    TelemetryService.instance.capture(
-      TelemetryEvents.assessmentCompleted,
-      properties: {'type': widget.scale.id},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.assessmentCompleted,
+        properties: {'type': widget.scale.id},
+      ),
     );
 
     // C-SSRS only: derive the escalation tier, surface a blocking modal for
@@ -89,11 +93,13 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
         if (!mounted) return;
         if (result.outcome == CrisisModalOutcome.initiateSafetyPlan) {
           service.recordSafetyPlanInitiated(escalation);
-          Navigator.of(context).pushReplacementNamed(
-            '/safety_plan',
-            arguments: PatientDetailArgs(
-              id: widget.patientId,
-              name: widget.patientName ?? 'Patient',
+          unawaited(
+            Navigator.of(context).pushReplacementNamed(
+              '/safety_plan',
+              arguments: PatientDetailArgs(
+                id: widget.patientId,
+                name: widget.patientName ?? 'Patient',
+              ),
             ),
           );
           return;
@@ -118,15 +124,17 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
     }
 
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => _ScaleResultScreen(
-          scale: widget.scale,
-          patientName: widget.patientName,
-          patientId: widget.patientId,
-          result: result,
-          escalation: escalation,
-          resources: resources,
+    unawaited(
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => _ScaleResultScreen(
+            scale: widget.scale,
+            patientName: widget.patientName,
+            patientId: widget.patientId,
+            result: result,
+            escalation: escalation,
+            resources: resources,
+          ),
         ),
       ),
     );
@@ -505,11 +513,13 @@ class _ScaleResultScreen extends StatelessWidget {
                     CssrsEscalationService().recordSafetyPlanInitiated(
                       escalation!,
                     );
-                    Navigator.of(context).pushNamed(
-                      '/safety_plan',
-                      arguments: PatientDetailArgs(
-                        id: patientId,
-                        name: patientName ?? 'Patient',
+                    unawaited(
+                      Navigator.of(context).pushNamed(
+                        '/safety_plan',
+                        arguments: PatientDetailArgs(
+                          id: patientId,
+                          name: patientName ?? 'Patient',
+                        ),
                       ),
                     );
                   },

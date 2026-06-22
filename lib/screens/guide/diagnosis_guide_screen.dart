@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert' as convert;
 
 import 'package:flutter/material.dart';
 import 'package:psyclinicai/models/homework_item.dart';
 import 'package:psyclinicai/services/data/homework_repository.dart';
+import 'package:psyclinicai/services/data/telemetry_service.dart';
 
 class DiagnosisGuideScreen extends StatefulWidget {
   const DiagnosisGuideScreen({super.key});
@@ -452,7 +454,18 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Ödev eklendi')));
-    } catch (_) {
+    } catch (e, st) {
+      // Silent-fail fix (audit 2026-06-21): the snackbar tells the
+      // clinician "homework couldn't be added" but support never sees
+      // the underlying error. Capture so prod failures are
+      // diagnosable; PHI scrubbing happens inside captureError.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'diagnosis_guide.homework_add',
+        ),
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

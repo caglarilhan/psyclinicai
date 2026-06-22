@@ -1,12 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import '../../models/clinical_lens.dart';
 import '../../models/denial_risk.dart';
 import '../../models/session_note.dart';
-import '../../models/supervision_report.dart';
 import '../../services/billing/denial_shield_service.dart';
 import '../../services/billing/icd10_lookup_service.dart';
 import '../../services/billing/note_billing_extractor.dart';
@@ -21,6 +18,7 @@ import '../../services/data/session_note_repository.dart';
 import 'audit_feedback.dart';
 import 'compliance_rail.dart';
 import 'insights_sheet.dart';
+import 'live_ai_panel_details.dart';
 import 'panel_chrome.dart';
 import 'panel_state_views.dart';
 import 'risk_denial_strip.dart';
@@ -338,170 +336,6 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     });
   }
 
-  void _showDenialDetails(BuildContext context) {
-    final d = _denial;
-    if (d == null) return;
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: cs.surface,
-        isScrollControlled: true,
-        builder: (_) => DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          maxChildSize: 0.92,
-          builder: (_, controller) => ListView(
-            controller: controller,
-            padding: const EdgeInsets.all(20),
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.verified_user_outlined,
-                    color: denialColor(cs, d),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${d.level.label} · ${d.payer.label}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${d.cptCode} · ${d.cptLabel}'
-                '${d.revenueAtRisk != null ? ' · ~\$${d.revenueAtRisk!.round()} at risk' : ''}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-              if (d.reasons.any((r) => r.insertText != null)) ...[
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () {
-                    _applyDenialFixes();
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.auto_fix_high, size: 18),
-                  label: const Text('Update note & reset risk'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(46),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              if (d.reasons.isEmpty)
-                Text(
-                  'No denial drivers found for ${d.payer.short}. '
-                  'Documentation supports the billed code.',
-                  style: theme.textTheme.bodyMedium,
-                )
-              else
-                ...d.reasons.map(
-                  (r) => Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: r.critical
-                            ? cs.error.withValues(alpha: 0.4)
-                            : cs.outlineVariant,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              r.critical
-                                  ? Icons.error_outline
-                                  : Icons.warning_amber_rounded,
-                              size: 16,
-                              color: r.critical
-                                  ? cs.error
-                                  : const Color(0xFFD97706),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                r.title,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          r.detail,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.75),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: cs.primary.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.add_circle_outline,
-                                size: 15,
-                                color: cs.primary,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  r.fixSentence,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: cs.primary,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Text(
-                DenialShieldService.payerFocus(d.payer),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Decision-support — payer rules and reimbursement vary and change. '
-                'This estimates denial risk; it does not guarantee payment.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showAuditDetails(BuildContext context) {
     final report = _report;
@@ -582,7 +416,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         modality: _modality,
       );
       if (!context.mounted) return;
-      _presentSupervision(context, report);
+      showSupervisionSheet(context, report);
     } on SupervisionException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -602,149 +436,6 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     }
   }
 
-  void _presentSupervision(BuildContext context, SupervisionReport r) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final color = r.fidelityScore >= 80
-        ? const Color(0xFF16A34A)
-        : r.fidelityScore >= 60
-        ? const Color(0xFFD97706)
-        : cs.error;
-    Widget list(String title, List<String> items) {
-      if (items.isEmpty) return const SizedBox.shrink();
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 12),
-          Text(
-            title.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: cs.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
-            ),
-          ),
-          const SizedBox(height: 4),
-          ...items.map(
-            (i) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.chevron_right,
-                    size: 16,
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                  ),
-                  Expanded(child: Text(i, style: theme.textTheme.bodyMedium)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: cs.surface,
-        isScrollControlled: true,
-        builder: (sheetCtx) => DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.65,
-          maxChildSize: 0.92,
-          builder: (_, controller) => ListView(
-            controller: controller,
-            padding: const EdgeInsets.all(20),
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.school_outlined, color: cs.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${r.modalityLabel} supervision (de-identified)',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Text(
-                    '${r.fidelityScore}',
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6, left: 4),
-                    child: Text(
-                      '/100 fidelity',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (r.summary.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(r.summary, style: theme.textTheme.bodyMedium),
-              ],
-              if (r.fidelityNotes.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  r.fidelityNotes,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-              list('Strengths', r.strengths),
-              list('Growth areas', r.growthAreas),
-              list('Reflective questions', r.reflectiveQuestions),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {
-                  unawaited(
-                    Clipboard.setData(ClipboardData(text: r.anonymizedText())),
-                  );
-                  ScaffoldMessenger.of(sheetCtx).showSnackBar(
-                    const SnackBar(
-                      content: Text('De-identified report copied.'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.copy_outlined, size: 18),
-                label: const Text('Copy anonymized report'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(46),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Decision-support for supervision — not a competency '
-                'determination. Verify anonymization before sharing.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Extracts the selected modality's clinical lens from the session and shows
   /// it in a sheet — the clinical-depth engine.
   Future<void> _showClinicalLens(BuildContext context) async {
     final src = _transcript.isNotEmpty
@@ -758,7 +449,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         modality: _modality,
       );
       if (!context.mounted) return;
-      _presentLens(context, lens);
+      showClinicalLensSheet(context, lens);
     } on ClinicalLensException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -778,79 +469,6 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     }
   }
 
-  void _presentLens(BuildContext context, ClinicalLens lens) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: cs.surface,
-        isScrollControlled: true,
-        builder: (_) => DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          maxChildSize: 0.92,
-          builder: (_, controller) => ListView(
-            controller: controller,
-            padding: const EdgeInsets.all(20),
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.center_focus_strong_outlined, color: cs.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${lens.modalityLabel} lens',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              for (final s in lens.sections) ...[
-                Text(
-                  s.title.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ...s.items.map(
-                  (it) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.chevron_right,
-                          size: 16,
-                          color: cs.onSurface.withValues(alpha: 0.5),
-                        ),
-                        Expanded(
-                          child: Text(it, style: theme.textTheme.bodyMedium),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              Text(
-                'Decision-support — extracted from the transcript for review, not '
-                'a diagnosis.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1005,7 +623,15 @@ class _LiveAiPanelState extends State<LiveAiPanel>
                           theme: theme,
                           cs: cs,
                           onPayerChanged: onPayer,
-                          onDetails: () => _showDenialDetails(context),
+                          onDetails: () {
+                            final d = _denial;
+                            if (d == null) return;
+                            showDenialDetailsSheet(
+                              context,
+                              denial: d,
+                              onApplyFixes: _applyDenialFixes,
+                            );
+                          },
                         ),
                       Expanded(child: noteView),
                     ],

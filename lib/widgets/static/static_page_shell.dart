@@ -84,7 +84,7 @@ class StaticPageShell extends StatelessWidget {
   }
 
   static double _hPadding(BuildContext c) =>
-      MediaQuery.of(c).size.width >= PsyBreakpoints.md
+      MediaQuery.sizeOf(c).width >= PsyBreakpoints.md
       ? PsySpacing.huge
       : PsySpacing.xl;
 

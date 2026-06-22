@@ -9,6 +9,7 @@ import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
 import 'intake_form_widgets.dart';
@@ -233,217 +234,222 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
     final cs = theme.colorScheme;
     final canSave = !_saving && _current().isComplete;
 
-    return AppShell(
-      routeName: '/patients',
-      title: 'Intake',
-      subtitle: '${widget.args.name} · demographics, safety baseline, consent',
-      scrollable: false,
-      breadcrumbs: [
-        const Crumb('Home', '/dashboard'),
-        const Crumb('Patients', '/patients'),
-        Crumb(widget.args.name, null),
-        const Crumb('Intake', null),
-      ],
-      primaryAction: _loading
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SavingIndicator(controller: _saveCtrl),
-                const SizedBox(width: PsySpacing.md),
-                FilledButton.icon(
-                  onPressed: canSave ? _save : null,
-                  icon: const Icon(Icons.check),
-                  label: const Text('Save intake'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 48),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: PsySpacing.xl,
+    return PsySaveShortcut(
+      onSave: _save,
+      enabled: canSave,
+      child: AppShell(
+        routeName: '/patients',
+        title: 'Intake',
+        subtitle:
+            '${widget.args.name} · demographics, safety baseline, consent',
+        scrollable: false,
+        breadcrumbs: [
+          const Crumb('Home', '/dashboard'),
+          const Crumb('Patients', '/patients'),
+          Crumb(widget.args.name, null),
+          const Crumb('Intake', null),
+        ],
+        primaryAction: _loading
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SavingIndicator(controller: _saveCtrl),
+                  const SizedBox(width: PsySpacing.md),
+                  FilledButton.icon(
+                    onPressed: canSave ? _save : null,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Save intake'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: PsySpacing.xl,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-      child: _loading
-          ? const Padding(
-              padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                PhiBanner(cs: cs, theme: theme),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '1 · Demographics'),
-                PsyCard(
-                  child: Column(
-                    children: [
-                      _field(
-                        'Full legal name',
-                        _fullName,
-                        hint: 'Required for the chart and consent record',
-                      ),
-                      _row2(
-                        child1: _dobField(theme),
-                        child2: _field(
-                          'Gender (optional)',
-                          _gender,
-                          hint: 'Self-described',
+                ],
+              ),
+        child: _loading
+            ? const Padding(
+                padding: EdgeInsets.only(top: 80),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  PhiBanner(cs: cs, theme: theme),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '1 · Demographics'),
+                  PsyCard(
+                    child: Column(
+                      children: [
+                        _field(
+                          'Full legal name',
+                          _fullName,
+                          hint: 'Required for the chart and consent record',
                         ),
-                      ),
-                      _row2(
-                        child1: _field(
-                          'Phone',
-                          _phone,
-                          keyboardType: TextInputType.phone,
-                          validator: _validatePhone,
+                        _row2(
+                          child1: _dobField(theme),
+                          child2: _field(
+                            'Gender (optional)',
+                            _gender,
+                            hint: 'Self-described',
+                          ),
                         ),
-                        child2: _field(
-                          'Email',
-                          _email,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: _validateEmail,
+                        _row2(
+                          child1: _field(
+                            'Phone',
+                            _phone,
+                            keyboardType: TextInputType.phone,
+                            validator: _validatePhone,
+                          ),
+                          child2: _field(
+                            'Email',
+                            _email,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: _validateEmail,
+                          ),
                         ),
-                      ),
-                      _row2(
-                        child1: _field(
-                          'Emergency contact name',
-                          _emergencyName,
-                          hint: 'Who to call if you cannot reach the patient',
+                        _row2(
+                          child1: _field(
+                            'Emergency contact name',
+                            _emergencyName,
+                            hint: 'Who to call if you cannot reach the patient',
+                          ),
+                          child2: _field(
+                            'Emergency contact phone',
+                            _emergencyPhone,
+                            keyboardType: TextInputType.phone,
+                            validator: _validatePhone,
+                          ),
                         ),
-                        child2: _field(
-                          'Emergency contact phone',
-                          _emergencyPhone,
-                          keyboardType: TextInputType.phone,
-                          validator: _validatePhone,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '2 · Presenting concern'),
-                PsyCard(
-                  child: TextField(
-                    controller: _presenting,
-                    minLines: 3,
-                    maxLines: 6,
-                    decoration: const InputDecoration(
-                      hintText:
-                          "In the patient's own words — what brings "
-                          'them in, when it started, how it affects daily '
-                          'life.',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '3 · Allergies'),
-                PsyCard(
-                  child: ChipList(
-                    items: _allergies,
-                    hint: 'Drug, food, or environmental allergen…',
-                    onChanged: () => setState(() {}),
-                  ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '4 · Current medications'),
-                PsyCard(
-                  child: ChipList(
-                    items: _medications,
-                    hint:
-                        'Name + dose + frequency (e.g. "Sertraline 50 mg qD")',
-                    onChanged: () => setState(() {}),
-                  ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '5 · Medical history'),
-                PsyCard(
-                  child: TextField(
-                    controller: _medicalHistory,
-                    minLines: 2,
-                    maxLines: 5,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'Chronic conditions, surgeries, head '
-                          'injuries, recent hospitalisations.',
-                      border: OutlineInputBorder(),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '6 · Mental health history'),
-                PsyCard(
-                  child: TextField(
-                    controller: _mentalHistory,
-                    minLines: 2,
-                    maxLines: 5,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'Past diagnoses, prior therapy or '
-                          'medication, inpatient stays.',
-                      border: OutlineInputBorder(),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '2 · Presenting concern'),
+                  PsyCard(
+                    child: TextField(
+                      controller: _presenting,
+                      minLines: 3,
+                      maxLines: 6,
+                      decoration: const InputDecoration(
+                        hintText:
+                            "In the patient's own words — what brings "
+                            'them in, when it started, how it affects daily '
+                            'life.',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '7 · Substance use'),
-                PsyCard(
-                  child: TextField(
-                    controller: _substanceUse,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'Alcohol, tobacco, recreational substances '
-                          '— current and past patterns.',
-                      border: OutlineInputBorder(),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '3 · Allergies'),
+                  PsyCard(
+                    child: ChipList(
+                      items: _allergies,
+                      hint: 'Drug, food, or environmental allergen…',
+                      onChanged: () => setState(() {}),
                     ),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '8 · Safety screening'),
-                PsyCard(
-                  child: Column(
-                    children: [
-                      _yesNoTile(
-                        title: 'Prior suicide attempt (lifetime)',
-                        subtitle:
-                            'A yes here should trigger a full C-SSRS '
-                            'during the first session.',
-                        value: _priorSuicideAttempt,
-                        onChanged: (v) =>
-                            setState(() => _priorSuicideAttempt = v),
-                      ),
-                      Divider(height: 1, color: cs.outlineVariant),
-                      _yesNoTile(
-                        title: 'Prior non-suicidal self-harm',
-                        subtitle: 'Cutting, burning, hitting, or similar.',
-                        value: _priorSelfHarm,
-                        onChanged: (v) => setState(() => _priorSelfHarm = v),
-                      ),
-                    ],
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '4 · Current medications'),
+                  PsyCard(
+                    child: ChipList(
+                      items: _medications,
+                      hint:
+                          'Name + dose + frequency (e.g. "Sertraline 50 mg qD")',
+                      onChanged: () => setState(() {}),
+                    ),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _section(theme, '9 · Consent'),
-                ConsentCard(
-                  policyVersion: _consentPolicyVersion,
-                  dataProcessing: _consentDataProcessing,
-                  aiAssistance: _consentAi,
-                  sensitiveData: _consentSensitive,
-                  signature: _signature,
-                  onDataChanged: (v) =>
-                      setState(() => _consentDataProcessing = v),
-                  onAiChanged: (v) => setState(() => _consentAi = v),
-                  onSensitiveChanged: (v) =>
-                      setState(() => _consentSensitive = v),
-                  onSignatureChanged: () => setState(() {}),
-                ),
-                const SizedBox(height: PsySpacing.huge),
-              ],
-            ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '5 · Medical history'),
+                  PsyCard(
+                    child: TextField(
+                      controller: _medicalHistory,
+                      minLines: 2,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Chronic conditions, surgeries, head '
+                            'injuries, recent hospitalisations.',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '6 · Mental health history'),
+                  PsyCard(
+                    child: TextField(
+                      controller: _mentalHistory,
+                      minLines: 2,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Past diagnoses, prior therapy or '
+                            'medication, inpatient stays.',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '7 · Substance use'),
+                  PsyCard(
+                    child: TextField(
+                      controller: _substanceUse,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'Alcohol, tobacco, recreational substances '
+                            '— current and past patterns.',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '8 · Safety screening'),
+                  PsyCard(
+                    child: Column(
+                      children: [
+                        _yesNoTile(
+                          title: 'Prior suicide attempt (lifetime)',
+                          subtitle:
+                              'A yes here should trigger a full C-SSRS '
+                              'during the first session.',
+                          value: _priorSuicideAttempt,
+                          onChanged: (v) =>
+                              setState(() => _priorSuicideAttempt = v),
+                        ),
+                        Divider(height: 1, color: cs.outlineVariant),
+                        _yesNoTile(
+                          title: 'Prior non-suicidal self-harm',
+                          subtitle: 'Cutting, burning, hitting, or similar.',
+                          value: _priorSelfHarm,
+                          onChanged: (v) => setState(() => _priorSelfHarm = v),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '9 · Consent'),
+                  ConsentCard(
+                    policyVersion: _consentPolicyVersion,
+                    dataProcessing: _consentDataProcessing,
+                    aiAssistance: _consentAi,
+                    sensitiveData: _consentSensitive,
+                    signature: _signature,
+                    onDataChanged: (v) =>
+                        setState(() => _consentDataProcessing = v),
+                    onAiChanged: (v) => setState(() => _consentAi = v),
+                    onSensitiveChanged: (v) =>
+                        setState(() => _consentSensitive = v),
+                    onSignatureChanged: () => setState(() {}),
+                  ),
+                  const SizedBox(height: PsySpacing.huge),
+                ],
+              ),
+      ),
     );
   }
 

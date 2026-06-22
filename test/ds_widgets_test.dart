@@ -13,8 +13,10 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/widgets/ds/psy_empty_state.dart';
+import 'package:psyclinicai/widgets/ds/psy_save_shortcut.dart';
 import 'package:psyclinicai/widgets/ds/psy_skeleton.dart';
 import 'package:psyclinicai/widgets/ds/psy_snack.dart';
+import 'package:psyclinicai/widgets/ds/psy_tooltip.dart';
 import 'package:psyclinicai/widgets/ds/saving_indicator.dart';
 
 Widget _host(Widget child) {
@@ -273,6 +275,75 @@ void main() {
       );
       await tester.pump();
       expect(find.byType(PsySkeletonLine), findsOneWidget);
+    });
+  });
+
+  group('PsySaveShortcut', () {
+    testWidgets('invokes onSave when PsySaveIntent fires + enabled', (
+      tester,
+    ) async {
+      var saved = 0;
+      await tester.pumpWidget(
+        _host(
+          PsySaveShortcut(
+            onSave: () => saved++,
+            child: const Text('body'),
+          ),
+        ),
+      );
+      // Invoke the Intent directly — testing keyboard simulation
+      // would couple the test to platform key binding tables. The
+      // Action mapping is what we care about.
+      final detector =
+          tester.element(find.byType(FocusableActionDetector))
+              as BuildContext;
+      Actions.invoke<PsySaveIntent>(detector, const PsySaveIntent());
+      await tester.pump();
+      expect(saved, 1);
+    });
+
+    testWidgets('no-ops when disabled', (tester) async {
+      var saved = 0;
+      await tester.pumpWidget(
+        _host(
+          PsySaveShortcut(
+            onSave: () => saved++,
+            enabled: false,
+            child: const Text('body'),
+          ),
+        ),
+      );
+      final detector =
+          tester.element(find.byType(FocusableActionDetector))
+              as BuildContext;
+      Actions.invoke<PsySaveIntent>(detector, const PsySaveIntent());
+      await tester.pump();
+      expect(saved, 0);
+    });
+  });
+
+  group('PsyTooltip', () {
+    testWidgets('wraps the child + registers a Tooltip', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          const PsyTooltip(
+            label: 'F32.1',
+            description:
+                'Major Depressive Disorder, Single Episode, Moderate',
+            child: Text('badge'),
+          ),
+        ),
+      );
+      expect(find.text('badge'), findsOneWidget);
+      expect(find.byType(Tooltip), findsOneWidget);
+    });
+
+    testWidgets('skips Tooltip when label is empty', (tester) async {
+      await tester.pumpWidget(
+        _host(const PsyTooltip(label: '', child: Text('badge'))),
+      );
+      expect(find.text('badge'), findsOneWidget);
+      expect(find.byType(Tooltip), findsNothing);
     });
   });
 }

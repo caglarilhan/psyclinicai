@@ -11,6 +11,7 @@ import '../../services/data/safety_plan_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
@@ -140,11 +141,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       await _repo.save(_current());
       _saveCtrl.markSaved();
       if (!mounted) return;
-      PsySnack.success(
-        context,
-        'Safety plan saved.',
-        hint: 'safety_plan.save',
-      );
+      PsySnack.success(context, 'Safety plan saved.', hint: 'safety_plan.save');
     } catch (e, st) {
       // A crisis plan that failed to persist must NOT report success.
       // Telemetry capture (PHI-scrubbed inside captureError) +
@@ -233,191 +230,197 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    return AppShell(
-      routeName: '/patients',
-      title: 'Safety plan',
-      subtitle: '${widget.args.name} · crisis safety planning (Stanley-Brown)',
-      breadcrumbs: [
-        const Crumb('Home', '/dashboard'),
-        const Crumb('Patients', '/patients'),
-        Crumb(widget.args.name, null),
-        const Crumb('Safety plan', null),
-      ],
-      primaryAction: _loading
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SavingIndicator(controller: _saveCtrl),
-                const SizedBox(width: PsySpacing.md),
-                FilledButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Save'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 48),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: PsySpacing.xl,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-      child: _loading
-          ? const Padding(
-              padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Calmer notice: neutral surface tint + tight padding so
-                // the warning reads as guidance, not as a giant pink alarm.
-                // The red icon still carries the safety semantic. "Draft
-                // with AI" steps down to TextButton — pure secondary.
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: PsySpacing.md,
-                    vertical: PsySpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(PsyRadius.md),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, c) {
-                      final compact = c.maxWidth < 560;
-                      const icon = Icon(
-                        Icons.health_and_safety_outlined,
-                        color: Color(0xFFDC2626),
-                        size: 20,
-                      );
-                      final body = Text(
-                        'Complete this WITH the client. Decision-support '
-                        'scaffold — not a clinical risk assessment.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.78),
-                          height: 1.4,
-                        ),
-                      );
-                      final draftButton = TextButton.icon(
-                        onPressed: _busy ? null : _draftAi,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.auto_awesome, size: 16),
-                        label: const Text('Draft with AI'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: cs.primary,
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                      );
-                      if (compact) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                icon,
-                                const SizedBox(width: PsySpacing.sm),
-                                Expanded(child: body),
-                              ],
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: draftButton,
-                            ),
-                          ],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          icon,
-                          const SizedBox(width: PsySpacing.md),
-                          Expanded(child: body),
-                          const SizedBox(width: PsySpacing.sm),
-                          draftButton,
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: PsySpacing.xl),
-                _Section(
-                  title: '1 · Warning signs',
-                  items: _warning,
-                  onChanged: () => setState(() {}),
-                ),
-                _Section(
-                  title: '2 · Coping strategies (on my own)',
-                  items: _coping,
-                  onChanged: () => setState(() {}),
-                ),
-                _Section(
-                  title: '3 · Social distractions (people & places)',
-                  items: _social,
-                  onChanged: () => setState(() {}),
-                ),
-                _Section(
-                  title: '4 · People I can ask for help',
-                  items: _support,
-                  onChanged: () => setState(() {}),
-                ),
-                _Section(
-                  title: '5 · Professionals / agencies',
-                  items: _pros,
-                  onChanged: () => setState(() {}),
-                ),
-                _Section(
-                  title: '6 · Crisis lines / emergency',
-                  items: _crisis,
-                  onChanged: () => setState(() {}),
-                  trailing: TextButton.icon(
-                    onPressed: _suggestCrisisLines,
-                    icon: const Icon(Icons.add_location_outlined, size: 16),
-                    label: const Text('Suggest for this region'),
-                    style: TextButton.styleFrom(
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+    return PsySaveShortcut(
+      onSave: _save,
+      enabled: !_loading,
+      child: AppShell(
+        routeName: '/patients',
+        title: 'Safety plan',
+        subtitle:
+            '${widget.args.name} · crisis safety planning (Stanley-Brown)',
+        breadcrumbs: [
+          const Crumb('Home', '/dashboard'),
+          const Crumb('Patients', '/patients'),
+          Crumb(widget.args.name, null),
+          const Crumb('Safety plan', null),
+        ],
+        primaryAction: _loading
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SavingIndicator(controller: _saveCtrl),
+                  const SizedBox(width: PsySpacing.md),
+                  FilledButton.icon(
+                    onPressed: _save,
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Save'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: PsySpacing.xl,
                       ),
                     ),
                   ),
-                ),
-                _Section(
-                  title: '7 · Reasons to keep living',
-                  items: _reasons,
-                  onChanged: () => setState(() {}),
-                ),
-                const SizedBox(height: PsySpacing.md),
-                Text(
-                  '8 · Making the environment safe',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                ],
+              ),
+        child: _loading
+            ? const Padding(
+                padding: EdgeInsets.only(top: 80),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Calmer notice: neutral surface tint + tight padding so
+                  // the warning reads as guidance, not as a giant pink alarm.
+                  // The red icon still carries the safety semantic. "Draft
+                  // with AI" steps down to TextButton — pure secondary.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: PsySpacing.md,
+                      vertical: PsySpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(PsyRadius.md),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, c) {
+                        final compact = c.maxWidth < 560;
+                        const icon = Icon(
+                          Icons.health_and_safety_outlined,
+                          color: Color(0xFFDC2626),
+                          size: 20,
+                        );
+                        final body = Text(
+                          'Complete this WITH the client. Decision-support '
+                          'scaffold — not a clinical risk assessment.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.78),
+                            height: 1.4,
+                          ),
+                        );
+                        final draftButton = TextButton.icon(
+                          onPressed: _busy ? null : _draftAi,
+                          icon: _busy
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.auto_awesome, size: 16),
+                          label: const Text('Draft with AI'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: cs.primary,
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        );
+                        if (compact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  icon,
+                                  const SizedBox(width: PsySpacing.sm),
+                                  Expanded(child: body),
+                                ],
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: draftButton,
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            icon,
+                            const SizedBox(width: PsySpacing.md),
+                            Expanded(child: body),
+                            const SizedBox(width: PsySpacing.sm),
+                            draftButton,
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.sm),
-                TextField(
-                  controller: _means,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Means-restriction steps agreed with the client…',
+                  const SizedBox(height: PsySpacing.xl),
+                  _Section(
+                    title: '1 · Warning signs',
+                    items: _warning,
+                    onChanged: () => setState(() {}),
                   ),
-                ),
-                const SizedBox(height: PsySpacing.huge),
-              ],
-            ),
+                  _Section(
+                    title: '2 · Coping strategies (on my own)',
+                    items: _coping,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _Section(
+                    title: '3 · Social distractions (people & places)',
+                    items: _social,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _Section(
+                    title: '4 · People I can ask for help',
+                    items: _support,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _Section(
+                    title: '5 · Professionals / agencies',
+                    items: _pros,
+                    onChanged: () => setState(() {}),
+                  ),
+                  _Section(
+                    title: '6 · Crisis lines / emergency',
+                    items: _crisis,
+                    onChanged: () => setState(() {}),
+                    trailing: TextButton.icon(
+                      onPressed: _suggestCrisisLines,
+                      icon: const Icon(Icons.add_location_outlined, size: 16),
+                      label: const Text('Suggest for this region'),
+                      style: TextButton.styleFrom(
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  _Section(
+                    title: '7 · Reasons to keep living',
+                    items: _reasons,
+                    onChanged: () => setState(() {}),
+                  ),
+                  const SizedBox(height: PsySpacing.md),
+                  Text(
+                    '8 · Making the environment safe',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.sm),
+                  TextField(
+                    controller: _means,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'Means-restriction steps agreed with the client…',
+                    ),
+                  ),
+                  const SizedBox(height: PsySpacing.huge),
+                ],
+              ),
+      ),
     );
   }
 }

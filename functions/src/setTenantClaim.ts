@@ -17,9 +17,35 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 /**
+ * M-12 (audit 2026-06-21) — reserved tenant prefixes that only the
+ * platform team may assign. Prevents an admin from re-binding a user
+ * into the platform tenant or a system-internal namespace.
+ */
+export const RESERVED_PREFIXES: ReadonlyArray<string> = [
+  "platform_",
+  "system_",
+  "internal_",
+];
+
+/**
+ * M-12 — strict tenant id format. Firestore doc IDs cannot contain
+ * `/` (path injection) and we reject everything outside a small
+ * alphanumeric + hyphen + underscore window so log/metric scrapers
+ * stay parseable. Max 64 chars matches the Auth uid budget.
+ */
+const TENANT_ID_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+
+export function isValidTenantId(value: string): boolean {
+  return TENANT_ID_PATTERN.test(value);
+}
+
+/**
  * Assign a tenant_id claim and mirror the assignment into Firestore for
  * auditability. Idempotent — re-running with the same args is a no-op
- * relative to claims, only the mirror doc bumps `assigned_at`.
+ * relative to claims, only the mirror doc bumps `assigned_at`. The
+ * M-12 fix also writes a dedicated `admin_actions/{auto}` row so the
+ * SIEM can stream every privileged reassignment without scanning the
+ * per-user mirror docs.
  */
 async function applyClaim(
   uid: string,
@@ -28,19 +54,28 @@ async function applyClaim(
 ): Promise<void> {
   const user = await admin.auth().getUser(uid);
   const existing = (user.customClaims ?? {}) as Record<string, unknown>;
+  const prevTenant = (existing.tenant_id as string | undefined) ?? null;
   const next = { ...existing, tenant_id: tenantId };
   await admin.auth().setCustomUserClaims(uid, next);
-  await admin
-    .firestore()
-    .doc(`users/${uid}/tenant_assignment/current`)
-    .set(
-      {
-        tenant_id: tenantId,
-        assigned_at: admin.firestore.FieldValue.serverTimestamp(),
-        assigned_by: assignedBy,
-      },
-      { merge: false },
-    );
+  const db = admin.firestore();
+  await db.doc(`users/${uid}/tenant_assignment/current`).set(
+    {
+      tenant_id: tenantId,
+      assigned_at: admin.firestore.FieldValue.serverTimestamp(),
+      assigned_by: assignedBy,
+    },
+    { merge: false },
+  );
+  // M-12 dedicated admin escalation log so the SIEM streams every
+  // reassignment without scanning per-user mirror docs.
+  await db.collection("admin_actions").add({
+    action: "tenant_reassign",
+    target_uid: uid,
+    prev_tenant_id: prevTenant,
+    next_tenant_id: tenantId,
+    actor_uid: assignedBy,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+  });
 }
 
 /**
@@ -93,6 +128,30 @@ export const adminSetTenantClaim = functions.https.onCall(
       throw new functions.https.HttpsError(
         "invalid-argument",
         "uid + tenant_id required.",
+      );
+    }
+    // M-12 — strict format for both ids so neither value can carry
+    // a path separator into the doc write that follows.
+    if (!isValidTenantId(uid) || !isValidTenantId(tenantId)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "uid and tenant_id must match ^[A-Za-z0-9_-]{1,64}$.",
+      );
+    }
+    // M-12 — reserved prefixes are platform-only. Even a verified
+    // platform admin must NOT bind a normal customer uid into a
+    // system tenant namespace via this callable; that path goes
+    // through the manual console out-of-band.
+    const lower = tenantId.toLowerCase();
+    if (RESERVED_PREFIXES.some((p) => lower.startsWith(p))) {
+      functions.logger.warn("adminSetTenantClaim.reserved_prefix_denied", {
+        actor: context.auth.uid,
+        target_uid: uid,
+        tenant_id: tenantId,
+      });
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Reserved tenant prefix; use the platform console.",
       );
     }
     await applyClaim(uid, tenantId, context.auth.uid);

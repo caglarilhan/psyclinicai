@@ -63,6 +63,32 @@ jobs:
         # Sprint 29 D-01: strict — red tests fail the build.
         run: flutter test --coverage --no-pub --reporter=expanded
 
+      - name: Enforce coverage floor (>= 60% lines)
+        # Audit 2026-06-21 / CI item 5: lcov was uploaded but never
+        # gated. At the time of landing line coverage was ~74.8%, so
+        # we set the floor at 60% — enough room for short-term churn
+        # without letting a slow erosion slide. Pure shell so the
+        # workflow has no extra runtime dependency.
+        env:
+          LC_ALL: C
+        run: |
+          awk -F: '
+            /^LH:/ { hit += $2 }
+            /^LF:/ { found += $2 }
+            END {
+              if (found == 0) {
+                print "::error::No LF entries in lcov.info"
+                exit 1
+              }
+              pct = 100 * hit / found
+              printf "line coverage: %.2f%% (%d / %d)\n", pct, hit, found
+              if (pct < 60) {
+                printf "::error::line coverage %.2f%% below 60%% floor\n", pct
+                exit 1
+              }
+            }
+          ' coverage/lcov.info
+
       - name: Upload coverage artefact
         if: always()
         uses: actions/upload-artifact@v4
@@ -148,9 +174,15 @@ jobs:
         working-directory: functions
         run: npm run build
 
-      - name: Test
+      - name: Test (with coverage threshold)
+        # Audit 2026-06-21 / CI item 5: lcov was uploaded but no
+        # threshold gate. The Jest coverageThreshold block in
+        # package.json now enforces a 40/28/38/40 (stmt/br/fn/ln)
+        # floor; --coverage activates it. Baseline at the time of
+        # landing was 44.66% statements — set conservatively so test
+        # drift fails the build before the safety floor is breached.
         working-directory: functions
-        run: npm test -- --ci --reporters=default
+        run: npm test -- --ci --coverage --reporters=default
 
   # Audit 2026-06-21: secret-scan was missing — no protection against
   # committed API keys / private keys. Runs full-history on push,

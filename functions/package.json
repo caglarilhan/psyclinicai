@@ -29,6 +29,19 @@
     "testEnvironment": "node",
     "testMatch": [
       "**/__tests__/**/*.test.ts"
-    ]
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/__tests__/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 40,
+        "branches": 28,
+        "functions": 38,
+        "lines": 40
+      }
+    }
   }
 }

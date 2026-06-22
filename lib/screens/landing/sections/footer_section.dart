@@ -29,12 +29,10 @@ class FooterSection extends StatelessWidget {
       _FooterColumn('Company', const [
         _Link('About', 'about'),
         _Link('Contact', 'contact'),
-        _Link('Careers', 'careers'),
         _Link('Press kit', 'press'),
       ]),
       _FooterColumn('Resources', const [
         _Link('Help center', 'help'),
-        _Link('Clinical research', 'research'),
         _Link('Status', 'status'),
         _Link('Changelog', 'changelog'),
       ]),

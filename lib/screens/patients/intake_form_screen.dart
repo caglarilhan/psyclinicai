@@ -185,7 +185,20 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Intake saved — consent recorded.')),
       );
-    } catch (_) {
+    } catch (e, st) {
+      // Silent-fail fix (audit 2026-06-21): the previous `catch (_)`
+      // dropped the underlying error on the floor — a Firestore
+      // permission denied, a serialization bug, a quota hit all
+      // looked the same to the clinician AND to support. Capture the
+      // (PHI-scrubbed) error so prod failures can be diagnosed
+      // without local repro; user-facing copy stays the same.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'patient.intake_save',
+        ),
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

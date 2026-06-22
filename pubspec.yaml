@@ -33,7 +33,6 @@ dependencies:
   qr_flutter: ^4.1.0
   # Push Notifications için
   flutter_local_notifications: ^16.3.2
-  # firebase_messaging: ^14.7.20 # Geçici olarak devre dışı
   # Offline Database için — only sqflite_sqlcipher is imported in lib/
   # (test/security/local_db_encryption_test.dart pins this so a plain
   # sqflite import can never regress). Drop the redundant top-level

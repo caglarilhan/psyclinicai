@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// 3-pane product mockup for the hero. A primary "browser window" carries
@@ -23,11 +25,13 @@ class _HeroVisualState extends State<HeroVisual> with TickerProviderStateMixin {
     _entry = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..forward();
+    );
+    unawaited(_entry.forward());
     _float = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
-    )..repeat(reverse: true);
+    );
+    unawaited(_float.repeat(reverse: true));
   }
 
   @override

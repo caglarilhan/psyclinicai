@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../services/offline_service.dart';
 
 class OfflineIndicator extends StatelessWidget {
@@ -118,7 +121,7 @@ class OfflineStatusCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: () {
-                      offlineService.syncPendingData();
+                      unawaited(offlineService.syncPendingData());
                     },
                     icon: const Icon(Icons.sync, size: 16),
                     label: const Text('Senkronize Et'),
@@ -264,54 +267,58 @@ class OfflineDataList extends StatelessWidget {
     List<Map<String, dynamic>> data,
     String title,
   ) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final item = data[index];
-              return ListTile(
-                title: Text(
-                  '${item['name'] ?? item['title'] ?? item['id'] ?? ''}',
-                ),
-                subtitle: Text('${item['created_at'] ?? ''}'),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                final item = data[index];
+                return ListTile(
+                  title: Text(
+                    '${item['name'] ?? item['title'] ?? item['id'] ?? ''}',
                   ),
-                  decoration: BoxDecoration(
-                    color: item['sync_status'] == 'synced'
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    item['sync_status'] == 'synced' ? 'Senkronize' : 'Bekliyor',
-                    style: TextStyle(
+                  subtitle: Text('${item['created_at'] ?? ''}'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
                       color: item['sync_status'] == 'synced'
-                          ? Colors.green
-                          : Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item['sync_status'] == 'synced'
+                          ? 'Senkronize'
+                          : 'Bekliyor',
+                      style: TextStyle(
+                        color: item['sync_status'] == 'synced'
+                            ? Colors.green
+                            : Colors.orange,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kapat'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Kapat'),
-          ),
-        ],
       ),
     );
   }

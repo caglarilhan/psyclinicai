@@ -38,7 +38,7 @@ class FirebaseAuthService extends ChangeNotifier {
   Future<void> initialize() async {
     if (_initialized) return;
     try {
-      _sub?.cancel();
+      unawaited(_sub?.cancel());
       _sub = _auth.authStateChanges().listen((u) async {
         _user = u;
         _profile = u != null ? await _loadProfile(u.uid) : null;
@@ -269,7 +269,7 @@ class FirebaseAuthService extends ChangeNotifier {
 
   @override
   void dispose() {
-    _sub?.cancel();
+    unawaited(_sub?.cancel());
     super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -228,7 +230,9 @@ class KeyboardShortcutsService extends ChangeNotifier {
       icon: const Icon(Icons.keyboard),
       tooltip: 'Klavye Kısayolları',
       onPressed: () {
-        showDialog<void>(context: context, builder: buildShortcutsWidget);
+        unawaited(
+          showDialog<void>(context: context, builder: buildShortcutsWidget),
+        );
       },
     );
   }
@@ -250,7 +254,12 @@ class KeyboardShortcutsService extends ChangeNotifier {
           const Spacer(),
           TextButton(
             onPressed: () {
-              showDialog<void>(context: context, builder: buildShortcutsWidget);
+              unawaited(
+                showDialog<void>(
+                  context: context,
+                  builder: buildShortcutsWidget,
+                ),
+              );
             },
             child: const Text('Tüm Kısayollar', style: TextStyle(fontSize: 12)),
           ),

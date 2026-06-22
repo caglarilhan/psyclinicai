@@ -49,10 +49,10 @@ class _PsyRevealState extends State<PsyReveal>
       return;
     }
     if (widget.delay == Duration.zero) {
-      _c.forward();
+      unawaited(_c.forward());
     } else {
       _timer = Timer(widget.delay, () {
-        if (mounted) _c.forward();
+        if (mounted) unawaited(_c.forward());
       });
     }
   }

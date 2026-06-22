@@ -34,11 +34,11 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    _c.forward();
+    unawaited(_c.forward());
     // Hold the brand for a beat after the animation lands, then transition.
     _exit = Timer(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(_initialTarget());
+      unawaited(Navigator.of(context).pushReplacementNamed(_initialTarget()));
     });
   }
 

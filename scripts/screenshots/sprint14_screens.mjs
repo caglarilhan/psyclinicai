@@ -96,11 +96,21 @@ function safeMime(ext) {
 
 function startServer(rootDir, port) {
   return new Promise((resolve) => {
+    const resolvedRoot = path.resolve(rootDir);
     const server = http.createServer((req, res) => {
       const url = decodeURIComponent((req.url ?? '/').split('?')[0]);
-      let target = path.join(rootDir, url);
+      let target = path.resolve(rootDir, '.' + url);
+      // Path-traversal guard — see sprint17_screens.mjs for the
+      // CodeQL "Uncontrolled data used in path expression" rationale.
+      if (
+        target !== resolvedRoot &&
+        !target.startsWith(resolvedRoot + path.sep)
+      ) {
+        res.writeHead(403).end('forbidden');
+        return;
+      }
       if (!fs.existsSync(target) || fs.statSync(target).isDirectory()) {
-        target = path.join(rootDir, 'index.html');
+        target = path.join(resolvedRoot, 'index.html');
       }
       try {
         const data = fs.readFileSync(target);

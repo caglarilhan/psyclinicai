@@ -155,10 +155,20 @@ class KpiCard extends StatelessWidget {
                   ),
                   KpiState.data =>
                     kpi.value != null
-                        ? Text(
-                            kpi.value!,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                        // A11y guard (audit 2026-06-21 — DESIGN.md
+                        // dynamic-type follow-up): accessibility text
+                        // scale ≥1.3 was pushing "$680" / "1 234" beyond
+                        // the card edge. FittedBox.scaleDown bounds the
+                        // numeral to the card width without breaking
+                        // smaller numbers.
+                        ? FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              kpi.value!,
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           )
                         : Text(

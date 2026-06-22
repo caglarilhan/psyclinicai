@@ -11,6 +11,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/outcomes/caseload_outcomes_panel.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
@@ -288,9 +289,23 @@ class _LiveChartCard extends StatelessWidget {
       ),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(PsySpacing.xxxl),
-            child: Center(child: CircularProgressIndicator()),
+          // Skeleton mirrors the trend-card shape (PsyCard wrapper +
+          // ~240 px chart canvas) so the page layout doesn't jump
+          // between waiting and data.
+          return const PsyCard(
+            child: PsySkeletonGroup(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: PsySpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PsySkeletonLine(width: 160),
+                    SizedBox(height: PsySpacing.lg),
+                    PsySkeletonBlock(height: 220),
+                  ],
+                ),
+              ),
+            ),
           );
         }
         final list = snap.data ?? const <AssessmentDoc>[];

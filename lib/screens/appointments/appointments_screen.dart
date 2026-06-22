@@ -7,6 +7,7 @@ import '../../models/appointment_model.dart';
 import '../../services/appointment_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 
 /// `/appointments` — month calendar + day agenda + quick scheduling.
 ///
@@ -73,7 +74,23 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       ),
       scrollable: false,
       child: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const PsySkeletonGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Calendar grid placeholder (matches _CalendarCard
+                  // 320 px footprint).
+                  PsySkeletonBlock(height: 320),
+                  SizedBox(height: PsySpacing.xl),
+                  // 3 agenda row placeholders.
+                  PsySkeletonBlock(),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(),
+                ],
+              ),
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

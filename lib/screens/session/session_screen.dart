@@ -15,6 +15,7 @@ import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/structured_note_editor.dart';
 
 class SessionScreen extends StatefulWidget {
@@ -148,8 +149,10 @@ class _SessionScreenState extends State<SessionScreen> {
   Future<void> _saveSessionNotes() async {
     final snapshot = _noteValue;
     if (snapshot == null || snapshot.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kaydedilecek bir seans notu bulunamadı')),
+      PsySnack.info(
+        context,
+        'Kaydedilecek bir seans notu bulunamadı.',
+        hint: 'session.save_empty',
       );
       return;
     }
@@ -185,14 +188,29 @@ class _SessionScreenState extends State<SessionScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.success(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Session note saved')));
-    } catch (e) {
+        'Session note saved.',
+        hint: 'session.save',
+      );
+    } catch (e, st) {
+      // Bare catch was swallowing the error to a generic snackbar.
+      // Capture for telemetry so prod failures are diagnosable and
+      // surface a retryable error via the DS vocabulary.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.save_failed',
+        ),
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Could not save note: $e')));
+        'Could not save note — please retry.',
+        hint: 'session.save_failed',
+        action: SnackBarAction(label: 'Retry', onPressed: _saveSessionNotes),
+      );
     }
   }
 
@@ -286,19 +304,24 @@ class _SessionScreenState extends State<SessionScreen> {
       await pdfService.printPDF(pdfBytes);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PDF generated successfully and sent to printer'),
-          backgroundColor: Colors.green,
+      PsySnack.success(
+        context,
+        'PDF generated successfully and sent to printer.',
+        hint: 'session.pdf_export',
+      );
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.pdf_export_failed',
         ),
       );
-    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF generation error: $e'),
-          backgroundColor: Colors.red,
-        ),
+      PsySnack.error(
+        context,
+        'PDF generation error: $e',
+        hint: 'session.pdf_export_failed',
       );
     }
   }

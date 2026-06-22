@@ -572,9 +572,13 @@ class PDFExportService {
     return file.path;
   }
 
-  /// PDF'i paylaş
+  /// PDF'i paylaş — currently a stub. Wire up `share_plus` before
+  /// calling this from a UI flow; failing loudly is safer than a
+  /// silent no-op that lies about success (audit 2026-06-21 silent-
+  /// fail item).
   Future<void> sharePDF(Uint8List pdfBytes, String fileName) async {
-    // TODO: Share plugin entegrasyonu
-    // await Share.shareFiles([file.path], text: 'Seans raporu');
+    throw UnimplementedError(
+      'sharePDF: hook up share_plus in pdf_export_service before calling.',
+    );
   }
 }

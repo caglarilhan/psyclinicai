@@ -3,21 +3,36 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/treatment_plan_models.dart';
+import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
+import 'copilot_endpoint.dart';
+import 'prompt_safety.dart';
 
 /// AI-drafts SMART treatment-plan goals from a diagnosis + clinical
 /// formulation, using Anthropic Claude (BYOK). Decision-support — the
 /// clinician reviews and edits every goal. Mirrors the HTTP/auth pattern of
 /// `soap_generator_service.dart`.
 class TreatmentPlanAiService {
-  TreatmentPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-      _client = client ?? http.Client();
+  TreatmentPlanAiService({
+    ApiKeyStorage? keyStorage,
+    http.Client? client,
+    ConsentGuard? consentGuard,
+    IdTokenProvider? idTokenProvider,
+    String? Function()? patientIdProvider,
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       // Default to fail-closed; production caller injects an
+       // IntakeRepository-backed guard.
+       _guard = consentGuard ?? ConsentGuard(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
+  final ConsentGuard _guard;
+  final IdTokenProvider? _idTokenProvider;
+  final String? Function()? _patientIdProvider;
 
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
   static const String _anthropicVersion = '2023-06-01';
 
@@ -25,9 +40,11 @@ class TreatmentPlanAiService {
   /// no-key case (so the UI can prompt for a key); other failures surface as a
   /// typed message too, never an opaque crash.
   Future<List<DraftGoal>> draftGoals({
+    required String patientId,
     required String diagnosis,
     required String formulation,
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(
@@ -47,33 +64,51 @@ class TreatmentPlanAiService {
         'crisisPrevention|other","priority":"low|medium|high|critical",'
         '"measurement":"how progress is measured","targetWeeks":<int>}]}';
 
+    // Prompt-injection guard (B7): clinician-supplied free-text is
+    // fenced as data-only blocks. Either field can be replayed as
+    // "ignore previous instructions" otherwise.
     final user =
-        'Primary diagnosis: $diagnosis\n\n'
-        'Clinical formulation:\n$formulation';
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('formulation', formulation)}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint so the
+    // relay path (server-side consent gate + PHI scrub) is taken when
+    // BACKEND_URL is configured. In direct/BYOK mode this falls back to the
+    // pre-existing Anthropic-direct call — testers and BYOK users see no
+    // behaviour change. The relay only sees the additional `patientId`
+    // hint when the caller wired a provider; Anthropic's API ignores
+    // extra top-level fields.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 900,
       'temperature': 0.3,
-      'system': system,
+      'system': '$system\n\n${PromptSafety.dataOnlyDirective}',
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     http.Response resp;
     try {
       resp = await _client
-          .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 40));
     } catch (e) {
       throw TreatmentPlanAiException('Network error reaching Anthropic. $e');
@@ -152,9 +187,11 @@ class TreatmentPlanAiService {
   /// Suggests 3–5 concrete homework assignment titles tied to the active
   /// goals. Throws [TreatmentPlanAiException] (noKey set) when no key.
   Future<List<String>> suggestHomework({
+    required String patientId,
     required String diagnosis,
     required List<String> goals,
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(
@@ -168,32 +205,42 @@ class TreatmentPlanAiService {
         'between-session homework assignments tied to the treatment goals. '
         'Each is one short actionable sentence the client could do this week. '
         'Respond STRICT JSON only: {"homework":["...","..."]} (3–5 items).';
+    // Prompt-injection guard (B7): fence inputs as data-only.
     final user =
-        'Diagnosis: $diagnosis\nActive goals:\n'
-        '${goals.map((g) => '- $g').join('\n')}';
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('active_goals', goals.map((g) => '- $g').join('\n'))}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 500,
       'temperature': 0.4,
-      'system': system,
+      'system': '$system\n\n${PromptSafety.dataOnlyDirective}',
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
-          .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 30));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(
@@ -231,11 +278,13 @@ class TreatmentPlanAiService {
   /// goals. Returns the letter text; throws [TreatmentPlanAiException]
   /// (noKey set) when no key. Decision-support draft — clinician reviews.
   Future<String> draftReimbursementLetter({
+    required String patientId,
     required String patientName,
     required String diagnosis,
     required List<String> goals,
     String language = 'English',
   }) async {
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const TreatmentPlanAiException(
@@ -252,10 +301,15 @@ class TreatmentPlanAiService {
         'goals and expected duration/frequency, in a professional letter '
         'format with placeholders [Insurer], [Date], [Clinician], [Credentials]. '
         'Do NOT invent facts beyond what is given. Output the letter text only.';
+    // Prompt-injection guard (B7): patient name / diagnosis / goals
+    // are all clinician-supplied; fence them as data-only.
     final user =
-        'Patient: $patientName\nDiagnosis: $diagnosis\n'
-        'Treatment goals:\n${goals.map((g) => '- $g').join('\n')}';
+        '${PromptSafety.fence('patient', patientName)}\n\n'
+        '${PromptSafety.fence('diagnosis', diagnosis)}\n\n'
+        '${PromptSafety.fence('treatment_goals', goals.map((g) => '- $g').join('\n'))}';
 
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 900,
@@ -264,20 +318,27 @@ class TreatmentPlanAiService {
       'messages': [
         {'role': 'user', 'content': user},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
-          .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const TreatmentPlanAiException(

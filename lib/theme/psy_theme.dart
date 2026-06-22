@@ -32,12 +32,15 @@ class PsyTheme {
       hoverColor: cs.primary.withValues(alpha: 0.04),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          // Android FadeUpwards smells too mobile. Web/desktop = instant.
-          TargetPlatform.android: _NoTransitionsBuilder(),
-          TargetPlatform.linux: _NoTransitionsBuilder(),
-          TargetPlatform.windows: _NoTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          // Soft fade-through (220ms) on every surface — the landing
+          // reference uses a calm crossfade; instant snaps felt
+          // jarring against the dark canvas.
+          TargetPlatform.android: _FadeThroughBuilder(),
+          TargetPlatform.linux: _FadeThroughBuilder(),
+          TargetPlatform.windows: _FadeThroughBuilder(),
+          TargetPlatform.iOS: _FadeThroughBuilder(),
+          TargetPlatform.macOS: _FadeThroughBuilder(),
+          TargetPlatform.fuchsia: _FadeThroughBuilder(),
         },
       ),
       appBarTheme: AppBarTheme(
@@ -48,9 +51,7 @@ class PsyTheme {
         surfaceTintColor: cs.surface,
         centerTitle: false,
         shape: Border(bottom: BorderSide(color: cs.outlineVariant)),
-        titleTextStyle: text.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+        titleTextStyle: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
       ),
       cardTheme: CardThemeData(
         elevation: PsyElevation.flat,
@@ -65,7 +66,9 @@ class PsyTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.lg,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(PsyRadius.md),
           ),
@@ -79,7 +82,9 @@ class PsyTheme {
         style: ElevatedButton.styleFrom(
           elevation: PsyElevation.flat,
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.lg,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(PsyRadius.md),
           ),
@@ -88,20 +93,22 @@ class PsyTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.lg,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(PsyRadius.md),
           ),
           side: BorderSide(color: cs.outlineVariant),
-          textStyle: text.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+            horizontal: PsySpacing.lg,
+            vertical: PsySpacing.md,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(PsyRadius.sm),
           ),
@@ -112,7 +119,9 @@ class PsyTheme {
         filled: true,
         fillColor: cs.surfaceContainerLow,
         contentPadding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.lg, vertical: PsySpacing.lg),
+          horizontal: PsySpacing.lg,
+          vertical: PsySpacing.lg,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(PsyRadius.md),
           borderSide: BorderSide(color: cs.outlineVariant),
@@ -138,9 +147,7 @@ class PsyTheme {
         backgroundColor: cs.surfaceContainerHigh,
         selectedColor: cs.primary,
         labelStyle: text.labelMedium,
-        shape: StadiumBorder(
-          side: BorderSide(color: cs.outlineVariant),
-        ),
+        shape: StadiumBorder(side: BorderSide(color: cs.outlineVariant)),
       ),
       dividerTheme: DividerThemeData(
         color: cs.outlineVariant,
@@ -165,7 +172,9 @@ class PsyTheme {
         ),
         textStyle: text.labelSmall?.copyWith(color: cs.onInverseSurface),
         padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.md, vertical: PsySpacing.sm),
+          horizontal: PsySpacing.md,
+          vertical: PsySpacing.sm,
+        ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: cs.primary),
       iconTheme: IconThemeData(color: cs.onSurface, size: 20),
@@ -173,9 +182,11 @@ class PsyTheme {
   }
 }
 
-/// Web-native page transition — instant snap, no Android FadeUpwards.
-class _NoTransitionsBuilder extends PageTransitionsBuilder {
-  const _NoTransitionsBuilder();
+/// Calm fade-through used app-wide on web + mobile. 220ms feels
+/// natural against the dark slate canvas — long enough to register
+/// as a transition, short enough to stay snappy.
+class _FadeThroughBuilder extends PageTransitionsBuilder {
+  const _FadeThroughBuilder();
 
   @override
   Widget buildTransitions<T>(
@@ -184,6 +195,20 @@ class _NoTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) =>
-      child;
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final fade = Tween<double>(begin: 0, end: 1).animate(curved);
+    final lift = Tween<Offset>(
+      begin: const Offset(0, 0.012),
+      end: Offset.zero,
+    ).animate(curved);
+    return FadeTransition(
+      opacity: fade,
+      child: SlideTransition(position: lift, child: child),
+    );
+  }
 }

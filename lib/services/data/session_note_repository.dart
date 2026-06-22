@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -44,23 +45,33 @@ class SessionNoteRepository {
             _notes.add(SessionNote.fromJson(e as Map<String, dynamic>));
           } catch (err, st) {
             dropped++;
-            TelemetryService.instance.captureError(
-              err,
-              st,
-              hint: 'session_note_decode_record',
+            unawaited(
+              TelemetryService.instance.captureError(
+                err,
+                st,
+                hint: 'session_note_decode_record',
+              ),
             );
           }
         }
         if (dropped > 0) {
-          TelemetryService.instance.captureError(
-            StateError('Dropped $dropped corrupt session note(s) on load'),
-            StackTrace.current,
-            hint: 'session_note_init',
+          unawaited(
+            TelemetryService.instance.captureError(
+              StateError('Dropped $dropped corrupt session note(s) on load'),
+              StackTrace.current,
+              hint: 'session_note_init',
+            ),
           );
         }
       }
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'session_note_init');
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session_note_init',
+        ),
+      );
     }
     _loaded = true;
   }
@@ -86,10 +97,12 @@ class SessionNoteRepository {
       );
       await _storage.write(key: _key, value: raw);
     } catch (e, st) {
-      TelemetryService.instance.captureError(
-        e,
-        st,
-        hint: 'session_note_persist',
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session_note_persist',
+        ),
       );
     }
   }

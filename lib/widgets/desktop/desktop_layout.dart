@@ -5,7 +5,6 @@ import '../../services/keyboard_shortcuts_service.dart';
 import '../../utils/desktop_theme.dart';
 
 class DesktopLayout extends StatefulWidget {
-
   const DesktopLayout({
     super.key,
     required this.child,
@@ -101,27 +100,28 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           children: [
             // Top Bar
             _buildTopBar(),
-            
+
             // Main Content
             Expanded(
               child: Row(
                 children: [
                   // Sidebar
-                  if ((widget.sidebar != null || (widget.sidebarItems != null && widget.sidebarItems!.isNotEmpty)) && !_isSidebarCollapsed)
+                  if ((widget.sidebar != null ||
+                          (widget.sidebarItems != null &&
+                              widget.sidebarItems!.isNotEmpty)) &&
+                      !_isSidebarCollapsed)
                     _buildSidebar(),
-                  
+
                   // Main Content
-                  Expanded(
-                    child: _buildMainContent(),
-                  ),
-                  
+                  Expanded(child: _buildMainContent()),
+
                   // Right Panel
                   if (widget.rightPanel != null && !_isRightPanelCollapsed)
                     _buildRightPanel(),
                 ],
               ),
             ),
-            
+
             // Status Bar
             if (widget.showStatusBar) _buildStatusBar(),
           ],
@@ -135,11 +135,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
       height: DesktopTheme.topBarHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: DesktopTheme.desktopBorder,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: DesktopTheme.desktopBorder)),
       ),
       child: Row(
         children: [
@@ -165,39 +161,47 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               ],
             ),
           ),
-          
+
           const Spacer(),
-          
+
           // Actions
           if (widget.actions != null) ...widget.actions!,
-          
+
           // Sidebar Toggle
           if (widget.sidebar != null)
             IconButton(
               icon: Icon(_isSidebarCollapsed ? Icons.menu : Icons.menu_open),
-              tooltip: 'Sidebar ${_isSidebarCollapsed ? 'Aç' : 'Kapat'} (Ctrl+B)',
+              tooltip:
+                  'Sidebar ${_isSidebarCollapsed ? 'Aç' : 'Kapat'} (Ctrl+B)',
               onPressed: _toggleSidebar,
             ),
-          
+
           // Right Panel Toggle
           if (widget.rightPanel != null)
             IconButton(
-              icon: Icon(_isRightPanelCollapsed ? Icons.keyboard_arrow_left : Icons.keyboard_arrow_right),
-              tooltip: 'Panel ${_isRightPanelCollapsed ? 'Aç' : 'Kapat'} (Ctrl+P)',
+              icon: Icon(
+                _isRightPanelCollapsed
+                    ? Icons.keyboard_arrow_left
+                    : Icons.keyboard_arrow_right,
+              ),
+              tooltip:
+                  'Panel ${_isRightPanelCollapsed ? 'Aç' : 'Kapat'} (Ctrl+P)',
               onPressed: _toggleRightPanel,
             ),
-          
+
           // Full Screen Toggle
           IconButton(
-            icon: Icon(_isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
+            icon: Icon(
+              _isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+            ),
             tooltip: 'Tam Ekran (F11)',
             onPressed: _toggleFullScreen,
           ),
-          
+
           // Shortcuts Help
           if (widget.showShortcuts)
             _shortcutsService.buildShortcutsHelpButton(context),
-          
+
           const SizedBox(width: 16),
         ],
       ),
@@ -216,9 +220,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: const BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: DesktopTheme.desktopBorder,
-                ),
+                bottom: BorderSide(color: DesktopTheme.desktopBorder),
               ),
             ),
             child: Row(
@@ -242,11 +244,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               ],
             ),
           ),
-          
+
           // Sidebar Content
-          Expanded(
-            child: widget.sidebar ?? _buildSidebarFromItems(),
-          ),
+          Expanded(child: widget.sidebar ?? _buildSidebarFromItems()),
         ],
       ),
     );
@@ -276,9 +276,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
-                bottom: BorderSide(
-                  color: DesktopTheme.desktopBorder,
-                ),
+                bottom: BorderSide(color: DesktopTheme.desktopBorder),
               ),
             ),
             child: Row(
@@ -303,7 +301,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               ],
             ),
           ),
-          
+
           // Main Content
           Expanded(
             child: Container(
@@ -328,9 +326,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: const BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: DesktopTheme.desktopBorder,
-                ),
+                bottom: BorderSide(color: DesktopTheme.desktopBorder),
               ),
             ),
             child: Row(
@@ -354,11 +350,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               ],
             ),
           ),
-          
+
           // Panel Content
-          Expanded(
-            child: widget.rightPanel!,
-          ),
+          Expanded(child: widget.rightPanel!),
         ],
       ),
     );
@@ -389,7 +383,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
 
 // Masaüstü sidebar widget'ı
 class DesktopSidebar extends StatelessWidget {
-
   const DesktopSidebar({
     super.key,
     required this.items,
@@ -408,11 +401,13 @@ class DesktopSidebar extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         final isSelected = index == selectedIndex;
-        
+
         return ListTile(
           leading: Icon(
             item.icon,
-            color: isSelected ? DesktopTheme.desktopPrimary : const Color(0xFF64748B),
+            color: isSelected
+                ? DesktopTheme.desktopPrimary
+                : const Color(0xFF64748B),
             size: 20,
           ),
           title: Text(
@@ -420,7 +415,9 @@ class DesktopSidebar extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              color: isSelected ? DesktopTheme.desktopPrimary : const Color(0xFF1E293B),
+              color: isSelected
+                  ? DesktopTheme.desktopPrimary
+                  : const Color(0xFF1E293B),
             ),
           ),
           selected: isSelected,
@@ -433,7 +430,6 @@ class DesktopSidebar extends StatelessWidget {
 }
 
 class DesktopSidebarItem {
-
   const DesktopSidebarItem({
     required this.title,
     required this.icon,
@@ -449,7 +445,6 @@ class DesktopSidebarItem {
 
 // Masaüstü panel widget'ı
 class DesktopPanel extends StatelessWidget {
-
   const DesktopPanel({
     super.key,
     required this.title,
@@ -470,9 +465,7 @@ class DesktopPanel extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
             border: Border(
-              bottom: BorderSide(
-                color: DesktopTheme.desktopBorder,
-              ),
+              bottom: BorderSide(color: DesktopTheme.desktopBorder),
             ),
           ),
           child: Row(
@@ -490,7 +483,7 @@ class DesktopPanel extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Panel Content
         Expanded(
           child: SingleChildScrollView(

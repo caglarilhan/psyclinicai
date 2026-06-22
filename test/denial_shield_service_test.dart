@@ -25,8 +25,7 @@ void main() {
           ComplianceCheck(
             id: id,
             label: id,
-            status:
-                failing.contains(id) ? CheckStatus.fail : CheckStatus.pass,
+            status: failing.contains(id) ? CheckStatus.fail : CheckStatus.pass,
           ),
       ],
     );
@@ -52,14 +51,13 @@ void main() {
       audit: report(),
     );
     expect(r.level, DenialLevel.high);
-    expect(
-        r.reasons.any((x) => x.title.contains('does not support')), isTrue);
+    expect(r.reasons.any((x) => x.title.contains('does not support')), isTrue);
   });
 
-  test('90834 for a 45-minute documented session with a clean note is low',
-      () {
+  test('90834 for a 45-minute documented session with a clean note is low', () {
     final r = shield.assess(
-      note: 'Used cognitive restructuring; client engaged. 45 minute session. '
+      note:
+          'Used cognitive restructuring; client engaged. 45 minute session. '
           'No SI/HI. Plan: weekly. Targeted goal 1.',
       cptCode: '90834',
       payer: Payer.aetna,

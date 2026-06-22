@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/assessments/gad7_service.dart';
+import '../../services/assessments/phq9_item9_router.dart';
 import '../../services/assessments/phq9_service.dart';
 import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../widgets/phq9_trigger_sheet.dart';
 
 /// Unified assessment runner for PHQ-9 and GAD-7. One question at a time with
 /// progress, navigation, instant scoring, and clinical-action guidance.
@@ -36,6 +40,17 @@ extension AssessmentTypeX on AssessmentType {
 
   List<String> get choices =>
       this == AssessmentType.phq9 ? Phq9Service.choices : Gad7Service.choices;
+
+  /// Public-domain attribution shown on the result screen. The PHQ-9 and
+  /// GAD-7 are free to use under their original educational grants — we
+  /// display the citation so clinicians and auditors can trace provenance.
+  String get referenceNote => this == AssessmentType.phq9
+      ? 'PHQ-9 — Kroenke, Spitzer & Williams (2001). Developed with an '
+            'educational grant from Pfizer Inc. No permission required to '
+            'reproduce, translate, display, or distribute.'
+      : 'GAD-7 — Spitzer, Kroenke, Williams & Löwe (2006). Developed with '
+            'an educational grant from Pfizer Inc. Free to use without '
+            'permission.';
 }
 
 class _AssessmentScreenState extends State<AssessmentScreen> {
@@ -73,18 +88,40 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         : _resultFromGad7(gad7!);
 
     await _persistToFirestore(phq9: phq9, gad7: gad7);
-    TelemetryService.instance.capture(
-      TelemetryEvents.assessmentCompleted,
-      properties: {'type': widget.type.name},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.assessmentCompleted,
+        properties: {'type': widget.type.name},
+      ),
     );
 
+    // PHQ-9 item 9 (suicidal ideation) is a hard patient-safety
+    // signal: regardless of the total band, a positive answer must
+    // surface the Phq9TriggerSheet BEFORE the score page so the
+    // clinician decides on a C-SSRS / safety plan / crisis path.
+    if (widget.type == AssessmentType.phq9 && intAnswers.length >= 9) {
+      final recommendation = const Phq9Item9Router().evaluate({
+        'phq9_9': intAnswers[8],
+      });
+      if (recommendation.primaryAction != Phq9Item9Action.none) {
+        if (!mounted) return;
+        await Phq9TriggerSheet.show(
+          context,
+          recommendation: recommendation,
+          locale: Localizations.maybeLocaleOf(context),
+        );
+      }
+    }
+
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => _ResultScreen(
-          type: widget.type,
-          patientName: widget.patientName,
-          result: result,
+    unawaited(
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => _ResultScreen(
+            type: widget.type,
+            patientName: widget.patientName,
+            result: result,
+          ),
         ),
       ),
     );
@@ -117,8 +154,17 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           result: gad7,
         );
       }
-    } catch (_) {
-      // Persist is best-effort; UI already shows the score.
+    } catch (e, st) {
+      // Persist is best-effort; UI already shows the score. We still
+      // capture so the outcomes ledger doesn't quietly drop PHQ-9 /
+      // GAD-7 writes for the dashboard MBC stream.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'assessment.firestore_persist',
+        ),
+      );
     }
   }
 
@@ -347,45 +393,45 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 // Visual anchor — same sticky-feeling pattern as clinical_scale.
                 Container(
                   decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(color: cs.outlineVariant))),
+                    border: Border(top: BorderSide(color: cs.outlineVariant)),
+                  ),
                   padding: const EdgeInsets.only(top: 12),
                   child: Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _currentIndex == 0 ? null : _prev,
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: const Text('Back'),
-                    ),
-                    const Spacer(),
-                    if (_currentIndex < questions.length - 1)
-                      FilledButton.icon(
-                        onPressed: _answers[_currentIndex] == null
-                            ? null
-                            : _next,
-                        icon: const Icon(Icons.arrow_forward, size: 18),
-                        label: const Text('Next'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                        ),
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: _allAnswered ? _submit : null,
-                        icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Score'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                        ),
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _currentIndex == 0 ? null : _prev,
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: const Text('Back'),
                       ),
-                  ],
-                ),
+                      const Spacer(),
+                      if (_currentIndex < questions.length - 1)
+                        FilledButton.icon(
+                          onPressed: _answers[_currentIndex] == null
+                              ? null
+                              : _next,
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: const Text('Next'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: _allAnswered ? _submit : null,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text('Score'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -605,6 +651,14 @@ class _ResultScreen extends StatelessWidget {
                     Text(
                       result.actionSuggestion,
                       style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      type.referenceNote,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.5),
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ),

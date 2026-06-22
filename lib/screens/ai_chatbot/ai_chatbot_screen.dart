@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/chat_service.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
@@ -49,13 +52,32 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
         _sending = false;
       });
       _scrollToBottom();
-    } on ChatException catch (e) {
+    } on ChatException catch (e, st) {
+      // Skip the noApiKey case (expected UX); capture everything
+      // else so prod chat failures (network / parse / rate-limit)
+      // are observable.
+      if (e.code != ChatErrorCode.noApiKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'ai_chatbot.send',
+          ),
+        );
+      }
       if (!mounted) return;
       setState(() {
         _error = e.message;
         _sending = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'ai_chatbot.unexpected',
+        ),
+      );
       if (!mounted) return;
       setState(() {
         _error = 'Unexpected error: $e';
@@ -67,10 +89,12 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOut,
+      unawaited(
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOut,
+        ),
       );
     });
   }
@@ -84,7 +108,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
 
   void _useSuggestion(String text) {
     _input.text = text;
-    _send();
+    unawaited(_send());
   }
 
   @override
@@ -106,19 +130,18 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
         children: [
           Expanded(
             child: _history.isEmpty
-                ? _EmptyState(
-                    cs: cs, theme: theme, onSuggest: _useSuggestion)
+                ? _EmptyState(cs: cs, theme: theme, onSuggest: _useSuggestion)
                 : ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.symmetric(
-                        vertical: PsySpacing.xl),
+                      vertical: PsySpacing.xl,
+                    ),
                     itemCount: _history.length + (_sending ? 1 : 0),
                     itemBuilder: (_, i) {
                       if (_sending && i == _history.length) {
                         return _TypingBubble(cs: cs);
                       }
-                      return _Bubble(
-                          turn: _history[i], cs: cs, theme: theme);
+                      return _Bubble(turn: _history[i], cs: cs, theme: theme);
                     },
                   ),
           ),
@@ -126,25 +149,25 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
             Container(
               color: cs.error.withValues(alpha: 0.08),
               padding: const EdgeInsets.symmetric(
-                  horizontal: PsySpacing.xxl, vertical: PsySpacing.md),
+                horizontal: PsySpacing.xxl,
+                vertical: PsySpacing.md,
+              ),
               child: Row(
                 children: [
                   Icon(Icons.error_outline, color: cs.error, size: 18),
                   const SizedBox(width: PsySpacing.sm),
                   Expanded(
-                    child: Text(_error!,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: cs.error)),
+                    child: Text(
+                      _error!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.error,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-          _Composer(
-            input: _input,
-            cs: cs,
-            sending: _sending,
-            onSend: _send,
-          ),
+          _Composer(input: _input, cs: cs, sending: _sending, onSend: _send),
         ],
       ),
     );
@@ -183,8 +206,9 @@ class _EmptyState extends StatelessWidget {
               const SizedBox(height: PsySpacing.lg),
               Text(
                 'Ask me anything clinical.',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: PsySpacing.sm),
               Text(
@@ -197,9 +221,12 @@ class _EmptyState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: PsySpacing.xxl),
-              Text('Try one of these:',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Try one of these:',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: PsySpacing.md),
               ..._suggestions.map(
                 (s) => Padding(
@@ -216,12 +243,14 @@ class _EmptyState extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.bolt_outlined,
-                              size: 16, color: cs.primary),
+                          Icon(
+                            Icons.bolt_outlined,
+                            size: 16,
+                            color: cs.primary,
+                          ),
                           const SizedBox(width: PsySpacing.sm),
                           Expanded(
-                            child: Text(s,
-                                style: theme.textTheme.bodyMedium),
+                            child: Text(s, style: theme.textTheme.bodyMedium),
                           ),
                           const Icon(Icons.arrow_forward_ios, size: 12),
                         ],
@@ -239,8 +268,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble(
-      {required this.turn, required this.cs, required this.theme});
+  const _Bubble({required this.turn, required this.cs, required this.theme});
   final ChatTurn turn;
   final ColorScheme cs;
   final ThemeData theme;
@@ -252,15 +280,19 @@ class _Bubble extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: PsySpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!isUser) ...[
             CircleAvatar(
               radius: 16,
               backgroundColor: cs.primary,
-              child: Icon(Icons.smart_toy_outlined,
-                  color: cs.onPrimary, size: 16),
+              child: Icon(
+                Icons.smart_toy_outlined,
+                color: cs.onPrimary,
+                size: 16,
+              ),
             ),
             const SizedBox(width: PsySpacing.md),
           ],
@@ -268,7 +300,9 @@ class _Bubble extends StatelessWidget {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 640),
               padding: const EdgeInsets.symmetric(
-                  horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+                horizontal: PsySpacing.xl,
+                vertical: PsySpacing.lg,
+              ),
               decoration: BoxDecoration(
                 color: isUser
                     ? cs.primary.withValues(alpha: 0.10)
@@ -277,14 +311,17 @@ class _Bubble extends StatelessWidget {
                   topLeft: const Radius.circular(PsyRadius.lg),
                   topRight: const Radius.circular(PsyRadius.lg),
                   bottomLeft: Radius.circular(
-                      isUser ? PsyRadius.lg : PsyRadius.xs),
+                    isUser ? PsyRadius.lg : PsyRadius.xs,
+                  ),
                   bottomRight: Radius.circular(
-                      isUser ? PsyRadius.xs : PsyRadius.lg),
+                    isUser ? PsyRadius.xs : PsyRadius.lg,
+                  ),
                 ),
                 border: Border.all(
-                    color: isUser
-                        ? cs.primary.withValues(alpha: 0.25)
-                        : cs.outlineVariant),
+                  color: isUser
+                      ? cs.primary.withValues(alpha: 0.25)
+                      : cs.outlineVariant,
+                ),
               ),
               child: SelectableText(
                 turn.text,
@@ -297,8 +334,7 @@ class _Bubble extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundColor: cs.surfaceContainerHigh,
-              child: Icon(Icons.person_outline,
-                  color: cs.onSurface, size: 16),
+              child: Icon(Icons.person_outline, color: cs.onSurface, size: 16),
             ),
           ],
         ],
@@ -320,13 +356,18 @@ class _TypingBubble extends StatelessWidget {
           CircleAvatar(
             radius: 16,
             backgroundColor: cs.primary,
-            child: Icon(Icons.smart_toy_outlined,
-                color: cs.onPrimary, size: 16),
+            child: Icon(
+              Icons.smart_toy_outlined,
+              color: cs.onPrimary,
+              size: 16,
+            ),
           ),
           const SizedBox(width: PsySpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.xl, vertical: PsySpacing.lg),
+              horizontal: PsySpacing.xl,
+              vertical: PsySpacing.lg,
+            ),
             decoration: BoxDecoration(
               color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(PsyRadius.lg),
@@ -340,16 +381,17 @@ class _TypingBubble extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(cs.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
                   ),
                 ),
                 const SizedBox(width: PsySpacing.md),
-                Text('Thinking…',
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      fontStyle: FontStyle.italic,
-                    )),
+                Text(
+                  'Thinking…',
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ],
             ),
           ),
@@ -379,7 +421,9 @@ class _Composer extends StatelessWidget {
         border: Border(top: BorderSide(color: cs.outlineVariant)),
       ),
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.xxl, vertical: PsySpacing.lg),
+        horizontal: PsySpacing.xxl,
+        vertical: PsySpacing.lg,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [

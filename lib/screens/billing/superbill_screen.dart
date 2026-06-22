@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -14,6 +16,11 @@ import '../../services/data/patient_repository.dart';
 import '../../services/data/superbill_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/ds/psy_tooltip.dart';
+import 'superbill_chrome.dart';
+import 'superbill_denial_card.dart';
+import 'superbill_pickers.dart';
 
 /// Builds a superbill (CPT + ICD-10 + provider + patient) and renders/prints
 /// the PDF. Material 3 design, two-column on wide layouts.
@@ -211,16 +218,27 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         serviceLines: List.of(_lines),
       );
       await _pdfService.printOrShare(data);
-      TelemetryService.instance.capture(
-        TelemetryEvents.superbillGenerated,
-        properties: {'lines': _lines.length, 'dx': _diagnoses.length},
+      unawaited(
+        TelemetryService.instance.capture(
+          TelemetryEvents.superbillGenerated,
+          properties: {'lines': _lines.length, 'dx': _diagnoses.length},
+        ),
       );
       await _persistToFirestore(data);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'superbill.generate_failed',
+        ),
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to generate PDF: $e')));
+        'PDF generation failed — please retry.',
+        hint: 'superbill.generate_failed',
+      );
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -251,8 +269,17 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         clinicianId: profile.userId,
         data: data,
       );
-    } catch (_) {
-      // Local PDF already delivered — persistence best-effort.
+    } catch (e, st) {
+      // Local PDF already delivered — persistence best-effort. We
+      // still capture so a quietly-broken Firestore write surface
+      // doesn't go undiagnosed; the clinician sees no UI change.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'superbill.firestore_persist',
+        ),
+      );
     }
   }
 
@@ -264,7 +291,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   Future<void> _pickDiagnosis() async {
     final picked = await showDialog<Icd10Code>(
       context: context,
-      builder: (_) => _DiagnosisPicker(service: _icdService),
+      builder: (_) => DiagnosisPicker(service: _icdService),
     );
     if (picked != null && !_diagnoses.any((d) => d.code == picked.code)) {
       setState(() => _diagnoses.add(picked));
@@ -274,7 +301,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   Future<void> _pickCptForLine() async {
     final picked = await showDialog<CptCode>(
       context: context,
-      builder: (_) => _CptPicker(service: _cptService),
+      builder: (_) => CptPicker(service: _cptService),
     );
     if (picked != null) {
       setState(() {
@@ -328,8 +355,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           // header band on a 390-wide phone.
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          textStyle:
-              const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -343,10 +369,19 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
             padding: const EdgeInsets.only(bottom: 48),
             children: [
               if (_denial != null) ...[
-                _buildDenialCard(theme, cs),
+                DenialShieldCard(
+                  denial: _denial!,
+                  payer: _payer,
+                  onPayerChanged: (p) => setState(() {
+                    _payer = p;
+                    _computeDenial();
+                  }),
+                  theme: theme,
+                  cs: cs,
+                ),
                 const SizedBox(height: 16),
               ],
-              _InvoiceMetaCard(
+              InvoiceMetaCard(
                 cs: cs,
                 theme: theme,
                 invoiceNumber: _invoiceNumber,
@@ -379,159 +414,26 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
     );
   }
 
-  Widget _buildDenialCard(ThemeData theme, ColorScheme cs) {
-    final d = _denial!;
-    final color = switch (d.level) {
-      DenialLevel.high => cs.error,
-      DenialLevel.medium => const Color(0xFFD97706),
-      DenialLevel.low => const Color(0xFF16A34A),
-    };
-    final risk = d.revenueAtRisk;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.verified_user_outlined, color: color, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Denial Shield · ${d.level.label}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-              ),
-              DropdownButton<Payer>(
-                value: _payer,
-                isDense: true,
-                underline: const SizedBox.shrink(),
-                items: [
-                  for (final p in Payer.values)
-                    DropdownMenuItem(value: p, child: Text(p.short)),
-                ],
-                onChanged: (p) {
-                  if (p == null) return;
-                  setState(() {
-                    _payer = p;
-                    _computeDenial();
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${d.cptCode} · ${d.cptLabel}'
-            '${risk != null ? ' · ~\$${risk.round()} at risk if denied' : ''}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.7),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (d.reasons.isEmpty)
-            Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  size: 18,
-                  color: Color(0xFF16A34A),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Documentation supports billing — no denial drivers for '
-                    '${_payer.short}.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            )
-          else
-            ...d.reasons.map(
-              (r) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          r.critical
-                              ? Icons.error_outline
-                              : Icons.warning_amber_rounded,
-                          size: 16,
-                          color: r.critical
-                              ? cs.error
-                              : const Color(0xFFD97706),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            r.title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 22, top: 4),
-                      child: Text(
-                        '+ ${r.fixSentence}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.primary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Text(
-            DenialShieldService.payerFocus(_payer),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.55),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildProviderCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Provider',
       cs: cs,
       theme: theme,
       child: Column(
         children: [
-          _Field(controller: _providerName, label: 'Full name'),
-          _Field(
+          SuperbillField(controller: _providerName, label: 'Full name'),
+          SuperbillField(
             controller: _providerCreds,
             label: 'Credentials (e.g. LCSW, PhD)',
           ),
           Row(
             children: [
               Expanded(
-                child: _Field(controller: _providerNpi, label: 'NPI'),
+                child: SuperbillField(controller: _providerNpi, label: 'NPI'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(
+                child: SuperbillField(
                   controller: _providerTaxId,
                   label: 'Tax ID / EIN',
                 ),
@@ -541,33 +443,39 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           Row(
             children: [
               Expanded(
-                child: _Field(controller: _providerPhone, label: 'Phone'),
+                child: SuperbillField(
+                  controller: _providerPhone,
+                  label: 'Phone',
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(controller: _providerEmail, label: 'Email'),
+                child: SuperbillField(
+                  controller: _providerEmail,
+                  label: 'Email',
+                ),
               ),
             ],
           ),
-          _Field(controller: _providerAddr, label: 'Address line 1'),
-          _Field(controller: _providerAddr2, label: 'Address line 2'),
+          SuperbillField(controller: _providerAddr, label: 'Address line 1'),
+          SuperbillField(controller: _providerAddr2, label: 'Address line 2'),
         ],
       ),
     );
   }
 
   Widget _buildPatientCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Patient',
       cs: cs,
       theme: theme,
       child: Column(
         children: [
-          _Field(controller: _patientName, label: 'Full name'),
+          SuperbillField(controller: _patientName, label: 'Full name'),
           Row(
             children: [
               Expanded(
-                child: _DateField(
+                child: SuperbillDateField(
                   label: 'Date of birth',
                   value: _patientDob,
                   onPick: () async {
@@ -583,20 +491,23 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _Field(controller: _patientMemberId, label: 'Member ID'),
+                child: SuperbillField(
+                  controller: _patientMemberId,
+                  label: 'Member ID',
+                ),
               ),
             ],
           ),
-          _Field(controller: _patientInsurer, label: 'Insurer'),
-          _Field(controller: _patientAddr, label: 'Address line 1'),
-          _Field(controller: _patientAddr2, label: 'Address line 2'),
+          SuperbillField(controller: _patientInsurer, label: 'Insurer'),
+          SuperbillField(controller: _patientAddr, label: 'Address line 1'),
+          SuperbillField(controller: _patientAddr2, label: 'Address line 2'),
         ],
       ),
     );
   }
 
   Widget _buildDiagnosisCard(ThemeData theme, ColorScheme cs) {
-    return _SectionCard(
+    return SectionCard(
       title: 'Diagnoses',
       trailing: TextButton.icon(
         onPressed: _pickDiagnosis,
@@ -640,21 +551,25 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          dx.code,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.primary,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
+                      PsyTooltip(
+                        label: dx.code,
+                        description: dx.label,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            dx.code,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: cs.primary,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -685,7 +600,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
 
   Widget _buildServiceLinesCard(ThemeData theme, ColorScheme cs) {
     final total = _lines.fold<double>(0, (s, l) => s + l.totalCharge);
-    return _SectionCard(
+    return SectionCard(
       title: 'Service lines',
       trailing: TextButton.icon(
         onPressed: _pickCptForLine,
@@ -714,21 +629,25 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        line.cpt.code,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: cs.primary,
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w600,
+                    PsyTooltip(
+                      label: line.cpt.code,
+                      description: line.cpt.shortLabel,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          line.cpt.code,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: cs.primary,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -804,437 +723,7 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    required this.cs,
-    required this.theme,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget child;
-  final ColorScheme cs;
-  final ThemeData theme;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              if (trailing != null) trailing!,
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({required this.controller, required this.label});
-  final TextEditingController controller;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 14,
-          ),
-          isDense: true,
-        ),
-      ),
-    );
-  }
-}
-
-class _DateField extends StatelessWidget {
-  const _DateField({
-    required this.label,
-    required this.value,
-    required this.onPick,
-  });
-
-  final String label;
-  final DateTime? value;
-  final VoidCallback onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
-          isDense: true,
-        ),
-        child: InkWell(
-          onTap: onPick,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value == null ? '—' : DateFormat('yyyy-MM-dd').format(value!),
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ),
-              const Icon(Icons.calendar_today, size: 18),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InvoiceMetaCard extends StatelessWidget {
-  const _InvoiceMetaCard({
-    required this.cs,
-    required this.theme,
-    required this.invoiceNumber,
-    required this.serviceDate,
-    required this.onPickDate,
-  });
-
-  final ColorScheme cs;
-  final ThemeData theme;
-  final TextEditingController invoiceNumber;
-  final DateTime serviceDate;
-  final VoidCallback onPickDate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            cs.primaryContainer.withValues(alpha: 0.4),
-            cs.primaryContainer.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.18)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final wide = c.maxWidth > 560;
-          final header = Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.receipt_long, color: cs.primary, size: 28),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Superbill Draft',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Out-of-network insurance reimbursement receipt. '
-                      'Provider must verify codes before submission.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-          final fields = Column(
-            children: [
-              _Field(controller: invoiceNumber, label: 'Invoice #'),
-              _DateField(
-                label: 'Service date',
-                value: serviceDate,
-                onPick: onPickDate,
-              ),
-            ],
-          );
-          // Below ~560 px the fixed-220 sidecar starved the title to 34 px
-          // and the text rendered one letter per line — stack on mobile.
-          if (wide) {
-            return Row(
-              children: [
-                Expanded(child: header),
-                const SizedBox(width: 20),
-                SizedBox(width: 220, child: fields),
-              ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              header,
-              const SizedBox(height: 16),
-              fields,
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _DiagnosisPicker extends StatefulWidget {
-  const _DiagnosisPicker({required this.service});
-  final Icd10LookupService service;
-
-  @override
-  State<_DiagnosisPicker> createState() => _DiagnosisPickerState();
-}
-
-class _DiagnosisPickerState extends State<_DiagnosisPicker> {
-  String _query = '';
-  late List<Icd10Code> _results = widget.service.all();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Dialog(
-      child: SizedBox(
-        width: 600,
-        height: 540,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pick ICD-10 diagnosis',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                autofocus: true,
-                onChanged: (v) => setState(() {
-                  _query = v;
-                  _results = widget.service.search(v);
-                }),
-                decoration: InputDecoration(
-                  hintText: 'Search by code, label, or synonym…',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _results.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No diagnoses match "$_query"',
-                          style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: _results.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(color: cs.outlineVariant, height: 1),
-                        itemBuilder: (_, i) {
-                          final c = _results[i];
-                          return ListTile(
-                            dense: true,
-                            leading: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cs.primary.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                c.code,
-                                style: TextStyle(
-                                  color: cs.primary,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              c.label,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            subtitle: Text(
-                              c.category.label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurface.withValues(alpha: 0.55),
-                              ),
-                            ),
-                            onTap: () => Navigator.of(context).pop(c),
-                          );
-                        },
-                      ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CptPicker extends StatefulWidget {
-  const _CptPicker({required this.service});
-  final CptLookupService service;
-
-  @override
-  State<_CptPicker> createState() => _CptPickerState();
-}
-
-class _CptPickerState extends State<_CptPicker> {
-  CptCategory? _filter;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final codes = _filter == null
-        ? widget.service.all()
-        : widget.service.byCategory(_filter!);
-    return Dialog(
-      child: SizedBox(
-        width: 620,
-        height: 580,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Pick CPT code',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _filter == null,
-                    onSelected: (_) => setState(() => _filter = null),
-                  ),
-                  for (final c in CptCategory.values)
-                    FilterChip(
-                      label: Text(c.label),
-                      selected: _filter == c,
-                      onSelected: (_) => setState(() => _filter = c),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.separated(
-                  itemCount: codes.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(color: cs.outlineVariant, height: 1),
-                  itemBuilder: (_, i) {
-                    final c = codes[i];
-                    return ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          c.code,
-                          style: TextStyle(
-                            color: cs.primary,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      title: Text(c.shortLabel),
-                      subtitle: Text(
-                        '${c.typicalDurationMinutes} min · \$${c.nationalAverageUsd.toStringAsFixed(0)} avg',
-                      ),
-                      onTap: () => Navigator.of(context).pop(c),
-                    );
-                  },
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// Layout widgets (SectionCard / SuperbillField / SuperbillDateField /
+// InvoiceMetaCard) moved to superbill_chrome.dart.
+// DiagnosisPicker + CptPicker moved to superbill_pickers.dart.
+// (HIGH-4 god-file split, audit 2026-06-21.)

@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/dpa` — GDPR Article 28 Data Processing Agreement summary + the
 /// "request your signed copy" CTA. Renders an executive abstract of
@@ -30,13 +31,17 @@ class DpaPage extends StatelessWidget {
         children: [
           _Summary(theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xl),
-          _FactsCard(theme: theme, cs: cs, rows: const [
-            _Fact('Controller', 'Clinic / clinician'),
-            _Fact('Processor', 'PsyClinic Software GmbH'),
-            _Fact('Data residency', 'Frankfurt, EU-Central'),
-            _Fact('Audio handling', 'On-device by default'),
-            _Fact('Breach notice', 'Within 72 hours'),
-          ]),
+          _FactsCard(
+            theme: theme,
+            cs: cs,
+            rows: const [
+              _Fact('Controller', 'Clinic / clinician'),
+              _Fact('Processor', 'PsyClinic Software GmbH'),
+              _Fact('Data residency', 'Frankfurt, EU-Central'),
+              _Fact('Audio handling', 'On-device by default'),
+              _Fact('Breach notice', '≤ 24 h policy (Art. 33 ceiling 72 h)'),
+            ],
+          ),
           const SizedBox(height: PsySpacing.xl),
           _Section(
             theme: theme,
@@ -76,9 +81,11 @@ class DpaPage extends StatelessWidget {
             cs: cs,
             title: 'Breach notification',
             body:
-                'You are notified within 72 hours of a confirmed personal-data '
-                'breach affecting your tenant, with scope, affected data, and '
-                'remediation steps.',
+                'GDPR Art. 33 sets a 72-hour ceiling — our policy notifies you '
+                'within ≤ 24 hours of becoming aware so your team still has '
+                '≥ 48 hours to file with the supervisory authority. Each '
+                'notice carries the Art. 33(3) content (scope, affected data, '
+                'remediation) and follow-ups as facts develop.',
           ),
           _Section(
             theme: theme,
@@ -116,9 +123,12 @@ class _Article30Card extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Article 30 register',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Article 30 register',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.sm),
         Text(
           'Live record of every processing activity — purpose, data '
@@ -186,7 +196,11 @@ const _activities = <_Activity>[
 ];
 
 class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.row, required this.theme, required this.cs});
+  const _ActivityRow({
+    required this.row,
+    required this.theme,
+    required this.cs,
+  });
   final _Activity row;
   final ThemeData theme;
   final ColorScheme cs;
@@ -194,13 +208,18 @@ class _ActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(row.purpose,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            row.purpose,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           _kv(theme, cs, 'Category', row.category),
           _kv(theme, cs, 'Retention', row.retention),
@@ -218,18 +237,22 @@ class _ActivityRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(k,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.55),
-                  fontWeight: FontWeight.w600,
-                )),
+            child: Text(
+              k,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(v,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.88),
-                  height: 1.45,
-                )),
+            child: Text(
+              v,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.88),
+                height: 1.45,
+              ),
+            ),
           ),
         ],
       ),
@@ -245,64 +268,85 @@ class _RetentionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const rows = [
-      _Retention('Clinical session notes',
-          '7 years after last session', 'Clinical record law'),
-      _Retention('Patient demographic record',
-          '7 years after last session', 'Clinical record law'),
-      _Retention('Audit logs', '6 years',
-          'HIPAA §164.316(b)(2)(i)'),
-      _Retention('Deleted patient (grace)',
-          '30 days, then hard delete', 'GDPR Art. 17 · clinic policy'),
-      _Retention('Crash / error events',
-          '90 days rolling', 'Legitimate interest'),
-      _Retention('Invoices + billing',
-          '10 years', 'EU tax record law'),
+      _Retention(
+        'Clinical session notes',
+        '7 years after last session',
+        'Clinical record law',
+      ),
+      _Retention(
+        'Patient demographic record',
+        '7 years after last session',
+        'Clinical record law',
+      ),
+      _Retention('Audit logs', '6 years', 'HIPAA §164.316(b)(2)(i)'),
+      _Retention(
+        'Deleted patient (grace)',
+        '30 days, then hard delete',
+        'GDPR Art. 17 · clinic policy',
+      ),
+      _Retention(
+        'Crash / error events',
+        '90 days rolling',
+        'Legitimate interest',
+      ),
+      _Retention('Invoices + billing', '10 years', 'EU tax record law'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Retention policy',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Retention policy',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.md),
         PsyCard(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.lg, vertical: PsySpacing.sm),
+            horizontal: PsySpacing.lg,
+            vertical: PsySpacing.sm,
+          ),
           child: Column(
             children: [
               for (var i = 0; i < rows.length; i++) ...[
                 if (i > 0)
                   Divider(
-                      height: 1,
-                      color:
-                          cs.outlineVariant.withValues(alpha: 0.6)),
+                    height: 1,
+                    color: cs.outlineVariant.withValues(alpha: 0.6),
+                  ),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: PsySpacing.sm),
+                  padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         flex: 5,
-                        child: Text(rows[i].label,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600)),
+                        child: Text(
+                          rows[i].label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                       Expanded(
                         flex: 4,
-                        child: Text(rows[i].period,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: cs.onSurface
-                                    .withValues(alpha: 0.78),
-                                height: 1.4)),
+                        child: Text(
+                          rows[i].period,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.78),
+                            height: 1.4,
+                          ),
+                        ),
                       ),
                       Expanded(
                         flex: 5,
-                        child: Text(rows[i].source,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                                color: cs.onSurface
-                                    .withValues(alpha: 0.55),
-                                fontWeight: FontWeight.w500)),
+                        child: Text(
+                          rows[i].source,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.55),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -325,8 +369,7 @@ class _Retention {
 
 // ─── International transfers / SCCs ───────────────────────────────────
 class _InternationalTransfersCard extends StatelessWidget {
-  const _InternationalTransfersCard(
-      {required this.theme, required this.cs});
+  const _InternationalTransfersCard({required this.theme, required this.cs});
   final ThemeData theme;
   final ColorScheme cs;
   @override
@@ -334,9 +377,12 @@ class _InternationalTransfersCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('International transfers',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'International transfers',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.md),
         PsyCard(
           child: Column(
@@ -346,9 +392,12 @@ class _InternationalTransfersCard extends StatelessWidget {
                 children: [
                   Icon(Icons.public, color: cs.primary, size: 18),
                   const SizedBox(width: 8),
-                  Text('EU Standard Contractual Clauses',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    'EU Standard Contractual Clauses',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: PsySpacing.sm),
@@ -365,16 +414,17 @@ class _InternationalTransfersCard extends StatelessWidget {
               ),
               const SizedBox(height: PsySpacing.md),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context)
-                    .pushNamed('/trust/subprocessors'),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/trust/subprocessors'),
                 icon: const Icon(Icons.lan_outlined, size: 16),
                 label: const Text('Open subprocessor list'),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 36),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   textStyle: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -433,16 +483,21 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
-          Text(body,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72),
-                height: 1.55,
-                fontSize: 13.5,
-              )),
+          Text(
+            body,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.72),
+              height: 1.55,
+              fontSize: 13.5,
+            ),
+          ),
         ],
       ),
     );
@@ -459,8 +514,7 @@ class _Fact {
 }
 
 class _FactsCard extends StatelessWidget {
-  const _FactsCard(
-      {required this.theme, required this.cs, required this.rows});
+  const _FactsCard({required this.theme, required this.cs, required this.rows});
   final ThemeData theme;
   final ColorScheme cs;
   final List<_Fact> rows;
@@ -469,7 +523,9 @@ class _FactsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
@@ -477,7 +533,9 @@ class _FactsCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Divider(
-                    height: 1, color: cs.outlineVariant.withValues(alpha: 0.6)),
+                  height: 1,
+                  color: cs.outlineVariant.withValues(alpha: 0.6),
+                ),
               ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
@@ -526,9 +584,12 @@ class _DownloadCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Request a signed copy',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Request a signed copy',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Text(
             'Email legal@psyclinicai.com with your clinic name and we will '
@@ -542,11 +603,10 @@ class _DownloadCard extends StatelessWidget {
           PsyButton(
             label: 'Email legal@psyclinicai.com',
             icon: Icons.email_outlined,
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    'Email client opens in your local mail handler — demo skips this in web.'),
-              ),
+            onPressed: () => PsySnack.info(
+              context,
+              'Email client opens in your local mail handler — demo skips this in web.',
+              hint: 'dpa.email_demo',
             ),
           ),
         ],

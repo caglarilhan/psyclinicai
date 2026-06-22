@@ -16,21 +16,24 @@ class DenialShieldSection extends StatelessWidget {
       _Point(
         icon: Icons.fact_check_outlined,
         title: 'Catches the CPT mismatch before you bill',
-        body: '90837 (60 min) needs documented time + a medical-necessity '
+        body:
+            '90837 (60 min) needs documented time + a medical-necessity '
             'reason. We flag the mismatch at save-time — not 45 days later in '
             'a denial letter.',
       ),
       _Point(
         icon: Icons.account_balance_outlined,
         title: 'Audited by each payer’s own rules',
-        body: 'Medicare, Medicaid, Blue Cross, UnitedHealthcare/Optum, Aetna '
+        body:
+            'Medicare, Medicaid, Blue Cross, UnitedHealthcare/Optum, Aetna '
             'and Cigna each reject claims differently. The note is checked '
             'against the one you’re billing.',
       ),
       _Point(
         icon: Icons.attach_money,
         title: 'Quantified, with the exact fix',
-        body: 'See the dollars at risk and the one sentence that clears the '
+        body:
+            'See the dollars at risk and the one sentence that clears the '
             'denial — paste it in and submit with confidence.',
       ),
     ];
@@ -70,11 +73,9 @@ class DenialShieldSection extends StatelessWidget {
                 ],
               );
               if (!wide) {
-                return Column(children: [
-                  card,
-                  const SizedBox(height: 32),
-                  list,
-                ]);
+                return Column(
+                  children: [card, const SizedBox(height: 32), list],
+                );
               }
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,8 +101,7 @@ class _Point {
 }
 
 class _PointRow extends StatelessWidget {
-  const _PointRow(
-      {required this.point, required this.theme, required this.cs});
+  const _PointRow({required this.point, required this.theme, required this.cs});
   final _Point point;
   final ThemeData theme;
   final ColorScheme cs;
@@ -126,14 +126,20 @@ class _PointRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(point.title,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                point.title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(point.body,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      height: 1.55)),
+              Text(
+                point.body,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                  height: 1.55,
+                ),
+              ),
             ],
           ),
         ),
@@ -172,25 +178,30 @@ class _DenialMock extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_user_outlined,
-                  size: 18, color: danger),
+              const Icon(Icons.verified_user_outlined, size: 18, color: danger),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('High denial risk · 90837 · ~\$175 at risk',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        color: danger, fontWeight: FontWeight.w700)),
+                child: Text(
+                  'High denial risk · 90837 · ~\$175 at risk',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: danger,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text('UHC/Optum',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                child: Text(
+                  'UHC/Optum',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
               ),
             ],
           ),
@@ -205,7 +216,9 @@ class _DenialMock extends StatelessWidget {
                   '90837 lacks a medical-necessity reason for the extended '
                   'session.',
                   style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600, height: 1.4),
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -227,18 +240,23 @@ class _DenialMock extends StatelessWidget {
                   child: Text(
                     'Add: “53+ minutes were medically necessary for trauma '
                     'processing given symptom severity.”',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.primary, height: 1.45),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.primary,
+                      height: 1.45,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          Text('Decision-support — estimates denial risk, not a guarantee.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic)),
+          Text(
+            'Decision-support — estimates denial risk, not a guarantee.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ],
       ),
     );

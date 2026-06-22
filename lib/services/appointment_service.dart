@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment_model.dart';
+import '../utils/appointment_conflict.dart';
+import 'data/telemetry_service.dart';
 import 'notification_service.dart';
 
 class AppointmentService {
@@ -22,13 +23,24 @@ class AppointmentService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final appointmentsJson = prefs.getStringList(_appointmentsKey) ?? [];
-      
+
       _appointments = appointmentsJson
-          .map((json) =>
-              Appointment.fromJson(jsonDecode(json) as Map<String, dynamic>))
+          .map(
+            (json) =>
+                Appointment.fromJson(jsonDecode(json) as Map<String, dynamic>),
+          )
           .toList();
-    } catch (e) {
-      debugPrint('Error loading appointments: $e');
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint is a no-op in
+      // release, so sync failures here used to disappear silently and
+      // the UI silently presented an empty appointment list. Telemetry
+      // surfaces the exception so a real user-facing problem can be
+      // diagnosed without reproducing locally.
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_load',
+      );
       _appointments = [];
     }
   }
@@ -40,10 +52,14 @@ class AppointmentService {
       final appointmentsJson = _appointments
           .map((appointment) => jsonEncode(appointment.toJson()))
           .toList();
-      
+
       await prefs.setStringList(_appointmentsKey, appointmentsJson);
-    } catch (e) {
-      debugPrint('Error saving appointments: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_save',
+      );
     }
   }
 
@@ -56,8 +72,8 @@ class AppointmentService {
   List<Appointment> getAppointmentsForDate(DateTime date) {
     return _appointments.where((appointment) {
       return appointment.startTime.year == date.year &&
-             appointment.startTime.month == date.month &&
-             appointment.startTime.day == date.day;
+          appointment.startTime.month == date.month &&
+          appointment.startTime.day == date.day;
     }).toList();
   }
 
@@ -67,7 +83,7 @@ class AppointmentService {
     return _appointments
         .where((appointment) => appointment.startTime.isAfter(now))
         .toList()
-        ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
   // Get today's appointments
@@ -81,7 +97,7 @@ class AppointmentService {
     return _appointments
         .where((appointment) => appointment.status == status)
         .toList()
-        ..sort((a, b) => a.startTime.compareTo(b.startTime));
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
   // Get appointment by ID
@@ -99,9 +115,9 @@ class AppointmentService {
       // Check for time conflicts
       if (_hasTimeConflict(appointment)) {
         throw Exception('Bu saatte başka bir randevu var');
-    }
-    
-    _appointments.add(appointment);
+      }
+
+      _appointments.add(appointment);
       await _saveAppointments();
       // Bildirim planla
       await NotificationService().scheduleAppointmentReminders(
@@ -111,8 +127,12 @@ class AppointmentService {
         startTime: appointment.startTime,
       );
       return true;
-    } catch (e) {
-      debugPrint('Error adding appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_add',
+      );
       return false;
     }
   }
@@ -120,19 +140,26 @@ class AppointmentService {
   // Update appointment
   Future<bool> updateAppointment(Appointment updatedAppointment) async {
     try {
-      final index = _appointments.indexWhere((appointment) => appointment.id == updatedAppointment.id);
-    if (index == -1) {
-      throw Exception('Randevu bulunamadı');
-    }
-    
+      final index = _appointments.indexWhere(
+        (appointment) => appointment.id == updatedAppointment.id,
+      );
+      if (index == -1) {
+        throw Exception('Randevu bulunamadı');
+      }
+
       // Check for time conflicts (excluding the current appointment)
-      if (_hasTimeConflict(updatedAppointment, excludeId: updatedAppointment.id)) {
+      if (_hasTimeConflict(
+        updatedAppointment,
+        excludeId: updatedAppointment.id,
+      )) {
         throw Exception('Bu saatte başka bir randevu var');
-    }
-    
-    // Eski hatırlatmaları iptal et
-    await NotificationService().cancelAppointmentReminders(_appointments[index].id);
-    _appointments[index] = updatedAppointment;
+      }
+
+      // Eski hatırlatmaları iptal et
+      await NotificationService().cancelAppointmentReminders(
+        _appointments[index].id,
+      );
+      _appointments[index] = updatedAppointment;
       await _saveAppointments();
       // Yeni hatırlatmaları planla
       await NotificationService().scheduleAppointmentReminders(
@@ -142,8 +169,12 @@ class AppointmentService {
         startTime: updatedAppointment.startTime,
       );
       return true;
-    } catch (e) {
-      debugPrint('Error updating appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_update',
+      );
       return false;
     }
   }
@@ -151,34 +182,38 @@ class AppointmentService {
   // Delete appointment
   Future<bool> deleteAppointment(String id) async {
     try {
-      final index = _appointments.indexWhere((appointment) => appointment.id == id);
-    if (index == -1) {
-      throw Exception('Randevu bulunamadı');
-    }
-    
-      await NotificationService().cancelAppointmentReminders(_appointments[index].id);
+      final index = _appointments.indexWhere(
+        (appointment) => appointment.id == id,
+      );
+      if (index == -1) {
+        throw Exception('Randevu bulunamadı');
+      }
+
+      await NotificationService().cancelAppointmentReminders(
+        _appointments[index].id,
+      );
       _appointments.removeAt(index);
       await _saveAppointments();
       return true;
-      } catch (e) {
-      debugPrint('Error deleting appointment: $e');
+    } catch (e, stack) {
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'appointments_delete',
+      );
       return false;
     }
   }
 
-  // Check for time conflicts
-  bool _hasTimeConflict(Appointment newAppointment, {String? excludeId}) {
-    for (final appointment in _appointments) {
-      if (excludeId != null && appointment.id == excludeId) continue;
-      
-      // Check if appointments overlap
-      if (newAppointment.startTime.isBefore(appointment.endTime) &&
-          newAppointment.endTime.isAfter(appointment.startTime)) {
-        return true;
-      }
-    }
-    return false;
-  }
+  // Check for time conflicts using the pure utility — keeps the rule
+  // (half-open intervals, back-to-back OK) testable without bootstrapping
+  // SharedPreferences.
+  bool _hasTimeConflict(Appointment newAppointment, {String? excludeId}) =>
+      hasAppointmentConflict(
+        newAppointment,
+        _appointments,
+        excludeId: excludeId,
+      );
 
   // Get appointment statistics
   Map<String, int> getAppointmentStatistics() {
@@ -188,15 +223,27 @@ class AppointmentService {
     final monthStart = DateTime(now.year, now.month);
 
     final todaysAppointments = _appointments.where((a) => a.isToday).length;
-    final thisWeekAppointments = _appointments.where((a) => 
-        a.startTime.isAfter(weekStart.subtract(const Duration(days: 1))) &&
-        a.startTime.isBefore(weekStart.add(const Duration(days: 7)))
-    ).length;
-    final thisMonthAppointments = _appointments.where((a) => 
-        a.startTime.isAfter(monthStart.subtract(const Duration(days: 1))) &&
-        a.startTime.isBefore(DateTime(now.year, now.month + 1))
-    ).length;
-    final upcomingAppointments = _appointments.where((a) => a.isUpcoming).length;
+    final thisWeekAppointments = _appointments
+        .where(
+          (a) =>
+              a.startTime.isAfter(
+                weekStart.subtract(const Duration(days: 1)),
+              ) &&
+              a.startTime.isBefore(weekStart.add(const Duration(days: 7))),
+        )
+        .length;
+    final thisMonthAppointments = _appointments
+        .where(
+          (a) =>
+              a.startTime.isAfter(
+                monthStart.subtract(const Duration(days: 1)),
+              ) &&
+              a.startTime.isBefore(DateTime(now.year, now.month + 1)),
+        )
+        .length;
+    final upcomingAppointments = _appointments
+        .where((a) => a.isUpcoming)
+        .length;
 
     return {
       'today': todaysAppointments,
@@ -208,8 +255,10 @@ class AppointmentService {
 
   // Generate demo data
   Future<void> generateDemoData() async {
-    if (_appointments.isNotEmpty) return; // Don't generate if data already exists
-    
+    if (_appointments.isNotEmpty) {
+      return; // Don't generate if data already exists
+    }
+
     final now = DateTime.now();
     final demoAppointments = [
       Appointment(

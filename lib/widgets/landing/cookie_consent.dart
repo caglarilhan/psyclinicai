@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,7 +23,7 @@ class _CookieConsentState extends State<CookieConsent> {
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_load());
   }
 
   Future<void> _load() async {
@@ -84,8 +86,7 @@ class _CookieConsentState extends State<CookieConsent> {
                 ),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/privacy'),
+                  onPressed: () => Navigator.of(context).pushNamed('/privacy'),
                   style: TextButton.styleFrom(
                     minimumSize: const Size(0, 36),
                     padding: const EdgeInsets.symmetric(horizontal: 8),

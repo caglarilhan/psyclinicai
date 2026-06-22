@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/baa` — HIPAA Business Associate Agreement summary + request CTA.
 /// Mirrors the structure of [DpaPage]; the binding contract is the
@@ -31,8 +32,11 @@ class BaaPage extends StatelessWidget {
             // Neutral info notice — teal reserved for CTAs per critique.
             child: Row(
               children: [
-                Icon(Icons.health_and_safety_outlined,
-                    color: cs.primary, size: 22),
+                Icon(
+                  Icons.health_and_safety_outlined,
+                  color: cs.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: PsySpacing.md),
                 Expanded(
                   child: Text(
@@ -49,13 +53,20 @@ class BaaPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: PsySpacing.xl),
-          _FactsCard(theme: theme, cs: cs, rows: const [
-            _Fact('Our role', 'Business Associate · 45 CFR §160.103'),
-            _Fact('PHI handling', 'AES-256 at rest, TLS 1.3 in transit'),
-            _Fact('Access control', 'Role-based + audit-logged'),
-            _Fact('Breach notice', 'Within 60 days (we aim for 72 h)'),
-            _Fact('On termination', 'Return or destroy PHI within 30 days'),
-          ]),
+          _FactsCard(
+            theme: theme,
+            cs: cs,
+            rows: const [
+              _Fact('Our role', 'Business Associate · 45 CFR §160.103'),
+              _Fact('PHI handling', 'AES-256 at rest, TLS 1.3 in transit'),
+              _Fact('Access control', 'Role-based + audit-logged'),
+              _Fact(
+                'Breach notice',
+                '≤ 24 h policy (statutory ceiling 60 days)',
+              ),
+              _Fact('On termination', 'Return or destroy PHI within 30 days'),
+            ],
+          ),
           const SizedBox(height: PsySpacing.xl),
           _Section(
             theme: theme,
@@ -79,8 +90,10 @@ class BaaPage extends StatelessWidget {
             cs: cs,
             title: 'Breach notification',
             body:
-                'Within 60 days of discovery (45 CFR §164.410) — we aim for '
-                '72 hours to mirror the GDPR commitment.',
+                'HITECH §13402 / 45 CFR §164.410 sets a 60-day ceiling — our '
+                'policy notifies your team within ≤ 24 hours of discovery, '
+                'with the §164.410(c) content (affected individuals, scope, '
+                'mitigation) and follow-ups as facts develop.',
           ),
           _Section(
             theme: theme,
@@ -106,9 +119,12 @@ class BaaPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Request a signed BAA',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'Request a signed BAA',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.sm),
                 Text(
                   'Email legal@psyclinicai.com with your NPI and clinic '
@@ -122,11 +138,10 @@ class BaaPage extends StatelessWidget {
                 PsyButton(
                   label: 'Email legal@psyclinicai.com',
                   icon: Icons.email_outlined,
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Email client opens in your local mail handler — demo skips this in web.'),
-                    ),
+                  onPressed: () => PsySnack.info(
+                    context,
+                    'Email client opens in your local mail handler — demo skips this in web.',
+                    hint: 'baa.email_demo',
                   ),
                 ),
               ],
@@ -148,8 +163,7 @@ class _Fact {
 }
 
 class _FactsCard extends StatelessWidget {
-  const _FactsCard(
-      {required this.theme, required this.cs, required this.rows});
+  const _FactsCard({required this.theme, required this.cs, required this.rows});
   final ThemeData theme;
   final ColorScheme cs;
   final List<_Fact> rows;
@@ -158,7 +172,9 @@ class _FactsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
@@ -166,8 +182,9 @@ class _FactsCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Divider(
-                    height: 1,
-                    color: cs.outlineVariant.withValues(alpha: 0.6)),
+                  height: 1,
+                  color: cs.outlineVariant.withValues(alpha: 0.6),
+                ),
               ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
@@ -217,23 +234,41 @@ class _OperationalControlsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const rows = [
-      _OpRow(Icons.lock_outline, 'MFA',
-          'TOTP + WebAuthn passkey supported for every workforce member.'),
-      _OpRow(Icons.cloud_upload_outlined, 'Backup',
-          'Encrypted snapshots every 15 min · daily copy to a second EU region.'),
-      _OpRow(Icons.timelapse, 'RPO / RTO',
-          '≤ 15 min RPO · ≤ 1 h RTO · quarterly restore tests.'),
-      _OpRow(Icons.manage_accounts_outlined, 'Access reviews',
-          'Quarterly attestation · departure deactivation within 24 h.'),
-      _OpRow(Icons.timer_outlined, 'Session timeout',
-          '30 minutes idle (configurable per clinic).'),
+      _OpRow(
+        Icons.lock_outline,
+        'MFA',
+        'TOTP + WebAuthn passkey supported for every workforce member.',
+      ),
+      _OpRow(
+        Icons.cloud_upload_outlined,
+        'Backup',
+        'Encrypted snapshots every 15 min · daily copy to a second EU region.',
+      ),
+      _OpRow(
+        Icons.timelapse,
+        'RPO / RTO',
+        '≤ 15 min RPO · ≤ 1 h RTO · quarterly restore tests.',
+      ),
+      _OpRow(
+        Icons.manage_accounts_outlined,
+        'Access reviews',
+        'Quarterly attestation · departure deactivation within 24 h.',
+      ),
+      _OpRow(
+        Icons.timer_outlined,
+        'Session timeout',
+        '30 minutes idle (configurable per clinic).',
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Operational controls',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          'Operational controls',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: PsySpacing.sm),
         Text(
           'The questions that follow "is a BAA available?". Full HIPAA '
@@ -247,14 +282,17 @@ class _OperationalControlsCard extends StatelessWidget {
         const SizedBox(height: PsySpacing.md),
         PsyCard(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.lg, vertical: PsySpacing.sm),
+            horizontal: PsySpacing.lg,
+            vertical: PsySpacing.sm,
+          ),
           child: Column(
             children: [
               for (var i = 0; i < rows.length; i++) ...[
                 if (i > 0)
                   Divider(
-                      height: 1,
-                      color: cs.outlineVariant.withValues(alpha: 0.6)),
+                    height: 1,
+                    color: cs.outlineVariant.withValues(alpha: 0.6),
+                  ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: PsySpacing.sm),
                   child: Row(
@@ -266,9 +304,12 @@ class _OperationalControlsCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(rows[i].label,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              rows[i].label,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               rows[i].body,
@@ -289,15 +330,17 @@ class _OperationalControlsCard extends StatelessWidget {
         ),
         const SizedBox(height: PsySpacing.md),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context)
-              .pushNamed('/trust/security_controls'),
+          onPressed: () =>
+              Navigator.of(context).pushNamed('/trust/security_controls'),
           icon: const Icon(Icons.shield_outlined, size: 16),
           label: const Text('Open full security controls'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(0, 36),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             textStyle: const TextStyle(
-                fontWeight: FontWeight.w600, fontSize: 13),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
         ),
       ],
@@ -331,16 +374,21 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
-          Text(body,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72),
-                height: 1.55,
-                fontSize: 13.5,
-              )),
+          Text(
+            body,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.72),
+              height: 1.55,
+              fontSize: 13.5,
+            ),
+          ),
         ],
       ),
     );

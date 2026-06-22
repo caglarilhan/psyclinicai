@@ -9,32 +9,32 @@ enum Payer { medicare, medicaid, bcbs, uhcOptum, aetna, cigna }
 
 extension PayerX on Payer {
   String get label => switch (this) {
-        Payer.medicare => 'Medicare',
-        Payer.medicaid => 'Medicaid',
-        Payer.bcbs => 'Blue Cross Blue Shield',
-        Payer.uhcOptum => 'UnitedHealthcare / Optum',
-        Payer.aetna => 'Aetna',
-        Payer.cigna => 'Cigna',
-      };
+    Payer.medicare => 'Medicare',
+    Payer.medicaid => 'Medicaid',
+    Payer.bcbs => 'Blue Cross Blue Shield',
+    Payer.uhcOptum => 'UnitedHealthcare / Optum',
+    Payer.aetna => 'Aetna',
+    Payer.cigna => 'Cigna',
+  };
 
   String get short => switch (this) {
-        Payer.medicare => 'Medicare',
-        Payer.medicaid => 'Medicaid',
-        Payer.bcbs => 'BCBS',
-        Payer.uhcOptum => 'UHC/Optum',
-        Payer.aetna => 'Aetna',
-        Payer.cigna => 'Cigna',
-      };
+    Payer.medicare => 'Medicare',
+    Payer.medicaid => 'Medicaid',
+    Payer.bcbs => 'BCBS',
+    Payer.uhcOptum => 'UHC/Optum',
+    Payer.aetna => 'Aetna',
+    Payer.cigna => 'Cigna',
+  };
 }
 
 enum DenialLevel { low, medium, high }
 
 extension DenialLevelX on DenialLevel {
   String get label => switch (this) {
-        DenialLevel.low => 'Low denial risk',
-        DenialLevel.medium => 'Medium denial risk',
-        DenialLevel.high => 'High denial risk',
-      };
+    DenialLevel.low => 'Low denial risk',
+    DenialLevel.medium => 'Medium denial risk',
+    DenialLevel.high => 'High denial risk',
+  };
 }
 
 /// One concrete denial driver + the fix that removes it.

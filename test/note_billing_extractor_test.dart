@@ -41,8 +41,10 @@ void main() {
 
     test('psychiatry uses E&M codes', () {
       expect(x.suggestCpt('Med review.', isPsychiatry: true), '99213');
-      expect(x.suggestCpt('30 minute med management.', isPsychiatry: true),
-          '99214');
+      expect(
+        x.suggestCpt('30 minute med management.', isPsychiatry: true),
+        '99214',
+      );
     });
   });
 

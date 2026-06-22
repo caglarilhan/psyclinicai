@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../config/build_config.dart';
+import '../../utils/phi_redaction.dart';
 
 /// Telemetry façade — Sentry (errors) + PostHog (funnel events).
 ///
@@ -36,7 +37,9 @@ class TelemetryService {
       } catch (e, stack) {
         // Never let a misconfigured DSN crash the app — fall back to no-op.
         _sentryReady = false;
-        if (kDebugMode) debugPrint('[telemetry] Sentry init failed: $e\n$stack');
+        if (kDebugMode) {
+          debugPrint('[telemetry] Sentry init failed: $e\n$stack');
+        }
       }
     }
     if (kDebugMode) {
@@ -53,12 +56,14 @@ class TelemetryService {
     if (_sentryReady) {
       // Record as a Sentry breadcrumb so a later crash carries the funnel
       // context. Cheap and PHI-free (event names are public constants).
-      await Sentry.addBreadcrumb(Breadcrumb(
-        message: event,
-        category: 'funnel',
-        level: SentryLevel.info,
-        data: properties.map((k, v) => MapEntry(k, v?.toString() ?? '')),
-      ));
+      await Sentry.addBreadcrumb(
+        Breadcrumb(
+          message: event,
+          category: 'funnel',
+          level: SentryLevel.info,
+          data: properties.map((k, v) => MapEntry(k, v?.toString() ?? '')),
+        ),
+      );
     }
     if (kDebugMode) {
       debugPrint('[telemetry] capture: $event $properties');
@@ -72,8 +77,8 @@ class TelemetryService {
     Map<String, Object?> traits = const {},
   }) async {
     if (_sentryReady) {
-      await Sentry.configureScope((scope) {
-        scope.setUser(SentryUser(id: userId));
+      await Sentry.configureScope((scope) async {
+        await scope.setUser(SentryUser(id: userId));
       });
     }
     if (kDebugMode) {
@@ -92,22 +97,54 @@ class TelemetryService {
   }
 
   /// Crash + error reporting (Sentry).
+  ///
+  /// H-7 fix (audit 2026-06-21): Anthropic / HTTP exceptions echo the
+  /// upstream response body in `.toString()`, which can include the
+  /// prompt — and the prompt may carry a transcript line with PHI
+  /// (name, phone, MRN). We never trusted error messages to be PHI-
+  /// free; now we run the same `PhiRedactor` patterns the relay uses
+  /// over the message before sending it to Sentry, and we replace the
+  /// original error with a `SafeReportedError` carrying the scrubbed
+  /// text. Stack traces stay verbatim — they encode code paths, not
+  /// patient data.
   Future<void> captureError(
     Object error,
     StackTrace? stack, {
     String? hint,
   }) async {
+    final scrubber = PhiRedactor();
+    final scrubbedMessage = scrubber.scrub(error.toString()).cleanText;
+    final scrubbedHint = hint == null ? null : scrubber.scrub(hint).cleanText;
+    final reportError = SafeReportedError(scrubbedMessage, error.runtimeType);
+
     if (_sentryReady) {
       await Sentry.captureException(
-        error,
+        reportError,
         stackTrace: stack,
-        hint: hint != null ? Hint.withMap({'hint': hint}) : null,
+        hint: scrubbedHint != null
+            ? Hint.withMap({'hint': scrubbedHint})
+            : null,
       );
     }
     if (kDebugMode) {
-      debugPrint('[telemetry] error${hint != null ? '/$hint' : ''}: $error');
+      debugPrint(
+        '[telemetry] error${scrubbedHint != null ? '/$scrubbedHint' : ''}: '
+        '$scrubbedMessage',
+      );
     }
   }
+}
+
+/// Wrapper used by [TelemetryService.captureError] so Sentry receives
+/// a PHI-scrubbed message + the original runtime type for grouping.
+class SafeReportedError implements Exception {
+  SafeReportedError(this.message, this.originalType);
+
+  final String message;
+  final Type originalType;
+
+  @override
+  String toString() => 'SafeReportedError(type=$originalType): $message';
 }
 
 /// Common funnel event names — centralised so dashboards use a stable
@@ -115,10 +152,15 @@ class TelemetryService {
 class TelemetryEvents {
   const TelemetryEvents._();
 
+  // Sprint 29 P-01 — public-funnel taxonomy (snake_case `noun.verb`).
+  // Wired through the existing TelemetryService; PostHog DSN ramps in
+  // via lib/config/build_config.dart once D-07 secrets land.
+  static const String landingVisit = 'landing.visit';
   static const String landingHeroEmailSubmit = 'landing.hero_email_submit';
   static const String landingWatchDemoClick = 'landing.watch_demo_click';
   static const String landingPricingPickTier = 'landing.pricing_pick_tier';
   static const String landingExitIntentSubmit = 'landing.exit_intent_submit';
+  static const String betaWaitlistSubmitted = 'landing.beta_waitlist_submitted';
 
   static const String signUpStarted = 'auth.signup_started';
   static const String signUpCompleted = 'auth.signup_completed';
@@ -135,4 +177,50 @@ class TelemetryEvents {
   static const String sessionNoteSaved = 'session.note_saved';
   static const String superbillGenerated = 'billing.superbill_generated';
   static const String assessmentCompleted = 'assessment.completed';
+
+  // Sprint 29 P-06 — north-star activation. Track when a clinician
+  // produces their first SOAP draft so the D7 activation cohort is
+  // measurable. Properties must NOT include patient identifiers or
+  // note content — only the `time_to_first_soap_sec` from signup.
+  static const String firstSoapGenerated = 'session.first_soap_generated';
+  static const String soapGenerated = 'session.soap_generated';
+
+  // Sprint 29 P-04 — Stripe Reserve-seat funnel.
+  static const String paymentInitiated = 'billing.payment_initiated';
+  static const String paymentSucceeded = 'billing.payment_succeeded';
+  static const String paymentFailed = 'billing.payment_failed';
+
+  // Sprint 32 P2 — BYOK key rotation lifecycle. Properties carry
+  // `provider` (anthropic|openai|cohere), `grace_period_h`, never
+  // the key value itself.
+  static const String byokRotationRequested = 'byok.rotation_requested';
+  static const String byokRotationCompleted = 'byok.rotation_completed';
+  static const String byokRotationFailed = 'byok.rotation_failed';
+
+  // Sprint 31 P2 — first-launch session tour. Properties carry
+  // `total_steps`, `last_step_index`. No PHI.
+  static const String onboardingTourStarted = 'onboarding.tour_started';
+  static const String onboardingTourCompleted = 'onboarding.tour_completed';
+  static const String onboardingTourSkipped = 'onboarding.tour_skipped';
+
+  // Sprint 33 P2 — Stripe Customer Portal redirect.
+  static const String billingCustomerPortalOpened =
+      'billing.customer_portal_opened';
+  static const String billingInvoiceDownloaded = 'billing.invoice_downloaded';
+
+  /// A C-SSRS screener crossed a risk threshold (mild and above). Properties
+  /// MUST NOT include item answers or patient identifiers — only the tier
+  /// and severity band so dashboards can monitor escalation volume.
+  static const String cssrsRiskEscalated = 'assessment.cssrs_escalated';
+
+  /// The clinician acted on the escalation banner and navigated to safety
+  /// planning. Pairs with [cssrsRiskEscalated] to measure follow-through.
+  static const String safetyPlanInitiatedFromCssrs =
+      'assessment.cssrs_safety_plan_initiated';
+
+  /// The clinician dismissed the high-risk escalation modal without
+  /// initiating safety planning. Useful to flag training gaps. Carries a
+  /// non-PHI reason code ("opened_full_view", "dismissed_explicit").
+  static const String cssrsEscalationModalDismissed =
+      'assessment.cssrs_escalation_dismissed';
 }

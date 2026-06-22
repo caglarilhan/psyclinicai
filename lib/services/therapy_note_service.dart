@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/therapy_note_models.dart';
+import 'data/telemetry_service.dart';
 
 class TherapyNoteService extends ChangeNotifier {
   factory TherapyNoteService() => _instance;
@@ -17,9 +18,21 @@ class TherapyNoteService extends ChangeNotifier {
       name: 'DAP Notu',
       description: 'Data-Assessment-Plan formatı',
       fields: [
-        TherapyNoteField(key: 'data', label: 'Veri (Gözlemler)', type: NoteFieldType.longText),
-        TherapyNoteField(key: 'assessment', label: 'Değerlendirme', type: NoteFieldType.longText),
-        TherapyNoteField(key: 'plan', label: 'Plan', type: NoteFieldType.longText),
+        TherapyNoteField(
+          key: 'data',
+          label: 'Veri (Gözlemler)',
+          type: NoteFieldType.longText,
+        ),
+        TherapyNoteField(
+          key: 'assessment',
+          label: 'Değerlendirme',
+          type: NoteFieldType.longText,
+        ),
+        TherapyNoteField(
+          key: 'plan',
+          label: 'Plan',
+          type: NoteFieldType.longText,
+        ),
       ],
     ),
     const TherapyNoteTemplate(
@@ -27,10 +40,26 @@ class TherapyNoteService extends ChangeNotifier {
       name: 'SOAP Notu',
       description: 'Subjective-Objective-Assessment-Plan',
       fields: [
-        TherapyNoteField(key: 'subjective', label: 'Subjective', type: NoteFieldType.longText),
-        TherapyNoteField(key: 'objective', label: 'Objective', type: NoteFieldType.longText),
-        TherapyNoteField(key: 'assessment', label: 'Assessment', type: NoteFieldType.longText),
-        TherapyNoteField(key: 'plan', label: 'Plan', type: NoteFieldType.longText),
+        TherapyNoteField(
+          key: 'subjective',
+          label: 'Subjective',
+          type: NoteFieldType.longText,
+        ),
+        TherapyNoteField(
+          key: 'objective',
+          label: 'Objective',
+          type: NoteFieldType.longText,
+        ),
+        TherapyNoteField(
+          key: 'assessment',
+          label: 'Assessment',
+          type: NoteFieldType.longText,
+        ),
+        TherapyNoteField(
+          key: 'plan',
+          label: 'Plan',
+          type: NoteFieldType.longText,
+        ),
       ],
     ),
   ];
@@ -90,15 +119,24 @@ class TherapyNoteService extends ChangeNotifier {
         ..clear()
         ..addAll(
           decoded
-              .map((item) => TherapyNoteEntry.fromJson(
-                    Map<String, dynamic>.from(item as Map),
-                  ))
+              .map(
+                (item) => TherapyNoteEntry.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
               .toList(),
         );
-    } catch (e) {
-      // Persisted veriler bozuksa sessizce sıfırla
+    } catch (e, stack) {
+      // HIGH-11 fix (audit 2026-06-21): debugPrint is no-op in
+      // release. A corrupt persisted store used to wipe the
+      // therapy entries silently — clinicians would see an empty
+      // history list with no trace of why.
       _entries.clear();
-      debugPrint('TherapyNoteService load error: $e');
+      await TelemetryService.instance.captureError(
+        e,
+        stack,
+        hint: 'therapy_note_load',
+      );
     }
   }
 

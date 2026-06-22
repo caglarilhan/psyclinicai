@@ -19,9 +19,9 @@ class NotFoundPage extends StatelessWidget {
       title: "We can't find that page.",
       lede: path == null
           ? "The URL you opened doesn't exist on PsyClinicAI. Try one "
-              'of these instead, or head back to the homepage.'
+                'of these instead, or head back to the homepage.'
           : "The URL '$path' doesn't exist on PsyClinicAI. Try one of "
-              'these instead, or head back to the homepage.',
+                'these instead, or head back to the homepage.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,16 +29,46 @@ class NotFoundPage extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _shortcut(context, theme, cs, Icons.home_outlined,
-                  'Homepage', '/landing'),
-              _shortcut(context, theme, cs,
-                  Icons.verified_user_outlined, 'Security', '/security'),
-              _shortcut(context, theme, cs, Icons.attach_money,
-                  'Pricing', '/landing'),
-              _shortcut(context, theme, cs, Icons.help_outline, 'FAQ',
-                  '/landing'),
-              _shortcut(context, theme, cs, Icons.email_outlined,
-                  'Contact', '/contact'),
+              _shortcut(
+                context,
+                theme,
+                cs,
+                Icons.home_outlined,
+                'Homepage',
+                '/landing',
+              ),
+              _shortcut(
+                context,
+                theme,
+                cs,
+                Icons.verified_user_outlined,
+                'Security',
+                '/security',
+              ),
+              _shortcut(
+                context,
+                theme,
+                cs,
+                Icons.attach_money,
+                'Pricing',
+                '/landing',
+              ),
+              _shortcut(
+                context,
+                theme,
+                cs,
+                Icons.help_outline,
+                'FAQ',
+                '/landing',
+              ),
+              _shortcut(
+                context,
+                theme,
+                cs,
+                Icons.email_outlined,
+                'Contact',
+                '/contact',
+              ),
             ],
           ),
           const SizedBox(height: 36),
@@ -56,8 +86,14 @@ class NotFoundPage extends StatelessWidget {
     );
   }
 
-  Widget _shortcut(BuildContext context, ThemeData theme, ColorScheme cs,
-      IconData icon, String label, String route) {
+  Widget _shortcut(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme cs,
+    IconData icon,
+    String label,
+    String route,
+  ) {
     return Material(
       color: cs.surface,
       borderRadius: BorderRadius.circular(12),
@@ -65,8 +101,7 @@ class NotFoundPage extends StatelessWidget {
         onTap: () => Navigator.of(context).pushReplacementNamed(route),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: cs.outlineVariant),
@@ -76,9 +111,12 @@ class NotFoundPage extends StatelessWidget {
             children: [
               Icon(icon, color: cs.primary, size: 18),
               const SizedBox(width: 10),
-              Text(label,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),

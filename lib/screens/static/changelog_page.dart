@@ -77,8 +77,7 @@ class ChangelogPage extends StatelessWidget {
       lastUpdated: DateTime(2026, 5, 23),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children:
-            _releases.map((r) => _ReleaseCard(release: r)).toList(),
+        children: _releases.map((r) => _ReleaseCard(release: r)).toList(),
       ),
     );
   }
@@ -123,12 +122,13 @@ class _ReleaseCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: PsySpacing.md, vertical: PsySpacing.xs),
+                  horizontal: PsySpacing.md,
+                  vertical: PsySpacing.xs,
+                ),
                 decoration: BoxDecoration(
                   color: cs.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(PsyRadius.full),
-                  border: Border.all(
-                      color: cs.primary.withValues(alpha: 0.30)),
+                  border: Border.all(color: cs.primary.withValues(alpha: 0.30)),
                 ),
                 child: Text(
                   'v${release.version}',

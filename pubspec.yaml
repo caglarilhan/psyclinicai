@@ -15,6 +15,9 @@ dependencies:
   shared_preferences: ^2.2.2
   gap: ^3.0.1
   crypto: ^3.0.3
+  # B6 (Sprint 8): DSAR encrypted ZIP export — bundle so PHI does
+  # not have to leave the device through the clipboard.
+  archive: ^3.6.1
   json_annotation: ^4.9.0
   provider: ^6.1.1
   # PDF Export için gerekli paketler
@@ -30,15 +33,17 @@ dependencies:
   qr_flutter: ^4.1.0
   # Push Notifications için
   flutter_local_notifications: ^16.3.2
-  # firebase_messaging: ^14.7.20 # Geçici olarak devre dışı
-  # Offline Database için
-  sqflite: ^2.3.2
+  # Offline Database için — only sqflite_sqlcipher is imported in lib/
+  # (test/security/local_db_encryption_test.dart pins this so a plain
+  # sqflite import can never regress). Drop the redundant top-level
+  # sqflite entry; sqflite_common still flows in via sqflite_sqlcipher.
   path: ^1.9.0
   # Connectivity için
   connectivity_plus: ^5.0.2
-  # Biometric Authentication için
+  # Biometric Authentication için — `local_auth_android` is pulled in
+  # transitively by `local_auth` and no Dart file imports it directly,
+  # so the explicit top-level pin was redundant.
   local_auth: ^2.1.8
-  local_auth_android: ^1.0.38
   # Encryption için
   encrypt: ^5.0.3
   # Charts için
@@ -50,8 +55,16 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.3
-  # Google Fonts for Material 3 typography
-  google_fonts: ^6.1.0
+  # L-11 (audit 2026-06-21) — App Check scaffold. Debug provider
+  # used in dev/test; production providers (Play Integrity, DeviceCheck/
+  # AppAttest, reCAPTCHA v3) require Firebase Console configuration
+  # before enforcement can be enabled. The dep is wired now so the
+  # client-side activation lives in main.dart and only the Console
+  # step is missing.
+  firebase_app_check: ^0.3.2
+  # Perf audit 2026-06-21: google_fonts (~300 KB) had zero call sites
+  # in lib/ — Inter is loaded via <link rel=stylesheet> in web/index.html
+  # and bundled directly via system font on mobile. Dependency removed.
   # Material 3 animations
   animations: ^2.0.8
   # Calendar
@@ -67,6 +80,11 @@ dependencies:
   image_picker: ^1.0.4
 
   intl: any
+  # B17 (Sprint 8): localizations baseline — EN + TR ship today, the
+  # remaining EU locales (DE/FR/NL/IT/ES) land once professional
+  # translations clear PHQ-9 / GAD-7 / C-SSRS validation review.
+  flutter_localizations:
+    sdk: flutter
   timezone: any
   # Observability — Sentry crash + error capture. No-op until SENTRY_DSN
   # is provided via --dart-define (see lib/config/build_config.dart and
@@ -86,10 +104,15 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  fake_async: any
 flutter:
   uses-material-design: true
+  # Generates `lib/l10n/app_localizations.dart` from the .arb files
+  # under `lib/l10n/`. See `l10n.yaml` at repo root.
+  generate: true
   assets:
     - assets/
     - assets/guidelines/
     - assets/drugs/
     - assets/landing/
+    - assets/branding/

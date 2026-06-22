@@ -5,7 +5,6 @@ import '../billing/cpt_lookup_service.dart';
 import '../billing/icd10_lookup_service.dart';
 import '../billing/superbill_pdf_service.dart';
 import '../copilot/soap_generator_service.dart';
-import 'assessment_repository.dart';
 import 'auth_service.dart';
 import 'firebase_bootstrap.dart';
 import 'patient_repository.dart';
@@ -166,10 +165,6 @@ class SeedService {
         ],
       ),
     );
-
-    // Silence unused-import warning if AssessmentRepository ever
-    // re-enters the seed path.
-    AssessmentRepository.instance;
   }
 
   Future<void> _writeAssessmentWithDate(

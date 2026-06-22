@@ -3,6 +3,14 @@ import 'package:psyclinicai/models/homework_item.dart';
 import 'package:psyclinicai/services/data/homework_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Module-level seed for the "corrupt + valid" test below. Hoisted out
+/// of the list literal so the no_adjacent_strings_in_list lint can't
+/// confuse Dart's adjacent-string concatenation with a missing comma.
+const _validHomeworkJson =
+    '{"id":"ok","patientId":"p1","title":"keep me",'
+    '"dueDate":"2026-06-01T00:00:00.000","done":false}';
+const _homeworkSeed = <String>['{not valid json', _validHomeworkJson];
+
 /// Repository logic (shared shape across the offline stores): patient
 /// filtering, due-date ordering, in-place toggle isolation, and per-record
 /// resilience so one corrupt entry never wipes a patient's list.
@@ -10,25 +18,27 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   HomeworkItem item(String id, String pid, String due) => HomeworkItem(
-        id: id,
-        patientId: pid,
-        title: 'task $id',
-        dueDate: DateTime.parse(due),
-      );
+    id: id,
+    patientId: pid,
+    title: 'task $id',
+    dueDate: DateTime.parse(due),
+  );
 
-  test('forPatient filters by patient and sorts by dueDate ascending',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final repo = HomeworkRepository();
-    await repo.initialize();
-    await repo.add(item('a', 'p1', '2026-06-10T00:00:00.000'));
-    await repo.add(item('b', 'p1', '2026-06-01T00:00:00.000'));
-    await repo.add(item('c', 'p2', '2026-06-05T00:00:00.000'));
+  test(
+    'forPatient filters by patient and sorts by dueDate ascending',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final repo = HomeworkRepository();
+      await repo.initialize();
+      await repo.add(item('a', 'p1', '2026-06-10T00:00:00.000'));
+      await repo.add(item('b', 'p1', '2026-06-01T00:00:00.000'));
+      await repo.add(item('c', 'p2', '2026-06-05T00:00:00.000'));
 
-    final p1 = repo.forPatient('p1');
-    expect(p1.map((i) => i.id), ['b', 'a']); // earliest due first
-    expect(repo.forPatient('p2').map((i) => i.id), ['c']); // isolation
-  });
+      final p1 = repo.forPatient('p1');
+      expect(p1.map((i) => i.id), ['b', 'a']); // earliest due first
+      expect(repo.forPatient('p2').map((i) => i.id), ['c']); // isolation
+    },
+  );
 
   test('toggleDone flips the target only', () async {
     SharedPreferences.setMockInitialValues({});
@@ -45,11 +55,11 @@ void main() {
 
   test('a corrupt stored record is skipped, valid ones survive', () async {
     SharedPreferences.setMockInitialValues({
-      'homework_items': <String>[
-        '{not valid json',
-        '{"id":"ok","patientId":"p1","title":"keep me",'
-            '"dueDate":"2026-06-01T00:00:00.000","done":false}',
-      ],
+      // Two JSON strings: one malformed, one valid. The valid string
+      // is built up before the list literal so the
+      // no_adjacent_strings_in_list lint does not flag the Dart-
+      // adjacent-string trick that is normally allowed.
+      'homework_items': _homeworkSeed,
     });
     final repo = HomeworkRepository();
     await repo.initialize();

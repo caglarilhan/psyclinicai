@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,22 +28,28 @@ class MedicationRepository {
           );
         } catch (err, st) {
           dropped++;
-          TelemetryService.instance.captureError(
-            err,
-            st,
-            hint: 'medication_decode_record',
+          unawaited(
+            TelemetryService.instance.captureError(
+              err,
+              st,
+              hint: 'medication_decode_record',
+            ),
           );
         }
       }
       if (dropped > 0) {
-        TelemetryService.instance.captureError(
-          StateError('Dropped $dropped corrupt medication record(s) on load'),
-          StackTrace.current,
-          hint: 'medication_init',
+        unawaited(
+          TelemetryService.instance.captureError(
+            StateError('Dropped $dropped corrupt medication record(s) on load'),
+            StackTrace.current,
+            hint: 'medication_init',
+          ),
         );
       }
     } catch (e, st) {
-      TelemetryService.instance.captureError(e, st, hint: 'medication_init');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'medication_init'),
+      );
     }
     _loaded = true;
   }
@@ -56,7 +63,9 @@ class MedicationRepository {
       );
     } catch (e, st) {
       // Medication is clinical data — a lost write must be observable.
-      TelemetryService.instance.captureError(e, st, hint: 'medication_save');
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'medication_save'),
+      );
     }
   }
 

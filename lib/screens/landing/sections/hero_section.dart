@@ -25,52 +25,56 @@ class HeroSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final isWide = w >= 1024;
 
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          // Pill is informational, not a CTA — slimmer padding + just an
-          // outline (no fill) so the teal stays reserved for primary
-          // actions, per "teal discipline" guideline.
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(40),
-            border:
-                Border.all(color: cs.primary.withValues(alpha: 0.30)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
+        // Sprint 29 F-03 — screen-reader gets the full availability
+        // status as one phrase instead of decoding "dot · 18 of 30".
+        Semantics(
+          label: 'Founding access, 18 of 30 seats left',
+          container: true,
+          child: Container(
+            // Pill is informational, not a CTA — slimmer padding + just an
+            // outline (no fill) so the teal stays reserved for primary
+            // actions, per "teal discipline" guideline.
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.30)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'FOUNDING ACCESS · 18 of 30 seats left',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  fontSize: 11,
+                const SizedBox(width: 8),
+                Text(
+                  'FOUNDING ACCESS · 18 of 30 seats left',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 24),
         Text(
-          'Your AI co-pilot\nfor therapy sessions.',
+          'The AI co-pilot\nfor therapists and psychiatrists.',
           style: theme.textTheme.displayLarge?.copyWith(
             // Mobile headline trimmed -15% (was 38) to keep enterprise
             // weight without overwhelming a 390px viewport. Desktop
@@ -83,8 +87,10 @@ class HeroSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Notes drafted in 30 seconds. Superbill PDF in one click. '
-          'Audio never leaves the device.',
+          'For solo clinicians and small clinics treating anxiety, depression, '
+          'trauma, and PTSD. SOAP / DAP / BIRP notes in 30 seconds. CMS-1500 '
+          'superbill in one click. On iOS and Android, audio never leaves '
+          'the device.',
           style: theme.textTheme.titleMedium?.copyWith(
             color: cs.onSurface.withValues(alpha: 0.78),
             height: 1.5,
@@ -108,33 +114,35 @@ class HeroSection extends StatelessWidget {
           runSpacing: 8,
           children: [
             _TrustChip(
-                icon: Icons.verified_user_outlined,
-                label: 'HIPAA-aligned'),
+              icon: Icons.verified_user_outlined,
+              label: 'HIPAA-aligned',
+            ),
             _TrustChip(
-                icon: Icons.gavel_outlined, label: 'GDPR Article 28 DPA'),
+              icon: Icons.gavel_outlined,
+              label: 'GDPR Article 28 DPA',
+            ),
+            _TrustChip(icon: Icons.public_outlined, label: 'EU data residency'),
             _TrustChip(
-                icon: Icons.public_outlined, label: 'EU data residency'),
-            _TrustChip(
-                icon: Icons.mic_off_outlined,
-                label: 'Audio stays on-device'),
-            _TrustChip(
-                icon: Icons.lock_outline, label: 'AES-256 + TLS 1.3'),
+              icon: Icons.mic_off_outlined,
+              label: 'Audio on-device (iOS/Android)',
+            ),
+            _TrustChip(icon: Icons.lock_outline, label: 'AES-256 + TLS 1.3'),
           ],
         ),
         const SizedBox(height: 32),
         if (onWaitlistEmail != null)
-          _WaitlistForm(
-              cs: cs, theme: theme, onSubmit: onWaitlistEmail!)
+          _WaitlistForm(cs: cs, theme: theme, onSubmit: onWaitlistEmail!)
         else
           FilledButton.icon(
             onPressed: onPrimaryCta,
             icon: const Icon(Icons.rocket_launch, size: 18),
             label: const Text('Reserve a founding seat'),
             style: FilledButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
               textStyle: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         const SizedBox(height: 14),
@@ -144,8 +152,10 @@ class HeroSection extends StatelessWidget {
           label: const Text('Watch 90-sec demo'),
           style: TextButton.styleFrom(
             foregroundColor: cs.onSurface,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            // Sprint 29 F-04 — WCAG 2.5.5 / Apple HIG: 44pt minimum
+            // touch-target. 18pt vertical padding + 14pt text = 46pt.
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            minimumSize: const Size(0, 48),
             textStyle: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -187,11 +197,7 @@ class HeroSection extends StatelessWidget {
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                copy,
-                const SizedBox(height: 48),
-                visual,
-              ],
+              children: [copy, const SizedBox(height: 48), visual],
             ),
     );
   }
@@ -204,11 +210,11 @@ class HeroSection extends StatelessWidget {
       decoration: BoxDecoration(color: muted, shape: BoxShape.circle),
     );
     TextStyle s() => TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
-          color: muted,
-          letterSpacing: 0.6,
-        );
+      fontSize: 11.5,
+      fontWeight: FontWeight.w600,
+      color: muted,
+      letterSpacing: 0.6,
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -338,7 +344,9 @@ class _WaitlistFormState extends State<_WaitlistForm> {
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 18),
+                        horizontal: 18,
+                        vertical: 18,
+                      ),
                       isDense: true,
                       filled: false,
                     ),
@@ -354,9 +362,13 @@ class _WaitlistFormState extends State<_WaitlistForm> {
                       backgroundColor: widget.cs.primary,
                       foregroundColor: widget.cs.onPrimary,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 14),
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
                       textStyle: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -369,12 +381,14 @@ class _WaitlistFormState extends State<_WaitlistForm> {
         ),
         if (_err != null) ...[
           const SizedBox(height: 6),
-          Text(_err!,
-              style: TextStyle(
-                color: widget.cs.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              )),
+          Text(
+            _err!,
+            style: TextStyle(
+              color: widget.cs.error,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ],
     );

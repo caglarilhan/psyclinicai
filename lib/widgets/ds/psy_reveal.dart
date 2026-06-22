@@ -32,8 +32,10 @@ class _PsyRevealState extends State<PsyReveal>
     vsync: this,
     duration: PsyMotion.slow,
   );
-  late final Animation<double> _t =
-      CurvedAnimation(parent: _c, curve: PsyMotion.emphasized);
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _c,
+    curve: PsyMotion.emphasized,
+  );
   Timer? _timer;
   bool _started = false;
 
@@ -47,10 +49,10 @@ class _PsyRevealState extends State<PsyReveal>
       return;
     }
     if (widget.delay == Duration.zero) {
-      _c.forward();
+      unawaited(_c.forward());
     } else {
       _timer = Timer(widget.delay, () {
-        if (mounted) _c.forward();
+        if (mounted) unawaited(_c.forward());
       });
     }
   }

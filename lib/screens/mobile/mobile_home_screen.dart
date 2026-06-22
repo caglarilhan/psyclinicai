@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../services/language_service.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   const MobileHomeScreen({super.key});
@@ -9,7 +13,8 @@ class MobileHomeScreen extends StatefulWidget {
   State<MobileHomeScreen> createState() => _MobileHomeScreenState();
 }
 
-class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProviderStateMixin {
+class _MobileHomeScreenState extends State<MobileHomeScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final PageController _pageController = PageController();
   int _currentPage = 0;
@@ -18,7 +23,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    
+
     // Auto-scroll for featured content
     _startAutoScroll();
   }
@@ -34,15 +39,19 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         if (_currentPage < 2) {
-          _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+          unawaited(
+            _pageController.nextPage(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
           );
         } else {
-          _pageController.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+          unawaited(
+            _pageController.animateToPage(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
           );
         }
         _startAutoScroll();
@@ -358,7 +367,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -380,10 +394,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
           ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ),
         ],
@@ -391,7 +402,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildFeaturedCard(String title, String subtitle, IconData icon, Color color) {
+  Widget _buildFeaturedCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
@@ -438,7 +454,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionCard(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -467,7 +488,13 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
     );
   }
 
-  Widget _buildActivityItem(String action, String patient, String time, IconData icon, Color color) {
+  Widget _buildActivityItem(
+    String action,
+    String patient,
+    String time,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -483,59 +510,64 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
         subtitle: Text(patient),
         trailing: Text(
           time,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
         ),
       ),
     );
   }
 
   Widget _buildPatientsTab() {
-    return const Center(
-      child: Text('Hastalar sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Hastalar sekmesi - Mobil optimizasyon'));
   }
 
   Widget _buildAppointmentsTab() {
-    return const Center(
-      child: Text('Randevular sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Randevular sekmesi - Mobil optimizasyon'));
   }
 
   Widget _buildProfileTab() {
-    return const Center(
-      child: Text('Profil sekmesi - Mobil optimizasyon'),
-    );
+    return const Center(child: Text('Profil sekmesi - Mobil optimizasyon'));
   }
 
   void _showNotifications() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (context) => Container(
-        height: 400,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bildirimler',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (context) => Container(
+          height: 400,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bildirimler',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildNotificationItem('Yeni randevu talebi', 'Ahmet Yılmaz', '2 saat önce'),
-                  _buildNotificationItem('Reçete onayı', 'Dr. Mehmet Kaya', '4 saat önce'),
-                  _buildNotificationItem('Sistem güncellemesi', 'Sistem', '1 gün önce'),
-                ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildNotificationItem(
+                      'Yeni randevu talebi',
+                      'Ahmet Yılmaz',
+                      '2 saat önce',
+                    ),
+                    _buildNotificationItem(
+                      'Reçete onayı',
+                      'Dr. Mehmet Kaya',
+                      '4 saat önce',
+                    ),
+                    _buildNotificationItem(
+                      'Sistem güncellemesi',
+                      'Sistem',
+                      '1 gün önce',
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -551,42 +583,44 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> with TickerProvider
       subtitle: Text(subtitle),
       trailing: Text(
         time,
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 12,
-        ),
+        style: TextStyle(color: Colors.grey[600], fontSize: 12),
       ),
     );
   }
 
   void _showSearch() {
-    showSearch(
-      context: context,
-      delegate: MobileSearchDelegate(),
-    );
+    unawaited(showSearch(context: context, delegate: MobileSearchDelegate()));
   }
 
   void _addPatient() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Yeni hasta ekleme özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Yeni hasta ekleme özelliği açılıyor…',
+      hint: 'mobile_home.add_patient',
     );
   }
 
   void _createAppointment() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Randevu oluşturma özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Randevu oluşturma özelliği açılıyor…',
+      hint: 'mobile_home.create_appointment',
     );
   }
 
   void _recordVoiceNote() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sesli not alma özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'Sesli not alma özelliği açılıyor…',
+      hint: 'mobile_home.voice_note',
     );
   }
 
   void _startAIDiagnosis() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('AI tanı özelliği açılıyor...')),
+    PsySnack.info(
+      context,
+      'AI tanı özelliği açılıyor…',
+      hint: 'mobile_home.ai_diagnosis',
     );
   }
 }
@@ -608,6 +642,7 @@ class MobileSearchDelegate extends SearchDelegate<String?> {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
+      tooltip: 'Close search',
       onPressed: () {
         close(context, null);
       },
@@ -616,9 +651,7 @@ class MobileSearchDelegate extends SearchDelegate<String?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return Center(
-      child: Text('Arama sonuçları: $query'),
-    );
+    return Center(child: Text('Arama sonuçları: $query'));
   }
 
   @override

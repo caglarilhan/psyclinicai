@@ -9,7 +9,9 @@ class ExitIntentModal extends StatefulWidget {
   final ValueChanged<String> onSubmit;
 
   static Future<void> show(
-      BuildContext context, ValueChanged<String> onSubmit) {
+    BuildContext context,
+    ValueChanged<String> onSubmit,
+  ) {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.55),
@@ -48,8 +50,7 @@ class _ExitIntentModalState extends State<ExitIntentModal> {
     final cs = theme.colorScheme;
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding:
-          const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: Container(
@@ -71,12 +72,14 @@ class _ExitIntentModalState extends State<ExitIntentModal> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.notifications_active_outlined,
-                      color: cs.primary),
+                  Icon(Icons.notifications_active_outlined, color: cs.primary),
                   const SizedBox(width: 8),
-                  Text('Wait — one quick thing',
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Wait — one quick thing',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -116,9 +119,13 @@ class _ExitIntentModalState extends State<ExitIntentModal> {
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 14),
+                      horizontal: 22,
+                      vertical: 14,
+                    ),
                     textStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

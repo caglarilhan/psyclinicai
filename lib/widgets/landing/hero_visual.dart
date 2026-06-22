@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// 3-pane product mockup for the hero. A primary "browser window" carries
@@ -13,8 +15,7 @@ class HeroVisual extends StatefulWidget {
   State<HeroVisual> createState() => _HeroVisualState();
 }
 
-class _HeroVisualState extends State<HeroVisual>
-    with TickerProviderStateMixin {
+class _HeroVisualState extends State<HeroVisual> with TickerProviderStateMixin {
   late final AnimationController _entry;
   late final AnimationController _float;
 
@@ -24,11 +25,13 @@ class _HeroVisualState extends State<HeroVisual>
     _entry = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..forward();
+    );
+    unawaited(_entry.forward());
     _float = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
-    )..repeat(reverse: true);
+    );
+    unawaited(_float.repeat(reverse: true));
   }
 
   @override
@@ -36,6 +39,23 @@ class _HeroVisualState extends State<HeroVisual>
     _entry.dispose();
     _float.dispose();
     super.dispose();
+  }
+
+  bool _reduceMotionApplied = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Perf + a11y audit 2026-06-21 (WCAG 2.3.3 Animation from Interactions):
+    // Honour the user's reduce-motion preference. When set, stop the idle
+    // _float controller so the hero doesn't burn CPU and doesn't violate
+    // the OS-level motion preference. Done once after first context resolve.
+    if (_reduceMotionApplied) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _float.stop();
+      _float.value = 0.5; // freeze at the visually neutral midpoint
+    }
+    _reduceMotionApplied = true;
   }
 
   @override
@@ -151,11 +171,7 @@ class _HeroVisualState extends State<HeroVisual>
   }) {
     final entryCurve = CurvedAnimation(
       parent: _entry,
-      curve: Interval(
-        delay / 900,
-        1,
-        curve: Curves.easeOutCubic,
-      ),
+      curve: Interval(delay / 900, 1, curve: Curves.easeOutCubic),
     );
     return AnimatedBuilder(
       animation: Listenable.merge([_entry, _float]),
@@ -221,15 +237,13 @@ class _BrowserWindow extends StatelessWidget {
               asset,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
-              semanticLabel:
-                  'Product screenshot showing the $title interface',
+              semanticLabel: 'Product screenshot showing the $title interface',
               errorBuilder: (_, __, ___) => Container(
                 color: cs.surfaceContainerHighest,
                 alignment: Alignment.center,
                 child: Text(
                   asset.split('/').last,
-                  style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.5)),
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
                 ),
               ),
             ),
@@ -241,8 +255,11 @@ class _BrowserWindow extends StatelessWidget {
 }
 
 class _Chrome extends StatelessWidget {
-  const _Chrome(
-      {required this.title, required this.cs, required this.pulseDot});
+  const _Chrome({
+    required this.title,
+    required this.cs,
+    required this.pulseDot,
+  });
   final String title;
   final ColorScheme cs;
   final bool pulseDot;
@@ -265,8 +282,7 @@ class _Chrome extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(6),
@@ -274,9 +290,11 @@ class _Chrome extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock_outline,
-                      size: 12,
-                      color: cs.onSurface.withValues(alpha: 0.6)),
+                  Icon(
+                    Icons.lock_outline,
+                    size: 12,
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -289,10 +307,7 @@ class _Chrome extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (pulseDot) ...[
-                    const SizedBox(width: 6),
-                    const _LiveDot(),
-                  ],
+                  if (pulseDot) ...[const SizedBox(width: 6), const _LiveDot()],
                 ],
               ),
             ),
@@ -303,10 +318,10 @@ class _Chrome extends StatelessWidget {
   }
 
   Widget _dot(Color c) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-      );
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+  );
 }
 
 class _LiveDot extends StatefulWidget {
@@ -340,8 +355,9 @@ class _LiveDotState extends State<_LiveDot>
               width: 7,
               height: 7,
               decoration: BoxDecoration(
-                color: const Color(0xFFEF4444)
-                    .withValues(alpha: 0.55 + 0.45 * _c.value),
+                color: const Color(
+                  0xFFEF4444,
+                ).withValues(alpha: 0.55 + 0.45 * _c.value),
                 shape: BoxShape.circle,
               ),
             ),

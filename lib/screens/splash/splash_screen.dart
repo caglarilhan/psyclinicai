@@ -20,22 +20,37 @@ class _SplashScreenState extends State<SplashScreen>
     vsync: this,
     duration: const Duration(milliseconds: 700),
   );
-  late final Animation<double> _scale =
-      CurvedAnimation(parent: _c, curve: Curves.easeOutBack);
-  late final Animation<double> _fade =
-      CurvedAnimation(parent: _c, curve: const Interval(0.4, 1.0));
+  late final Animation<double> _scale = CurvedAnimation(
+    parent: _c,
+    curve: Curves.easeOutBack,
+  );
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _c,
+    curve: const Interval(0.4, 1.0),
+  );
 
   Timer? _exit;
 
   @override
   void initState() {
     super.initState();
-    _c.forward();
+    unawaited(_c.forward());
     // Hold the brand for a beat after the animation lands, then transition.
     _exit = Timer(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/landing');
+      unawaited(Navigator.of(context).pushReplacementNamed(_initialTarget()));
     });
+  }
+
+  /// Honour a deep-link path passed in the hash fragment (Flutter web ships
+  /// hash routes by default). E.g. `https://psyclinic.ai/#/security` should
+  /// land on `/security`, not `/landing`. Mobile / unknown URLs fall back to
+  /// the marketing landing. Unknown paths still resolve via
+  /// `MaterialApp.onUnknownRoute`, so no extra allowlist is needed.
+  String _initialTarget() {
+    final fragment = Uri.base.fragment;
+    if (fragment.startsWith('/') && fragment.length > 1) return fragment;
+    return '/landing';
   }
 
   @override
@@ -63,10 +78,10 @@ class _SplashScreenState extends State<SplashScreen>
                   color: cs.onPrimary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                      color: cs.onPrimary.withValues(alpha: 0.25), width: 1),
+                    color: cs.onPrimary.withValues(alpha: 0.25),
+                  ),
                 ),
-                child: Icon(Icons.psychology,
-                    color: cs.onPrimary, size: 52),
+                child: Icon(Icons.psychology, color: cs.onPrimary, size: 52),
               ),
             ),
             const SizedBox(height: PsySpacing.xl),
@@ -77,18 +92,18 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'PsyClinicAI',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: cs.onPrimary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
-                        ),
+                      color: cs.onPrimary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.8,
+                    ),
                   ),
                   const SizedBox(height: PsySpacing.xs),
                   Text(
                     'AI co-pilot for therapy sessions',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: cs.onPrimary.withValues(alpha: 0.78),
-                          letterSpacing: 0.2,
-                        ),
+                      color: cs.onPrimary.withValues(alpha: 0.78),
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ],
               ),

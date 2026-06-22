@@ -1,0 +1,79 @@
+{
+  "@@locale": "en",
+
+  "appName": "PsyClinicAI",
+  "@appName": {
+    "description": "Brand name surfaced on the splash and app bar."
+  },
+
+  "navHome": "Home",
+  "navPatients": "Patients",
+  "navCalendar": "Calendar",
+  "navSettings": "Settings",
+  "navTrustCenter": "Trust Center",
+
+  "actionSave": "Save",
+  "actionCancel": "Cancel",
+  "actionConfirm": "Confirm",
+  "actionBack": "Back",
+  "actionNext": "Next",
+  "actionExport": "Export",
+  "actionCopy": "Copy",
+
+  "consentDeniedTitle": "AI assistance is not consented",
+  "consentDeniedBody": "Update the intake form before drafting with AI.",
+  "consentDeniedAction": "Open intake",
+
+  "imminentRiskHeadline": "Imminent risk — act now",
+  "imminentRiskBody": "Do not leave the patient alone. Conduct a full clinical risk assessment and arrange transfer to emergency services or an inpatient setting per protocol.",
+  "imminentRiskCta": "Start safety plan now",
+  "imminentRiskDismiss": "I'll handle this manually",
+
+  "dismissReasonHospitalized": "Patient is on the way to / already at an inpatient setting",
+  "dismissReasonFamilyPresent": "Family or trusted adult is with the patient and informed",
+  "dismissReasonSupervisorHandoff": "Handed off to a supervisor / on-call psychiatrist",
+  "dismissReasonInSessionPlan": "Completing a safety plan inside this session instead",
+  "dismissReasonOther": "Other (documented in the session note)",
+
+  "crisisResources": "Crisis resources",
+  "crisisResourcesLastReviewed": "Last reviewed {date} — verify before relying on a number in an emergency.",
+  "@crisisResourcesLastReviewed": {
+    "placeholders": {
+      "date": { "type": "String", "example": "2026-06" }
+    }
+  },
+
+  "dsarPortalTitle": "Data export (DSAR)",
+  "dsarPortalSubtitle": "GDPR Article 15 (access) + Article 20 (portability).",
+  "dsarPhiBanner": "Sharing this file outside the chart is patient authorised under GDPR Art. 15/20. Treat the JSON as PHI.",
+  "dsarEmptyBundle": "No patient records on file yet. Complete an intake or open a safety plan and the bundle will populate.",
+
+  "phiBadge": "PHI",
+  "phiBannerWeb": "Web build does not cache PHI on this device. Records read from and write to the server on every action.",
+
+  "supervisionQueueTitle": "Supervision queue",
+  "supervisionQueueSubtitle": "Trainee notes awaiting your approval, change request, or co-sign.",
+  "supervisionOpenSection": "Open",
+  "supervisionClosedSection": "Closed",
+  "supervisionEmptyOpen": "No notes are waiting on you.",
+  "supervisionEmptyClosed": "No decisions on the record yet.",
+  "supervisionActionApprove": "Approve",
+  "supervisionActionChanges": "Request changes",
+  "supervisionActionCoSign": "Co-sign",
+  "supervisionCoSignDisclaimer": "Co-sign here records the supervisor decision but is NOT yet a legally binding electronic signature. Cryptographic signing (TOTP/WebAuthn, eIDAS / HIPAA §164.312(c)(2)) lands in Sprint 10. Until then, keep a wet-signature archive for billable Medicaid notes.",
+
+  "portalTitle": "Your portal",
+  "portalWelcome": "Welcome",
+  "portalIntro": "A private space connected to your clinic. Everything you do here is logged for your records and protected under GDPR and KVKK.",
+  "portalIntakeTitle": "First-visit questionnaire",
+  "portalIntakeBody": "Share history, current medications, and consent with your clinician before the first session.",
+  "portalPromTitle": "Progress questionnaires",
+  "portalPromBody": "PHQ-9, GAD-7, and other measures requested by your clinician.",
+  "portalSessionsTitle": "Upcoming sessions",
+  "portalSessionsBody": "See the appointments your clinician scheduled. Cancellations and reschedule requests notify your clinician automatically.",
+  "portalDsarTitle": "Request your data",
+  "portalDsarBody": "Get a copy of every record we hold for you. Delivered as a portable JSON archive.",
+  "portalDeleteTitle": "Close your account",
+  "portalDeleteBody": "Start a 30-day deletion. Your clinical record is pseudonymised after the grace window (replaced with an anonymous placeholder).",
+  "portalSecurityFooter": "Sessions and notes between you and your clinician are held on EU servers. AI assistance only runs when you have explicitly opted in."
+}

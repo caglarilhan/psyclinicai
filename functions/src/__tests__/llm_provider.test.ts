@@ -1,0 +1,220 @@
+jest.mock("firebase-functions", () => ({
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import {
+  AnthropicProvider,
+  AzureOpenAIProvider,
+  LlmProvider,
+  LlmProviderError,
+  LlmRequest,
+  invokeWithFallback,
+} from "../lib/llm_provider";
+
+// Mock global fetch for these tests. Restore between cases.
+const realFetch = global.fetch;
+afterEach(() => {
+  global.fetch = realFetch;
+  jest.clearAllMocks();
+});
+
+function mockFetch(
+  impl: (url: string, init: RequestInit) => Promise<Response> | Response
+) {
+  (global as unknown as {fetch: typeof fetch}).fetch = jest.fn(
+    impl as unknown as typeof fetch
+  ) as unknown as typeof fetch;
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {"content-type": "application/json"},
+  });
+}
+
+function anthropicTextResponse(text: string, status = 200): Response {
+  return jsonResponse(
+    {
+      content: [{type: "text", text}],
+      usage: {input_tokens: 12, output_tokens: 7},
+    },
+    status
+  );
+}
+
+function azureTextResponse(text: string, status = 200): Response {
+  return jsonResponse(
+    {
+      choices: [{message: {content: text}}],
+      usage: {prompt_tokens: 5, completion_tokens: 3},
+    },
+    status
+  );
+}
+
+const baseReq: LlmRequest = {
+  messages: [{role: "user", content: "Summarise the session"}],
+};
+
+describe("AnthropicProvider", () => {
+  it("invokes /v1/messages with x-api-key + claude headers", async () => {
+    mockFetch(async (url, init) => {
+      expect(url).toBe("https://api.anthropic.com/v1/messages");
+      expect((init.headers as Record<string, string>)["x-api-key"]).toBe("sk-x");
+      const body = JSON.parse(init.body as string);
+      expect(body.messages).toEqual(baseReq.messages);
+      return anthropicTextResponse("summary");
+    });
+    const p = new AnthropicProvider("sk-x");
+    const r = await p.invoke(baseReq);
+    expect(r.text).toBe("summary");
+    expect(r.provider).toBe("anthropic");
+    expect(r.inputTokens).toBe(12);
+    expect(r.outputTokens).toBe(7);
+  });
+
+  it("throws missing_credentials when api key absent", async () => {
+    const p = new AnthropicProvider(undefined);
+    expect(p.configured).toBe(false);
+    await expect(p.invoke(baseReq)).rejects.toMatchObject({
+      reason: "missing_credentials",
+    });
+  });
+
+  it("throws upstream_5xx on a 503 + preserves status", async () => {
+    mockFetch(async () => new Response("down", {status: 503}));
+    const p = new AnthropicProvider("sk-x");
+    await expect(p.invoke(baseReq)).rejects.toMatchObject({
+      reason: "upstream_5xx",
+      statusCode: 503,
+    });
+  });
+
+  it("throws malformed_response when content array is empty", async () => {
+    mockFetch(async () => jsonResponse({content: []}));
+    const p = new AnthropicProvider("sk-x");
+    await expect(p.invoke(baseReq)).rejects.toMatchObject({
+      reason: "malformed_response",
+    });
+  });
+});
+
+describe("AzureOpenAIProvider", () => {
+  it("adapts messages + system prompt to chat/completions shape", async () => {
+    mockFetch(async (url, init) => {
+      expect(url).toContain("/openai/deployments/dep-1/chat/completions");
+      const body = JSON.parse(init.body as string);
+      expect(body.messages[0]).toEqual({role: "system", content: "be safe"});
+      expect(body.messages[1].role).toBe("user");
+      return azureTextResponse("azure summary");
+    });
+    const p = new AzureOpenAIProvider(
+      "https://az.example.com",
+      "az-key",
+      "dep-1"
+    );
+    const r = await p.invoke({...baseReq, system: "be safe"});
+    expect(r.text).toBe("azure summary");
+    expect(r.provider).toBe("azure_openai");
+    expect(r.model).toBe("dep-1");
+    expect(r.inputTokens).toBe(5);
+    expect(r.outputTokens).toBe(3);
+  });
+
+  it("is not configured when any env var is missing", () => {
+    expect(
+      new AzureOpenAIProvider(undefined, "k", "d").configured
+    ).toBe(false);
+    expect(
+      new AzureOpenAIProvider("e", undefined, "d").configured
+    ).toBe(false);
+    expect(
+      new AzureOpenAIProvider("e", "k", undefined).configured
+    ).toBe(false);
+  });
+});
+
+describe("invokeWithFallback", () => {
+  function p(id: string, opts: {
+    configured: boolean;
+    response?: string;
+    throwReason?: LlmProviderError["reason"];
+  }): LlmProvider {
+    return {
+      id,
+      configured: opts.configured,
+      invoke: async () => {
+        if (opts.throwReason) {
+          throw new LlmProviderError(opts.throwReason, `${id} failed`);
+        }
+        return {
+          text: opts.response ?? "",
+          provider: id,
+          model: "m",
+        };
+      },
+    };
+  }
+
+  it("uses the first configured provider that succeeds", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("primary", {configured: true, response: "ok-primary"}),
+        p("secondary", {configured: true, response: "ok-secondary"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("primary");
+    expect(r.text).toBe("ok-primary");
+  });
+
+  it("falls over to the secondary when primary throws upstream error", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("primary", {configured: true, throwReason: "upstream_5xx"}),
+        p("secondary", {configured: true, response: "from-secondary"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("secondary");
+    expect(r.text).toBe("from-secondary");
+  });
+
+  it("skips unconfigured providers without raising", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("primary", {configured: false}),
+        p("secondary", {configured: true, response: "took-secondary"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("secondary");
+  });
+
+  it("rethrows the last error when every provider fails", async () => {
+    await expect(
+      invokeWithFallback(
+        [
+          p("primary", {configured: true, throwReason: "upstream_5xx"}),
+          p("secondary", {configured: true, throwReason: "upstream_4xx"}),
+        ],
+        baseReq
+      )
+    ).rejects.toMatchObject({reason: "upstream_4xx"});
+  });
+
+  it("throws missing_credentials when nobody is configured", async () => {
+    await expect(
+      invokeWithFallback(
+        [p("a", {configured: false}), p("b", {configured: false})],
+        baseReq
+      )
+    ).rejects.toMatchObject({reason: "missing_credentials"});
+  });
+});

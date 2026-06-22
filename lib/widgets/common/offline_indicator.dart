@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../services/offline_service.dart';
 
 class OfflineIndicator extends StatelessWidget {
@@ -19,11 +22,7 @@ class OfflineIndicator extends StatelessWidget {
           color: Colors.orange,
           child: Row(
             children: [
-              const Icon(
-                Icons.wifi_off,
-                color: Colors.white,
-                size: 16,
-              ),
+              const Icon(Icons.wifi_off, color: Colors.white, size: 16),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -37,7 +36,10 @@ class OfflineIndicator extends StatelessWidget {
               ),
               if (offlineService.pendingSync.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -70,7 +72,7 @@ class OfflineStatusCard extends StatelessWidget {
     return Consumer<OfflineService>(
       builder: (context, offlineService, child) {
         return Card(
-          color: offlineService.isOnline 
+          color: offlineService.isOnline
               ? Colors.green.withValues(alpha: 0.1)
               : Colors.orange.withValues(alpha: 0.1),
           child: Padding(
@@ -82,21 +84,25 @@ class OfflineStatusCard extends StatelessWidget {
                   children: [
                     Icon(
                       offlineService.isOnline ? Icons.wifi : Icons.wifi_off,
-                      color: offlineService.isOnline ? Colors.green : Colors.orange,
+                      color: offlineService.isOnline
+                          ? Colors.green
+                          : Colors.orange,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       offlineService.isOnline ? 'Çevrimiçi' : 'Çevrimdışı',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: offlineService.isOnline ? Colors.green : Colors.orange,
+                        color: offlineService.isOnline
+                            ? Colors.green
+                            : Colors.orange,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  offlineService.isOnline 
+                  offlineService.isOnline
                       ? 'Tüm veriler senkronize edildi'
                       : 'Offline modda çalışıyorsunuz',
                   style: theme.textTheme.bodyMedium,
@@ -110,11 +116,12 @@ class OfflineStatusCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (offlineService.isOnline && offlineService.pendingSync.isNotEmpty) ...[
+                if (offlineService.isOnline &&
+                    offlineService.pendingSync.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: () {
-                      offlineService.syncPendingData();
+                      unawaited(offlineService.syncPendingData());
                     },
                     icon: const Icon(Icons.sync, size: 16),
                     label: const Text('Senkronize Et'),
@@ -134,7 +141,6 @@ class OfflineStatusCard extends StatelessWidget {
 }
 
 class OfflineDataList extends StatelessWidget {
-
   const OfflineDataList({
     super.key,
     required this.tableName,
@@ -174,7 +180,10 @@ class OfflineDataList extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -211,17 +220,24 @@ class OfflineDataList extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: item['sync_status'] == 'synced' 
+                              color: item['sync_status'] == 'synced'
                                   ? Colors.green.withValues(alpha: 0.1)
                                   : Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              item['sync_status'] == 'synced' ? 'Senkronize' : 'Bekliyor',
+                              item['sync_status'] == 'synced'
+                                  ? 'Senkronize'
+                                  : 'Bekliyor',
                               style: TextStyle(
-                                color: item['sync_status'] == 'synced' ? Colors.green : Colors.orange,
+                                color: item['sync_status'] == 'synced'
+                                    ? Colors.green
+                                    : Colors.orange,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -246,49 +262,63 @@ class OfflineDataList extends StatelessWidget {
     );
   }
 
-  void _showAllData(BuildContext context, List<Map<String, dynamic>> data, String title) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final item = data[index];
-              return ListTile(
-                title: Text(
-                    '${item['name'] ?? item['title'] ?? item['id'] ?? ''}'),
-                subtitle: Text('${item['created_at'] ?? ''}'),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: item['sync_status'] == 'synced' 
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+  void _showAllData(
+    BuildContext context,
+    List<Map<String, dynamic>> data,
+    String title,
+  ) {
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: ListView.builder(
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                final item = data[index];
+                return ListTile(
+                  title: Text(
+                    '${item['name'] ?? item['title'] ?? item['id'] ?? ''}',
                   ),
-                  child: Text(
-                    item['sync_status'] == 'synced' ? 'Senkronize' : 'Bekliyor',
-                    style: TextStyle(
-                      color: item['sync_status'] == 'synced' ? Colors.green : Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                  subtitle: Text('${item['created_at'] ?? ''}'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: item['sync_status'] == 'synced'
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item['sync_status'] == 'synced'
+                          ? 'Senkronize'
+                          : 'Bekliyor',
+                      style: TextStyle(
+                        color: item['sync_status'] == 'synced'
+                            ? Colors.green
+                            : Colors.orange,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kapat'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Kapat'),
-          ),
-        ],
       ),
     );
   }

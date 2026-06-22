@@ -14,7 +14,7 @@ class FooterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final hPad = w >= 768
         ? LandingTokens.sectionHorizontalPaddingDesktop
         : LandingTokens.sectionHorizontalPaddingMobile;
@@ -29,12 +29,10 @@ class FooterSection extends StatelessWidget {
       _FooterColumn('Company', const [
         _Link('About', 'about'),
         _Link('Contact', 'contact'),
-        _Link('Careers', 'careers'),
         _Link('Press kit', 'press'),
       ]),
       _FooterColumn('Resources', const [
         _Link('Help center', 'help'),
-        _Link('Clinical research', 'research'),
         _Link('Status', 'status'),
         _Link('Changelog', 'changelog'),
       ]),
@@ -52,8 +50,9 @@ class FooterSection extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 56),
       child: Center(
         child: ConstrainedBox(
-          constraints:
-              const BoxConstraints(maxWidth: LandingTokens.maxContentWidth),
+          constraints: const BoxConstraints(
+            maxWidth: LandingTokens.maxContentWidth,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -67,14 +66,19 @@ class FooterSection extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.psychology,
-                                color: cs.primary, size: 28),
+                            Image.asset(
+                              'assets/branding/logo-master.png',
+                              width: 36,
+                              height: 36,
+                              filterQuality: FilterQuality.high,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'PsyClinicAI',
                               style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.onSurface),
+                                fontWeight: FontWeight.bold,
+                                color: cs.onSurface,
+                              ),
                             ),
                           ],
                         ),
@@ -106,27 +110,26 @@ class FooterSection extends StatelessWidget {
                       spacing: 32,
                       runSpacing: 32,
                       children: cols
-                          .map((col) => SizedBox(
-                                width: isWide
-                                    ? ((c.maxWidth - 280 - 32) - 32 * 3) / 4
-                                    : (c.maxWidth - 32) / 2,
-                                child: _ColumnView(
-                                    col: col,
-                                    theme: theme,
-                                    cs: cs,
-                                    onLink: onLink),
-                              ))
+                          .map(
+                            (col) => SizedBox(
+                              width: isWide
+                                  ? ((c.maxWidth - 280 - 32) - 32 * 3) / 4
+                                  : (c.maxWidth - 32) / 2,
+                              child: _ColumnView(
+                                col: col,
+                                theme: theme,
+                                cs: cs,
+                                onLink: onLink,
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   );
                   return isWide
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            brand,
-                            const SizedBox(width: 32),
-                            colGrid,
-                          ],
+                          children: [brand, const SizedBox(width: 32), colGrid],
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,11 +184,12 @@ class _Link {
 }
 
 class _ColumnView extends StatelessWidget {
-  const _ColumnView(
-      {required this.col,
-      required this.theme,
-      required this.cs,
-      required this.onLink});
+  const _ColumnView({
+    required this.col,
+    required this.theme,
+    required this.cs,
+    required this.onLink,
+  });
   final _FooterColumn col;
   final ThemeData theme;
   final ColorScheme cs;
@@ -205,18 +209,20 @@ class _ColumnView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        ...col.links.map((l) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => onLink(l.id),
-                child: Text(
-                  l.label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.78),
-                  ),
+        ...col.links.map(
+          (l) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: InkWell(
+              onTap: () => onLink(l.id),
+              child: Text(
+                l.label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.78),
                 ),
               ),
-            )),
+            ),
+          ),
+        ),
       ],
     );
   }

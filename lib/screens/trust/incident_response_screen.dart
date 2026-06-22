@@ -33,8 +33,11 @@ class IncidentResponseScreen extends StatelessWidget {
           PsyCard(
             child: Row(
               children: [
-                Icon(Icons.report_problem_outlined,
-                    color: cs.primary, size: 20),
+                Icon(
+                  Icons.report_problem_outlined,
+                  color: cs.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: PsySpacing.md),
                 Expanded(
                   child: Text(
@@ -51,10 +54,12 @@ class IncidentResponseScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: PsySpacing.xl),
-          ..._phases.map((p) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                child: _PhaseCard(phase: p, theme: theme, cs: cs),
-              )),
+          ..._phases.map(
+            (p) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.md),
+              child: _PhaseCard(phase: p, theme: theme, cs: cs),
+            ),
+          ),
           const SizedBox(height: PsySpacing.lg),
           Text(
             'Notification commitments — HIPAA §164.410 (60 days) + GDPR '
@@ -137,8 +142,11 @@ const _phases = <_Phase>[
 ];
 
 class _PhaseCard extends StatelessWidget {
-  const _PhaseCard(
-      {required this.phase, required this.theme, required this.cs});
+  const _PhaseCard({
+    required this.phase,
+    required this.theme,
+    required this.cs,
+  });
   final _Phase phase;
   final ThemeData theme;
   final ColorScheme cs;
@@ -147,7 +155,9 @@ class _PhaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,11 +178,13 @@ class _PhaseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(phase.label,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        )),
+                    Text(
+                      phase.label,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${phase.target} · ${phase.owner}',

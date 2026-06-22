@@ -99,13 +99,17 @@ void main() {
 
   group('severity → action mapping', () {
     test('minimal suggests monitoring', () {
-      expect(Phq9Severity.minimal.actionSuggestion.toLowerCase(),
-          contains('monitor'));
+      expect(
+        Phq9Severity.minimal.actionSuggestion.toLowerCase(),
+        contains('monitor'),
+      );
     });
 
     test('severe escalates to immediate treatment', () {
-      expect(Phq9Severity.severe.actionSuggestion.toLowerCase(),
-          contains('immediate'));
+      expect(
+        Phq9Severity.severe.actionSuggestion.toLowerCase(),
+        contains('immediate'),
+      );
     });
 
     test('all bands have a non-empty label', () {
@@ -117,9 +121,14 @@ void main() {
 
   group('input validation', () {
     test('throws on wrong answer length', () {
-      expect(() => svc.score(List.filled(8, 0)), throwsA(isA<AssertionError>()));
       expect(
-          () => svc.score(List.filled(10, 0)), throwsA(isA<AssertionError>()));
+        () => svc.score(List.filled(8, 0)),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => svc.score(List.filled(10, 0)),
+        throwsA(isA<AssertionError>()),
+      );
     });
 
     test('returns immutable answers list', () {

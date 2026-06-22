@@ -52,7 +52,8 @@ class BuiltForSection extends StatelessWidget {
           const SectionTitle('One product, three workflows.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'PsyClinicAI adapts to your role — same data, different surface.'),
+            'PsyClinicAI adapts to your role — same data, different surface.',
+          ),
           const SizedBox(height: 40),
           LayoutBuilder(
             builder: (ctx, c) {
@@ -61,12 +62,16 @@ class BuiltForSection extends StatelessWidget {
                 spacing: LandingTokens.gridGap,
                 runSpacing: LandingTokens.gridGap,
                 children: cards
-                    .map((card) => SizedBox(
-                          width:
-                              isWide ? (c.maxWidth - 48) / 3 : c.maxWidth,
-                          child: _AudienceCardView(
-                              card: card, theme: theme, cs: cs),
-                        ))
+                    .map(
+                      (card) => SizedBox(
+                        width: isWide ? (c.maxWidth - 48) / 3 : c.maxWidth,
+                        child: _AudienceCardView(
+                          card: card,
+                          theme: theme,
+                          cs: cs,
+                        ),
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -78,16 +83,22 @@ class BuiltForSection extends StatelessWidget {
 }
 
 class _AudienceCard {
-  _AudienceCard(
-      {required this.icon, required this.title, required this.bullets});
+  _AudienceCard({
+    required this.icon,
+    required this.title,
+    required this.bullets,
+  });
   final IconData icon;
   final String title;
   final List<String> bullets;
 }
 
 class _AudienceCardView extends StatelessWidget {
-  const _AudienceCardView(
-      {required this.card, required this.theme, required this.cs});
+  const _AudienceCardView({
+    required this.card,
+    required this.theme,
+    required this.cs,
+  });
   final _AudienceCard card;
   final ThemeData theme;
   final ColorScheme cs;
@@ -115,25 +126,31 @@ class _AudienceCardView extends StatelessWidget {
             child: Icon(card.icon, color: cs.primary, size: 24),
           ),
           const SizedBox(height: 18),
-          Text(card.title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            card.title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 16),
-          ...card.bullets.map((b) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.check_circle, size: 18, color: cs.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(b,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(height: 1.4)),
+          ...card.bullets.map(
+            (b) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.check_circle, size: 18, color: cs.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      b,
+                      style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

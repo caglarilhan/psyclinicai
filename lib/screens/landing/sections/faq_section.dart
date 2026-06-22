@@ -17,53 +17,61 @@ class _FaqSectionState extends State<FaqSection> {
   static const _items = <_Faq>[
     _Faq(
       q: 'Is the audio really kept on device?',
-      a: 'Yes. We use the operating system\'s built-in speech-to-text — on '
+      a:
+          'Yes. We use the operating system\'s built-in speech-to-text — on '
           'macOS, Windows, iOS, and Android. The audio is transcribed locally '
           'and never uploaded to any server, including ours. Only the resulting '
           'text transcript is sent to the AI model you choose.',
     ),
     _Faq(
       q: 'What is BYOK and why does it matter?',
-      a: 'BYOK = Bring Your Own Key. You sign a BAA directly with Anthropic '
+      a:
+          'BYOK = Bring Your Own Key. You sign a BAA directly with Anthropic '
           'and paste your API key into PsyClinicAI. That means PsyClinicAI '
           'never holds the BAA-protected data path, only orchestrates it. '
           'It also means your per-token cost is at-cost, not marked up.',
     ),
     _Faq(
       q: 'Is PsyClinicAI HIPAA-compliant?',
-      a: 'PsyClinicAI is HIPAA-aligned by architecture: TLS 1.3 in transit, '
+      a:
+          'PsyClinicAI is HIPAA-aligned by architecture: TLS 1.3 in transit, '
           'AES-256 at rest, no audio retention, BAA-protected AI processing '
           'via your own Anthropic account. A signed BAA covering PsyClinicAI '
           'itself is in legal review and available to founding members.',
     ),
     _Faq(
       q: 'Where is patient data stored?',
-      a: 'Firestore in europe-west3 (Frankfurt) by default for EU clinicians, '
+      a:
+          'Firestore in europe-west3 (Frankfurt) by default for EU clinicians, '
           'us-central1 for US clinicians. PHI never crosses regions. '
           'A GDPR Article 28 DPA is provided to every paying clinic.',
     ),
     _Faq(
       q: 'Can I cancel anytime?',
-      a: 'Yes, monthly plans cancel anytime from the in-app settings page. '
+      a:
+          'Yes, monthly plans cancel anytime from the in-app settings page. '
           'Annual founding rates are honoured for the full year — but you can '
           'export every byte of your data, encrypted, before you leave.',
     ),
     _Faq(
       q: 'Does the AI replace my clinical judgement?',
-      a: 'No. The AI drafts a structured note from the transcript and flags '
+      a:
+          'No. The AI drafts a structured note from the transcript and flags '
           'risk language; you review, edit, and sign every note. We log every '
           'AI suggestion alongside the clinician\'s edit so the audit trail '
           'is bulletproof.',
     ),
     _Faq(
       q: 'How do I get my data out?',
-      a: 'One-click export from Settings → Data: a zip file with every '
+      a:
+          'One-click export from Settings → Data: a zip file with every '
           'session note, assessment, and superbill as JSON + PDF. No vendor '
           'lock-in — your patient records are yours.',
     ),
     _Faq(
       q: 'Who is liable if the AI drafts a wrong note?',
-      a: 'You are. PsyClinicAI drafts; the clinician reviews, edits, and '
+      a:
+          'You are. PsyClinicAI drafts; the clinician reviews, edits, and '
           'signs every note. The signed note is the legal record — same as '
           'a dictation transcriptionist. Our audit log captures the AI '
           'suggestion, your edits, and the timestamp on every save, so '
@@ -71,7 +79,8 @@ class _FaqSectionState extends State<FaqSection> {
     ),
     _Faq(
       q: 'Will insurance actually pay against this superbill?',
-      a: 'The PDF follows CMS-1500 layout with CPT (12 mental-health '
+      a:
+          'The PDF follows CMS-1500 layout with CPT (12 mental-health '
           'codes) + ICD-10 (35) + NPI + Tax ID + DSM-5-aligned diagnoses. '
           'Most US payers (BCBS, Aetna, Cigna, United) accept it out of '
           'the box. If a claim is rejected, you keep all source data — '
@@ -79,21 +88,24 @@ class _FaqSectionState extends State<FaqSection> {
     ),
     _Faq(
       q: 'Can I migrate patient data from SimplePractice / TherapyNotes?',
-      a: 'CSV import from any EHR that exports patient demographics, '
+      a:
+          'CSV import from any EHR that exports patient demographics, '
           'session history, and superbills. We provide a 1:1 mapping '
           'guide for the four largest mental-health EHRs and a hands-on '
           'migration session during the founding pilot.',
     ),
     _Faq(
       q: 'Does it work if my internet drops mid-session?',
-      a: 'Yes — the entire session UI is offline-first. The transcript '
+      a:
+          'Yes — the entire session UI is offline-first. The transcript '
           'keeps building on-device, the SOAP draft is queued, and the '
           'note + superbill sync to Firestore the moment connection '
           'returns. You never lose a session.',
     ),
     _Faq(
       q: 'Can I try it before signing a BAA?',
-      a: "Yes. Founding access starts in 'evaluation mode' with synthetic "
+      a:
+          "Yes. Founding access starts in 'evaluation mode' with synthetic "
           'demo data — no PHI, no BAA needed. The moment you switch to '
           'real patients we email you a pre-signed BAA you counter-sign '
           'with one click, fully effective before the first real save.',
@@ -116,8 +128,9 @@ class _FaqSectionState extends State<FaqSection> {
           const SectionTitle('Straight answers.'),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'No marketing fog. If you have a question we did not answer, '
-              'email founders@psyclinicai.com.'),
+            'No marketing fog. If you have a question we did not answer, '
+            'email founders@psyclinicai.com.',
+          ),
           const SizedBox(height: 36),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 920),
@@ -142,7 +155,9 @@ class _FaqSectionState extends State<FaqSection> {
                       onTap: () => setState(() => _open = open ? null : i),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 22, vertical: 18),
+                          horizontal: 22,
+                          vertical: 18,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -152,16 +167,16 @@ class _FaqSectionState extends State<FaqSection> {
                                   child: Text(
                                     _items[i].q,
                                     style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                            fontWeight: FontWeight.w600),
+                                        ?.copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ),
                                 AnimatedRotation(
-                                  duration:
-                                      const Duration(milliseconds: 200),
+                                  duration: const Duration(milliseconds: 200),
                                   turns: open ? 0.5 : 0,
-                                  child: Icon(Icons.expand_more,
-                                      color: cs.primary),
+                                  child: Icon(
+                                    Icons.expand_more,
+                                    color: cs.primary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -172,8 +187,7 @@ class _FaqSectionState extends State<FaqSection> {
                                 child: Text(
                                   _items[i].a,
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: cs.onSurface
-                                        .withValues(alpha: 0.78),
+                                    color: cs.onSurface.withValues(alpha: 0.78),
                                     height: 1.6,
                                   ),
                                 ),

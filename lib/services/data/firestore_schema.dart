@@ -2,6 +2,17 @@
 ///
 /// Single source of truth — both repositories AND security rules should
 /// reference these constants to avoid drift.
+///
+/// Arch M4 fix (audit 2026-06-21): `ClinicianRole` + `ClinicianRoleX`
+/// used to live in this file, which meant every UI screen pulled in
+/// every schema constant just to read a role label. They moved to
+/// `../auth/clinician_role.dart`; the re-export below keeps
+/// data-layer callers compiling without churn while UI code can
+/// switch to the narrow module.
+library;
+
+export '../auth/clinician_role.dart' show ClinicianRole, ClinicianRoleX;
+
 class FirestoreSchema {
   FirestoreSchema._();
 
@@ -95,28 +106,5 @@ class FirestoreSchema {
   ) => '${patientPath(clinicId, patientId)}/$superbills/$invoiceId';
 }
 
-/// Clinician roles for RBAC.
-enum ClinicianRole {
-  psychiatrist,
-  psychologist,
-  therapist,
-  nurse,
-  secretary,
-  administrator,
-}
-
-extension ClinicianRoleX on ClinicianRole {
-  String get id => name;
-  String get label => switch (this) {
-    ClinicianRole.psychiatrist => 'Psychiatrist',
-    ClinicianRole.psychologist => 'Psychologist',
-    ClinicianRole.therapist => 'Therapist',
-    ClinicianRole.nurse => 'Nurse',
-    ClinicianRole.secretary => 'Secretary',
-    ClinicianRole.administrator => 'Administrator',
-  };
-
-  bool get canPrescribe => this == ClinicianRole.psychiatrist;
-  bool get canSeeFinancials =>
-      this == ClinicianRole.administrator || this == ClinicianRole.secretary;
-}
+// ClinicianRole + ClinicianRoleX moved to ../auth/clinician_role.dart
+// and re-exported at the top of this file. See Arch M4 doc above.

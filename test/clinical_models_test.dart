@@ -47,6 +47,69 @@ void main() {
       expect(next.copingStrategies, ['a']); // untouched
       expect(next.warningSigns, ['w']);
     });
+
+    test('reasonsForLiving round-trips through JSON', () {
+      final plan = SafetyPlan(
+        patientId: 'p5',
+        reasonsForLiving: const ['my daughter', 'finishing my research'],
+      );
+      final r = SafetyPlan.fromJson(plan.toJson());
+      expect(r.reasonsForLiving, plan.reasonsForLiving);
+    });
+
+    test('legacy JSON without reasonsForLiving stays empty (back-compat)', () {
+      final r = SafetyPlan.fromJson({
+        'patientId': 'p6',
+        'warningSigns': ['x'],
+      });
+      expect(r.reasonsForLiving, isEmpty);
+      expect(r.warningSigns, ['x']);
+    });
+
+    test('copyWith can update reasonsForLiving in isolation', () {
+      final base = SafetyPlan(patientId: 'p7', warningSigns: const ['w']);
+      final next = base.copyWith(reasonsForLiving: const ['hope']);
+      expect(next.warningSigns, ['w']);
+      expect(next.reasonsForLiving, ['hope']);
+    });
+
+    test('isClinicallyComplete demands warning + coping + contact + line', () {
+      final empty = SafetyPlan(patientId: 'p8');
+      expect(empty.isClinicallyComplete, isFalse);
+      expect(
+        empty.missingClinicalSections,
+        containsAll([
+          'warning_signs',
+          'coping_strategies',
+          'people_to_reach',
+          'crisis_lines',
+        ]),
+      );
+
+      final partial = SafetyPlan(
+        patientId: 'p8',
+        warningSigns: const ['ruminating'],
+        copingStrategies: const ['paced breathing'],
+        supportContacts: const ['Partner — 555-0101'],
+      );
+      expect(partial.isClinicallyComplete, isFalse);
+      expect(partial.missingClinicalSections, ['crisis_lines']);
+
+      final complete = partial.copyWith(crisisLines: const ['988']);
+      expect(complete.isClinicallyComplete, isTrue);
+      expect(complete.missingClinicalSections, isEmpty);
+    });
+
+    test('professionals satisfies the "people to reach" floor', () {
+      final p = SafetyPlan(
+        patientId: 'p9',
+        warningSigns: const ['x'],
+        copingStrategies: const ['y'],
+        professionals: const ['Dr. Lee — 555-0102'],
+        crisisLines: const ['988'],
+      );
+      expect(p.isClinicallyComplete, isTrue);
+    });
   });
 
   group('SessionNote', () {

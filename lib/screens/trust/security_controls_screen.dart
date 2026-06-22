@@ -37,16 +37,26 @@ class SecurityControlsScreen extends StatelessWidget {
             cs: cs,
             heading: 'Administrative safeguards · 45 CFR §164.308',
             rows: const [
-              _Row('Security management',
-                  'Annual risk assessment + tracked remediation backlog.'),
-              _Row('Workforce security',
-                  'Background checks for engineers with prod access; least-privilege roles.'),
-              _Row('Access management',
-                  'Role-based access · quarterly review · departure deactivation ≤ 24 h.'),
-              _Row('Security awareness',
-                  'HIPAA + secure-code training on hire and yearly thereafter.'),
-              _Row('Contingency planning',
-                  'Documented IR playbook + tabletop exercise twice a year.'),
+              _Row(
+                'Security management',
+                'Annual risk assessment + tracked remediation backlog.',
+              ),
+              _Row(
+                'Workforce security',
+                'Background checks for engineers with prod access; least-privilege roles.',
+              ),
+              _Row(
+                'Access management',
+                'Role-based access · quarterly review · departure deactivation ≤ 24 h.',
+              ),
+              _Row(
+                'Security awareness',
+                'HIPAA + secure-code training on hire and yearly thereafter.',
+              ),
+              _Row(
+                'Contingency planning',
+                'Documented IR playbook + tabletop exercise twice a year.',
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.xl),
@@ -55,12 +65,18 @@ class SecurityControlsScreen extends StatelessWidget {
             cs: cs,
             heading: 'Physical safeguards · §164.310',
             rows: const [
-              _Row('Facility access',
-                  'Hetzner DE-Frankfurt ISO 27001 + SOC 2 certified data centres.'),
-              _Row('Device controls',
-                  'Engineer laptops: disk encryption, MDM, remote wipe.'),
-              _Row('Media disposal',
-                  'Storage decommissioning per NIST 800-88 (sub-processor handled).'),
+              _Row(
+                'Facility access',
+                'Hetzner DE-Frankfurt ISO 27001 + SOC 2 certified data centres.',
+              ),
+              _Row(
+                'Device controls',
+                'Engineer laptops: disk encryption, MDM, remote wipe.',
+              ),
+              _Row(
+                'Media disposal',
+                'Storage decommissioning per NIST 800-88 (sub-processor handled).',
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.xl),
@@ -69,16 +85,26 @@ class SecurityControlsScreen extends StatelessWidget {
             cs: cs,
             heading: 'Technical safeguards · §164.312',
             rows: const [
-              _Row('Access control',
-                  'Unique user ID · MFA required for staff · session timeout 30 min idle.'),
-              _Row('Audit controls',
-                  'Append-only, hash-chained event log — 6-year retention.'),
-              _Row('Integrity',
-                  'Versioned writes + SHA-256 chain prevents silent tampering.'),
-              _Row('Person/entity authentication',
-                  'Email + password + MFA · WebAuthn passkeys supported.'),
-              _Row('Transmission security',
-                  'TLS 1.3 end-to-end · HSTS preload · perfect forward secrecy.'),
+              _Row(
+                'Access control',
+                'Unique user ID · MFA required for staff · session timeout 30 min idle.',
+              ),
+              _Row(
+                'Audit controls',
+                'Append-only, hash-chained event log — 6-year retention.',
+              ),
+              _Row(
+                'Integrity',
+                'Versioned writes + SHA-256 chain prevents silent tampering.',
+              ),
+              _Row(
+                'Person/entity authentication',
+                'Email + password + MFA · WebAuthn passkeys supported.',
+              ),
+              _Row(
+                'Transmission security',
+                'TLS 1.3 end-to-end · HSTS preload · perfect forward secrecy.',
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.xl),
@@ -89,8 +115,10 @@ class SecurityControlsScreen extends StatelessWidget {
             rows: const [
               _Row('At rest', 'AES-256 (LUKS) on every database volume.'),
               _Row('In transit', 'TLS 1.3 with mandatory PFS ciphersuites.'),
-              _Row('Key management',
-                  'Hetzner KMS for storage keys · BYOK Anthropic key in OS keychain.'),
+              _Row(
+                'Key management',
+                'Hetzner KMS for storage keys · BYOK Anthropic key in OS keychain.',
+              ),
               _Row('Secrets', 'GitHub Actions OIDC + per-env secret rotation.'),
             ],
           ),
@@ -102,10 +130,14 @@ class SecurityControlsScreen extends StatelessWidget {
             rows: const [
               _Row('RPO', '≤ 15 minutes (Postgres WAL streaming to standby).'),
               _Row('RTO', '≤ 1 hour (warm standby + DNS failover).'),
-              _Row('Geo-redundancy',
-                  'Daily encrypted snapshot to a second EU region.'),
-              _Row('Restore tests',
-                  'Quarterly restore drill against a fresh database snapshot.'),
+              _Row(
+                'Geo-redundancy',
+                'Daily encrypted snapshot to a second EU region.',
+              ),
+              _Row(
+                'Restore tests',
+                'Quarterly restore drill against a fresh database snapshot.',
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.xl),
@@ -115,12 +147,18 @@ class SecurityControlsScreen extends StatelessWidget {
             heading: 'Access lifecycle',
             rows: const [
               _Row('MFA', 'TOTP + WebAuthn passkey supported.'),
-              _Row('Single sign-on',
-                  'SAML 2.0 + Okta-tested (paid plans, Q3 2026).'),
-              _Row('Session timeout',
-                  '30 minutes idle (configurable per clinic).'),
-              _Row('Access review',
-                  'Quarterly attestation by clinic owner · audit log entry on change.'),
+              _Row(
+                'Single sign-on',
+                'SAML 2.0 + Okta-tested (paid plans, Q3 2026).',
+              ),
+              _Row(
+                'Session timeout',
+                '30 minutes idle (configurable per clinic).',
+              ),
+              _Row(
+                'Access review',
+                'Quarterly attestation by clinic owner · audit log entry on change.',
+              ),
               _Row('Deactivation', 'Departing user disabled within 24 hours.'),
             ],
           ),
@@ -189,7 +227,9 @@ class _Group extends StatelessWidget {
         const SizedBox(height: PsySpacing.sm),
         PsyCard(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.lg, vertical: PsySpacing.sm),
+            horizontal: PsySpacing.lg,
+            vertical: PsySpacing.sm,
+          ),
           child: Column(
             children: [
               for (var i = 0; i < rows.length; i++) ...[
@@ -203,16 +243,22 @@ class _Group extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.check_circle_outline,
-                          size: 16, color: cs.primary),
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 16,
+                        color: cs.primary,
+                      ),
                       const SizedBox(width: PsySpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(rows[i].label,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              rows[i].label,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               rows[i].body,

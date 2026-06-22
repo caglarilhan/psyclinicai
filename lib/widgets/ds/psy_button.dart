@@ -50,12 +50,18 @@ class _PsyButtonState extends State<PsyButton> {
     final isDisabled = widget.onPressed == null || widget.loading;
 
     final pad = switch (widget.size) {
-      PsyButtonSize.sm =>
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      PsyButtonSize.md =>
-        const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      PsyButtonSize.lg =>
-        const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
+      PsyButtonSize.sm => const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 8,
+      ),
+      PsyButtonSize.md => const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 14,
+      ),
+      PsyButtonSize.lg => const EdgeInsets.symmetric(
+        horizontal: 28,
+        vertical: 18,
+      ),
     };
     final fontSize = switch (widget.size) {
       PsyButtonSize.sm => 13.0,
@@ -84,7 +90,8 @@ class _PsyButtonState extends State<PsyButton> {
     Color borderColor = cs.outlineVariant;
     if (!isFilled && hovered) {
       bg = cs.primary.withValues(
-          alpha: widget.variant == PsyButtonVariant.ghost ? 0.08 : 0.05);
+        alpha: widget.variant == PsyButtonVariant.ghost ? 0.08 : 0.05,
+      );
       borderColor = cs.primary.withValues(alpha: 0.40);
     }
     if (isDisabled) bg = baseBg.withValues(alpha: 0.5);
@@ -117,8 +124,9 @@ class _PsyButtonState extends State<PsyButton> {
             )
           : Row(
               key: const ValueKey('content'),
-              mainAxisSize:
-                  widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisSize: widget.fullWidth
+                  ? MainAxisSize.max
+                  : MainAxisSize.min,
               mainAxisAlignment: widget.fullWidth
                   ? MainAxisAlignment.center
                   : MainAxisAlignment.start,

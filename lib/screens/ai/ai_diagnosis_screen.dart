@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/diagnosis_service.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -79,13 +82,35 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
         _result = list;
         _loading = false;
       });
-    } on DiagnosisException catch (e) {
+    } on DiagnosisException catch (e, st) {
+      // Capture non-noApiKey errors so prod diagnosis-AI failures
+      // (network / parse / rate-limit / unauthorized / unknown) are
+      // observable. noApiKey is expected UX — user surfaces an inline
+      // hint and we don't want every "key not configured" page-view
+      // to generate a Sentry event.
+      if (e.code != DiagnosisErrorCode.noApiKey) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'ai_diagnosis.differential',
+          ),
+        );
+      }
       if (!mounted) return;
       setState(() {
         _error = e.message;
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      // Unexpected (non-typed) failure — always capture.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'ai_diagnosis.unexpected',
+        ),
+      );
       if (!mounted) return;
       setState(() {
         _error = 'Unexpected error: $e';
@@ -101,7 +126,8 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
     return AppShell(
       routeName: '/ai_diagnosis',
       title: 'DSM-5 Differential',
-      subtitle: 'Differential support · Claude Haiku — the clinician owns the diagnosis.',
+      subtitle:
+          'Differential support · Claude Haiku — the clinician owns the diagnosis.',
       scrollable: false,
       child: ListView(
         padding: EdgeInsets.zero,
@@ -126,9 +152,12 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.xxl),
-          Text('Vignette',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Vignette',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           TextField(
             controller: _vignette,
@@ -141,9 +170,12 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.xxl),
-          Text('Observed symptoms',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Observed symptoms',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.sm),
           Wrap(
             spacing: PsySpacing.sm,
@@ -193,17 +225,19 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
               decoration: BoxDecoration(
                 color: cs.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(PsyRadius.md),
-                border:
-                    Border.all(color: cs.error.withValues(alpha: 0.3)),
+                border: Border.all(color: cs.error.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
                   Icon(Icons.error_outline, color: cs.error),
                   const SizedBox(width: PsySpacing.md),
                   Expanded(
-                    child: Text(_error!,
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: cs.error)),
+                    child: Text(
+                      _error!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.error,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -211,9 +245,12 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
           ],
           if (_result != null) ...[
             const SizedBox(height: PsySpacing.xxxl),
-            Text('Candidates',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              'Candidates',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: PsySpacing.lg),
             if (_result!.isEmpty)
               PsyCard(
@@ -238,17 +275,16 @@ class _AIDiagnosisScreenState extends State<AIDiagnosisScreen> {
 }
 
 class _DxCard extends StatelessWidget {
-  const _DxCard(
-      {required this.c, required this.theme, required this.cs});
+  const _DxCard({required this.c, required this.theme, required this.cs});
   final DxCandidate c;
   final ThemeData theme;
   final ColorScheme cs;
 
   PsyBadgeTone get _tone => switch (c.confidence.toLowerCase()) {
-        'high' => PsyBadgeTone.success,
-        'medium' => PsyBadgeTone.warning,
-        _ => PsyBadgeTone.neutral,
-      };
+    'high' => PsyBadgeTone.success,
+    'medium' => PsyBadgeTone.warning,
+    _ => PsyBadgeTone.neutral,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -260,14 +296,14 @@ class _DxCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(c.name,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                child: Text(
+                  c.name,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-              PsyBadge(
-                label: 'Confidence: ${c.confidence}',
-                tone: _tone,
-              ),
+              PsyBadge(label: 'Confidence: ${c.confidence}', tone: _tone),
             ],
           ),
           const SizedBox(height: PsySpacing.sm),
@@ -282,21 +318,45 @@ class _DxCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: PsySpacing.lg),
-          _list(theme, cs, Icons.check_circle, 'Matching criteria',
-              c.matchingCriteria, cs.primary),
+          _list(
+            theme,
+            cs,
+            Icons.check_circle,
+            'Matching criteria',
+            c.matchingCriteria,
+            cs.primary,
+          ),
           if (c.missingCriteria.isNotEmpty)
-            _list(theme, cs, Icons.help_outline, 'Confirm / rule out',
-                c.missingCriteria, const Color(0xFFEA580C)),
+            _list(
+              theme,
+              cs,
+              Icons.help_outline,
+              'Confirm / rule out',
+              c.missingCriteria,
+              const Color(0xFFEA580C),
+            ),
           if (c.nextSteps.isNotEmpty)
-            _list(theme, cs, Icons.flag_outlined, 'Next steps',
-                c.nextSteps, cs.secondary),
+            _list(
+              theme,
+              cs,
+              Icons.flag_outlined,
+              'Next steps',
+              c.nextSteps,
+              cs.secondary,
+            ),
         ],
       ),
     );
   }
 
-  Widget _list(ThemeData theme, ColorScheme cs, IconData icon,
-      String title, List<String> items, Color accent) {
+  Widget _list(
+    ThemeData theme,
+    ColorScheme cs,
+    IconData icon,
+    String title,
+    List<String> items,
+    Color accent,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(top: PsySpacing.md),
       child: Column(
@@ -306,21 +366,28 @@ class _DxCard extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: accent),
               const SizedBox(width: PsySpacing.sm),
-              Text(title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700, color: accent)),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.xs),
-          ...items.map((s) => Padding(
-                padding: const EdgeInsets.only(
-                    left: 24, top: 4, bottom: 4),
-                child: Text('• $s',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.78),
-                      height: 1.5,
-                    )),
-              )),
+          ...items.map(
+            (s) => Padding(
+              padding: const EdgeInsets.only(left: 24, top: 4, bottom: 4),
+              child: Text(
+                '• $s',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.78),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -328,8 +395,7 @@ class _DxCard extends StatelessWidget {
 }
 
 class _CodeChip extends StatelessWidget {
-  const _CodeChip(
-      {required this.label, required this.value, required this.cs});
+  const _CodeChip({required this.label, required this.value, required this.cs});
   final String label;
   final String value;
   final ColorScheme cs;
@@ -337,19 +403,23 @@ class _CodeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.xs),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(PsyRadius.sm),
         border: Border.all(color: cs.outlineVariant),
       ),
-      child: Text('$label  $value',
-          style: TextStyle(
-            fontSize: 12,
-            fontFamily: 'JetBrains Mono',
-            color: cs.onSurface.withValues(alpha: 0.78),
-            fontWeight: FontWeight.w600,
-          )),
+      child: Text(
+        '$label  $value',
+        style: TextStyle(
+          fontSize: 12,
+          fontFamily: 'JetBrains Mono',
+          color: cs.onSurface.withValues(alpha: 0.78),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

@@ -39,20 +39,24 @@ void main() {
 
     test('does not flag benign conversation', () {
       final out = svc.scanSegment(
-          'We talked about my new job and the weekend plans with family.');
+        'We talked about my new job and the weekend plans with family.',
+      );
       expect(out, isEmpty);
     });
 
     test('is case-insensitive and punctuation-tolerant', () {
       final out = svc.scanSegment('I WANT TO DIE!!!');
       expect(
-          out.map((s) => s.category), contains(RiskCategory.suicidalIdeation));
+        out.map((s) => s.category),
+        contains(RiskCategory.suicidalIdeation),
+      );
     });
 
     test('emits at most one signal per category per segment', () {
       final out = svc.scanSegment('suicidal. suicide. want to die.');
-      final suicidal =
-          out.where((s) => s.category == RiskCategory.suicidalIdeation);
+      final suicidal = out.where(
+        (s) => s.category == RiskCategory.suicidalIdeation,
+      );
       expect(suicidal.length, 1);
     });
 
@@ -60,6 +64,90 @@ void main() {
       final a = svc.scanSegment('want to die').first;
       final b = svc.scanSegment('I want to die').first;
       expect(a.dedupKey, b.dedupKey);
+    });
+
+    // Patient-safety: non-English suicidal ideation MUST trigger.
+    // KRİTİK-5 fix: lexicon was English-only, missing TR/DE/FR/ES patients.
+    group('multilingual coverage', () {
+      test('TR: "kendimi öldürmek istiyorum" flags suicidal ideation', () {
+        final out = svc.scanSegment('Bazen kendimi öldürmek istiyorum.');
+        expect(
+          out.map((s) => s.category),
+          contains(RiskCategory.suicidalIdeation),
+        );
+        expect(
+          out
+              .firstWhere((s) => s.category == RiskCategory.suicidalIdeation)
+              .severity,
+          RiskSeverity.high,
+        );
+      });
+
+      test('TR ASCII-transliterated also flags', () {
+        final out = svc.scanSegment('artik yasamak istemiyorum');
+        expect(
+          out.map((s) => s.category),
+          contains(RiskCategory.suicidalIdeation),
+        );
+      });
+
+      test('DE: "ich will mich umbringen" flags suicidal ideation', () {
+        final out = svc.scanSegment('Ich will mich umbringen.');
+        expect(
+          out.map((s) => s.category),
+          contains(RiskCategory.suicidalIdeation),
+        );
+      });
+
+      test('FR: "je veux me tuer" flags suicidal ideation', () {
+        final out = svc.scanSegment('Je veux me tuer.');
+        expect(
+          out.map((s) => s.category),
+          contains(RiskCategory.suicidalIdeation),
+        );
+      });
+
+      test('ES: "quiero morir" flags suicidal ideation', () {
+        final out = svc.scanSegment('A veces quiero morir.');
+        expect(
+          out.map((s) => s.category),
+          contains(RiskCategory.suicidalIdeation),
+        );
+      });
+
+      test('TR self-harm: "kendime zarar veriyorum" flags', () {
+        final out = svc.scanSegment('Kendime zarar veriyorum.');
+        expect(out.map((s) => s.category), contains(RiskCategory.selfHarm));
+      });
+
+      test('DE hopelessness: "ich bin hoffnungslos" flags', () {
+        final out = svc.scanSegment('Ich bin hoffnungslos.');
+        expect(out.map((s) => s.category), contains(RiskCategory.hopelessness));
+      });
+    });
+
+    test('aiOnline starts true (no degradation yet)', () {
+      expect(svc.aiOnline.value, isTrue);
+    });
+  });
+
+  // L-2 fix coverage — imminent tier is distinct from high.
+  group('RiskSeverity.imminent (L-2)', () {
+    test('enum ordering keeps existing threshold filters intact', () {
+      expect(RiskSeverity.info.index, lessThan(RiskSeverity.elevated.index));
+      expect(RiskSeverity.elevated.index, lessThan(RiskSeverity.high.index));
+      expect(RiskSeverity.high.index, lessThan(RiskSeverity.imminent.index));
+    });
+
+    test('triggersImmediateHandoff is true only for imminent', () {
+      expect(RiskSeverity.imminent.triggersImmediateHandoff, isTrue);
+      expect(RiskSeverity.high.triggersImmediateHandoff, isFalse);
+      expect(RiskSeverity.elevated.triggersImmediateHandoff, isFalse);
+      expect(RiskSeverity.info.triggersImmediateHandoff, isFalse);
+    });
+
+    test('label is "Imminent" for the new tier', () {
+      expect(RiskSeverity.imminent.label, 'Imminent');
     });
   });
 }

@@ -32,7 +32,7 @@ class LanguageService extends ChangeNotifier {
       'success': 'Başarılı',
       'warning': 'Uyarı',
       'info': 'Bilgi',
-      
+
       // Dashboard
       'dashboard': 'Dashboard',
       'home': 'Ana Sayfa',
@@ -45,7 +45,7 @@ class LanguageService extends ChangeNotifier {
       'billing': 'Faturalandırma',
       'insurance': 'Sigorta',
       'e_prescription': 'E-Reçete',
-      
+
       // Hasta Yönetimi
       'patient_management': 'Hasta Yönetimi',
       'patient_name': 'Hasta Adı',
@@ -61,7 +61,7 @@ class LanguageService extends ChangeNotifier {
       'add_patient': 'Hasta Ekle',
       'edit_patient': 'Hasta Düzenle',
       'delete_patient': 'Hasta Sil',
-      
+
       // Randevu Sistemi
       'appointment_system': 'Randevu Sistemi',
       'appointment_date': 'Randevu Tarihi',
@@ -76,7 +76,7 @@ class LanguageService extends ChangeNotifier {
       'new_appointment': 'Yeni Randevu',
       'reschedule_appointment': 'Randevu Ertle',
       'cancel_appointment': 'Randevu İptal Et',
-      
+
       // AI Tanı
       'ai_diagnosis': 'AI Destekli Tanı',
       'symptoms': 'Semptomlar',
@@ -86,7 +86,7 @@ class LanguageService extends ChangeNotifier {
       'risk_assessment': 'Risk Değerlendirmesi',
       'recommended_treatment': 'Önerilen Tedavi',
       'possible_diagnosis': 'Olası Tanı',
-      
+
       // Telemedicine
       'video_call': 'Video Görüşme',
       'start_call': 'Görüşmeyi Başlat',
@@ -98,7 +98,7 @@ class LanguageService extends ChangeNotifier {
       'screen_share': 'Ekran Paylaşımı',
       'local_video': 'Yerel Video Akışı',
       'remote_video': 'Uzak Video Akışı',
-      
+
       // Güvenlik
       'security_settings': 'Güvenlik Ayarları',
       'biometric_auth': 'Biyometrik Kimlik Doğrulama',
@@ -107,7 +107,7 @@ class LanguageService extends ChangeNotifier {
       'encryption_settings': 'Şifreleme Ayarları',
       'password_change': 'Şifre Değiştir',
       'security_report': 'Güvenlik Raporu',
-      
+
       // Analitik
       'analytics_reporting': 'Analitik ve Raporlama',
       'total_patients': 'Toplam Hasta',
@@ -117,7 +117,7 @@ class LanguageService extends ChangeNotifier {
       'monthly_sessions': 'Aylık Seans Sayısı',
       'performance_metrics': 'Performans Metrikleri',
       'trend_analysis': 'Trend Analizi',
-      
+
       // Hasta Portalı
       'patient_portal': 'Hasta Portalı',
       'book_appointment': 'Randevu Al',
@@ -130,7 +130,7 @@ class LanguageService extends ChangeNotifier {
       'lab_results': 'Laboratuvar Sonuçları',
       'download': 'İndir',
       'share': 'Paylaş',
-      
+
       // Sesli Notlar
       'voice_notes': 'Sesli Notlar',
       'start_recording': 'Kayıt Başlat',
@@ -144,7 +144,7 @@ class LanguageService extends ChangeNotifier {
       'save_note': 'Notu Kaydet',
       'delete_note': 'Notu Sil',
       'no_voice_notes': 'Henüz ses notu yok',
-      
+
       // Faturalandırma
       'billing_system': 'Faturalandırma Sistemi',
       'invoices': 'Faturalar',
@@ -164,7 +164,7 @@ class LanguageService extends ChangeNotifier {
       'create_invoice': 'Fatura Oluştur',
       'send_invoice': 'Fatura Gönder',
       'view_invoice': 'Faturayı Görüntüle',
-      
+
       // Sigorta
       'insurance_integration': 'Sigorta Entegrasyonu',
       'insurance_companies': 'Sigorta Şirketleri',
@@ -191,7 +191,7 @@ class LanguageService extends ChangeNotifier {
       'under_review': 'İnceleniyor',
       'rejected': 'Reddedildi',
       'track_claim': 'Talep Takip Et',
-      
+
       // E-Reçete
       'e_prescription_system': 'E-Reçete Sistemi',
       'medications': 'İlaçlar',
@@ -223,7 +223,7 @@ class LanguageService extends ChangeNotifier {
       'delivery_available': 'Teslimat Mevcut',
       'call_pharmacy': 'Eczaneyi Ara',
       'send_prescription': 'Reçete Gönder',
-      
+
       // Gelişmiş Arama
       'advanced_search': 'Gelişmiş Arama',
       'search_query': 'Arama Sorgusu',
@@ -248,7 +248,7 @@ class LanguageService extends ChangeNotifier {
       'low': 'Düşük',
       'run_saved_search': 'Kayıtlı Aramayı Çalıştır',
       'delete_saved_search': 'Kayıtlı Aramayı Sil',
-      
+
       // Mood Tracking
       'mood_tracking': 'Mood Tracking',
       'mood_entry': 'Mood Girişi',
@@ -280,7 +280,7 @@ class LanguageService extends ChangeNotifier {
       'goal_status': 'Hedef Durumu',
       'in_progress': 'Devam Ediyor',
       'update_goal_progress': 'Hedef İlerlemesini Güncelle',
-      
+
       // AI Asistan
       'ai_assistant': 'AI Asistan',
       'chat_with_ai': 'AI ile Sohbet Et',
@@ -299,7 +299,7 @@ class LanguageService extends ChangeNotifier {
       'security_help': 'Güvenlik ayarları',
       'analytics_help': 'Analitik ve raporlama',
       'ask_questions': 'Sorularınızı doğal dilde sorabilirsiniz.',
-      
+
       // Dil Ayarları
       'language_settings': 'Dil Ayarları',
       'select_language': 'Dil Seçin',
@@ -310,7 +310,8 @@ class LanguageService extends ChangeNotifier {
       'spanish': 'Español',
       'arabic': 'العربية',
       'language_changed': 'Dil değiştirildi',
-      'restart_required': 'Değişikliklerin etkili olması için uygulamayı yeniden başlatın',
+      'restart_required':
+          'Değişikliklerin etkili olması için uygulamayı yeniden başlatın',
     },
     'en': {
       // General
@@ -334,7 +335,7 @@ class LanguageService extends ChangeNotifier {
       'success': 'Success',
       'warning': 'Warning',
       'info': 'Info',
-      
+
       // Dashboard
       'dashboard': 'Dashboard',
       'home': 'Home',
@@ -347,7 +348,7 @@ class LanguageService extends ChangeNotifier {
       'billing': 'Billing',
       'insurance': 'Insurance',
       'e_prescription': 'E-Prescription',
-      
+
       // Patient Management
       'patient_management': 'Patient Management',
       'patient_name': 'Patient Name',
@@ -363,7 +364,7 @@ class LanguageService extends ChangeNotifier {
       'add_patient': 'Add Patient',
       'edit_patient': 'Edit Patient',
       'delete_patient': 'Delete Patient',
-      
+
       // Appointment System
       'appointment_system': 'Appointment System',
       'appointment_date': 'Appointment Date',
@@ -378,7 +379,7 @@ class LanguageService extends ChangeNotifier {
       'new_appointment': 'New Appointment',
       'reschedule_appointment': 'Reschedule Appointment',
       'cancel_appointment': 'Cancel Appointment',
-      
+
       // AI Diagnosis
       'ai_diagnosis': 'AI-Powered Diagnosis',
       'symptoms': 'Symptoms',
@@ -388,7 +389,7 @@ class LanguageService extends ChangeNotifier {
       'risk_assessment': 'Risk Assessment',
       'recommended_treatment': 'Recommended Treatment',
       'possible_diagnosis': 'Possible Diagnosis',
-      
+
       // Telemedicine
       'video_call': 'Video Call',
       'start_call': 'Start Call',
@@ -400,7 +401,7 @@ class LanguageService extends ChangeNotifier {
       'screen_share': 'Screen Share',
       'local_video': 'Local Video Stream',
       'remote_video': 'Remote Video Stream',
-      
+
       // Security
       'security_settings': 'Security Settings',
       'biometric_auth': 'Biometric Authentication',
@@ -409,7 +410,7 @@ class LanguageService extends ChangeNotifier {
       'encryption_settings': 'Encryption Settings',
       'password_change': 'Change Password',
       'security_report': 'Security Report',
-      
+
       // Analytics
       'analytics_reporting': 'Analytics and Reporting',
       'total_patients': 'Total Patients',
@@ -419,7 +420,7 @@ class LanguageService extends ChangeNotifier {
       'monthly_sessions': 'Monthly Sessions',
       'performance_metrics': 'Performance Metrics',
       'trend_analysis': 'Trend Analysis',
-      
+
       // Patient Portal
       'patient_portal': 'Patient Portal',
       'book_appointment': 'Book Appointment',
@@ -432,7 +433,7 @@ class LanguageService extends ChangeNotifier {
       'lab_results': 'Lab Results',
       'download': 'Download',
       'share': 'Share',
-      
+
       // Voice Notes
       'voice_notes': 'Voice Notes',
       'start_recording': 'Start Recording',
@@ -446,7 +447,7 @@ class LanguageService extends ChangeNotifier {
       'save_note': 'Save Note',
       'delete_note': 'Delete Note',
       'no_voice_notes': 'No voice notes yet',
-      
+
       // Billing
       'billing_system': 'Billing System',
       'invoices': 'Invoices',
@@ -466,7 +467,7 @@ class LanguageService extends ChangeNotifier {
       'create_invoice': 'Create Invoice',
       'send_invoice': 'Send Invoice',
       'view_invoice': 'View Invoice',
-      
+
       // Insurance
       'insurance_integration': 'Insurance Integration',
       'insurance_companies': 'Insurance Companies',
@@ -493,7 +494,7 @@ class LanguageService extends ChangeNotifier {
       'under_review': 'Under Review',
       'rejected': 'Rejected',
       'track_claim': 'Track Claim',
-      
+
       // E-Prescription
       'e_prescription_system': 'E-Prescription System',
       'medications': 'Medications',
@@ -525,7 +526,7 @@ class LanguageService extends ChangeNotifier {
       'delivery_available': 'Delivery Available',
       'call_pharmacy': 'Call Pharmacy',
       'send_prescription': 'Send Prescription',
-      
+
       // Advanced Search
       'advanced_search': 'Advanced Search',
       'search_query': 'Search Query',
@@ -550,7 +551,7 @@ class LanguageService extends ChangeNotifier {
       'low': 'Low',
       'run_saved_search': 'Run Saved Search',
       'delete_saved_search': 'Delete Saved Search',
-      
+
       // Mood Tracking
       'mood_tracking': 'Mood Tracking',
       'mood_entry': 'Mood Entry',
@@ -582,7 +583,7 @@ class LanguageService extends ChangeNotifier {
       'goal_status': 'Goal Status',
       'in_progress': 'In Progress',
       'update_goal_progress': 'Update Goal Progress',
-      
+
       // AI Assistant
       'ai_assistant': 'AI Assistant',
       'chat_with_ai': 'Chat with AI',
@@ -601,7 +602,7 @@ class LanguageService extends ChangeNotifier {
       'security_help': 'Security settings',
       'analytics_help': 'Analytics and reporting',
       'ask_questions': 'You can ask questions in natural language.',
-      
+
       // Language Settings
       'language_settings': 'Language Settings',
       'select_language': 'Select Language',
@@ -621,11 +622,11 @@ class LanguageService extends ChangeNotifier {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     final prefs = await SharedPreferences.getInstance();
     final languageCode = prefs.getString('language_code') ?? 'en';
     final countryCode = prefs.getString('country_code') ?? 'US';
-    
+
     _currentLocale = Locale(languageCode, countryCode);
     _isInitialized = true;
     notifyListeners();
@@ -633,10 +634,10 @@ class LanguageService extends ChangeNotifier {
 
   Future<void> changeLanguage(Locale locale) async {
     if (_currentLocale == locale) return;
-    
+
     _currentLocale = locale;
     notifyListeners();
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('language_code', locale.languageCode);
     await prefs.setString('country_code', locale.countryCode ?? '');

@@ -4,6 +4,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/trust/rag_status_card.dart';
 
 /// `/trust` — the enterprise-grade compliance landing.
 ///
@@ -39,12 +40,15 @@ class TrustCenterScreen extends StatelessWidget {
         children: [
           _PostureBar(theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xl),
+          _SectionHeader(theme: theme, cs: cs, label: 'Live infrastructure'),
+          const SizedBox(height: PsySpacing.md),
+          const RagStatusCard(),
+          const SizedBox(height: PsySpacing.xl),
           _SectionHeader(theme: theme, cs: cs, label: 'Programs'),
           const SizedBox(height: PsySpacing.md),
           _TrustGrid(theme: theme, cs: cs),
           const SizedBox(height: PsySpacing.xxl),
-          _SectionHeader(
-              theme: theme, cs: cs, label: 'Documents on request'),
+          _SectionHeader(theme: theme, cs: cs, label: 'Documents on request'),
           const SizedBox(height: PsySpacing.md),
           _DocsCard(theme: theme, cs: cs),
         ],
@@ -59,7 +63,7 @@ class _PostureBar extends StatelessWidget {
   final ColorScheme cs;
   @override
   Widget build(BuildContext context) {
-    final items = const [
+    const items = [
       _Posture('HIPAA', 'Aligned', PsyBadgeTone.success),
       _Posture('GDPR Art. 28', 'DPA signed on request', PsyBadgeTone.success),
       _Posture('SOC 2 Type II', 'In progress · Q4 2026', PsyBadgeTone.warning),
@@ -67,7 +71,9 @@ class _PostureBar extends StatelessWidget {
     ];
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.md,
+      ),
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -128,8 +134,11 @@ class _Posture {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(
-      {required this.theme, required this.cs, required this.label});
+  const _SectionHeader({
+    required this.theme,
+    required this.cs,
+    required this.label,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final String label;
@@ -190,20 +199,24 @@ class _TrustGrid extends StatelessWidget {
         route: '/trust/incident_response',
       ),
     ];
-    return LayoutBuilder(builder: (context, c) {
-      final cols = c.maxWidth >= PsyBreakpoints.md ? 2 : 1;
-      final w = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
-      return Wrap(
-        spacing: PsySpacing.lg,
-        runSpacing: PsySpacing.lg,
-        children: cards
-            .map((card) => SizedBox(
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cols = c.maxWidth >= PsyBreakpoints.md ? 2 : 1;
+        final w = (c.maxWidth - (cols - 1) * PsySpacing.lg) / cols;
+        return Wrap(
+          spacing: PsySpacing.lg,
+          runSpacing: PsySpacing.lg,
+          children: cards
+              .map(
+                (card) => SizedBox(
                   width: w,
                   child: _TrustCardView(card: card, theme: theme, cs: cs),
-                ))
-            .toList(),
-      );
-    });
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
   }
 }
 
@@ -221,8 +234,11 @@ class _TrustCard {
 }
 
 class _TrustCardView extends StatelessWidget {
-  const _TrustCardView(
-      {required this.card, required this.theme, required this.cs});
+  const _TrustCardView({
+    required this.card,
+    required this.theme,
+    required this.cs,
+  });
   final _TrustCard card;
   final ThemeData theme;
   final ColorScheme cs;
@@ -246,14 +262,19 @@ class _TrustCardView extends StatelessWidget {
                 child: Icon(card.icon, color: cs.primary, size: 18),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right,
-                  color: cs.onSurface.withValues(alpha: 0.45)),
+              Icon(
+                Icons.chevron_right,
+                color: cs.onSurface.withValues(alpha: 0.45),
+              ),
             ],
           ),
           const SizedBox(height: PsySpacing.md),
-          Text(card.title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            card.title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.xs),
           Text(
             card.body,
@@ -274,7 +295,7 @@ class _DocsCard extends StatelessWidget {
   final ColorScheme cs;
   @override
   Widget build(BuildContext context) {
-    final docs = const [
+    const docs = [
       _DocRow('Security whitepaper', 'On request'),
       _DocRow('SOC 2 readiness summary', 'Q4 2026'),
       _DocRow('Penetration test report', 'Under NDA'),
@@ -283,7 +304,9 @@ class _DocsCard extends StatelessWidget {
     ];
     return PsyCard(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.lg, vertical: PsySpacing.sm),
+        horizontal: PsySpacing.lg,
+        vertical: PsySpacing.sm,
+      ),
       child: Column(
         children: [
           for (var i = 0; i < docs.length; i++) ...[
@@ -301,8 +324,9 @@ class _DocsCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       docs[i].name,
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Text(

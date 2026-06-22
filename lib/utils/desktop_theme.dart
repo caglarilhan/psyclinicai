@@ -65,15 +65,10 @@ class DesktopTheme {
         style: ElevatedButton.styleFrom(
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           backgroundColor: desktopPrimary,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -91,17 +86,17 @@ class DesktopTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: desktopPrimary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: desktopBorder,
         thickness: 1,
         space: 1,
       ),
-      iconTheme: const IconThemeData(
-        color: Color(0xFF64748B),
-        size: 20,
-      ),
+      iconTheme: const IconThemeData(color: Color(0xFF64748B), size: 20),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,
@@ -167,15 +162,15 @@ class DesktopTheme {
 
   // Masaüstü boyutları için yardımcı metodlar
   static bool isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= desktopMinWidth;
+    return MediaQuery.sizeOf(context).width >= desktopMinWidth;
   }
 
   static bool isWideScreen(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 1600;
+    return MediaQuery.sizeOf(context).width >= 1600;
   }
 
   static bool isUltraWideScreen(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 2000;
+    return MediaQuery.sizeOf(context).width >= 2000;
   }
 
   static double getSidebarWidth(BuildContext context) {
@@ -185,10 +180,10 @@ class DesktopTheme {
   }
 
   static double getPanelWidth(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final sidebarWidth = getSidebarWidth(context);
     final availableWidth = screenWidth - sidebarWidth - 32; // padding
-    
+
     if (availableWidth >= 1200) return 600;
     if (availableWidth >= 800) return 500;
     return panelMinWidth;
@@ -237,9 +232,7 @@ class DesktopTheme {
           backgroundColor: backgroundColor ?? desktopPrimary,
           foregroundColor: textColor ?? Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
@@ -286,7 +279,10 @@ class DesktopTheme {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: desktopPrimary, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         ),
       ],
@@ -300,8 +296,8 @@ class DesktopTheme {
     required Widget desktop,
     required BuildContext context,
   }) {
-    final width = MediaQuery.of(context).size.width;
-    
+    final width = MediaQuery.sizeOf(context).width;
+
     if (width >= desktopMinWidth) {
       return desktop;
     } else if (width >= 768) {
@@ -320,14 +316,14 @@ class DesktopTheme {
     double? crossAxisSpacing,
     double? mainAxisSpacing,
   }) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
     final sidebarWidth = getSidebarWidth(context);
     final availableWidth = width - sidebarWidth - 32;
-    
+
     int columns = crossAxisCount ?? 2;
     if (availableWidth >= 1600) columns = 3;
     if (availableWidth >= 2000) columns = 4;
-    
+
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
@@ -349,9 +345,7 @@ class DesktopTheme {
     return Container(
       width: getSidebarWidth(context),
       color: backgroundColor ?? desktopSurface,
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 

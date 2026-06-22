@@ -31,7 +31,9 @@ class PsyBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: PsySpacing.md, vertical: PsySpacing.xs),
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: base.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(PsyRadius.full),

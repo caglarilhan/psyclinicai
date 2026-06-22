@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/analytics/caseload_outcomes_metrics.dart';
 import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
@@ -10,6 +11,8 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
+import '../../widgets/outcomes/caseload_outcomes_panel.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/outcomes` — PHQ-9 + GAD-7 trend dashboard.
@@ -23,8 +26,7 @@ class OutcomesDashboardScreen extends StatefulWidget {
       _OutcomesDashboardScreenState();
 }
 
-class _OutcomesDashboardScreenState
-    extends State<OutcomesDashboardScreen> {
+class _OutcomesDashboardScreenState extends State<OutcomesDashboardScreen> {
   PatientDetailArgs? _picked;
 
   @override
@@ -53,6 +55,37 @@ class _OutcomesDashboardScreenState
         children: [
           _Lede(theme: theme, cs: cs, patientName: patientName),
           const SizedBox(height: PsySpacing.xl),
+          // B20 (Sprint 9) — caseload roll-up. Demo data lives ONLY in
+          // demo mode; in live mode we hide the panel until the
+          // assessment repository streams a real roster (Sprint 10),
+          // so a clinician never sees fabricated aggregate numbers
+          // alongside a real patient's chart.
+          if (!canPickLive) ...[
+            CaseloadOutcomesPanel(
+              instrumentLabel: 'PHQ-9 · demo caseload roll-up',
+              metrics: buildCaseloadMetrics(
+                instrument: 'phq9',
+                series: const [
+                  PatientOutcomeSeries(
+                    patientId: 'demo-1',
+                    instrument: 'phq9',
+                    scores: [18, 14, 11, 9, 7],
+                  ),
+                  PatientOutcomeSeries(
+                    patientId: 'demo-2',
+                    instrument: 'phq9',
+                    scores: [15, 12, 10],
+                  ),
+                  PatientOutcomeSeries(
+                    patientId: 'demo-3',
+                    instrument: 'phq9',
+                    scores: [22, 17, 12, 8],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: PsySpacing.lg),
+          ],
           if (canPickLive)
             _PatientPicker(
               picked: args,
@@ -64,8 +97,7 @@ class _OutcomesDashboardScreenState
           if (!canPickLive || args == null)
             _DemoChartCard(theme: theme, cs: cs)
           else
-            _LiveChartCard(
-                theme: theme, cs: cs, patientId: args.id),
+            _LiveChartCard(theme: theme, cs: cs, patientId: args.id),
           const SizedBox(height: PsySpacing.xxl),
           _LegendCard(theme: theme, cs: cs),
         ],
@@ -91,8 +123,10 @@ class _PatientPicker extends StatelessWidget {
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
       return PsyCard(
-        child: Text('Sign in to load your patient roster.',
-            style: theme.textTheme.bodyMedium),
+        child: Text(
+          'Sign in to load your patient roster.',
+          style: theme.textTheme.bodyMedium,
+        ),
       );
     }
     return StreamBuilder<List<PatientDoc>>(
@@ -112,8 +146,7 @@ class _PatientPicker extends StatelessWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/patients'),
+                  onPressed: () => Navigator.of(context).pushNamed('/patients'),
                   child: const Text('Open patients'),
                 ),
               ],
@@ -122,7 +155,9 @@ class _PatientPicker extends StatelessWidget {
         }
         return PsyCard(
           padding: const EdgeInsets.symmetric(
-              horizontal: PsySpacing.xl, vertical: PsySpacing.md),
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.md,
+          ),
           child: Row(
             children: [
               Icon(Icons.person_outline, color: cs.primary, size: 20),
@@ -134,10 +169,12 @@ class _PatientPicker extends StatelessWidget {
                   value: picked?.id,
                   hint: const Text('Select a patient'),
                   items: patients
-                      .map((p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(p.fullName),
-                          ))
+                      .map(
+                        (p) => DropdownMenuItem(
+                          value: p.id,
+                          child: Text(p.fullName),
+                        ),
+                      )
                       .toList(),
                   onChanged: (id) {
                     if (id == null) return;
@@ -155,10 +192,11 @@ class _PatientPicker extends StatelessWidget {
 }
 
 class _Lede extends StatelessWidget {
-  const _Lede(
-      {required this.theme,
-      required this.cs,
-      required this.patientName});
+  const _Lede({
+    required this.theme,
+    required this.cs,
+    required this.patientName,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final String patientName;
@@ -167,11 +205,13 @@ class _Lede extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Outcome trend',
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              height: 1.1,
-            )),
+        Text(
+          'Outcome trend',
+          style: theme.textTheme.displaySmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            height: 1.1,
+          ),
+        ),
         const SizedBox(height: PsySpacing.sm),
         Text(
           'PHQ-9 (depression) and GAD-7 (anxiety) scores plotted over '
@@ -217,8 +257,11 @@ class _DemoChartCard extends StatelessWidget {
 }
 
 class _LiveChartCard extends StatelessWidget {
-  const _LiveChartCard(
-      {required this.theme, required this.cs, required this.patientId});
+  const _LiveChartCard({
+    required this.theme,
+    required this.cs,
+    required this.patientId,
+  });
   final ThemeData theme;
   final ColorScheme cs;
   final String patientId;
@@ -229,39 +272,59 @@ class _LiveChartCard extends StatelessWidget {
     if (profile == null) {
       return PsyCard(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
+          padding: const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
           child: Center(
-            child: Text('Sign in to load outcomes.',
-                style: theme.textTheme.bodyMedium),
+            child: Text(
+              'Sign in to load outcomes.',
+              style: theme.textTheme.bodyMedium,
+            ),
           ),
         ),
       );
     }
     return StreamBuilder<List<AssessmentDoc>>(
-      stream: AssessmentRepository.instance
-          .watchForPatient(profile.clinicId, patientId),
+      stream: AssessmentRepository.instance.watchForPatient(
+        profile.clinicId,
+        patientId,
+      ),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(PsySpacing.xxxl),
-            child: Center(child: CircularProgressIndicator()),
+          // Skeleton mirrors the trend-card shape (PsyCard wrapper +
+          // ~240 px chart canvas) so the page layout doesn't jump
+          // between waiting and data.
+          return const PsyCard(
+            child: PsySkeletonGroup(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: PsySpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PsySkeletonLine(width: 160),
+                    SizedBox(height: PsySpacing.lg),
+                    PsySkeletonBlock(height: 220),
+                  ],
+                ),
+              ),
+            ),
           );
         }
         final list = snap.data ?? const <AssessmentDoc>[];
         if (list.length < 2) {
           return PsyCard(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
+              padding: const EdgeInsets.symmetric(vertical: PsySpacing.xxl),
               child: Column(
                 children: [
-                  Icon(Icons.show_chart,
-                      color: cs.onSurface.withValues(alpha: 0.4),
-                      size: 36),
+                  Icon(
+                    Icons.show_chart,
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                    size: 36,
+                  ),
                   const SizedBox(height: PsySpacing.md),
-                  Text('Need at least 2 datapoints to plot a trend.',
-                      style: theme.textTheme.bodyMedium),
+                  Text(
+                    'Need at least 2 datapoints to plot a trend.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ],
               ),
             ),
@@ -281,7 +344,12 @@ class _LiveChartCard extends StatelessWidget {
           if (a.type == 'gad7') gad7.add(FlSpot(x, a.score.toDouble()));
         }
         return _ChartCard(
-            theme: theme, cs: cs, phq9: phq9, gad7: gad7, isDemo: false);
+          theme: theme,
+          cs: cs,
+          phq9: phq9,
+          gad7: gad7,
+          isDemo: false,
+        );
       },
     );
   }
@@ -305,19 +373,23 @@ class _ChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PsyCard(
       padding: const EdgeInsets.fromLTRB(
-          PsySpacing.lg, PsySpacing.xl, PsySpacing.xl, PsySpacing.xl),
+        PsySpacing.lg,
+        PsySpacing.xl,
+        PsySpacing.xl,
+        PsySpacing.xl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Text('Last datapoints',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
+              const Text(
+                'Last datapoints',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
               const Spacer(),
               if (isDemo)
-                const PsyBadge(
-                    label: 'Demo data', tone: PsyBadgeTone.warning),
+                const PsyBadge(label: 'Demo data', tone: PsyBadgeTone.warning),
               const SizedBox(width: PsySpacing.sm),
               _legendDot(color: PsyColors.danger, label: 'PHQ-9'),
               const SizedBox(width: PsySpacing.md),
@@ -334,17 +406,13 @@ class _ChartCard extends StatelessWidget {
                 gridData: FlGridData(
                   drawVerticalLine: false,
                   horizontalInterval: 5,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: cs.outlineVariant,
-                    strokeWidth: 0.5,
-                  ),
+                  getDrawingHorizontalLine: (_) =>
+                      FlLine(color: cs.outlineVariant, strokeWidth: 0.5),
                 ),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  rightTitles: const AxisTitles(
-                      ),
-                  topTitles: const AxisTitles(
-                      ),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -385,15 +453,17 @@ class _ChartCard extends StatelessWidget {
                   touchTooltipData: LineTouchTooltipData(
                     tooltipBgColor: cs.inverseSurface,
                     getTooltipItems: (items) => items
-                        .map((s) => LineTooltipItem(
-                              s.bar.color == PsyColors.danger
-                                  ? 'PHQ-9 · ${s.y.toInt()}'
-                                  : 'GAD-7 · ${s.y.toInt()}',
-                              TextStyle(
-                                color: cs.onInverseSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ))
+                        .map(
+                          (s) => LineTooltipItem(
+                            s.bar.color == PsyColors.danger
+                                ? 'PHQ-9 · ${s.y.toInt()}'
+                                : 'GAD-7 · ${s.y.toInt()}',
+                            TextStyle(
+                              color: cs.onInverseSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -407,32 +477,28 @@ class _ChartCard extends StatelessWidget {
     );
   }
 
-  LineChartBarData _line(List<FlSpot> spots, Color color) =>
-      LineChartBarData(
-        spots: spots,
-        isCurved: true,
+  LineChartBarData _line(List<FlSpot> spots, Color color) => LineChartBarData(
+    spots: spots,
+    isCurved: true,
+    color: color,
+    barWidth: 2.6,
+    dotData: FlDotData(
+      getDotPainter: (s, p, b, i) => FlDotCirclePainter(
+        radius: 4,
         color: color,
-        barWidth: 2.6,
-        dotData: FlDotData(
-          getDotPainter: (s, p, b, i) => FlDotCirclePainter(
-            radius: 4,
-            color: color,
-            strokeWidth: 2,
-            strokeColor: Colors.white,
-          ),
-        ),
-        belowBarData: BarAreaData(
-          show: true,
-          gradient: LinearGradient(
-            colors: [
-              color.withValues(alpha: 0.18),
-              color.withValues(alpha: 0.02),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      );
+        strokeWidth: 2,
+        strokeColor: Colors.white,
+      ),
+    ),
+    belowBarData: BarAreaData(
+      show: true,
+      gradient: LinearGradient(
+        colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0.02)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+  );
 
   Widget _legendDot({required Color color, required String label}) {
     return Row(
@@ -441,13 +507,13 @@ class _ChartCard extends StatelessWidget {
         Container(
           width: 10,
           height: 10,
-          decoration:
-              BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: PsySpacing.xs),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -502,11 +568,12 @@ class _DeltaSummary extends StatelessWidget {
               d == null
                   ? '$label · not enough data'
                   : '$label · ${d.abs().toStringAsFixed(0)} point '
-                      '${improving ? 'improvement' : 'increase'}',
+                        '${improving ? 'improvement' : 'increase'}',
               style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13),
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -531,9 +598,12 @@ class _LegendCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Severity bands',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Severity bands',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: PsySpacing.md),
           _band('Minimal (0–4)', PsyColors.riskMinimal),
           _band('Mild (5–9)', PsyColors.riskMild),
@@ -558,10 +628,12 @@ class _LegendCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: PsySpacing.md),
-          Text(label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.78),
-              )),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.78),
+            ),
+          ),
         ],
       ),
     );

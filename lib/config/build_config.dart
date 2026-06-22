@@ -18,8 +18,10 @@ class BuildConfig {
 
   /// Demo mode: no real backend/auth required. Defaults to TRUE so the app
   /// always runs locally; production release builds MUST pass IS_DEMO=false.
-  static const bool isDemo =
-      bool.fromEnvironment('IS_DEMO', defaultValue: true);
+  static const bool isDemo = bool.fromEnvironment(
+    'IS_DEMO',
+    defaultValue: true,
+  );
 
   /// Sentry DSN for crash/error reporting. Empty ⇒ telemetry stays a no-op.
   static const String sentryDsn = String.fromEnvironment('SENTRY_DSN');
@@ -28,12 +30,17 @@ class BuildConfig {
   static const String posthogKey = String.fromEnvironment('POSTHOG_KEY');
 
   /// Stripe publishable (client) key. Empty ⇒ checkout shows "not configured".
-  static const String stripePublishableKey =
-      String.fromEnvironment('STRIPE_PUBLISHABLE_KEY');
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+  );
 
   /// Base URL of our backend (Cloud Functions): Stripe checkout sessions,
   /// webhooks, and the Anthropic relay. Empty ⇒ BYOK / demo paths only.
   static const String backendUrl = String.fromEnvironment('BACKEND_URL');
+
+  // Sprint 30 polish — `ragBaseUrl` + `ragApiKey` removed. They were
+  // kept one sprint past the F-003 migration to give external build
+  // scripts a grace window; no consumer remains.
 
   /// True once real telemetry keys are present.
   static bool get telemetryEnabled =>
@@ -45,4 +52,8 @@ class BuildConfig {
   /// True once Stripe is configured for client-side checkout redirect.
   static bool get billingConfigured =>
       backendConfigured && stripePublishableKey.isNotEmpty;
+
+  /// True once the backend Cloud Functions proxy (`/v1/rag/**`) is
+  /// reachable — that is the only RAG path post-Sprint-27 (F-003).
+  static bool get ragEnabled => backendConfigured;
 }

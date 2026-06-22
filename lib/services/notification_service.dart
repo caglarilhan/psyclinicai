@@ -8,7 +8,8 @@ class NotificationService {
   NotificationService._internal();
   static final NotificationService _instance = NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _fln =
+      FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
   Future<void> initialize() async {
@@ -22,7 +23,10 @@ class NotificationService {
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+    const initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
+    );
     await _fln.initialize(initSettings);
 
     _initialized = true;
@@ -63,7 +67,8 @@ class NotificationService {
           iOS: DarwinNotificationDetails(),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.dateAndTime,
       );
     }
@@ -72,7 +77,9 @@ class NotificationService {
   Future<void> cancelAppointmentReminders(String appointmentId) async {
     if (kIsWeb) return;
     await initialize();
-    await _fln.cancel(_notificationId(appointmentId, const Duration(hours: 24)));
+    await _fln.cancel(
+      _notificationId(appointmentId, const Duration(hours: 24)),
+    );
     await _fln.cancel(_notificationId(appointmentId, const Duration(hours: 1)));
   }
 

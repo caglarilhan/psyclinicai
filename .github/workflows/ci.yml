@@ -30,17 +30,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify formatting on owned code
-        run: |
-          dart format --set-exit-if-changed --output=none \
-            lib/services/copilot/ \
-            lib/services/billing/ \
-            lib/services/assessments/ \
-            lib/services/data/ \
-            lib/widgets/copilot/ \
-            lib/screens/settings/api_keys_screen.dart \
-            lib/screens/billing/superbill_screen.dart \
-            lib/screens/assessments/assessment_screen.dart
+      - name: Verify formatting (whole tree)
+        # Audit 2026-06-21 / CI item 8 close: the previous list of 8
+        # paths covered ~7% of lib/ and let formatter drift accumulate
+        # on the other 93%. After the 2026-06-22 sweep we now enforce
+        # `dart format` on the full lib/ + test/ surface so PRs cannot
+        # reintroduce drift.
+        run: dart format --set-exit-if-changed --output=none lib/ test/
 
       - name: Analyze
         # Fails on errors + warnings (0 tolerated on owned code). Info-level
@@ -64,8 +60,34 @@ jobs:
         run: flutter pub get
 
       - name: Run tests
+        # Sprint 29 D-01: strict — red tests fail the build.
         run: flutter test --coverage --no-pub --reporter=expanded
-        continue-on-error: true   # Sprint 3 — re-enable strict once coverage stabilizes
+
+      - name: Enforce coverage floor (>= 60% lines)
+        # Audit 2026-06-21 / CI item 5: lcov was uploaded but never
+        # gated. At the time of landing line coverage was ~74.8%, so
+        # we set the floor at 60% — enough room for short-term churn
+        # without letting a slow erosion slide. Pure shell so the
+        # workflow has no extra runtime dependency.
+        env:
+          LC_ALL: C
+        run: |
+          awk -F: '
+            /^LH:/ { hit += $2 }
+            /^LF:/ { found += $2 }
+            END {
+              if (found == 0) {
+                print "::error::No LF entries in lcov.info"
+                exit 1
+              }
+              pct = 100 * hit / found
+              printf "line coverage: %.2f%% (%d / %d)\n", pct, hit, found
+              if (pct < 60) {
+                printf "::error::line coverage %.2f%% below 60%% floor\n", pct
+                exit 1
+              }
+            }
+          ' coverage/lcov.info
 
       - name: Upload coverage artefact
         if: always()
@@ -97,7 +119,10 @@ jobs:
       - name: Verify bundle size budget
         run: |
           BUNDLE_SIZE=$(stat -c%s build/web/main.dart.js)
-          BUDGET=$((5 * 1024 * 1024))
+          # 6 MB temporary ceiling for sprint-26 backlog (WebAuthn, PWA shell,
+          # iOS Hand-off, RAG console). Sprint 27 bundle-split + tree-shake
+          # chore targets 5 MB; tighten this back down once that ships.
+          BUDGET=$((6 * 1024 * 1024))
           echo "main.dart.js: $BUNDLE_SIZE bytes (budget: $BUDGET bytes)"
           if [ "$BUNDLE_SIZE" -gt "$BUDGET" ]; then
             echo "::error::Bundle size exceeded budget."
@@ -110,3 +135,65 @@ jobs:
           name: build-web
           path: build/web/
           retention-days: 7
+
+  # Audit 2026-06-21: functions/ has 127 jest tests + TS strict build but
+  # was never executed in CI. Stripe webhook, PHI relay, WebAuthn, and
+  # account-deletion purge all live here — PRs MUST run them.
+  functions:
+    name: Cloud Functions (lint + build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install
+        working-directory: functions
+        run: npm ci
+
+      # Audit 2026-06-21 / CI item 4: form-data CVSS 7.5 was patched by
+      # `npm audit fix` but there was no gate to prevent the next high
+      # CVE from sliding in. We scope to `--omit=dev` because the dev
+      # deps (eslint plugins, ts-jest helpers) carry transitive
+      # moderate findings that do not ship to production and tracking
+      # them here would just create noise; `--audit-level=high` keeps
+      # the gate tight on the surface that actually runs.
+      - name: npm audit (high severity, prod deps)
+        working-directory: functions
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint (tsc --noEmit)
+        working-directory: functions
+        run: npm run lint
+
+      - name: Build
+        working-directory: functions
+        run: npm run build
+
+      - name: Test (with coverage threshold)
+        # Audit 2026-06-21 / CI item 5: lcov was uploaded but no
+        # threshold gate. The Jest coverageThreshold block in
+        # package.json now enforces a 40/28/38/40 (stmt/br/fn/ln)
+        # floor; --coverage activates it. Baseline at the time of
+        # landing was 44.66% statements — set conservatively so test
+        # drift fails the build before the safety floor is breached.
+        working-directory: functions
+        run: npm test -- --ci --coverage --reporters=default
+
+  # Audit 2026-06-21: secret-scan was missing — no protection against
+  # committed API keys / private keys. Runs full-history on push,
+  # PR-diff-only on PRs to keep latency low.
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

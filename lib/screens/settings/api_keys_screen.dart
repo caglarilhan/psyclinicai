@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/copilot/api_key_storage.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// Settings page where clinicians provide their own AI provider API keys
 /// (BYOK — Bring Your Own Key).
@@ -28,7 +31,7 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
   @override
   void initState() {
     super.initState();
-    _hydrate();
+    unawaited(_hydrate());
   }
 
   Future<void> _hydrate() async {
@@ -65,18 +68,19 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
         _hasOpenAi = openai.isNotEmpty;
         _saving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('API keys saved securely on device'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      PsySnack.success(
+        context,
+        'API keys saved securely on device.',
+        hint: 'api_keys.save',
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
+      PsySnack.error(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+        'Failed to save: $e',
+        hint: 'api_keys.save_failed',
+      );
     }
   }
 
@@ -114,7 +118,10 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
                   subtitle:
                       'Used for AI session notes (SOAP / DAP / BIRP), risk flagging, and treatment plan suggestions.',
                   pricing:
-                      'Pay-as-you-go, ~\$0.001 per 5-minute session (Haiku 3.5).',
+                      'Pay-as-you-go, ~\$0.001 per 5-minute session on '
+                      'Claude Haiku 4.5. Model picker (Sonnet 4.6 / Opus '
+                      '4.7) lands with the server-side LLM proxy in '
+                      'Sprint 19.',
                   helpUrl: 'console.anthropic.com → API Keys → Create Key',
                   controller: _anthropicCtl,
                   visible: _anthropicVisible,
@@ -208,6 +215,18 @@ class _SecurityBanner extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Trade-off: direct-browser calls mean we cannot rate-limit '
+                  'misuse or log AI usage for your audit trail. A server-side '
+                  'LLM proxy with KMS-wrapped keys, PHI redaction, per-tenant '
+                  'cost meter and full audit logging is on the Sprint 19 '
+                  'roadmap — track it on /changelog.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -271,7 +290,16 @@ class _ProviderCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
+                    // Arch M3 fix (audit 2026-06-21): Colors.green is
+                    // light-mode tuned and disappears against the
+                    // dark-mode surface. Use a brightness-aware
+                    // success swatch with adequate WCAG-AA contrast
+                    // for both themes.
+                    color:
+                        (theme.brightness == Brightness.dark
+                                ? const Color(0xFF34D399)
+                                : const Color(0xFF15803D))
+                            .withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -279,14 +307,18 @@ class _ProviderCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: Colors.green[700],
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFF6EE7B7)
+                            : const Color(0xFF15803D),
                         size: 14,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Configured',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.green[700],
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFF6EE7B7)
+                              : const Color(0xFF15803D),
                           fontWeight: FontWeight.w600,
                         ),
                       ),

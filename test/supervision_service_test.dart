@@ -7,7 +7,8 @@ void main() {
   final svc = SupervisionService();
 
   test('parses a valid report and clamps the score', () {
-    const json = '{"fidelityScore":140,"fidelityNotes":"Strong CBT structure.",'
+    const json =
+        '{"fidelityScore":140,"fidelityNotes":"Strong CBT structure.",'
         '"strengths":["Clear agenda"],"growthAreas":["More Socratic questioning"],'
         '"reflectiveQuestions":["What kept the client stuck?"],'
         '"summary":"The therapist used CBT well."}';
@@ -22,15 +23,18 @@ void main() {
   test('returns null on garbage / empty content', () {
     expect(svc.parse('not json', Modality.cbt), isNull);
     expect(
-        svc.parse(
-            '{"fidelityScore":0,"strengths":[],"growthAreas":[],'
-            '"reflectiveQuestions":[],"summary":"","fidelityNotes":""}',
-            Modality.cbt),
-        isNull);
+      svc.parse(
+        '{"fidelityScore":0,"strengths":[],"growthAreas":[],'
+        '"reflectiveQuestions":[],"summary":"","fidelityNotes":""}',
+        Modality.cbt,
+      ),
+      isNull,
+    );
   });
 
   test('anonymizedText is de-identified and structured', () {
-    const json = '{"fidelityScore":82,"fidelityNotes":"Good adherence.",'
+    const json =
+        '{"fidelityScore":82,"fidelityNotes":"Good adherence.",'
         '"strengths":["Validation"],"growthAreas":["Pacing"],'
         '"reflectiveQuestions":["Where was the client ambivalent?"],'
         '"summary":"The therapist held the frame."}';

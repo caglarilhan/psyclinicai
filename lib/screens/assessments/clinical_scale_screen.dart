@@ -1,16 +1,38 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/clinical_scale.dart';
+import '../../models/crisis_resource.dart';
+import '../../services/assessments/clinical_scales.dart';
+import '../../services/assessments/cssrs_escalation_service.dart';
+import '../../services/assessments/escalation_soft_lock.dart';
+import '../../services/crisis/crisis_resource_registry.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../widgets/crisis_escalation_card.dart';
+import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// Generic runner for any [ClinicalScale] (C-SSRS, PCL-5, AUDIT, …). One
 /// question at a time with per-item options, instant scoring, severity band,
 /// and clinical-action guidance. Decision-support — never a diagnosis.
 class ClinicalScaleScreen extends StatefulWidget {
-  const ClinicalScaleScreen({super.key, required this.scale, this.patientName});
+  const ClinicalScaleScreen({
+    super.key,
+    required this.scale,
+    required this.patientId,
+    this.patientName,
+  });
 
   final ClinicalScale scale;
+
+  /// Display name shown on the result + escalation cards.
   final String? patientName;
+
+  /// Patient identifier carried into the safety-plan route when a
+  /// positive C-SSRS triggers escalation. **Required** since B2 — a
+  /// silent `demo-1` fallback could open the wrong chart on a positive
+  /// screen, which is a clinical-safety hazard.
+  final String patientId;
 
   @override
   State<ClinicalScaleScreen> createState() => _ClinicalScaleScreenState();
@@ -36,20 +58,86 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
     if (_index > 0) setState(() => _index--);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final values = <int>[];
     for (var i = 0; i < _answers.length; i++) {
       values.add(widget.scale.questions[i].choices[_answers[i]!].value);
     }
     final result = widget.scale.score(values);
-    TelemetryService.instance.capture(TelemetryEvents.assessmentCompleted,
-        properties: {'type': widget.scale.id});
-    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-      builder: (_) => _ScaleResultScreen(
-          scale: widget.scale,
-          patientName: widget.patientName,
-          result: result),
-    ));
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.assessmentCompleted,
+        properties: {'type': widget.scale.id},
+      ),
+    );
+
+    // C-SSRS only: derive the escalation tier, surface a blocking modal for
+    // the high tiers, and remember the escalation so the result screen can
+    // render the crisis card and resources. Other scales fall through.
+    CssrsEscalation? escalation;
+    List<CrisisResource> resources = const [];
+    if (widget.scale.id == ClinicalScales.cssrs.id) {
+      final service = CssrsEscalationService();
+      escalation = service.evaluate(result);
+      resources = CrisisResourceRegistry.forLocale(
+        Localizations.maybeLocaleOf(context),
+      );
+      service.recordEscalation(escalation);
+
+      if (escalation.requiresImmediateAction) {
+        final result = await showCrisisEscalationModal(
+          context: context,
+          escalation: escalation,
+          resources: resources,
+        );
+        if (!mounted) return;
+        if (result.outcome == CrisisModalOutcome.initiateSafetyPlan) {
+          service.recordSafetyPlanInitiated(escalation);
+          unawaited(
+            Navigator.of(context).pushReplacementNamed(
+              '/safety_plan',
+              arguments: PatientDetailArgs(
+                id: widget.patientId,
+                name: widget.patientName ?? 'Patient',
+              ),
+            ),
+          );
+          return;
+        }
+        // Dismissed — clinician picked a reason on the picker. Telemetry
+        // splits manual handoff from a true dismissal, and the soft-lock
+        // banner reminds the next dashboard load there is unfinished
+        // high-risk follow-up.
+        final reason = result.dismissReason ?? 'modal_dismissed';
+        service.recordModalDismissed(escalation, reason: reason);
+        EscalationSoftLock.instance.record(
+          EscalationSoftLockEntry(
+            patientId: widget.patientId,
+            patientName: widget.patientName ?? 'Patient',
+            severity: escalation.severity.name,
+            tier: escalation.tier.name,
+            reason: reason,
+            dismissedAt: DateTime.now().toUtc(),
+          ),
+        );
+      }
+    }
+
+    if (!mounted) return;
+    unawaited(
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => _ScaleResultScreen(
+            scale: widget.scale,
+            patientName: widget.patientName,
+            patientId: widget.patientId,
+            result: result,
+            escalation: escalation,
+            resources: resources,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -87,24 +175,36 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                 if (widget.patientName != null) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: cs.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(widget.patientName!,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.primary, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      widget.patientName!,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
-                Text(widget.scale.instructions,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                Text(
+                  widget.scale.instructions,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text('Question ${_index + 1} of ${widget.scale.itemCount}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.55))),
+                Text(
+                  'Question ${_index + 1} of ${widget.scale.itemCount}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Expanded(
                   child: SingleChildScrollView(
@@ -118,9 +218,13 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(q.text,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w600, height: 1.35)),
+                          Text(
+                            q.text,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           ...List.generate(q.choices.length, (i) {
                             final selected = _answers[_index] == i;
@@ -133,7 +237,9 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 14),
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: selected
                                         ? cs.primary.withValues(alpha: 0.1)
@@ -159,27 +265,37 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                                       ),
                                       const SizedBox(width: 14),
                                       Expanded(
-                                        child: Text(choice.label,
-                                            style: theme.textTheme.bodyLarge
-                                                ?.copyWith(
-                                                    fontWeight: selected
-                                                        ? FontWeight.w600
-                                                        : FontWeight.normal)),
+                                        child: Text(
+                                          choice.label,
+                                          style: theme.textTheme.bodyLarge
+                                              ?.copyWith(
+                                                fontWeight: selected
+                                                    ? FontWeight.w600
+                                                    : FontWeight.normal,
+                                              ),
+                                        ),
                                       ),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 2),
+                                          horizontal: 10,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: cs.surfaceContainerHighest,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                         ),
-                                        child: Text('+${choice.value}',
-                                            style: TextStyle(
-                                                fontFamily: 'monospace',
-                                                color: cs.onSurface
-                                                    .withValues(alpha: 0.55),
-                                                fontSize: 12)),
+                                        child: Text(
+                                          '+${choice.value}',
+                                          style: TextStyle(
+                                            fontFamily: 'monospace',
+                                            color: cs.onSurface.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -197,37 +313,43 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
                 // action bar at the foot of the question card.
                 Container(
                   decoration: BoxDecoration(
-                      border: Border(
-                          top: BorderSide(color: cs.outlineVariant))),
+                    border: Border(top: BorderSide(color: cs.outlineVariant)),
+                  ),
                   padding: const EdgeInsets.only(top: 12),
                   child: Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _index == 0 ? null : _prev,
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: const Text('Back'),
-                    ),
-                    const Spacer(),
-                    if (_index < widget.scale.itemCount - 1)
-                      FilledButton.icon(
-                        onPressed: _answers[_index] == null ? null : _next,
-                        icon: const Icon(Icons.arrow_forward, size: 18),
-                        label: const Text('Next'),
-                        style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14)),
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: _allAnswered ? _submit : null,
-                        icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Score'),
-                        style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14)),
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _index == 0 ? null : _prev,
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: const Text('Back'),
                       ),
-                  ],
-                ),
+                      const Spacer(),
+                      if (_index < widget.scale.itemCount - 1)
+                        FilledButton.icon(
+                          onPressed: _answers[_index] == null ? null : _next,
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: const Text('Next'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: _allAnswered ? _submit : null,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: const Text('Score'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -239,28 +361,42 @@ class _ClinicalScaleScreenState extends State<ClinicalScaleScreen> {
 }
 
 Color _severityColor(ScaleSeverity s) => switch (s) {
-      ScaleSeverity.minimal => Colors.green,
-      ScaleSeverity.mild => Colors.lightGreen,
-      ScaleSeverity.moderate => Colors.amber,
-      ScaleSeverity.severe => Colors.deepOrange,
-      ScaleSeverity.critical => Colors.red,
-    };
+  ScaleSeverity.minimal => Colors.green,
+  ScaleSeverity.mild => Colors.lightGreen,
+  ScaleSeverity.moderate => Colors.amber,
+  ScaleSeverity.severe => Colors.deepOrange,
+  ScaleSeverity.critical => Colors.red,
+};
 
 class _ScaleResultScreen extends StatelessWidget {
-  const _ScaleResultScreen(
-      {required this.scale, required this.patientName, required this.result});
+  const _ScaleResultScreen({
+    required this.scale,
+    required this.patientName,
+    required this.patientId,
+    required this.result,
+    required this.escalation,
+    required this.resources,
+  });
 
   final ClinicalScale scale;
   final String? patientName;
+  final String patientId;
   final ScaleResult result;
+
+  /// Populated only for C-SSRS; null for other scales.
+  final CssrsEscalation? escalation;
+
+  /// Crisis resources matched to the device locale; empty for non-C-SSRS.
+  final List<CrisisResource> resources;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final color = _severityColor(result.severity);
-    final progress =
-        result.maxScore == 0 ? 0.0 : result.total / result.maxScore;
+    final progress = result.maxScore == 0
+        ? 0.0
+        : result.total / result.maxScore;
 
     return Scaffold(
       backgroundColor: cs.surfaceContainerLowest,
@@ -277,9 +413,12 @@ class _ScaleResultScreen extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             children: [
               if (patientName != null) ...[
-                Text(patientName!,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7))),
+                Text(
+                  patientName!,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
                 const SizedBox(height: 8),
               ],
               Container(
@@ -295,31 +434,41 @@ class _ScaleResultScreen extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: color.withValues(alpha: 0.35), width: 2),
+                    color: color.withValues(alpha: 0.35),
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total score',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                            letterSpacing: 0.8)),
+                    Text(
+                      'Total score',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('${result.total}',
-                            style: theme.textTheme.displayLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                                height: 1)),
+                        Text(
+                          '${result.total}',
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                            height: 1,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Text('/ ${result.maxScore}',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                  color: cs.onSurface
-                                      .withValues(alpha: 0.5))),
+                          child: Text(
+                            '/ ${result.maxScore}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: cs.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -336,30 +485,56 @@ class _ScaleResultScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: color,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(result.bandLabel,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5)),
+                      child: Text(
+                        result.bandLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              if (result.riskFlag && result.riskFlagText != null)
+              if (escalation != null && escalation!.hasAnyRisk) ...[
+                CrisisEscalationCard(
+                  escalation: escalation!,
+                  resources: resources,
+                  onInitiateSafetyPlan: () {
+                    CssrsEscalationService().recordSafetyPlanInitiated(
+                      escalation!,
+                    );
+                    unawaited(
+                      Navigator.of(context).pushNamed(
+                        '/safety_plan',
+                        arguments: PatientDetailArgs(
+                          id: patientId,
+                          name: patientName ?? 'Patient',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ] else if (result.riskFlag && result.riskFlagText != null)
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.red.withValues(alpha: 0.35)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,15 +545,20 @@ class _ScaleResultScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Clinical risk flag',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.red[800])),
+                            Text(
+                              'Clinical risk flag',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red[800],
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(result.riskFlagText!,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: cs.onSurface
-                                        .withValues(alpha: 0.85))),
+                            Text(
+                              result.riskFlagText!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.85),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -395,20 +575,27 @@ class _ScaleResultScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Clinical guidance',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                            letterSpacing: 0.8)),
+                    Text(
+                      'Clinical guidance',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text(result.guidance,
-                        style:
-                            theme.textTheme.bodyLarge?.copyWith(height: 1.5)),
+                    Text(
+                      result.guidance,
+                      style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                    ),
                     if (scale.referenceNote != null) ...[
                       const SizedBox(height: 16),
-                      Text(scale.referenceNote!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.5),
-                              fontStyle: FontStyle.italic)),
+                      Text(
+                        scale.referenceNote!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -423,7 +610,8 @@ class _ScaleResultScreen extends StatelessWidget {
                       icon: const Icon(Icons.home, size: 18),
                       label: const Text('Back to dashboard'),
                       style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -432,13 +620,17 @@ class _ScaleResultScreen extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => ClinicalScaleScreen(
-                              scale: scale, patientName: patientName),
+                            scale: scale,
+                            patientName: patientName,
+                            patientId: patientId,
+                          ),
                         ),
                       ),
                       icon: const Icon(Icons.refresh, size: 18),
                       label: const Text('Run again'),
                       style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                     ),
                   ),
                 ],

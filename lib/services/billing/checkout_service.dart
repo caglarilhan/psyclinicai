@@ -21,8 +21,7 @@ class CheckoutService {
   final http.Client _client;
   final Future<bool> Function(Uri) _launch;
 
-  static Future<bool> _defaultLaunch(Uri uri) =>
-      launchUrl(uri, mode: LaunchMode.platformDefault);
+  static Future<bool> _defaultLaunch(Uri uri) => launchUrl(uri);
 
   /// Creates a checkout session for [tier] and redirects to Stripe.
   /// Throws [CheckoutException] (notConfigured set) when billing isn't wired.

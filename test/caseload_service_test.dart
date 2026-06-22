@@ -8,39 +8,43 @@ void main() {
   const service = CaseloadService();
   final now = DateTime(2026, 5, 26, 12);
 
-  HomeworkItem hw(String patientId,
-          {bool done = false, required DateTime due}) =>
-      HomeworkItem(
-          id: 'h-$patientId-${due.millisecondsSinceEpoch}',
-          patientId: patientId,
-          title: 'Task',
-          dueDate: due,
-          done: done);
+  HomeworkItem hw(
+    String patientId, {
+    bool done = false,
+    required DateTime due,
+  }) => HomeworkItem(
+    id: 'h-$patientId-${due.millisecondsSinceEpoch}',
+    patientId: patientId,
+    title: 'Task',
+    dueDate: due,
+    done: done,
+  );
 
   TreatmentGoal goal(int progress) => TreatmentGoal(
-        id: 'g',
-        description: 'Reduce symptoms',
-        category: GoalCategory.symptomReduction,
-        priority: GoalPriority.high,
-        targetDate: now.add(const Duration(days: 60)),
-        progress: progress,
-        createdAt: now,
-      );
+    id: 'g',
+    description: 'Reduce symptoms',
+    category: GoalCategory.symptomReduction,
+    priority: GoalPriority.high,
+    targetDate: now.add(const Duration(days: 60)),
+    progress: progress,
+    createdAt: now,
+  );
 
-  TreatmentPlan plan(String patientId,
-          {required DateTime createdAt,
-          DateTime? updatedAt,
-          List<TreatmentGoal> goals = const []}) =>
-      TreatmentPlan(
-        id: 'p-$patientId',
-        patientId: patientId,
-        clinicianId: 'c1',
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-        primaryDiagnosis: 'F41.1',
-        clinicalFormulation: 'x',
-        goals: goals,
-      );
+  TreatmentPlan plan(
+    String patientId, {
+    required DateTime createdAt,
+    DateTime? updatedAt,
+    List<TreatmentGoal> goals = const [],
+  }) => TreatmentPlan(
+    id: 'p-$patientId',
+    patientId: patientId,
+    clinicianId: 'c1',
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    primaryDiagnosis: 'F41.1',
+    clinicalFormulation: 'x',
+    goals: goals,
+  );
 
   test('flags overdue homework as high severity', () {
     final out = service.compute(
@@ -75,10 +79,12 @@ void main() {
       names: const {},
       homework: const [],
       plans: [
-        plan('p1',
-            createdAt: now.subtract(const Duration(days: 20)),
-            updatedAt: now.subtract(const Duration(days: 2)),
-            goals: [goal(10)])
+        plan(
+          'p1',
+          createdAt: now.subtract(const Duration(days: 20)),
+          updatedAt: now.subtract(const Duration(days: 2)),
+          goals: [goal(10)],
+        ),
       ],
       safetyPlans: const [],
       now: now,
@@ -94,15 +100,19 @@ void main() {
       names: const {},
       homework: const [],
       plans: [
-        plan('p1',
-            createdAt: now.subtract(const Duration(days: 45)),
-            goals: [goal(60)]) // progressed → not "stalled"
+        plan(
+          'p1',
+          createdAt: now.subtract(const Duration(days: 45)),
+          goals: [goal(60)],
+        ), // progressed → not "stalled"
       ],
       safetyPlans: const [],
       now: now,
     );
     expect(
-        out.first.reasons.any((r) => r.label.contains('not reviewed')), isTrue);
+      out.first.reasons.any((r) => r.label.contains('not reviewed')),
+      isTrue,
+    );
     expect(out.first.reasons.any((r) => r.label.contains('stalled')), isFalse);
   });
 
@@ -111,13 +121,15 @@ void main() {
       names: const {},
       homework: const [],
       plans: [
-        plan('p1',
-            createdAt: now.subtract(const Duration(days: 2)),
-            updatedAt: now,
-            goals: [goal(60)])
+        plan(
+          'p1',
+          createdAt: now.subtract(const Duration(days: 2)),
+          updatedAt: now,
+          goals: [goal(60)],
+        ),
       ],
       safetyPlans: [
-        SafetyPlan(patientId: 'p1', warningSigns: const ['feeling low'])
+        SafetyPlan(patientId: 'p1', warningSigns: const ['feeling low']),
       ],
       now: now,
     );
@@ -130,10 +142,12 @@ void main() {
       names: const {'p1': 'Low', 'p2': 'High'},
       homework: [hw('p2', due: now.subtract(const Duration(days: 1)))],
       plans: [
-        plan('p1',
-            createdAt: now.subtract(const Duration(days: 2)),
-            updatedAt: now,
-            goals: [goal(60)]) // only low "no safety plan"
+        plan(
+          'p1',
+          createdAt: now.subtract(const Duration(days: 2)),
+          updatedAt: now,
+          goals: [goal(60)],
+        ), // only low "no safety plan"
       ],
       safetyPlans: const [],
       now: now,

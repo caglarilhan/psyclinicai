@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/note_format.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
@@ -14,9 +15,11 @@ import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/copilot/live_ai_panel.dart';
+import '../../widgets/ds/psy_save_shortcut.dart';
+import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/structured_note_editor.dart';
 
 class SessionScreen extends StatefulWidget {
-
   const SessionScreen({
     super.key,
     required this.sessionId,
@@ -32,7 +35,9 @@ class SessionScreen extends StatefulWidget {
 }
 
 class _SessionScreenState extends State<SessionScreen> {
-  final TextEditingController _notesController = TextEditingController();
+  /// Latest snapshot from [StructuredNoteEditor]. Null until the clinician
+  /// types something; persisted on save via [StructuredNoteValue.markdown].
+  StructuredNoteValue? _noteValue;
   final TextEditingController _aiPromptController = TextEditingController();
   final String _aiSummary = '';
   List<String> _treatmentGoals = const [];
@@ -41,7 +46,7 @@ class _SessionScreenState extends State<SessionScreen> {
   bool _isSessionActive = false;
   DateTime? _sessionStartTime;
   Duration _sessionDuration = Duration.zero;
-  
+
   // Session clock — a no-op sentinel until _startSession installs the real
   // periodic timer, so dispose() can always cancel safely (no late-init crash
   // if start ever fails before assignment).
@@ -51,7 +56,7 @@ class _SessionScreenState extends State<SessionScreen> {
   void initState() {
     super.initState();
     _startSession();
-    _loadGoals();
+    unawaited(_loadGoals());
   }
 
   /// Load the patient's active treatment-plan goals so the AI note can tie
@@ -61,15 +66,17 @@ class _SessionScreenState extends State<SessionScreen> {
     await svc.initialize();
     final plan = svc.getTreatmentPlanForPatient(widget.clientId);
     if (plan != null && mounted) {
-      setState(() => _treatmentGoals =
-          plan.activeGoals.map((g) => g.description).toList());
+      setState(
+        () => _treatmentGoals = plan.activeGoals
+            .map((g) => g.description)
+            .toList(),
+      );
     }
   }
 
   @override
   void dispose() {
     _sessionTimer.cancel();
-    _notesController.dispose();
     _aiPromptController.dispose();
     super.dispose();
   }
@@ -95,37 +102,39 @@ class _SessionScreenState extends State<SessionScreen> {
       _isSessionActive = false;
     });
     _sessionTimer.cancel();
-    
+
     // Seans sonlandırma dialog'u
     _showSessionEndDialog();
   }
 
   void _showSessionEndDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Session Ended'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Session duration: ${_formatDuration(_sessionDuration)}'),
-            const SizedBox(height: 16),
-            const Text('Do you want to save the session note?'),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Session Ended'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Session duration: ${_formatDuration(_sessionDuration)}'),
+              const SizedBox(height: 16),
+              const Text('Do you want to save the session note?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _saveSessionNotes();
+              },
+              child: const Text('Save'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await _saveSessionNotes();
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -139,13 +148,16 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   Future<void> _saveSessionNotes() async {
-    final noteText = _notesController.text.trim();
-    if (noteText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kaydedilecek bir seans notu bulunamadı')),
+    final snapshot = _noteValue;
+    if (snapshot == null || snapshot.isEmpty) {
+      PsySnack.info(
+        context,
+        'Kaydedilecek bir seans notu bulunamadı.',
+        hint: 'session.save_empty',
       );
       return;
     }
+    final markdown = snapshot.markdown;
 
     try {
       final therapyNoteService = context.read<TherapyNoteService>();
@@ -155,7 +167,9 @@ class _SessionScreenState extends State<SessionScreen> {
         clientId: widget.clientId,
         templateId: 'session_note',
         values: {
-          'notes': noteText,
+          'notes': markdown,
+          'format': snapshot.format.id,
+          'sections': snapshot.sections,
           'aiSummary': _aiSummary,
           'aiPrompt': _aiPromptController.text.trim(),
           'sessionDuration': _sessionDuration.inSeconds,
@@ -163,23 +177,50 @@ class _SessionScreenState extends State<SessionScreen> {
         },
       );
 
-      await _persistToFirestore(noteText);
-      TelemetryService.instance.capture(TelemetryEvents.sessionNoteSaved,
-          properties: {'duration_s': _sessionDuration.inSeconds});
+      await _persistToFirestore(markdown, snapshot.format);
+      unawaited(
+        TelemetryService.instance.capture(
+          TelemetryEvents.sessionNoteSaved,
+          properties: {
+            'duration_s': _sessionDuration.inSeconds,
+            'format': snapshot.format.id,
+          },
+        ),
+      );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Session note saved')),
+      PsySnack.success(context, 'Session note saved.', hint: 'session.save');
+    } catch (e, st) {
+      // Bare catch was swallowing the error to a generic snackbar.
+      // Capture for telemetry so prod failures are diagnosable and
+      // surface a retryable error via the DS vocabulary.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.save_failed',
+        ),
       );
-    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save note: $e')),
+      PsySnack.error(
+        context,
+        'Could not save note — please retry.',
+        hint: 'session.save_failed',
+        action: SnackBarAction(label: 'Retry', onPressed: _saveSessionNotes),
       );
     }
   }
 
-  Future<void> _persistToFirestore(String noteText) async {
+  /// Maps the editor-level [NoteFormat] (SOAP / BIRP / DAP) to the broader
+  /// [SoapFormat] the persistence layer accepts (which also includes GIRP
+  /// and a psychiatry variant managed by the AI generator).
+  SoapFormat _toSoapFormat(NoteFormat f) => switch (f) {
+    NoteFormat.soap => SoapFormat.soap,
+    NoteFormat.birp => SoapFormat.birp,
+    NoteFormat.dap => SoapFormat.dap,
+  };
+
+  Future<void> _persistToFirestore(String noteText, NoteFormat format) async {
     if (!PsyFirebase.isReady) return;
     final auth = FirebaseAuthService.instance;
     final profile = auth.profile;
@@ -198,7 +239,7 @@ class _SessionScreenState extends State<SessionScreen> {
       );
       final note = SoapNote(
         rawMarkdown: noteText,
-        format: SoapFormat.soap,
+        format: _toSoapFormat(format),
         generatedAt: DateTime.now(),
       );
       await SessionRepository.instance.saveNote(
@@ -214,9 +255,18 @@ class _SessionScreenState extends State<SessionScreen> {
         endedAt: DateTime.now(),
         durationMinutes: _sessionDuration.inMinutes,
       );
-    } catch (_) {
-      // Swallow — local save already succeeded; Firestore retry will be
-      // handled by the offline persistence layer in a future sprint.
+    } catch (e, st) {
+      // Local save already succeeded; Firestore retry will be handled
+      // by the offline persistence layer in a future sprint. We
+      // capture the error so the systemic break-rate is observable
+      // until then — PHI scrubbing happens inside captureError.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.firestore_persist',
+        ),
+      );
     }
   }
 
@@ -240,76 +290,84 @@ class _SessionScreenState extends State<SessionScreen> {
       final pdfBytes = await pdfService.generateSessionPDF(
         clientName: widget.clientName,
         sessionId: widget.sessionId,
-        sessionNotes: _notesController.text,
+        sessionNotes: _noteValue?.markdown ?? '',
         aiSummary: _aiSummary,
         sessionDate: _sessionStartTime ?? DateTime.now(),
         sessionDuration: _sessionDuration,
         therapistName: _therapistDisplayName,
       );
-      
+
       // PDF'i yazdır
       await pdfService.printPDF(pdfBytes);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PDF generated successfully and sent to printer'),
-          backgroundColor: Colors.green,
+      PsySnack.success(
+        context,
+        'PDF generated successfully and sent to printer.',
+        hint: 'session.pdf_export',
+      );
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.pdf_export_failed',
         ),
       );
-    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF generation error: $e'),
-          backgroundColor: Colors.red,
-        ),
+      PsySnack.error(
+        context,
+        'PDF generation error: $e',
+        hint: 'session.pdf_export_failed',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      routeName: '/session',
-      title: widget.clientName,
-      subtitle: 'Session ID: ${widget.sessionId}',
-      scrollable: false,
-      child: Column(
-        children: [
-          _SessionControlBar(
-            active: _isSessionActive,
-            durationLabel: _formatDuration(_sessionDuration),
-            onStartStop: _isSessionActive ? _endSession : _startSession,
-            onExport: _exportToPDF,
-          ),
-          const SizedBox(height: PsySpacing.md),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Reflow below ~900px / at high zoom (WCAG 1.4.10): the three
-                // panels stack instead of crushing into unreadable slivers.
-                if (constraints.maxWidth >= 900) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PsySaveShortcut(
+      onSave: _saveSessionNotes,
+      child: AppShell(
+        routeName: '/session',
+        title: widget.clientName,
+        subtitle: 'Session ID: ${widget.sessionId}',
+        scrollable: false,
+        child: Column(
+          children: [
+            _SessionControlBar(
+              active: _isSessionActive,
+              durationLabel: _formatDuration(_sessionDuration),
+              onStartStop: _isSessionActive ? _endSession : _startSession,
+              onExport: _exportToPDF,
+            ),
+            const SizedBox(height: PsySpacing.md),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Reflow below ~900px / at high zoom (WCAG 1.4.10): the three
+                  // panels stack instead of crushing into unreadable slivers.
+                  if (constraints.maxWidth >= 900) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 2, child: _buildNotesPanel()),
+                        Expanded(child: _buildAIPanel()),
+                        Expanded(child: _buildClientInfoPanel()),
+                      ],
+                    );
+                  }
+                  return Column(
                     children: [
-                      Expanded(flex: 2, child: _buildNotesPanel()),
-                      Expanded(child: _buildAIPanel()),
-                      Expanded(child: _buildClientInfoPanel()),
+                      Expanded(flex: 3, child: _buildNotesPanel()),
+                      Expanded(flex: 2, child: _buildAIPanel()),
+                      Expanded(flex: 2, child: _buildClientInfoPanel()),
                     ],
                   );
-                }
-                return Column(
-                  children: [
-                    Expanded(flex: 3, child: _buildNotesPanel()),
-                    Expanded(flex: 2, child: _buildAIPanel()),
-                    Expanded(flex: 2, child: _buildClientInfoPanel()),
-                  ],
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -331,7 +389,9 @@ class _SessionScreenState extends State<SessionScreen> {
           // açık teal olsun.'
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: PsySpacing.lg, vertical: PsySpacing.md),
+              horizontal: PsySpacing.lg,
+              vertical: PsySpacing.md,
+            ),
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
               borderRadius: const BorderRadius.only(
@@ -340,13 +400,17 @@ class _SessionScreenState extends State<SessionScreen> {
               ),
               border: Border(
                 bottom: BorderSide(
-                    color: cs.outlineVariant.withValues(alpha: 0.7)),
+                  color: cs.outlineVariant.withValues(alpha: 0.7),
+                ),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.edit_note,
-                    color: cs.onSurface.withValues(alpha: 0.75), size: 20),
+                Icon(
+                  Icons.edit_note,
+                  color: cs.onSurface.withValues(alpha: 0.75),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Session Note',
@@ -367,33 +431,26 @@ class _SessionScreenState extends State<SessionScreen> {
                     minimumSize: const Size(0, 32),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     textStyle: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          // Not yazma alanı
+          // Structured editor — SOAP / BIRP / DAP with one field per
+          // section. Snapshot piped to [_noteValue] for save + export.
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Semantics(
-                label: 'Session notes',
-                textField: true,
-                child: TextField(
-                controller: _notesController,
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  hintText: 'Write your session notes here...\n\nExample:\n- Client mood today\n- Main concerns\n- Techniques used\n- Next steps',
-                  border: InputBorder.none,
-                  alignLabelWithHint: true,
+                label: 'Structured session notes',
+                child: StructuredNoteEditor(
+                  initialFormat: _noteValue?.format ?? NoteFormat.soap,
+                  initialSections: _noteValue?.sections ?? const {},
+                  onChanged: (v) => setState(() => _noteValue = v),
                 ),
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-              ),
               ),
             ),
           ),
@@ -409,7 +466,6 @@ class _SessionScreenState extends State<SessionScreen> {
       treatmentGoals: _treatmentGoals,
     );
   }
-
 
   Widget _buildClientInfoPanel() {
     final cs = Theme.of(context).colorScheme;
@@ -496,24 +552,19 @@ class _SessionScreenState extends State<SessionScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              '• $item',
-              style: const TextStyle(fontSize: 12),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('• $item', style: const TextStyle(fontSize: 12)),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
-
 }
 
 /// Session control bar: timer state, start/stop, export, and quick nav —
@@ -535,123 +586,133 @@ class _SessionControlBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final timerTint = active ? cs.primary : cs.onSurfaceVariant;
-    return LayoutBuilder(builder: (context, c) {
-      // Mobile (<560): timer + primary action + overflow menu (Export PDF,
-      // Appointments, Prescriptions). Stops Export PDF from being cut off
-      // at the right edge and calms the secondary actions, per feedback.
-      final compact = c.maxWidth < 560;
-      final timer = Semantics(
-        label: active ? 'Session live, $durationLabel' : 'Session ended',
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(active ? Icons.timer : Icons.timer_off,
-                size: 18, color: timerTint),
-            const SizedBox(width: PsySpacing.xs),
-            Text(
-              '${active ? 'Live' : 'Ended'} · $durationLabel',
-              style:
-                  TextStyle(fontWeight: FontWeight.w700, color: timerTint),
-            ),
-          ],
-        ),
-      );
-      final startStop = FilledButton.icon(
-        onPressed: onStartStop,
-        icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
-        label: Text(active ? 'End session' : 'Start session'),
-        style: FilledButton.styleFrom(
-          backgroundColor: active ? cs.error : cs.primary,
-          // Slightly tighter on mobile so the red CTA reads as "important"
-          // without dominating the toolbar width.
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 14 : 18,
-            vertical: compact ? 10 : 12,
-          ),
-        ),
-      );
-      return Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: PsySpacing.md, vertical: PsySpacing.sm),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(PsyRadius.md),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            timer,
-            const Spacer(),
-            startStop,
-            const SizedBox(width: PsySpacing.sm),
-            if (compact)
-              PopupMenuButton<_SessionAction>(
-                tooltip: 'More',
-                icon: const Icon(Icons.more_vert),
-                onSelected: (a) {
-                  switch (a) {
-                    case _SessionAction.export:
-                      onExport();
-                      break;
-                    case _SessionAction.appointments:
-                      Navigator.of(context).pushNamed('/appointments');
-                      break;
-                    case _SessionAction.prescriptions:
-                      Navigator.of(context).pushNamed('/e_prescription');
-                      break;
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: _SessionAction.export,
-                    child: ListTile(
-                      leading: Icon(Icons.picture_as_pdf),
-                      title: Text('Export PDF'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _SessionAction.appointments,
-                    child: ListTile(
-                      leading: Icon(Icons.calendar_today),
-                      title: Text('Appointments'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: _SessionAction.prescriptions,
-                    child: ListTile(
-                      leading: Icon(Icons.medical_services),
-                      title: Text('Prescriptions'),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
-              )
-            else ...[
-              OutlinedButton.icon(
-                onPressed: onExport,
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Export PDF'),
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Mobile (<560): timer + primary action + overflow menu (Export PDF,
+        // Appointments, Prescriptions). Stops Export PDF from being cut off
+        // at the right edge and calms the secondary actions, per feedback.
+        final compact = c.maxWidth < 560;
+        final timer = Semantics(
+          label: active ? 'Session live, $durationLabel' : 'Session ended',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                active ? Icons.timer : Icons.timer_off,
+                size: 18,
+                color: timerTint,
               ),
-              const SizedBox(width: PsySpacing.sm),
-              IconButton(
-                tooltip: 'Appointments',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/appointments'),
-                icon: const Icon(Icons.calendar_today),
-              ),
-              IconButton(
-                tooltip: 'Prescriptions',
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/e_prescription'),
-                icon: const Icon(Icons.medical_services),
+              const SizedBox(width: PsySpacing.xs),
+              Text(
+                '${active ? 'Live' : 'Ended'} · $durationLabel',
+                style: TextStyle(fontWeight: FontWeight.w700, color: timerTint),
               ),
             ],
-          ],
-        ),
-      );
-    });
+          ),
+        );
+        final startStop = FilledButton.icon(
+          onPressed: onStartStop,
+          icon: Icon(active ? Icons.stop_circle : Icons.play_circle),
+          label: Text(active ? 'End session' : 'Start session'),
+          style: FilledButton.styleFrom(
+            backgroundColor: active ? cs.error : cs.primary,
+            // Slightly tighter on mobile so the red CTA reads as "important"
+            // without dominating the toolbar width.
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 14 : 18,
+              vertical: compact ? 10 : 12,
+            ),
+          ),
+        );
+        return Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.md,
+            vertical: PsySpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              timer,
+              const Spacer(),
+              startStop,
+              const SizedBox(width: PsySpacing.sm),
+              if (compact)
+                PopupMenuButton<_SessionAction>(
+                  tooltip: 'More',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (a) {
+                    switch (a) {
+                      case _SessionAction.export:
+                        onExport();
+                        break;
+                      case _SessionAction.appointments:
+                        unawaited(
+                          Navigator.of(context).pushNamed('/appointments'),
+                        );
+                        break;
+                      case _SessionAction.prescriptions:
+                        unawaited(
+                          Navigator.of(context).pushNamed('/e_prescription'),
+                        );
+                        break;
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: _SessionAction.export,
+                      child: ListTile(
+                        leading: Icon(Icons.picture_as_pdf),
+                        title: Text('Export PDF'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _SessionAction.appointments,
+                      child: ListTile(
+                        leading: Icon(Icons.calendar_today),
+                        title: Text('Appointments'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _SessionAction.prescriptions,
+                      child: ListTile(
+                        leading: Icon(Icons.medical_services),
+                        title: Text('Prescriptions'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                OutlinedButton.icon(
+                  onPressed: onExport,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Export PDF'),
+                ),
+                const SizedBox(width: PsySpacing.sm),
+                IconButton(
+                  tooltip: 'Appointments',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/appointments'),
+                  icon: const Icon(Icons.calendar_today),
+                ),
+                IconButton(
+                  tooltip: 'Prescriptions',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/e_prescription'),
+                  icon: const Icon(Icons.medical_services),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

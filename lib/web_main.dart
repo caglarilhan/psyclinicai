@@ -14,56 +14,57 @@ import 'widgets/common/offline_indicator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-         final languageService = LanguageService();
-         final offlineService = OfflineService();
-         final roleService = RoleService();
-  
-         await languageService.initialize();
-         await offlineService.initialize();
-         await roleService.initialize();
-  
-  runApp(PsyClinicAIWebApp(
-           languageService: languageService,
-           offlineService: offlineService,
-           roleService: roleService,
-  ));
+  final languageService = LanguageService();
+  final offlineService = OfflineService();
+  final roleService = RoleService();
+
+  await languageService.initialize();
+  await offlineService.initialize();
+  await roleService.initialize();
+
+  runApp(
+    PsyClinicAIWebApp(
+      languageService: languageService,
+      offlineService: offlineService,
+      roleService: roleService,
+    ),
+  );
 }
 
-       class PsyClinicAIWebApp extends StatelessWidget {
-  
-         const PsyClinicAIWebApp({
+class PsyClinicAIWebApp extends StatelessWidget {
+  const PsyClinicAIWebApp({
     super.key,
     required this.languageService,
     required this.offlineService,
-           required this.roleService,
+    required this.roleService,
   });
   final LanguageService languageService;
   final OfflineService offlineService;
-         final RoleService roleService;
+  final RoleService roleService;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<LanguageService>.value(value: languageService),
-               ChangeNotifierProvider<OfflineService>.value(value: offlineService),
-               ChangeNotifierProvider<RoleService>.value(value: roleService),
+        ChangeNotifierProvider<OfflineService>.value(value: offlineService),
+        ChangeNotifierProvider<RoleService>.value(value: roleService),
       ],
       child: Consumer<LanguageService>(
         builder: (context, languageService, child) {
           return MaterialApp(
             title: languageService.translate('app_title'),
             debugShowCheckedModeBanner: false,
-                   theme: ThemeData(
-                     useMaterial3: true,
-                     colorScheme: ColorScheme.fromSeed(
-                       seedColor: const Color(0xFF6D4AFF), // modern mor ton
-                     ),
-                     visualDensity: VisualDensity.adaptivePlatformDensity,
-                   ),
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF6D4AFF), // modern mor ton
+              ),
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+            ),
             locale: languageService.currentLocale,
             supportedLocales: languageService.supportedLocales,
-                   home: const LoginScreen(),
+            home: const LoginScreen(),
             routes: {
               '/landing': (context) => const LoginScreen(),
               '/login': (context) => const LoginScreen(),

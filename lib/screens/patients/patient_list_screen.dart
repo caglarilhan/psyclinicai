@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/patient_filter.dart';
 import '../../services/data/patient_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
+import '../../widgets/ds/psy_skeleton.dart';
+import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/patient_list_filter_bar.dart';
 
 /// `/patients` — searchable patient roster.
 class PatientListScreen extends StatefulWidget {
@@ -20,6 +28,7 @@ class PatientListScreen extends StatefulWidget {
 class _PatientListScreenState extends State<PatientListScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  PatientFilter _filter = PatientFilter.empty;
 
   @override
   void dispose() {
@@ -53,7 +62,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
               prefixIcon: Icon(Icons.search),
             ),
           ),
-          const SizedBox(height: PsySpacing.xl),
+          const SizedBox(height: PsySpacing.md),
+          PatientListFilterBar(
+            filter: _filter,
+            onChanged: (f) => setState(() => _filter = f),
+          ),
+          const SizedBox(height: PsySpacing.lg),
           Expanded(child: _list(context, theme, cs)),
         ],
       ),
@@ -67,15 +81,21 @@ class _PatientListScreenState extends State<PatientListScreen> {
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
       return _emptyState(
-          icon: Icons.lock_outline,
-          title: 'Sign in to see patients',
-          body: 'Your roster lives in your tenant — log in to load it.');
+        icon: Icons.lock_outline,
+        title: 'Sign in to see patients',
+        body: 'Your roster lives in your tenant — log in to load it.',
+      );
     }
     return StreamBuilder<List<PatientDoc>>(
       stream: PatientRepository.instance.watch(profile.clinicId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          // Skeleton list mirrors the real _PatientTile shape so the
+          // page layout is stable across the loading → loaded
+          // transition. No jarring spinner → row jump.
+          return PsySkeletonList(
+            itemBuilder: (_) => const _PatientTileSkeleton(),
+          );
         }
         if (snap.hasError) {
           return _emptyState(
@@ -96,17 +116,23 @@ class _PatientListScreenState extends State<PatientListScreen> {
             body: _query.isEmpty
                 ? 'Add your first patient to get started.'
                 : 'Try a different keyword or clear the search.',
+            action: _query.isEmpty
+                ? PsyEmptyStateAction(
+                    label: 'Add patient',
+                    icon: Icons.person_add_alt_1,
+                    onTap: _openAddPatient,
+                  )
+                : null,
           );
         }
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
           itemCount: patients.length,
-          separatorBuilder: (_, __) =>
-              const SizedBox(height: PsySpacing.md),
+          separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
           itemBuilder: (_, i) => _PatientTile(
-              patient: patients[i],
-              onOpen: () =>
-                  _openDetail(patients[i].id, patients[i].fullName)),
+            patient: patients[i],
+            onOpen: () => _openDetail(patients[i].id, patients[i].fullName),
+          ),
         );
       },
     );
@@ -115,37 +141,64 @@ class _PatientListScreenState extends State<PatientListScreen> {
   Widget _demoList(ThemeData theme, ColorScheme cs) {
     const demos = <_DemoPatient>[
       _DemoPatient(
-          id: 'demo-1',
-          name: 'John Demo',
-          insurer: 'BCBS',
-          memberId: 'BCBS-INS-001',
-          lastSeen: 'Yesterday',
-          tone: PsyBadgeTone.brand,
-          status: 'Active'),
+        id: 'demo-1',
+        name: 'John Demo',
+        insurer: 'BCBS',
+        memberId: 'BCBS-INS-001',
+        lastSeen: 'Yesterday',
+        tone: PsyBadgeTone.brand,
+        status: 'Active',
+      ),
       _DemoPatient(
-          id: 'demo-2',
-          name: 'Maria Sample',
-          insurer: 'Aetna',
-          memberId: 'AET-9981-002',
-          lastSeen: 'Last week',
-          tone: PsyBadgeTone.success,
-          status: 'Stable'),
+        id: 'demo-2',
+        name: 'Maria Sample',
+        insurer: 'Aetna',
+        memberId: 'AET-9981-002',
+        lastSeen: 'Last week',
+        tone: PsyBadgeTone.success,
+        status: 'Stable',
+      ),
       _DemoPatient(
-          id: 'demo-3',
-          name: 'Sven Placeholder',
-          insurer: 'TK',
-          memberId: 'TK-EU-301',
-          lastSeen: '3 weeks ago',
-          tone: PsyBadgeTone.warning,
-          status: 'Follow-up'),
+        id: 'demo-3',
+        name: 'Sven Müller',
+        insurer: 'TK',
+        memberId: 'TK-EU-301',
+        lastSeen: '3 weeks ago',
+        tone: PsyBadgeTone.warning,
+        status: 'Follow-up',
+      ),
     ];
-    final filtered = demos.where((d) {
-      if (_query.isEmpty) return true;
-      final q = _query.toLowerCase();
-      return d.name.toLowerCase().contains(q) ||
-          d.memberId.toLowerCase().contains(q) ||
-          d.insurer.toLowerCase().contains(q);
-    }).toList(growable: false);
+    final filtered = demos
+        .where((d) {
+          if (_query.isNotEmpty) {
+            final q = _query.toLowerCase();
+            final matchQuery =
+                d.name.toLowerCase().contains(q) ||
+                d.memberId.toLowerCase().contains(q) ||
+                d.insurer.toLowerCase().contains(q);
+            if (!matchQuery) return false;
+          }
+          if (_filter.statuses.isNotEmpty) {
+            final statusId = d.status.toLowerCase().replaceAll(
+              RegExp(r'\s+'),
+              '-',
+            );
+            final matchStatus = _filter.statuses.any(
+              (s) => s.id == statusId || s.name == statusId,
+            );
+            if (!matchStatus) return false;
+          }
+          if (_filter.risks.isNotEmpty) {
+            final risk = d.tone == PsyBadgeTone.warning
+                ? PatientRiskFilter.medium
+                : (d.tone == PsyBadgeTone.danger
+                      ? PatientRiskFilter.high
+                      : PatientRiskFilter.low);
+            if (!_filter.risks.contains(risk)) return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
     if (filtered.isEmpty) {
       return _emptyState(
         icon: Icons.search_off,
@@ -156,8 +209,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
       itemCount: filtered.length,
-      separatorBuilder: (_, __) =>
-          const SizedBox(height: PsySpacing.md),
+      separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
       itemBuilder: (_, i) => PsyCard(
         onTap: () => _openDetail(filtered[i].id, filtered[i].name),
         child: Row(
@@ -178,9 +230,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(filtered[i].name,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    filtered[i].name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: PsySpacing.xxs),
                   Text(
                     '${filtered[i].insurer} · ${filtered[i].memberId} · last seen ${filtered[i].lastSeen}',
@@ -198,34 +253,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
-  Widget _emptyState(
-      {required IconData icon,
-      required String title,
-      required String body}) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(PsySpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                color: cs.onSurface.withValues(alpha: 0.45), size: 44),
-            const SizedBox(height: PsySpacing.lg),
-            Text(title,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: PsySpacing.sm),
-            Text(body,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.6),
-                )),
-          ],
-        ),
-      ),
-    );
+  Widget _emptyState({
+    required IconData icon,
+    required String title,
+    required String body,
+    PsyEmptyStateAction? action,
+  }) {
+    return PsyEmptyState(icon: icon, title: title, body: body, action: action);
   }
 
   bool _match(PatientDoc p) {
@@ -240,7 +274,20 @@ class _PatientListScreenState extends State<PatientListScreen> {
     final nameCtrl = TextEditingController();
     final insurerCtrl = TextEditingController();
     final memberCtrl = TextEditingController();
+    try {
+      await _addPatientFlow(nameCtrl, insurerCtrl, memberCtrl);
+    } finally {
+      nameCtrl.dispose();
+      insurerCtrl.dispose();
+      memberCtrl.dispose();
+    }
+  }
 
+  Future<void> _addPatientFlow(
+    TextEditingController nameCtrl,
+    TextEditingController insurerCtrl,
+    TextEditingController memberCtrl,
+  ) async {
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -287,10 +334,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     if (!PsyFirebase.isReady) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.')),
+      PsySnack.warning(
+        context,
+        'Demo mode — "${nameCtrl.text}" not persisted. Configure Firebase to save.',
+        hint: 'patient_list.add_demo_no_persist',
       );
       return;
     }
@@ -303,18 +350,29 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
     try {
       await PatientRepository.instance.create(profile.clinicId, draft);
-    } catch (e) {
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'patient_list.add_failed',
+        ),
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not add patient: $e')),
+      PsySnack.error(
+        context,
+        'Could not add patient — please retry.',
+        hint: 'patient_list.add_failed',
       );
     }
   }
 
   void _openDetail(String patientId, String patientName) {
-    Navigator.of(context).pushNamed(
-      '/patient/detail',
-      arguments: PatientDetailArgs(id: patientId, name: patientName),
+    unawaited(
+      Navigator.of(context).pushNamed(
+        '/patient/detail',
+        arguments: PatientDetailArgs(id: patientId, name: patientName),
+      ),
     );
   }
 }
@@ -360,10 +418,7 @@ class _PatientTile extends StatelessWidget {
             backgroundColor: cs.primaryContainer,
             child: Text(
               initial,
-              style: TextStyle(
-                color: cs.primary,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: PsySpacing.lg),
@@ -371,15 +426,17 @@ class _PatientTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(patient.fullName,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  patient.fullName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.xxs),
                 Text(
                   [
                     if (patient.insurer.isNotEmpty) patient.insurer,
-                    if (patient.memberId.isNotEmpty)
-                      'ID ${patient.memberId}',
+                    if (patient.memberId.isNotEmpty) 'ID ${patient.memberId}',
                     if (updated != null) 'added ${_fmtDate(updated)}',
                   ].join(' · '),
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -405,4 +462,34 @@ class PatientDetailArgs {
   const PatientDetailArgs({required this.id, required this.name});
   final String id;
   final String name;
+}
+
+/// Placeholder row that mirrors [_PatientTile]'s layout so the page
+/// doesn't flicker when StreamBuilder flips waiting → data. Sits
+/// inside a [PsyCard] and pulses with its enclosing
+/// [PsySkeletonGroup] (inserted by [PsySkeletonList]).
+class _PatientTileSkeleton extends StatelessWidget {
+  const _PatientTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PsyCard(
+      child: Row(
+        children: [
+          PsySkeletonCircle(size: 44),
+          SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PsySkeletonLine(width: 180, height: 16),
+                SizedBox(height: 8),
+                PsySkeletonLine(width: 240, height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

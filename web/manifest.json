@@ -1,13 +1,40 @@
 {
-    "name": "psyclinicai",
-    "short_name": "psyclinicai",
-    "start_url": ".",
+    "name": "PsyClinicAI — AI co-pilot for therapists & psychiatrists",
+    "short_name": "PsyClinicAI",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0B1220",
+    "theme_color": "#3B82F6",
+    "description": "Clinical AI co-pilot: SOAP/DAP/BIRP notes in 30s, CMS-1500 superbill, patient portal. HIPAA + GDPR aligned, EU residency.",
+    "orientation": "any",
+    "categories": ["medical", "productivity", "health"],
+    "lang": "en",
+    "dir": "ltr",
     "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "New session",
+            "short_name": "Session",
+            "description": "Start a co-pilot session and auto-draft a SOAP note.",
+            "url": "/session",
+            "icons": [{"src": "icons/Icon-192.png", "sizes": "192x192"}]
+        },
+        {
+            "name": "Patient list",
+            "short_name": "Patients",
+            "description": "Jump to the caseload roster.",
+            "url": "/patients",
+            "icons": [{"src": "icons/Icon-192.png", "sizes": "192x192"}]
+        },
+        {
+            "name": "Superbill",
+            "short_name": "Billing",
+            "description": "Generate a CMS-1500-aligned superbill PDF.",
+            "url": "/superbill",
+            "icons": [{"src": "icons/Icon-192.png", "sizes": "192x192"}]
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

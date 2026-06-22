@@ -3,20 +3,35 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/safety_plan.dart';
+import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
+import 'copilot_endpoint.dart';
+import 'prompt_safety.dart';
 
 /// AI-drafts a Stanley-Brown crisis safety plan (BYOK Claude) the clinician
 /// reviews and completes WITH the client. Decision-support scaffold — not a
 /// substitute for clinical risk assessment; the clinician owns the plan.
 class SafetyPlanAiService {
-  SafetyPlanAiService({ApiKeyStorage? keyStorage, http.Client? client})
-    : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
-      _client = client ?? http.Client();
+  SafetyPlanAiService({
+    ApiKeyStorage? keyStorage,
+    http.Client? client,
+    ConsentGuard? consentGuard,
+    IdTokenProvider? idTokenProvider,
+    String? Function()? patientIdProvider,
+  }) : _keyStorage = keyStorage ?? ApiKeyStorage.instance,
+       _client = client ?? http.Client(),
+       // Default to a fail-closed guard — production callers MUST inject
+       // an IntakeRepository-backed lookup before invoking [draft].
+       _guard = consentGuard ?? ConsentGuard(),
+       _idTokenProvider = idTokenProvider,
+       _patientIdProvider = patientIdProvider;
 
   final ApiKeyStorage _keyStorage;
   final http.Client _client;
+  final ConsentGuard _guard;
+  final IdTokenProvider? _idTokenProvider;
+  final String? Function()? _patientIdProvider;
 
-  static const String _apiUrl = 'https://api.anthropic.com/v1/messages';
   static const String _model = 'claude-haiku-4-5-20251001';
   static const String _anthropicVersion = '2023-06-01';
 
@@ -28,6 +43,10 @@ class SafetyPlanAiService {
     required String context,
     String region = 'US',
   }) async {
+    // GDPR Art. 7 / Art. 9(2)(a) gate. Throws [ConsentDeniedException]
+    // when the patient has not granted AI-assistance consent; callers
+    // surface that as a UI banner with a link to the consent screen.
+    _guard.requireAi(patientId);
     final key = await _keyStorage.getAnthropicKey();
     if (key == null || key.isEmpty) {
       throw const SafetyPlanAiException(
@@ -49,30 +68,50 @@ class SafetyPlanAiService {
         'JSON only: {"warningSigns":[],"copingStrategies":[],'
         '"socialDistractions":[],"supportContacts":[],"professionals":[],'
         '"crisisLines":[],"meansSafety":"one sentence on making the '
-        'environment safer"}';
+        'environment safer"}\n\n'
+        '${PromptSafety.dataOnlyDirective}';
 
+    // Prompt-injection guard (B7): fence the clinician-supplied context
+    // as a data-only block so a sentence like "ignore previous
+    // instructions" inside the context cannot hijack the system role.
+    final fencedContext = PromptSafety.fence('context', context);
+    // KRİTİK-1 fix (audit 2026-06-21): route through CopilotEndpoint so the
+    // relay path (server-side consent gate + PHI scrub) is taken when
+    // BACKEND_URL is configured. In direct/BYOK mode this falls back to the
+    // pre-existing Anthropic-direct call — testers and BYOK users see no
+    // behaviour change. The relay only sees the additional `patientId`
+    // hint when the caller wired a provider; Anthropic's API ignores
+    // extra top-level fields.
+    final relayPatientId = _patientIdProvider?.call() ?? patientId;
     final body = jsonEncode({
       'model': _model,
       'max_tokens': 800,
       'temperature': 0.4,
       'system': system,
       'messages': [
-        {'role': 'user', 'content': 'Context: $context'},
+        {'role': 'user', 'content': fencedContext},
       ],
+      if (relayPatientId.isNotEmpty) 'patientId': relayPatientId,
     });
+
+    Map<String, String> headers;
+    if (CopilotEndpoint.useRelay) {
+      headers = await CopilotEndpoint.headersAsync(
+        key,
+        idTokenProvider: _idTokenProvider,
+      );
+    } else {
+      headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': _anthropicVersion,
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
+    }
 
     try {
       final resp = await _client
-          .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': key,
-              'anthropic-version': _anthropicVersion,
-              'anthropic-dangerous-direct-browser-access': 'true',
-            },
-            body: body,
-          )
+          .post(CopilotEndpoint.uri, headers: headers, body: body)
           .timeout(const Duration(seconds: 40));
       if (resp.statusCode == 401 || resp.statusCode == 403) {
         throw const SafetyPlanAiException(

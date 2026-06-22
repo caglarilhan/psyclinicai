@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/medication.dart';
@@ -11,6 +13,8 @@ import '../../widgets/clinical_brief_card.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_empty_state.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import 'patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/patient/detail` — single-patient chart: header + assessments timeline.
@@ -59,8 +63,8 @@ class PatientDetailScreen extends StatelessWidget {
                 label: 'PHQ-9',
                 icon: Icons.psychology_outlined,
                 size: PsyButtonSize.sm,
-                onPressed: () => Navigator.of(context)
-                    .pushNamed('/assessments/phq9'),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/assessments/phq9'),
               ),
               const SizedBox(width: PsySpacing.md),
               PsyButton(
@@ -68,8 +72,8 @@ class PatientDetailScreen extends StatelessWidget {
                 icon: Icons.spa_outlined,
                 size: PsyButtonSize.sm,
                 variant: PsyButtonVariant.secondary,
-                onPressed: () => Navigator.of(context)
-                    .pushNamed('/assessments/gad7'),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/assessments/gad7'),
               ),
               const Spacer(),
               PsyButton(
@@ -77,10 +81,22 @@ class PatientDetailScreen extends StatelessWidget {
                 icon: Icons.show_chart,
                 size: PsyButtonSize.sm,
                 variant: PsyButtonVariant.ghost,
-                onPressed: () => Navigator.of(context)
-                    .pushNamed('/outcomes', arguments: args),
+                onPressed: () => Navigator.of(
+                  context,
+                ).pushNamed('/outcomes', arguments: args),
               ),
             ],
+          ),
+          const SizedBox(height: PsySpacing.xxl),
+          const _SectionTitle('Intake & consent'),
+          const SizedBox(height: PsySpacing.md),
+          PsyButton(
+            label: 'Open intake form',
+            icon: Icons.assignment_ind_outlined,
+            size: PsyButtonSize.sm,
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed('/patients/intake', arguments: args),
           ),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Treatment plan'),
@@ -89,8 +105,9 @@ class PatientDetailScreen extends StatelessWidget {
             label: 'Open treatment plan',
             icon: Icons.assignment_outlined,
             size: PsyButtonSize.sm,
-            onPressed: () => Navigator.of(context)
-                .pushNamed('/treatment_plan', arguments: args),
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed('/treatment_plan', arguments: args),
           ),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Crisis safety plan'),
@@ -99,8 +116,9 @@ class PatientDetailScreen extends StatelessWidget {
             label: 'Open safety plan',
             icon: Icons.health_and_safety_outlined,
             size: PsyButtonSize.sm,
-            onPressed: () => Navigator.of(context)
-                .pushNamed('/safety_plan', arguments: args),
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed('/safety_plan', arguments: args),
           ),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Medications'),
@@ -117,8 +135,7 @@ class PatientDetailScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header(
-      {required this.args, required this.theme, required this.cs});
+  const _Header({required this.args, required this.theme, required this.cs});
   final PatientDetailArgs args;
   final ThemeData theme;
   final ColorScheme cs;
@@ -146,9 +163,12 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(args.name,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  args.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.xs),
                 Text(
                   'Patient ID · ${args.id}',
@@ -170,10 +190,12 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
   final String text;
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: Theme.of(
+      context,
+    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+  );
 }
 
 class _AssessmentList extends StatelessWidget {
@@ -187,29 +209,49 @@ class _AssessmentList extends StatelessWidget {
     }
     final profile = FirebaseAuthService.instance.profile;
     if (profile == null) {
-      return _emptyCard(context, 'Sign in to load assessments.');
+      return _emptyCard(
+        context,
+        title: 'Sign in required',
+        body: 'Sign in to load assessments.',
+      );
     }
     return StreamBuilder<List<AssessmentDoc>>(
-      stream: AssessmentRepository.instance
-          .watchForPatient(profile.clinicId, patientId),
+      stream: AssessmentRepository.instance.watchForPatient(
+        profile.clinicId,
+        patientId,
+      ),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(PsySpacing.xxl),
-            child: Center(child: CircularProgressIndicator()),
+          return const PsySkeletonGroup(
+            child: Padding(
+              padding: EdgeInsets.all(PsySpacing.xxl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PsySkeletonLine(width: 140),
+                  SizedBox(height: PsySpacing.md),
+                  PsySkeletonBlock(height: 180),
+                ],
+              ),
+            ),
           );
         }
         final list = snap.data ?? const <AssessmentDoc>[];
         if (list.isEmpty) {
-          return _emptyCard(context,
-              'No assessments yet. Send a PHQ-9 or GAD-7 to start the trend.');
+          return _emptyCard(
+            context,
+            title: 'No assessments yet',
+            body: 'Send a PHQ-9 or GAD-7 to start the trend.',
+          );
         }
         return Column(
           children: list
-              .map((a) => Padding(
-                    padding: const EdgeInsets.only(bottom: PsySpacing.md),
-                    child: _AssessmentTile(a: a),
-                  ))
+              .map(
+                (a) => Padding(
+                  padding: const EdgeInsets.only(bottom: PsySpacing.md),
+                  child: _AssessmentTile(a: a),
+                ),
+              )
               .toList(),
         );
       },
@@ -220,43 +262,44 @@ class _AssessmentList extends StatelessWidget {
     return const Column(
       children: [
         _DemoAssessmentTile(
-            type: 'phq9',
-            score: 14,
-            severity: 'Moderate',
-            date: '2026-05-09',
-            tone: PsyBadgeTone.warning),
+          type: 'phq9',
+          score: 14,
+          severity: 'Moderate',
+          date: '2026-05-09',
+          tone: PsyBadgeTone.warning,
+        ),
         SizedBox(height: PsySpacing.md),
         _DemoAssessmentTile(
-            type: 'phq9',
-            score: 9,
-            severity: 'Mild',
-            date: '2026-05-16',
-            tone: PsyBadgeTone.info),
+          type: 'phq9',
+          score: 9,
+          severity: 'Mild',
+          date: '2026-05-16',
+          tone: PsyBadgeTone.info,
+        ),
         SizedBox(height: PsySpacing.md),
         _DemoAssessmentTile(
-            type: 'gad7',
-            score: 6,
-            severity: 'Mild',
-            date: '2026-05-16',
-            tone: PsyBadgeTone.info),
+          type: 'gad7',
+          score: 6,
+          severity: 'Mild',
+          date: '2026-05-16',
+          tone: PsyBadgeTone.info,
+        ),
       ],
     );
   }
 
-  Widget _emptyCard(BuildContext context, String body) => PsyCard(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
-          child: Center(
-            child: Text(body,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.6),
-                    )),
-          ),
-        ),
-      );
+  Widget _emptyCard(
+    BuildContext context, {
+    required String title,
+    required String body,
+  }) => PsyCard(
+    child: PsyEmptyState(
+      icon: Icons.assessment_outlined,
+      title: title,
+      body: body,
+      compact: true,
+    ),
+  );
 }
 
 class _AssessmentTile extends StatelessWidget {
@@ -271,9 +314,7 @@ class _AssessmentTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            a.type == 'phq9'
-                ? Icons.psychology_outlined
-                : Icons.spa_outlined,
+            a.type == 'phq9' ? Icons.psychology_outlined : Icons.spa_outlined,
             color: cs.primary,
             size: 22,
           ),
@@ -282,9 +323,12 @@ class _AssessmentTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${a.type.toUpperCase()} · score ${a.score}',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  '${a.type.toUpperCase()} · score ${a.score}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (a.completedAt != null) ...[
                   const SizedBox(height: PsySpacing.xxs),
                   Text(
@@ -301,9 +345,10 @@ class _AssessmentTile extends StatelessWidget {
           if (a.selfHarmFlag) ...[
             const SizedBox(width: PsySpacing.sm),
             const PsyBadge(
-                label: 'RISK FLAG',
-                tone: PsyBadgeTone.danger,
-                icon: Icons.warning_amber_rounded),
+              label: 'RISK FLAG',
+              tone: PsyBadgeTone.danger,
+              icon: Icons.warning_amber_rounded,
+            ),
           ],
         ],
       ),
@@ -345,9 +390,7 @@ class _DemoAssessmentTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            type == 'phq9'
-                ? Icons.psychology_outlined
-                : Icons.spa_outlined,
+            type == 'phq9' ? Icons.psychology_outlined : Icons.spa_outlined,
             color: cs.primary,
             size: 22,
           ),
@@ -356,14 +399,19 @@ class _DemoAssessmentTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${type.toUpperCase()} · score $score',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  '${type.toUpperCase()} · score $score',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: PsySpacing.xxs),
-                Text('Completed $date',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.55),
-                    )),
+                Text(
+                  'Completed $date',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
               ],
             ),
           ),
@@ -394,7 +442,7 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
   @override
   void initState() {
     super.initState();
-    _init();
+    unawaited(_init());
   }
 
   Future<void> _init() async {
@@ -427,9 +475,20 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.all(PsySpacing.md),
-        child: Center(child: CircularProgressIndicator()),
+      return const PsySkeletonGroup(
+        child: Padding(
+          padding: EdgeInsets.all(PsySpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PsySkeletonBlock(height: 60),
+              SizedBox(height: PsySpacing.sm),
+              PsySkeletonBlock(height: 60),
+              SizedBox(height: PsySpacing.sm),
+              PsySkeletonBlock(height: 60),
+            ],
+          ),
+        ),
       );
     }
     return Column(
@@ -444,15 +503,25 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
               borderRadius: BorderRadius.circular(PsyRadius.lg),
               border: Border.all(color: cs.outlineVariant),
             ),
-            child: Text('No medications recorded.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+            child: Text(
+              'No medications recorded.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
           )
         else
-          ..._meds.map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: PsySpacing.sm),
-                child: _MedTile(med: m, theme: theme, cs: cs, onToggle: () => _toggle(m)),
-              )),
+          ..._meds.map(
+            (m) => Padding(
+              padding: const EdgeInsets.only(bottom: PsySpacing.sm),
+              child: _MedTile(
+                med: m,
+                theme: theme,
+                cs: cs,
+                onToggle: () => _toggle(m),
+              ),
+            ),
+          ),
         const SizedBox(height: PsySpacing.md),
         PsyButton(
           label: 'Add medication',
@@ -467,11 +536,12 @@ class _MedicationsSectionState extends State<_MedicationsSection> {
 }
 
 class _MedTile extends StatelessWidget {
-  const _MedTile(
-      {required this.med,
-      required this.theme,
-      required this.cs,
-      required this.onToggle});
+  const _MedTile({
+    required this.med,
+    required this.theme,
+    required this.cs,
+    required this.onToggle,
+  });
   final Medication med;
   final ThemeData theme;
   final ColorScheme cs;
@@ -479,7 +549,10 @@ class _MedTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final detail = [med.dose, med.frequency].where((s) => s.isNotEmpty).join(' · ');
+    final detail = [
+      med.dose,
+      med.frequency,
+    ].where((s) => s.isNotEmpty).join(' · ');
     return Container(
       padding: const EdgeInsets.all(PsySpacing.lg),
       decoration: BoxDecoration(
@@ -489,29 +562,35 @@ class _MedTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.medication,
-              size: 20,
-              color: med.active
-                  ? cs.primary
-                  : cs.onSurface.withValues(alpha: 0.4)),
+          Icon(
+            Icons.medication,
+            size: 20,
+            color: med.active
+                ? cs.primary
+                : cs.onSurface.withValues(alpha: 0.4),
+          ),
           const SizedBox(width: PsySpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(med.name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      decoration:
-                          med.active ? null : TextDecoration.lineThrough,
-                      color: med.active
-                          ? null
-                          : cs.onSurface.withValues(alpha: 0.5),
-                    )),
+                Text(
+                  med.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    decoration: med.active ? null : TextDecoration.lineThrough,
+                    color: med.active
+                        ? null
+                        : cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
                 if (detail.isNotEmpty)
-                  Text(detail,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.65))),
+                  Text(
+                    detail,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -558,38 +637,42 @@ class _MedicationDialogState extends State<_MedicationDialog> {
               controller: _name,
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                  labelText: 'Medication (e.g. Sertraline)'),
+                labelText: 'Medication (e.g. Sertraline)',
+              ),
             ),
             const SizedBox(height: PsySpacing.md),
             TextField(
               controller: _dose,
-              decoration:
-                  const InputDecoration(labelText: 'Dose (e.g. 50 mg)'),
+              decoration: const InputDecoration(labelText: 'Dose (e.g. 50 mg)'),
             ),
             const SizedBox(height: PsySpacing.md),
             TextField(
               controller: _freq,
               decoration: const InputDecoration(
-                  labelText: 'Frequency (e.g. once daily)'),
+                labelText: 'Frequency (e.g. once daily)',
+              ),
             ),
           ],
         ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: _name.text.trim().isEmpty
               ? null
-              : () => Navigator.of(context).pop(Medication(
+              : () => Navigator.of(context).pop(
+                  Medication(
                     id: DateTime.now().microsecondsSinceEpoch.toString(),
                     patientId: widget.patientId,
                     name: _name.text.trim(),
                     dose: _dose.text.trim(),
                     frequency: _freq.text.trim(),
                     startedOn: DateTime.now(),
-                  )),
+                  ),
+                ),
           child: const Text('Add'),
         ),
       ],

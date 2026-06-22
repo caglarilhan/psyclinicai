@@ -1,5 +1,4 @@
 class Appointment {
-
   Appointment({
     required this.id,
     required this.clientId,
@@ -52,8 +51,8 @@ class Appointment {
   bool get isToday {
     final now = DateTime.now();
     return startTime.year == now.year &&
-           startTime.month == now.month &&
-           startTime.day == now.day;
+        startTime.month == now.month &&
+        startTime.day == now.day;
   }
 
   bool get isUpcoming {

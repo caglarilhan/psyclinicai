@@ -78,19 +78,21 @@ class TrustStrip extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: cs.primary),
         const SizedBox(width: 6),
-        Text(label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: muted,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            )),
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: muted,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
       ],
     );
   }
 
   Widget _dot(Color c) => Container(
-        width: 3,
-        height: 3,
-        decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-      );
+    width: 3,
+    height: 3,
+    decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+  );
 }

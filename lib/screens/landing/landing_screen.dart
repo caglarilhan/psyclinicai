@@ -1,9 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/telemetry_service.dart';
+import '../../services/data/waitlist_repository.dart';
+import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/landing/cookie_consent.dart';
 import '../../widgets/landing/demo_modal.dart';
 import '../../widgets/landing/exit_intent_modal.dart';
@@ -54,8 +56,12 @@ class _LandingScreenState extends State<LandingScreen> {
     // pitch — fire when the cursor approaches the browser tab bar.
     if (_scroll.hasClients && _scroll.offset > 1200 && e.position.dy < 8) {
       _exitIntentShown = true;
-      ExitIntentModal.show(
-          context, (email) => _waitlistSubmit(context, email));
+      unawaited(
+        ExitIntentModal.show(
+          context,
+          (email) => _waitlistSubmit(context, email),
+        ),
+      );
     }
   }
 
@@ -83,56 +89,57 @@ class _LandingScreenState extends State<LandingScreen> {
     final key = _anchors[anchor];
     final ctx = key?.currentContext;
     if (ctx == null) return;
-    Scrollable.ensureVisible(
-      ctx,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
-      alignment: 0.05,
+    unawaited(
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+        alignment: 0.05,
+      ),
     );
   }
 
   void _gotoSignup(BuildContext context) {
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   void _gotoLogin(BuildContext context) {
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   void _bookDemo(BuildContext context) {
-    DemoModal.show(context);
+    unawaited(DemoModal.show(context));
   }
 
   void _pickTier(BuildContext context, String tier) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Reserving a $tier seat — sign in to continue'),
-      ),
+    PsySnack.info(
+      context,
+      'Reserving a $tier seat — sign in to continue.',
+      hint: 'landing.tier_pick',
     );
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   Future<void> _waitlistSubmit(BuildContext context, String email) async {
-    TelemetryService.instance.capture(TelemetryEvents.landingHeroEmailSubmit,
-        properties: {'source': 'hero'});
-    // Best-effort Firestore write — if rules deny, the user still gets a
-    // success confirmation (we never block conversion on backend ACK).
-    if (PsyFirebase.isReady) {
-      try {
-        await FirebaseFirestore.instance.collection('landing_waitlist').add({
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-          'source': 'hero',
-        });
-      } catch (_) {
-        // Rules deny / network fail — ignore, fall through to UI ack.
-      }
-    }
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("You're in. We'll email $email the moment a founding seat opens."),
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.landingHeroEmailSubmit,
+        properties: {'source': 'hero'},
       ),
+    );
+    // KRİTİK-10 fix (audit 2026-06-21): direct FirebaseFirestore.add
+    // inline in the screen left no test seam + nowhere to plug
+    // App Check / debounce later. Repository handles the
+    // best-effort semantics (skipped / denied → snackbar still fires).
+    await WaitlistRepository.instance.recordLanding(
+      email: email,
+      source: 'hero',
+    );
+    if (!context.mounted) return;
+    PsySnack.success(
+      context,
+      "You're in. We'll email $email the moment a founding seat opens.",
+      hint: 'landing.waitlist_confirmed',
     );
   }
 
@@ -154,21 +161,32 @@ class _LandingScreenState extends State<LandingScreen> {
       'about' => '/about',
       'changelog' => '/changelog',
       'status' => '/status',
+      'roadmap' => '/roadmap',
       'privacy' => '/privacy',
       'tos' => '/tos',
       'contact' => '/contact',
       'press' => '/press',
-      'help' => '/security',
-      'baa' => '/privacy',
-      'dpa' => '/privacy',
+      // The footer "Pricing" link landed on the "coming soon" snackbar
+      // because the resolver didn't know about it, even though
+      // PricingPage is registered at /pricing in main.dart. Audit
+      // 2026-06-21 quick-win #9.
+      'pricing' => '/pricing',
+      // Sprint 29 P-02 — legal pages stand on their own. Pilot clinicians
+      // ask for BAA / DPA links directly from procurement; redirecting
+      // them to /privacy was an audit smell flagged by counsel.
+      'baa' => '/baa',
+      'dpa' => '/dpa',
+      'help' => '/contact',
       _ => null,
     };
     if (route != null) {
-      Navigator.of(context).pushNamed(route);
+      unawaited(Navigator.of(context).pushNamed(route));
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"$id" page coming soon')),
+    PsySnack.info(
+      context,
+      '"$id" page coming soon.',
+      hint: 'landing.footer_coming_soon',
     );
   }
 
@@ -179,7 +197,8 @@ class _LandingScreenState extends State<LandingScreen> {
         onSignIn: () => _gotoLogin(context),
         onStart: () => _gotoSignup(context),
         onScrollTo: _scrollTo,
-        onSecurity: () => Navigator.of(context).pushNamed('/security'),
+        onSecurity: () =>
+            unawaited(Navigator.of(context).pushNamed('/security')),
       ),
       drawer: _LandingDrawer(
         onScrollTo: (a) {
@@ -188,67 +207,65 @@ class _LandingScreenState extends State<LandingScreen> {
         },
         onRoute: (r) {
           Navigator.of(context).pop();
-          Navigator.of(context).pushNamed(r);
+          unawaited(Navigator.of(context).pushNamed(r));
         },
       ),
       body: MouseRegion(
         onHover: _onMouseHover,
         child: Stack(
-        children: [
-          ListView(
-            controller: _scroll,
-            padding: EdgeInsets.zero,
-            children: [
-              HeroSection(
-                onPrimaryCta: () => _gotoSignup(context),
-                onSecondaryCta: () => _bookDemo(context),
-                onWaitlistEmail: (email) =>
-                    _waitlistSubmit(context, email),
-              ),
-              const TrustStrip(),
-              const TrustBarSection(),
-              KeyedSubtree(
+          children: [
+            ListView(
+              controller: _scroll,
+              padding: EdgeInsets.zero,
+              children: [
+                HeroSection(
+                  onPrimaryCta: () => _gotoSignup(context),
+                  onSecondaryCta: () => _bookDemo(context),
+                  onWaitlistEmail: (email) => _waitlistSubmit(context, email),
+                ),
+                const TrustStrip(),
+                const TrustBarSection(),
+                KeyedSubtree(
                   key: _anchors['comparison'],
-                  child: const ComparisonTableSection()),
-              const ProductGallerySection(),
-              const HowItWorksSection(),
-              const FeatureGridSection(),
-              const BuiltForSection(),
-              const ProblemSection(),
-              const DenialShieldSection(),
-              KeyedSubtree(
+                  child: const ComparisonTableSection(),
+                ),
+                const ProductGallerySection(),
+                const HowItWorksSection(),
+                const FeatureGridSection(),
+                const BuiltForSection(),
+                const ProblemSection(),
+                const DenialShieldSection(),
+                KeyedSubtree(
                   key: _anchors['pricing'],
                   child: PricingSection(
-                      onPickTier: (t) => _pickTier(context, t))),
-              TestimonialsSection(onCta: () => _gotoSignup(context)),
-              KeyedSubtree(
-                  key: _anchors['faq'], child: const FaqSection()),
-              FinalCtaSection(
+                    onPickTier: (t) => _pickTier(context, t),
+                  ),
+                ),
+                TestimonialsSection(onCta: () => _gotoSignup(context)),
+                KeyedSubtree(key: _anchors['faq'], child: const FaqSection()),
+                FinalCtaSection(
+                  onPrimary: () => _gotoSignup(context),
+                  onSecondary: () => _bookDemo(context),
+                ),
+                FooterSection(onLink: (id) => _footerLink(context, id)),
+                // Leave room for the sticky bar so the footer doesn't hide.
+                const SizedBox(height: 80),
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: StickyCtaBar(
+                visible: _stickyVisible,
                 onPrimary: () => _gotoSignup(context),
-                onSecondary: () => _bookDemo(context),
               ),
-              FooterSection(onLink: (id) => _footerLink(context, id)),
-              // Leave room for the sticky bar so the footer doesn't hide.
-              const SizedBox(height: 80),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: StickyCtaBar(
-              visible: _stickyVisible,
-              onPrimary: () => _gotoSignup(context),
             ),
-          ),
-          const Positioned.fill(
-            child: IgnorePointer(
-              ignoring: false,
-              child: CookieConsent(),
+            const Positioned.fill(
+              child: IgnorePointer(ignoring: false, child: CookieConsent()),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -276,7 +293,7 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isWide = MediaQuery.of(context).size.width >= 720;
+    final isWide = MediaQuery.sizeOf(context).width >= 720;
 
     return AppBar(
       backgroundColor: cs.surface,
@@ -290,7 +307,12 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
         alignment: AlignmentDirectional.centerStart,
         child: Row(
           children: [
-            Icon(Icons.psychology, color: cs.primary, size: 26),
+            Image.asset(
+              'assets/branding/logo-master.png',
+              width: 32,
+              height: 32,
+              filterQuality: FilterQuality.high,
+            ),
             const SizedBox(width: 8),
             Text(
               'PsyClinicAI',
@@ -320,8 +342,7 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
           style: FilledButton.styleFrom(
             backgroundColor: cs.primary,
             foregroundColor: cs.onPrimary,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
           child: const Text('Start free'),
         ),
@@ -344,8 +365,7 @@ class _NavLink extends StatelessWidget {
       style: TextButton.styleFrom(
         foregroundColor: cs.onSurface.withValues(alpha: 0.78),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
       child: Text(label),
     );
@@ -353,8 +373,7 @@ class _NavLink extends StatelessWidget {
 }
 
 class _LandingDrawer extends StatelessWidget {
-  const _LandingDrawer(
-      {required this.onScrollTo, required this.onRoute});
+  const _LandingDrawer({required this.onScrollTo, required this.onRoute});
 
   final void Function(String anchor) onScrollTo;
   final void Function(String route) onRoute;
@@ -366,9 +385,12 @@ class _LandingDrawer extends StatelessWidget {
     Widget tile(IconData icon, String label, VoidCallback onTap) {
       return ListTile(
         leading: Icon(icon, color: cs.primary),
-        title: Text(label,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w600)),
+        title: Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         onTap: onTap,
       );
     }
@@ -381,30 +403,40 @@ class _LandingDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Row(
                 children: [
-                  Icon(Icons.psychology, color: cs.primary, size: 28),
+                  Image.asset(
+                    'assets/branding/logo-master.png',
+                    width: 36,
+                    height: 36,
+                    filterQuality: FilterQuality.high,
+                  ),
                   const SizedBox(width: 8),
-                  Text('PsyClinicAI',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      )),
+                  Text(
+                    'PsyClinicAI',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ),
             const Divider(),
-            tile(Icons.attach_money, 'Pricing',
-                () => onScrollTo('pricing')),
-            tile(Icons.compare_arrows, 'Compare',
-                () => onScrollTo('comparison')),
+            tile(Icons.attach_money, 'Pricing', () => onScrollTo('pricing')),
+            tile(
+              Icons.compare_arrows,
+              'Compare',
+              () => onScrollTo('comparison'),
+            ),
             tile(Icons.help_outline, 'FAQ', () => onScrollTo('faq')),
             const Divider(),
-            tile(Icons.verified_user_outlined, 'Security',
-                () => onRoute('/security')),
+            tile(
+              Icons.verified_user_outlined,
+              'Security',
+              () => onRoute('/security'),
+            ),
             tile(Icons.info_outline, 'About', () => onRoute('/about')),
-            tile(Icons.email_outlined, 'Contact',
-                () => onRoute('/contact')),
-            tile(Icons.gavel_outlined, 'Privacy',
-                () => onRoute('/privacy')),
+            tile(Icons.email_outlined, 'Contact', () => onRoute('/contact')),
+            tile(Icons.gavel_outlined, 'Privacy', () => onRoute('/privacy')),
             const Divider(),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),

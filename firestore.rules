@@ -37,8 +37,47 @@ service cloud.firestore {
         match /sessions/{sessionId} {
           allow read, write: if isClinicOwner(clinicId);
 
+          // H-12 fix (audit 2026-06-21): clinical notes must satisfy
+          // HIPAA §164.312(c)(1) integrity + Joint Commission
+          // RC.01.01.01 authentication. Once `signed` is true the
+          // body MUST NOT change — corrections go through an
+          // addendum doc that references the signed parent's id.
+          // Unsigned drafts stay freely editable for the author.
           match /notes/{noteId} {
-            allow read, write: if isClinicOwner(clinicId);
+            allow read: if isClinicOwner(clinicId);
+            allow create: if isClinicOwner(clinicId);
+            // Update only when (a) the parent is still unsigned, OR
+            // (b) the write only flips `signed` false → true and
+            // adds the signer metadata. Any edit to `markdown` /
+            // `format` on a signed note is denied — the writer must
+            // create a child addendum instead.
+            allow update: if isClinicOwner(clinicId)
+              && (
+                resource.data.signed != true
+                || (
+                  request.resource.data.signed == true
+                  && request.resource.data.markdown == resource.data.markdown
+                  && request.resource.data.format == resource.data.format
+                  && request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['signed', 'signedAt', 'signedBy'])
+                )
+              );
+            // Hard delete blocked — retention is the audit log's job.
+            allow delete: if false;
+
+            // Addendum subcollection — corrections + extensions to a
+            // signed note. Each addendum carries `addendumOf` ==
+            // parent note id and follows the same sign/lock rules
+            // recursively.
+            match /addenda/{addendumId} {
+              allow read: if isClinicOwner(clinicId);
+              allow create: if isClinicOwner(clinicId)
+                && request.resource.data.addendumOf == noteId
+                && request.resource.data.markdown is string;
+              allow update: if isClinicOwner(clinicId)
+                && resource.data.signed != true;
+              allow delete: if false;
+            }
           }
         }
 
@@ -62,6 +101,243 @@ service cloud.firestore {
           && request.resource.data.email.matches('.*@.*[.].*')
           && request.resource.data.keys().hasOnly(
               ['email', 'createdAt', 'source']);
+    }
+
+    // Beta pilot signups (Sprint 28). Same shape as landing_waitlist but
+    // richer fields — the cold-outreach pipeline routes by clinic + region
+    // + role to schedule pilot calls. Client may CREATE only; reads happen
+    // server-side via founders@ Cloud Function export.
+    match /beta_signups/{doc} {
+      allow read, update, delete: if false;
+      allow create: if request.resource.data.email is string
+          && request.resource.data.email.size() <= 320
+          && request.resource.data.email.matches('.*@.*[.].*')
+          && request.resource.data.clinic_name is string
+          && request.resource.data.clinic_name.size() <= 200
+          && request.resource.data.country is string
+          && request.resource.data.country.size() <= 100
+          && request.resource.data.region in ['EU', 'US', 'TR']
+          && request.resource.data.role in ['clinician', 'admin', 'researcher']
+          && request.resource.data.source == 'web/beta'
+          && request.resource.data.keys().hasOnly(
+              ['email', 'clinic_name', 'country', 'region', 'role',
+               'source', 'created_at']);
+    }
+
+    // ------------------------------------------------------------------
+    // Sprint 9 — Compliance-scoped top-level collections
+    // ------------------------------------------------------------------
+
+    // Audit logs — HIPAA §164.312(b) + §164.316(b).
+    // Writes flow only through the admin SDK (Cloud Functions); client
+    // writes are denied so the hash chain stays tamper-evident.
+    // Reads are scoped to the clinic that owns the row.
+    //
+    // Sprint 29 B-04 — defence-in-depth: the row must (1) belong to the
+    // caller's clinic AND (2) carry the required schema fields so a
+    // malformed row written by a future admin-SDK bug cannot leak
+    // sideways. Solo-practice invariant (clinicId == uid) stays
+    // enforced — if multi-clinician support lands, move this rule to
+    // /clinics/{clinicId}/audit_logs/{logId} and check membership via
+    // /clinics/{cid}/clinicians/{request.auth.uid}.
+    match /audit_logs/{logId} {
+      allow create, update, delete: if false;
+      // H-3 fix (audit 2026-06-21): the read rule was uid-keyed (only
+      // the writing clinician could read their own rows). In a group
+      // practice every clinician shares one `clinic_id`, so a colleague
+      // who is also part of that clinic must be able to read the log
+      // — but ONLY when the practice has explicitly granted them the
+      // `viewAuditLog` permission via the `practice_role` custom
+      // claim. Admin-only by default keeps SOC 2 CC6.1 evidence
+      // intact. Solo pilots still pass (uid == clinic_id and the
+      // admin claim is auto-assigned by setTenantClaim).
+      allow read: if isAuthed()
+          && resource.data.clinic_id is string
+          && resource.data.event_type is string
+          && resource.data.ts is timestamp
+          && (
+            resource.data.clinic_id == request.auth.uid
+            || request.auth.token.practice_role == 'admin'
+          );
+    }
+
+    // Sprint 29 S-01 — WebAuthn per-IP rate-limit buckets. Written by
+    // the rate_limit lib via admin SDK; clients must never touch them.
+    match /webauthn_rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    // Sprint 29 B-09 — Stripe webhook idempotency ledger. Admin-SDK
+    // only; clients have no business touching processed_webhooks.
+    match /processed_webhooks/{eventId} {
+      allow read, write: if false;
+    }
+
+    // Consent records — GDPR Art. 7 (lawful basis) + 7(3) (right to
+    // withdraw). Once `withdrawn_at` is set the row is immutable so the
+    // withdrawal trail cannot be quietly rewritten.
+    match /consent_records/{recordId} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+
+      allow create: if isAuthed()
+          && request.resource.data.clinic_id == request.auth.uid;
+
+      // Update is intentionally narrow: only `withdrawn_at` may change,
+      // and only from null → a timestamp. Every other field is frozen
+      // so the consent record can never be retroactively rewritten
+      // (Art. 7(3) requires a tamper-evident withdrawal trail; flipping
+      // `ai_assistance_consent` after the fact would defeat that).
+      allow update: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid
+          && resource.data.withdrawn_at == null
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['withdrawn_at']);
+
+      // Hard-delete blocked — Art. 30 ROPA needs the trail.
+      allow delete: if false;
+    }
+
+    // Account deletion requests — GDPR Art. 17 erasure with 30-day grace.
+    // User writes own request (docId == uid). Cloud Function (admin
+    // SDK) bypasses these rules to mark `completed_at` after the purge;
+    // the client can never set or modify that field.
+    match /account_deletions/{userId} {
+      allow read: if isSelf(userId);
+
+      // Create: client must own the row, must not pre-set `completed_at`,
+      // and must not include it as a field at all. The Cloud Function
+      // (admin SDK) sets `completed_at` after the purge.
+      allow create: if isSelf(userId)
+          && request.resource.data.user_id == userId
+          && !('completed_at' in request.resource.data);
+
+      // Update is for cancellation. The user may flip `cancelled_at`
+      // null → timestamp, but only while the purge hasn't happened.
+      // `completed_at` and `user_id` must stay identical to the row
+      // already on disk — clients cannot inject a future completion
+      // stamp to bypass the purge.
+      allow update: if isSelf(userId)
+          && resource.data.completed_at == null
+          && request.resource.data.user_id == resource.data.user_id
+          && request.resource.data.completed_at == resource.data.completed_at
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['cancelled_at']);
+
+      allow delete: if false;
+    }
+
+    // Telehealth sessions (Sprint 11, sıkılaştırma Sprint 14).
+    // Clinic owner reads + creates; update is narrow — only the
+    // operational fields (`joinedAt`, `endedAt`, `recordingConsent`
+    // null → granted/declined once, `consentAt`) can move. PatientId,
+    // sessionId, scheduledFor, roomName, clinicId, clinicianId are
+    // frozen so a retroactive edit cannot rewrite the audit trail.
+    match /telehealth_sessions/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+      allow create: if isAuthed()
+          && request.resource.data.clinicId == request.auth.uid;
+      allow update: if isAuthed()
+          && resource.data.clinicId == request.auth.uid
+          && (
+            resource.data.recordingConsent == 'not_asked'
+            || request.resource.data.recordingConsent
+                == resource.data.recordingConsent
+          )
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['joinedAt', 'endedAt', 'recordingConsent',
+                        'consentAt']);
+      allow delete: if false;
+    }
+
+    // Deposit + no-show charges (Sprint 11, sıkılaştırma Sprint 14).
+    // Client direct-write is DENIED — `depositIntent` Cloud Function
+    // owns row creation so `patientId` ownership across clinics can
+    // be verified server-side. The client only reads; the admin SDK
+    // does the writes.
+    match /deposit_charges/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // C-SSRS imminent / immediate dismissal soft-lock (Sprint 10).
+    // - The clinic owner (and only the clinic owner) can read the
+    //   roster so a covering clinician sees the lock cross-device.
+    // - The dismissing clinician creates the row.
+    // - `stale` flips to true only via the cleanup Cloud Function
+    //   (admin SDK) — clients cannot silently age out a row.
+    // - Rows are never hard-deleted: the audit trail must show the
+    //   lock existed and was followed up.
+    match /escalation_soft_locks/{lockId} {
+      allow read: if isAuthed()
+          && resource.data.clinicId == request.auth.uid;
+
+      allow create: if isAuthed()
+          && request.resource.data.clinicId == request.auth.uid
+          && request.resource.data.dismissingClinicianId
+              == request.auth.uid
+          && request.resource.data.stale == false;
+
+      // Update only allowed for the supervisor-handoff field; `stale`
+      // and the original audit columns stay client-immutable.
+      allow update: if isAuthed()
+          && resource.data.clinicId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['supervisorHandoffId']);
+
+      allow delete: if false;
+    }
+
+    // MFA enrolments — owner-only; recovery_code_hashes immutable
+    // post-create. used_recovery_codes is append-only (you mark codes
+    // as used, never rewrite). HIPAA §164.312(d).
+    match /mfa_enrolments/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.recovery_code_hashes is list
+        && request.resource.data.recovery_code_hashes.size() >= 8
+        && request.resource.data.recovery_code_hashes.size() <= 12;
+      // H-4 fix (audit 2026-06-21): the previous rule only checked
+      // that the list size did not shrink. An attacker who controlled
+      // a stale session could overwrite earlier indices with empty
+      // strings (size unchanged) and re-use the original codes. The
+      // `toSet().hasAll(...)` check enforces that every previously
+      // used code is still present in the new payload — junk
+      // additions are still possible but they don't unlock anything
+      // because they're also marked used.
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.recovery_code_hashes
+              == resource.data.recovery_code_hashes
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.enrolled_at == resource.data.enrolled_at
+        && request.resource.data.used_recovery_codes.size()
+              >= resource.data.used_recovery_codes.size()
+        && request.resource.data.used_recovery_codes.toSet()
+              .hasAll(resource.data.used_recovery_codes.toSet());
+      allow delete: if false;
+    }
+
+    // Tenant region pin — write-once invariant. Region migrations go
+    // through tenant_region_changes/{id} resolved by a CISO-approved
+    // Cloud Function; clients cannot flip the field directly.
+    match /tenants/{tid} {
+      // Sprint 28 audit (F2 close): cross-tenant read was possible because
+      // the previous rule only required `request.auth != null`. Tenant docs
+      // expose region + plan + feature flags, so any authenticated caller
+      // could enumerate competitors. Scope read+update to the owning uid.
+      allow read: if request.auth != null && request.auth.uid == tid;
+      allow create: if request.auth != null && request.auth.uid == tid
+        && request.resource.data.region in ['eu-central', 'us-central'];
+      allow update: if request.auth != null && request.auth.uid == tid
+        && request.resource.data.region == resource.data.region;
+      allow delete: if false;
+    }
+    match /tenant_region_changes/{id} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if false;
     }
 
     // Hard fail — anything else is denied.

@@ -8,12 +8,12 @@ enum ScaleSeverity { minimal, mild, moderate, severe, critical }
 
 extension ScaleSeverityX on ScaleSeverity {
   String get label => switch (this) {
-        ScaleSeverity.minimal => 'Minimal',
-        ScaleSeverity.mild => 'Mild',
-        ScaleSeverity.moderate => 'Moderate',
-        ScaleSeverity.severe => 'Severe',
-        ScaleSeverity.critical => 'Critical',
-      };
+    ScaleSeverity.minimal => 'Minimal',
+    ScaleSeverity.mild => 'Mild',
+    ScaleSeverity.moderate => 'Moderate',
+    ScaleSeverity.severe => 'Severe',
+    ScaleSeverity.critical => 'Critical',
+  };
 }
 
 /// One selectable answer with its point value (values differ per item on some

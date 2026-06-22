@@ -15,8 +15,7 @@ class PricingSection extends StatefulWidget {
 class _PricingSectionState extends State<PricingSection> {
   bool _annual = false;
 
-  int _priceFor(int monthly) =>
-      _annual ? (monthly * 0.8).round() : monthly;
+  int _priceFor(int monthly) => _annual ? (monthly * 0.8).round() : monthly;
 
   @override
   Widget build(BuildContext context) {
@@ -79,24 +78,25 @@ class _PricingSectionState extends State<PricingSection> {
         children: [
           const SectionEyebrow('Founding pricing'),
           const SizedBox(height: 12),
-          const SectionTitle('Half price for life of pilot.',
-              textAlign: TextAlign.center),
+          const SectionTitle(
+            'Half price for life of pilot.',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 12),
           const SectionSubtitle(
-              'First 30 clinicians lock in the founding rate. No card on file '
-              'during onboarding — your trial seat is yours until you say otherwise.',
-              textAlign: TextAlign.center),
+            'First 30 clinicians lock in the founding rate. No card on file '
+            'during onboarding — your trial seat is yours until you say otherwise.',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 28),
           Center(
             child: SegmentedButton<bool>(
               segments: const [
                 ButtonSegment(value: false, label: Text('Monthly')),
-                ButtonSegment(
-                    value: true, label: Text('Annual · Save 20%')),
+                ButtonSegment(value: true, label: Text('Annual · Save 20%')),
               ],
               selected: {_annual},
-              onSelectionChanged: (s) =>
-                  setState(() => _annual = s.first),
+              onSelectionChanged: (s) => setState(() => _annual = s.first),
               showSelectedIcon: false,
             ),
           ),
@@ -109,19 +109,21 @@ class _PricingSectionState extends State<PricingSection> {
                 runSpacing: 24,
                 alignment: WrapAlignment.center,
                 children: tiers
-                    .map((t) => SizedBox(
-                          width: isWide ? 320 : c.maxWidth,
-                          child: HoverLift(
-                            borderRadius: 16,
-                            lift: t.highlighted ? 4 : 2,
-                            child: _TierCard(
-                                tier: t,
-                                theme: theme,
-                                cs: cs,
-                                onPick: () =>
-                                    widget.onPickTier(t.name)),
+                    .map(
+                      (t) => SizedBox(
+                        width: isWide ? 320 : c.maxWidth,
+                        child: HoverLift(
+                          borderRadius: 16,
+                          lift: t.highlighted ? 4 : 2,
+                          child: _TierCard(
+                            tier: t,
+                            theme: theme,
+                            cs: cs,
+                            onPick: () => widget.onPickTier(t.name),
                           ),
-                        ))
+                        ),
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -134,10 +136,8 @@ class _PricingSectionState extends State<PricingSection> {
             children: [
               _MicroChip(cs: cs, text: 'No credit card during pilot'),
               _MicroChip(cs: cs, text: 'Cancel anytime'),
-              _MicroChip(
-                  cs: cs, text: '30-day money-back, no questions'),
-              _MicroChip(
-                  cs: cs, text: 'BAA + DPA pre-signed before you pay'),
+              _MicroChip(cs: cs, text: '30-day money-back, no questions'),
+              _MicroChip(cs: cs, text: 'BAA + DPA pre-signed before you pay'),
             ],
           ),
           const SizedBox(height: 16),
@@ -166,12 +166,14 @@ class _MicroChip extends StatelessWidget {
       children: [
         Icon(Icons.check, size: 14, color: cs.primary),
         const SizedBox(width: 6),
-        Text(text,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: cs.onSurface.withValues(alpha: 0.72),
-            )),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: cs.onSurface.withValues(alpha: 0.72),
+          ),
+        ),
       ],
     );
   }
@@ -215,11 +217,12 @@ class _TierCard extends StatelessWidget {
         color: isHi ? cs.primary : cs.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: isHi ? cs.primary : cs.outlineVariant, width: 2),
+          color: isHi ? cs.primary : cs.outlineVariant,
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: (isHi ? cs.primary : Colors.grey)
-                .withValues(alpha: 0.18),
+            color: (isHi ? cs.primary : Colors.grey).withValues(alpha: 0.18),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -230,8 +233,7 @@ class _TierCard extends StatelessWidget {
         children: [
           if (isHi)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.28),
                 borderRadius: BorderRadius.circular(20),
@@ -247,59 +249,75 @@ class _TierCard extends StatelessWidget {
               ),
             ),
           if (isHi) const SizedBox(height: 14),
-          Text(tier.name,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isHi ? Colors.white : cs.onSurface,
-              )),
+          Text(
+            tier.name,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isHi ? Colors.white : cs.onSurface,
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(tier.price,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontSize: 44,
-                    fontWeight: FontWeight.bold,
-                    color: isHi ? Colors.white : cs.primary,
-                    height: 1,
-                  )),
+              Text(
+                tier.price,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontSize: 44,
+                  fontWeight: FontWeight.bold,
+                  color: isHi ? Colors.white : cs.primary,
+                  height: 1,
+                ),
+              ),
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(tier.period,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: (isHi ? Colors.white : cs.onSurface)
-                          .withValues(alpha: 0.75),
-                    )),
+                child: Text(
+                  tier.period,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: (isHi ? Colors.white : cs.onSurface).withValues(
+                      alpha: 0.75,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-          Text(tier.followUp,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: (isHi ? Colors.white : cs.onSurface)
-                    .withValues(alpha: 0.65),
-                fontStyle: FontStyle.italic,
-              )),
+          Text(
+            tier.followUp,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: (isHi ? Colors.white : cs.onSurface).withValues(
+                alpha: 0.65,
+              ),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
           const SizedBox(height: 20),
-          ...tier.features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.check_circle,
-                        size: 18,
-                        color: isHi ? Colors.white : cs.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(f,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isHi ? Colors.white : cs.onSurface,
-                            height: 1.45,
-                          )),
+          ...tier.features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: isHi ? Colors.white : cs.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isHi ? Colors.white : cs.onSurface,
+                        height: 1.45,
+                      ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -310,13 +328,13 @@ class _TierCard extends StatelessWidget {
                 foregroundColor: isHi ? cs.primary : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
               child: const Text(
                 'Get Started',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
           ),

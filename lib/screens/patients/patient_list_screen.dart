@@ -259,12 +259,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
     required String body,
     PsyEmptyStateAction? action,
   }) {
-    return PsyEmptyState(
-      icon: icon,
-      title: title,
-      body: body,
-      action: action,
-    );
+    return PsyEmptyState(icon: icon, title: title, body: body, action: action);
   }
 
   bool _match(PatientDoc p) {

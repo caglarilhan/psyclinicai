@@ -20,7 +20,9 @@ import 'package:psyclinicai/widgets/ds/psy_tooltip.dart';
 import 'package:psyclinicai/widgets/ds/saving_indicator.dart';
 
 Widget _host(Widget child) {
-  return MaterialApp(home: Scaffold(body: Builder(builder: (_) => child)));
+  return MaterialApp(
+    home: Scaffold(body: Builder(builder: (_) => child)),
+  );
 }
 
 void main() {
@@ -285,18 +287,14 @@ void main() {
       var saved = 0;
       await tester.pumpWidget(
         _host(
-          PsySaveShortcut(
-            onSave: () => saved++,
-            child: const Text('body'),
-          ),
+          PsySaveShortcut(onSave: () => saved++, child: const Text('body')),
         ),
       );
       // Invoke the Intent directly — testing keyboard simulation
       // would couple the test to platform key binding tables. The
       // Action mapping is what we care about.
       final detector =
-          tester.element(find.byType(FocusableActionDetector))
-              as BuildContext;
+          tester.element(find.byType(FocusableActionDetector)) as BuildContext;
       Actions.invoke<PsySaveIntent>(detector, const PsySaveIntent());
       await tester.pump();
       expect(saved, 1);
@@ -314,8 +312,7 @@ void main() {
         ),
       );
       final detector =
-          tester.element(find.byType(FocusableActionDetector))
-              as BuildContext;
+          tester.element(find.byType(FocusableActionDetector)) as BuildContext;
       Actions.invoke<PsySaveIntent>(detector, const PsySaveIntent());
       await tester.pump();
       expect(saved, 0);
@@ -328,8 +325,7 @@ void main() {
         _host(
           const PsyTooltip(
             label: 'F32.1',
-            description:
-                'Major Depressive Disorder, Single Episode, Moderate',
+            description: 'Major Depressive Disorder, Single Episode, Moderate',
             child: Text('badge'),
           ),
         ),

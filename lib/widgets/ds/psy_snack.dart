@@ -119,13 +119,7 @@ class PsySnack {
     SnackBarAction? action,
     Duration duration = _defaultDuration,
     String? hint,
-  }) => show(
-    context,
-    message,
-    action: action,
-    duration: duration,
-    hint: hint,
-  );
+  }) => show(context, message, action: action, duration: duration, hint: hint);
 
   static void success(
     BuildContext context,

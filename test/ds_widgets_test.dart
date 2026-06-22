@@ -13,6 +13,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/widgets/ds/psy_empty_state.dart';
+import 'package:psyclinicai/widgets/ds/psy_skeleton.dart';
 import 'package:psyclinicai/widgets/ds/psy_snack.dart';
 import 'package:psyclinicai/widgets/ds/saving_indicator.dart';
 
@@ -216,6 +217,62 @@ void main() {
         ),
       );
       expect(find.byType(FilledButton), findsNothing);
+    });
+  });
+
+  group('PsySkeleton', () {
+    testWidgets('PsySkeletonList renders the requested row count', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          PsySkeletonList(
+            count: 4,
+            itemBuilder: (_) => const PsySkeletonBlock(height: 64),
+          ),
+        ),
+      );
+      await tester.pump(); // allow the pulse controller to advance once
+      expect(find.byType(PsySkeletonBlock), findsNWidgets(4));
+    });
+
+    testWidgets('Line / Block / Circle render their shape', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          const PsySkeletonGroup(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PsySkeletonLine(width: 120, height: 14),
+                PsySkeletonBlock(width: 240, height: 64),
+                PsySkeletonCircle(size: 32),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(PsySkeletonLine), findsOneWidget);
+      expect(find.byType(PsySkeletonBlock), findsOneWidget);
+      expect(find.byType(PsySkeletonCircle), findsOneWidget);
+    });
+
+    testWidgets('reduce-motion freezes the pulse', (tester) async {
+      // disableAnimations=true should NOT throw and should still render.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: const Scaffold(
+              body: PsySkeletonGroup(
+                child: PsySkeletonLine(width: 100, height: 12),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(PsySkeletonLine), findsOneWidget);
     });
   });
 }

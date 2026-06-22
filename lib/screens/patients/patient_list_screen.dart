@@ -11,6 +11,7 @@ import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/patient_list_filter_bar.dart';
 
 /// `/patients` — searchable patient roster.
@@ -86,7 +87,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
       stream: PatientRepository.instance.watch(profile.clinicId),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          // Skeleton list mirrors the real _PatientTile shape so the
+          // page layout is stable across the loading → loaded
+          // transition. No jarring spinner → row jump.
+          return PsySkeletonList(
+            itemBuilder: (_) => const _PatientTileSkeleton(),
+          );
         }
         if (snap.hasError) {
           return _emptyState(
@@ -452,4 +458,34 @@ class PatientDetailArgs {
   const PatientDetailArgs({required this.id, required this.name});
   final String id;
   final String name;
+}
+
+/// Placeholder row that mirrors [_PatientTile]'s layout so the page
+/// doesn't flicker when StreamBuilder flips waiting → data. Sits
+/// inside a [PsyCard] and pulses with its enclosing
+/// [PsySkeletonGroup] (inserted by [PsySkeletonList]).
+class _PatientTileSkeleton extends StatelessWidget {
+  const _PatientTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PsyCard(
+      child: Row(
+        children: [
+          PsySkeletonCircle(size: 44),
+          SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PsySkeletonLine(width: 180, height: 16),
+                SizedBox(height: 8),
+                PsySkeletonLine(width: 240, height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

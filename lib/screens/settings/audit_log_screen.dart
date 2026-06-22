@@ -88,7 +88,7 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
       ),
     );
     if (!mounted) return;
-    Navigator.of(context).maybePop();
+    unawaited(Navigator.of(context).maybePop());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -101,86 +101,89 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
 
   void _showExportSheet(BuildContext context, List<_AuditEntry> rows) {
     var redact = true; // default ON — fail-closed for PHI
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            final theme = Theme.of(ctx);
-            final cs = theme.colorScheme;
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  PsySpacing.xl,
-                  0,
-                  PsySpacing.xl,
-                  PsySpacing.xl,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Export audit log',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: PsySpacing.xs),
-                    Text(
-                      'With redaction on, email-shaped actors and the last '
-                      'two IP octets are masked before the bundle leaves '
-                      'your device. The export itself is logged on this '
-                      'trail either way.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.7),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: PsySpacing.md),
-                    SwitchListTile.adaptive(
-                      value: redact,
-                      onChanged: (v) => setSheetState(() => redact = v),
-                      title: const Text('Redact PHI (recommended)'),
-                      subtitle: Text(
-                        redact
-                            ? 'Emails and last two IP octets are masked.'
-                            : 'RAW export — file contains PHI. Audit log '
-                                  'flags this leg for compliance review.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: redact
-                              ? cs.onSurface.withValues(alpha: 0.6)
-                              : cs.error,
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (ctx, setSheetState) {
+              final theme = Theme.of(ctx);
+              final cs = theme.colorScheme;
+              return SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    PsySpacing.xl,
+                    0,
+                    PsySpacing.xl,
+                    PsySpacing.xl,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Export audit log',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(height: PsySpacing.sm),
-                    _ExportTile(
-                      label: 'JSONL · for Splunk / Datadog',
-                      icon: Icons.data_object,
-                      onTap: () =>
-                          _exportInFormat(rows, 'jsonl', redact: redact),
-                    ),
-                    _ExportTile(
-                      label: 'CSV · for compliance review',
-                      icon: Icons.table_chart_outlined,
-                      onTap: () => _exportInFormat(rows, 'csv', redact: redact),
-                    ),
-                    _ExportTile(
-                      label: 'Syslog RFC 5424 · for ELK',
-                      icon: Icons.dns_outlined,
-                      onTap: () =>
-                          _exportInFormat(rows, 'syslog', redact: redact),
-                    ),
-                  ],
+                      const SizedBox(height: PsySpacing.xs),
+                      Text(
+                        'With redaction on, email-shaped actors and the last '
+                        'two IP octets are masked before the bundle leaves '
+                        'your device. The export itself is logged on this '
+                        'trail either way.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.7),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: PsySpacing.md),
+                      SwitchListTile.adaptive(
+                        value: redact,
+                        onChanged: (v) => setSheetState(() => redact = v),
+                        title: const Text('Redact PHI (recommended)'),
+                        subtitle: Text(
+                          redact
+                              ? 'Emails and last two IP octets are masked.'
+                              : 'RAW export — file contains PHI. Audit log '
+                                    'flags this leg for compliance review.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: redact
+                                ? cs.onSurface.withValues(alpha: 0.6)
+                                : cs.error,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      const SizedBox(height: PsySpacing.sm),
+                      _ExportTile(
+                        label: 'JSONL · for Splunk / Datadog',
+                        icon: Icons.data_object,
+                        onTap: () =>
+                            _exportInFormat(rows, 'jsonl', redact: redact),
+                      ),
+                      _ExportTile(
+                        label: 'CSV · for compliance review',
+                        icon: Icons.table_chart_outlined,
+                        onTap: () =>
+                            _exportInFormat(rows, 'csv', redact: redact),
+                      ),
+                      _ExportTile(
+                        label: 'Syslog RFC 5424 · for ELK',
+                        icon: Icons.dns_outlined,
+                        onTap: () =>
+                            _exportInFormat(rows, 'syslog', redact: redact),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 

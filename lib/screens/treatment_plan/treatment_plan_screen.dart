@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/homework_item.dart';
@@ -45,7 +47,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   @override
   void initState() {
     super.initState();
-    _init();
+    unawaited(_init());
   }
 
   @override
@@ -406,11 +408,13 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
         goals: plan.activeGoals.map((g) => g.description).toList(),
       );
       if (!mounted) return;
-      showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (_) => _LetterSheet(letter: letter),
+      unawaited(
+        showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          isScrollControlled: true,
+          builder: (_) => _LetterSheet(letter: letter),
+        ),
       );
     } on TreatmentPlanAiException catch (e) {
       if (!mounted) return;

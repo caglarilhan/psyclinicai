@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
   @override
   void initState() {
     super.initState();
-    _build();
+    unawaited(_build());
   }
 
   Future<void> _build() async {
@@ -80,9 +81,11 @@ class _DataExportScreenState extends State<DataExportScreen> {
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: _prettyJson));
     if (!mounted) return;
-    TelemetryService.instance.capture(
-      'compliance.dsar_export_copied',
-      properties: {'bytes': _byteSize, 'schema_version': dsarSchemaVersion},
+    unawaited(
+      TelemetryService.instance.capture(
+        'compliance.dsar_export_copied',
+        properties: {'bytes': _byteSize, 'schema_version': dsarSchemaVersion},
+      ),
     );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Export bundle copied to clipboard.')),

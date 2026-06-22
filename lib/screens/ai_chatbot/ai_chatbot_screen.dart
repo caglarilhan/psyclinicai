@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/chat_service.dart';
@@ -67,10 +69,12 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOut,
+      unawaited(
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOut,
+        ),
       );
     });
   }
@@ -84,7 +88,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
 
   void _useSuggestion(String text) {
     _input.text = text;
-    _send();
+    unawaited(_send());
   }
 
   @override

@@ -12,6 +12,8 @@
 /// activation funnel exposes drop-off).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/data/telemetry_service.dart';
@@ -104,9 +106,11 @@ class SessionTourController extends ChangeNotifier {
   }
 
   Future<void> begin() async {
-    TelemetryService.instance.capture(
-      TelemetryEvents.onboardingTourStarted,
-      properties: {'total_steps': _steps.length},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.onboardingTourStarted,
+        properties: {'total_steps': _steps.length},
+      ),
     );
   }
 
@@ -135,11 +139,13 @@ class SessionTourController extends ChangeNotifier {
     if (_completed) return;
     _completed = true;
     await _persistence.markSeen();
-    TelemetryService.instance.capture(
-      reason == 'completed'
-          ? TelemetryEvents.onboardingTourCompleted
-          : TelemetryEvents.onboardingTourSkipped,
-      properties: {'last_step_index': _index, 'total_steps': _steps.length},
+    unawaited(
+      TelemetryService.instance.capture(
+        reason == 'completed'
+            ? TelemetryEvents.onboardingTourCompleted
+            : TelemetryEvents.onboardingTourSkipped,
+        properties: {'last_step_index': _index, 'total_steps': _steps.length},
+      ),
     );
     notifyListeners();
   }

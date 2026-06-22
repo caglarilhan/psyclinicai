@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/consent_record.dart';
@@ -61,7 +63,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   void initState() {
     super.initState();
     _fullName.text = widget.args.name;
-    _init();
+    unawaited(_init());
   }
 
   Future<void> _init() async {
@@ -166,16 +168,18 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
     setState(() => _saving = true);
     try {
       await _repo.save(intake);
-      TelemetryService.instance.capture(
-        'patient.intake_completed',
-        properties: {
-          'has_emergency_contact':
-              intake.emergencyContactName?.isNotEmpty == true,
-          'prior_attempt': intake.priorSuicideAttempt,
-          'prior_self_harm': intake.priorSelfHarm,
-          'ai_consent': intake.consent?.aiAssistanceConsent ?? false,
-          'consent_policy_version': _consentPolicyVersion,
-        },
+      unawaited(
+        TelemetryService.instance.capture(
+          'patient.intake_completed',
+          properties: {
+            'has_emergency_contact':
+                intake.emergencyContactName?.isNotEmpty == true,
+            'prior_attempt': intake.priorSuicideAttempt,
+            'prior_self_harm': intake.priorSelfHarm,
+            'ai_consent': intake.consent?.aiAssistanceConsent ?? false,
+            'consent_policy_version': _consentPolicyVersion,
+          },
+        ),
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

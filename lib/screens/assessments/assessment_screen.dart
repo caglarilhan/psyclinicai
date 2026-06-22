@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/assessments/gad7_service.dart';
@@ -86,9 +88,11 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
         : _resultFromGad7(gad7!);
 
     await _persistToFirestore(phq9: phq9, gad7: gad7);
-    TelemetryService.instance.capture(
-      TelemetryEvents.assessmentCompleted,
-      properties: {'type': widget.type.name},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.assessmentCompleted,
+        properties: {'type': widget.type.name},
+      ),
     );
 
     // PHQ-9 item 9 (suicidal ideation) is a hard patient-safety
@@ -110,12 +114,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
     }
 
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => _ResultScreen(
-          type: widget.type,
-          patientName: widget.patientName,
-          result: result,
+    unawaited(
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => _ResultScreen(
+            type: widget.type,
+            patientName: widget.patientName,
+            result: result,
+          ),
         ),
       ),
     );

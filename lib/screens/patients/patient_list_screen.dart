@@ -140,7 +140,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
           status: 'Stable'),
       _DemoPatient(
           id: 'demo-3',
-          name: 'Sven Placeholder',
+          name: 'Sven Müller',
           insurer: 'TK',
           memberId: 'TK-EU-301',
           lastSeen: '3 weeks ago',

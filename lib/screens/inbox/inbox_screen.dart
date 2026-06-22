@@ -119,7 +119,7 @@ class _InboxScreenState extends State<InboxScreen> {
         id: 'i-3',
         kind: InboxItemKind.task,
         fromUid: 'system',
-        subject: 'Co-sign trainee SOAP note · Sven Placeholder',
+        subject: 'Co-sign trainee SOAP note · Sven Müller',
         bodyPreview:
             'Trainee draft from 2026-06-02 awaiting supervisor co-sign.',
         receivedAt: now.subtract(const Duration(days: 1)),

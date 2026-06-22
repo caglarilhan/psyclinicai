@@ -25,7 +25,7 @@ class _CaseloadScreenState extends State<CaseloadScreen> {
   static const _demoNames = <String, String>{
     'demo-1': 'John Demo',
     'demo-2': 'Maria Sample',
-    'demo-3': 'Sven Placeholder',
+    'demo-3': 'Sven Müller',
   };
 
   final _homework = HomeworkRepository();

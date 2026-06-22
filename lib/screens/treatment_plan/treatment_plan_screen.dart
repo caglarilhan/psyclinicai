@@ -15,6 +15,7 @@ import '../../utils/smart_goal_notes.dart';
 import '../../widgets/app_shell.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 import 'treatment_plan_cards.dart';
+import 'treatment_plan_homework.dart';
 
 /// `/treatment_plan` — the Golden Thread: a patient's diagnosis → SMART goals
 /// → progress, all in one auditable plan. Goals can be AI-drafted (BYOK) and
@@ -210,7 +211,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
           ..._homework.map(
             (h) => Padding(
               padding: const EdgeInsets.only(bottom: PsySpacing.sm),
-              child: _HomeworkTile(
+              child: HomeworkTile(
                 item: h,
                 theme: theme,
                 cs: cs,
@@ -319,7 +320,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   Future<void> _addHomework() async {
     final title = await showDialog<String>(
       context: context,
-      builder: (_) => const _HomeworkDialog(),
+      builder: (_) => const HomeworkDialog(),
     );
     if (title == null || title.trim().isEmpty) return;
     await _homeworkRepo.add(
@@ -414,7 +415,7 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
           context: context,
           showDragHandle: true,
           isScrollControlled: true,
-          builder: (_) => _LetterSheet(letter: letter),
+          builder: (_) => LetterSheet(letter: letter),
         ),
       );
     } on TreatmentPlanAiException catch (e) {
@@ -848,176 +849,3 @@ class _AddGoalDialogState extends State<_AddGoalDialog> {
   }
 }
 
-class _HomeworkTile extends StatelessWidget {
-  const _HomeworkTile({
-    required this.item,
-    required this.theme,
-    required this.cs,
-    required this.onToggle,
-  });
-  final HomeworkItem item;
-  final ThemeData theme;
-  final ColorScheme cs;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final due =
-        '${item.dueDate.year}-${item.dueDate.month.toString().padLeft(2, '0')}-${item.dueDate.day.toString().padLeft(2, '0')}';
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: PsySpacing.md,
-        vertical: PsySpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(PsyRadius.lg),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: onToggle,
-            borderRadius: BorderRadius.circular(PsyRadius.full),
-            child: Icon(
-              item.done ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: item.done
-                  ? const Color(0xFF16A34A)
-                  : cs.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(width: PsySpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    decoration: item.done ? TextDecoration.lineThrough : null,
-                    color: item.done
-                        ? cs.onSurface.withValues(alpha: 0.5)
-                        : null,
-                  ),
-                ),
-                Text(
-                  'Due $due',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (item.linkedGoal != null)
-            Tooltip(
-              message: 'Goal: ${item.linkedGoal}',
-              child: Icon(
-                Icons.link,
-                size: 16,
-                color: cs.primary.withValues(alpha: 0.7),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeworkDialog extends StatefulWidget {
-  const _HomeworkDialog();
-  @override
-  State<_HomeworkDialog> createState() => _HomeworkDialogState();
-}
-
-class _HomeworkDialogState extends State<_HomeworkDialog> {
-  final _ctl = TextEditingController();
-
-  @override
-  void dispose() {
-    _ctl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Assign homework'),
-      content: TextField(
-        controller: _ctl,
-        onChanged: (_) => setState(() {}),
-        minLines: 2,
-        maxLines: 4,
-        decoration: const InputDecoration(
-          labelText: 'Homework (one actionable task)',
-          alignLabelWithHint: true,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _ctl.text.trim().isEmpty
-              ? null
-              : () => Navigator.of(context).pop(_ctl.text.trim()),
-          child: const Text('Assign'),
-        ),
-      ],
-    );
-  }
-}
-
-class _LetterSheet extends StatelessWidget {
-  const _LetterSheet({required this.letter});
-  final String letter;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.description_outlined, color: cs.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Reimbursement letter (draft)',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  letter,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'AI-drafted — review, fill the [placeholders], and verify before '
-              'sending. Select text to copy.',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

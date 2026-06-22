@@ -98,5 +98,48 @@ void main() {
       expect(pass.contains('+'), false);
       expect(pass.contains('/'), false);
     });
+
+    // L-10 fix coverage — graceful rotation with grace-period
+    // recovery slot, matching the BYOK rotation flow.
+    group('rotateAndGetNew (L-10)', () {
+      test('archives the previous passphrase + returns a fresh value',
+          () async {
+        final original = await svc.getOrCreatePassphrase();
+        final next = await svc.rotateAndGetNew();
+        expect(next, isNot(equals(original)));
+        // The previous slot now holds the OLD passphrase so the
+        // caller can recover if PRAGMA rekey crashes mid-flight.
+        expect(await svc.readPreviousPassphrase(), original);
+        // getOrCreatePassphrase now returns the new value.
+        expect(await svc.getOrCreatePassphrase(), next);
+      });
+
+      test('rotating from an empty store does not record a previous slot',
+          () async {
+        final next = await svc.rotateAndGetNew();
+        expect(next.isNotEmpty, isTrue);
+        expect(await svc.readPreviousPassphrase(), isNull);
+      });
+
+      test('commitRotation drops the previous slot (idempotent)',
+          () async {
+        await svc.getOrCreatePassphrase();
+        await svc.rotateAndGetNew();
+        expect(await svc.readPreviousPassphrase(), isNotNull);
+        await svc.commitRotation();
+        expect(await svc.readPreviousPassphrase(), isNull);
+        // Calling again is a no-op (idempotent).
+        await svc.commitRotation();
+        expect(await svc.readPreviousPassphrase(), isNull);
+      });
+
+      test('classic rotate() also wipes the previous slot', () async {
+        await svc.getOrCreatePassphrase();
+        await svc.rotateAndGetNew();
+        expect(await svc.readPreviousPassphrase(), isNotNull);
+        await svc.rotate();
+        expect(await svc.readPreviousPassphrase(), isNull);
+      });
+    });
   });
 }

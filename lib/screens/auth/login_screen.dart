@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
@@ -64,9 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
       // Demo mode: returning visitors skip the wizard — first-timers see it.
       final done = await OnboardingService.instance.isOnboarded('demo');
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacementNamed(done ? '/dashboard' : '/onboarding');
+      unawaited(
+        Navigator.of(
+          context,
+        ).pushReplacementNamed(done ? '/dashboard' : '/onboarding'),
+      );
       return;
     }
 
@@ -85,20 +88,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result.success) {
       final email = _email.text.trim();
-      TelemetryService.instance.capture(
-        _mode == _Mode.signIn
-            ? TelemetryEvents.signInCompleted
-            : TelemetryEvents.signUpCompleted,
-        properties: {'mode': _mode.name},
+      unawaited(
+        TelemetryService.instance.capture(
+          _mode == _Mode.signIn
+              ? TelemetryEvents.signInCompleted
+              : TelemetryEvents.signUpCompleted,
+          properties: {'mode': _mode.name},
+        ),
       );
       // Identify on a SHA-256 fingerprint so analytics never sees a raw
       // PHI-adjacent identifier (GDPR Art. 25 — privacy by design).
       final emailFingerprint = sha256
           .convert(utf8.encode(email.toLowerCase()))
           .toString();
-      TelemetryService.instance.identify(
-        emailFingerprint,
-        traits: {'email_hash': emailFingerprint},
+      unawaited(
+        TelemetryService.instance.identify(
+          emailFingerprint,
+          traits: {'email_hash': emailFingerprint},
+        ),
       );
       // Post-sign-in interceptor (HIPAA §164.312(d)).
       // The UID source MUST match the one the MFA wizard wrote under
@@ -129,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(route);
+      unawaited(Navigator.of(context).pushReplacementNamed(route));
     } else {
       setState(() => _error = result.error ?? 'Unknown error');
     }
@@ -139,9 +146,11 @@ class _LoginScreenState extends State<LoginScreen> {
     // Hand off to the dedicated reset screen so the clinician gets a
     // confirmation state (and a chance to fix typos) instead of guessing
     // what a snackbar meant. The current email seeds the form.
-    Navigator.of(context).pushNamed(
-      '/auth/password_reset',
-      arguments: _email.text.trim().isEmpty ? null : _email.text.trim(),
+    unawaited(
+      Navigator.of(context).pushNamed(
+        '/auth/password_reset',
+        arguments: _email.text.trim().isEmpty ? null : _email.text.trim(),
+      ),
     );
   }
 

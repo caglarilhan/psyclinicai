@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -101,7 +103,7 @@ class AppShell extends StatelessWidget {
 
   void _go(BuildContext context, String route) {
     if (route == routeName) return;
-    Navigator.of(context).pushReplacementNamed(route);
+    unawaited(Navigator.of(context).pushReplacementNamed(route));
   }
 
   @override
@@ -491,7 +493,7 @@ class _Breadcrumb extends StatelessWidget {
               if (c.route == '/dashboard') {
                 onHome();
               } else {
-                Navigator.of(context).pushReplacementNamed(c.route!);
+                unawaited(Navigator.of(context).pushReplacementNamed(c.route!));
               }
             },
             child: Padding(
@@ -547,15 +549,15 @@ class _UserMenu extends StatelessWidget {
       onSelected: (v) async {
         switch (v) {
           case 'settings':
-            Navigator.of(context).pushNamed('/settings');
+            unawaited(Navigator.of(context).pushNamed('/settings'));
           case 'api_keys':
-            Navigator.of(context).pushNamed('/settings/api_keys');
+            unawaited(Navigator.of(context).pushNamed('/settings/api_keys'));
           case 'signout':
             if (PsyFirebase.isReady) {
               await FirebaseAuthService.instance.signOut();
             }
             if (context.mounted) {
-              Navigator.of(context).pushReplacementNamed('/landing');
+              unawaited(Navigator.of(context).pushReplacementNamed('/landing'));
             }
         }
       },

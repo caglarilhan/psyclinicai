@@ -54,7 +54,7 @@ class _SessionScreenState extends State<SessionScreen> {
   void initState() {
     super.initState();
     _startSession();
-    _loadGoals();
+    unawaited(_loadGoals());
   }
 
   /// Load the patient's active treatment-plan goals so the AI note can tie
@@ -106,31 +106,33 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   void _showSessionEndDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Session Ended'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Session duration: ${_formatDuration(_sessionDuration)}'),
-            const SizedBox(height: 16),
-            const Text('Do you want to save the session note?'),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Session Ended'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Session duration: ${_formatDuration(_sessionDuration)}'),
+              const SizedBox(height: 16),
+              const Text('Do you want to save the session note?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _saveSessionNotes();
+              },
+              child: const Text('Save'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await _saveSessionNotes();
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -172,12 +174,14 @@ class _SessionScreenState extends State<SessionScreen> {
       );
 
       await _persistToFirestore(markdown, snapshot.format);
-      TelemetryService.instance.capture(
-        TelemetryEvents.sessionNoteSaved,
-        properties: {
-          'duration_s': _sessionDuration.inSeconds,
-          'format': snapshot.format.id,
-        },
+      unawaited(
+        TelemetryService.instance.capture(
+          TelemetryEvents.sessionNoteSaved,
+          properties: {
+            'duration_s': _sessionDuration.inSeconds,
+            'format': snapshot.format.id,
+          },
+        ),
       );
 
       if (!mounted) return;
@@ -614,10 +618,14 @@ class _SessionControlBar extends StatelessWidget {
                         onExport();
                         break;
                       case _SessionAction.appointments:
-                        Navigator.of(context).pushNamed('/appointments');
+                        unawaited(
+                          Navigator.of(context).pushNamed('/appointments'),
+                        );
                         break;
                       case _SessionAction.prescriptions:
-                        Navigator.of(context).pushNamed('/e_prescription');
+                        unawaited(
+                          Navigator.of(context).pushNamed('/e_prescription'),
+                        );
                         break;
                     }
                   },

@@ -603,13 +603,24 @@ extension on _AuditKind {
         _AuditKind.signin => Icons.login_outlined,
         _AuditKind.delete => Icons.delete_outlined,
       };
-  Color tone(ColorScheme cs) => switch (this) {
-        _AuditKind.signin => cs.primary,
-        _AuditKind.read => const Color(0xFF2563EB),
-        _AuditKind.write => const Color(0xFFDB2777),
-        _AuditKind.export => const Color(0xFFD97706),
-        _AuditKind.delete => cs.error,
-      };
+  // Arch M3 fix (audit 2026-06-21): the previous palette hard-coded
+  // light-mode hex values that washed out / clashed on Material 3
+  // dark surfaces. We now branch on the ColorScheme brightness so
+  // each kind keeps a stable semantic hue while staying readable in
+  // both themes.
+  Color tone(ColorScheme cs) {
+    final dark = cs.brightness == Brightness.dark;
+    return switch (this) {
+      _AuditKind.signin => cs.primary,
+      _AuditKind.read =>
+        dark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB),
+      _AuditKind.write =>
+        dark ? const Color(0xFFF9A8D4) : const Color(0xFFDB2777),
+      _AuditKind.export =>
+        dark ? const Color(0xFFFCD34D) : const Color(0xFFD97706),
+      _AuditKind.delete => cs.error,
+    };
+  }
 }
 
 class _AuditEntry {

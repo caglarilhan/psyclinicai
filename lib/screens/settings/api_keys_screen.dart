@@ -286,7 +286,15 @@ class _ProviderCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
+                    // Arch M3 fix (audit 2026-06-21): Colors.green is
+                    // light-mode tuned and disappears against the
+                    // dark-mode surface. Use a brightness-aware
+                    // success swatch with adequate WCAG-AA contrast
+                    // for both themes.
+                    color: (theme.brightness == Brightness.dark
+                            ? const Color(0xFF34D399)
+                            : const Color(0xFF15803D))
+                        .withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -294,14 +302,18 @@ class _ProviderCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: Colors.green[700],
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFF6EE7B7)
+                            : const Color(0xFF15803D),
                         size: 14,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Configured',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.green[700],
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFF6EE7B7)
+                              : const Color(0xFF15803D),
                           fontWeight: FontWeight.w600,
                         ),
                       ),

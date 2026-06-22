@@ -96,6 +96,10 @@ class _ByokRotationDialogState extends State<ByokRotationDialog> {
     if (!mounted) return;
     switch (result.status) {
       case ByokRotationStatus.completed:
+        // Capture the dialog's Navigator reference before the next
+        // await so the use_build_context_synchronously lint can prove
+        // we are not crossing a fresh async gap with the context.
+        final navigator = Navigator.of(context);
         await _telemetry.capture(
           TelemetryEvents.byokRotationCompleted,
           properties: {
@@ -103,7 +107,7 @@ class _ByokRotationDialogState extends State<ByokRotationDialog> {
             'grace_period_h': ByokRotationService.defaultGraceWindow.inHours,
           },
         );
-        Navigator.of(context).pop(result);
+        navigator.pop(result);
         return;
       case ByokRotationStatus.rejected:
         setState(() {

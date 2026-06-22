@@ -519,7 +519,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     setState(() => _loadingInsights = true);
     try {
       final insights = await _insights.analyze(transcript);
-      if (!mounted) return;
+      if (!context.mounted) return;
       unawaited(
         showModalBottomSheet<void>(
           context: context,
@@ -529,7 +529,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         ),
       );
     } on SessionInsightsException catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
@@ -577,10 +577,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         transcript: src,
         modality: _modality,
       );
-      if (!mounted) return;
+      if (!context.mounted) return;
       _presentSupervision(context, report);
     } on SupervisionException catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
@@ -753,10 +753,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
         transcript: src,
         modality: _modality,
       );
-      if (!mounted) return;
+      if (!context.mounted) return;
       _presentLens(context, lens);
     } on ClinicalLensException catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),

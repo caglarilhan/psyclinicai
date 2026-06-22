@@ -38,7 +38,14 @@ class ErxMarketPickerCard extends StatelessWidget {
     try {
       final adapter = factory.forMarket(m);
       return 'adapter: ${adapter.runtimeType}';
-    } on StateError catch (e) {
+    }
+    // `factory.forMarket` throws StateError when no adapter is wired
+    // for the given market. The StateError IS the value we surface to
+    // the picker UI — it carries the human-readable "no adapter yet
+    // for $market" message. The lint flags catching Errors; here it
+    // is intentional because StateError is the contract.
+    // ignore: avoid_catching_errors
+    on StateError catch (e) {
       return e.message;
     }
   }

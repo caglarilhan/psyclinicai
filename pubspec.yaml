@@ -34,14 +34,17 @@ dependencies:
   # Push Notifications için
   flutter_local_notifications: ^16.3.2
   # firebase_messaging: ^14.7.20 # Geçici olarak devre dışı
-  # Offline Database için
-  sqflite: ^2.3.2
+  # Offline Database için — only sqflite_sqlcipher is imported in lib/
+  # (test/security/local_db_encryption_test.dart pins this so a plain
+  # sqflite import can never regress). Drop the redundant top-level
+  # sqflite entry; sqflite_common still flows in via sqflite_sqlcipher.
   path: ^1.9.0
   # Connectivity için
   connectivity_plus: ^5.0.2
-  # Biometric Authentication için
+  # Biometric Authentication için — `local_auth_android` is pulled in
+  # transitively by `local_auth` and no Dart file imports it directly,
+  # so the explicit top-level pin was redundant.
   local_auth: ^2.1.8
-  local_auth_android: ^1.0.38
   # Encryption için
   encrypt: ^5.0.3
   # Charts için

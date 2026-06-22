@@ -135,7 +135,7 @@ class EuCountryLawService {
                 'Section 5B Female Genital Mutilation Act 2003 requires any '
                 'regulated health, social-care, or teaching professional to '
                 'report a known case of FGM in a person under 18 to police '
-                "as soon as practicable, ideally within 24 hours.",
+                'as soon as practicable, ideally within 24 hours.',
             category: AlertCategory.mandatoryReporting,
             severity: AlertSeverity.critical,
             citation: 'FGM Act 2003 s.5B',
@@ -144,7 +144,7 @@ class EuCountryLawService {
             id: 'UK.mandatoryReporting.children',
             title: 'United Kingdom — child safeguarding (Working Together)',
             body:
-                "Working Together to Safeguard Children 2018 expects an "
+                'Working Together to Safeguard Children 2018 expects an '
                 "immediate referral to local-authority Children's Social Care "
                 'when a child is at risk of significant harm. There is no '
                 'single statutory criminal-penalty mandate but failure to '

@@ -9,6 +9,8 @@
 /// `../auth/clinician_role.dart`; the re-export below keeps
 /// data-layer callers compiling without churn while UI code can
 /// switch to the narrow module.
+library;
+
 export '../auth/clinician_role.dart' show ClinicianRole, ClinicianRoleX;
 
 class FirestoreSchema {

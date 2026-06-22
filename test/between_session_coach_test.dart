@@ -171,7 +171,7 @@ void main() {
         },
       );
       final reply = await svc.send(
-        conversation: _seed(modality: 'cbt'),
+        conversation: _seed(),
         patientText: 'Anxious about a meeting tomorrow.',
         patientMessageId: 'm1',
         at: DateTime.utc(2026, 6, 21, 9),

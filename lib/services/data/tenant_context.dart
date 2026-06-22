@@ -103,7 +103,7 @@ class TenantContext {
   static bool _isReleaseMode() {
     // const bool.fromEnvironment is evaluated at compile time; in
     // release builds Flutter wires `dart.vm.product` to true.
-    return const bool.fromEnvironment('dart.vm.product', defaultValue: false);
+    return const bool.fromEnvironment('dart.vm.product');
   }
 }
 

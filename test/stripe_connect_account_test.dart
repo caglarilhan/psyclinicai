@@ -50,8 +50,6 @@ void main() {
         requirementsDue: const ['external_account'],
         lastSyncAt: DateTime.utc(2026, 6, 1, 12),
         dashboardUrl: 'https://example/dash',
-        chargesEnabled: false,
-        payoutsEnabled: false,
       );
       final b = StripeConnectAccount.fromJson(a.toJson());
       expect(b.tenantId, a.tenantId);

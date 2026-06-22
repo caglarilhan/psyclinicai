@@ -3,85 +3,85 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:psyclinicai/l10n/app_localizations.dart';
 import 'package:psyclinicai/models/superbill_prefill.dart';
 import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
-import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
+import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
-import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
-import 'package:psyclinicai/screens/settings/account_deletion_screen.dart';
-import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
-import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
 import 'package:psyclinicai/screens/auth/telehealth_setup_screen.dart';
-import 'package:psyclinicai/screens/billing/preauth_screen.dart';
 import 'package:psyclinicai/screens/billing/insurance_claim_board_screen.dart';
-import 'package:psyclinicai/screens/inbox/inbox_screen.dart';
-import 'package:psyclinicai/screens/settings/ehr_sync_console_screen.dart';
-import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
-import 'package:psyclinicai/screens/settings/region_settings_screen.dart';
-import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
-import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
-import 'package:psyclinicai/screens/patients/patient_chart_screen.dart';
+import 'package:psyclinicai/screens/billing/preauth_screen.dart';
 import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
 import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
 import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
 import 'package:psyclinicai/screens/group_session/group_session_screen.dart';
+import 'package:psyclinicai/screens/inbox/inbox_screen.dart';
 import 'package:psyclinicai/screens/landing/beta_waitlist_screen.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
+import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
+import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
+import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
+import 'package:psyclinicai/screens/patients/patient_chart_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
 import 'package:psyclinicai/screens/safety_plan/safety_plan_screen.dart';
 import 'package:psyclinicai/screens/session/session_management_screen.dart';
 import 'package:psyclinicai/screens/session/session_screen.dart';
+import 'package:psyclinicai/screens/settings/account_deletion_screen.dart';
 import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
 import 'package:psyclinicai/screens/settings/audit_log_screen.dart';
+import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
+import 'package:psyclinicai/screens/settings/data_export_screen.dart';
+import 'package:psyclinicai/screens/settings/ehr_sync_console_screen.dart';
+import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
+import 'package:psyclinicai/screens/settings/region_settings_screen.dart';
+import 'package:psyclinicai/screens/settings/settings_screen.dart';
+import 'package:psyclinicai/screens/splash/splash_screen.dart';
+import 'package:psyclinicai/screens/static/about_page.dart';
 import 'package:psyclinicai/screens/static/baa_page.dart';
-import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
-import 'package:psyclinicai/screens/supervision/supervision_queue_screen.dart';
+import 'package:psyclinicai/screens/static/changelog_page.dart';
+import 'package:psyclinicai/screens/static/compare_page.dart';
+import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
+import 'package:psyclinicai/screens/static/faq_page.dart';
+import 'package:psyclinicai/screens/static/not_found_page.dart';
+import 'package:psyclinicai/screens/static/press_page.dart';
+import 'package:psyclinicai/screens/static/pricing_page.dart';
+import 'package:psyclinicai/screens/static/privacy_page.dart';
+import 'package:psyclinicai/screens/static/roadmap_page.dart';
+import 'package:psyclinicai/screens/static/security_page.dart';
+import 'package:psyclinicai/screens/static/status_page.dart';
+import 'package:psyclinicai/screens/static/tos_page.dart';
+import 'package:psyclinicai/screens/supervision/supervision_queue_screen.dart';
+import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/screens/trust/incident_response_screen.dart';
 import 'package:psyclinicai/screens/trust/security_controls_screen.dart';
 import 'package:psyclinicai/screens/trust/subprocessors_screen.dart';
 import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
-import 'package:psyclinicai/screens/settings/settings_screen.dart';
-import 'package:psyclinicai/screens/static/about_page.dart';
-import 'package:psyclinicai/screens/static/changelog_page.dart';
-import 'package:psyclinicai/screens/static/roadmap_page.dart';
-import 'package:psyclinicai/screens/static/compare_page.dart';
-import 'package:psyclinicai/screens/static/faq_page.dart';
-import 'package:psyclinicai/screens/static/pricing_page.dart';
-import 'package:psyclinicai/screens/static/contact_page.dart';
-import 'package:psyclinicai/screens/static/not_found_page.dart';
-import 'package:psyclinicai/screens/static/press_page.dart';
-import 'package:psyclinicai/screens/static/privacy_page.dart';
-import 'package:psyclinicai/screens/static/security_page.dart';
-import 'package:psyclinicai/screens/static/status_page.dart';
-import 'package:psyclinicai/screens/splash/splash_screen.dart';
-import 'package:psyclinicai/screens/static/tos_page.dart';
-import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
+import 'package:psyclinicai/services/ai/rag_service.dart';
+import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
+import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
-import 'package:psyclinicai/services/ai/rag_service.dart';
-import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/services/patient_service.dart';
 import 'package:psyclinicai/services/region_service.dart';
 import 'package:psyclinicai/services/role_service.dart';
 import 'package:psyclinicai/services/theme_service.dart';
-import 'package:psyclinicai/l10n/app_localizations.dart';
 import 'package:psyclinicai/theme/psy_theme.dart';
 import 'package:psyclinicai/utils/document_title.dart';
 
@@ -459,9 +459,9 @@ class _ProductionErrorFallback extends StatelessWidget {
         color: const Color(0xFFF8FAFC),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
-        child: Column(
+        child: const Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(
               Icons.warning_amber_rounded,
               size: 48,

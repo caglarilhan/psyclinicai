@@ -2,9 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/assessments/escalation_soft_lock.dart';
 
 void main() {
-  setUp(() {
-    EscalationSoftLock.instance.clearForTesting();
-  });
+  setUp(EscalationSoftLock.instance.clearForTesting);
 
   EscalationSoftLockEntry entry({
     String patientId = 'p1',
@@ -80,7 +78,7 @@ void main() {
     });
 
     test('isLocked scopes to the right patient', () {
-      EscalationSoftLock.instance.record(entry(patientId: 'p1'));
+      EscalationSoftLock.instance.record(entry());
       expect(EscalationSoftLock.instance.isLocked('p2'), isFalse);
     });
 

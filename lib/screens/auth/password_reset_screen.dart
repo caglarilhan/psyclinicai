@@ -217,7 +217,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           ),
           const SizedBox(height: PsySpacing.md),
           Align(
-            alignment: Alignment.center,
             child: TextButton(
               onPressed: _loading
                   ? null
@@ -274,7 +273,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         ),
         const SizedBox(height: PsySpacing.sm),
         Align(
-          alignment: Alignment.center,
           child: TextButton(
             onPressed: () => setState(() => _sent = false),
             child: const Text('Use a different email'),

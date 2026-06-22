@@ -132,7 +132,7 @@ void main() {
 
   group('consent policy version round-trip', () {
     test('survives JSON round-trip', () {
-      final a = build(consentPolicyVersion: '2026-06');
+      final a = build();
       final back = AiDiagnosisAudit.fromJson(a.toJson());
       expect(back.consentPolicyVersion, '2026-06');
     });

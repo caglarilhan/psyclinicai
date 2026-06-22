@@ -65,6 +65,19 @@ enum TenantRegion {
 /// Immutable snapshot of a tenant's residency commitment. Lives in
 /// Firestore at `tenants/{tenantId}` under the `region_pin` field.
 class TenantRegionPin {
+  factory TenantRegionPin.fromJson(Map<String, dynamic> json) {
+    return TenantRegionPin(
+      tenantId: json['tenant_id'] as String,
+      region: TenantRegion.fromId(json['region'] as String),
+      pinnedAt: DateTime.parse(json['pinned_at'] as String),
+      changeRequestedAt: json['change_requested_at'] != null
+          ? DateTime.parse(json['change_requested_at'] as String)
+          : null,
+      changeRequestedTo: json['change_requested_to'] is String
+          ? TenantRegion.fromId(json['change_requested_to'] as String)
+          : null,
+    );
+  }
   const TenantRegionPin({
     required this.tenantId,
     required this.region,
@@ -105,18 +118,4 @@ class TenantRegionPin {
       'change_requested_at': changeRequestedAt!.toUtc().toIso8601String(),
     if (changeRequestedTo != null) 'change_requested_to': changeRequestedTo!.id,
   };
-
-  factory TenantRegionPin.fromJson(Map<String, dynamic> json) {
-    return TenantRegionPin(
-      tenantId: json['tenant_id'] as String,
-      region: TenantRegion.fromId(json['region'] as String),
-      pinnedAt: DateTime.parse(json['pinned_at'] as String),
-      changeRequestedAt: json['change_requested_at'] != null
-          ? DateTime.parse(json['change_requested_at'] as String)
-          : null,
-      changeRequestedTo: json['change_requested_to'] is String
-          ? TenantRegion.fromId(json['change_requested_to'] as String)
-          : null,
-    );
-  }
 }

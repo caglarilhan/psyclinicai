@@ -690,7 +690,7 @@ class _ConsentCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: PsySpacing.sm),
-              PsyBadge(label: policyVersion, tone: PsyBadgeTone.neutral),
+              PsyBadge(label: policyVersion),
             ],
           ),
           const SizedBox(height: PsySpacing.md),

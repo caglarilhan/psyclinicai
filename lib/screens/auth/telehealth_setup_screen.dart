@@ -118,9 +118,9 @@ class _TelehealthSetupScreenState extends State<TelehealthSetupScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.md),
-          PsyCard(
+          const PsyCard(
             child: Column(
-              children: const [
+              children: [
                 _Bullet(
                   icon: Icons.videocam_outlined,
                   title: 'EU-routed WebRTC (Daily.co)',

@@ -24,6 +24,29 @@ enum ClaimStatus {
 }
 
 class ClaimSubmission {
+  factory ClaimSubmission.fromJson(Map<String, dynamic> json) {
+    return ClaimSubmission(
+      id: json['id'] as String,
+      superbillId: json['superbill_id'] as String,
+      payerId: json['payer_id'] as String,
+      subjectPatientId: json['subject_patient_id'] as String,
+      cptCodes: (json['cpt_codes'] as List).map((e) => e as String).toList(),
+      icd10Codes: (json['icd10_codes'] as List)
+          .map((e) => e as String)
+          .toList(),
+      amountCents: json['amount_cents'] as int,
+      status: ClaimStatus.fromId(json['status'] as String? ?? 'draft'),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      submittedAt: json['submitted_at'] != null
+          ? DateTime.parse(json['submitted_at'] as String)
+          : null,
+      adjudicatedAt: json['adjudicated_at'] != null
+          ? DateTime.parse(json['adjudicated_at'] as String)
+          : null,
+      denialReasonCode: json['denial_reason_code'] as String?,
+      refNumber: json['ref_number'] as String?,
+    );
+  }
   ClaimSubmission({
     required this.id,
     required this.superbillId,
@@ -144,28 +167,4 @@ class ClaimSubmission {
     if (denialReasonCode != null) 'denial_reason_code': denialReasonCode,
     if (refNumber != null) 'ref_number': refNumber,
   };
-
-  factory ClaimSubmission.fromJson(Map<String, dynamic> json) {
-    return ClaimSubmission(
-      id: json['id'] as String,
-      superbillId: json['superbill_id'] as String,
-      payerId: json['payer_id'] as String,
-      subjectPatientId: json['subject_patient_id'] as String,
-      cptCodes: (json['cpt_codes'] as List).map((e) => e as String).toList(),
-      icd10Codes: (json['icd10_codes'] as List)
-          .map((e) => e as String)
-          .toList(),
-      amountCents: json['amount_cents'] as int,
-      status: ClaimStatus.fromId(json['status'] as String? ?? 'draft'),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      submittedAt: json['submitted_at'] != null
-          ? DateTime.parse(json['submitted_at'] as String)
-          : null,
-      adjudicatedAt: json['adjudicated_at'] != null
-          ? DateTime.parse(json['adjudicated_at'] as String)
-          : null,
-      denialReasonCode: json['denial_reason_code'] as String?,
-      refNumber: json['ref_number'] as String?,
-    );
-  }
 }

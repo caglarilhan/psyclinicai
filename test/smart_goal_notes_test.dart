@@ -6,12 +6,7 @@ void main() {
     test('returns an empty string when every field is blank', () {
       expect(formatSmartGoalNotes(), '');
       expect(
-        formatSmartGoalNotes(
-          baseline: '   ',
-          target: '\n',
-          achievability: '',
-          relevance: ' ',
-        ),
+        formatSmartGoalNotes(baseline: '   ', target: '\n', relevance: ' '),
         '',
       );
     });

@@ -101,7 +101,6 @@ class MoodTrendChart extends StatelessWidget {
             LineChartData(
               minY: 0,
               maxY: 10,
-              gridData: const FlGridData(show: true),
               titlesData: const FlTitlesData(show: false),
               borderData: FlBorderData(show: false),
               lineBarsData: [
@@ -131,7 +130,6 @@ class MoodTrendChart extends StatelessWidget {
     spots: spots,
     isCurved: true,
     color: color,
-    barWidth: 2,
     dotData: const FlDotData(show: false),
   );
 }

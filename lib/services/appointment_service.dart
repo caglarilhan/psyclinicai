@@ -255,8 +255,9 @@ class AppointmentService {
 
   // Generate demo data
   Future<void> generateDemoData() async {
-    if (_appointments.isNotEmpty)
+    if (_appointments.isNotEmpty) {
       return; // Don't generate if data already exists
+    }
 
     final now = DateTime.now();
     final demoAppointments = [

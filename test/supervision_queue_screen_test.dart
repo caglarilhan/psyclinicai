@@ -7,19 +7,17 @@ import 'package:psyclinicai/services/supervision_review_repository.dart';
 
 Future<void> _pump(WidgetTester tester) async {
   await tester.pumpWidget(
-    MaterialApp(
+    const MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const SupervisionQueueScreen(supervisorId: 'sup-1'),
+      home: SupervisionQueueScreen(supervisorId: 'sup-1'),
     ),
   );
   await tester.pumpAndSettle();
 }
 
 void main() {
-  setUp(() {
-    InMemorySupervisionReviewRepository.instance.clearForTesting();
-  });
+  setUp(InMemorySupervisionReviewRepository.instance.clearForTesting);
 
   group('SupervisionQueueScreen', () {
     testWidgets(

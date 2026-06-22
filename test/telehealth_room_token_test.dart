@@ -3,7 +3,7 @@ import 'package:psyclinicai/models/telehealth_room_token.dart';
 
 void main() {
   group('TelehealthRoomToken', () {
-    final now = DateTime.utc(2026, 6, 2, 12, 0, 0);
+    final now = DateTime.utc(2026, 6, 2, 12);
     final tok = TelehealthRoomToken(
       roomName: 'psy-t-1-s-1',
       token: 'jwt-X',
@@ -57,7 +57,7 @@ void main() {
   });
 
   group('TelehealthRoomMinterStub', () {
-    final fixedTime = DateTime.utc(2026, 6, 2, 12, 0, 0);
+    final fixedTime = DateTime.utc(2026, 6, 2, 12);
     final minter = TelehealthRoomMinterStub(clock: () => fixedTime);
 
     test('mints a room name scoped to tenant + session', () async {

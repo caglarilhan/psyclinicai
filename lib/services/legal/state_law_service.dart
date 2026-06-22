@@ -403,8 +403,8 @@ class StateLawService {
             body:
                 'Adult mental-health records: at least 7 years after the '
                 "last service. Minor records: until the patient's 21st "
-                "birthday OR 7 years after the last service, whichever is "
-                "later.",
+                'birthday OR 7 years after the last service, whichever is '
+                'later.',
             category: AlertCategory.documentationRetention,
             severity: AlertSeverity.info,
             citation: 'WAC 246-924-354',

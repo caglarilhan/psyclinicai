@@ -34,7 +34,7 @@ void main() {
     final base = TenantRegionPin(
       tenantId: 't-1',
       region: TenantRegion.euCentral,
-      pinnedAt: DateTime.utc(2026, 6, 1),
+      pinnedAt: DateTime.utc(2026, 6),
     );
 
     test('requestChangeTo refuses identity change', () {

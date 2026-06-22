@@ -21,6 +21,16 @@ enum TenantRole {
 }
 
 class TenantMembership {
+  factory TenantMembership.fromJson(Map<String, dynamic> json) {
+    return TenantMembership(
+      tenantId: json['tenant_id'] as String,
+      tenantName: json['tenant_name'] as String,
+      uid: json['uid'] as String,
+      role: TenantRole.fromId(json['role'] as String? ?? 'clinician'),
+      joinedAt: DateTime.parse(json['joined_at'] as String),
+      isDefault: json['is_default'] as bool? ?? false,
+    );
+  }
   const TenantMembership({
     required this.tenantId,
     required this.tenantName,
@@ -45,15 +55,4 @@ class TenantMembership {
     'joined_at': joinedAt.toUtc().toIso8601String(),
     'is_default': isDefault,
   };
-
-  factory TenantMembership.fromJson(Map<String, dynamic> json) {
-    return TenantMembership(
-      tenantId: json['tenant_id'] as String,
-      tenantName: json['tenant_name'] as String,
-      uid: json['uid'] as String,
-      role: TenantRole.fromId(json['role'] as String? ?? 'clinician'),
-      joinedAt: DateTime.parse(json['joined_at'] as String),
-      isDefault: json['is_default'] as bool? ?? false,
-    );
-  }
 }

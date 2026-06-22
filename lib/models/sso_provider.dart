@@ -20,6 +20,24 @@ enum SsoProvider {
 enum SsoProtocol { saml, oidc }
 
 class SsoConfiguration {
+  factory SsoConfiguration.fromJson(Map<String, dynamic> json) =>
+      SsoConfiguration(
+        tenantId: json['tenant_id'] as String,
+        provider: SsoProvider.fromId(json['provider'] as String? ?? ''),
+        protocol: SsoProtocol.values.firstWhere(
+          (p) => p.name == json['protocol'],
+          orElse: () => SsoProtocol.saml,
+        ),
+        idpEntityId: json['idp_entity_id'] as String,
+        acsUrl: json['acs_url'] as String,
+        metadataUrl: json['metadata_url'] as String?,
+        jitProvisioning: json['jit_provisioning'] as bool? ?? false,
+        requireSso: json['require_sso'] as bool? ?? false,
+        lastTestAt: json['last_test_at'] != null
+            ? DateTime.parse(json['last_test_at'] as String)
+            : null,
+        lastTestOk: json['last_test_ok'] as bool? ?? false,
+      );
   const SsoConfiguration({
     required this.tenantId,
     required this.provider,
@@ -77,23 +95,4 @@ class SsoConfiguration {
       'last_test_at': lastTestAt!.toUtc().toIso8601String(),
     'last_test_ok': lastTestOk,
   };
-
-  factory SsoConfiguration.fromJson(Map<String, dynamic> json) =>
-      SsoConfiguration(
-        tenantId: json['tenant_id'] as String,
-        provider: SsoProvider.fromId(json['provider'] as String? ?? ''),
-        protocol: SsoProtocol.values.firstWhere(
-          (p) => p.name == json['protocol'],
-          orElse: () => SsoProtocol.saml,
-        ),
-        idpEntityId: json['idp_entity_id'] as String,
-        acsUrl: json['acs_url'] as String,
-        metadataUrl: json['metadata_url'] as String?,
-        jitProvisioning: json['jit_provisioning'] as bool? ?? false,
-        requireSso: json['require_sso'] as bool? ?? false,
-        lastTestAt: json['last_test_at'] != null
-            ? DateTime.parse(json['last_test_at'] as String)
-            : null,
-        lastTestOk: json['last_test_ok'] as bool? ?? false,
-      );
 }

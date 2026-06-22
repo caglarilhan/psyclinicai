@@ -15,7 +15,7 @@ void main() {
   });
 
   group('SsoConfiguration', () {
-    SsoConfiguration base() => SsoConfiguration(
+    SsoConfiguration base() => const SsoConfiguration(
       tenantId: 't-1',
       provider: SsoProvider.workspace,
       protocol: SsoProtocol.saml,

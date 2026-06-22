@@ -158,10 +158,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
                       ),
                     ),
                     const SizedBox(width: PsySpacing.sm),
-                    PsyBadge(
-                      label: 'v$dsarSchemaVersion',
-                      tone: PsyBadgeTone.neutral,
-                    ),
+                    const PsyBadge(label: 'v$dsarSchemaVersion'),
                     const Spacer(),
                     Text(
                       '${(_byteSize / 1024).toStringAsFixed(1)} KB',

@@ -3,6 +3,16 @@
 /// is **never** persisted client-side — we hold it in memory just
 /// long enough to hand it to the WebRTC SDK.
 class TelehealthRoomToken {
+  factory TelehealthRoomToken.fromJson(Map<String, dynamic> json) {
+    return TelehealthRoomToken(
+      roomName: json['room_name'] as String,
+      token: json['token'] as String,
+      expiresAt: DateTime.parse(json['expires_at'] as String),
+      recordingEnabled: json['recording_enabled'] as bool? ?? false,
+      euRegion: json['eu_region'] as bool? ?? true,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
   const TelehealthRoomToken({
     required this.roomName,
     required this.token,
@@ -48,17 +58,6 @@ class TelehealthRoomToken {
   /// Caller is responsible for dropping the reference immediately
   /// after `join()` — never persist this map.
   Map<String, dynamic> toWireJson() => {...toJson(), 'token': token};
-
-  factory TelehealthRoomToken.fromJson(Map<String, dynamic> json) {
-    return TelehealthRoomToken(
-      roomName: json['room_name'] as String,
-      token: json['token'] as String,
-      expiresAt: DateTime.parse(json['expires_at'] as String),
-      recordingEnabled: json['recording_enabled'] as bool? ?? false,
-      euRegion: json['eu_region'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
 }
 
 abstract class TelehealthRoomMinter {

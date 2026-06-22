@@ -34,7 +34,7 @@ void main() {
         tenantName: 'Demo',
         uid: 'u-1',
         role: TenantRole.admin,
-        joinedAt: DateTime.utc(2026, 6, 1),
+        joinedAt: DateTime.utc(2026, 6),
         isDefault: true,
       );
       final restored = TenantMembership.fromJson(m.toJson());

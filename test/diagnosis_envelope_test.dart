@@ -2,6 +2,8 @@
 /// HTTP client so we never reach Anthropic — the assertions focus on
 /// the envelope contract (riskClass, disclaimer, model metadata,
 /// serialisation round-trip) rather than the upstream call.
+library;
+
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

@@ -24,7 +24,6 @@ class GroupSessionScreen extends StatelessWidget {
     clinicId: 'c-demo',
     modalityLabel: 'DBT skills group · Thursdays',
     scheduledAt: DateTime.utc(2026, 6, 11, 17),
-    status: GroupSessionStatus.scheduled,
     roster: const [
       GroupSessionAttendance(
         patientId: 'p-001',
@@ -118,9 +117,9 @@ class GroupSessionScreen extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    "Per-patient subjective notes live in each "
+                    'Per-patient subjective notes live in each '
                     "patient's own chart. This roster only carries "
-                    "PHI-light operational fields.",
+                    'PHI-light operational fields.',
                     style: t.bodySmall?.copyWith(color: cs.onTertiaryContainer),
                   ),
                 ),

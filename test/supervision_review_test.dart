@@ -81,9 +81,7 @@ void main() {
   });
 
   group('InMemorySupervisionReviewRepository', () {
-    setUp(() {
-      InMemorySupervisionReviewRepository.instance.clearForTesting();
-    });
+    setUp(InMemorySupervisionReviewRepository.instance.clearForTesting);
 
     test('submit creates a pending review in the supervisor queue', () {
       final repo = InMemorySupervisionReviewRepository.instance;

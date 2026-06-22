@@ -95,7 +95,7 @@ class TenantMembershipService extends ChangeNotifier {
       tenantName: 'Frankfurt Locum Clinic',
       uid: 'demo',
       role: TenantRole.clinician,
-      joinedAt: DateTime.utc(2026, 4, 1),
+      joinedAt: DateTime.utc(2026, 4),
     ),
   ];
 }

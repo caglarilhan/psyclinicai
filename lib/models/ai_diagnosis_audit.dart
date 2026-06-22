@@ -56,7 +56,7 @@ class AiDiagnosisAudit {
          'candidateLabel must be clinician-curated; raw PHI is forbidden',
        ),
        assert(
-         consentPolicyVersion.length > 0,
+         consentPolicyVersion.isNotEmpty,
          'consentPolicyVersion must be set — an AI audit row without '
          'consent context is invalid (GDPR Art. 7).',
        ),

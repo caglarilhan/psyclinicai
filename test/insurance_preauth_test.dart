@@ -13,7 +13,7 @@ void main() {
     serviceCode: '90837',
     requestedUnits: 12,
     status: status,
-    requestedAt: DateTime.utc(2026, 6, 1),
+    requestedAt: DateTime.utc(2026, 6),
     expiresAt: expiresAt,
     referenceNumber: 'REF-001',
   );
@@ -22,7 +22,7 @@ void main() {
     test('round-trips through JSON without losing fields', () {
       final p = build(
         status: PreAuthStatus.approved,
-        expiresAt: DateTime.utc(2026, 12, 1),
+        expiresAt: DateTime.utc(2026, 12),
       );
       final back = InsurancePreAuth.fromJson(p.toJson());
       expect(back.id, 'pa1');
@@ -38,27 +38,27 @@ void main() {
     test('isUsableAt returns true when approved and not expired', () {
       final p = build(
         status: PreAuthStatus.approved,
-        expiresAt: DateTime.utc(2026, 12, 1),
+        expiresAt: DateTime.utc(2026, 12),
       );
-      expect(p.isUsableAt(DateTime.utc(2026, 7, 1)), isTrue);
+      expect(p.isUsableAt(DateTime.utc(2026, 7)), isTrue);
     });
 
     test('isUsableAt returns false when expired even if approved', () {
       final p = build(
         status: PreAuthStatus.approved,
-        expiresAt: DateTime.utc(2026, 5, 1),
+        expiresAt: DateTime.utc(2026, 5),
       );
-      expect(p.isUsableAt(DateTime.utc(2026, 7, 1)), isFalse);
+      expect(p.isUsableAt(DateTime.utc(2026, 7)), isFalse);
     });
 
     test('isUsableAt returns false when not yet approved', () {
-      final p = build(status: PreAuthStatus.submitted);
-      expect(p.isUsableAt(DateTime.utc(2026, 7, 1)), isFalse);
+      final p = build();
+      expect(p.isUsableAt(DateTime.utc(2026, 7)), isFalse);
     });
 
     test('isUsableAt is true when approved with no explicit expiry', () {
       final p = build(status: PreAuthStatus.approved);
-      expect(p.isUsableAt(DateTime.utc(2030, 7, 1)), isTrue);
+      expect(p.isUsableAt(DateTime.utc(2030, 7)), isTrue);
     });
 
     test('awaitingDecision flips only while submitted', () {
@@ -84,7 +84,7 @@ void main() {
           serviceCode: '90837',
           requestedUnits: 0,
           status: PreAuthStatus.submitted,
-          requestedAt: DateTime.utc(2026, 6, 1),
+          requestedAt: DateTime.utc(2026, 6),
         ),
         throwsA(isA<AssertionError>()),
       );
@@ -100,7 +100,7 @@ void main() {
           serviceCode: 'A' * 17,
           requestedUnits: 1,
           status: PreAuthStatus.submitted,
-          requestedAt: DateTime.utc(2026, 6, 1),
+          requestedAt: DateTime.utc(2026, 6),
         ),
         throwsA(isA<AssertionError>()),
       );

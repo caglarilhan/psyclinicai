@@ -18,6 +18,23 @@ enum InboxItemKind {
 }
 
 class InboxItem {
+  factory InboxItem.fromJson(Map<String, dynamic> json) {
+    return InboxItem(
+      id: json['id'] as String,
+      kind: InboxItemKind.fromId(json['kind'] as String? ?? 'team_note'),
+      fromUid: json['from_uid'] as String,
+      subject: json['subject'] as String,
+      bodyPreview: json['body_preview'] as String,
+      receivedAt: DateTime.parse(json['received_at'] as String),
+      subjectPatientId: json['subject_patient_id'] as String?,
+      readAt: json['read_at'] != null
+          ? DateTime.parse(json['read_at'] as String)
+          : null,
+      dueAt: json['due_at'] != null
+          ? DateTime.parse(json['due_at'] as String)
+          : null,
+    );
+  }
   const InboxItem({
     required this.id,
     required this.kind,
@@ -74,22 +91,4 @@ class InboxItem {
     if (readAt != null) 'read_at': readAt!.toUtc().toIso8601String(),
     if (dueAt != null) 'due_at': dueAt!.toUtc().toIso8601String(),
   };
-
-  factory InboxItem.fromJson(Map<String, dynamic> json) {
-    return InboxItem(
-      id: json['id'] as String,
-      kind: InboxItemKind.fromId(json['kind'] as String? ?? 'team_note'),
-      fromUid: json['from_uid'] as String,
-      subject: json['subject'] as String,
-      bodyPreview: json['body_preview'] as String,
-      receivedAt: DateTime.parse(json['received_at'] as String),
-      subjectPatientId: json['subject_patient_id'] as String?,
-      readAt: json['read_at'] != null
-          ? DateTime.parse(json['read_at'] as String)
-          : null,
-      dueAt: json['due_at'] != null
-          ? DateTime.parse(json['due_at'] as String)
-          : null,
-    );
-  }
 }

@@ -79,7 +79,6 @@ class _SplashScreenState extends State<SplashScreen>
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: cs.onPrimary.withValues(alpha: 0.25),
-                    width: 1,
                   ),
                 ),
                 child: Icon(Icons.psychology, color: cs.onPrimary, size: 52),

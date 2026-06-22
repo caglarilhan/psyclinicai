@@ -148,7 +148,10 @@ class _RegionSettingsScreenState extends State<RegionSettingsScreen> {
               tinted: true,
               child: Row(
                 children: [
-                  Icon(Icons.hourglass_top_outlined, color: PsyColors.warning),
+                  const Icon(
+                    Icons.hourglass_top_outlined,
+                    color: PsyColors.warning,
+                  ),
                   const SizedBox(width: PsySpacing.sm),
                   Expanded(
                     child: Text(

@@ -90,7 +90,7 @@ void main() {
           .widgetList<Widget>(find.byWidgetPredicate((w) => w is FilledButton))
           .whereType<FilledButton>()
           .firstWhere(
-            (b) => b.child is Text && (b.child as Text).data == 'Open C-SSRS',
+            (b) => b.child is Text && (b.child! as Text).data == 'Open C-SSRS',
           );
       expect(btn.onPressed, isNull);
     });

@@ -17,19 +17,19 @@ PortalDsarRequest _row({
 void main() {
   group('PortalDsarRequest', () {
     test('deadline is exactly 30 days after submittedAt', () {
-      final r = _row(submittedAt: DateTime.utc(2026, 6, 1));
-      expect(r.deadline, DateTime.utc(2026, 7, 1));
+      final r = _row(submittedAt: DateTime.utc(2026, 6));
+      expect(r.deadline, DateTime.utc(2026, 7));
     });
 
     test('isOverdue flips after the 30-day window for an open request', () {
-      final r = _row(submittedAt: DateTime.utc(2026, 5, 1));
+      final r = _row(submittedAt: DateTime.utc(2026, 5));
       expect(r.isOverdue(DateTime.utc(2026, 6, 5)), isTrue);
     });
 
     test('fulfilled requests are never overdue', () {
       final r = _row(
         state: PortalDsarState.fulfilled,
-        submittedAt: DateTime.utc(2026, 1, 1),
+        submittedAt: DateTime.utc(2026),
       );
       expect(r.isOverdue(DateTime.utc(2026, 6, 5)), isFalse);
     });

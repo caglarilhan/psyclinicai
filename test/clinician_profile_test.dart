@@ -67,7 +67,7 @@ void main() {
         fullName: 'Jane',
         role: ClinicianRole.therapist,
       );
-      final exp = DateTime(2030, 1, 1);
+      final exp = DateTime(2030);
       final next = base.copyWith(licenseExpiry: exp);
       expect(next.licenseExpiry, exp);
       expect(next.fullName, 'Jane');

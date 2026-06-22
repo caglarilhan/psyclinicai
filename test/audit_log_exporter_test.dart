@@ -101,7 +101,7 @@ void main() {
     });
 
     test('truncates the entity to 24 chars with an ellipsis', () {
-      final long =
+      const long =
           'patient demo-1 chart — '
           'long context that should be cut';
       final r = redactForSiem(entry(entity: long));
@@ -110,7 +110,7 @@ void main() {
     });
 
     test('redacts the last two octets of an IPv4 address', () {
-      final r = redactForSiem(entry(ip: '92.184.10.20'));
+      final r = redactForSiem(entry());
       expect(r.ip, '92.184.··.··');
     });
 
@@ -138,7 +138,7 @@ void main() {
         action: 'X',
         actor: 'a@b.com',
         entity: 'e',
-        timestampUtc: DateTime.utc(2026, 6, 1),
+        timestampUtc: DateTime.utc(2026, 6),
         result: AuditResult.success,
         // no userId / ip / device / hash
       );
@@ -152,7 +152,7 @@ void main() {
 
   group('toSyslogRfc5424', () {
     test('emits the canonical syslog framing per row', () {
-      final out = toSyslogRfc5424([entry(id: 'a1')]);
+      final out = toSyslogRfc5424([entry()]);
       expect(out, startsWith('<13>1 2026-06-01T12:00:00.000Z'));
       expect(out, contains('psyclinicai'));
       expect(out, contains('audit'));

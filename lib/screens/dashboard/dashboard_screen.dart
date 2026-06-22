@@ -71,8 +71,8 @@ class DashboardScreen extends StatelessWidget {
             child: _KpiRow(theme: theme, cs: cs),
           ),
           const SizedBox(height: PsySpacing.xxl),
-          PsyReveal(
-            delay: const Duration(milliseconds: 40),
+          const PsyReveal(
+            delay: Duration(milliseconds: 40),
             child: _SetupChecklist(),
           ),
           const SizedBox(height: PsySpacing.xxl),

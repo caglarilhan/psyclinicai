@@ -36,7 +36,7 @@ void main() {
 
       test('DSGVO Art. 9(2)(h) processing basis flagged', () {
         final a = alerts.firstWhere((e) => e.id == 'DE.consentToTreat.dsgvo');
-        expect(a.citation, contains("Art. 9(2)(h) DSGVO"));
+        expect(a.citation, contains('Art. 9(2)(h) DSGVO'));
         expect(a.category, AlertCategory.consentToTreat);
       });
 

@@ -50,8 +50,8 @@ void main() {
       await _pump(
         tester,
         slots: [
-          _slot(hour: 10, name: 'Maria S.'),
-          _slot(hour: 14, name: 'John Demo', kind: 'intake', duration: 90),
+          _slot(name: 'Maria S.'),
+          _slot(hour: 14, kind: 'intake', duration: 90),
         ],
       );
       expect(find.text('Maria S.'), findsOneWidget);

@@ -715,11 +715,11 @@ class _MobileTabBar extends StatelessWidget {
   // HIG: <=5 destinations. We surface the five most-used clinician
   // routes; the drawer still carries the long tail.
   static const _primaryRoutes = [
-    "/dashboard",
-    "/patients",
-    "/appointments",
-    "/session",
-    "/settings",
+    '/dashboard',
+    '/patients',
+    '/appointments',
+    '/session',
+    '/settings',
   ];
 
   @override
@@ -734,7 +734,7 @@ class _MobileTabBar extends StatelessWidget {
           d.route ==
           (selectedIndex >= 0 && selectedIndex < dests.length
               ? dests[selectedIndex].route
-              : ""),
+              : ''),
     );
     return NavigationBar(
       selectedIndex: activeIndex < 0 ? 0 : activeIndex,

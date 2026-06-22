@@ -15,14 +15,14 @@ void main() {
 
     test('round-trip: generated code verifies at the same instant', () {
       final secret = svc.generateSecret();
-      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final at = DateTime.utc(2026, 6, 2, 12);
       final code = svc.currentCode(secret, forTime: at);
       expect(svc.verify(secret: secret, code: code, at: at), isTrue);
     });
 
     test('verify accepts code from previous window (clock skew)', () {
       final secret = svc.generateSecret();
-      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final at = DateTime.utc(2026, 6, 2, 12);
       final previous = at.subtract(const Duration(seconds: 30));
       final prevCode = svc.currentCode(secret, forTime: previous);
       expect(svc.verify(secret: secret, code: prevCode, at: at), isTrue);
@@ -30,7 +30,7 @@ void main() {
 
     test('verify rejects a code from 5 minutes ago (outside skew)', () {
       final secret = svc.generateSecret();
-      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final at = DateTime.utc(2026, 6, 2, 12);
       final old = at.subtract(const Duration(minutes: 5));
       final oldCode = svc.currentCode(secret, forTime: old);
       expect(svc.verify(secret: secret, code: oldCode, at: at), isFalse);
@@ -44,7 +44,7 @@ void main() {
 
     test('verify refuses replay of the same code (RFC 6238 §5.2)', () {
       final secret = svc.generateSecret();
-      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final at = DateTime.utc(2026, 6, 2, 12);
       final code = svc.currentCode(secret, forTime: at);
       expect(svc.verify(secret: secret, code: code, at: at), isTrue);
       expect(
@@ -56,7 +56,7 @@ void main() {
 
     test('consume:false allows repeated verifies for tests/preview', () {
       final secret = svc.generateSecret();
-      final at = DateTime.utc(2026, 6, 2, 12, 0, 0);
+      final at = DateTime.utc(2026, 6, 2, 12);
       final code = svc.currentCode(secret, forTime: at);
       expect(
         svc.verify(secret: secret, code: code, at: at, consume: false),
@@ -81,7 +81,7 @@ void main() {
     });
 
     test('recovery codes are XXXX-XXXX and unique within a batch', () {
-      final codes = svc.generateRecoveryCodes(count: 10);
+      final codes = svc.generateRecoveryCodes();
       expect(codes.length, 10);
       for (final c in codes) {
         expect(

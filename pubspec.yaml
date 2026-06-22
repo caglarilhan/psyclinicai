@@ -97,6 +97,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  fake_async: any
 flutter:
   uses-material-design: true
   # Generates `lib/l10n/app_localizations.dart` from the .arb files

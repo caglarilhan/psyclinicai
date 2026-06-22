@@ -9,6 +9,24 @@
 ///
 /// PHI never lands here — `deviceLabel` is a free-form user nickname.
 class PasskeyCredential {
+  factory PasskeyCredential.fromJson(Map<String, dynamic> json) =>
+      PasskeyCredential(
+        credentialId: json['credential_id'] as String,
+        publicKey: json['public_key'] as String,
+        signCount: json['sign_count'] as int,
+        deviceLabel: json['device_label'] as String,
+        transports: (json['transports'] as List? ?? const [])
+            .map((e) => e as String)
+            .toList(growable: false),
+        aaguid: json['aaguid'] as String?,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        lastUsedAt: json['last_used_at'] == null
+            ? null
+            : DateTime.parse(json['last_used_at'] as String),
+        revokedAt: json['revoked_at'] == null
+            ? null
+            : DateTime.parse(json['revoked_at'] as String),
+      );
   PasskeyCredential({
     required this.credentialId,
     required this.publicKey,
@@ -82,25 +100,6 @@ class PasskeyCredential {
     if (lastUsedAt != null) 'last_used_at': lastUsedAt!.toIso8601String(),
     if (revokedAt != null) 'revoked_at': revokedAt!.toIso8601String(),
   };
-
-  factory PasskeyCredential.fromJson(Map<String, dynamic> json) =>
-      PasskeyCredential(
-        credentialId: json['credential_id'] as String,
-        publicKey: json['public_key'] as String,
-        signCount: json['sign_count'] as int,
-        deviceLabel: json['device_label'] as String,
-        transports: (json['transports'] as List? ?? const [])
-            .map((e) => e as String)
-            .toList(growable: false),
-        aaguid: json['aaguid'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        lastUsedAt: json['last_used_at'] == null
-            ? null
-            : DateTime.parse(json['last_used_at'] as String),
-        revokedAt: json['revoked_at'] == null
-            ? null
-            : DateTime.parse(json['revoked_at'] as String),
-      );
 }
 
 abstract class PasskeyRepository {

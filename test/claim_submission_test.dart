@@ -11,7 +11,7 @@ void main() {
     icd10Codes: const ['F32.1'],
     amountCents: 14000,
     status: ClaimStatus.draft,
-    createdAt: DateTime.utc(2026, 6, 1),
+    createdAt: DateTime.utc(2026, 6),
   );
 
   group('ClaimSubmission validation', () {
@@ -26,7 +26,7 @@ void main() {
           icd10Codes: const ['F32.1'],
           amountCents: 1000,
           status: ClaimStatus.draft,
-          createdAt: DateTime.utc(2026, 6, 1),
+          createdAt: DateTime.utc(2026, 6),
         ),
         throwsArgumentError,
       );
@@ -40,7 +40,7 @@ void main() {
           icd10Codes: const [],
           amountCents: 1000,
           status: ClaimStatus.draft,
-          createdAt: DateTime.utc(2026, 6, 1),
+          createdAt: DateTime.utc(2026, 6),
         ),
         throwsArgumentError,
       );
@@ -54,7 +54,7 @@ void main() {
           icd10Codes: const ['F32.1'],
           amountCents: -1,
           status: ClaimStatus.draft,
-          createdAt: DateTime.utc(2026, 6, 1),
+          createdAt: DateTime.utc(2026, 6),
         ),
         throwsArgumentError,
       );

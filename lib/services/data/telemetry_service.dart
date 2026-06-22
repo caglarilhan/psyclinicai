@@ -37,8 +37,9 @@ class TelemetryService {
       } catch (e, stack) {
         // Never let a misconfigured DSN crash the app — fall back to no-op.
         _sentryReady = false;
-        if (kDebugMode)
+        if (kDebugMode) {
           debugPrint('[telemetry] Sentry init failed: $e\n$stack');
+        }
       }
     }
     if (kDebugMode) {

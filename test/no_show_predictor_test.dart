@@ -27,7 +27,7 @@ void main() {
 
   group('NoShowPredictor', () {
     test('reliable patient with mid-day slot is low risk', () {
-      final r = p.predict(input(attended: 20, noShow: 1, daysSinceLast: 7));
+      final r = p.predict(input(attended: 20, daysSinceLast: 7));
       expect(r.risk, NoShowRisk.low);
     });
 

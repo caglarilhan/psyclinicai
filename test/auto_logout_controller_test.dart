@@ -12,20 +12,16 @@ void main() {
     SharedDeviceService.setTestInstance(SharedPreferences.getInstance);
   });
 
-  tearDown(() {
-    SharedDeviceService.resetTestInstance();
-  });
+  tearDown(SharedDeviceService.resetTestInstance);
 
   test('does nothing on a non-shared device, even after 10 minutes', () {
     fakeAsync((async) {
       var fired = 0;
-      var clock = DateTime(2026, 6, 16, 12, 0, 0);
+      var clock = DateTime(2026, 6, 16, 12);
       final svc = SharedDeviceService.instance;
       final ctl = AutoLogoutController(
         sharedDevice: svc,
         onLogout: () async => fired++,
-        sharedIdleTimeout: const Duration(minutes: 5),
-        tickInterval: const Duration(seconds: 1),
         now: () => clock,
       );
 
@@ -44,7 +40,7 @@ void main() {
 
   test('fires sign-out after 5 minutes idle on a shared device', () async {
     var fired = 0;
-    var clock = DateTime(2026, 6, 16, 12, 0, 0);
+    var clock = DateTime(2026, 6, 16, 12);
     final svc = SharedDeviceService.instance;
     await svc.setShared(true);
 
@@ -52,8 +48,6 @@ void main() {
       final ctl = AutoLogoutController(
         sharedDevice: svc,
         onLogout: () async => fired++,
-        sharedIdleTimeout: const Duration(minutes: 5),
-        tickInterval: const Duration(seconds: 1),
         now: () => clock,
       );
 
@@ -76,7 +70,7 @@ void main() {
 
   test('recordActivity resets the idle window', () async {
     var fired = 0;
-    var clock = DateTime(2026, 6, 16, 12, 0, 0);
+    var clock = DateTime(2026, 6, 16, 12);
     final svc = SharedDeviceService.instance;
     await svc.setShared(true);
 
@@ -84,8 +78,6 @@ void main() {
       final ctl = AutoLogoutController(
         sharedDevice: svc,
         onLogout: () async => fired++,
-        sharedIdleTimeout: const Duration(minutes: 5),
-        tickInterval: const Duration(seconds: 1),
         now: () => clock,
       );
 

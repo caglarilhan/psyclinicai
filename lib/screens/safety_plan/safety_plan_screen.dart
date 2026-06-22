@@ -246,7 +246,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
                   child: LayoutBuilder(
                     builder: (context, c) {
                       final compact = c.maxWidth < 560;
-                      final icon = const Icon(
+                      const icon = Icon(
                         Icons.health_and_safety_outlined,
                         color: Color(0xFFDC2626),
                         size: 20,

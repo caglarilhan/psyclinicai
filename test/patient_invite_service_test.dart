@@ -3,7 +3,7 @@ import 'package:psyclinicai/services/portal/patient_invite_service.dart';
 
 void main() {
   group('patient invite — Sprint 27 F-012', () {
-    final t0 = DateTime.utc(2026, 6, 16, 12, 0);
+    final t0 = DateTime.utc(2026, 6, 16, 12);
 
     test('notFound when state is null', () {
       expect(checkInvite(state: null, now: t0), InviteCheckResult.notFound);

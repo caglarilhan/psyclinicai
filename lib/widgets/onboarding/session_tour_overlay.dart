@@ -227,18 +227,18 @@ class SessionTourOverlay extends StatelessWidget {
                       Row(
                         children: [
                           TextButton(
-                            onPressed: () => controller.skip(),
+                            onPressed: controller.skip,
                             child: const Text('Skip'),
                           ),
                           const Spacer(),
                           if (!controller.isFirstStep)
                             TextButton(
-                              onPressed: () => controller.previous(),
+                              onPressed: controller.previous,
                               child: const Text('Back'),
                             ),
                           const SizedBox(width: 4),
                           FilledButton(
-                            onPressed: () => controller.next(),
+                            onPressed: controller.next,
                             child: Text(
                               controller.isLastStep ? 'Done' : 'Next',
                             ),

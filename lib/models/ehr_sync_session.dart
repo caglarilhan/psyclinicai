@@ -21,6 +21,17 @@ enum FhirSyncStatus { idle, running, conflict, complete, error }
 enum FhirConflictKind { divergent, remoteMissing, localMissing }
 
 class FhirConflict {
+  factory FhirConflict.fromJson(Map<String, dynamic> json) => FhirConflict(
+    resourceType: json['resource_type'] as String,
+    resourceId: json['resource_id'] as String,
+    kind: FhirConflictKind.values.firstWhere(
+      (k) => k.name == json['kind'],
+      orElse: () => FhirConflictKind.divergent,
+    ),
+    localUpdatedAt: DateTime.parse(json['local_updated_at'] as String),
+    remoteUpdatedAt: DateTime.parse(json['remote_updated_at'] as String),
+    fieldPath: json['field_path'] as String?,
+  );
   const FhirConflict({
     required this.resourceType,
     required this.resourceId,
@@ -45,21 +56,30 @@ class FhirConflict {
     'remote_updated_at': remoteUpdatedAt.toUtc().toIso8601String(),
     if (fieldPath != null) 'field_path': fieldPath,
   };
-
-  factory FhirConflict.fromJson(Map<String, dynamic> json) => FhirConflict(
-    resourceType: json['resource_type'] as String,
-    resourceId: json['resource_id'] as String,
-    kind: FhirConflictKind.values.firstWhere(
-      (k) => k.name == json['kind'],
-      orElse: () => FhirConflictKind.divergent,
-    ),
-    localUpdatedAt: DateTime.parse(json['local_updated_at'] as String),
-    remoteUpdatedAt: DateTime.parse(json['remote_updated_at'] as String),
-    fieldPath: json['field_path'] as String?,
-  );
 }
 
 class EhrSyncSession {
+  factory EhrSyncSession.fromJson(Map<String, dynamic> json) => EhrSyncSession(
+    sessionId: json['session_id'] as String,
+    vendor: FhirVendor.fromId(json['vendor'] as String? ?? 'smart'),
+    resourceTypes: (json['resource_types'] as List)
+        .map((e) => e as String)
+        .toList(),
+    status: FhirSyncStatus.values.firstWhere(
+      (s) => s.name == json['status'],
+      orElse: () => FhirSyncStatus.idle,
+    ),
+    startedAt: DateTime.parse(json['started_at'] as String),
+    completedAt: json['completed_at'] != null
+        ? DateTime.parse(json['completed_at'] as String)
+        : null,
+    conflicts: (json['conflicts'] as List? ?? [])
+        .map((c) => FhirConflict.fromJson(c as Map<String, dynamic>))
+        .toList(),
+    recordsRead: json['records_read'] as int? ?? 0,
+    recordsWritten: json['records_written'] as int? ?? 0,
+    errorMessage: json['error_message'] as String?,
+  );
   const EhrSyncSession({
     required this.sessionId,
     required this.vendor,
@@ -87,8 +107,7 @@ class EhrSyncSession {
   bool get needsAttention =>
       status == FhirSyncStatus.conflict || status == FhirSyncStatus.error;
 
-  Duration? get runtime =>
-      completedAt == null ? null : completedAt!.difference(startedAt);
+  Duration? get runtime => completedAt?.difference(startedAt);
 
   Map<String, dynamic> toJson() => {
     'session_id': sessionId,
@@ -103,26 +122,4 @@ class EhrSyncSession {
     'records_written': recordsWritten,
     if (errorMessage != null) 'error_message': errorMessage,
   };
-
-  factory EhrSyncSession.fromJson(Map<String, dynamic> json) => EhrSyncSession(
-    sessionId: json['session_id'] as String,
-    vendor: FhirVendor.fromId(json['vendor'] as String? ?? 'smart'),
-    resourceTypes: (json['resource_types'] as List)
-        .map((e) => e as String)
-        .toList(),
-    status: FhirSyncStatus.values.firstWhere(
-      (s) => s.name == json['status'],
-      orElse: () => FhirSyncStatus.idle,
-    ),
-    startedAt: DateTime.parse(json['started_at'] as String),
-    completedAt: json['completed_at'] != null
-        ? DateTime.parse(json['completed_at'] as String)
-        : null,
-    conflicts: (json['conflicts'] as List? ?? [])
-        .map((c) => FhirConflict.fromJson(c as Map<String, dynamic>))
-        .toList(),
-    recordsRead: json['records_read'] as int? ?? 0,
-    recordsWritten: json['records_written'] as int? ?? 0,
-    errorMessage: json['error_message'] as String?,
-  );
 }

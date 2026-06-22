@@ -49,6 +49,19 @@ final List<RegExp> _phiSentinels = [
 ];
 
 class BetaFeedback {
+  factory BetaFeedback.fromJson(Map<String, dynamic> json) => BetaFeedback(
+    id: json['id'] as String,
+    kind: BetaFeedbackKind.fromId(json['kind'] as String),
+    body: json['body'] as String,
+    route: json['route'] as String,
+    uid: json['uid'] as String,
+    phiAttestation: json['phi_attested'] as bool? ?? false,
+    submittedAt: DateTime.parse(json['submitted_at'] as String),
+    severity: BetaFeedbackSeverity.values.firstWhere(
+      (s) => s.name == json['severity'],
+      orElse: () => BetaFeedbackSeverity.medium,
+    ),
+  );
   BetaFeedback({
     required this.id,
     required this.kind,
@@ -105,20 +118,6 @@ class BetaFeedback {
     'phi_attested': phiAttestation,
     'submitted_at': submittedAt.toUtc().toIso8601String(),
   };
-
-  factory BetaFeedback.fromJson(Map<String, dynamic> json) => BetaFeedback(
-    id: json['id'] as String,
-    kind: BetaFeedbackKind.fromId(json['kind'] as String),
-    body: json['body'] as String,
-    route: json['route'] as String,
-    uid: json['uid'] as String,
-    phiAttestation: json['phi_attested'] as bool? ?? false,
-    submittedAt: DateTime.parse(json['submitted_at'] as String),
-    severity: BetaFeedbackSeverity.values.firstWhere(
-      (s) => s.name == json['severity'],
-      orElse: () => BetaFeedbackSeverity.medium,
-    ),
-  );
 }
 
 abstract class BetaFeedbackRepository {

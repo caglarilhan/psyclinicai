@@ -18,8 +18,8 @@ void main() {
     status: 'Scheduled',
     notes: '',
     location: 'Office',
-    createdAt: DateTime(2026, 1, 1),
-    updatedAt: DateTime(2026, 1, 1),
+    createdAt: DateTime(2026),
+    updatedAt: DateTime(2026),
   );
 
   group('Appointment model', () {

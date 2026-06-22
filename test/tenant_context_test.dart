@@ -2,6 +2,8 @@
 /// the override + ownership-check code paths so the helper's contract
 /// is locked down without needing a Firebase emulator. The Firebase
 /// branch is tested by the integration suite.
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/data/tenant_context.dart';
 

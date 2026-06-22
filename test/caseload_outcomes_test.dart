@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/utils/caseload_outcomes.dart';
 
 void main() {
-  final baseDate = DateTime.utc(2026, 6, 1);
+  final baseDate = DateTime.utc(2026, 6);
   AppointmentOutcome appt(String status) =>
       AppointmentOutcome(status: status, scheduledFor: baseDate);
 
@@ -47,9 +47,9 @@ void main() {
     test('delta is the signed change from earliest to latest sample', () {
       final m = buildCaseloadMetrics(
         samples: [
-          OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
-          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 3, 1)),
-          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
+          OutcomeSample(score: 18, takenAt: DateTime.utc(2026)),
+          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 3)),
+          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5)),
         ],
       );
       expect(m.totalSamples, 3);
@@ -62,8 +62,8 @@ void main() {
     test('reorders samples chronologically before computing delta', () {
       final m = buildCaseloadMetrics(
         samples: [
-          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5, 1)),
-          OutcomeSample(score: 18, takenAt: DateTime.utc(2026, 1, 1)),
+          OutcomeSample(score: 8, takenAt: DateTime.utc(2026, 5)),
+          OutcomeSample(score: 18, takenAt: DateTime.utc(2026)),
         ],
       );
       expect(m.firstSample!.score, 18);
@@ -73,7 +73,7 @@ void main() {
 
     test('single sample reports null delta and false improvement', () {
       final m = buildCaseloadMetrics(
-        samples: [OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 4, 1))],
+        samples: [OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 4))],
       );
       expect(m.delta, isNull);
       expect(m.hasReliableImprovement, isFalse);
@@ -82,8 +82,8 @@ void main() {
     test('hasReliableImprovement requires at least a -5 delta', () {
       final small = buildCaseloadMetrics(
         samples: [
-          OutcomeSample(score: 14, takenAt: DateTime.utc(2026, 1, 1)),
-          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 5, 1)),
+          OutcomeSample(score: 14, takenAt: DateTime.utc(2026)),
+          OutcomeSample(score: 12, takenAt: DateTime.utc(2026, 5)),
         ],
       );
       expect(small.delta, -2);

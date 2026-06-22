@@ -3,9 +3,7 @@ import 'package:psyclinicai/models/portal_dsar_request.dart';
 import 'package:psyclinicai/services/portal/portal_dsar_repository.dart';
 
 void main() {
-  setUp(() {
-    InMemoryPortalDsarRepository.instance.clearForTesting();
-  });
+  setUp(InMemoryPortalDsarRepository.instance.clearForTesting);
 
   group('InMemoryPortalDsarRepository', () {
     test('submit lands a request in submitted state for the user', () {

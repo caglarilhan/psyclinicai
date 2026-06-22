@@ -20,7 +20,7 @@ class SubprocessorsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final entries = SubprocessorRegistry.entries;
+    const entries = SubprocessorRegistry.entries;
     return AppShell(
       routeName: '/trust/subprocessors',
       title: 'Subprocessors',
@@ -62,10 +62,7 @@ class SubprocessorsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: PsySpacing.sm),
-                PsyBadge(
-                  label: '${entries.length} vendors',
-                  tone: PsyBadgeTone.neutral,
-                ),
+                PsyBadge(label: '${entries.length} vendors'),
               ],
             ),
           ),

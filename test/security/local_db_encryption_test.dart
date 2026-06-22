@@ -19,7 +19,7 @@ void main() {
 
     test('imports sqflite_sqlcipher, never plain sqflite', () {
       expect(
-        source.contains("package:sqflite_sqlcipher/sqflite.dart"),
+        source.contains('package:sqflite_sqlcipher/sqflite.dart'),
         true,
         reason:
             'offline_service must import sqflite_sqlcipher so openDatabase '
@@ -43,14 +43,14 @@ void main() {
 
     test('imports LocalDbKeyService and passes password to openDatabase', () {
       expect(
-        source.contains("LocalDbKeyService"),
+        source.contains('LocalDbKeyService'),
         true,
         reason:
             'OfflineService must call LocalDbKeyService.getOrCreatePassphrase '
             '— hard-coded keys defeat the keychain binding.',
       );
       expect(
-        source.contains("password: passphrase"),
+        source.contains('password: passphrase'),
         true,
         reason:
             'openDatabase must receive `password: passphrase` — without it '
@@ -60,7 +60,7 @@ void main() {
 
     test('uses v2 DB filename so plaintext v1 file is never re-opened', () {
       expect(
-        source.contains("psyclinic_offline_v2.db"),
+        source.contains('psyclinic_offline_v2.db'),
         true,
         reason:
             'v2 filename guarantees the legacy plaintext file is not opened '

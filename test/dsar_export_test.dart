@@ -13,7 +13,7 @@ void main() {
     aiAssistanceConsent: true,
     sensitiveDataConsent: true,
     signedFullName: 'Jane Doe',
-    signedAt: DateTime.utc(2026, 6, 1),
+    signedAt: DateTime.utc(2026, 6),
   );
 
   group('buildPatientExport', () {
@@ -32,7 +32,7 @@ void main() {
     test('GDPR pointer block names Article 15 and Article 20', () {
       final bundle = buildPatientExport(
         patientId: 'p',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
       );
       final gdpr = bundle['gdpr'] as Map<String, dynamic>;
       expect(gdpr['article_15'], contains('access'));
@@ -42,7 +42,7 @@ void main() {
     test('omits sections that are not supplied', () {
       final bundle = buildPatientExport(
         patientId: 'p',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
       );
       expect(bundle.containsKey('intake'), isFalse);
       expect(bundle.containsKey('consent'), isFalse);
@@ -63,15 +63,10 @@ void main() {
         patientId: 'p1',
         warningSigns: const ['ruminating'],
       );
-      final note = SessionNote(
-        id: 'n1',
-        patientId: 'p1',
-        markdown: 'S: ...',
-        format: 'soap',
-      );
+      final note = SessionNote(id: 'n1', patientId: 'p1', markdown: 'S: ...');
       final bundle = buildPatientExport(
         patientId: 'p1',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
         intake: intake,
         safetyPlan: plan,
         sessionNotes: [note],
@@ -92,7 +87,7 @@ void main() {
         );
         final bundle = buildPatientExport(
           patientId: 'p1',
-          generatedAt: DateTime.utc(2026, 6, 1),
+          generatedAt: DateTime.utc(2026, 6),
           intake: intake,
         );
         expect(bundle['consent'], isNotNull);
@@ -115,11 +110,11 @@ void main() {
         aiAssistanceConsent: false,
         sensitiveDataConsent: true,
         signedFullName: 'Jane Doe',
-        signedAt: DateTime.utc(2026, 12, 1),
+        signedAt: DateTime.utc(2026, 12),
       );
       final bundle = buildPatientExport(
         patientId: 'p1',
-        generatedAt: DateTime.utc(2027, 1, 1),
+        generatedAt: DateTime.utc(2027),
         intake: intake,
         consent: newer,
       );
@@ -133,7 +128,7 @@ void main() {
     test('true for a bundle with no records', () {
       final bundle = buildPatientExport(
         patientId: 'p',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
       );
       expect(isExportEmpty(bundle), isTrue);
     });
@@ -142,22 +137,17 @@ void main() {
       final intake = PatientIntake(patientId: 'p', fullName: 'A');
       final bundle = buildPatientExport(
         patientId: 'p',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
         intake: intake,
       );
       expect(isExportEmpty(bundle), isFalse);
     });
 
     test('false when at least one session note is present', () {
-      final note = SessionNote(
-        id: 'n',
-        patientId: 'p',
-        markdown: 'x',
-        format: 'soap',
-      );
+      final note = SessionNote(id: 'n', patientId: 'p', markdown: 'x');
       final bundle = buildPatientExport(
         patientId: 'p',
-        generatedAt: DateTime.utc(2026, 6, 1),
+        generatedAt: DateTime.utc(2026, 6),
         sessionNotes: [note],
       );
       expect(isExportEmpty(bundle), isFalse);

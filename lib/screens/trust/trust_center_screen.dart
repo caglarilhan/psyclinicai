@@ -63,7 +63,7 @@ class _PostureBar extends StatelessWidget {
   final ColorScheme cs;
   @override
   Widget build(BuildContext context) {
-    final items = const [
+    const items = [
       _Posture('HIPAA', 'Aligned', PsyBadgeTone.success),
       _Posture('GDPR Art. 28', 'DPA signed on request', PsyBadgeTone.success),
       _Posture('SOC 2 Type II', 'In progress · Q4 2026', PsyBadgeTone.warning),
@@ -295,7 +295,7 @@ class _DocsCard extends StatelessWidget {
   final ColorScheme cs;
   @override
   Widget build(BuildContext context) {
-    final docs = const [
+    const docs = [
       _DocRow('Security whitepaper', 'On request'),
       _DocRow('SOC 2 readiness summary', 'Q4 2026'),
       _DocRow('Penetration test report', 'Under NDA'),

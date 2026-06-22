@@ -5,9 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    SecuritySettingsService.setTestInstance(
-      () => SharedPreferences.getInstance(),
-    );
+    SecuritySettingsService.setTestInstance(SharedPreferences.getInstance);
   });
 
   tearDown(SecuritySettingsService.resetTestInstance);

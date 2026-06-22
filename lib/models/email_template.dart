@@ -79,6 +79,15 @@ const Map<EmailTemplateKind, Set<String>> kPerKindTokenAllowList = {
 };
 
 class EmailTemplate {
+  factory EmailTemplate.fromJson(Map<String, dynamic> json) => EmailTemplate(
+    id: json['id'] as String,
+    kind: EmailTemplateKind.fromId(json['kind'] as String),
+    subject: json['subject'] as String,
+    bodyMarkdown: json['body_md'] as String,
+    enabled: json['enabled'] as bool? ?? true,
+    abVariantId: json['ab_variant_id'] as String?,
+    updatedAt: DateTime.parse(json['updated_at'] as String),
+  );
   EmailTemplate({
     required this.id,
     required this.kind,
@@ -142,19 +151,17 @@ class EmailTemplate {
     if (abVariantId != null) 'ab_variant_id': abVariantId,
     'updated_at': updatedAt.toIso8601String(),
   };
-
-  factory EmailTemplate.fromJson(Map<String, dynamic> json) => EmailTemplate(
-    id: json['id'] as String,
-    kind: EmailTemplateKind.fromId(json['kind'] as String),
-    subject: json['subject'] as String,
-    bodyMarkdown: json['body_md'] as String,
-    enabled: json['enabled'] as bool? ?? true,
-    abVariantId: json['ab_variant_id'] as String?,
-    updatedAt: DateTime.parse(json['updated_at'] as String),
-  );
 }
 
 class EmailSequence {
+  factory EmailSequence.fromJson(Map<String, dynamic> json) => EmailSequence(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    enabled: json['enabled'] as bool? ?? true,
+    steps: (json['steps'] as List)
+        .map((s) => EmailSequenceStep.fromJson(s as Map<String, dynamic>))
+        .toList(),
+  );
   const EmailSequence({
     required this.id,
     required this.name,
@@ -180,18 +187,14 @@ class EmailSequence {
     'enabled': enabled,
     'steps': steps.map((s) => s.toJson()).toList(),
   };
-
-  factory EmailSequence.fromJson(Map<String, dynamic> json) => EmailSequence(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    enabled: json['enabled'] as bool? ?? true,
-    steps: (json['steps'] as List)
-        .map((s) => EmailSequenceStep.fromJson(s as Map<String, dynamic>))
-        .toList(),
-  );
 }
 
 class EmailSequenceStep {
+  factory EmailSequenceStep.fromJson(Map<String, dynamic> json) =>
+      EmailSequenceStep(
+        offset: Duration(minutes: json['offset_minutes'] as int),
+        kind: EmailTemplateKind.fromId(json['kind'] as String),
+      );
   const EmailSequenceStep({required this.kind, required this.offset});
 
   final Duration offset;
@@ -201,10 +204,4 @@ class EmailSequenceStep {
     'offset_minutes': offset.inMinutes,
     'kind': kind.id,
   };
-
-  factory EmailSequenceStep.fromJson(Map<String, dynamic> json) =>
-      EmailSequenceStep(
-        offset: Duration(minutes: json['offset_minutes'] as int),
-        kind: EmailTemplateKind.fromId(json['kind'] as String),
-      );
 }

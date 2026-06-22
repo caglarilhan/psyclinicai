@@ -10,6 +10,25 @@ import '../mfa/totp_service.dart';
 /// so we can verify lost-device unlock without seeing the raw codes
 /// (HIPAA §164.312(a)(2)(iv)).
 class MfaEnrolment {
+  factory MfaEnrolment.fromJson(Map<String, dynamic> json) {
+    return MfaEnrolment(
+      uid: json['uid'] as String,
+      enrolledAt: DateTime.parse(json['enrolled_at'] as String),
+      recoveryCodeHashes:
+          (json['recovery_code_hashes'] as List?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      usedRecoveryCodes:
+          (json['used_recovery_codes'] as List?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      lastVerifiedAt: json['last_verified_at'] != null
+          ? DateTime.parse(json['last_verified_at'] as String)
+          : null,
+    );
+  }
   const MfaEnrolment({
     required this.uid,
     required this.enrolledAt,
@@ -35,26 +54,6 @@ class MfaEnrolment {
     if (lastVerifiedAt != null)
       'last_verified_at': lastVerifiedAt!.toUtc().toIso8601String(),
   };
-
-  factory MfaEnrolment.fromJson(Map<String, dynamic> json) {
-    return MfaEnrolment(
-      uid: json['uid'] as String,
-      enrolledAt: DateTime.parse(json['enrolled_at'] as String),
-      recoveryCodeHashes:
-          (json['recovery_code_hashes'] as List?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-      usedRecoveryCodes:
-          (json['used_recovery_codes'] as List?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-      lastVerifiedAt: json['last_verified_at'] != null
-          ? DateTime.parse(json['last_verified_at'] as String)
-          : null,
-    );
-  }
 
   MfaEnrolment markUsed(String hash, DateTime at) => MfaEnrolment(
     uid: uid,

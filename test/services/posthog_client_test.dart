@@ -33,7 +33,7 @@ void main() {
           event: 'session.first_soap_generated',
           distinctId: 'user_42',
           properties: {'time_to_first_soap_sec': 178},
-          timestamp: DateTime.utc(2026, 6, 20, 12, 0, 0),
+          timestamp: DateTime.utc(2026, 6, 20, 12),
         );
         expect(ok, true);
         expect(url.host, 'eu.i.posthog.com');
@@ -42,7 +42,7 @@ void main() {
         expect(body['event'], 'session.first_soap_generated');
         expect(body['distinct_id'], 'user_42');
         expect(body['timestamp'], '2026-06-20T12:00:00.000Z');
-        final props = body['properties'] as Map<String, Object?>;
+        final props = body['properties']! as Map<String, Object?>;
         expect(props['time_to_first_soap_sec'], 178);
         expect(props[r'$lib'], 'psyclinicai-flutter');
       },
@@ -78,7 +78,7 @@ void main() {
       );
       expect(ok, true);
       expect(body['event'], r'$identify');
-      final props = body['properties'] as Map<String, Object?>;
+      final props = body['properties']! as Map<String, Object?>;
       expect(props[r'$anon_distinct_id'], 'anon-99');
       expect(props[r'$set'], {'region': 'EU'});
     });

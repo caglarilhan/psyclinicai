@@ -8,7 +8,7 @@ void main() {
         suggestion: 'F33.1 Major depressive disorder, recurrent, moderate',
         modelId: 'claude-haiku-4-5',
         modelVersion: 'pyc-2026-06-21',
-        generatedAt: DateTime.utc(2026, 6, 21, 12, 0, 0),
+        generatedAt: DateTime.utc(2026, 6, 21, 12),
       );
       expect(cds.riskClass, ClinicalRiskClass.decisionSupportOnly);
       expect(cds.requiresClinicianConfirmation, isTrue);
@@ -30,7 +30,7 @@ void main() {
         suggestion: {'icd10': 'F32.1', 'label': 'MDD moderate'},
         modelId: 'claude-haiku-4-5',
         modelVersion: 'pyc-2026-06-21',
-        generatedAt: DateTime.utc(2026, 6, 21, 12, 0, 0),
+        generatedAt: DateTime.utc(2026, 6, 21, 12),
         riskClass: ClinicalRiskClass.cdss,
         evidenceSpans: ['Client reports 2 weeks of low mood'],
       );

@@ -140,7 +140,7 @@ class RopaRegistry {
     RopaActivity(
       id: 'ai-assistance',
       purpose:
-          "Generate decision-support drafts (treatment plan suggestions, "
+          'Generate decision-support drafts (treatment plan suggestions, '
           "session note structuring) at the clinician's explicit request.",
       dataCategories: [
         'Clinical free-text segments',

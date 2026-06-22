@@ -154,7 +154,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
 
   Widget _statusBadge(DeletionStatus s, bool hasRequest) {
     if (!hasRequest) {
-      return const PsyBadge(label: 'No request', tone: PsyBadgeTone.neutral);
+      return const PsyBadge(label: 'No request');
     }
     switch (s) {
       case DeletionStatus.pendingGrace:
@@ -163,7 +163,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
           tone: PsyBadgeTone.warning,
         );
       case DeletionStatus.cancelled:
-        return const PsyBadge(label: 'Cancelled', tone: PsyBadgeTone.neutral);
+        return const PsyBadge(label: 'Cancelled');
       case DeletionStatus.completed:
         return const PsyBadge(label: 'Purged', tone: PsyBadgeTone.danger);
     }

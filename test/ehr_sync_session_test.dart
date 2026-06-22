@@ -75,7 +75,7 @@ void main() {
             resourceId: 'enc-9',
             kind: FhirConflictKind.remoteMissing,
             localUpdatedAt: DateTime.utc(2026, 6, 2, 10),
-            remoteUpdatedAt: DateTime.utc(2026, 6, 1),
+            remoteUpdatedAt: DateTime.utc(2026, 6),
           ),
         ],
         recordsRead: 42,

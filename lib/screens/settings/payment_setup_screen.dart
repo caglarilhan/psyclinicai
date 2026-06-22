@@ -133,9 +133,9 @@ class _PaymentSetupScreenState extends State<PaymentSetupScreen> {
             ),
           ),
           const SizedBox(height: PsySpacing.md),
-          PsyCard(
+          const PsyCard(
             child: Column(
-              children: const [
+              children: [
                 _Bullet(
                   icon: Icons.credit_card,
                   title: 'Stripe card + Apple/Google Pay',
@@ -394,7 +394,7 @@ class _ConnectAccountPanel extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.error_outline,
                       size: 16,
                       color: PsyColors.warning,

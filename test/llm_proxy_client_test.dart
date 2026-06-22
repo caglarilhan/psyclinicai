@@ -22,11 +22,11 @@ void main() {
 
   group('LlmRequest.redacted', () {
     test('strips email + phone + name before egress', () {
-      final req = LlmRequest(
+      const req = LlmRequest(
         tenantId: 't-1',
         model: LlmModel.sonnet46,
         prompt: 'John Demo (jane@example.com, +905551112233) reports …',
-        patientNames: const ['John Demo'],
+        patientNames: ['John Demo'],
       );
       final scrubbed = req.redacted();
       expect(scrubbed.prompt, contains('[EMAIL]'));

@@ -12,9 +12,7 @@ Future<void> _pump(WidgetTester tester) async {
 }
 
 void main() {
-  setUp(() {
-    InMemoryConsentEntryRepository.instance.clearForTesting();
-  });
+  setUp(InMemoryConsentEntryRepository.instance.clearForTesting);
 
   group('ConsentCenterScreen', () {
     testWidgets('renders six category cards in not-given state by default', (

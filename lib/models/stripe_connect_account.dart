@@ -18,6 +18,37 @@ enum StripeConnectStatus {
 }
 
 class StripeConnectAccount {
+  factory StripeConnectAccount.fromJson(Map<String, dynamic> json) {
+    return StripeConnectAccount(
+      tenantId: json['tenant_id'] as String,
+      status: StripeConnectStatus.fromId(json['status'] as String? ?? 'none'),
+      accountId: json['account_id'] as String?,
+      requirementsDue:
+          (json['requirements_due'] as List?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      lastSyncAt: json['last_sync_at'] != null
+          ? DateTime.parse(json['last_sync_at'] as String)
+          : null,
+      dashboardUrl: json['dashboard_url'] as String?,
+      chargesEnabled: json['charges_enabled'] as bool? ?? false,
+      payoutsEnabled: json['payouts_enabled'] as bool? ?? false,
+    );
+  }
+
+  factory StripeConnectAccount.demo(String tenantId) => StripeConnectAccount(
+    tenantId: tenantId,
+    status: StripeConnectStatus.restricted,
+    accountId: 'acct_demo_${tenantId.substring(0, 4).toUpperCase()}',
+    requirementsDue: const [
+      'external_account',
+      'individual.id_number',
+      'tos_acceptance.date',
+    ],
+    lastSyncAt: DateTime.utc(2026, 6, 2, 8, 30),
+    dashboardUrl: 'https://connect.stripe.com/express/demo',
+  );
   const StripeConnectAccount({
     required this.tenantId,
     required this.status,
@@ -73,38 +104,4 @@ class StripeConnectAccount {
     'charges_enabled': chargesEnabled,
     'payouts_enabled': payoutsEnabled,
   };
-
-  factory StripeConnectAccount.fromJson(Map<String, dynamic> json) {
-    return StripeConnectAccount(
-      tenantId: json['tenant_id'] as String,
-      status: StripeConnectStatus.fromId(json['status'] as String? ?? 'none'),
-      accountId: json['account_id'] as String?,
-      requirementsDue:
-          (json['requirements_due'] as List?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const [],
-      lastSyncAt: json['last_sync_at'] != null
-          ? DateTime.parse(json['last_sync_at'] as String)
-          : null,
-      dashboardUrl: json['dashboard_url'] as String?,
-      chargesEnabled: json['charges_enabled'] as bool? ?? false,
-      payoutsEnabled: json['payouts_enabled'] as bool? ?? false,
-    );
-  }
-
-  factory StripeConnectAccount.demo(String tenantId) => StripeConnectAccount(
-    tenantId: tenantId,
-    status: StripeConnectStatus.restricted,
-    accountId: 'acct_demo_${tenantId.substring(0, 4).toUpperCase()}',
-    requirementsDue: const [
-      'external_account',
-      'individual.id_number',
-      'tos_acceptance.date',
-    ],
-    lastSyncAt: DateTime.utc(2026, 6, 2, 8, 30),
-    dashboardUrl: 'https://connect.stripe.com/express/demo',
-    chargesEnabled: false,
-    payoutsEnabled: false,
-  );
 }

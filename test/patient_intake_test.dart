@@ -29,8 +29,6 @@ void main() {
         medicalHistory: 'No chronic conditions',
         mentalHealthHistory: 'Mild MDE in 2022',
         substanceUse: 'Occasional alcohol',
-        priorSuicideAttempt: false,
-        priorSelfHarm: false,
         consent: validConsent(),
       );
 

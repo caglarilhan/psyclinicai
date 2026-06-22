@@ -42,7 +42,7 @@ void main() {
     });
 
     test('isActiveAt flips to false after the window closes', () {
-      final r = _row(dismissedAt: DateTime.utc(2026, 6, 1));
+      final r = _row(dismissedAt: DateTime.utc(2026, 6));
       expect(r.isActiveAt(DateTime.utc(2026, 6, 3)), isFalse);
     });
 

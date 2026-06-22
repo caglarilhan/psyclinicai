@@ -49,7 +49,7 @@ void main() {
 
     test('double revoke throws StateError', () {
       final revoked = _entry().revoke();
-      expect(() => revoked.revoke(), throwsA(isA<StateError>()));
+      expect(revoked.revoke, throwsA(isA<StateError>()));
     });
 
     test('JSON round-trip preserves revoke trail', () {
@@ -75,9 +75,7 @@ void main() {
   });
 
   group('InMemoryConsentEntryRepository', () {
-    setUp(() {
-      InMemoryConsentEntryRepository.instance.clearForTesting();
-    });
+    setUp(InMemoryConsentEntryRepository.instance.clearForTesting);
 
     test('record + activeOf return the same row', () {
       final repo = InMemoryConsentEntryRepository.instance;
@@ -87,7 +85,7 @@ void main() {
 
     test('a new active row of the same kind revokes the previous', () {
       final repo = InMemoryConsentEntryRepository.instance;
-      final first = repo.record(_entry(id: 'ce-1'));
+      final first = repo.record(_entry());
       final second = repo.record(_entry(id: 'ce-2'));
       expect(repo.activeOf('p-1', ConsentKind.aiProcessing)?.id, second.id);
       final firstRows = repo
@@ -113,7 +111,7 @@ void main() {
 
     test('forPatient scopes correctly across patients', () {
       final repo = InMemoryConsentEntryRepository.instance;
-      repo.record(_entry(id: 'a', patientId: 'p-1'));
+      repo.record(_entry(id: 'a'));
       repo.record(_entry(id: 'b', patientId: 'p-2'));
       expect(repo.forPatient('p-1'), hasLength(1));
       expect(repo.forPatient('p-2'), hasLength(1));

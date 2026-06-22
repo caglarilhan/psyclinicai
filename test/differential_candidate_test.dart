@@ -47,7 +47,7 @@ void main() {
     test('confidence bands', () {
       expect(_candidate(confidence: 0.1).band, ConfidenceBand.low);
       expect(_candidate(confidence: 0.3).band, ConfidenceBand.moderate);
-      expect(_candidate(confidence: 0.6).band, ConfidenceBand.high);
+      expect(_candidate().band, ConfidenceBand.high);
       expect(_candidate(confidence: 0.85).band, ConfidenceBand.veryHigh);
     });
 

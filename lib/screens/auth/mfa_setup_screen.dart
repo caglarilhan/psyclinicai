@@ -193,7 +193,7 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
             ),
             MfaStep.recovery => _RecoveryPane(
               codes: _recoveryCodes,
-              onFinish: () => _finish(),
+              onFinish: _finish,
             ),
             MfaStep.done => _DonePane(onReset: _restart),
           },
@@ -429,7 +429,6 @@ class _ScanPane extends StatelessWidget {
               child: QrImageView(
                 data: uri,
                 size: 200,
-                version: QrVersions.auto,
                 backgroundColor: Colors.white,
               ),
             ),

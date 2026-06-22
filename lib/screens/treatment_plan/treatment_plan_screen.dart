@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../models/homework_item.dart';
 import '../../models/treatment_plan_models.dart';
+import '../../services/compliance/consent_guard.dart';
 import '../../services/copilot/treatment_plan_ai_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/homework_repository.dart';
-import '../../services/compliance/consent_guard.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';

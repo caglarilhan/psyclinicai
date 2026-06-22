@@ -10,9 +10,7 @@ void main() {
     SharedDeviceService.setTestInstance(SharedPreferences.getInstance);
   });
 
-  tearDown(() {
-    SharedDeviceService.resetTestInstance();
-  });
+  tearDown(SharedDeviceService.resetTestInstance);
 
   test('default is false; load reads persisted value', () async {
     final svc = SharedDeviceService.instance;

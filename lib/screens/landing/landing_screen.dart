@@ -165,6 +165,11 @@ class _LandingScreenState extends State<LandingScreen> {
       'tos' => '/tos',
       'contact' => '/contact',
       'press' => '/press',
+      // The footer "Pricing" link landed on the "coming soon" snackbar
+      // because the resolver didn't know about it, even though
+      // PricingPage is registered at /pricing in main.dart. Audit
+      // 2026-06-21 quick-win #9.
+      'pricing' => '/pricing',
       // Sprint 29 P-02 — legal pages stand on their own. Pilot clinicians
       // ask for BAA / DPA links directly from procurement; redirecting
       // them to /privacy was an audit smell flagged by counsel.

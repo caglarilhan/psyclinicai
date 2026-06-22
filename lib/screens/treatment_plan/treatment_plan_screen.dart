@@ -437,5 +437,3 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
     }
   }
 }
-
-

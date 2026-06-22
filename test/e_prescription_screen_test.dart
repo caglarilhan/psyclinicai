@@ -13,9 +13,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1400, 2000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(home: EPrescriptionScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: EPrescriptionScreen()));
     await tester.pumpAndSettle();
 
     expect(find.text('e-Prescribing'), findsWidgets);

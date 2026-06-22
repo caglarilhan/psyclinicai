@@ -51,6 +51,10 @@ app.*.map.json
 /blob-report/
 /playwright/.cache/
 package-lock.json
+# Cloud Functions lockfile IS committed so deterministic `npm ci`
+# builds reproduce CI locally and so the runner can cache against
+# its content (.github/workflows/ci.yml cache-dependency-path).
+!functions/package-lock.json
 
 # Secrets & credentials — never commit (PHI/clinical app, defense in depth)
 *.env

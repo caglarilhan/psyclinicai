@@ -165,7 +165,6 @@ class SeedService {
         ],
       ),
     );
-
   }
 
   Future<void> _writeAssessmentWithDate(

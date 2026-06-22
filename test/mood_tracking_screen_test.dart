@@ -21,18 +21,13 @@ void main() {
     tester,
   ) async {
     await wide(tester);
-    await tester.pumpWidget(
-      const MaterialApp(home: MoodTrackingScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: MoodTrackingScreen()));
     await tester.pumpAndSettle();
 
     // Page title + subtitle copy: regression on these strings would
     // mean the AppShell wiring drifted.
     expect(find.text('Mood tracker'), findsWidgets);
-    expect(
-      find.textContaining('Daily mood'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Daily mood'), findsWidgets);
 
     // Three labelled sliders — Mood, Sleep quality, Anxiety. These
     // are the MBC inputs; the underlying widget is _Slider in the

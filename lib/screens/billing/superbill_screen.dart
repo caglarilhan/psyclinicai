@@ -432,11 +432,17 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
           Row(
             children: [
               Expanded(
-                child: SuperbillField(controller: _providerPhone, label: 'Phone'),
+                child: SuperbillField(
+                  controller: _providerPhone,
+                  label: 'Phone',
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SuperbillField(controller: _providerEmail, label: 'Email'),
+                child: SuperbillField(
+                  controller: _providerEmail,
+                  label: 'Email',
+                ),
               ),
             ],
           ),
@@ -474,7 +480,10 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SuperbillField(controller: _patientMemberId, label: 'Member ID'),
+                child: SuperbillField(
+                  controller: _patientMemberId,
+                  label: 'Member ID',
+                ),
               ),
             ],
           ),

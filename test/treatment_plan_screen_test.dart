@@ -45,9 +45,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           (call) async => handleSecureStorage(call),
         );
   });
@@ -55,16 +53,12 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           null,
         );
   });
 
-  testWidgets('renders the diagnosis → goals → progress shell', (
-    tester,
-  ) async {
+  testWidgets('renders the diagnosis → goals → progress shell', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -79,10 +73,7 @@ void main() {
 
     expect(find.text('Treatment plan'), findsWidgets);
     // Subtitle copy anchors the three-stage flow.
-    expect(
-      find.textContaining('diagnosis → goals → progress'),
-      findsWidgets,
-    );
+    expect(find.textContaining('diagnosis → goals → progress'), findsWidgets);
     // Patient name surfaces in the subtitle + breadcrumb crumb.
     expect(find.textContaining('John Demo'), findsWidgets);
   });

@@ -21,9 +21,7 @@ void main() {
   ) async {
     await wide(tester);
     await tester.pumpWidget(
-      const MaterialApp(
-        home: AssessmentScreen(type: AssessmentType.phq9),
-      ),
+      const MaterialApp(home: AssessmentScreen(type: AssessmentType.phq9)),
     );
     await tester.pumpAndSettle();
     // The screen surfaces the scale identifier in the AppShell title
@@ -35,9 +33,7 @@ void main() {
   testWidgets('GAD-7 AssessmentScreen renders', (tester) async {
     await wide(tester);
     await tester.pumpWidget(
-      const MaterialApp(
-        home: AssessmentScreen(type: AssessmentType.gad7),
-      ),
+      const MaterialApp(home: AssessmentScreen(type: AssessmentType.gad7)),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('GAD'), findsWidgets);
@@ -47,9 +43,7 @@ void main() {
     tester,
   ) async {
     await wide(tester);
-    await tester.pumpWidget(
-      const MaterialApp(home: DiagnosisGuideScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: DiagnosisGuideScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Tanı Rehberi'), findsOneWidget);
     // Embedded reference card carries the PHQ-9 / GAD-7 severity

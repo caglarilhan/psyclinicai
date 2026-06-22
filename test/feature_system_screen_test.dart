@@ -15,18 +15,13 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(home: FeatureSystemScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: FeatureSystemScreen()));
     await tester.pumpAndSettle();
 
     expect(find.text('PsyClinicAI — Feature System'), findsOneWidget);
     // Role + category filter chips/labels surface the default
     // selection ("Psychiatrist" + "All"); copy regressions would
     // mean the filter bar drifted from the in-screen catalog.
-    expect(
-      find.textContaining('Psychiatrist'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Psychiatrist'), findsWidgets);
   });
 }

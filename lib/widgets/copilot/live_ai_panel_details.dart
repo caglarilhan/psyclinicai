@@ -310,9 +310,7 @@ void showSupervisionSheet(BuildContext context, SupervisionReport report) {
                   ),
                 );
                 ScaffoldMessenger.of(sheetCtx).showSnackBar(
-                  const SnackBar(
-                    content: Text('De-identified report copied.'),
-                  ),
+                  const SnackBar(content: Text('De-identified report copied.')),
                 );
               },
               icon: const Icon(Icons.copy_outlined, size: 18),

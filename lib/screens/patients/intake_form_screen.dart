@@ -545,4 +545,3 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
     );
   }
 }
-

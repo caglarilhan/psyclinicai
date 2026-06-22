@@ -53,11 +53,7 @@ class DashboardScreen extends StatelessWidget {
           if (profile?.role.label != null) ...[
             Align(
               alignment: Alignment.centerLeft,
-              child: RoleChip(
-                label: profile!.role.label,
-                cs: cs,
-                theme: theme,
-              ),
+              child: RoleChip(label: profile!.role.label, cs: cs, theme: theme),
             ),
             const SizedBox(height: PsySpacing.xl),
           ],
@@ -97,4 +93,3 @@ class DashboardScreen extends StatelessWidget {
     return 'Good evening';
   }
 }
-

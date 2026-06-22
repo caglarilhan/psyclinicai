@@ -49,9 +49,7 @@ void main() {
     secureStore.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           (call) async => handleSecureStorage(call),
         );
   });
@@ -59,9 +57,7 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           null,
         );
   });
@@ -72,7 +68,9 @@ void main() {
   }
 
   Widget host() => const MaterialApp(
-    home: SafetyPlanScreen(args: PatientDetailArgs(id: 'p1', name: 'Sven M.')),
+    home: SafetyPlanScreen(
+      args: PatientDetailArgs(id: 'p1', name: 'Sven M.'),
+    ),
   );
 
   testWidgets('renders the Stanley-Brown shell with the patient name', (
@@ -87,10 +85,7 @@ void main() {
     // "Safety plan" appears in the page title AND the breadcrumb
     // crumb, so the right assertion is "at least one".
     expect(find.text('Safety plan'), findsWidgets);
-    expect(
-      find.textContaining('Stanley-Brown'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Stanley-Brown'), findsOneWidget);
     // Patient name surfaces in the subtitle + the breadcrumb so the
     // clinician never confuses two patients mid-crisis.
     expect(find.textContaining('Sven M.'), findsWidgets);

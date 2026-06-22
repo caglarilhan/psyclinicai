@@ -18,9 +18,7 @@ void main() {
     // channel so a "save BYOK" branch never hits Keychain in CI.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           (call) async => null,
         );
   });
@@ -28,9 +26,7 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           null,
         );
   });

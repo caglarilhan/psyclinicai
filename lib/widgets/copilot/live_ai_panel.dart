@@ -54,7 +54,6 @@ class LiveAiPanel extends StatefulWidget {
   State<LiveAiPanel> createState() => _LiveAiPanelState();
 }
 
-
 class _LiveAiPanelState extends State<LiveAiPanel>
     with SingleTickerProviderStateMixin {
   late final TranscriptionService _transcription;
@@ -336,7 +335,6 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     });
   }
 
-
   void _showAuditDetails(BuildContext context) {
     final report = _report;
     if (report == null) return;
@@ -468,7 +466,6 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       if (mounted) setState(() => _loadingLens = false);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

@@ -140,11 +140,7 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
       // worst place to lose diagnostics. PHI scrubbing happens inside
       // captureError; user-facing copy is unchanged.
       unawaited(
-        TelemetryService.instance.captureError(
-          e,
-          st,
-          hint: 'safety_plan.save',
-        ),
+        TelemetryService.instance.captureError(e, st, hint: 'safety_plan.save'),
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

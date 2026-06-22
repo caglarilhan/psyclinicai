@@ -47,9 +47,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           (call) async => handleSecureStorage(call),
         );
   });
@@ -57,9 +55,7 @@ void main() {
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-          const MethodChannel(
-            'plugins.it_nomads.com/flutter_secure_storage',
-          ),
+          const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
           null,
         );
   });
@@ -73,17 +69,12 @@ void main() {
     tester,
   ) async {
     await wide(tester);
-    await tester.pumpWidget(
-      const MaterialApp(home: PatientListScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: PatientListScreen()));
     await tester.pumpAndSettle();
 
     // Title + search hint anchor on stable copy.
     expect(find.text('Patients'), findsWidgets);
-    expect(
-      find.textContaining('Search the roster'),
-      findsWidgets,
-    );
+    expect(find.textContaining('Search the roster'), findsWidgets);
     // Three demo patients ship in the fallback. Sample one.
     expect(find.textContaining('John Demo'), findsWidgets);
   });

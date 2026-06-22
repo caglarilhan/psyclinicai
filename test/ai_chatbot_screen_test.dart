@@ -18,9 +18,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1400, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(
-      const MaterialApp(home: AIChatbotScreen()),
-    );
+    await tester.pumpWidget(const MaterialApp(home: AIChatbotScreen()));
     await tester.pumpAndSettle();
 
     // Title surfaces in the AppShell page header + the breadcrumb.

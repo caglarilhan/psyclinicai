@@ -129,6 +129,17 @@ jobs:
         working-directory: functions
         run: npm ci
 
+      # Audit 2026-06-21 / CI item 4: form-data CVSS 7.5 was patched by
+      # `npm audit fix` but there was no gate to prevent the next high
+      # CVE from sliding in. We scope to `--omit=dev` because the dev
+      # deps (eslint plugins, ts-jest helpers) carry transitive
+      # moderate findings that do not ship to production and tracking
+      # them here would just create noise; `--audit-level=high` keeps
+      # the gate tight on the surface that actually runs.
+      - name: npm audit (high severity, prod deps)
+        working-directory: functions
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Lint (tsc --noEmit)
         working-directory: functions
         run: npm run lint

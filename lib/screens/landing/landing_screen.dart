@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -53,7 +55,12 @@ class _LandingScreenState extends State<LandingScreen> {
     // pitch — fire when the cursor approaches the browser tab bar.
     if (_scroll.hasClients && _scroll.offset > 1200 && e.position.dy < 8) {
       _exitIntentShown = true;
-      ExitIntentModal.show(context, (email) => _waitlistSubmit(context, email));
+      unawaited(
+        ExitIntentModal.show(
+          context,
+          (email) => _waitlistSubmit(context, email),
+        ),
+      );
     }
   }
 
@@ -81,37 +88,41 @@ class _LandingScreenState extends State<LandingScreen> {
     final key = _anchors[anchor];
     final ctx = key?.currentContext;
     if (ctx == null) return;
-    Scrollable.ensureVisible(
-      ctx,
-      duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
-      alignment: 0.05,
+    unawaited(
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+        alignment: 0.05,
+      ),
     );
   }
 
   void _gotoSignup(BuildContext context) {
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   void _gotoLogin(BuildContext context) {
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   void _bookDemo(BuildContext context) {
-    DemoModal.show(context);
+    unawaited(DemoModal.show(context));
   }
 
   void _pickTier(BuildContext context, String tier) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Reserving a $tier seat — sign in to continue')),
     );
-    Navigator.of(context).pushNamed('/login');
+    unawaited(Navigator.of(context).pushNamed('/login'));
   }
 
   Future<void> _waitlistSubmit(BuildContext context, String email) async {
-    TelemetryService.instance.capture(
-      TelemetryEvents.landingHeroEmailSubmit,
-      properties: {'source': 'hero'},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.landingHeroEmailSubmit,
+        properties: {'source': 'hero'},
+      ),
     );
     // KRİTİK-10 fix (audit 2026-06-21): direct FirebaseFirestore.add
     // inline in the screen left no test seam + nowhere to plug
@@ -163,7 +174,7 @@ class _LandingScreenState extends State<LandingScreen> {
       _ => null,
     };
     if (route != null) {
-      Navigator.of(context).pushNamed(route);
+      unawaited(Navigator.of(context).pushNamed(route));
       return;
     }
     ScaffoldMessenger.of(
@@ -178,7 +189,8 @@ class _LandingScreenState extends State<LandingScreen> {
         onSignIn: () => _gotoLogin(context),
         onStart: () => _gotoSignup(context),
         onScrollTo: _scrollTo,
-        onSecurity: () => Navigator.of(context).pushNamed('/security'),
+        onSecurity: () =>
+            unawaited(Navigator.of(context).pushNamed('/security')),
       ),
       drawer: _LandingDrawer(
         onScrollTo: (a) {
@@ -187,7 +199,7 @@ class _LandingScreenState extends State<LandingScreen> {
         },
         onRoute: (r) {
           Navigator.of(context).pop();
-          Navigator.of(context).pushNamed(r);
+          unawaited(Navigator.of(context).pushNamed(r));
         },
       ),
       body: MouseRegion(

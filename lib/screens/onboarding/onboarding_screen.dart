@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../services/auth/clinician_role.dart';
@@ -39,22 +41,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _next() {
     if (_step >= _totalSteps - 1) {
-      _finish();
+      unawaited(_finish());
       return;
     }
     setState(() => _step += 1);
-    _ctrl.nextPage(
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
+    unawaited(
+      _ctrl.nextPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      ),
     );
   }
 
   void _back() {
     if (_step == 0) return;
     setState(() => _step -= 1);
-    _ctrl.previousPage(
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
+    unawaited(
+      _ctrl.previousPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      ),
     );
   }
 
@@ -64,14 +70,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final key = _byokCtrl.text.trim();
     if (key.isNotEmpty) {
       await ApiKeyStorage.instance.setAnthropicKey(key);
-      TelemetryService.instance.capture(TelemetryEvents.onboardingByokSaved);
+      unawaited(
+        TelemetryService.instance.capture(TelemetryEvents.onboardingByokSaved),
+      );
     }
 
     if (_seedDemo) {
       // Best-effort — silent no-op in demo mode (Firebase off).
       await SeedService.instance.seedDemoChart();
-      TelemetryService.instance.capture(
-        TelemetryEvents.onboardingSeedRequested,
+      unawaited(
+        TelemetryService.instance.capture(
+          TelemetryEvents.onboardingSeedRequested,
+        ),
       );
     }
 
@@ -86,19 +96,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'phq9' => '/assessments/phq9',
       _ => '/dashboard',
     };
-    TelemetryService.instance.capture(
-      TelemetryEvents.onboardingFinished,
-      properties: {'first_action': _firstAction},
+    unawaited(
+      TelemetryService.instance.capture(
+        TelemetryEvents.onboardingFinished,
+        properties: {'first_action': _firstAction},
+      ),
     );
-    Navigator.of(context).pushReplacementNamed(route);
+    unawaited(Navigator.of(context).pushReplacementNamed(route));
   }
 
   Future<void> _skip() async {
-    TelemetryService.instance.capture(TelemetryEvents.onboardingSkipped);
+    unawaited(
+      TelemetryService.instance.capture(TelemetryEvents.onboardingSkipped),
+    );
     final uid = FirebaseAuthService.instance.profile?.userId;
     await OnboardingService.instance.markCompleted(uid ?? 'demo');
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/dashboard');
+    unawaited(Navigator.of(context).pushReplacementNamed('/dashboard'));
   }
 
   @override

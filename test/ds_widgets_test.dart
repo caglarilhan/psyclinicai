@@ -243,7 +243,7 @@ void main() {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                PsySkeletonLine(width: 120, height: 14),
+                PsySkeletonLine(),
                 PsySkeletonBlock(width: 240, height: 64),
                 PsySkeletonCircle(size: 32),
               ],
@@ -260,10 +260,10 @@ void main() {
     testWidgets('reduce-motion freezes the pulse', (tester) async {
       // disableAnimations=true should NOT throw and should still render.
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(disableAnimations: true),
-            child: const Scaffold(
+            data: MediaQueryData(disableAnimations: true),
+            child: Scaffold(
               body: PsySkeletonGroup(
                 child: PsySkeletonLine(width: 100, height: 12),
               ),

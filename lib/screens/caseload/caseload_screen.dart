@@ -11,6 +11,8 @@ import '../../services/data/safety_plan_repository.dart';
 import '../../services/treatment_plan_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_skeleton.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
 
 /// `/caseload` — proactive "who needs attention now" view across the whole
@@ -95,9 +97,9 @@ class _CaseloadScreenState extends State<CaseloadScreen> {
         Crumb('Caseload attention', null),
       ],
       child: _loading
-          ? const Padding(
-              padding: EdgeInsets.only(top: 80),
-              child: Center(child: CircularProgressIndicator()),
+          ? PsySkeletonList(
+              count: 4,
+              itemBuilder: (_) => const _AttentionCardSkeleton(),
             )
           : _items.isEmpty
           ? _AllClear(theme: theme)
@@ -280,3 +282,32 @@ Color _levelColor(AttentionLevel level, ColorScheme cs) => switch (level) {
   AttentionLevel.medium => const Color(0xFFD97706), // amber-600
   AttentionLevel.low => cs.primary,
 };
+
+/// Placeholder card mirroring [_AttentionCard]'s row layout (icon
+/// square + title/body lines + chevron). Drives the loading state
+/// inside a [PsySkeletonList].
+class _AttentionCardSkeleton extends StatelessWidget {
+  const _AttentionCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const PsyCard(
+      child: Row(
+        children: [
+          PsySkeletonBlock(width: 36, height: 36),
+          SizedBox(width: PsySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PsySkeletonLine(width: 200, height: 16),
+                SizedBox(height: 8),
+                PsySkeletonLine(width: 280, height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -55,6 +55,13 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
   cloud_firestore: ^5.4.3
+  # L-11 (audit 2026-06-21) — App Check scaffold. Debug provider
+  # used in dev/test; production providers (Play Integrity, DeviceCheck/
+  # AppAttest, reCAPTCHA v3) require Firebase Console configuration
+  # before enforcement can be enabled. The dep is wired now so the
+  # client-side activation lives in main.dart and only the Console
+  # step is missing.
+  firebase_app_check: ^0.3.2
   # Perf audit 2026-06-21: google_fonts (~300 KB) had zero call sites
   # in lib/ — Inter is loaded via <link rel=stylesheet> in web/index.html
   # and bundled directly via system font on mobile. Dependency removed.

@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
@@ -70,6 +71,39 @@ class PsyFirebase {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      // L-11 (audit 2026-06-21) — App Check activation. We ship the
+      // debug provider in all build modes today; the production
+      // providers (Play Integrity on Android, DeviceCheck/AppAttest
+      // on iOS, reCAPTCHA v3 on web) need their site keys wired
+      // through the Firebase Console + `--dart-define=APP_CHECK_
+      // RECAPTCHA_SITE_KEY=...` before enforcement can flip on.
+      // Activation is best-effort — a misconfigured provider must
+      // not block Firebase Auth + Firestore from coming up.
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: AndroidProvider.debug,
+          appleProvider: AppleProvider.debug,
+          webProvider: ReCaptchaV3Provider(
+            const String.fromEnvironment(
+              'APP_CHECK_RECAPTCHA_SITE_KEY',
+              defaultValue: 'recaptcha-v3-site-key-not-configured',
+            ),
+          ),
+        );
+      } catch (e, stack) {
+        // Firebase Console may not have enabled App Check yet, the
+        // platform provider may not be available (e.g. emulator), or
+        // the placeholder reCAPTCHA key may be rejected. Each of
+        // those is recoverable — keep booting.
+        await TelemetryService.instance.captureError(
+          e,
+          stack,
+          hint: 'app_check_activate',
+        );
+        if (kDebugMode) {
+          debugPrint('[PsyFirebase] App Check activation skipped: $e');
+        }
+      }
       await FirebaseAuthService.instance.initialize();
       _ready = true;
     } catch (e, stack) {

@@ -27,6 +27,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import {applyCors} from "./lib/auth";
+import {checkAiConsent, extractPatientId} from "./lib/consent_gate";
 import {env, resolveCorsOrigin} from "./lib/env";
 
 type RagOp = "analyze" | "query" | "feedback" | "health";
@@ -98,6 +99,37 @@ export const ragProxy = functions
   if (!caller) {
     res.status(401).json({error: "unauthorized"});
     return;
+  }
+
+  // M-2 (audit 2026-06-21) — consent gate on every PHI-bound op.
+  // `health` is exempt because it carries no body and is used by the
+  // dashboard ping. For analyze/query/feedback we look for a patient
+  // pointer in the request body; when present, a non-withdrawn
+  // consent_records row with aiAssistanceConsent==true is required
+  // before we forward to psyrag. Same shape as anthropicRelay and
+  // llmProxy so the three AI paths stay equivalent.
+  if (op !== "health") {
+    const patientId = extractPatientId(req.body);
+    if (patientId !== null) {
+      const decision = await checkAiConsent({
+        db: admin.firestore(),
+        clinicId: caller.uid,
+        patientId,
+      });
+      if (!decision.ok) {
+        functions.logger.warn("ragProxy.consent_denied", {
+          uid: caller.uid,
+          op,
+          reason: decision.reason,
+        });
+        await writeAudit(caller, op, 403, 0);
+        res.status(403).json({
+          error: "consent_required",
+          reason: decision.reason,
+        });
+        return;
+      }
+    }
   }
 
   const hubUrl = env.RAG_HUB_URL;

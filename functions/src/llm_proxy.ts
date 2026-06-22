@@ -30,6 +30,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import {applyCors, authorizeUid} from "./lib/auth";
+import {checkAiConsent, extractPatientId} from "./lib/consent_gate";
 import {env} from "./lib/env";
 import {
   detectJailbreak,
@@ -42,6 +43,10 @@ interface LlmProxyBody {
   model: string;
   prompt: string;
   systemPrompt?: string;
+  // M-2 (audit 2026-06-21) — optional PHI patient pointer. Present when
+  // the prompt is bound to a real patient (note, plan, copilot reply).
+  // Triggers the server-side consent gate before the model is invoked.
+  patientId?: string;
   tools?: unknown;
   maxTokens?: number;
   temperature?: number;
@@ -193,6 +198,30 @@ export const llmProxy = functions
     return;
   }
 
+  const db = admin.firestore();
+
+  // M-2 (audit 2026-06-21) — consent gate. When the caller binds the
+  // prompt to a patient we MUST have a non-withdrawn consent_records
+  // row with aiAssistanceConsent == true before any model invocation.
+  // Calls without a patient (e.g. generic template drafts) pass through
+  // because the UI surface guards those upstream. Same enforcement as
+  // anthropicRelay (index.ts:220) so the two LLM paths stay equivalent.
+  const patientId = extractPatientId(body);
+  if (patientId !== null) {
+    const decision = await checkAiConsent({db, clinicId: uid, patientId});
+    if (!decision.ok) {
+      functions.logger.warn("llmProxy.consent_denied", {
+        uid,
+        reason: decision.reason,
+      });
+      res.status(403).json({
+        error: "consent_required",
+        reason: decision.reason,
+      });
+      return;
+    }
+  }
+
   // F-001 guard #1: jailbreak reject — refuse before paying for the model.
   const hit = detectJailbreak(body.prompt) ??
     (body.systemPrompt ? detectJailbreak(body.systemPrompt) : null);
@@ -211,8 +240,6 @@ export const llmProxy = functions
     res.status(400).json({error: "unknown_model", model: body.model});
     return;
   }
-
-  const db = admin.firestore();
 
   // F-001 guard #2: per-tenant hourly request cap.
   const hourlyCap = Number(

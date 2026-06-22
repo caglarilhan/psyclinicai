@@ -16,7 +16,7 @@ class LandingTokens {
   static const double gridGap = 24;
 
   static EdgeInsetsGeometry sectionPadding(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final wide = w >= 768;
     return EdgeInsets.symmetric(
       horizontal:
@@ -71,7 +71,7 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final size = w >= 768 ? 40.0 : 30.0;
     return Text(
       text,

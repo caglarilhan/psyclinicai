@@ -70,7 +70,7 @@ class RiskEscalationModal extends StatelessWidget {
     final cs = theme.colorScheme;
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(PsySpacing.xl, PsySpacing.lg,

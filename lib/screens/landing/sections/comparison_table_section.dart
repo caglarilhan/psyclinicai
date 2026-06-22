@@ -65,7 +65,7 @@ class ComparisonTableSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width - 96),
+                  minWidth: MediaQuery.sizeOf(context).width - 96),
               child: _Table(rows: rows, theme: theme, cs: cs),
             ),
           ),

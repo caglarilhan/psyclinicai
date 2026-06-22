@@ -14,7 +14,7 @@ class FooterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final w = MediaQuery.of(context).size.width;
+    final w = MediaQuery.sizeOf(context).width;
     final hPad = w >= 768
         ? LandingTokens.sectionHorizontalPaddingDesktop
         : LandingTokens.sectionHorizontalPaddingMobile;

@@ -273,7 +273,7 @@ class _LandingAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isWide = MediaQuery.of(context).size.width >= 720;
+    final isWide = MediaQuery.sizeOf(context).width >= 720;
 
     return AppBar(
       backgroundColor: cs.surface,

@@ -167,15 +167,15 @@ class DesktopTheme {
 
   // Masaüstü boyutları için yardımcı metodlar
   static bool isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= desktopMinWidth;
+    return MediaQuery.sizeOf(context).width >= desktopMinWidth;
   }
 
   static bool isWideScreen(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 1600;
+    return MediaQuery.sizeOf(context).width >= 1600;
   }
 
   static bool isUltraWideScreen(BuildContext context) {
-    return MediaQuery.of(context).size.width >= 2000;
+    return MediaQuery.sizeOf(context).width >= 2000;
   }
 
   static double getSidebarWidth(BuildContext context) {
@@ -185,7 +185,7 @@ class DesktopTheme {
   }
 
   static double getPanelWidth(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final sidebarWidth = getSidebarWidth(context);
     final availableWidth = screenWidth - sidebarWidth - 32; // padding
     
@@ -300,7 +300,7 @@ class DesktopTheme {
     required Widget desktop,
     required BuildContext context,
   }) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
     
     if (width >= desktopMinWidth) {
       return desktop;
@@ -320,7 +320,7 @@ class DesktopTheme {
     double? crossAxisSpacing,
     double? mainAxisSpacing,
   }) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
     final sidebarWidth = getSidebarWidth(context);
     final availableWidth = width - sidebarWidth - 32;
     

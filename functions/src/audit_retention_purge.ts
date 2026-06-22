@@ -21,6 +21,8 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
+import {AuditChainRow, verifyChainSlice} from "./lib/audit_chain";
+
 /** Where audit log rows live in Firestore. Mirrors the client model. */
 const AUDIT_COLLECTION = "audit_logs";
 
@@ -84,6 +86,7 @@ export const auditRetentionPurge = functions.pubsub
     let purged = 0;
     let failed = 0;
     let commitFailed = 0;
+    let tamperedSkipped = 0;
     let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
 
     /* eslint-disable no-await-in-loop */
@@ -97,6 +100,45 @@ export const auditRetentionPurge = functions.pubsub
 
       const snap = await q.get();
       if (snap.empty) break;
+
+      // L-6 fix (audit 2026-06-21): verify the hash chain over this
+      // batch BEFORE pseudonymising. A tampered chain that gets
+      // pseudonymised loses the evidence that proves tampering — so
+      // we skip + log a tampered batch instead, and the operator
+      // rebuilds from cold storage. Genesis hash (prev=null) is fine
+      // for the first batch in a fresh cohort; later batches use the
+      // most recent row's hash from the previous page as `initialPrev`.
+      const chainRows: AuditChainRow[] = snap.docs.map((doc) => {
+        const d = doc.data() as Record<string, unknown>;
+        return {
+          id: doc.id,
+          kind: (d.kind as string) ?? "",
+          action: (d.action as string) ?? "",
+          actor: (d.actor as string) ?? "",
+          entity: (d.entity as string) ?? "",
+          timestamp_utc:
+            ((d.timestamp_utc as admin.firestore.Timestamp | undefined)
+              ?.toDate()
+              .toISOString()) ?? "",
+          result: (d.result as string) ?? "",
+          hash: (d.hash as string | undefined) ?? null,
+          prev_hash: (d.prev_hash as string | undefined) ?? null,
+        };
+      });
+      const verdict = verifyChainSlice(chainRows);
+      if (!verdict.ok) {
+        tamperedSkipped += snap.size;
+        functions.logger.error("audit_retention.chain_tampered", {
+          rows: snap.size,
+          first_bad: verdict.firstBadIndex,
+          reason: verdict.reason,
+        });
+        // Skip the batch — do NOT pseudonymise rows whose integrity
+        // we cannot prove. Operator must restore from cold storage.
+        cursor = snap.docs[snap.docs.length - 1] ?? null;
+        if (snap.size < 200) break;
+        continue;
+      }
 
       const batch = db.batch();
       let stagedInBatch = 0;
@@ -139,17 +181,29 @@ export const auditRetentionPurge = functions.pubsub
       action: "retention.purge_run",
       actor: "system.audit_retention_purge",
       clinic_id: "__system__",
-      entity: `purged=${purged} failed=${failed} commit_failed=${commitFailed}`,
+      entity:
+        `purged=${purged} failed=${failed} ` +
+        `commit_failed=${commitFailed} ` +
+        `tampered_skipped=${tamperedSkipped}`,
       timestamp_utc: admin.firestore.Timestamp.fromDate(now),
-      result: failed === 0 && commitFailed === 0 ? "success" : "failure",
+      result:
+        failed === 0 && commitFailed === 0 && tamperedSkipped === 0 ?
+          "success" :
+          "failure",
     });
 
     functions.logger.info("audit_retention.purge_complete", {
       purged,
       failed,
       commit_failed: commitFailed,
+      tampered_skipped: tamperedSkipped,
       cutoff: cutoff.toISOString(),
     });
 
-    return { purged, failed, commit_failed: commitFailed };
+    return {
+      purged,
+      failed,
+      commit_failed: commitFailed,
+      tampered_skipped: tamperedSkipped,
+    };
   });

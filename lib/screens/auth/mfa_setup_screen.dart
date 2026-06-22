@@ -123,15 +123,22 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
     final uid = FirebaseAuthService.instance.profile?.userId ?? 'demo';
     try {
       await SecuritySettingsService.instance.markMfaEnrolled(uid);
-    } catch (_) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() {
         _error =
             'We verified the code but could not persist your '
             'enrolment. Try again from the recovery step.';
       });
+      // Promoted from an event-only `capture` to `captureError` so the
+      // underlying exception type + stack reach telemetry — the MFA
+      // surface is high-stakes for HIPAA §164.312(d) audits.
       unawaited(
-        TelemetryService.instance.capture('security.mfa_enrol_persist_failed'),
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'security.mfa_enrol_persist_failed',
+        ),
       );
       return;
     }

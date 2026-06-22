@@ -154,8 +154,17 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
           result: gad7,
         );
       }
-    } catch (_) {
-      // Persist is best-effort; UI already shows the score.
+    } catch (e, st) {
+      // Persist is best-effort; UI already shows the score. We still
+      // capture so the outcomes ledger doesn't quietly drop PHQ-9 /
+      // GAD-7 writes for the dashboard MBC stream.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'assessment.firestore_persist',
+        ),
+      );
     }
   }
 

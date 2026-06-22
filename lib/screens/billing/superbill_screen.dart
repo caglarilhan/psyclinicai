@@ -258,8 +258,17 @@ class _SuperbillScreenState extends State<SuperbillScreen> {
         clinicianId: profile.userId,
         data: data,
       );
-    } catch (_) {
-      // Local PDF already delivered — persistence best-effort.
+    } catch (e, st) {
+      // Local PDF already delivered — persistence best-effort. We
+      // still capture so a quietly-broken Firestore write surface
+      // doesn't go undiagnosed; the clinician sees no UI change.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'superbill.firestore_persist',
+        ),
+      );
     }
   }
 

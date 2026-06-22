@@ -240,9 +240,18 @@ class _SessionScreenState extends State<SessionScreen> {
         endedAt: DateTime.now(),
         durationMinutes: _sessionDuration.inMinutes,
       );
-    } catch (_) {
-      // Swallow — local save already succeeded; Firestore retry will be
-      // handled by the offline persistence layer in a future sprint.
+    } catch (e, st) {
+      // Local save already succeeded; Firestore retry will be handled
+      // by the offline persistence layer in a future sprint. We
+      // capture the error so the systemic break-rate is observable
+      // until then — PHI scrubbing happens inside captureError.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'session.firestore_persist',
+        ),
+      );
     }
   }
 

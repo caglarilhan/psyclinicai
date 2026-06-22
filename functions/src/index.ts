@@ -352,11 +352,57 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
     const active = sub.status === "active" || sub.status === "trialing";
 
     if (email) {
-      await db.collection("subscriptions").doc(email).set(
-        { tier, active, status: sub.status, updatedAt: Date.now() },
-        { merge: true },
-      );
+      // M-13 fix (audit 2026-06-21): subscriptions used to be keyed
+      // by `email`, which (a) leaks PII into the doc path (logs,
+      // exports), (b) breaks when a user changes email, and (c)
+      // cannot be guarded by Firestore rules without a custom claim
+      // map. Switch to `subscriptions/{uid}` by resolving the
+      // Firebase Auth user. If the email has no matching user (e.g.
+      // someone bought before signing up), we log and skip — the
+      // newer stripe_subscription.ts path is the canonical writer
+      // for tenant-scoped records.
+      const uid = await resolveUidByEmail(email);
+      if (uid) {
+        await db.collection("subscriptions").doc(uid).set(
+          {
+            tier,
+            active,
+            status: sub.status,
+            customer_email: email,
+            updatedAt: Date.now(),
+          },
+          { merge: true },
+        );
+      } else {
+        functions.logger.warn("stripeWebhook.no_uid_for_email", {
+          event_id: event.id,
+        });
+      }
     }
   }
   res.json({ received: true });
 });
+
+/**
+ * M-13 helper (audit 2026-06-21) — resolve a Firebase Auth UID from
+ * an email. Returns null when the user is unknown (race between
+ * checkout and signup, deleted account) so the caller can decide
+ * how to log + skip. Exposed for unit tests.
+ */
+export async function resolveUidByEmail(
+  email: string,
+): Promise<string | null> {
+  try {
+    const user = await admin.auth().getUserByEmail(email);
+    return user.uid;
+  } catch (e) {
+    // getUserByEmail throws `auth/user-not-found` when there is no
+    // match. We swallow only that case; any other error (network,
+    // permission) should still bubble for observability.
+    const code =
+      (e as {code?: string})?.code ?? (e as {errorInfo?: {code?: string}})
+        ?.errorInfo?.code;
+    if (code === "auth/user-not-found") return null;
+    throw e;
+  }
+}

@@ -411,7 +411,7 @@ class _FeatureSystemScreenState extends State<FeatureSystemScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${category['features'].length} Özellik',
+                    '${(category['features'] as List).length} Özellik',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,

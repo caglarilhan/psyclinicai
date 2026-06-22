@@ -367,13 +367,14 @@ class OfflineService extends ChangeNotifier {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final now = DateTime.now().toIso8601String();
 
+    final tags = (voiceNote['tags'] as List?)?.join(',') ?? '';
     final voiceNoteData = {
       'id': id,
       'patient_id': voiceNote['patient_id'],
       'title': voiceNote['title'],
       'duration': voiceNote['duration'],
       'transcription': voiceNote['transcription'],
-      'tags': voiceNote['tags']?.join(',') ?? '',
+      'tags': tags,
       'file_path': voiceNote['file_path'],
       'created_at': now,
       'updated_at': now,
@@ -412,7 +413,7 @@ class OfflineService extends ChangeNotifier {
       'energy_level': moodEntry['energy_level'],
       'sleep_quality': moodEntry['sleep_quality'],
       'notes': moodEntry['notes'],
-      'tags': moodEntry['tags']?.join(',') ?? '',
+      'tags': (moodEntry['tags'] as List?)?.join(',') ?? '',
       'created_at': now,
       'updated_at': now,
       'sync_status': _isOnline ? 'synced' : 'pending',

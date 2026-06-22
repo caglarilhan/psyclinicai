@@ -9,9 +9,9 @@ void main() {
       final schema =
           AiDiagnosisService.toolSchema['input_schema'] as Map<String, dynamic>;
       expect(schema['required'], contains('candidates'));
-      final items =
-          (schema['properties'] as Map<String, dynamic>)['candidates']['items']
-              as Map<String, dynamic>;
+      final properties = schema['properties'] as Map<String, dynamic>;
+      final candidates = properties['candidates'] as Map<String, dynamic>;
+      final items = candidates['items'] as Map<String, dynamic>;
       expect(items['required'], containsAll(['code', 'name', 'confidence']));
     });
   });

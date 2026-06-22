@@ -204,9 +204,10 @@ void main() {
       final j = c.toJson();
       expect(j['patient_id'], 'p-1');
       expect(j['state'], 'triggered');
-      expect(j['trigger']['primary_action'], 'showCrisisModal');
+      final trigger = j['trigger'] as Map<String, dynamic>;
+      expect(trigger['primary_action'], 'showCrisisModal');
       expect(
-        (j['trigger']['secondary_actions'] as List).cast<String>(),
+        (trigger['secondary_actions'] as List).cast<String>(),
         containsAll(['openCssrs', 'openSafetyPlan']),
       );
     });

@@ -565,7 +565,7 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            ...((r['diagnoses'] as List).map(
+            ...((r['diagnoses'] as List).cast<Map<String, dynamic>>().map(
               (d) => Row(
                 children: [
                   const Text('• '),
@@ -586,8 +586,10 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
   }
 
   String? _pickDxFromState() {
-    if (_aiResult != null && (_aiResult!['diagnoses'] as List).isNotEmpty) {
-      return ((_aiResult!['diagnoses'] as List).first)['name'] as String?;
+    final dxList = (_aiResult?['diagnoses'] as List?)
+        ?.cast<Map<String, dynamic>>();
+    if (dxList != null && dxList.isNotEmpty) {
+      return dxList.first['name'] as String?;
     }
     if (_phq9 >= 10) return 'Depresyon';
     if (_gad7 >= 10) return 'Genel Anksiyete Bozukluğu';
@@ -656,7 +658,8 @@ class _DiagnosisGuideScreenState extends State<DiagnosisGuideScreen>
         context,
       ).loadString('assets/guidelines/$key');
       final map = convert.jsonDecode(data) as Map<String, dynamic>;
-      final recs = (map['recommendations'] as List?) ?? [];
+      final recs = ((map['recommendations'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>();
       return recs
           .map<Widget>(
             (r) => _guideCard(

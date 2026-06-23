@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/modality_preferences.dart';
 import '../../models/note_format.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
+import '../../services/data/modality_preferences_repository.dart';
+import '../../services/data/modality_session_repository.dart' show ModalityKind;
 import '../../services/data/patient_repository.dart';
 import '../../services/data/session_repository.dart';
 import '../../services/data/telemetry_service.dart';
@@ -64,6 +67,13 @@ class _SessionScreenState extends State<SessionScreen> {
   /// own save path through `ModalitySessionRepository`.
   SessionNoteModality _activeModality = SessionNoteModality.standard;
 
+  /// Per-clinician modality enablement + tier — loaded async on init.
+  /// Until loaded the picker only renders Standard so a Free clinician
+  /// never glimpses a paid segment before the gate applies.
+  ModalityPreferences? _modalityPrefs;
+  final ModalityPreferencesRepository _prefRepo =
+      ModalityPreferencesRepository();
+
   // Seans durumu
   bool _isSessionActive = false;
   DateTime? _sessionStartTime;
@@ -79,6 +89,56 @@ class _SessionScreenState extends State<SessionScreen> {
     super.initState();
     _startSession();
     unawaited(_loadGoals());
+    unawaited(_loadModalityPrefs());
+  }
+
+  Future<void> _loadModalityPrefs() async {
+    await _prefRepo.initialize();
+    if (!mounted) return;
+    setState(() {
+      _modalityPrefs = _prefRepo.forClinician(_resolveClinicianId());
+    });
+  }
+
+  /// Build the segmented-button options the picker should surface —
+  /// Standard always present, paid modalities only when the
+  /// clinician's prefs say so. Until prefs load, only Standard
+  /// appears.
+  List<ButtonSegment<SessionNoteModality>> _modalitySegments() {
+    final segments = <ButtonSegment<SessionNoteModality>>[
+      const ButtonSegment(
+        value: SessionNoteModality.standard,
+        label: Text('Standard'),
+      ),
+    ];
+    final prefs = _modalityPrefs;
+    if (prefs != null) {
+      if (prefs.isEnabled(ModalityKind.cbt)) {
+        segments.add(
+          const ButtonSegment(
+            value: SessionNoteModality.cbt,
+            label: Text('CBT'),
+          ),
+        );
+      }
+      if (prefs.isEnabled(ModalityKind.dbt)) {
+        segments.add(
+          const ButtonSegment(
+            value: SessionNoteModality.dbt,
+            label: Text('DBT'),
+          ),
+        );
+      }
+      if (prefs.isEnabled(ModalityKind.emdr)) {
+        segments.add(
+          const ButtonSegment(
+            value: SessionNoteModality.emdr,
+            label: Text('EMDR'),
+          ),
+        );
+      }
+    }
+    return segments;
   }
 
   /// Load the patient's active treatment-plan goals so the AI note can tie
@@ -478,24 +538,7 @@ class _SessionScreenState extends State<SessionScreen> {
                     style: SegmentedButton.styleFrom(
                       visualDensity: VisualDensity.compact,
                     ),
-                    segments: const [
-                      ButtonSegment(
-                        value: SessionNoteModality.standard,
-                        label: Text('Standard'),
-                      ),
-                      ButtonSegment(
-                        value: SessionNoteModality.cbt,
-                        label: Text('CBT'),
-                      ),
-                      ButtonSegment(
-                        value: SessionNoteModality.dbt,
-                        label: Text('DBT'),
-                      ),
-                      ButtonSegment(
-                        value: SessionNoteModality.emdr,
-                        label: Text('EMDR'),
-                      ),
-                    ],
+                    segments: _modalitySegments(),
                     selected: {_activeModality},
                     onSelectionChanged: (set) {
                       if (set.isEmpty) return;

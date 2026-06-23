@@ -24,6 +24,7 @@ import '../../widgets/structured_note_editor.dart';
 import 'modalities/cbt_thought_record_panel.dart';
 import 'modalities/dbt_diary_card_panel.dart';
 import 'modalities/emdr_session_tracker_panel.dart';
+import 'modalities/family_session_panel.dart';
 
 /// Active note style for this session — Standard SOAP/DAP/BIRP or a
 /// modality-specific template. Picked by the clinician at the top of
@@ -32,7 +33,8 @@ enum SessionNoteModality {
   standard('Standard'),
   cbt('CBT'),
   dbt('DBT'),
-  emdr('EMDR');
+  emdr('EMDR'),
+  family('Family');
 
   const SessionNoteModality(this.label);
   final String label;
@@ -134,6 +136,14 @@ class _SessionScreenState extends State<SessionScreen> {
           const ButtonSegment(
             value: SessionNoteModality.emdr,
             label: Text('EMDR'),
+          ),
+        );
+      }
+      if (prefs.isEnabled(ModalityKind.family)) {
+        segments.add(
+          const ButtonSegment(
+            value: SessionNoteModality.family,
+            label: Text('Family'),
           ),
         );
       }
@@ -584,6 +594,12 @@ class _SessionScreenState extends State<SessionScreen> {
                   ),
                   SessionNoteModality.emdr => SingleChildScrollView(
                     child: EmdrSessionTrackerPanel(
+                      patientId: widget.clientId,
+                      clinicianId: _resolveClinicianId(),
+                    ),
+                  ),
+                  SessionNoteModality.family => SingleChildScrollView(
+                    child: FamilySessionPanel(
                       patientId: widget.clientId,
                       clinicianId: _resolveClinicianId(),
                     ),

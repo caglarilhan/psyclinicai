@@ -20,12 +20,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/modalities/cbt_thought_record.dart';
 import '../../models/modalities/dbt_diary_card.dart';
 import '../../models/modalities/emdr_session_tracker.dart';
+import '../../models/modalities/family_session_note.dart';
 import 'telemetry_service.dart';
 
 enum ModalityKind {
   cbt('cbt'),
   dbt('dbt'),
-  emdr('emdr');
+  emdr('emdr'),
+  family('family');
 
   const ModalityKind(this.id);
   final String id;
@@ -58,6 +60,7 @@ class ModalityRecord {
       ModalityKind.cbt => CbtThoughtRecord.fromJson(payload),
       ModalityKind.dbt => DbtDiaryCard.fromJson(payload),
       ModalityKind.emdr => EmdrSessionTracker.fromJson(payload),
+      ModalityKind.family => FamilySessionNote.fromJson(payload),
     };
     return ModalityRecord(kind: kind, payload: inner);
   }
@@ -72,6 +75,7 @@ class ModalityRecord {
     final CbtThoughtRecord r => r.patientId,
     final DbtDiaryCard r => r.patientId,
     final EmdrSessionTracker r => r.patientId,
+    final FamilySessionNote r => r.patientId,
     _ => '',
   };
 
@@ -79,6 +83,7 @@ class ModalityRecord {
     final CbtThoughtRecord r => r.id,
     final DbtDiaryCard r => r.id,
     final EmdrSessionTracker r => r.id,
+    final FamilySessionNote r => r.id,
     _ => '',
   };
 
@@ -87,6 +92,7 @@ class ModalityRecord {
     final CbtThoughtRecord r => r.recordedAt,
     final DbtDiaryCard r => r.weekStart,
     final EmdrSessionTracker r => r.updatedAt ?? r.createdAt,
+    final FamilySessionNote r => r.sessionDate,
     _ => DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
   };
 
@@ -96,6 +102,8 @@ class ModalityRecord {
       payload is DbtDiaryCard ? payload as DbtDiaryCard : null;
   EmdrSessionTracker? get emdrSession =>
       payload is EmdrSessionTracker ? payload as EmdrSessionTracker : null;
+  FamilySessionNote? get familySessionNote =>
+      payload is FamilySessionNote ? payload as FamilySessionNote : null;
 
   Map<String, dynamic> toJson() => {
     'type': kind.id,
@@ -103,6 +111,7 @@ class ModalityRecord {
       final CbtThoughtRecord r => r.toJson(),
       final DbtDiaryCard r => r.toJson(),
       final EmdrSessionTracker r => r.toJson(),
+      final FamilySessionNote r => r.toJson(),
       _ => <String, dynamic>{},
     },
   };

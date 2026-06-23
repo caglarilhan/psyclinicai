@@ -130,7 +130,7 @@ Richness rules:
 - Use **status chips** (pill, tinted bg of success/warning/error at ~12% opacity) to add scannable color.
 - Add **leading icons/avatars** to list rows — competitors look "full" largely because of consistent iconography.
 
-**Empty states are designed, not blank:** icon + one-line explanation + a primary button to create the first item. Never show a blank area.
+**Empty states are designed, not blank:** use `PsyEmptyState` (see §8) — icon well + title + body + optional primary action. Never show a blank area or a centered grey paragraph.
 
 ---
 
@@ -203,3 +203,141 @@ When you ask for a screen, Claude will:
 Trigger phrases: *"DESIGN.md'ye göre X ekranını yap"*, *"bu sayfayı dolu/profesyonel yap"*, *"butonları belirginleştir"*.
 
 Reference competitors for richness (composition only, never copy): SimplePractice, TheraNest, Tebra.
+
+---
+
+## 8. Design-system widgets (`lib/widgets/ds/`)
+
+These six widgets are the canonical vocabulary for the clinician surface. **Always pick the DS widget over a bespoke implementation** — they carry the telemetry, a11y, and brightness/contrast rules the rest of this doc demands. Each one is covered by `test/ds_widgets_test.dart`.
+
+### `PsySnack` — unified snackbar (`psy_snack.dart`)
+
+Replaces every `ScaffoldMessenger.of(context).showSnackBar(...)` call site. Four levels (`info` / `success` / `warning` / `error`). Each call:
+
+- Fires `psysnack.shown {level, hint}` telemetry — use a **stable** `hint` like `safety_plan.save_failed`, not a sentence.
+- Carries `Semantics(liveRegion: true)` so screen readers announce all four levels (polite for info/success, assertive for error).
+- Tints are **brightness-aware** (WCAG 1.4.11 — light theme needs darker accents on the dark `inverseSurface`; dark theme inverts).
+
+```dart
+PsySnack.success(context, 'Safety plan saved.', hint: 'safety_plan.save');
+PsySnack.error(
+  context,
+  'Could not save — please retry.',
+  hint: 'safety_plan.save_failed',
+  action: SnackBarAction(label: 'Retry', onPressed: _save),
+);
+```
+
+**Never** pass `'$e'` into the message — route exceptions through `TelemetryService.captureError(e, st, hint: '...')` and surface a generic message ("PDF generation failed — please retry."). PHI / internal paths must not reach the UI.
+
+### `PsyEmptyState` — designed empty / null states (`psy_empty_state.dart`)
+
+The opposite of a centered grey paragraph. Icon well + bold title + body + optional action button. `Semantics(container: true, explicitChildNodes: true)` keeps the action button as its own SR node.
+
+```dart
+PsyEmptyState(
+  icon: Icons.group_outlined,
+  title: 'No patients yet',
+  body: 'Add your first patient to get started.',
+  action: PsyEmptyStateAction(
+    label: 'Add patient',
+    icon: Icons.person_add_alt_1,
+    onTap: _openAddPatient,
+  ),
+);
+```
+
+Use `compact: true` when the empty state sits inside a `PsyCard` that already has padding. Title is the short headline; body is the explanation — never swap the two. When there's no unambiguous next action, omit `action` instead of inventing one.
+
+### `PsyTooltip` — code / term tooltip (`psy_tooltip.dart`)
+
+For dense data where a short code (ICD-10, CPT, lab abbr.) is the visible label and the full expansion is needed on demand.
+
+```dart
+PsyTooltip(
+  label: 'F32.1',
+  description: 'Major Depressive Disorder, Single Episode, Moderate',
+  child: <chip widget>,
+);
+```
+
+- `Semantics(label, hint)` wraps the chip so SR users hear the expansion without hovering.
+- Inner child is wrapped in `ExcludeSemantics` so the label isn't announced twice.
+- `triggerMode: TooltipTriggerMode.longPress` gives touch parity (iPad / phone).
+- `richMessage` renders bold label + description with a 6s show duration.
+- Empty `label` returns the child as-is (no tooltip), so it's safe to call unconditionally.
+
+### `PsySkeleton*` — loading placeholders (`psy_skeleton.dart`)
+
+Replaces every `CircularProgressIndicator` that fronts a list or a card. Shapes match the real layout so the page doesn't jump on load.
+
+```dart
+// Inside a list-bearing screen (uses ListView under the hood):
+PsySkeletonList(itemBuilder: (_) => const _PatientTileSkeleton())
+
+// Inside an AppShell with its own scroll, compose primitives directly:
+Column(children: const [
+  PsySkeletonBlock(height: 64),
+  SizedBox(height: PsySpacing.lg),
+  PsySkeletonBlock(height: 144),
+]);
+
+// Primitives: PsySkeletonLine, PsySkeletonBlock, PsySkeletonCircle
+```
+
+- A shared `PsySkeletonGroup` drives every nested primitive with one pulse — sibling shapes pulse in sync, not in a noisy stutter.
+- Respects `MediaQuery.disableAnimationsOf(context)` — reduce-motion freezes the pulse.
+- The pulse alpha is tuned (max 0.28 of `onSurface`) so a fully-skeleton screen remains perceivable for low-vision clinicians, with a `Semantics(label: 'Loading content')` wrapper so SR announces the loading state.
+- **Do not** nest `PsySkeletonList` directly inside an `AppShell` (both scroll — unbounded viewport). Use the primitives in a `Column` instead.
+
+### `SavingIndicator` + `SavingIndicatorController` — write-state pill (`saving_indicator.dart`)
+
+Cures the "did it actually save?" anxiety. One controller per form; pin one `SavingIndicator` in the page header (next to the primary CTA).
+
+```dart
+class _MyScreenState extends State<MyScreen> {
+  final _saveCtrl = SavingIndicatorController();
+
+  @override
+  void dispose() { _saveCtrl.dispose(); super.dispose(); }
+
+  Future<void> _save() async {
+    _saveCtrl.startSaving();
+    try {
+      await _repo.save(...);
+      _saveCtrl.markSaved();             // auto-fades after 2s
+    } catch (e, st) {
+      unawaited(TelemetryService.instance.captureError(
+        e, st, hint: 'my_screen.save_failed'));
+      _saveCtrl.markError(onRetry: _save); // pill becomes tap-to-retry
+    }
+  }
+
+  // In the AppShell primaryAction slot:
+  Row(children: [SavingIndicator(controller: _saveCtrl), const SizedBox(width: PsySpacing.md), _primaryCta]);
+}
+```
+
+- State machine: `idle → saving → saved → idle` or `… → error → idle`.
+- `SemanticsService.sendAnnouncement` fires on every state flip ("Saved." polite / "Save failed — tap to retry." assertive) — clinicians never miss a write outcome.
+- The error pill has a 32-px minimum hit target (WCAG 2.5.8) and tap-to-retry.
+
+### `PsySaveShortcut` — Cmd+S / Ctrl+S binding (`psy_save_shortcut.dart`)
+
+Wrap any screen that has a save action so the power-user shortcut works:
+
+```dart
+PsySaveShortcut(
+  enabled: _canSave,
+  onSave: _save,
+  child: <screen body>,
+);
+```
+
+Uses Flutter's `Shortcuts` + `Actions` + `FocusableActionDetector` so the binding does not leak into nested editors. When `enabled: false` the shortcut is a no-op (no surprise saves while the form is incomplete).
+
+---
+
+### Rule of thumb
+
+If you find yourself writing `ScaffoldMessenger.showSnackBar`, a centered `Column` for an empty state, a bare `CircularProgressIndicator` on a content area, or a one-off `Tooltip(message: '$code $description')` — stop and reach for the DS widget above. The DS surface is what makes the clinician trust that *this* save behaved like *that* save did yesterday.

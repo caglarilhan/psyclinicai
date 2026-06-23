@@ -177,6 +177,17 @@ class _ModalitiesScreenState extends State<ModalitiesScreen> {
                   prefs: _prefs!,
                   onToggle: () => _toggle(ModalityKind.emdr),
                 ),
+                _ModalityRow(
+                  kind: ModalityKind.family,
+                  label: 'Family — McGoldrick / Bowen / Structural',
+                  blurb:
+                      'Approach picker (Bowen / structural / strategic / '
+                      'narrative / EFT / systemic), subsystem focus, '
+                      'attendees + optional genogram link, 0-10 '
+                      'relational-shift slider.',
+                  prefs: _prefs!,
+                  onToggle: () => _toggle(ModalityKind.family),
+                ),
                 const SizedBox(height: PsySpacing.xl),
                 _Footnote(),
               ],

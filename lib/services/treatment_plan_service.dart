@@ -131,6 +131,21 @@ class TreatmentPlanService {
     return plan;
   }
 
+  /// Persist a fully-formed plan (goals + interventions already
+  /// populated). Used when applying a `TreatmentPlanTemplate` —
+  /// the template materialises the plan and this method just
+  /// stores it. Replaces an existing row when `plan.id` matches.
+  Future<TreatmentPlan> persistPlan(TreatmentPlan plan) async {
+    final i = _treatmentPlans.indexWhere((p) => p.id == plan.id);
+    if (i < 0) {
+      _treatmentPlans.add(plan);
+    } else {
+      _treatmentPlans[i] = plan;
+    }
+    await _saveTreatmentPlans();
+    return plan;
+  }
+
   /// All plans across patients (read-only) — for caseload aggregation.
   List<TreatmentPlan> get allPlans => List.unmodifiable(_treatmentPlans);
 

@@ -275,24 +275,43 @@ class NoPlanCard extends StatelessWidget {
     required this.theme,
     required this.cs,
     required this.onCreate,
+    this.onUseTemplate,
   });
   final ThemeData theme;
   final ColorScheme cs;
   final VoidCallback onCreate;
 
+  /// Optional secondary CTA — opens the template picker so the
+  /// clinician can start from a curated scaffold instead of an
+  /// empty plan.
+  final VoidCallback? onUseTemplate;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 60),
-      child: PsyEmptyState(
-        icon: Icons.assignment_outlined,
-        title: 'No treatment plan yet',
-        body: 'Capture the diagnosis and formulation, then draft SMART goals.',
-        action: PsyEmptyStateAction(
-          label: 'Create treatment plan',
-          icon: Icons.add,
-          onTap: onCreate,
-        ),
+      child: Column(
+        children: [
+          PsyEmptyState(
+            icon: Icons.assignment_outlined,
+            title: 'No treatment plan yet',
+            body:
+                'Capture the diagnosis and formulation, then draft SMART goals.',
+            action: PsyEmptyStateAction(
+              label: 'Create treatment plan',
+              icon: Icons.add,
+              onTap: onCreate,
+            ),
+          ),
+          if (onUseTemplate != null) ...[
+            const SizedBox(height: PsySpacing.md),
+            OutlinedButton.icon(
+              onPressed: onUseTemplate,
+              icon: const Icon(Icons.collections_bookmark_outlined),
+              label: const Text('Or start from a template'),
+            ),
+          ],
+        ],
       ),
     );
   }

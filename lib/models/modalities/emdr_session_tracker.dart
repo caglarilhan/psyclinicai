@@ -57,9 +57,7 @@ class EmdrSessionTracker {
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now().toUtc(),
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
-      currentPhase: phase.isNotEmpty
-          ? phase.first
-          : EmdrPhase.threeAssessment,
+      currentPhase: phase.isNotEmpty ? phase.first : EmdrPhase.threeAssessment,
       targetMemory: json['targetMemory'] as String? ?? '',
       negativeCognition: json['negativeCognition'] as String? ?? '',
       positiveCognition: json['positiveCognition'] as String? ?? '',

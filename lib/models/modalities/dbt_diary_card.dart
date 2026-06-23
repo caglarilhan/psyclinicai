@@ -33,10 +33,7 @@ class DbtDiaryCard {
     required this.days,
     this.targetBehaviors = const [],
     this.clinicianNotes = '',
-  }) : assert(
-         days.length == 7,
-         'Diary card must hold exactly 7 daily entries',
-       );
+  }) : assert(days.length == 7, 'Diary card must hold exactly 7 daily entries');
 
   factory DbtDiaryCard.fromJson(Map<String, dynamic> json) => DbtDiaryCard(
     id: json['id'] as String,
@@ -264,8 +261,7 @@ class DbtDailyEntry {
     String? notes,
   }) => DbtDailyEntry(
     date: date,
-    targetBehaviorRatings:
-        targetBehaviorRatings ?? this.targetBehaviorRatings,
+    targetBehaviorRatings: targetBehaviorRatings ?? this.targetBehaviorRatings,
     emotionRatings: emotionRatings ?? this.emotionRatings,
     skillsUsed: skillsUsed ?? this.skillsUsed,
     notes: notes ?? this.notes,
@@ -320,8 +316,7 @@ class DbtTargetBehavior {
       id: 'si',
       label: 'Suicidal ideation',
       isUrge: true,
-      helpText:
-          'Rate 0-5 — fleeting through to specific plan with intent.',
+      helpText: 'Rate 0-5 — fleeting through to specific plan with intent.',
     ),
     DbtTargetBehavior(
       id: 'sh_urge',

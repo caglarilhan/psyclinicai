@@ -77,8 +77,7 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
     _record =
         widget.initial ??
         CbtThoughtRecord(
-          id:
-              'cbt-${DateTime.now().microsecondsSinceEpoch}-${widget.patientId}',
+          id: 'cbt-${DateTime.now().microsecondsSinceEpoch}-${widget.patientId}',
           patientId: widget.patientId,
           clinicianId: widget.clinicianId,
           recordedAt: DateTime.now().toUtc(),
@@ -229,10 +228,7 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
       _record = _record.copyWith(
         emotionsAfter: [
           ..._record.emotionsAfter,
-          CbtEmotionRating(
-            emotion: text,
-            intensity: _newEmotionAfterIntensity,
-          ),
+          CbtEmotionRating(emotion: text, intensity: _newEmotionAfterIntensity),
         ],
       );
       _newEmotionAfter.clear();
@@ -424,7 +420,8 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
         _SectionCard(
           step: '7',
           title: 'Balanced / alternative thought',
-          subtitle: "In the patient's words. New belief % is the outcome "
+          subtitle:
+              "In the patient's words. New belief % is the outcome "
               'signal.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -451,8 +448,7 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
         _EmotionsCard(
           step: '8',
           title: 'Emotions — after',
-          subtitle:
-              'Re-rate the same emotions. Delta is the session outcome.',
+          subtitle: 'Re-rate the same emotions. Delta is the session outcome.',
           ratings: _record.emotionsAfter,
           textCtrl: _newEmotionAfter,
           intensity: _newEmotionAfterIntensity,
@@ -675,9 +671,7 @@ class _EmotionTile extends StatelessWidget {
             ),
             child: Text(
               '${rating.intensity}/100',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: cs.secondary,
-              ),
+              style: theme.textTheme.labelMedium?.copyWith(color: cs.secondary),
             ),
           ),
           IconButton(

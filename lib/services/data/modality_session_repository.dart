@@ -193,10 +193,8 @@ class ModalitySessionRepository {
 
   /// All records for a patient of a specific modality, sorted
   /// newest-first.
-  List<ModalityRecord> forPatientOfKind(
-    String patientId,
-    ModalityKind kind,
-  ) => forPatient(patientId).where((r) => r.kind == kind).toList();
+  List<ModalityRecord> forPatientOfKind(String patientId, ModalityKind kind) =>
+      forPatient(patientId).where((r) => r.kind == kind).toList();
 
   ModalityRecord? byId(String id) {
     for (final r in _items) {

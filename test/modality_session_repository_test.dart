@@ -266,24 +266,19 @@ void main() {
       },
     );
 
-    test(
-      'initialize drops corrupt records but loads the valid ones',
-      () async {
-        // Pre-seed with one valid + one corrupt entry under the same
-        // key.
-        SharedPreferences.setMockInitialValues({
-          'mod_test_corrupt': <String>[
-            '{"type":"cbt","payload":{"id":"good","patientId":"p1","clinicianId":"c1","recordedAt":"2026-06-23T10:00:00Z"}}',
-            'not valid json',
-          ],
-        });
-        final repo = ModalitySessionRepository(
-          storageKey: 'mod_test_corrupt',
-        );
-        await repo.initialize();
-        expect(repo.all.length, 1);
-        expect(repo.all.first.id, 'good');
-      },
-    );
+    test('initialize drops corrupt records but loads the valid ones', () async {
+      // Pre-seed with one valid + one corrupt entry under the same
+      // key.
+      SharedPreferences.setMockInitialValues({
+        'mod_test_corrupt': <String>[
+          '{"type":"cbt","payload":{"id":"good","patientId":"p1","clinicianId":"c1","recordedAt":"2026-06-23T10:00:00Z"}}',
+          'not valid json',
+        ],
+      });
+      final repo = ModalitySessionRepository(storageKey: 'mod_test_corrupt');
+      await repo.initialize();
+      expect(repo.all.length, 1);
+      expect(repo.all.first.id, 'good');
+    });
   });
 }

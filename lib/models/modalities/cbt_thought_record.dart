@@ -295,10 +295,7 @@ class CbtEmotionRating {
   final String emotion;
   final int intensity;
 
-  Map<String, dynamic> toJson() => {
-    'emotion': emotion,
-    'intensity': intensity,
-  };
+  Map<String, dynamic> toJson() => {'emotion': emotion, 'intensity': intensity};
 }
 
 /// Burns' 10 cognitive distortions (the field-standard taxonomy from

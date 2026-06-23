@@ -61,8 +61,9 @@ class FaqPage extends StatelessWidget {
                 'through their own books, (2) we never sit between a '
                 'transcript and Anthropic, (3) you can rotate or revoke '
                 'the key without filing a ticket with us. A server-side '
-                'proxy with KMS-wrapped keys lands Sprint 19 for clinics '
-                'that prefer the managed path.',
+                'proxy with KMS-wrapped keys is available for clinics '
+                'that prefer the managed path — talk to your '
+                'administrator.',
           ),
           _Faq(
             q: 'Is the AI making the diagnosis?',

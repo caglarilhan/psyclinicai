@@ -1,7 +1,8 @@
 /// Pre-LLM PHI scrub — minimum-necessary under HIPAA §164.502(b) and
 /// GDPR Art. 5(1)(c). Not a guarantee; the full Presidio-style
-/// detector lives behind the LLM proxy (Sprint 19 backend). Use this
-/// helper as the baseline safety net on the device before egress.
+/// detector lives behind the `llmProxy` Cloud Function
+/// (`functions/src/llm_proxy.ts`). Use this helper as the baseline
+/// safety net on the device before egress.
 library;
 
 class PhiScrubResult {

@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../../utils/phi_redaction.dart';
 
-/// Abstraction over the server-side LLM proxy (Sprint 19 backend).
+/// Abstraction over the server-side LLM proxy (`llmProxy` Cloud
+/// Function — see `functions/src/llm_proxy.ts` for the contract,
+/// jailbreak guard, SYSTEM_FROZEN fence, and per-tenant quota).
 abstract class LlmProxyClient {
   Future<LlmCompletion> complete({required LlmRequest request});
 }

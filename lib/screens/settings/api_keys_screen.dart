@@ -119,9 +119,10 @@ class _ApiKeysScreenState extends State<ApiKeysScreen> {
                       'Used for AI session notes (SOAP / DAP / BIRP), risk flagging, and treatment plan suggestions.',
                   pricing:
                       'Pay-as-you-go, ~\$0.001 per 5-minute session on '
-                      'Claude Haiku 4.5. Model picker (Sonnet 4.6 / Opus '
-                      '4.7) lands with the server-side LLM proxy in '
-                      'Sprint 19.',
+                      'Claude Haiku 4.5. Clinic-managed deployments can '
+                      'switch to the server-side LLM proxy (KMS-wrapped '
+                      'keys, per-tenant cost meter, audit log) — contact '
+                      'your administrator to flip the BACKEND_URL.',
                   helpUrl: 'console.anthropic.com → API Keys → Create Key',
                   controller: _anthropicCtl,
                   visible: _anthropicVisible,
@@ -218,10 +219,11 @@ class _SecurityBanner extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Trade-off: direct-browser calls mean we cannot rate-limit '
-                  'misuse or log AI usage for your audit trail. A server-side '
-                  'LLM proxy with KMS-wrapped keys, PHI redaction, per-tenant '
-                  'cost meter and full audit logging is on the Sprint 19 '
-                  'roadmap — track it on /changelog.',
+                  'misuse or log AI usage for your audit trail. The server-'
+                  'side LLM proxy (KMS-wrapped keys, PHI scrub, per-tenant '
+                  'cost meter, jailbreak guard, and full audit logging) is '
+                  'available for clinic-managed deployments — your '
+                  'administrator can enable it.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6),
                     height: 1.4,

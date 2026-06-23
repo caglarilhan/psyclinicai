@@ -22,8 +22,10 @@ import 'package:flutter/material.dart';
 
 import '../../models/medication.dart';
 import '../../models/medication_dose_log.dart';
+import '../../models/medication_side_effect.dart';
 import '../../services/data/medication_dose_repository.dart';
 import '../../services/data/medication_repository.dart';
+import '../../services/data/medication_side_effect_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -32,6 +34,7 @@ import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
+import 'side_effect_sheet.dart';
 
 class MarScreen extends StatefulWidget {
   const MarScreen({
@@ -40,12 +43,20 @@ class MarScreen extends StatefulWidget {
     required this.patientName,
     this.doseRepository,
     this.medicationRepository,
+    this.sideEffectRepository,
+    this.clinicianId,
   });
 
   final String patientId;
   final String patientName;
   final MedicationDoseRepository? doseRepository;
   final MedicationRepository? medicationRepository;
+  final MedicationSideEffectRepository? sideEffectRepository;
+
+  /// Recorded on every SE event for audit / supervision. Falls back
+  /// to `demo_clinician` when unset (matches the rest of the app's
+  /// local-first sentinel).
+  final String? clinicianId;
 
   @override
   State<MarScreen> createState() => _MarScreenState();
@@ -54,15 +65,19 @@ class MarScreen extends StatefulWidget {
 class _MarScreenState extends State<MarScreen> {
   late final MedicationDoseRepository _doses;
   late final MedicationRepository _meds;
+  late final MedicationSideEffectRepository _seRepo;
   late final SavingIndicatorController _saveCtrl;
   late DateTime _selectedDay;
   bool _loading = true;
+
+  String get _clinicianId => widget.clinicianId ?? 'demo_clinician';
 
   @override
   void initState() {
     super.initState();
     _doses = widget.doseRepository ?? MedicationDoseRepository();
     _meds = widget.medicationRepository ?? MedicationRepository();
+    _seRepo = widget.sideEffectRepository ?? MedicationSideEffectRepository();
     _saveCtrl = SavingIndicatorController();
     final now = DateTime.now().toUtc();
     _selectedDay = DateTime.utc(now.year, now.month, now.day);
@@ -70,7 +85,11 @@ class _MarScreenState extends State<MarScreen> {
   }
 
   Future<void> _load() async {
-    await Future.wait([_doses.initialize(), _meds.initialize()]);
+    await Future.wait([
+      _doses.initialize(),
+      _meds.initialize(),
+      _seRepo.initialize(),
+    ]);
     if (!mounted) return;
     setState(() => _loading = false);
   }
@@ -120,15 +139,40 @@ class _MarScreenState extends State<MarScreen> {
   }
 
   Future<void> _addSideEffect(MedicationDoseLog dose) async {
-    final entry = await _promptSideEffect();
-    if (entry == null || entry.trim().isEmpty) return;
-    final updated = dose.copyWith(
-      sideEffects: [...dose.sideEffects, entry.trim()],
+    final draft = await showModalBottomSheet<MedicationSideEffect>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SideEffectSheet(
+        patientId: widget.patientId,
+        medicationId: dose.medicationId,
+        clinicianId: _clinicianId,
+      ),
     );
+    if (draft == null) return;
+
     _saveCtrl.startSaving();
     try {
+      await _seRepo.upsert(draft);
+      // Also append a short label to the dose log's free-text list
+      // so the existing inline chip view keeps surfacing what was
+      // captured today (mar_screen scans this list to badge the
+      // dose row). Source of truth is the SE repo from now on.
+      final label = draft.severity.value > 1
+          ? '${draft.symptom} (${draft.severity.label.toLowerCase()})'
+          : draft.symptom;
+      final updated = dose.copyWith(sideEffects: [...dose.sideEffects, label]);
       await _doses.upsert(updated);
       _saveCtrl.markSaved();
+      unawaited(
+        TelemetryService.instance.capture(
+          'mar.side_effect_logged',
+          properties: {
+            'system': draft.system.id,
+            'severity': draft.severity.value,
+            'significant': draft.isClinicallySignificant,
+          },
+        ),
+      );
       if (mounted) setState(() {});
     } catch (e, st) {
       unawaited(
@@ -139,37 +183,13 @@ class _MarScreenState extends State<MarScreen> {
         ),
       );
       _saveCtrl.markError(onRetry: () => _addSideEffect(dose));
-    }
-  }
-
-  Future<String?> _promptSideEffect() async {
-    final ctrl = TextEditingController();
-    try {
-      return await showDialog<String>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Log side effect'),
-          content: TextField(
-            controller: ctrl,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'e.g. "dry mouth", "drowsiness 4/10"',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(ctrl.text),
-              child: const Text('Log'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      ctrl.dispose();
+      if (mounted) {
+        PsySnack.error(
+          context,
+          'Could not save side effect — please retry.',
+          hint: 'mar.side_effect_failed',
+        );
+      }
     }
   }
 

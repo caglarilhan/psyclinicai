@@ -9,9 +9,11 @@ import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
+import 'package:psyclinicai/screens/assessments/aseba_intake_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
 import 'package:psyclinicai/screens/assessments/clinical_scale_screen.dart';
+import 'package:psyclinicai/screens/assessments/vanderbilt_intake_screen.dart';
 import 'package:psyclinicai/screens/auth/login_screen.dart';
 import 'package:psyclinicai/screens/auth/mfa_setup_screen.dart';
 import 'package:psyclinicai/screens/auth/password_reset_screen.dart';
@@ -22,6 +24,7 @@ import 'package:psyclinicai/screens/billing/superbill_screen.dart';
 import 'package:psyclinicai/screens/caseload/caseload_screen.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_screen.dart';
 import 'package:psyclinicai/screens/e_prescription/e_prescription_screen.dart';
+import 'package:psyclinicai/screens/family/genogram_canvas_screen.dart';
 import 'package:psyclinicai/screens/feature_system/feature_system_screen.dart';
 import 'package:psyclinicai/screens/group_session/group_session_screen.dart';
 import 'package:psyclinicai/screens/inbox/inbox_screen.dart';
@@ -32,6 +35,7 @@ import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 import 'package:psyclinicai/screens/outcomes/modality_outcomes_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
+import 'package:psyclinicai/screens/outcomes/patient_pulse_screen.dart';
 import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
 import 'package:psyclinicai/screens/patient_portal/portal_modality_history_screen.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
@@ -407,6 +411,52 @@ class PsyClinicAIApp extends StatelessWidget {
                       ModalRoute.of(context)?.settings.arguments
                           as PatientDetailArgs?;
                   return ModalityOutcomesScreen(patientId: args?.id);
+                },
+                '/outcomes/pulse': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs? ??
+                      const PatientDetailArgs(id: 'demo-1', name: 'John Demo');
+                  return PatientPulseScreen(
+                    patientId: args.id,
+                    patientName: args.name,
+                  );
+                },
+                '/assessments/vanderbilt': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs? ??
+                      const PatientDetailArgs(id: 'demo-1', name: 'John Demo');
+                  final cid =
+                      fb_auth.FirebaseAuthService.instance.profile?.userId ??
+                      'demo_clinician';
+                  return VanderbiltIntakeScreen(
+                    patientId: args.id,
+                    clinicianId: cid,
+                  );
+                },
+                '/assessments/aseba': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs? ??
+                      const PatientDetailArgs(id: 'demo-1', name: 'John Demo');
+                  final cid =
+                      fb_auth.FirebaseAuthService.instance.profile?.userId ??
+                      'demo_clinician';
+                  return AsebaIntakeScreen(
+                    patientId: args.id,
+                    clinicianId: cid,
+                  );
+                },
+                '/family/genogram': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs? ??
+                      const PatientDetailArgs(id: 'demo-1', name: 'John Demo');
+                  return GenogramCanvasScreen(
+                    patientId: args.id,
+                    patientName: args.name,
+                  );
                 },
                 '/onboarding': (context) => const OnboardingScreen(),
                 '/appointments': (context) => const AppointmentsScreen(),

@@ -9,6 +9,14 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Sprint 32 D-04: surface the Sentry token at job-level env so the
+    # step-level `if:` below can reference it. GitHub Actions rejects
+    # `if: ${{ secrets.X != '' }}` at workflow-validation time — that
+    # was firing a 0-second failure (+ a notification email) on every
+    # push. Mapping the secret to env first keeps the conditional and
+    # makes the workflow parse cleanly.
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - name: Checkout
@@ -56,13 +64,14 @@ jobs:
 
       # Sprint 32 — Sentry release tracking. Tags the deploy commit with
       # a release id so crashes after this run are blamed on the right
-      # build. No-op without SENTRY_AUTH_TOKEN, so the workflow stays
-      # green ahead of the vendor unlock (see vendor-unlocks.md §10).
+      # build. The token is read from the job-level env binding above,
+      # which lets this step-level `if:` evaluate to a string at
+      # workflow-validation time. (Direct `secrets.*` in step `if:` is
+      # rejected by GitHub Actions and triggers a 0-second failure.)
       - name: Sentry release
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        if: env.SENTRY_AUTH_TOKEN != ''
         uses: getsentry/action-release@v1
         env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: psyclinicai
           SENTRY_PROJECT: psyclinicai-flutter-web
         with:

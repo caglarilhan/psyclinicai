@@ -27,6 +27,7 @@ import 'package:psyclinicai/screens/group_session/group_session_screen.dart';
 import 'package:psyclinicai/screens/inbox/inbox_screen.dart';
 import 'package:psyclinicai/screens/landing/beta_waitlist_screen.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
+import 'package:psyclinicai/screens/medications/mar_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 import 'package:psyclinicai/screens/outcomes/modality_outcomes_screen.dart';
@@ -295,6 +296,15 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SupervisionQueueScreen(),
                 '/group_session': (context) => const GroupSessionScreen(),
                 '/portal': (context) => const PortalLandingScreen(),
+                '/medications/mar': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return MarScreen(
+                    patientId: args?.id ?? 'demo-1',
+                    patientName: args?.name ?? 'John Demo',
+                  );
+                },
                 '/portal/history': (context) {
                   final args =
                       ModalRoute.of(context)?.settings.arguments as String?;

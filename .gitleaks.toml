@@ -1,0 +1,28 @@
+# PsyClinicAI gitleaks config.
+#
+# Inherits the default ruleset and adds a narrow allowlist for
+# SharedPreferences storage-bucket constants in our repositories.
+# These are never credentials — they're string keys passed into
+# SharedPreferences to namespace a list of JSON records. The
+# default `generic-api-key` rule trips on them when the field
+# name contains "key" and the value passes its entropy heuristic.
+#
+# Pattern explained:
+#   _<name> = '<lowercase letters / digits / underscores>_v<N>'
+#   where <name> in defaultKey | storageId | storageKey | bucket | key
+# and the file lives under `lib/services/data/` ending in
+# `_repository.dart`. Anything outside that shape is still scanned.
+
+title = "PsyClinicAI gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "SharedPreferences storage bucket constants used by *_repository.dart files. Not credentials."
+regexes = [
+  '''(?i)_(?:defaultkey|storageid|storagekey|bucket|key)\s*=\s*['"][a-z0-9_]+_v\d+['"]''',
+]
+paths = [
+  '''lib/services/data/.*_repository\.dart''',
+]

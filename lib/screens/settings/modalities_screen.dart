@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/modality_preferences.dart';
+import '../../services/billing/subscription_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/modality_preferences_repository.dart';
 import '../../services/data/modality_session_repository.dart' show ModalityKind;
@@ -24,6 +25,7 @@ import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
+import 'pro_upgrade_sheet.dart';
 
 class ModalitiesScreen extends StatefulWidget {
   const ModalitiesScreen({super.key, this.repository});
@@ -104,16 +106,25 @@ class _ModalitiesScreenState extends State<ModalitiesScreen> {
   Future<void> _upgradeToPro() async {
     final current = _prefs;
     if (current == null) return;
-    // Local-only stub: in production this routes through Stripe and
-    // the webhook flips the tier server-side. For the local-first
-    // build we set the tier optimistically so the rest of the UX
-    // unblocks; webhook-driven reconciliation runs in Sprint 28+.
+    final picked = await showModalBottomSheet<SubscriptionTier>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const ProUpgradeSheet(),
+    );
+    // Sheet returned null = clinician dismissed without choosing.
+    // Sheet returned a paid tier = either Stripe checkout opened
+    // (success surface lands when the webhook syncs Firestore) or
+    // the local-fallback path fired in demo mode. Either way we
+    // optimistically flip the modality tier so the rest of the UX
+    // unblocks immediately; the webhook reconciles on next launch.
+    if (picked == null || picked == SubscriptionTier.free) return;
     final next = current.copyWith(tier: ModalityTier.pro);
     setState(() => _prefs = next);
     await _repo.save(next);
     unawaited(
       TelemetryService.instance.capture(
-        'modality_preferences.tier_upgraded_local',
+        'modality_preferences.tier_upgraded',
+        properties: {'plan': picked.name},
       ),
     );
     if (mounted) {

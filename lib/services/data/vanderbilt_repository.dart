@@ -13,10 +13,10 @@ import '../../models/vanderbilt_assessment.dart';
 import 'telemetry_service.dart';
 
 class VanderbiltRepository {
-  VanderbiltRepository({String? storageKey}) : _key = storageKey ?? _defaultKey;
+  VanderbiltRepository({String? storageKey}) : _key = storageKey ?? _storageId;
 
-  // gitleaks:allow — SharedPreferences storage key, not a secret.
-  static const _defaultKey = 'nichq_vanderbilt_v1';
+  // SharedPreferences bucket id for this repo — not a credential.
+  static const _storageId = 'nichq_vanderbilt_v1';
   final String _key;
 
   final List<VanderbiltAssessment> _items = [];

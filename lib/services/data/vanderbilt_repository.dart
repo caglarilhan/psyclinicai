@@ -15,7 +15,8 @@ import 'telemetry_service.dart';
 class VanderbiltRepository {
   VanderbiltRepository({String? storageKey}) : _key = storageKey ?? _defaultKey;
 
-  static const _defaultKey = 'vanderbilt_assessments_v1';
+  // gitleaks:allow — SharedPreferences storage key, not a secret.
+  static const _defaultKey = 'nichq_vanderbilt_v1';
   final String _key;
 
   final List<VanderbiltAssessment> _items = [];

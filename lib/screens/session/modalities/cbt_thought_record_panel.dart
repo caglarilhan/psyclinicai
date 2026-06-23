@@ -17,6 +17,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../models/modalities/cbt_thought_record.dart';
+import '../../../services/copilot/modality_draft_service.dart';
 import '../../../services/data/modality_session_repository.dart';
 import '../../../services/data/telemetry_service.dart';
 import '../../../theme/tokens.dart';
@@ -53,6 +54,10 @@ class CbtThoughtRecordPanel extends StatefulWidget {
 
 class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
   late final ModalitySessionRepository _repo;
+  // Local heuristic by default; an LLM-backed implementation will
+  // swap in here behind the same `ModalityDraftService` interface.
+  final ModalityDraftService _draftService =
+      const LocalHeuristicModalityDraftService();
   late final SavingIndicatorController _saveCtrl;
   late final TextEditingController _situation;
   late final TextEditingController _newThoughtText;
@@ -120,6 +125,100 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
       balancedBeliefPct: _balancedBelief,
       clinicianNotes: _clinicianNotes.text.trim(),
     );
+  }
+
+  Future<void> _draftFromTranscript() async {
+    final transcript = await _promptForTranscript();
+    if (transcript == null || transcript.trim().isEmpty) return;
+    try {
+      final draft = await _draftService.draftCbtThoughtRecord(
+        transcript: transcript,
+        id: _record.id,
+        patientId: widget.patientId,
+        clinicianId: widget.clinicianId,
+      );
+      setState(() {
+        _record = _record.copyWith(
+          situation: draft.situation.isNotEmpty
+              ? draft.situation
+              : _record.situation,
+          thoughts: [..._record.thoughts, ...draft.thoughts],
+          emotionsBefore: [..._record.emotionsBefore, ...draft.emotionsBefore],
+          distortions: {..._record.distortions, ...draft.distortions}.toList(),
+        );
+        _situation.text = _record.situation;
+      });
+      if (mounted) {
+        PsySnack.success(
+          context,
+          'Draft populated — review and edit before saving.',
+          hint: 'cbt_thought_record.draft_filled',
+        );
+      }
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'cbt_thought_record.draft_failed',
+        ),
+      );
+      if (mounted) {
+        PsySnack.error(
+          context,
+          'Could not draft — please try again.',
+          hint: 'cbt_thought_record.draft_failed',
+        );
+      }
+    }
+  }
+
+  Future<String?> _promptForTranscript() async {
+    final ctrl = TextEditingController();
+    try {
+      return await showDialog<String>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Draft from transcript'),
+          content: SizedBox(
+            width: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Paste a session transcript. We surface candidate '
+                  'automatic thoughts, emotions, and distortions — you '
+                  'edit anything we got wrong before saving.',
+                ),
+                const SizedBox(height: PsySpacing.md),
+                TextField(
+                  controller: ctrl,
+                  maxLines: 8,
+                  decoration: const InputDecoration(
+                    hintText: 'Paste here…',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Draft'),
+              onPressed: () => Navigator.of(context).pop(ctrl.text),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   Future<void> _save() async {
@@ -278,6 +377,12 @@ class _CbtThoughtRecordPanelState extends State<CbtThoughtRecordPanel> {
             ),
             SavingIndicator(controller: _saveCtrl),
             const SizedBox(width: PsySpacing.md),
+            OutlinedButton.icon(
+              onPressed: _draftFromTranscript,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Draft from transcript'),
+            ),
+            const SizedBox(width: PsySpacing.sm),
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_outlined, size: 18),

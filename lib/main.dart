@@ -29,6 +29,7 @@ import 'package:psyclinicai/screens/landing/beta_waitlist_screen.dart';
 import 'package:psyclinicai/screens/landing/landing_screen.dart';
 import 'package:psyclinicai/screens/mood_tracking/mood_tracking_screen.dart';
 import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
+import 'package:psyclinicai/screens/outcomes/modality_outcomes_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
 import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
@@ -382,6 +383,12 @@ class PsyClinicAIApp extends StatelessWidget {
                       ModalRoute.of(context)?.settings.arguments
                           as PatientDetailArgs?;
                   return OutcomesDashboardScreen(args: args);
+                },
+                '/outcomes/modalities': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments
+                          as PatientDetailArgs?;
+                  return ModalityOutcomesScreen(patientId: args?.id);
                 },
                 '/onboarding': (context) => const OnboardingScreen(),
                 '/appointments': (context) => const AppointmentsScreen(),

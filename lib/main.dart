@@ -45,6 +45,7 @@ import 'package:psyclinicai/screens/settings/audit_log_screen.dart';
 import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
 import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/settings/ehr_sync_console_screen.dart';
+import 'package:psyclinicai/screens/settings/modalities_screen.dart';
 import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
 import 'package:psyclinicai/screens/settings/region_settings_screen.dart';
 import 'package:psyclinicai/screens/settings/settings_screen.dart';
@@ -212,6 +213,7 @@ class PsyClinicAIApp extends StatelessWidget {
                     const TelehealthSetupScreen(),
                 '/settings/payments': (context) => const PaymentSetupScreen(),
                 '/settings/region': (context) => const RegionSettingsScreen(),
+                '/settings/modalities': (context) => const ModalitiesScreen(),
                 '/settings/ehr': (context) => const EhrSyncConsoleScreen(),
                 '/billing/claims': (context) =>
                     const InsuranceClaimBoardScreen(),

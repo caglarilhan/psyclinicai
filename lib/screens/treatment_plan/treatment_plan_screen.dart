@@ -11,6 +11,7 @@ import '../../services/data/homework_repository.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../services/treatment_plan_service.dart';
+import '../../services/treatment_plan_templates.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -19,6 +20,7 @@ import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/ds/saving_indicator.dart';
 import '../patients/patient_list_screen.dart' show PatientDetailArgs;
+import 'template_picker_sheet.dart';
 import 'treatment_plan_cards.dart';
 import 'treatment_plan_dialogs.dart';
 import 'treatment_plan_homework.dart';
@@ -135,7 +137,12 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
               ),
             )
           : _plan == null
-          ? NoPlanCard(theme: theme, cs: cs, onCreate: _createPlanDialog)
+          ? NoPlanCard(
+              theme: theme,
+              cs: cs,
+              onCreate: _createPlanDialog,
+              onUseTemplate: _useTemplateDialog,
+            )
           : _planView(theme, cs, _plan!),
     );
   }
@@ -267,6 +274,61 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
       primaryDiagnosis: res.$1,
       clinicalFormulation: res.$2,
     );
+    _reload();
+  }
+
+  Future<void> _useTemplateDialog() async {
+    final picked = await showModalBottomSheet<TreatmentPlanTemplate>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const TemplatePickerSheet(),
+    );
+    if (picked == null) return;
+    final clinicianId =
+        FirebaseAuthService.instance.profile?.userId ?? 'demo_clinician';
+    _saveCtrl.startSaving();
+    try {
+      final plan = picked.apply(
+        patientId: widget.args.id,
+        clinicianId: clinicianId,
+      );
+      await _svc.persistPlan(plan);
+      _saveCtrl.markSaved();
+      unawaited(
+        TelemetryService.instance.capture(
+          'treatment_plan.template_applied',
+          properties: {
+            'template': picked.id,
+            'goals': plan.goals.length,
+            'interventions': plan.interventions.length,
+          },
+        ),
+      );
+      if (mounted) {
+        PsySnack.success(
+          context,
+          'Draft plan created from "${picked.label}". Edit + activate '
+          'when ready.',
+          hint: 'treatment_plan.template_applied',
+        );
+      }
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'treatment_plan.template_failed',
+        ),
+      );
+      _saveCtrl.markError(onRetry: _useTemplateDialog);
+      if (mounted) {
+        PsySnack.error(
+          context,
+          'Could not apply template — please retry.',
+          hint: 'treatment_plan.template_failed',
+        );
+      }
+    }
     _reload();
   }
 

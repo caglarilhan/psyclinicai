@@ -32,6 +32,7 @@ import 'package:psyclinicai/screens/onboarding/onboarding_screen.dart';
 import 'package:psyclinicai/screens/outcomes/modality_outcomes_screen.dart';
 import 'package:psyclinicai/screens/outcomes/outcomes_dashboard_screen.dart';
 import 'package:psyclinicai/screens/patient_portal/portal_landing_screen.dart';
+import 'package:psyclinicai/screens/patient_portal/portal_modality_history_screen.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
 import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_chart_screen.dart';
@@ -294,6 +295,13 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SupervisionQueueScreen(),
                 '/group_session': (context) => const GroupSessionScreen(),
                 '/portal': (context) => const PortalLandingScreen(),
+                '/portal/history': (context) {
+                  final args =
+                      ModalRoute.of(context)?.settings.arguments as String?;
+                  return PortalModalityHistoryScreen(
+                    patientId: args ?? 'demo-1',
+                  );
+                },
                 '/superbill': (context) {
                   final args = ModalRoute.of(context)?.settings.arguments;
                   return SuperbillScreen(

@@ -93,6 +93,16 @@ class PortalLandingScreen extends StatelessWidget {
                     rightLabel: 'GDPR Art. 17',
                     onTap: null,
                   ),
+                  _PortalCard(
+                    icon: Icons.history_edu_outlined,
+                    title: 'Your therapy history',
+                    body:
+                        'A read-only view of your thought records, '
+                        'diary cards, and EMDR session summaries.',
+                    rightLabel: 'Read-only',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/portal/history'),
+                  ),
                   const SizedBox(height: PsySpacing.lg),
                   Container(
                     padding: const EdgeInsets.all(PsySpacing.md),

@@ -341,3 +341,94 @@ Uses Flutter's `Shortcuts` + `Actions` + `FocusableActionDetector` so the bindin
 ### Rule of thumb
 
 If you find yourself writing `ScaffoldMessenger.showSnackBar`, a centered `Column` for an empty state, a bare `CircularProgressIndicator` on a content area, or a one-off `Tooltip(message: '$code $description')` — stop and reach for the DS widget above. The DS surface is what makes the clinician trust that *this* save behaved like *that* save did yesterday.
+
+---
+
+## 9. Modality session templates (`lib/screens/session/modalities/`)
+
+The session screen ships four note styles. The clinician picks at session start via a `SegmentedButton` in the notes-panel header; the picker only surfaces the modalities the clinician has both **enabled** in Settings AND **paid for** (Pro tier).
+
+| Modality | Source | What it is | Where to use |
+|---|---|---|---|
+| **Standard** | `StructuredNoteEditor` (SOAP / DAP / BIRP) | Free-form structured note. Markdown export. | Default for every clinician. Generalist sessions, supervisors writing about cases, anywhere a modality-specific template would be overkill. |
+| **CBT** | `CbtThoughtRecordPanel` | Beck/Padesky 7-column thought record + Burns' 10 cognitive distortions. `intensityDelta` = sum(before) − sum(after). | Cognitive restructuring sessions. Captures the hot thought + the cognitive work + the outcome on one page. |
+| **DBT** | `DbtDiaryCardPanel` | Linehan 7-day diary card: 5 default target behaviours, 7 core emotions 0-5, 15 DBT skills across 4 modules. SI peak + self-harm act roll-up. | Borderline-spectrum / emotion-regulation work. The card is the week between sessions; the panel is where the clinician walks through it. |
+| **EMDR** | `EmdrSessionTrackerPanel` | Shapiro 8-Phase tracker: NC/PC/VOC/SUDS/Body assessment, BLS-set log, body scan + closure + reevaluation. Hard abreaction safety gate on closure. | Trauma reprocessing sessions. Mandatory for any clinician trained in EMDR — the SUDS/VOC trajectory is what supervisors review. |
+
+### Picker behaviour (tier + enablement)
+
+`ModalityPreferences` (`lib/models/modality_preferences.dart`) carries `{clinicianId, enabled: Set<ModalityKind>, tier: free|pro}`. The session-screen picker filters via `prefs.isEnabled(kind)`:
+
+- **Free** clinician → picker shows **Standard only**.
+- **Pro** clinician → picker shows **Standard + each enabled modality**. Pre-toggling a modality while Free pre-stores the choice so upgrading flips it on automatically (nobody has to "remember to toggle" after upgrading).
+- Until prefs load async → only Standard shows, so a Free clinician never glimpses a paid segment before the gate applies.
+
+### Panel anatomy (shared shape)
+
+Every modality panel follows the same composition so a clinician moving between modalities never relearns the surface:
+
+```
+┌─ Header ──────────────────────────────────────────────┐
+│  [Title]  [SavingIndicator]  [FilledButton Save]      │
+├─ Subheader ───────────────────────────────────────────┤
+│  One-line "what this is + the clinical convention"    │
+├─ Body ────────────────────────────────────────────────┤
+│  PsyCard sections, each:                              │
+│   • numbered step (or labelled phase)                 │
+│   • short subtitle stating the clinical rule          │
+│   • the editor (TextField / Slider / FilterChip /     │
+│     stepper / tile list)                              │
+├─ Outcome / Arc summary ───────────────────────────────┤
+│  PsyCard tinted with the delta / arc the supervisor   │
+│  reads (intensityDelta / SI peak / SUDS arc).         │
+└───────────────────────────────────────────────────────┘
+```
+
+### Persistence — `ModalitySessionRepository`
+
+One SharedPreferences key (`modality_sessions`), tagged-envelope JSON list: `{type: 'cbt'|'dbt'|'emdr', payload: <model JSON>}`. The factory in `ModalityRecord.fromJson` dispatches to the matching `fromJson`. Per-record resilience — one corrupt entry drops + logs, never wipes the list. Mirror to Firestore lands when the tenant flips to managed sync.
+
+### Telemetry hints
+
+Stable strings — never change them; dashboards rely on the slug.
+
+| Event | Properties | When |
+|---|---|---|
+| `cbt_thought_record.saved` | `{distortions, thoughts, intensity_delta}` | Save success |
+| `cbt_thought_record.save_failed` | (captureError) | Save error path |
+| `dbt_diary_card.saved` | `{filled_days, si_peak, sh_act}` | Save success |
+| `dbt_diary_card.save_failed` | (captureError) | Save error path |
+| `emdr_session.saved` | `{phase, bls_sets, suds_delta, voc_delta, abreaction, closure_safe}` | Save success |
+| `emdr_session.save_failed` | (captureError) | Save error path |
+| `emdr_session.closure_blocked` | (PsySnack.warning) | Closure attempt with unresolved abreaction |
+| `session.modality_changed` | `{modality}` | Picker flip |
+| `modality_preferences.toggled` | `{kind, enabled}` | Settings toggle |
+| `modality_preferences.tier_upgraded_local` | — | Upgrade button |
+
+**No PHI** in any property — only counts, deltas, enums, booleans.
+
+### Clinical fidelity sources
+
+Don't reinvent or "improve" the scales. The clinicians know these references — diverging from them is the fastest way to lose trust.
+
+- **CBT distortions** — David D. Burns, *Feeling Good* (1980, revised). 10 distortions, our `CbtCognitiveDistortion` enum order matches the book.
+- **CBT thought-record columns** — Greenberger & Padesky, *Mind Over Mood* (2nd ed., 2015). 7-column model.
+- **DBT diary card** — Marsha M. Linehan, *DBT Skills Training Manual* (2nd ed., 2014). Adult standard card.
+- **DBT skills (15 + 4 modules)** — same source. Our IDs are the canonical short names (`tip`, `dear_man`, `please`, etc.).
+- **EMDR 8 phases** — Francine Shapiro, *Eye Movement Desensitization and Reprocessing* (3rd ed., 2018).
+- **SUDS** — Joseph Wolpe (1969). Scale 0-10.
+- **VOC** — Shapiro (1989 → ongoing). Scale 1-7.
+
+### Adding a new modality (the cookbook)
+
+When the next modality lands (ACT / IFS / Schema / MI / Solution-Focused / …):
+
+1. **Model** — `lib/models/modalities/<name>.dart`. JSON round-trip with per-field clamps and an enum for any controlled vocabulary. Include a `clinicianNotes` field for the clinician's own addendum.
+2. **Repository** — extend `ModalityKind` (`lib/services/data/modality_session_repository.dart`) with the new enum value + switch arm in `ModalityRecord.fromJson` / `toJson` / `sortDate` / convenience getter. No schema migration needed — old records still decode because the dispatch is on `type`.
+3. **Panel** — `lib/screens/session/modalities/<name>_panel.dart` following the shared anatomy above. PsyCard sections, `SavingIndicator` controller, `PsySnack` on save/error, telemetry hint `<modality>.saved`.
+4. **Preferences row** — add to `lib/screens/settings/modalities_screen.dart`; the picker auto-respects the tier gate.
+5. **Session screen** — extend `SessionNoteModality` enum + `switch` in the body builder + `_modalitySegments()`.
+6. **Tests** — JSON round-trip, clinical-rule assertions (e.g. SUDS within 0-10), repository upsert idempotence. Mirror `test/modality_session_repository_test.dart` shape.
+7. **DESIGN.md §9** — add the modality row to the table at the top of this section + cite the clinical source.
+
+Seven steps; ~600-900 lines per modality. Keep the panel scrollable so the picker doesn't dictate viewport assumptions.

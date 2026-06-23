@@ -18,6 +18,22 @@ import '../../widgets/copilot/live_ai_panel.dart';
 import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_snack.dart';
 import '../../widgets/structured_note_editor.dart';
+import 'modalities/cbt_thought_record_panel.dart';
+import 'modalities/dbt_diary_card_panel.dart';
+import 'modalities/emdr_session_tracker_panel.dart';
+
+/// Active note style for this session — Standard SOAP/DAP/BIRP or a
+/// modality-specific template. Picked by the clinician at the top of
+/// the notes panel; persisted in-memory for the session lifetime.
+enum SessionNoteModality {
+  standard('Standard'),
+  cbt('CBT'),
+  dbt('DBT'),
+  emdr('EMDR');
+
+  const SessionNoteModality(this.label);
+  final String label;
+}
 
 class SessionScreen extends StatefulWidget {
   const SessionScreen({
@@ -41,6 +57,12 @@ class _SessionScreenState extends State<SessionScreen> {
   final TextEditingController _aiPromptController = TextEditingController();
   final String _aiSummary = '';
   List<String> _treatmentGoals = const [];
+
+  /// Active note style — Standard SOAP/DAP/BIRP by default; switches to
+  /// the CBT thought record, DBT diary card, or EMDR session tracker
+  /// when the clinician picks a modality. Each modality panel has its
+  /// own save path through `ModalitySessionRepository`.
+  SessionNoteModality _activeModality = SessionNoteModality.standard;
 
   // Seans durumu
   bool _isSessionActive = false;
@@ -270,6 +292,12 @@ class _SessionScreenState extends State<SessionScreen> {
     }
   }
 
+  /// Stable clinician id for modality records — the authenticated user
+  /// id, falling back to a demo marker when no profile is loaded.
+  /// Audit / supervision paths read this off the saved record.
+  String _resolveClinicianId() =>
+      FirebaseAuthService.instance.profile?.userId ?? 'demo_clinician';
+
   /// The signing clinician for exports — the authenticated profile, with
   /// credentials when present (e.g. "Jane Smith, LCSW"). Falls back to a
   /// neutral label in demo mode where no profile is loaded.
@@ -404,53 +432,120 @@ class _SessionScreenState extends State<SessionScreen> {
                 ),
               ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.edit_note,
-                  color: cs.onSurface.withValues(alpha: 0.75),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Session Note',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: cs.onSurface,
-                  ),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _saveSessionNotes,
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                  style: TextButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 32),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.edit_note,
+                      color: cs.onSurface.withValues(alpha: 0.75),
+                      size: 20,
                     ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Session Note',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_activeModality == SessionNoteModality.standard)
+                      TextButton.icon(
+                        onPressed: _saveSessionNotes,
+                        icon: const Icon(Icons.save, size: 16),
+                        label: const Text('Save'),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 32),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: PsySpacing.sm),
+                Semantics(
+                  label: 'Session note modality picker',
+                  child: SegmentedButton<SessionNoteModality>(
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    segments: const [
+                      ButtonSegment(
+                        value: SessionNoteModality.standard,
+                        label: Text('Standard'),
+                      ),
+                      ButtonSegment(
+                        value: SessionNoteModality.cbt,
+                        label: Text('CBT'),
+                      ),
+                      ButtonSegment(
+                        value: SessionNoteModality.dbt,
+                        label: Text('DBT'),
+                      ),
+                      ButtonSegment(
+                        value: SessionNoteModality.emdr,
+                        label: Text('EMDR'),
+                      ),
+                    ],
+                    selected: {_activeModality},
+                    onSelectionChanged: (set) {
+                      if (set.isEmpty) return;
+                      setState(() => _activeModality = set.first);
+                      unawaited(
+                        TelemetryService.instance.capture(
+                          'session.modality_changed',
+                          properties: {'modality': set.first.name},
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          // Structured editor — SOAP / BIRP / DAP with one field per
-          // section. Snapshot piped to [_noteValue] for save + export.
+          // Body — Standard structured editor or a modality-specific
+          // panel. Each modality panel owns its own save (through
+          // `ModalitySessionRepository`); the Standard editor still
+          // routes through `_saveSessionNotes`.
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Semantics(
-                label: 'Structured session notes',
-                child: StructuredNoteEditor(
-                  initialFormat: _noteValue?.format ?? NoteFormat.soap,
-                  initialSections: _noteValue?.sections ?? const {},
-                  onChanged: (v) => setState(() => _noteValue = v),
-                ),
+                label: 'Session note body',
+                child: switch (_activeModality) {
+                  SessionNoteModality.standard => StructuredNoteEditor(
+                    initialFormat: _noteValue?.format ?? NoteFormat.soap,
+                    initialSections: _noteValue?.sections ?? const {},
+                    onChanged: (v) => setState(() => _noteValue = v),
+                  ),
+                  SessionNoteModality.cbt => SingleChildScrollView(
+                    child: CbtThoughtRecordPanel(
+                      patientId: widget.clientId,
+                      clinicianId: _resolveClinicianId(),
+                    ),
+                  ),
+                  SessionNoteModality.dbt => SingleChildScrollView(
+                    child: DbtDiaryCardPanel(
+                      patientId: widget.clientId,
+                      clinicianId: _resolveClinicianId(),
+                    ),
+                  ),
+                  SessionNoteModality.emdr => SingleChildScrollView(
+                    child: EmdrSessionTrackerPanel(
+                      patientId: widget.clientId,
+                      clinicianId: _resolveClinicianId(),
+                    ),
+                  ),
+                },
               ),
             ),
           ),

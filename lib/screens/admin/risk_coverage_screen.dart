@@ -62,13 +62,21 @@ class _RiskCoverageScreenState extends State<RiskCoverageScreen> {
   }
 
   Future<void> _acknowledge(PersistedRiskSignal s) async {
-    final actor =
-        FirebaseAuthService.instance.profile?.email ??
-        'unknown@psyclinicai.com';
-    await _repo.acknowledge(s.id, actor: actor);
+    await _repo.acknowledge(s.id, actor: _actor);
     if (!mounted) return;
     setState(() => _report = RiskCoverageStats.summarise(_repo.all));
   }
+
+  Future<void> _acknowledgeAll() async {
+    final open = _report.unacknowledgedHighSeverity;
+    if (open.isEmpty) return;
+    await _repo.acknowledgeAll(open.map((s) => s.id), actor: _actor);
+    if (!mounted) return;
+    setState(() => _report = RiskCoverageStats.summarise(_repo.all));
+  }
+
+  String get _actor =>
+      FirebaseAuthService.instance.profile?.email ?? 'unknown@psyclinicai.com';
 
   @override
   Widget build(BuildContext context) {
@@ -82,16 +90,25 @@ class _RiskCoverageScreenState extends State<RiskCoverageScreen> {
       subtitle: 'Were the signals raised this period acted on?',
       child: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _Body(report: _report, onAck: _acknowledge),
+          : _Body(
+              report: _report,
+              onAck: _acknowledge,
+              onAckAll: _acknowledgeAll,
+            ),
     );
   }
 }
 
 class _Body extends StatelessWidget {
-  const _Body({required this.report, required this.onAck});
+  const _Body({
+    required this.report,
+    required this.onAck,
+    required this.onAckAll,
+  });
 
   final RiskCoverageReport report;
   final Future<void> Function(PersistedRiskSignal) onAck;
+  final Future<void> Function() onAckAll;
 
   @override
   Widget build(BuildContext context) {
@@ -168,11 +185,25 @@ class _Body extends StatelessWidget {
             child: _CategoryRow(breakdown: b, cs: cs, theme: theme),
           ),
         const SizedBox(height: PsySpacing.xl),
-        Text(
-          'Open high-severity signals (${report.unacknowledgedHighSeverity.length})',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Open high-severity signals (${report.unacknowledgedHighSeverity.length})',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (report.unacknowledgedHighSeverity.length >= 2)
+              OutlinedButton.icon(
+                onPressed: () => unawaited(onAckAll()),
+                icon: const Icon(Icons.done_all, size: 18),
+                label: Text(
+                  'Acknowledge all (${report.unacknowledgedHighSeverity.length})',
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: PsySpacing.md),
         if (report.unacknowledgedHighSeverity.isEmpty)

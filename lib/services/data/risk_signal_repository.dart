@@ -219,6 +219,42 @@ class RiskSignalRepository {
     return updated;
   }
 
+  /// Acknowledge several rows at once. Unknown ids are skipped
+  /// silently (so a stale UI snapshot never throws). Returns the
+  /// rows actually mutated, in their post-update form. Writes the
+  /// whole snapshot once at the end + fires a single
+  /// `risk_signal.acknowledged_bulk` telemetry hint with the count —
+  /// no per-row noise, no PHI.
+  Future<List<PersistedRiskSignal>> acknowledgeAll(
+    Iterable<String> ids, {
+    required String actor,
+    DateTime? at,
+  }) async {
+    final stamp = (at ?? DateTime.now()).toUtc();
+    final updated = <PersistedRiskSignal>[];
+    for (final id in ids) {
+      final idx = _items.indexWhere((e) => e.id == id);
+      if (idx < 0) continue;
+      if (_items[idx].acknowledged) continue;
+      final next = _items[idx].copyWith(
+        acknowledged: true,
+        acknowledgedAt: stamp,
+        acknowledgedBy: actor,
+      );
+      _items[idx] = next;
+      updated.add(next);
+    }
+    if (updated.isEmpty) return updated;
+    await _save();
+    unawaited(
+      TelemetryService.instance.capture(
+        'risk_signal.acknowledged_bulk',
+        properties: {'count': updated.length},
+      ),
+    );
+    return updated;
+  }
+
   Future<void> debugReset() async {
     _items.clear();
     _loaded = false;

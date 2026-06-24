@@ -8,6 +8,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/medication_repository.dart';
 import '../../services/data/patient_pin_repository.dart';
+import '../../services/data/patient_slug.dart';
 import '../../theme/tokens.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
@@ -173,7 +174,7 @@ class _Header extends StatelessWidget {
                 ),
                 const SizedBox(height: PsySpacing.xs),
                 Text(
-                  'Patient ID · ${args.id}',
+                  'MRN · PSY-${PatientSlug.encodeForDisplay(args.id)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6),
                     fontFamily: 'JetBrains Mono',

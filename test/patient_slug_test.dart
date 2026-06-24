@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/data/patient_slug.dart';
+import 'package:psyclinicai/services/data/tenant_context.dart';
 
 void main() {
   group('PatientSlug.encode', () {
@@ -133,6 +134,50 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+
+  group('PatientSlug.encodeForDisplay', () {
+    tearDown(() => TenantContext.setOverride(null));
+
+    test('uses the supplied tenantSalt when provided', () {
+      TenantContext.setOverride('tenant-ignored');
+      final direct = PatientSlug.encode(
+        patientId: 'pat-001',
+        tenantSalt: 'tenant-A',
+      );
+      final display = PatientSlug.encodeForDisplay(
+        'pat-001',
+        tenantSalt: 'tenant-A',
+      );
+      expect(display, direct);
+    });
+
+    test('falls back to TenantContext.currentTenantIdOrNull', () {
+      TenantContext.setOverride('tenant-A');
+      final direct = PatientSlug.encode(
+        patientId: 'pat-001',
+        tenantSalt: 'tenant-A',
+      );
+      expect(PatientSlug.encodeForDisplay('pat-001'), direct);
+    });
+
+    test('uses demo salt when no tenant is resolved', () {
+      TenantContext.setOverride(null);
+      final once = PatientSlug.encodeForDisplay('pat-001');
+      final twice = PatientSlug.encodeForDisplay('pat-001');
+      expect(once, twice);
+      expect(once, hasLength(12));
+    });
+
+    test('demo-fallback differs from a real tenant salt', () {
+      TenantContext.setOverride(null);
+      final demo = PatientSlug.encodeForDisplay('pat-001');
+      final real = PatientSlug.encodeForDisplay(
+        'pat-001',
+        tenantSalt: 'tenant-A',
+      );
+      expect(demo, isNot(real));
     });
   });
 

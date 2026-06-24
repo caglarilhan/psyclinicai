@@ -66,6 +66,7 @@ import 'package:psyclinicai/screens/static/compare_page.dart';
 import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
 import 'package:psyclinicai/screens/static/faq_page.dart';
+import 'package:psyclinicai/screens/static/kvkk_aydinlatma_page.dart';
 import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/static/pricing_page.dart';
@@ -387,6 +388,7 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/roadmap': (context) => const RoadmapPage(),
                 '/status': (context) => const StatusPage(),
                 '/privacy': (context) => const PrivacyPage(),
+                '/legal/kvkk': (context) => const KvkkAydinlatmaPage(),
                 '/tos': (context) => const TosPage(),
                 '/contact': (context) => const ContactPage(),
                 '/press': (context) => const PressPage(),

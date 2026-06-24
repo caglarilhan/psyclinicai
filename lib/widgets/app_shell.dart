@@ -10,6 +10,7 @@ import '../theme/tokens.dart';
 import 'command_palette.dart';
 import 'command_palette_registry.dart';
 import 'keyboard_shortcuts_sheet.dart';
+import 'subscription_chip.dart';
 import 'system_status_banner.dart';
 
 part 'app_shell_content.dart';
@@ -147,6 +148,10 @@ class AppShell extends StatelessWidget {
               tooltip: 'Search patients',
               onPressed: () => _go(context, '/patients'),
               icon: const Icon(Icons.search),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: PsySpacing.sm),
+              child: SubscriptionChip(),
             ),
             const _UserMenu(),
             const SizedBox(width: PsySpacing.sm),

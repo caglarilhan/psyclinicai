@@ -9,6 +9,7 @@ import '../services/data/firebase_bootstrap.dart';
 import '../theme/tokens.dart';
 import 'command_palette.dart';
 import 'command_palette_registry.dart';
+import 'keyboard_shortcuts_sheet.dart';
 import 'system_status_banner.dart';
 
 part 'app_shell_content.dart';
@@ -225,11 +226,17 @@ class AppShell extends StatelessWidget {
       );
     }
 
+    void openShortcutsHelp() {
+      unawaited(showKeyboardShortcuts(context));
+    }
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyK, meta: true): openPalette,
         const SingleActivator(LogicalKeyboardKey.keyK, control: true):
             openPalette,
+        const SingleActivator(LogicalKeyboardKey.slash, shift: true):
+            openShortcutsHelp,
       },
       child: Focus(autofocus: true, child: scaffold),
     );

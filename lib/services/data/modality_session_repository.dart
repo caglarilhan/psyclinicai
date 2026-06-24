@@ -1,15 +1,17 @@
-/// Offline repository for modality-specific session artefacts —
+/// Encrypted repository for modality-specific session artefacts —
 /// CBT thought records, DBT diary cards, EMDR session trackers.
 ///
-/// Storage strategy mirrors [`HomeworkRepository`] /
-/// [`AssessmentRepository`]: SharedPreferences-backed string list,
-/// per-record resilience (a single corrupt entry never wipes the
-/// list), telemetry on load/save errors.
+/// PHI uplift (SecurePrefs ship): each record is a verbatim
+/// clinical narrative (thoughts, urges, EMDR target memories), so
+/// the on-disk blob now sits in [SecurePrefs] (Android KeyStore /
+/// iOS Keychain) instead of plaintext SharedPreferences.
+/// `initialize()` carries forward any pre-upgrade SP list under
+/// the same key in a one-shot migration so existing records survive.
 ///
-/// One repository, three modalities — the envelope tags each record
-/// with its `type` so the loader can pick the correct
-/// `fromJson` factory. Saved as a single key so the cross-modality
-/// caseload view ("everything for this patient") is one read.
+/// Per-record resilience preserved: a single corrupt entry never
+/// wipes the rest. One repository, three modalities — the envelope
+/// tags each record with its `type` so the loader can pick the
+/// correct `fromJson` factory.
 library;
 
 import 'dart:async';
@@ -21,6 +23,7 @@ import '../../models/modalities/cbt_thought_record.dart';
 import '../../models/modalities/dbt_diary_card.dart';
 import '../../models/modalities/emdr_session_tracker.dart';
 import '../../models/modalities/family_session_note.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 enum ModalityKind {
@@ -118,11 +121,15 @@ class ModalityRecord {
 }
 
 class ModalitySessionRepository {
-  ModalitySessionRepository({String? storageKey})
-    : _key = storageKey ?? _defaultKey;
+  ModalitySessionRepository({String? storageKey, SecurePrefs? prefs})
+    : _key = storageKey ?? _defaultKey,
+      _prefs = prefs ?? SecurePrefs.instance;
 
+  /// Storage key for this repo — kept stable so the one-shot SP
+  /// migration on init can locate any pre-existing list.
   static const _defaultKey = 'modality_sessions';
   final String _key;
+  final SecurePrefs _prefs;
 
   final List<ModalityRecord> _items = [];
   bool _loaded = false;
@@ -131,35 +138,11 @@ class ModalitySessionRepository {
     if (_loaded) return;
     _items.clear();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getStringList(_key) ?? [];
-      var dropped = 0;
-      for (final s in raw) {
-        try {
-          _items.add(
-            ModalityRecord.fromJson(jsonDecode(s) as Map<String, dynamic>),
-          );
-        } catch (err, st) {
-          dropped++;
-          unawaited(
-            TelemetryService.instance.captureError(
-              err,
-              st,
-              hint: 'modality_session_decode_record',
-            ),
-          );
-        }
-      }
-      if (dropped > 0) {
-        unawaited(
-          TelemetryService.instance.captureError(
-            StateError(
-              'Dropped $dropped corrupt modality session record(s) on load',
-            ),
-            StackTrace.current,
-            hint: 'modality_session_init',
-          ),
-        );
+      final raw = await _prefs.getString(_key);
+      if (raw != null && raw.isNotEmpty) {
+        _decodeBlob(raw);
+      } else {
+        await _migrateFromSharedPreferences();
       }
     } catch (e, st) {
       unawaited(
@@ -173,13 +156,92 @@ class ModalitySessionRepository {
     _loaded = true;
   }
 
-  Future<void> _save() async {
+  Future<void> _migrateFromSharedPreferences() async {
+    SharedPreferences sp;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
-        _key,
-        _items.map((r) => jsonEncode(r.toJson())).toList(),
+      sp = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+    final legacy = sp.getStringList(_key);
+    if (legacy == null || legacy.isEmpty) return;
+    for (final s in legacy) {
+      try {
+        _items.add(
+          ModalityRecord.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        );
+      } catch (err, st) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            err,
+            st,
+            hint: 'modality_session_migrate_record',
+          ),
+        );
+      }
+    }
+    if (_items.isNotEmpty) {
+      await _persist();
+    }
+    try {
+      await sp.remove(_key);
+    } catch (_) {}
+    unawaited(
+      TelemetryService.instance.capture(
+        'modality_session.migrated_to_secure_prefs',
+        properties: {'count': _items.length},
+      ),
+    );
+  }
+
+  void _decodeBlob(String raw) {
+    var dropped = 0;
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      for (final entry in list) {
+        try {
+          _items.add(ModalityRecord.fromJson(entry as Map<String, dynamic>));
+        } catch (err, st) {
+          dropped++;
+          unawaited(
+            TelemetryService.instance.captureError(
+              err,
+              st,
+              hint: 'modality_session_decode_record',
+            ),
+          );
+        }
+      }
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'modality_session_decode_blob',
+        ),
       );
+    }
+    if (dropped > 0) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          StateError(
+            'Dropped $dropped corrupt modality session record(s) on load',
+          ),
+          StackTrace.current,
+          hint: 'modality_session_init',
+        ),
+      );
+    }
+  }
+
+  Future<void> _save() => _persist();
+
+  Future<void> _persist() async {
+    try {
+      final raw = jsonEncode(
+        _items.map((r) => r.toJson()).toList(growable: false),
+      );
+      await _prefs.setString(_key, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(
@@ -248,10 +310,12 @@ class ModalitySessionRepository {
     _items.clear();
     _loaded = false;
     try {
+      await _prefs.remove(_key);
+    } catch (_) {}
+    // Wipe any leftover SP entry from a pre-migration build.
+    try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_key);
-    } catch (_) {
-      // best-effort
-    }
+    } catch (_) {}
   }
 }

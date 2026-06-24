@@ -3,18 +3,57 @@
 /// records dropped, per-patient filter, upsert idempotence.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/modalities/cbt_thought_record.dart';
 import 'package:psyclinicai/models/modalities/dbt_diary_card.dart';
 import 'package:psyclinicai/models/modalities/emdr_session_tracker.dart';
 import 'package:psyclinicai/services/data/modality_session_repository.dart';
+import 'package:psyclinicai/services/data/secure_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _fssChannel = MethodChannel(
+  'plugins.it_nomads.com/flutter_secure_storage',
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  late Map<String, String> secureBacking;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    secureBacking = <String, String>{};
+    messenger.setMockMethodCallHandler(_fssChannel, (call) async {
+      switch (call.method) {
+        case 'read':
+          return secureBacking[(call.arguments as Map)['key'] as String];
+        case 'write':
+          final a = call.arguments as Map;
+          secureBacking[a['key'] as String] = a['value'] as String;
+          return null;
+        case 'delete':
+          secureBacking.remove((call.arguments as Map)['key'] as String);
+          return null;
+        case 'containsKey':
+          return secureBacking.containsKey(
+            (call.arguments as Map)['key'] as String,
+          );
+        case 'deleteAll':
+          secureBacking.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(secureBacking);
+      }
+      return null;
+    });
+  });
+
+  tearDown(() {
+    messenger.setMockMethodCallHandler(_fssChannel, null);
+    SecurePrefs.setInstanceForTest(null);
   });
 
   group('CbtThoughtRecord', () {
@@ -266,18 +305,34 @@ void main() {
       },
     );
 
-    test('initialize drops corrupt records but loads the valid ones', () async {
-      // Pre-seed with one valid + one corrupt entry under the same
-      // key.
-      SharedPreferences.setMockInitialValues({
-        'mod_test_corrupt': <String>[
-          '{"type":"cbt","payload":{"id":"good","patientId":"p1","clinicianId":"c1","recordedAt":"2026-06-23T10:00:00Z"}}',
-          'not valid json',
-        ],
-      });
+    test(
+      'initialize migrates legacy SP list into SecurePrefs (one-shot)',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'mod_test_migrate': <String>[
+            '{"type":"cbt","payload":{"id":"good","patientId":"p1","clinicianId":"c1","recordedAt":"2026-06-23T10:00:00Z"}}',
+            'not valid json',
+          ],
+        });
+        final repo = ModalitySessionRepository(storageKey: 'mod_test_migrate');
+        await repo.initialize();
+        expect(repo.all, hasLength(1));
+        expect(repo.all.first.id, 'good');
+
+        // SP entry must be wiped; SecurePrefs must hold the data.
+        expect(secureBacking.keys, contains('mod_test_migrate'));
+        final sp = await SharedPreferences.getInstance();
+        expect(sp.getStringList('mod_test_migrate'), isNull);
+      },
+    );
+
+    test('decoded blob drops corrupt records (per-record resilience)', () async {
+      secureBacking['mod_test_corrupt'] =
+          '[{"type":"cbt","payload":{"id":"good","patientId":"p1","clinicianId":"c1","recordedAt":"2026-06-23T10:00:00Z"}},'
+          '"not a map"]';
       final repo = ModalitySessionRepository(storageKey: 'mod_test_corrupt');
       await repo.initialize();
-      expect(repo.all.length, 1);
+      expect(repo.all, hasLength(1));
       expect(repo.all.first.id, 'good');
     });
   });

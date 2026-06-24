@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_reveal.dart';
+import '../../widgets/whats_new_sheet.dart';
 import 'dashboard_actions.dart';
 import 'dashboard_kpis.dart';
 import 'dashboard_sections.dart';
@@ -47,41 +50,47 @@ class DashboardScreen extends StatelessWidget {
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (profile?.role.label != null) ...[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: RoleChip(label: profile!.role.label, cs: cs, theme: theme),
+      child: _WhatsNewOnMount(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (profile?.role.label != null) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: RoleChip(
+                  label: profile!.role.label,
+                  cs: cs,
+                  theme: theme,
+                ),
+              ),
+              const SizedBox(height: PsySpacing.xl),
+            ],
+            // Dev-only callout — production visitors should not see "Firebase
+            // isn't configured" on the dashboard.
+            if (!PsyFirebase.isReady && kDebugMode) ...[
+              DemoBanner(cs: cs, theme: theme),
+              const SizedBox(height: PsySpacing.xl),
+            ],
+            PsyReveal(
+              child: KpiRow(theme: theme, cs: cs),
             ),
-            const SizedBox(height: PsySpacing.xl),
+            const SizedBox(height: PsySpacing.xxl),
+            const PsyReveal(
+              delay: Duration(milliseconds: 40),
+              child: SetupChecklist(),
+            ),
+            const SizedBox(height: PsySpacing.xxl),
+            PsyReveal(
+              delay: const Duration(milliseconds: 80),
+              child: QuickActions(theme: theme, cs: cs),
+            ),
+            const SizedBox(height: PsySpacing.xxl),
+            PsyReveal(
+              delay: const Duration(milliseconds: 160),
+              child: RecentActivity(theme: theme, cs: cs),
+            ),
           ],
-          // Dev-only callout — production visitors should not see "Firebase
-          // isn't configured" on the dashboard.
-          if (!PsyFirebase.isReady && kDebugMode) ...[
-            DemoBanner(cs: cs, theme: theme),
-            const SizedBox(height: PsySpacing.xl),
-          ],
-          PsyReveal(
-            child: KpiRow(theme: theme, cs: cs),
-          ),
-          const SizedBox(height: PsySpacing.xxl),
-          const PsyReveal(
-            delay: Duration(milliseconds: 40),
-            child: SetupChecklist(),
-          ),
-          const SizedBox(height: PsySpacing.xxl),
-          PsyReveal(
-            delay: const Duration(milliseconds: 80),
-            child: QuickActions(theme: theme, cs: cs),
-          ),
-          const SizedBox(height: PsySpacing.xxl),
-          PsyReveal(
-            delay: const Duration(milliseconds: 160),
-            child: RecentActivity(theme: theme, cs: cs),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -92,4 +101,31 @@ class DashboardScreen extends StatelessWidget {
     if (h < 18) return 'Good afternoon';
     return 'Good evening';
   }
+}
+
+/// Fires [maybeShowWhatsNew] exactly once when the dashboard mounts.
+/// Kept private so the side-effect lives next to the screen that
+/// uses it; promote it later if a second surface needs the same
+/// "open this sheet on first frame" pattern.
+class _WhatsNewOnMount extends StatefulWidget {
+  const _WhatsNewOnMount({required this.child});
+  final Widget child;
+
+  @override
+  State<_WhatsNewOnMount> createState() => _WhatsNewOnMountState();
+}
+
+class _WhatsNewOnMountState extends State<_WhatsNewOnMount> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Fire-and-forget. The helper itself guards against re-shows.
+      unawaited(maybeShowWhatsNew(context));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

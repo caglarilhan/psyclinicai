@@ -16,6 +16,7 @@ import '../../services/copilot/supervision_service.dart';
 import '../../services/copilot/transcription_service.dart';
 import '../../services/data/session_note_repository.dart';
 import '../ds/psy_snack.dart';
+import 'ai_disclaimer.dart';
 import 'audit_feedback.dart';
 import 'compliance_rail.dart';
 import 'insights_sheet.dart';
@@ -532,6 +533,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       case PanelState.listening:
         return Column(
           children: [
+            AiDisclaimer.compact(surface: 'live_panel_listening'),
             if (_signals.isNotEmpty)
               RiskStrip(signals: _signals, theme: theme, cs: cs),
             Expanded(
@@ -547,7 +549,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       case PanelState.generating:
         return GeneratingView(theme: theme, cs: cs, transcript: _transcript);
       case PanelState.noteReady:
-        final noteView = NoteReadyView(
+        final innerNote = NoteReadyView(
           theme: theme,
           cs: cs,
           note: _note!,
@@ -559,6 +561,19 @@ class _LiveAiPanelState extends State<LiveAiPanel>
           onSupervision: () => _showSupervision(context),
           loadingSupervision: _loadingSupervision,
           modalityLabel: _modality.label,
+        );
+        final noteView = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: AiDisclaimer.full(
+                surface: 'soap_draft',
+                draftedLabel: 'AI-drafted SOAP note',
+              ),
+            ),
+            Expanded(child: innerNote),
+          ],
         );
         void onPayer(Payer p) => setState(() {
           _payer = p;

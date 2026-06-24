@@ -14,6 +14,7 @@ import '../../services/treatment_plan_service.dart';
 import '../../services/treatment_plan_templates.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/copilot/ai_disclaimer.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/ds/psy_skeleton.dart';
@@ -184,6 +185,8 @@ class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
             ),
           ],
         ),
+        const SizedBox(height: PsySpacing.sm),
+        AiDisclaimer.compact(surface: 'treatment_plan_ai'),
         const SizedBox(height: PsySpacing.md),
         if (plan.goals.isEmpty)
           EmptyGoalsCard(theme: theme, cs: cs)

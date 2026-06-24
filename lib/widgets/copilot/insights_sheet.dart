@@ -12,6 +12,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../services/copilot/session_insights_service.dart';
+import 'ai_disclaimer.dart';
 
 class InsightsSheet extends StatelessWidget {
   const InsightsSheet({super.key, required this.insights});
@@ -125,14 +126,7 @@ class InsightsSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Reflective AI feedback — not a performance evaluation and not a '
-              'substitute for clinical supervision.',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+            AiDisclaimer.footer(surface: 'session_insights'),
           ],
         ),
       ),

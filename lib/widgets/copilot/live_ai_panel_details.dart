@@ -17,6 +17,7 @@ import '../../models/clinical_lens.dart';
 import '../../models/denial_risk.dart';
 import '../../models/supervision_report.dart';
 import '../../services/billing/denial_shield_service.dart';
+import 'ai_disclaimer.dart';
 import 'risk_denial_strip.dart' show denialColor;
 
 /// Denial Shield detail sheet. The panel passes `onApplyFixes` — when
@@ -320,14 +321,7 @@ void showSupervisionSheet(BuildContext context, SupervisionReport report) {
               ),
             ),
             const SizedBox(height: 10),
-            Text(
-              'Decision-support for supervision — not a competency '
-              'determination. Verify anonymization before sharing.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.5),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+            AiDisclaimer.footer(surface: 'supervision_sheet'),
           ],
         ),
       ),
@@ -396,14 +390,7 @@ void showClinicalLensSheet(BuildContext context, ClinicalLens lens) {
               ),
               const SizedBox(height: 16),
             ],
-            Text(
-              'Decision-support — extracted from the transcript for review, not '
-              'a diagnosis.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.5),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+            AiDisclaimer.footer(surface: 'clinical_lens_sheet'),
           ],
         ),
       ),

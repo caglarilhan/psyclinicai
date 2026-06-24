@@ -15,7 +15,10 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../services/billing/subscription_service.dart';
+import '../../services/data/auth_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/onboarding_checklist.dart';
@@ -199,13 +202,24 @@ class SetupChecklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nav = Navigator.of(context);
+    // Live signals — Provider-watched so checking a step in another
+    // tab flips the box without a refresh.
+    final auth = context.watch<FirebaseAuthService?>();
+    final subscription = context.watch<SubscriptionService?>();
+    final profile = auth?.profile;
+    final profileDone =
+        profile != null &&
+        profile.fullName.isNotEmpty &&
+        profile.npi.isNotEmpty;
+    final stripeDone = subscription?.isActive ?? false;
+
     final items = <OnboardingChecklistItem>[
       OnboardingChecklistItem(
         id: 'profile',
         label: 'Add your clinician profile',
         body: 'NPI, license, signature — feeds the superbill.',
         icon: Icons.badge_outlined,
-        done: false,
+        done: profileDone,
         onTap: () => nav.pushNamed('/settings/profile'),
       ),
       OnboardingChecklistItem(
@@ -221,7 +235,7 @@ class SetupChecklist extends StatelessWidget {
         label: 'Connect Stripe to take payments',
         body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
         icon: Icons.payments_outlined,
-        done: false,
+        done: stripeDone,
         onTap: () => nav.pushNamed('/settings/payments'),
       ),
       OnboardingChecklistItem(

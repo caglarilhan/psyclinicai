@@ -93,4 +93,50 @@ void main() {
       expect(ai.dpiaReference, isNotEmpty);
     });
   });
+
+  group('KVKK md. 16 alignment', () {
+    test('every activity now carries a KVKK basis', () {
+      for (final a in RopaRegistry.activities) {
+        expect(
+          a.kvkkBasis,
+          isNotEmpty,
+          reason:
+              '${a.id} missing kvkkBasis — KVKK md. 16 envanter '
+              'expects a per-activity Turkish basis next to the GDPR one.',
+        );
+      }
+    });
+
+    test('kvkkInScope returns every activity (all five align today)', () {
+      expect(RopaRegistry.kvkkInScope.length, RopaRegistry.activities.length);
+    });
+
+    test('exportJson carries both GDPR and KVKK lawful bases', () {
+      final dump = RopaRegistry.exportJson();
+      expect(dump['version'], '1.0');
+      expect(dump['frameworks'], contains('kvkk'));
+      expect(dump['frameworks'], contains('gdpr'));
+
+      final activities = dump['activities']! as List<Object?>;
+      expect(activities, hasLength(RopaRegistry.activities.length));
+
+      final first = activities.first! as Map<String, Object?>;
+      expect(first['gdpr_lawful_basis'], isNotEmpty);
+      expect(first['kvkk_basis'], isNotEmpty);
+      expect(first['data_categories'], isA<List<Object?>>());
+    });
+
+    test('exportJson cross-border block stays auditable per recipient', () {
+      final dump = RopaRegistry.exportJson();
+      final activities = (dump['activities']! as List<Object?>)
+          .cast<Map<String, Object?>>();
+      final ai = activities.firstWhere((a) => a['id'] == 'ai-assistance');
+      final recipients = ai['cross_border_recipients']! as List<Object?>;
+      expect(recipients, isNotEmpty);
+      final first = recipients.first! as Map<String, Object?>;
+      expect(first['country'], 'US');
+      expect(first['instrument'], isNotEmpty);
+      expect(first['tia_reference'], isNotEmpty);
+    });
+  });
 }

@@ -3,10 +3,16 @@
 /// corrupt-record drop on initialize.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/copilot/risk_signal_service.dart';
 import 'package:psyclinicai/services/data/risk_signal_repository.dart';
+import 'package:psyclinicai/services/data/secure_prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _fssChannel = MethodChannel(
+  'plugins.it_nomads.com/flutter_secure_storage',
+);
 
 PersistedRiskSignal _row({
   String id = 'sig-1',
@@ -33,9 +39,42 @@ PersistedRiskSignal _row({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  late Map<String, String> secureBacking;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    secureBacking = <String, String>{};
+    messenger.setMockMethodCallHandler(_fssChannel, (call) async {
+      switch (call.method) {
+        case 'read':
+          return secureBacking[(call.arguments as Map)['key'] as String];
+        case 'write':
+          final a = call.arguments as Map;
+          secureBacking[a['key'] as String] = a['value'] as String;
+          return null;
+        case 'delete':
+          secureBacking.remove((call.arguments as Map)['key'] as String);
+          return null;
+        case 'containsKey':
+          return secureBacking.containsKey(
+            (call.arguments as Map)['key'] as String,
+          );
+        case 'deleteAll':
+          secureBacking.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(secureBacking);
+      }
+      return null;
+    });
+  });
+
+  tearDown(() {
+    messenger.setMockMethodCallHandler(_fssChannel, null);
+    SecurePrefs.setInstanceForTest(null);
   });
 
   test('initialize on a fresh bucket yields an empty snapshot', () async {
@@ -147,15 +186,38 @@ void main() {
     expect(repo.all.map((s) => s.id).toList(), ['new', 'mid', 'old']);
   });
 
-  test('initialize drops corrupt records', () async {
-    const goodJson =
-        '{"id":"good","session_id":"s1","category":"suicidalIdeation",'
+  test(
+    'initialize migrates legacy SP list into SecurePrefs (one-shot)',
+    () async {
+      const goodJson =
+          '{"id":"good","session_id":"s1","category":"suicidalIdeation",'
+          '"severity":"high","matched_text":"x","snippet":"y",'
+          '"source":"lexicon","at":"2026-06-24T14:00:00.000Z",'
+          '"acknowledged":false}';
+      SharedPreferences.setMockInitialValues({
+        'rs_test_migrate': <String>[goodJson, 'not json at all'],
+      });
+
+      final repo = RiskSignalRepository(storageBucket: 'rs_test_migrate');
+      await repo.initialize();
+      expect(repo.all, hasLength(1));
+      expect(repo.all.first.id, 'good');
+
+      // Migration must have promoted the data into the SecurePrefs backing
+      // and cleared the SP entry so PHI never lingers in plaintext.
+      expect(secureBacking.keys, contains('rs_test_migrate'));
+      final sp = await SharedPreferences.getInstance();
+      expect(sp.getStringList('rs_test_migrate'), isNull);
+    },
+  );
+
+  test('decoded blob drops corrupt records (per-record resilience)', () async {
+    secureBacking['rs_test_corrupt'] =
+        '[{"id":"good","session_id":"s1","category":"suicidalIdeation",'
         '"severity":"high","matched_text":"x","snippet":"y",'
         '"source":"lexicon","at":"2026-06-24T14:00:00.000Z",'
-        '"acknowledged":false}';
-    SharedPreferences.setMockInitialValues({
-      'rs_test_corrupt': <String>[goodJson, 'not json at all'],
-    });
+        '"acknowledged":false},'
+        '"not a map at all"]';
     final repo = RiskSignalRepository(storageBucket: 'rs_test_corrupt');
     await repo.initialize();
     expect(repo.all, hasLength(1));

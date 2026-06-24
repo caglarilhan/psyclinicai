@@ -17,6 +17,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../copilot/risk_signal_service.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 class PersistedRiskSignal {
@@ -104,12 +105,16 @@ class PersistedRiskSignal {
 }
 
 class RiskSignalRepository {
-  RiskSignalRepository({String? storageBucket})
-    : _bucket = storageBucket ?? _storageId;
+  RiskSignalRepository({String? storageBucket, SecurePrefs? prefs})
+    : _bucket = storageBucket ?? _storageId,
+      _prefs = prefs ?? SecurePrefs.instance;
 
-  /// SharedPreferences bucket id for this repo — not a credential.
+  /// Storage key id for this repo — not a credential. Kept stable so
+  /// the one-shot SP→SecurePrefs migration on init can locate any
+  /// existing data under the same name.
   static const _storageId = 'risk_signals_v1';
   final String _bucket;
+  final SecurePrefs _prefs;
 
   final List<PersistedRiskSignal> _items = [];
   bool _loaded = false;
@@ -118,12 +123,72 @@ class RiskSignalRepository {
     if (_loaded) return;
     _items.clear();
     try {
-      final sp = await SharedPreferences.getInstance();
-      final raw = sp.getStringList(_bucket) ?? [];
-      for (final s in raw) {
+      final raw = await _prefs.getString(_bucket);
+      if (raw != null && raw.isNotEmpty) {
+        _decodeInto(raw);
+      } else {
+        await _migrateFromSharedPreferences();
+      }
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'risk_signal_init'),
+      );
+    }
+    _loaded = true;
+  }
+
+  /// PHI uplift (PR after SecurePrefs ship): risk signals used to sit
+  /// in plain SharedPreferences as a `getStringList`. On the first
+  /// launch with this code, copy any pre-existing list into
+  /// SecurePrefs and clear the SP entry so the data never gets left
+  /// in plaintext on disk.
+  Future<void> _migrateFromSharedPreferences() async {
+    SharedPreferences sp;
+    try {
+      sp = await SharedPreferences.getInstance();
+    } catch (_) {
+      // No SharedPreferences available (web cold start, certain test
+      // contexts) — nothing to migrate.
+      return;
+    }
+    final legacy = sp.getStringList(_bucket);
+    if (legacy == null || legacy.isEmpty) return;
+    for (final s in legacy) {
+      try {
+        _items.add(
+          PersistedRiskSignal.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        );
+      } catch (err, st) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            err,
+            st,
+            hint: 'risk_signal_migrate_record',
+          ),
+        );
+      }
+    }
+    if (_items.isNotEmpty) {
+      await _persist();
+    }
+    try {
+      await sp.remove(_bucket);
+    } catch (_) {}
+    unawaited(
+      TelemetryService.instance.capture(
+        'risk_signal.migrated_to_secure_prefs',
+        properties: {'count': _items.length},
+      ),
+    );
+  }
+
+  void _decodeInto(String raw) {
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      for (final entry in list) {
         try {
           _items.add(
-            PersistedRiskSignal.fromJson(jsonDecode(s) as Map<String, dynamic>),
+            PersistedRiskSignal.fromJson(entry as Map<String, dynamic>),
           );
         } catch (err, st) {
           unawaited(
@@ -137,19 +202,23 @@ class RiskSignalRepository {
       }
     } catch (e, st) {
       unawaited(
-        TelemetryService.instance.captureError(e, st, hint: 'risk_signal_init'),
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'risk_signal_decode_blob',
+        ),
       );
     }
-    _loaded = true;
   }
 
-  Future<void> _save() async {
+  Future<void> _save() => _persist();
+
+  Future<void> _persist() async {
     try {
-      final sp = await SharedPreferences.getInstance();
-      await sp.setStringList(
-        _bucket,
-        _items.map((e) => jsonEncode(e.toJson())).toList(),
+      final raw = jsonEncode(
+        _items.map((e) => e.toJson()).toList(growable: false),
       );
+      await _prefs.setString(_bucket, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(e, st, hint: 'risk_signal_save'),
@@ -258,6 +327,10 @@ class RiskSignalRepository {
   Future<void> debugReset() async {
     _items.clear();
     _loaded = false;
+    try {
+      await _prefs.remove(_bucket);
+    } catch (_) {}
+    // Clear any leftover SP entry from a pre-migration build.
     try {
       final sp = await SharedPreferences.getInstance();
       await sp.remove(_bucket);

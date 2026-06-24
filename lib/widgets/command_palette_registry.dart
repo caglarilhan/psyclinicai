@@ -98,6 +98,13 @@ List<CommandPaletteEntry> buildAppCommands(BuildContext context) {
       onSelect: () => go('/settings/audit'),
     ),
     CommandPaletteEntry(
+      label: 'Risk coverage',
+      section: 'Admin',
+      icon: Icons.shield_outlined,
+      subtitle: 'Leadership view: were risk signals acted on?',
+      onSelect: () => go('/admin/risk_coverage'),
+    ),
+    CommandPaletteEntry(
       label: 'API keys',
       section: 'Account',
       icon: Icons.key_outlined,

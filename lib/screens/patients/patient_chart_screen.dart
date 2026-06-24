@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/data/patient_slug.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -53,7 +54,8 @@ class _PatientChartScreenState extends State<PatientChartScreen>
     return AppShell(
       routeName: '/patients/chart',
       title: widget.args.name,
-      subtitle: 'Clinical chart · MRN PSY-${widget.args.id}',
+      subtitle:
+          'Clinical chart · MRN PSY-${PatientSlug.encodeForDisplay(widget.args.id)}',
       scrollable: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,7 +159,7 @@ class _Header extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        '42 y · he/him · MRN PSY-${args.id} · BCBS',
+                        '42 y · he/him · MRN PSY-${PatientSlug.encodeForDisplay(args.id)} · BCBS',
                         style: t.bodySmall,
                       ),
                       Text(

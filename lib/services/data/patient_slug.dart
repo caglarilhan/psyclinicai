@@ -14,8 +14,15 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import 'tenant_context.dart';
+
 class PatientSlug {
   PatientSlug._();
+
+  /// Stable demo salt for demo-mode + tests so the same id always
+  /// resolves to the same slug without a Firebase session. Not a
+  /// secret — the slug is a display alias, not an authn token.
+  static const _demoFallbackSalt = 'psy.demo.salt.v1';
 
   /// Encode [patientId] under [tenantSalt] into a 12-char URL-safe
   /// slug. Output charset is base32-alphabet upper without
@@ -52,6 +59,18 @@ class PatientSlug {
       diff |= slug.codeUnitAt(i) ^ expected.codeUnitAt(i);
     }
     return diff == 0;
+  }
+
+  /// Convenience for UI strings (page subtitles, chart headers,
+  /// pinned-patient cards): resolves the tenant salt from
+  /// [TenantContext] when [tenantSalt] is omitted, and falls back to
+  /// [_demoFallbackSalt] when no tenant is signed in (demo mode +
+  /// widget tests). Returns the 12-char slug — same alphabet as
+  /// [encode].
+  static String encodeForDisplay(String patientId, {String? tenantSalt}) {
+    final salt =
+        tenantSalt ?? TenantContext.currentTenantIdOrNull ?? _demoFallbackSalt;
+    return encode(patientId: patientId, tenantSalt: salt);
   }
 
   /// Base32-ish alphabet skipping confusable glyphs. 32 symbols so

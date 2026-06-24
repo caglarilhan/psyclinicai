@@ -73,6 +73,44 @@ void main() {
     });
   });
 
+  group('Dark scheme — info badge (a11y audit fix)', () {
+    // The actual darkScheme.surface hex from PsyColors.darkScheme — the
+    // older `n900` constant up top is not what the real scheme paints.
+    const darkSurfaceReal = 0xFF0B1220;
+    // PsyColors.info — the light-mode value, paired with the dark
+    // surface fails 4.5:1.
+    const lightInfo = 0xFF2563EB;
+    // PsyColors.infoDark — Tailwind blue-400, lifts above 4.5:1.
+    const infoDark = 0xFF60A5FA;
+
+    test(
+      'PsyColors.info on dark surface FAILS AA-small (regression bound)',
+      () {
+        // Pin the bug being fixed — a future palette tweak that quietly
+        // re-routes the badge through plain `info` will trip this.
+        expect(
+          passesWcagAa(lightInfo, darkSurfaceReal),
+          isFalse,
+          reason:
+              'PsyColors.info on dark surface sits at ~3.34:1 — must use '
+              'PsyColors.infoDark for badge labels in dark theme.',
+        );
+      },
+    );
+
+    test('PsyColors.infoDark on dark surface passes AA-small (≥ 4.5)', () {
+      expect(
+        passesWcagAa(infoDark, darkSurfaceReal),
+        isTrue,
+        reason: 'Info badge label must clear AA-small in dark mode.',
+      );
+    });
+
+    test('PsyColors.infoDark passes AAA-small for premium-tier disclosure', () {
+      expect(passesWcagAaa(infoDark, darkSurfaceReal), isTrue);
+    });
+  });
+
   group('Risk band chips (white background)', () {
     test('riskMinimal green passes AA-large on white', () {
       expect(passesWcagAa(riskMinimal, lightSurface, largeText: true), isTrue);

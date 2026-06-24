@@ -206,7 +206,7 @@ class _PsyButtonState extends State<PsyButton> {
         borderRadius: BorderRadius.circular(PsyRadius.md + 2),
         border: Border.all(
           color: _focused
-              ? cs.primary.withValues(alpha: 0.45)
+              ? cs.primary.withValues(alpha: 0.70)
               : Colors.transparent,
           width: 2,
         ),

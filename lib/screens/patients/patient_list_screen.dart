@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/patient_filter.dart';
+import '../../services/data/patient_pin_repository.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
@@ -36,11 +37,23 @@ class _PatientListScreenState extends State<PatientListScreen> {
   PatientFilter _filter = PatientFilter.empty;
   int _visibleCount = _pageSize;
 
+  final PatientPinRepository _pinRepo = PatientPinRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_pinRepo.initialize());
+  }
+
   @override
   void dispose() {
     _searchTimer?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _togglePin(String patientId) async {
+    await _pinRepo.toggle(patientId);
   }
 
   void _onQueryChanged(String v) {
@@ -162,26 +175,42 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 : null,
           );
         }
-        final total = patients.length;
-        final visible = total <= _visibleCount ? total : _visibleCount;
-        final hasMore = visible < total;
-        final shown = patients.take(visible).toList(growable: false);
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
-          itemCount: shown.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
-          itemBuilder: (_, i) {
-            if (i == shown.length) {
-              return _ResultFooter(
-                visible: visible,
-                total: total,
-                hasMore: hasMore,
-                onLoadMore: _loadMore,
-              );
-            }
-            return _PatientTile(
-              patient: shown[i],
-              onOpen: () => _openDetail(shown[i].id, shown[i].fullName),
+        return ValueListenableBuilder<Set<String>>(
+          valueListenable: _pinRepo.listenable,
+          builder: (context, pinned, _) {
+            // Pinned first (their relative order preserved by the
+            // underlying stream), unpinned next.
+            final pinnedSlice = patients
+                .where((p) => pinned.contains(p.id))
+                .toList(growable: false);
+            final restSlice = patients
+                .where((p) => !pinned.contains(p.id))
+                .toList(growable: false);
+            final ordered = <PatientDoc>[...pinnedSlice, ...restSlice];
+            final total = ordered.length;
+            final visible = total <= _visibleCount ? total : _visibleCount;
+            final hasMore = visible < total;
+            final shown = ordered.take(visible).toList(growable: false);
+            return ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
+              itemCount: shown.length + 1,
+              separatorBuilder: (_, _) => const SizedBox(height: PsySpacing.md),
+              itemBuilder: (_, i) {
+                if (i == shown.length) {
+                  return _ResultFooter(
+                    visible: visible,
+                    total: total,
+                    hasMore: hasMore,
+                    onLoadMore: _loadMore,
+                  );
+                }
+                return _PatientTile(
+                  patient: shown[i],
+                  pinned: pinned.contains(shown[i].id),
+                  onOpen: () => _openDetail(shown[i].id, shown[i].fullName),
+                  onTogglePin: () => _togglePin(shown[i].id),
+                );
+              },
             );
           },
         );
@@ -448,9 +477,16 @@ class _DemoPatient {
 }
 
 class _PatientTile extends StatelessWidget {
-  const _PatientTile({required this.patient, required this.onOpen});
+  const _PatientTile({
+    required this.patient,
+    required this.onOpen,
+    this.pinned = false,
+    this.onTogglePin,
+  });
   final PatientDoc patient;
   final VoidCallback onOpen;
+  final bool pinned;
+  final VoidCallback? onTogglePin;
 
   @override
   Widget build(BuildContext context) {
@@ -498,6 +534,17 @@ class _PatientTile extends StatelessWidget {
               ],
             ),
           ),
+          if (onTogglePin != null)
+            IconButton(
+              tooltip: pinned ? 'Unpin' : 'Pin to top',
+              onPressed: onTogglePin,
+              icon: Icon(
+                pinned ? Icons.star : Icons.star_outline,
+                color: pinned
+                    ? const Color(0xFFD97706)
+                    : cs.onSurface.withValues(alpha: 0.45),
+              ),
+            ),
           const Icon(Icons.chevron_right),
         ],
       ),

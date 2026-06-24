@@ -18,6 +18,7 @@ import '../../services/copilot/risk_signal_service.dart' show RiskCategory;
 import '../../services/data/auth_service.dart';
 import '../../services/data/risk_signal_repository.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -374,7 +375,9 @@ class _OpenRow extends StatelessWidget {
                   ),
                   const SizedBox(height: PsySpacing.xs),
                   Text(
-                    'Session ${signal.sessionId} · ${signal.at.toLocal()}',
+                    'Session ${signal.sessionId} · '
+                    '${TimeFormat.relativeDay(signal.at)} '
+                    '${TimeFormat.localClock(signal.at)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.onSurface.withValues(alpha: 0.55),
                     ),

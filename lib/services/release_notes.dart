@@ -35,6 +35,18 @@ class ReleaseNotes {
   /// in-app sheet reads `releases.first`.
   static const List<Release> releases = <Release>[
     Release(
+      version: '0.9.0',
+      date: '2026-06-24',
+      tag: 'Power-user shell + live audit verify + onboarding accuracy',
+      bullets: [
+        'Subscription tier chip in the AppShell header — at-a-glance Free / Solo / Practice / Group badge on every screen.',
+        'Press ? from anywhere to open the Keyboard shortcuts help sheet (pairs with the existing Cmd+K command palette).',
+        '/settings/audit_log integrity check is now a live button — runs verifyChain() and renders "Chain intact" or "Broken at row N".',
+        'Setup checklist on the dashboard derives done flags from real services (profile + Stripe), so the X / 4 badge reflects reality.',
+        '/settings/pinned management screen — every pinned patient with per-row Unpin + bulk Unpin all; reachable from Settings → Workspace or Cmd+K.',
+      ],
+    ),
+    Release(
       version: '0.8.0',
       date: '2026-06-24',
       tag: 'Dashboard tiles + pinning + bulk risk acknowledgement',

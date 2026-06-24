@@ -1,29 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../../models/session_note.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 /// Offline per-patient session-note store. Feeds the Clinical Memory
-/// pre-session brief. Firestore is the authoritative store; this is a local
-/// cache, but the notes are clinical text (PHI) so it persists to the device's
-/// secure storage rather than plaintext SharedPreferences. On first run it
-/// seeds a couple of demo notes for the demo patient so the brief has history.
+/// pre-session brief. Firestore is the authoritative store; this is a
+/// local cache, but the notes are clinical text (PHI) so it persists
+/// to the device's secure storage (via [SecurePrefs]) rather than
+/// plaintext SharedPreferences. On first run it seeds a couple of demo
+/// notes for the demo patient so the brief has history.
 class SessionNoteRepository {
-  SessionNoteRepository({FlutterSecureStorage? storage})
-    : _storage =
-          storage ??
-          const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            iOptions: IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock,
-            ),
-          );
+  SessionNoteRepository({SecurePrefs? prefs})
+    : _prefs = prefs ?? SecurePrefs.instance;
 
   static const _key = 'session_notes';
-  final FlutterSecureStorage _storage;
+  final SecurePrefs _prefs;
 
   final List<SessionNote> _notes = [];
   bool _loaded = false;
@@ -32,7 +25,7 @@ class SessionNoteRepository {
     if (_loaded) return;
     _notes.clear();
     try {
-      final raw = await _storage.read(key: _key);
+      final raw = await _prefs.getString(_key);
       if (raw == null || raw.isEmpty) {
         _notes.addAll(_demoSeed());
         await _persist();
@@ -95,7 +88,7 @@ class SessionNoteRepository {
       final raw = jsonEncode(
         _notes.map((n) => n.toJson()).toList(growable: false),
       );
-      await _storage.write(key: _key, value: raw);
+      await _prefs.setString(_key, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(

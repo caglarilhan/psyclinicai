@@ -1,30 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../../models/safety_plan.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 /// Offline safety-plan store — one plan per patient.
 ///
-/// A Stanley-Brown crisis safety plan is PHI, so it persists to the device's
-/// secure storage (iOS Keychain / Android encrypted prefs), never plaintext.
-/// Failures are reported to telemetry rather than silently swallowed: an
-/// invisible "no crisis plan" state for an at-risk patient is unacceptable.
+/// A Stanley-Brown crisis safety plan is PHI, so it persists to the
+/// device's secure storage via [SecurePrefs] (iOS Keychain / Android
+/// encrypted prefs under the centralised platform options), never
+/// plaintext. Failures are reported to telemetry rather than silently
+/// swallowed: an invisible "no crisis plan" state for an at-risk
+/// patient is unacceptable.
 class SafetyPlanRepository {
-  SafetyPlanRepository({FlutterSecureStorage? storage})
-    : _storage =
-          storage ??
-          const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            iOptions: IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock,
-            ),
-          );
+  SafetyPlanRepository({SecurePrefs? prefs})
+    : _prefs = prefs ?? SecurePrefs.instance;
 
   static const _key = 'safety_plans';
-  final FlutterSecureStorage _storage;
+  final SecurePrefs _prefs;
 
   final Map<String, SafetyPlan> _byPatient = {};
   bool _loaded = false;
@@ -33,7 +27,7 @@ class SafetyPlanRepository {
     if (_loaded) return;
     _byPatient.clear();
     try {
-      final raw = await _storage.read(key: _key);
+      final raw = await _prefs.getString(_key);
       if (raw != null && raw.isNotEmpty) {
         final list = jsonDecode(raw) as List<dynamic>;
         var dropped = 0;
@@ -85,7 +79,7 @@ class SafetyPlanRepository {
       final raw = jsonEncode(
         _byPatient.values.map((p) => p.toJson()).toList(growable: false),
       );
-      await _storage.write(key: _key, value: raw);
+      await _prefs.setString(_key, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(e, st, hint: 'safety_plan_save'),

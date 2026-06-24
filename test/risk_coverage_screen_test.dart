@@ -128,10 +128,7 @@ void main() {
   testWidgets('unacknowledged high-severity row exposes Acknowledge button', (
     tester,
   ) async {
-    final repo = await _seed(
-      'rs_test_screen_ack',
-      rows: [_sig(id: 'a')],
-    );
+    final repo = await _seed('rs_test_screen_ack', rows: [_sig(id: 'a')]);
     await pumpAt1800(tester, RiskCoverageScreen(repo: repo));
     expect(find.text('Acknowledge'), findsOneWidget);
   });
@@ -139,10 +136,7 @@ void main() {
   testWidgets('tapping Acknowledge flips the row + rebuilds the screen', (
     tester,
   ) async {
-    final repo = await _seed(
-      'rs_test_screen_ack_flow',
-      rows: [_sig(id: 'a')],
-    );
+    final repo = await _seed('rs_test_screen_ack_flow', rows: [_sig(id: 'a')]);
     await pumpAt1800(tester, RiskCoverageScreen(repo: repo));
 
     await tester.tap(find.text('Acknowledge'));

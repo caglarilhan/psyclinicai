@@ -35,6 +35,19 @@ class ReleaseNotes {
   /// in-app sheet reads `releases.first`.
   static const List<Release> releases = <Release>[
     Release(
+      version: '0.7.0',
+      date: '2026-06-24',
+      tag: 'Interop + risk leadership + URL pseudonymization',
+      bullets: [
+        'HL7 FHIR R4 Patient + Observation (PHQ-9 LOINC 44249-1, GAD-7 LOINC 69737-5) + Bundle serializer — the foundation for EHR sync and DSAR interop bundles.',
+        'Risk signal coverage: persistent ledger + per-category aggregate + leadership panel at /admin/risk_coverage with inline Acknowledge.',
+        'Cmd+K / Ctrl+K command palette wired across every screen — 15 destinations including audit log, risk coverage, API keys, changelog.',
+        'In-app system status banner — degraded Anthropic / Firestore / Stripe / email surfaces a colour-coded ribbon on every screen.',
+        'PatientSlug helper (HIPAA §164.514) — 12-char Crockford-lite pseudonymized slug ready to replace raw Firestore doc ids in URLs.',
+        'TimeFormat canonical helpers (ISO UTC, relative, day) adopted across patient list/detail, risk coverage, portal modality history.',
+      ],
+    ),
+    Release(
       version: '0.6.0',
       date: '2026-06-24',
       tag: 'Clinical safety + immutable audit',

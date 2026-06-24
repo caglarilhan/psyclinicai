@@ -14,6 +14,7 @@ import '../../services/copilot/session_insights_service.dart';
 import '../../services/copilot/soap_generator_service.dart';
 import '../../services/copilot/supervision_service.dart';
 import '../../services/copilot/transcription_service.dart';
+import '../../services/data/risk_signal_repository.dart';
 import '../../services/data/session_note_repository.dart';
 import '../ds/psy_snack.dart';
 import 'ai_disclaimer.dart';
@@ -88,11 +89,18 @@ class _LiveAiPanelState extends State<LiveAiPanel>
   DenialRisk? _denial;
   final _editCtl = TextEditingController();
   final _noteRepo = SessionNoteRepository();
+  final _signalRepo = RiskSignalRepository();
   final _lensService = ClinicalLensService();
   final _supervision = SupervisionService();
   bool _editing = false;
   bool _loadingLens = false;
   bool _loadingSupervision = false;
+
+  /// Per-listening-burst session id. Generated on _startListening so
+  /// every persisted risk signal can be grouped + replayed under the
+  /// same key. Format is millisUtc-randomSuffix — no PHI, stable.
+  String? _sessionId;
+  int _signalSerial = 0;
 
   @override
   void initState() {
@@ -113,6 +121,7 @@ class _LiveAiPanelState extends State<LiveAiPanel>
 
   Future<void> _initialize() async {
     await _transcription.initialize();
+    await _signalRepo.initialize();
     _sub = _transcription.transcriptStream.listen(_onTranscript);
     if (mounted) setState(() {});
   }
@@ -133,6 +142,31 @@ class _LiveAiPanelState extends State<LiveAiPanel>
     final fresh = found.where((s) => _seenSignals.add(s.dedupKey)).toList();
     if (fresh.isEmpty || !mounted) return;
     setState(() => _signals.addAll(fresh));
+    _persistSignals(fresh);
+  }
+
+  void _persistSignals(List<RiskSignal> fresh) {
+    final sid = _sessionId;
+    if (sid == null) return;
+    for (final s in fresh) {
+      _signalSerial++;
+      final id = '$sid#${_signalSerial.toString().padLeft(4, '0')}';
+      unawaited(
+        _signalRepo.save(
+          PersistedRiskSignal(
+            id: id,
+            sessionId: sid,
+            patientId: widget.patientId,
+            category: s.category,
+            severity: s.severity,
+            matchedText: s.matchedText,
+            snippet: s.snippet,
+            source: s.source,
+            at: s.at,
+          ),
+        ),
+      );
+    }
   }
 
   void _scheduleTier2() {
@@ -164,6 +198,10 @@ class _LiveAiPanelState extends State<LiveAiPanel>
       _note = null;
       _signals.clear();
       _seenSignals.clear();
+      _signalSerial = 0;
+      _sessionId =
+          'ses-${DateTime.now().toUtc().millisecondsSinceEpoch}-'
+          '${(widget.patientId ?? 'anon').hashCode.toUnsigned(16).toRadixString(16)}';
       _report = null;
       _transcription.reset();
     });

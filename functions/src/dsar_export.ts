@@ -56,7 +56,122 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
-import {applyCors, authorizeUid} from "./lib/auth";
+import {applyCors, authorizeClinicianUid} from "./lib/auth";
+
+/**
+ * KVK Tebliğ md. 13 + GDPR Art. 12(3) both mandate a 30-day response
+ * window. The audit row stamps this so a downstream report can flag
+ * any pending DSARs nearing the deadline.
+ */
+const DSAR_SLA_DAYS = 30;
+
+/**
+ * Anti-abuse rate limit: each (clinic, patient) tuple gets one
+ * successful export per 24 hours. A second request inside that window
+ * is rejected at the HTTP layer and the attempt is audit-logged.
+ */
+const DSAR_REPEAT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Test-only seam: production reads the wall clock; tests inject a
+ * stable instant so the rate-limit math is deterministic.
+ */
+let _clockNow: () => Date = () => new Date();
+
+/** @visibleForTesting */
+export function setClockForTesting(now: () => Date): void {
+  _clockNow = now;
+}
+
+/** @visibleForTesting — pure SLA arithmetic. */
+export function slaExpiresAtForTesting(now: Date): string {
+  return _slaExpiresAt(now);
+}
+
+/** @visibleForTesting — rate-limit lookup against a Firestore stub. */
+export function findRecentExportForTesting(
+  db: admin.firestore.Firestore,
+  clinicId: string,
+  patientId: string,
+  windowMs: number = DSAR_REPEAT_WINDOW_MS,
+): Promise<Date | null> {
+  return _findRecentExport(db, clinicId, patientId, windowMs);
+}
+
+interface DsarAuditRow {
+  id: string;
+  kind: "dsar_export";
+  action:
+    | "dsar.export_built"
+    | "dsar.rate_limited"
+    | "dsar.failed"
+    | "dsar.unauthorized";
+  actor: string | null;
+  clinic_id: string | null;
+  entity: string;
+  timestamp_utc: admin.firestore.Timestamp;
+  sla_expires_at_utc: string;
+  result: "success" | "denied" | "failed";
+  bytes_estimated?: number;
+}
+
+async function _writeAudit(
+  db: admin.firestore.Firestore,
+  row: DsarAuditRow,
+): Promise<void> {
+  try {
+    await db.collection("audit_logs").add(row);
+  } catch (e) {
+    functions.logger.error("dsarExport.audit_failed", {
+      reason: String(e),
+      id: row.id,
+    });
+  }
+}
+
+function _slaExpiresAt(now: Date): string {
+  const t = new Date(now.getTime() + DSAR_SLA_DAYS * 24 * 60 * 60 * 1000);
+  return t.toISOString();
+}
+
+async function _findRecentExport(
+  db: admin.firestore.Firestore,
+  clinicId: string,
+  patientId: string,
+  windowMs: number,
+): Promise<Date | null> {
+  const doc = await db
+    .collection("dsar_requests")
+    .doc(`${clinicId}_${patientId}`)
+    .get();
+  if (!doc.exists) return null;
+  const data = doc.data() as {
+    last_export_at_utc?: admin.firestore.Timestamp;
+  };
+  const ts = data.last_export_at_utc;
+  if (!ts) return null;
+  const last = ts.toDate();
+  if (_clockNow().getTime() - last.getTime() <= windowMs) return last;
+  return null;
+}
+
+async function _stampExport(
+  db: admin.firestore.Firestore,
+  clinicId: string,
+  patientId: string,
+): Promise<void> {
+  await db
+    .collection("dsar_requests")
+    .doc(`${clinicId}_${patientId}`)
+    .set(
+      {
+        clinic_id: clinicId,
+        patient_id: patientId,
+        last_export_at_utc: admin.firestore.Timestamp.now(),
+      },
+      {merge: true},
+    );
+}
 
 /** Top-level collections keyed by patient_id (camelCase + snake_case). */
 const FLAT_COLLECTIONS: Array<{
@@ -201,31 +316,97 @@ export const dsarExport = functions
       return void res.status(405).json({error: "POST only"});
     }
 
-    const uid = await authorizeUid(req, "dsarExport");
-    if (!uid) return void res.status(401).json({error: "unauthorized"});
+    const db = admin.firestore();
+    const now = _clockNow();
+    const sla = _slaExpiresAt(now);
+
+    // Clinician-only gate. Patient/non-clinician tokens never reach
+    // the DSAR builder — caught + audit-logged at the boundary.
+    const uid = await authorizeClinicianUid(req, "dsarExport");
+    if (!uid) {
+      await _writeAudit(db, {
+        id: `dsar-unauth-${Date.now()}`,
+        kind: "dsar_export",
+        action: "dsar.unauthorized",
+        actor: null,
+        clinic_id: null,
+        entity: "auth_gate=reject",
+        timestamp_utc: admin.firestore.Timestamp.now(),
+        sla_expires_at_utc: sla,
+        result: "denied",
+      });
+      return void res.status(401).json({error: "unauthorized"});
+    }
 
     const patientId = String(
-      (req.body as {patientId?: unknown})?.patientId ?? ""
+      (req.body as {patientId?: unknown})?.patientId ?? "",
     ).trim();
     if (!patientId) {
       return void res.status(400).json({error: "patient_id_required"});
     }
 
+    // 24-hour anti-abuse window — accidental double-submits and
+    // scripted scraping both trip this.
     try {
-      const db = admin.firestore();
-      const bundle = await buildDsarBundle(db, uid, patientId);
+      const recent = await _findRecentExport(
+        db,
+        uid,
+        patientId,
+        DSAR_REPEAT_WINDOW_MS,
+      );
+      if (recent) {
+        await _writeAudit(db, {
+          id: `dsar-rl-${uid}-${patientId}-${Date.now()}`,
+          kind: "dsar_export",
+          action: "dsar.rate_limited",
+          actor: uid,
+          clinic_id: uid,
+          entity:
+            `patient:${patientId} last_export_at=${recent.toISOString()}`,
+          timestamp_utc: admin.firestore.Timestamp.now(),
+          sla_expires_at_utc: sla,
+          result: "denied",
+        });
+        return void res.status(429).json({
+          error: "rate_limited",
+          last_export_at_utc: recent.toISOString(),
+          retry_after_utc: new Date(
+            recent.getTime() + DSAR_REPEAT_WINDOW_MS,
+          ).toISOString(),
+        });
+      }
+    } catch (e) {
+      functions.logger.warn("dsarExport.rate_limit_check_failed", {
+        uid,
+        patientId,
+        reason: String(e),
+      });
+      // Fail-open on the rate-limit storage lookup: a transient
+      // Firestore error must not make the regulator wait 30 days for
+      // a re-try.
+    }
 
-      // Compliance audit row — Art. 30 ROPA wants every access event
-      // logged. We never log the bundle itself (PHI), only the counts.
-      await db.collection("audit_logs").add({
+    try {
+      const bundle = await buildDsarBundle(db, uid, patientId);
+      const bytesEstimated = JSON.stringify(bundle).length;
+
+      await _stampExport(db, uid, patientId);
+
+      // KVKK Art. 11 / GDPR Art. 30 audit row — counts + SLA, never
+      // PHI. `sla_expires_at_utc` lets a downstream alert flag any
+      // request older than the configured threshold.
+      await _writeAudit(db, {
         id: `dsar-${uid}-${patientId}-${Date.now()}`,
         kind: "dsar_export",
         action: "dsar.export_built",
         actor: uid,
         clinic_id: uid,
-        entity: `patient:${patientId} collections=${bundle.manifest.length}`,
+        entity:
+          `patient:${patientId} collections=${bundle.manifest.length}`,
         timestamp_utc: admin.firestore.Timestamp.now(),
+        sla_expires_at_utc: sla,
         result: "success",
+        bytes_estimated: bytesEstimated,
       });
 
       res.status(200).json(bundle);
@@ -234,6 +415,17 @@ export const dsarExport = functions
         uid,
         patientId,
         reason: String(e),
+      });
+      await _writeAudit(db, {
+        id: `dsar-fail-${uid}-${patientId}-${Date.now()}`,
+        kind: "dsar_export",
+        action: "dsar.failed",
+        actor: uid,
+        clinic_id: uid,
+        entity: `patient:${patientId} reason=${String(e).slice(0, 200)}`,
+        timestamp_utc: admin.firestore.Timestamp.now(),
+        sla_expires_at_utc: sla,
+        result: "failed",
       });
       res.status(502).json({error: "export_failed"});
     }

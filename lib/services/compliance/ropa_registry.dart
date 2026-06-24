@@ -1,20 +1,25 @@
-/// GDPR Art. 30 — Record of Processing Activities (RoPA).
+/// GDPR Art. 30 (Records of Processing Activities) + KVKK md. 16
+/// (Veri İşleme Envanteri) consolidated registry.
 ///
-/// Art. 30 is the underrated half of GDPR: every controller must keep a
-/// living register of every distinct processing activity. The auditor
-/// walks down this register and pattern-matches it against:
-///   • Art. 6 / 9 lawful basis,
-///   • Art. 28 sub-processor contracts,
-///   • Art. 32 security measures,
-///   • Art. 5(1)(e) storage limitation,
-///   • Art. 44+ third-country transfer mechanism.
+/// Both regulators require a living register of every distinct
+/// processing activity. The auditor walks down this register and
+/// pattern-matches it against:
+///   • Art. 6 / 9 (GDPR) and md. 5 / 6 (KVKK) lawful basis,
+///   • Art. 28 sub-processor contracts (DPA / DPAdd),
+///   • Art. 32 / md. 12 technical + organizational measures,
+///   • Art. 5(1)(e) / md. 4 storage limitation,
+///   • Art. 44+ / md. 9 cross-border transfer mechanism.
+///
+/// Each [RopaActivity] therefore tracks both legal frameworks. The
+/// [RopaRegistry.exportJson] dump is the snapshot a regulator (KVK
+/// Kurumu or an EU DPA) sees during a vendor questionnaire.
 ///
 /// Rows here are concise — long-form is in the DPA and the
-/// sub-processor registry. The Trust Center reads this list to render a
-/// human-readable table for prospective customers.
+/// sub-processor registry. The Trust Center reads this list to render
+/// a human-readable table for prospective customers.
 ///
-/// Status is conservative; a row that is missing one cell stays out of
-/// the registry until the cell is filled.
+/// Status is conservative; a row missing a mandatory cell stays out
+/// of the registry until the cell is filled.
 library;
 
 /// One end-to-end processing activity.
@@ -29,6 +34,7 @@ class RopaActivity {
     required this.recipients,
     required this.transferMechanism,
     required this.securityMeasures,
+    this.kvkkBasis = '',
     this.dpiaReference,
     this.crossBorderRecipients = const [],
   });
@@ -47,6 +53,11 @@ class RopaActivity {
 
   /// Article + plain-English basis ("Art. 9(2)(h) — health care").
   final String lawfulBasis;
+
+  /// KVKK md. 5 / 6 lawful-processing ground, plain Turkish copy
+  /// ("md. 6/2 ve md. 6/3 — özel nitelikli sağlık verisi için
+  /// açık rıza"). Empty for activities outside Türkiye scope.
+  final String kvkkBasis;
 
   /// Storage limitation — short, audit-friendly ("6 years post-discharge").
   final String retention;
@@ -70,6 +81,27 @@ class RopaActivity {
   /// Structured cross-border recipients. Use when [transferMechanism]
   /// is non-empty so the trust center can render a recipient table.
   final List<RopaCrossBorderRecipient> crossBorderRecipients;
+
+  /// Audit-export shape. Field names mirror the regulatory glossary
+  /// so an auditor can read the JSON without an internal cheat-sheet:
+  /// `gdpr_lawful_basis`, `kvkk_basis`, `data_categories`, etc.
+  Map<String, Object?> toJson() => <String, Object?>{
+    'id': id,
+    'purpose': purpose,
+    'data_categories': dataCategories,
+    'data_subjects': dataSubjects,
+    'gdpr_lawful_basis': lawfulBasis,
+    if (kvkkBasis.isNotEmpty) 'kvkk_basis': kvkkBasis,
+    'retention': retention,
+    'recipients': recipients,
+    if (transferMechanism.isNotEmpty) 'transfer_mechanism': transferMechanism,
+    'security_measures': securityMeasures,
+    if (dpiaReference != null) 'dpia_reference': dpiaReference,
+    if (crossBorderRecipients.isNotEmpty)
+      'cross_border_recipients': crossBorderRecipients
+          .map((c) => c.toJson())
+          .toList(growable: false),
+  };
 }
 
 /// A single cross-border recipient with the lawful transfer
@@ -95,6 +127,13 @@ class RopaCrossBorderRecipient {
 
   /// Path or URL to the Transfer Impact Assessment artefact.
   final String tiaReference;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'name': name,
+    'country': country,
+    'instrument': instrument,
+    'tia_reference': tiaReference,
+  };
 }
 
 class RopaRegistry {
@@ -136,6 +175,10 @@ class RopaRegistry {
         'Firestore deny-by-default rules',
         'At-rest encryption (Google EU)',
       ],
+      kvkkBasis:
+          'md. 6/2 + md. 6/3 — özel nitelikli sağlık verisi için açık rıza '
+          '(intake formundan toplanır); md. 5/2(ç) — yasal yükümlülüklerin '
+          'yerine getirilmesi (tıbbi kayıt mevzuatı).',
     ),
     RopaActivity(
       id: 'ai-assistance',
@@ -172,6 +215,11 @@ class RopaRegistry {
           tiaReference: 'docs/compliance/TIA_ANTHROPIC.md',
         ),
       ],
+      kvkkBasis:
+          'md. 6/2 — özel nitelikli sağlık verisi için açık rıza '
+          '(consent_records.ai_assistance_consent altında kayıt altına '
+          'alınır); md. 9 kapsamında ABD aktarımı, açık rıza + SCC '
+          'Modül 2 + TIA çerçevesinde yapılır.',
     ),
     RopaActivity(
       id: 'billing-and-superbill',
@@ -201,6 +249,11 @@ class RopaRegistry {
           tiaReference: 'docs/compliance/TIA_STRIPE.md',
         ),
       ],
+      kvkkBasis:
+          'md. 5/2(c) — sözleşmenin kurulması ve ifası; md. 5/2(ç) — '
+          'vergi / muhasebe mevzuatı kapsamındaki yasal yükümlülükler. '
+          'md. 9 kapsamında ABD aktarımı, SCC Modül 2 + Stripe DPA '
+          'çerçevesinde gerçekleştirilir.',
     ),
     RopaActivity(
       id: 'audit-logging',
@@ -226,6 +279,9 @@ class RopaRegistry {
         'SHA-256 hash chain',
         'Daily retention cron',
       ],
+      kvkkBasis:
+          'md. 5/2(ç) — KVKK md. 12 + ISMS denetim izi gereği; '
+          'md. 5/2(f) — meşru menfaat (güvenlik denetimi).',
     ),
     RopaActivity(
       id: 'incident-response',
@@ -247,6 +303,10 @@ class RopaRegistry {
         'On-call rotation',
         '24-hour internal determination SLA',
       ],
+      kvkkBasis:
+          'md. 5/2(ç) — KVKK md. 12/5 ihlal bildirim yükümlülüğü '
+          '(KVK Kurulu en geç 72 saat içinde bilgilendirilir); '
+          'md. 5/2(f) — meşru menfaat (olay müdahalesi).',
     ),
   ];
 
@@ -270,4 +330,22 @@ class RopaRegistry {
     }
     return null;
   }
+
+  /// Full registry dump suitable for KVK Kurumu envanter audit and
+  /// GDPR Art. 30 supervisory-authority requests. Structured fields
+  /// (snake_case) so the downstream JSON consumer doesn't need a
+  /// custom decoder. Stable shape — auditors pin specific paths.
+  static Map<String, Object?> exportJson() => <String, Object?>{
+    'version': '1.0',
+    'frameworks': const ['gdpr', 'kvkk', 'hipaa'],
+    'last_reviewed': lastReviewed,
+    'controller': controller,
+    'dpo_contact': dpoContact,
+    'activities': activities.map((a) => a.toJson()).toList(growable: false),
+  };
+
+  /// Activities with a non-empty KVKK basis — surfaced when the
+  /// patient/clinician is in scope of the Turkish regulator.
+  static List<RopaActivity> get kvkkInScope =>
+      activities.where((a) => a.kvkkBasis.isNotEmpty).toList(growable: false);
 }

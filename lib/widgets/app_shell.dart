@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../services/data/auth_service.dart';
 import '../services/data/firebase_bootstrap.dart';
 import '../theme/tokens.dart';
+import 'command_palette.dart';
+import 'command_palette_registry.dart';
 
 part 'app_shell_content.dart';
 part 'app_shell_header.dart';
@@ -123,9 +126,10 @@ class AppShell extends StatelessWidget {
       child: child,
     );
 
+    final Scaffold scaffold;
     if (!isWide) {
       // Mobile: header AppBar + drawer nav.
-      return Scaffold(
+      scaffold = Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
           backgroundColor: cs.surface,
@@ -175,37 +179,52 @@ class AppShell extends StatelessWidget {
           onSelect: (i) => _go(context, _dests[i].route),
         ),
       );
+    } else {
+      // Desktop / tablet: persistent rail + header + content.
+      final extended = MediaQuery.sizeOf(context).width >= PsyBreakpoints.lg;
+      scaffold = Scaffold(
+        backgroundColor: cs.surface,
+        floatingActionButton: floatingActionButton,
+        body: Row(
+          children: [
+            _Rail(
+              dests: _dests,
+              selectedIndex: _selectedIndex,
+              extended: extended,
+              onSelect: (i) => _go(context, _dests[i].route),
+            ),
+            VerticalDivider(width: 1, thickness: 1, color: cs.outlineVariant),
+            Expanded(
+              child: Column(
+                children: [
+                  _Header(
+                    crumbs: breadcrumbs ?? _defaultCrumbs(),
+                    onHome: () => _go(context, '/dashboard'),
+                    onSearch: () => _go(context, '/patients'),
+                  ),
+                  Divider(height: 1, thickness: 1, color: cs.outlineVariant),
+                  Expanded(child: content),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
-    // Desktop / tablet: persistent rail + header + content.
-    final extended = MediaQuery.sizeOf(context).width >= PsyBreakpoints.lg;
-    return Scaffold(
-      backgroundColor: cs.surface,
-      floatingActionButton: floatingActionButton,
-      body: Row(
-        children: [
-          _Rail(
-            dests: _dests,
-            selectedIndex: _selectedIndex,
-            extended: extended,
-            onSelect: (i) => _go(context, _dests[i].route),
-          ),
-          VerticalDivider(width: 1, thickness: 1, color: cs.outlineVariant),
-          Expanded(
-            child: Column(
-              children: [
-                _Header(
-                  crumbs: breadcrumbs ?? _defaultCrumbs(),
-                  onHome: () => _go(context, '/dashboard'),
-                  onSearch: () => _go(context, '/patients'),
-                ),
-                Divider(height: 1, thickness: 1, color: cs.outlineVariant),
-                Expanded(child: content),
-              ],
-            ),
-          ),
-        ],
-      ),
+    void openPalette() {
+      unawaited(
+        CommandPalette.show(context, entries: buildAppCommands(context)),
+      );
+    }
+
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): openPalette,
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            openPalette,
+      },
+      child: Focus(autofocus: true, child: scaffold),
     );
   }
 

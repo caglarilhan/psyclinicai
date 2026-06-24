@@ -12,6 +12,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'command_palette.dart';
+import 'keyboard_shortcuts_sheet.dart';
 
 List<CommandPaletteEntry> buildAppCommands(BuildContext context) {
   void go(String route) {
@@ -131,6 +132,13 @@ List<CommandPaletteEntry> buildAppCommands(BuildContext context) {
       icon: Icons.lock_outline,
       subtitle: 'Our security + compliance posture',
       onSelect: () => go('/security'),
+    ),
+    CommandPaletteEntry(
+      label: 'Keyboard shortcuts',
+      section: 'Help',
+      icon: Icons.keyboard_outlined,
+      subtitle: 'List every global shortcut (also: press ?)',
+      onSelect: () => unawaited(showKeyboardShortcuts(context)),
     ),
   ];
 }

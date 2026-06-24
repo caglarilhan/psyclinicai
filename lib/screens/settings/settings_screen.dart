@@ -15,6 +15,7 @@ import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_snack.dart';
+import '../../widgets/keyboard_shortcuts_sheet.dart';
 
 /// `/settings` — clinician settings hub. Surfaces account info,
 /// integration keys, and a danger zone for account deletion.
@@ -132,6 +133,15 @@ class SettingsScreen extends StatelessWidget {
             title: 'Pinned patients',
             body: 'Manage roster favourites · bulk unpin.',
             onTap: () => Navigator.of(context).pushNamed('/settings/pinned'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.keyboard_outlined,
+            title: 'Keyboard shortcuts',
+            body: 'Cmd+K palette · ? help sheet · power-user list.',
+            onTap: () => unawaited(showKeyboardShortcuts(context)),
           ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Security'),

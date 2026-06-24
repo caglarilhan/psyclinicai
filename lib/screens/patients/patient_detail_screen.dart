@@ -60,36 +60,7 @@ class PatientDetailScreen extends StatelessWidget {
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Send screener'),
           const SizedBox(height: PsySpacing.md),
-          Row(
-            children: [
-              PsyButton(
-                label: 'PHQ-9',
-                icon: Icons.psychology_outlined,
-                size: PsyButtonSize.sm,
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/assessments/phq9'),
-              ),
-              const SizedBox(width: PsySpacing.md),
-              PsyButton(
-                label: 'GAD-7',
-                icon: Icons.spa_outlined,
-                size: PsyButtonSize.sm,
-                variant: PsyButtonVariant.secondary,
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/assessments/gad7'),
-              ),
-              const Spacer(),
-              PsyButton(
-                label: 'View trend',
-                icon: Icons.show_chart,
-                size: PsyButtonSize.sm,
-                variant: PsyButtonVariant.ghost,
-                onPressed: () => Navigator.of(
-                  context,
-                ).pushNamed('/outcomes', arguments: args),
-              ),
-            ],
-          ),
+          SendScreenerActions(args: args),
           const SizedBox(height: PsySpacing.xxl),
           const _SectionTitle('Intake & consent'),
           const SizedBox(height: PsySpacing.md),
@@ -186,6 +157,48 @@ class _Header extends StatelessWidget {
           _PinButton(patientId: args.id),
         ],
       ),
+    );
+  }
+}
+
+/// Send-screener row, extracted from [PatientDetailScreen] so the
+/// 360px reflow can be unit-tested in isolation (the parent screen
+/// pulls in Firebase + Provider and is too heavy for a narrow-
+/// viewport widget test).
+class SendScreenerActions extends StatelessWidget {
+  const SendScreenerActions({super.key, required this.args});
+
+  final PatientDetailArgs args;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: PsySpacing.md,
+      runSpacing: PsySpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        PsyButton(
+          label: 'PHQ-9',
+          icon: Icons.psychology_outlined,
+          size: PsyButtonSize.sm,
+          onPressed: () => Navigator.of(context).pushNamed('/assessments/phq9'),
+        ),
+        PsyButton(
+          label: 'GAD-7',
+          icon: Icons.spa_outlined,
+          size: PsyButtonSize.sm,
+          variant: PsyButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pushNamed('/assessments/gad7'),
+        ),
+        PsyButton(
+          label: 'View trend',
+          icon: Icons.show_chart,
+          size: PsyButtonSize.sm,
+          variant: PsyButtonVariant.ghost,
+          onPressed: () =>
+              Navigator.of(context).pushNamed('/outcomes', arguments: args),
+        ),
+      ],
     );
   }
 }

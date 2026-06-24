@@ -4,11 +4,16 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/vanderbilt_assessment.dart';
 import 'package:psyclinicai/screens/assessments/vanderbilt_intake_screen.dart';
 import 'package:psyclinicai/services/data/vanderbilt_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _fssChannel = MethodChannel(
+  'plugins.it_nomads.com/flutter_secure_storage',
+);
 
 Future<void> _pump(WidgetTester tester, Widget screen) async {
   // Narrow viewport so the screen renders the column layout (score
@@ -25,9 +30,37 @@ Future<void> _pump(WidgetTester tester, Widget screen) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    final backing = <String, String>{};
+    messenger.setMockMethodCallHandler(_fssChannel, (call) async {
+      switch (call.method) {
+        case 'read':
+          return backing[(call.arguments as Map)['key'] as String];
+        case 'write':
+          final a = call.arguments as Map;
+          backing[a['key'] as String] = a['value'] as String;
+          return null;
+        case 'delete':
+          backing.remove((call.arguments as Map)['key'] as String);
+          return null;
+        case 'containsKey':
+          return backing.containsKey((call.arguments as Map)['key'] as String);
+        case 'deleteAll':
+          backing.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(backing);
+      }
+      return null;
+    });
+  });
+
+  tearDown(() {
+    messenger.setMockMethodCallHandler(_fssChannel, null);
   });
 
   testWidgets('parent form shows all five symptom sections', (tester) async {

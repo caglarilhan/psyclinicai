@@ -4,11 +4,16 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/services/copilot/risk_signal_service.dart';
 import 'package:psyclinicai/services/data/risk_signal_repository.dart';
 import 'package:psyclinicai/widgets/dashboard/open_risk_signals_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _fssChannel = MethodChannel(
+  'plugins.it_nomads.com/flutter_secure_storage',
+);
 
 PersistedRiskSignal _sig({
   String id = 's',
@@ -42,9 +47,37 @@ Future<RiskSignalRepository> _seed(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    final backing = <String, String>{};
+    messenger.setMockMethodCallHandler(_fssChannel, (call) async {
+      switch (call.method) {
+        case 'read':
+          return backing[(call.arguments as Map)['key'] as String];
+        case 'write':
+          final a = call.arguments as Map;
+          backing[a['key'] as String] = a['value'] as String;
+          return null;
+        case 'delete':
+          backing.remove((call.arguments as Map)['key'] as String);
+          return null;
+        case 'containsKey':
+          return backing.containsKey((call.arguments as Map)['key'] as String);
+        case 'deleteAll':
+          backing.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(backing);
+      }
+      return null;
+    });
+  });
+
+  tearDown(() {
+    messenger.setMockMethodCallHandler(_fssChannel, null);
   });
 
   Widget app(Widget home) => MaterialApp(

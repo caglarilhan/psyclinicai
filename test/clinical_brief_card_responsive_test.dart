@@ -40,10 +40,7 @@ void main() {
   });
 
   tearDown(() {
-    messenger.setMockMethodCallHandler(
-      const MethodChannel(_fssChannel),
-      null,
-    );
+    messenger.setMockMethodCallHandler(const MethodChannel(_fssChannel), null);
   });
 
   testWidgets('ClinicalBriefCard renders at 360px without overflow', (

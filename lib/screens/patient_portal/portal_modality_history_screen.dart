@@ -33,6 +33,7 @@ import '../../models/modalities/dbt_diary_card.dart';
 import '../../models/modalities/emdr_session_tracker.dart';
 import '../../services/data/modality_session_repository.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 
@@ -211,7 +212,7 @@ class _ThoughtRecordCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _date(r.recordedAt),
+            TimeFormat.isoDate(r.recordedAt),
             style: theme.textTheme.labelMedium?.copyWith(
               color: cs.onSurface.withValues(alpha: 0.65),
             ),
@@ -308,7 +309,7 @@ class _DiaryCardTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Week of ${_date(card.weekStart)}',
+            'Week of ${TimeFormat.isoDate(card.weekStart)}',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -412,7 +413,7 @@ class _EmdrSessionTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _date(s.updatedAt ?? s.createdAt),
+            TimeFormat.isoDate(s.updatedAt ?? s.createdAt),
             style: theme.textTheme.labelMedium?.copyWith(
               color: cs.onSurface.withValues(alpha: 0.65),
             ),
@@ -442,10 +443,4 @@ class _EmdrSessionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-String _date(DateTime d) {
-  final m = d.month.toString().padLeft(2, '0');
-  final day = d.day.toString().padLeft(2, '0');
-  return '${d.year}-$m-$day';
 }

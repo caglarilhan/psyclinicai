@@ -1,7 +1,6 @@
 /// Coverage for SetupChecklist — the dashboard's onboarding tile
-/// now derives `done` flags from real services (profile + Stripe).
-/// Verifies the count badge flips when SubscriptionService.applyStatus
-/// activates a paid tier.
+/// now derives `done` flags from real services (profile + Stripe +
+/// local MFA acknowledgement).
 library;
 
 import 'package:flutter/material.dart';
@@ -9,12 +8,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:psyclinicai/screens/dashboard/dashboard_sections.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
+import 'package:psyclinicai/services/data/mfa_local_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Widget wrapWith({SubscriptionService? sub}) {
-    const tile = SetupChecklist();
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  Widget wrapWith({SubscriptionService? sub, MfaLocalRepository? mfa}) {
+    final tile = SetupChecklist(mfaRepo: mfa);
     final child = sub == null
         ? tile
         : ChangeNotifierProvider<SubscriptionService>.value(
@@ -47,6 +52,23 @@ void main() {
     expect(find.text('0 / 4'), findsOneWidget);
 
     sub.applyStatus(tier: SubscriptionTier.solo, active: true);
+    await tester.pumpAndSettle();
+    expect(find.text('1 / 4'), findsOneWidget);
+  });
+
+  testWidgets('local MFA acknowledgement flips the mfa step to done', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final mfa = MfaLocalRepository(storageKey: 'mfa_test_checklist');
+    await mfa.initialize();
+    await tester.pumpWidget(wrapWith(mfa: mfa));
+    await tester.pumpAndSettle();
+    expect(find.text('0 / 4'), findsOneWidget);
+
+    await mfa.markAcknowledged();
     await tester.pumpAndSettle();
     expect(find.text('1 / 4'), findsOneWidget);
   });

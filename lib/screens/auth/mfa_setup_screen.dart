@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../services/data/auth_service.dart';
+import '../../services/data/mfa_local_repository.dart';
 import '../../services/data/security_settings_service.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../services/mfa/totp_service.dart';
@@ -53,6 +54,7 @@ Future<void> _copyWithAutoClear(String value) async {
 class _MfaSetupScreenState extends State<MfaSetupScreen> {
   late final TotpService _totp = widget.totpOverride ?? TotpService();
   final TextEditingController _codeCtl = TextEditingController();
+  final MfaLocalRepository _localRepo = MfaLocalRepository();
 
   MfaStep _step = MfaStep.idle;
   String? _secret;
@@ -144,6 +146,7 @@ class _MfaSetupScreenState extends State<MfaSetupScreen> {
     }
     if (!mounted) return;
     setState(() => _step = MfaStep.done);
+    unawaited(_localRepo.markAcknowledged());
     unawaited(
       TelemetryService.instance.capture('security.mfa_enrol_completed'),
     );

@@ -1,7 +1,14 @@
-/// SharedPreferences-backed log of Vanderbilt ADHD screening
-/// assessments. One row per (patient, respondent, capture
-/// timestamp). The clinician usually orders both a parent + a
-/// teacher form for the same child so both rows live side-by-side.
+/// Encrypted log of NICHQ Vanderbilt ADHD screening assessments.
+/// One row per (patient, respondent, capture timestamp). The
+/// clinician usually orders both a parent + a teacher form for the
+/// same child so both rows live side-by-side.
+///
+/// PHI uplift (SecurePrefs ship): scores + symptom counts are
+/// clinical data, so the on-disk blob now sits in [SecurePrefs]
+/// (Android KeyStore / iOS Keychain) instead of plaintext
+/// SharedPreferences. `initialize()` carries forward any pre-upgrade
+/// SP list under the same key in a one-shot migration so the
+/// existing roster isn't lost.
 library;
 
 import 'dart:async';
@@ -10,14 +17,19 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/vanderbilt_assessment.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 class VanderbiltRepository {
-  VanderbiltRepository({String? storageKey}) : _key = storageKey ?? _storageId;
+  VanderbiltRepository({String? storageKey, SecurePrefs? prefs})
+    : _key = storageKey ?? _storageId,
+      _prefs = prefs ?? SecurePrefs.instance;
 
-  // SharedPreferences bucket id for this repo — not a credential.
+  /// Storage key for this repo — kept stable so the one-shot SP
+  /// migration on init can find any pre-existing list.
   static const _storageId = 'nichq_vanderbilt_v1';
   final String _key;
+  final SecurePrefs _prefs;
 
   final List<VanderbiltAssessment> _items = [];
   bool _loaded = false;
@@ -26,14 +38,65 @@ class VanderbiltRepository {
     if (_loaded) return;
     _items.clear();
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getStringList(_key) ?? [];
-      for (final s in raw) {
+      final raw = await _prefs.getString(_key);
+      if (raw != null && raw.isNotEmpty) {
+        _decodeBlob(raw);
+      } else {
+        await _migrateFromSharedPreferences();
+      }
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(e, st, hint: 'vanderbilt_init'),
+      );
+    }
+    _loaded = true;
+  }
+
+  Future<void> _migrateFromSharedPreferences() async {
+    SharedPreferences sp;
+    try {
+      sp = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+    final legacy = sp.getStringList(_key);
+    if (legacy == null || legacy.isEmpty) return;
+    for (final s in legacy) {
+      try {
+        _items.add(
+          VanderbiltAssessment.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        );
+      } catch (err, st) {
+        unawaited(
+          TelemetryService.instance.captureError(
+            err,
+            st,
+            hint: 'vanderbilt_migrate_record',
+          ),
+        );
+      }
+    }
+    if (_items.isNotEmpty) {
+      await _persist();
+    }
+    try {
+      await sp.remove(_key);
+    } catch (_) {}
+    unawaited(
+      TelemetryService.instance.capture(
+        'vanderbilt.migrated_to_secure_prefs',
+        properties: {'count': _items.length},
+      ),
+    );
+  }
+
+  void _decodeBlob(String raw) {
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      for (final entry in list) {
         try {
           _items.add(
-            VanderbiltAssessment.fromJson(
-              jsonDecode(s) as Map<String, dynamic>,
-            ),
+            VanderbiltAssessment.fromJson(entry as Map<String, dynamic>),
           );
         } catch (err, st) {
           unawaited(
@@ -47,19 +110,23 @@ class VanderbiltRepository {
       }
     } catch (e, st) {
       unawaited(
-        TelemetryService.instance.captureError(e, st, hint: 'vanderbilt_init'),
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'vanderbilt_decode_blob',
+        ),
       );
     }
-    _loaded = true;
   }
 
-  Future<void> _save() async {
+  Future<void> _save() => _persist();
+
+  Future<void> _persist() async {
     try {
-      final sp = await SharedPreferences.getInstance();
-      await sp.setStringList(
-        _key,
-        _items.map((a) => jsonEncode(a.toJson())).toList(),
+      final raw = jsonEncode(
+        _items.map((a) => a.toJson()).toList(growable: false),
       );
+      await _prefs.setString(_key, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(e, st, hint: 'vanderbilt_save'),
@@ -131,6 +198,9 @@ class VanderbiltRepository {
   Future<void> debugReset() async {
     _items.clear();
     _loaded = false;
+    try {
+      await _prefs.remove(_key);
+    } catch (_) {}
     try {
       final sp = await SharedPreferences.getInstance();
       await sp.remove(_key);

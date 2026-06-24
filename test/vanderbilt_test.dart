@@ -3,10 +3,16 @@
 /// JSON round-trip, parent/teacher pair lookup, corrupt drop.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/vanderbilt_assessment.dart';
+import 'package:psyclinicai/services/data/secure_prefs.dart';
 import 'package:psyclinicai/services/data/vanderbilt_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _fssChannel = MethodChannel(
+  'plugins.it_nomads.com/flutter_secure_storage',
+);
 
 VanderbiltAssessment _make({
   String id = 'v1',
@@ -34,9 +40,42 @@ VanderbiltAssessment _make({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  late Map<String, String> secureBacking;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    secureBacking = <String, String>{};
+    messenger.setMockMethodCallHandler(_fssChannel, (call) async {
+      switch (call.method) {
+        case 'read':
+          return secureBacking[(call.arguments as Map)['key'] as String];
+        case 'write':
+          final a = call.arguments as Map;
+          secureBacking[a['key'] as String] = a['value'] as String;
+          return null;
+        case 'delete':
+          secureBacking.remove((call.arguments as Map)['key'] as String);
+          return null;
+        case 'containsKey':
+          return secureBacking.containsKey(
+            (call.arguments as Map)['key'] as String,
+          );
+        case 'deleteAll':
+          secureBacking.clear();
+          return null;
+        case 'readAll':
+          return Map<String, String>.from(secureBacking);
+      }
+      return null;
+    });
+  });
+
+  tearDown(() {
+    messenger.setMockMethodCallHandler(_fssChannel, null);
+    SecurePrefs.setInstanceForTest(null);
   });
 
   group('VanderbiltAssessment cutoffs', () {
@@ -173,13 +212,32 @@ void main() {
       expect(pair.teacher, isNull);
     });
 
-    test('initialize drops corrupt records', () async {
-      SharedPreferences.setMockInitialValues({
-        'vb_corrupt': <String>[
-          '{"id":"good","patientId":"p1","clinicianId":"c1","respondent":"parent","capturedAt":"2026-06-23T10:00:00Z","inattention":[2,2,2,2,2,2,0,0,0],"performance":[1,1,4,1,1,1,1,1]}',
-          'not valid json',
-        ],
-      });
+    test(
+      'initialize migrates legacy SP list into SecurePrefs (one-shot)',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'vb_migrate': <String>[
+            '{"id":"good","patientId":"p1","clinicianId":"c1","respondent":"parent","capturedAt":"2026-06-23T10:00:00Z","inattention":[2,2,2,2,2,2,0,0,0],"performance":[1,1,4,1,1,1,1,1]}',
+            'not valid json',
+          ],
+        });
+        final repo = VanderbiltRepository(storageKey: 'vb_migrate');
+        await repo.initialize();
+        expect(repo.all, hasLength(1));
+        expect(repo.all.first.id, 'good');
+
+        // The migration must promote the row into the SecurePrefs
+        // backing AND clear the SP entry so PHI never lingers.
+        expect(secureBacking.keys, contains('vb_migrate'));
+        final sp = await SharedPreferences.getInstance();
+        expect(sp.getStringList('vb_migrate'), isNull);
+      },
+    );
+
+    test('decoded blob drops corrupt records (per-record resilience)', () async {
+      secureBacking['vb_corrupt'] =
+          '[{"id":"good","patientId":"p1","clinicianId":"c1","respondent":"parent","capturedAt":"2026-06-23T10:00:00Z","inattention":[2,2,2,2,2,2,0,0,0],"performance":[1,1,4,1,1,1,1,1]},'
+          '"not a map"]';
       final repo = VanderbiltRepository(storageKey: 'vb_corrupt');
       await repo.initialize();
       expect(repo.all, hasLength(1));

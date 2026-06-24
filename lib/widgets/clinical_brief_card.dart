@@ -137,18 +137,25 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: PsySpacing.sm,
+            runSpacing: PsySpacing.sm,
             children: [
-              Icon(Icons.auto_awesome, size: 18, color: cs.primary),
-              const SizedBox(width: PsySpacing.sm),
-              Text(
-                'Session prep',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.primary,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, size: 18, color: cs.primary),
+                  const SizedBox(width: PsySpacing.sm),
+                  Text(
+                    'Session prep',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: cs.primary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: PsySpacing.sm),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -163,7 +170,6 @@ class _ClinicalBriefCardState extends State<ClinicalBriefCard> {
                   ),
                 ),
               ),
-              const Spacer(),
               if (!_loading && brief != null && !brief.isFirstSession)
                 OutlinedButton.icon(
                   onPressed: _aiBusy ? null : _generateAi,

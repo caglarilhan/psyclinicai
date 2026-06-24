@@ -26,14 +26,47 @@ class PatientListScreen extends StatefulWidget {
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
+  static const int _pageSize = 50;
+  static const Duration _searchDebounce = Duration(milliseconds: 250);
+
   final _searchCtrl = TextEditingController();
   String _query = '';
+  Timer? _searchTimer;
   PatientFilter _filter = PatientFilter.empty;
+  int _visibleCount = _pageSize;
 
   @override
   void dispose() {
+    _searchTimer?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String v) {
+    _searchTimer?.cancel();
+    _searchTimer = Timer(_searchDebounce, () {
+      if (!mounted) return;
+      setState(() {
+        _query = v.trim();
+        _visibleCount = _pageSize;
+      });
+      unawaited(
+        TelemetryService.instance.capture(
+          'patient_list.search',
+          properties: {'has_query': _query.isNotEmpty},
+        ),
+      );
+    });
+  }
+
+  void _loadMore() {
+    setState(() => _visibleCount += _pageSize);
+    unawaited(
+      TelemetryService.instance.capture(
+        'patient_list.load_more',
+        properties: {'visible': _visibleCount},
+      ),
+    );
   }
 
   @override
@@ -56,7 +89,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
         children: [
           TextField(
             controller: _searchCtrl,
-            onChanged: (v) => setState(() => _query = v.trim()),
+            onChanged: _onQueryChanged,
             decoration: const InputDecoration(
               hintText: 'Search by name, member ID, or insurer…',
               prefixIcon: Icon(Icons.search),
@@ -65,7 +98,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
           const SizedBox(height: PsySpacing.md),
           PatientListFilterBar(
             filter: _filter,
-            onChanged: (f) => setState(() => _filter = f),
+            onChanged: (f) => setState(() {
+              _filter = f;
+              _visibleCount = _pageSize;
+            }),
           ),
           const SizedBox(height: PsySpacing.lg),
           Expanded(child: _list(context, theme, cs)),
@@ -125,14 +161,28 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 : null,
           );
         }
+        final total = patients.length;
+        final visible = total <= _visibleCount ? total : _visibleCount;
+        final hasMore = visible < total;
+        final shown = patients.take(visible).toList(growable: false);
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: PsySpacing.lg),
-          itemCount: patients.length,
+          itemCount: shown.length + 1,
           separatorBuilder: (_, __) => const SizedBox(height: PsySpacing.md),
-          itemBuilder: (_, i) => _PatientTile(
-            patient: patients[i],
-            onOpen: () => _openDetail(patients[i].id, patients[i].fullName),
-          ),
+          itemBuilder: (_, i) {
+            if (i == shown.length) {
+              return _ResultFooter(
+                visible: visible,
+                total: total,
+                hasMore: hasMore,
+                onLoadMore: _loadMore,
+              );
+            }
+            return _PatientTile(
+              patient: shown[i],
+              onOpen: () => _openDetail(shown[i].id, shown[i].fullName),
+            );
+          },
         );
       },
     );
@@ -462,6 +512,55 @@ class PatientDetailArgs {
   const PatientDetailArgs({required this.id, required this.name});
   final String id;
   final String name;
+}
+
+/// Result-count + "Load more" footer for the patient list. Always
+/// renders the "showing X of Y" line so the clinician knows the page
+/// is capped; the button only appears while more rows remain.
+class _ResultFooter extends StatelessWidget {
+  const _ResultFooter({
+    required this.visible,
+    required this.total,
+    required this.hasMore,
+    required this.onLoadMore,
+  });
+
+  final int visible;
+  final int total;
+  final bool hasMore;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: PsySpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Text(
+              'Showing $visible of $total',
+              style: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.6),
+                fontSize: 12,
+              ),
+            ),
+          ),
+          if (hasMore) ...[
+            const SizedBox(height: PsySpacing.sm),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: onLoadMore,
+                icon: const Icon(Icons.expand_more, size: 18),
+                label: const Text('Load more'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 /// Placeholder row that mirrors [_PatientTile]'s layout so the page

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:psyclinicai/l10n/app_localizations.dart';
 import 'package:psyclinicai/models/superbill_prefill.dart';
+import 'package:psyclinicai/screens/admin/risk_coverage_screen.dart';
 import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
@@ -266,6 +267,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   );
                 },
                 '/dashboard': (context) => const DashboardScreen(),
+                '/admin/risk_coverage': (context) => const RiskCoverageScreen(),
                 '/feature_system': (context) => const FeatureSystemScreen(),
                 '/session': (context) {
                   final args =

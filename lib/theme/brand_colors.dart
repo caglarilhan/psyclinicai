@@ -32,6 +32,12 @@ class PsyColors {
   static const Color danger = Color(0xFFDC2626);
   static const Color info = Color(0xFF2563EB);
 
+  /// Lighter info blue paired with the dark surface so the info badge
+  /// label clears WCAG 2.2 AA (4.5:1) — the standard [info] (#2563EB)
+  /// on `darkScheme.surface` (#0B1220) sits at 3.34:1. `#60A5FA`
+  /// (Tailwind blue-400) lifts it to ~8.7:1.
+  static const Color infoDark = Color(0xFF60A5FA);
+
   // --- Risk severity (PHQ-9 / GAD-7 trend bands) ---
   static const Color riskMinimal = Color(0xFF16A34A);
   static const Color riskMild = Color(0xFFCA8A04);

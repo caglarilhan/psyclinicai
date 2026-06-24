@@ -20,10 +20,15 @@ class PsyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    // Info badge text on the dark surface fails WCAG AA (4.5:1) at
+    // PsyColors.info — pick the lighter variant in dark mode so the
+    // label clears the threshold (~8.7:1).
     final base = switch (tone) {
       PsyBadgeTone.neutral => cs.onSurface,
-      PsyBadgeTone.info => PsyColors.info,
+      PsyBadgeTone.info => isDark ? PsyColors.infoDark : PsyColors.info,
       PsyBadgeTone.success => PsyColors.success,
       PsyBadgeTone.warning => PsyColors.warning,
       PsyBadgeTone.danger => cs.error,

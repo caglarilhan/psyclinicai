@@ -104,6 +104,12 @@ class ConsentEntry {
 enum ConsentKind {
   hipaaNopp('hipaa_nopp'),
   gdprProcessing('gdpr_processing'),
+
+  /// KVKK md. 6/2 + 6/3 — açık rıza for processing özel nitelikli
+  /// sağlık verisi (special-category health data) under Turkish
+  /// data-protection law. Required for any TR-resident patient on
+  /// top of the GDPR consent.
+  kvkkSpecialCategoryHealth('kvkk_md6_health'),
   aiProcessing('ai_processing'),
   audioRecording('audio_recording'),
   telehealth('telehealth'),
@@ -132,6 +138,9 @@ enum ConsentKind {
         return 'block telehealth scheduling';
       case ConsentKind.marketing:
         return 'unsubscribe from marketing';
+      case ConsentKind.kvkkSpecialCategoryHealth:
+        return 'KVKK md. 7 — silme / yok etme prosedürü tetiklenir; '
+            'klinisyenin TR-resident hasta dosyasına erişimi durur';
       case ConsentKind.hipaaNopp:
       case ConsentKind.gdprProcessing:
         return 'requires DPO review — revoking these means closing '

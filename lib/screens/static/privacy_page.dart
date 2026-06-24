@@ -79,7 +79,28 @@ class PrivacyPage extends StatelessWidget {
             '24 hours and resolve within 30 days, sooner where the '
             'law requires.',
           ),
+          _KvkkLink(),
         ],
+      ),
+    );
+  }
+}
+
+class _KvkkLink extends StatelessWidget {
+  const _KvkkLink();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => Navigator.of(context).pushNamed('/legal/kvkk'),
+          icon: Icon(Icons.menu_book_outlined, color: cs.primary),
+          label: const Text('Türkçe: KVKK md. 10 aydınlatma metni'),
+        ),
       ),
     );
   }

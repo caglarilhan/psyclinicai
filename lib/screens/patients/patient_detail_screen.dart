@@ -8,6 +8,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/medication_repository.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/clinical_brief_card.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -332,7 +333,7 @@ class _AssessmentTile extends StatelessWidget {
                 if (a.completedAt != null) ...[
                   const SizedBox(height: PsySpacing.xxs),
                   Text(
-                    'Completed ${_fmt(a.completedAt!)}',
+                    'Completed ${TimeFormat.relativeDay(a.completedAt!)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: cs.onSurface.withValues(alpha: 0.55),
                     ),
@@ -363,9 +364,6 @@ class _AssessmentTile extends StatelessWidget {
     if (s.contains('mild')) return PsyBadgeTone.info;
     return PsyBadgeTone.success;
   }
-
-  static String _fmt(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
 class _DemoAssessmentTile extends StatelessWidget {

@@ -8,6 +8,7 @@ import '../../services/data/patient_filter.dart';
 import '../../services/data/patient_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_button.dart';
@@ -487,7 +488,8 @@ class _PatientTile extends StatelessWidget {
                   [
                     if (patient.insurer.isNotEmpty) patient.insurer,
                     if (patient.memberId.isNotEmpty) 'ID ${patient.memberId}',
-                    if (updated != null) 'added ${_fmtDate(updated)}',
+                    if (updated != null)
+                      'added ${TimeFormat.relativeDay(updated)}',
                   ].join(' · '),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6),
@@ -500,10 +502,6 @@ class _PatientTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static String _fmtDate(DateTime d) {
-    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 }
 

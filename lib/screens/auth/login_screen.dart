@@ -50,10 +50,15 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
 
-    if (!_backendReady) {
-      if (!BuildConfig.isDemo) {
-        // Release build with no working backend is a misconfiguration — never
-        // silently grant unauthenticated access.
+    // Demo path triggers when (a) backend isn't reachable, or (b) the
+    // build was explicitly compiled with IS_DEMO=true so the dev /
+    // sales workspace can pretend to log in without a real Firebase
+    // account. Production release builds pass IS_DEMO=false; the
+    // unauthenticated branch is then refused.
+    if (!_backendReady || BuildConfig.isDemo) {
+      if (!_backendReady && !BuildConfig.isDemo) {
+        // Release build with no working backend is a misconfiguration —
+        // never silently grant unauthenticated access.
         setState(() {
           _loading = false;
           _error =
@@ -212,16 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _Logo(cs: cs),
-                          const SizedBox(height: 18),
-                          Text(
-                            'PsyClinicAI',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: cs.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Text(
                             isSignUp
                                 ? 'Create your clinician account'
@@ -504,24 +500,53 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Solid teal tile + Icons.psychology — same icon the landing AppBar uses,
-    // so the brand reads consistently from landing → login.
+    final theme = Theme.of(context);
+    // The brand asset itself is a mint rounded square containing the
+    // gear-in-head silhouette — same illustration used in the iOS app
+    // icon. We frame it with a soft drop shadow that picks the brand
+    // primary tone so the asset reads as "ours" against any surface.
     return Center(
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: cs.primary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: cs.primary.withValues(alpha: 0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.primary.withValues(alpha: 0.28),
+                  blurRadius: 28,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: cs.primary.withValues(alpha: 0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Icon(Icons.psychology, color: cs.onPrimary, size: 34),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Image.asset(
+                'assets/branding/logo-master.png',
+                width: 96,
+                height: 96,
+                fit: BoxFit.cover,
+                semanticLabel: 'PsyClinicAI logo',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'PsyClinicAI',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: cs.primary,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
       ),
     );
   }

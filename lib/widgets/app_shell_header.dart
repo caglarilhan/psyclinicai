@@ -34,6 +34,8 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(width: 240, child: _SearchBox(onTap: onSearch)),
           const SizedBox(width: PsySpacing.md),
+          const SubscriptionChip(),
+          const SizedBox(width: PsySpacing.md),
           const _UserMenu(),
         ],
       ),

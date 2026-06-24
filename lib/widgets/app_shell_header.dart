@@ -23,6 +23,11 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Below 480px there's no room for the 240px search box + chip
+    // alongside the breadcrumb + user menu; drop both. Search stays
+    // reachable via the AppBar search icon on the mobile shell.
+    final canFitSearch =
+        MediaQuery.sizeOf(context).width >= _headerSearchBreakpoint;
     return Container(
       height: 64,
       color: cs.surface,
@@ -32,16 +37,23 @@ class _Header extends StatelessWidget {
           Expanded(
             child: _Breadcrumb(crumbs: crumbs, onHome: onHome),
           ),
-          SizedBox(width: 240, child: _SearchBox(onTap: onSearch)),
-          const SizedBox(width: PsySpacing.md),
-          const SubscriptionChip(),
-          const SizedBox(width: PsySpacing.md),
+          if (canFitSearch) ...[
+            SizedBox(width: 240, child: _SearchBox(onTap: onSearch)),
+            const SizedBox(width: PsySpacing.md),
+            const SubscriptionChip(),
+            const SizedBox(width: PsySpacing.md),
+          ],
           const _UserMenu(),
         ],
       ),
     );
   }
 }
+
+/// Below this viewport width the desktop header drops its search box
+/// + subscription chip to fit. Phones still get the mobile AppBar
+/// shell, which has its own search icon.
+const double _headerSearchBreakpoint = 480;
 
 class _SearchBox extends StatelessWidget {
   const _SearchBox({required this.onTap});

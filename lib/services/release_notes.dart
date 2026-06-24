@@ -35,6 +35,18 @@ class ReleaseNotes {
   /// in-app sheet reads `releases.first`.
   static const List<Release> releases = <Release>[
     Release(
+      version: '0.8.0',
+      date: '2026-06-24',
+      tag: 'Dashboard tiles + pinning + bulk risk acknowledgement',
+      bullets: [
+        'Dashboard "Open risk signals" tile — top 3 unacknowledged elevated / high signals with one-tap routing to the leadership panel.',
+        "Dashboard \"Today's audit activity\" tile — your three most recent PHI access rows, with one-tap routing to the audit log + integrity verification.",
+        'Patient pinning — star button on patient list and detail; pinned patients float to the top of the roster across reloads.',
+        'Risk coverage "Acknowledge all" — clears the entire open high-severity list with one tap (idempotent, skips already-acked rows).',
+        'TimeFormat canonical helpers now drive every patient-facing date display (intake DOB, license expiry, recent activity, assessment timeline).',
+      ],
+    ),
+    Release(
       version: '0.7.0',
       date: '2026-06-24',
       tag: 'Interop + risk leadership + URL pseudonymization',

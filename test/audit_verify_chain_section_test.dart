@@ -78,6 +78,28 @@ void main() {
     expect(find.text('Chain intact'), findsOneWidget);
   });
 
+  testWidgets('Last verified stamp appears after a successful run', (
+    tester,
+  ) async {
+    final repo = await _seed('al_test_verify_stamp', rows: [_row(id: 'a')]);
+    await tester.pumpWidget(app(VerifyChainSection(repo: repo)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Last verified'), findsNothing);
+
+    await tester.tap(find.text('Verify chain'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Last verified'), findsOneWidget);
+
+    // Verify the stamp is persisted across a fresh widget instance
+    // (the second pump reads the SharedPreferences key set by the
+    // first run).
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(app(VerifyChainSection(repo: repo)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Last verified'), findsOneWidget);
+  });
+
   testWidgets('tampered ledger renders Broken at row N', (tester) async {
     const tamperedJson =
         '{"id":"a","kind":"signin","action":"Signed in",'

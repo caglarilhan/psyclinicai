@@ -120,6 +120,13 @@ List<CommandPaletteEntry> buildAppCommands(BuildContext context) {
       onSelect: () => go('/settings/export'),
     ),
     CommandPaletteEntry(
+      label: 'Pinned patients',
+      section: 'Account',
+      icon: Icons.star_outline,
+      subtitle: 'Manage roster favourites · bulk unpin',
+      onSelect: () => go('/settings/pinned'),
+    ),
+    CommandPaletteEntry(
       label: 'Changelog',
       section: 'Help',
       icon: Icons.history_outlined,

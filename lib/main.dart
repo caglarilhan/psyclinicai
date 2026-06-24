@@ -55,6 +55,7 @@ import 'package:psyclinicai/screens/settings/data_export_screen.dart';
 import 'package:psyclinicai/screens/settings/ehr_sync_console_screen.dart';
 import 'package:psyclinicai/screens/settings/modalities_screen.dart';
 import 'package:psyclinicai/screens/settings/payment_setup_screen.dart';
+import 'package:psyclinicai/screens/settings/pinned_patients_screen.dart';
 import 'package:psyclinicai/screens/settings/region_settings_screen.dart';
 import 'package:psyclinicai/screens/settings/settings_screen.dart';
 import 'package:psyclinicai/screens/splash/splash_screen.dart';
@@ -289,6 +290,7 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/settings': (context) => const SettingsScreen(),
                 '/settings/api_keys': (context) => const ApiKeysScreen(),
                 '/settings/audit_log': (context) => const AuditLogScreen(),
+                '/settings/pinned': (context) => const PinnedPatientsScreen(),
                 '/dpa': (context) => const DpaPage(),
                 '/baa': (context) => const BaaPage(),
                 '/trust': (context) => const TrustCenterScreen(),

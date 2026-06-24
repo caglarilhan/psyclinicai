@@ -5,6 +5,10 @@ import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
 
 Future<void> _pump(WidgetTester tester) async {
+  // Tall surface so every ConsentKind tile + its CTA stays inside
+  // the visible viewport — `tester.tap` rejects off-screen widgets.
+  await tester.binding.setSurfaceSize(const Size(900, 1400));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     const MaterialApp(home: ConsentCenterScreen(patientId: 'p-1')),
   );

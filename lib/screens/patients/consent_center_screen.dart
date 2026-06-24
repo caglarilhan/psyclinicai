@@ -127,6 +127,8 @@ class _ConsentCard extends StatelessWidget {
         return 'HIPAA Notice of Privacy Practices';
       case ConsentKind.gdprProcessing:
         return 'GDPR processing';
+      case ConsentKind.kvkkSpecialCategoryHealth:
+        return 'KVKK md. 6 — açık rıza (sağlık verisi)';
       case ConsentKind.aiProcessing:
         return 'AI processing';
       case ConsentKind.audioRecording:

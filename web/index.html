@@ -71,12 +71,19 @@
 
   <!-- Sprint 30 S-07 — Content-Security-Policy. Flutter Web is unusual
        (canvaskit + skia + dynamic font fetch); the directives below are
-       the minimum that lets `main.dart.js` boot while denying inline
-       script and arbitrary remote origins. Any future SDK that ships
-       its own CDN host has to land here too — keep this list tight. -->
+       the minimum that lets `main.dart.js` boot while denying arbitrary
+       remote origins.
+       'unsafe-inline' on script-src is required because Flutter's web
+       bootstrap + the dev-server hot-reload client inject inline
+       <script> blocks. In production the real defense lives in the
+       Caddy CSP header (which can use nonce-based allow-listing);
+       this meta tag is the build-time fallback so the app boots even
+       when Caddy is bypassed (e.g. flutter serve, local file open).
+       Any future SDK that ships its own CDN host has to land here too
+       — keep this list tight. -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com https://js.stripe.com;
+    script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://apis.google.com https://js.stripe.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com data:;
     img-src 'self' data: blob: https:;

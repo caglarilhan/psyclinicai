@@ -63,16 +63,20 @@ class _BrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: cs.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(PsyRadius.lg),
+    // Brand asset is the mint rounded square gear-in-head silhouette —
+    // same illustration as the login _Logo + the iOS app icon. Sidebar
+    // shows it at 36x36; the asset itself already carries the rounded
+    // corner so we only ClipRRect to align with the surrounding
+    // PsyRadius.lg scale.
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(PsyRadius.lg),
+      child: Image.asset(
+        'assets/branding/logo-master.png',
+        width: 36,
+        height: 36,
+        fit: BoxFit.cover,
+        semanticLabel: 'PsyClinicAI logo',
       ),
-      child: Icon(Icons.psychology, color: cs.primary, size: 22),
     );
   }
 }

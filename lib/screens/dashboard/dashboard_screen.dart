@@ -9,6 +9,7 @@ import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/dashboard/open_risk_signals_card.dart';
 import '../../widgets/ds/psy_reveal.dart';
 import '../../widgets/whats_new_sheet.dart';
 import 'dashboard_actions.dart';
@@ -83,6 +84,11 @@ class DashboardScreen extends StatelessWidget {
             PsyReveal(
               delay: const Duration(milliseconds: 80),
               child: QuickActions(theme: theme, cs: cs),
+            ),
+            const SizedBox(height: PsySpacing.xxl),
+            const PsyReveal(
+              delay: Duration(milliseconds: 120),
+              child: OpenRiskSignalsCard(),
             ),
             const SizedBox(height: PsySpacing.xxl),
             PsyReveal(

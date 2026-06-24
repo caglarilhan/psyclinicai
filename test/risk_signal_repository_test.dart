@@ -89,6 +89,46 @@ void main() {
     expect(await repo.acknowledge('missing', actor: 'x'), isNull);
   });
 
+  test('acknowledgeAll flips every matching row + stamps actor', () async {
+    final repo = RiskSignalRepository(storageBucket: 'rs_test_ack_all');
+    await repo.initialize();
+    await repo.save(_row(id: 'a'));
+    await repo.save(_row(id: 'b'));
+    await repo.save(_row(id: 'c'));
+    final updated = await repo.acknowledgeAll([
+      'a',
+      'b',
+    ], actor: 'dr.lee@psyclinicai.com');
+    expect(updated, hasLength(2));
+    final byId = {for (final s in repo.all) s.id: s};
+    expect(byId['a']!.acknowledged, isTrue);
+    expect(byId['a']!.acknowledgedBy, 'dr.lee@psyclinicai.com');
+    expect(byId['b']!.acknowledged, isTrue);
+    expect(byId['c']!.acknowledged, isFalse);
+  });
+
+  test('acknowledgeAll skips unknown ids without throwing', () async {
+    final repo = RiskSignalRepository(storageBucket: 'rs_test_ack_all_skip');
+    await repo.initialize();
+    await repo.save(_row(id: 'a'));
+    final updated = await repo.acknowledgeAll([
+      'a',
+      'never-existed',
+    ], actor: 'x');
+    expect(updated, hasLength(1));
+    expect(updated.first.id, 'a');
+  });
+
+  test('acknowledgeAll skips already-acknowledged rows', () async {
+    final repo = RiskSignalRepository(storageBucket: 'rs_test_ack_all_idem');
+    await repo.initialize();
+    await repo.save(_row(id: 'a'));
+    await repo.acknowledge('a', actor: 'first');
+    final updated = await repo.acknowledgeAll(['a'], actor: 'second');
+    expect(updated, isEmpty);
+    expect(repo.all.firstWhere((s) => s.id == 'a').acknowledgedBy, 'first');
+  });
+
   test('saving with the same id replaces the row (no duplicates)', () async {
     final repo = RiskSignalRepository(storageBucket: 'rs_test_dedup');
     await repo.initialize();

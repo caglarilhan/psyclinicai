@@ -13,9 +13,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../services/data/audit_log_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 
@@ -179,21 +182,54 @@ class VerifyChainSection extends StatefulWidget {
 }
 
 class _VerifyChainSectionState extends State<VerifyChainSection> {
+  /// SharedPreferences key id — not a credential.
+  static const _lastVerifiedKey = 'audit_log.last_verified_at_v1';
+
   late final AuditLogRepository _repo = widget.repo ?? AuditLogRepository();
   bool _running = false;
   bool _hasRun = false;
   int? _brokenAt; // null after a successful run means "chain intact"
+  DateTime? _lastVerifiedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadLastVerified());
+  }
+
+  Future<void> _loadLastVerified() async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final raw = sp.getString(_lastVerifiedKey);
+      if (raw == null || raw.isEmpty) return;
+      final parsed = DateTime.tryParse(raw)?.toUtc();
+      if (parsed == null || !mounted) return;
+      setState(() => _lastVerifiedAt = parsed);
+    } catch (_) {
+      // Silent — stale timestamp display is fine.
+    }
+  }
+
+  Future<void> _stashLastVerified(DateTime at) async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      await sp.setString(_lastVerifiedKey, at.toUtc().toIso8601String());
+    } catch (_) {}
+  }
 
   Future<void> _verify() async {
     setState(() => _running = true);
     await _repo.initialize();
     final result = _repo.verifyChain();
+    final at = DateTime.now().toUtc();
     if (!mounted) return;
     setState(() {
       _running = false;
       _hasRun = true;
       _brokenAt = result;
+      _lastVerifiedAt = at;
     });
+    unawaited(_stashLastVerified(at));
     unawaited(
       TelemetryService.instance.capture(
         'audit_log.verify',
@@ -246,6 +282,16 @@ class _VerifyChainSectionState extends State<VerifyChainSection> {
                     ),
                   ],
                 ),
+              if (_lastVerifiedAt != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Last verified ${TimeFormat.relativeDay(_lastVerifiedAt!)} '
+                  '${TimeFormat.localClock(_lastVerifiedAt!)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

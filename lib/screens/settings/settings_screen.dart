@@ -124,6 +124,15 @@ class SettingsScreen extends StatelessWidget {
             body: 'Trend across all your patients.',
             onTap: () => Navigator.of(context).pushNamed('/outcomes'),
           ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.star_outline,
+            title: 'Pinned patients',
+            body: 'Manage roster favourites · bulk unpin.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/pinned'),
+          ),
           const SizedBox(height: PsySpacing.xxl),
           _section(theme, cs, 'Security'),
           _row(

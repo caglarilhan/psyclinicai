@@ -9,6 +9,7 @@ import '../services/data/firebase_bootstrap.dart';
 import '../theme/tokens.dart';
 import 'command_palette.dart';
 import 'command_palette_registry.dart';
+import 'system_status_banner.dart';
 
 part 'app_shell_content.dart';
 part 'app_shell_header.dart';
@@ -172,7 +173,12 @@ class AppShell extends StatelessWidget {
           ),
         ),
         floatingActionButton: floatingActionButton,
-        body: content,
+        body: Column(
+          children: [
+            const SystemStatusBanner(),
+            Expanded(child: content),
+          ],
+        ),
         bottomNavigationBar: _MobileTabBar(
           dests: _dests,
           selectedIndex: _selectedIndex ?? 0,
@@ -197,6 +203,7 @@ class AppShell extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
+                  const SystemStatusBanner(),
                   _Header(
                     crumbs: breadcrumbs ?? _defaultCrumbs(),
                     onHome: () => _go(context, '/dashboard'),

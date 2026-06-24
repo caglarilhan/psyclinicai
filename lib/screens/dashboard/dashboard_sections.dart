@@ -14,11 +14,14 @@
 /// dashboard_screen.dart.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/billing/subscription_service.dart';
 import '../../services/data/auth_service.dart';
+import '../../services/data/mfa_local_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/onboarding_checklist.dart';
@@ -196,8 +199,26 @@ class RecentActivity extends StatelessWidget {
   }
 }
 
-class SetupChecklist extends StatelessWidget {
-  const SetupChecklist({super.key});
+class SetupChecklist extends StatefulWidget {
+  const SetupChecklist({super.key, this.mfaRepo});
+
+  /// Override for tests; production wires a default
+  /// [MfaLocalRepository].
+  final MfaLocalRepository? mfaRepo;
+
+  @override
+  State<SetupChecklist> createState() => _SetupChecklistState();
+}
+
+class _SetupChecklistState extends State<SetupChecklist> {
+  late final MfaLocalRepository _mfaRepo =
+      widget.mfaRepo ?? MfaLocalRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_mfaRepo.initialize());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,40 +234,46 @@ class SetupChecklist extends StatelessWidget {
         profile.npi.isNotEmpty;
     final stripeDone = subscription?.isActive ?? false;
 
-    final items = <OnboardingChecklistItem>[
-      OnboardingChecklistItem(
-        id: 'profile',
-        label: 'Add your clinician profile',
-        body: 'NPI, license, signature — feeds the superbill.',
-        icon: Icons.badge_outlined,
-        done: profileDone,
-        onTap: () => nav.pushNamed('/settings/profile'),
-      ),
-      OnboardingChecklistItem(
-        id: 'mfa',
-        label: 'Enable two-factor authentication',
-        body: 'TOTP + recovery codes. Required for ePHI under HIPAA.',
-        icon: Icons.shield_outlined,
-        done: false,
-        onTap: () => nav.pushNamed('/settings/mfa'),
-      ),
-      OnboardingChecklistItem(
-        id: 'stripe',
-        label: 'Connect Stripe to take payments',
-        body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
-        icon: Icons.payments_outlined,
-        done: stripeDone,
-        onTap: () => nav.pushNamed('/settings/payments'),
-      ),
-      OnboardingChecklistItem(
-        id: 'first-patient',
-        label: 'Invite your first patient',
-        body: 'Send the intake form, capture consent, schedule.',
-        icon: Icons.person_add_alt_outlined,
-        done: false,
-        onTap: () => nav.pushNamed('/patients'),
-      ),
-    ];
-    return OnboardingChecklist(items: items);
+    return ValueListenableBuilder<DateTime?>(
+      valueListenable: _mfaRepo.listenable,
+      builder: (context, mfaAt, _) {
+        final mfaDone = mfaAt != null;
+        final items = <OnboardingChecklistItem>[
+          OnboardingChecklistItem(
+            id: 'profile',
+            label: 'Add your clinician profile',
+            body: 'NPI, license, signature — feeds the superbill.',
+            icon: Icons.badge_outlined,
+            done: profileDone,
+            onTap: () => nav.pushNamed('/settings/profile'),
+          ),
+          OnboardingChecklistItem(
+            id: 'mfa',
+            label: 'Enable two-factor authentication',
+            body: 'TOTP + recovery codes. Required for ePHI under HIPAA.',
+            icon: Icons.shield_outlined,
+            done: mfaDone,
+            onTap: () => nav.pushNamed('/settings/mfa'),
+          ),
+          OnboardingChecklistItem(
+            id: 'stripe',
+            label: 'Connect Stripe to take payments',
+            body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
+            icon: Icons.payments_outlined,
+            done: stripeDone,
+            onTap: () => nav.pushNamed('/settings/payments'),
+          ),
+          OnboardingChecklistItem(
+            id: 'first-patient',
+            label: 'Invite your first patient',
+            body: 'Send the intake form, capture consent, schedule.',
+            icon: Icons.person_add_alt_outlined,
+            done: false,
+            onTap: () => nav.pushNamed('/patients'),
+          ),
+        ];
+        return OnboardingChecklist(items: items);
+      },
+    );
   }
 }

@@ -9,9 +9,14 @@
 /// + audit row rendering only.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../services/data/audit_log_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
 
 class ExportTile extends StatelessWidget {
@@ -148,8 +153,115 @@ class IntegrityCard extends StatelessWidget {
               ],
             ),
           ],
+          const SizedBox(height: PsySpacing.lg),
+          Divider(height: 1, color: cs.outlineVariant),
+          const SizedBox(height: PsySpacing.md),
+          const VerifyChainSection(),
         ],
       ),
+    );
+  }
+}
+
+/// Live integrity check button — calls [AuditLogRepository.verifyChain]
+/// and renders the result inline. The hash-chain claim in the
+/// attestation above is only credible when a clinician can actually
+/// run the verification; this is the surface that closes that loop.
+class VerifyChainSection extends StatefulWidget {
+  const VerifyChainSection({super.key, this.repo});
+
+  /// Override for tests; production wires the default
+  /// [AuditLogRepository].
+  final AuditLogRepository? repo;
+
+  @override
+  State<VerifyChainSection> createState() => _VerifyChainSectionState();
+}
+
+class _VerifyChainSectionState extends State<VerifyChainSection> {
+  late final AuditLogRepository _repo = widget.repo ?? AuditLogRepository();
+  bool _running = false;
+  bool _hasRun = false;
+  int? _brokenAt; // null after a successful run means "chain intact"
+
+  Future<void> _verify() async {
+    setState(() => _running = true);
+    await _repo.initialize();
+    final result = _repo.verifyChain();
+    if (!mounted) return;
+    setState(() {
+      _running = false;
+      _hasRun = true;
+      _brokenAt = result;
+    });
+    unawaited(
+      TelemetryService.instance.capture(
+        'audit_log.verify',
+        properties: {'result': result == null ? 'intact' : 'broken_at_$result'},
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Live chain check',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              if (!_hasRun)
+                Text(
+                  'Walk every row + recompute its SHA-256 hash.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.65),
+                  ),
+                )
+              else if (_brokenAt == null)
+                const Row(
+                  children: [
+                    PsyBadge(
+                      label: 'Chain intact',
+                      tone: PsyBadgeTone.success,
+                      icon: Icons.check,
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    PsyBadge(
+                      label: 'Broken at row $_brokenAt',
+                      tone: PsyBadgeTone.danger,
+                      icon: Icons.error_outline,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: PsySpacing.md),
+        FilledButton.tonalIcon(
+          onPressed: _running ? null : () => unawaited(_verify()),
+          icon: _running
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.fact_check_outlined, size: 18),
+          label: Text(_running ? 'Verifying' : 'Verify chain'),
+        ),
+      ],
     );
   }
 }

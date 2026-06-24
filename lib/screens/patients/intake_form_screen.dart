@@ -7,6 +7,7 @@ import '../../models/patient_intake.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_save_shortcut.dart';
@@ -552,10 +553,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
             suffixIcon: Icon(Icons.calendar_today, size: 16),
           ),
           child: Text(
-            _dob == null
-                ? 'Tap to pick'
-                : '${_dob!.year}-${_dob!.month.toString().padLeft(2, '0')}-'
-                      '${_dob!.day.toString().padLeft(2, '0')}',
+            _dob == null ? 'Tap to pick' : TimeFormat.isoDate(_dob!),
             style: theme.textTheme.bodyMedium,
           ),
         ),

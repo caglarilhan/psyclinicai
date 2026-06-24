@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth/clinician_role.dart';
 import '../../services/data/auth_service.dart';
 import '../../theme/tokens.dart';
+import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
@@ -245,8 +246,7 @@ class _ClinicianProfileScreenState extends State<ClinicianProfileScreen> {
                       child: Text(
                         _licenseExpiry == null
                             ? 'Tap to pick'
-                            : '${_licenseExpiry!.year}-${_licenseExpiry!.month.toString().padLeft(2, '0')}-'
-                                  '${_licenseExpiry!.day.toString().padLeft(2, '0')}',
+                            : TimeFormat.isoDate(_licenseExpiry!),
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),

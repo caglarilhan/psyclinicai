@@ -7,6 +7,7 @@ import '../../services/data/assessment_repository.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/firebase_bootstrap.dart';
 import '../../services/data/medication_repository.dart';
+import '../../services/data/patient_pin_repository.dart';
 import '../../theme/tokens.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
@@ -181,6 +182,7 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          _PinButton(patientId: args.id),
         ],
       ),
     );
@@ -674,6 +676,49 @@ class _MedicationDialogState extends State<_MedicationDialog> {
           child: const Text('Add'),
         ),
       ],
+    );
+  }
+}
+
+/// Self-contained star button. Owns its own [PatientPinRepository]
+/// so the parent header can stay a pure StatelessWidget. The set is
+/// shared with the patient list because the underlying SP key
+/// (`patient_pins_v1`) is the same.
+class _PinButton extends StatefulWidget {
+  const _PinButton({required this.patientId});
+  final String patientId;
+
+  @override
+  State<_PinButton> createState() => _PinButtonState();
+}
+
+class _PinButtonState extends State<_PinButton> {
+  final PatientPinRepository _repo = PatientPinRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_repo.initialize());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ValueListenableBuilder<Set<String>>(
+      valueListenable: _repo.listenable,
+      builder: (context, pinned, _) {
+        final isPinned = pinned.contains(widget.patientId);
+        return IconButton(
+          tooltip: isPinned ? 'Unpin from roster top' : 'Pin to roster top',
+          onPressed: () => unawaited(_repo.toggle(widget.patientId)),
+          icon: Icon(
+            isPinned ? Icons.star : Icons.star_outline,
+            color: isPinned
+                ? const Color(0xFFD97706)
+                : cs.onSurface.withValues(alpha: 0.55),
+          ),
+        );
+      },
     );
   }
 }

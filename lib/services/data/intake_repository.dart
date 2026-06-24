@@ -1,30 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../../models/patient_intake.dart';
+import 'secure_prefs.dart';
 import 'telemetry_service.dart';
 
 /// Offline patient-intake store — one intake per patient.
 ///
 /// Captures PHI (demographics, allergies, meds, signed consent), so the
-/// payload is held in [FlutterSecureStorage] (iOS Keychain / Android
-/// encrypted prefs). Failures bubble up to the caller so we never report
-/// a false "intake saved" message while the consent record was lost.
+/// payload is held in [SecurePrefs] (iOS Keychain / Android encrypted
+/// prefs via the platform defaults centralised in that facade). Same
+/// storage key as the previous direct-FSS revision (no on-disk
+/// migration needed). Failures bubble up to the caller so we never
+/// report a false "intake saved" message while the consent record was
+/// lost.
 class IntakeRepository {
-  IntakeRepository({FlutterSecureStorage? storage})
-    : _storage =
-          storage ??
-          const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            iOptions: IOSOptions(
-              accessibility: KeychainAccessibility.first_unlock,
-            ),
-          );
+  IntakeRepository({SecurePrefs? prefs})
+    : _prefs = prefs ?? SecurePrefs.instance;
 
   static const _key = 'patient_intakes';
-  final FlutterSecureStorage _storage;
+  final SecurePrefs _prefs;
 
   final Map<String, PatientIntake> _byPatient = {};
   bool _loaded = false;
@@ -33,7 +28,7 @@ class IntakeRepository {
     if (_loaded) return;
     _byPatient.clear();
     try {
-      final raw = await _storage.read(key: _key);
+      final raw = await _prefs.getString(_key);
       if (raw != null && raw.isNotEmpty) {
         final list = jsonDecode(raw) as List<dynamic>;
         var dropped = 0;
@@ -84,7 +79,7 @@ class IntakeRepository {
       final raw = jsonEncode(
         _byPatient.values.map((p) => p.toJson()).toList(growable: false),
       );
-      await _storage.write(key: _key, value: raw);
+      await _prefs.setString(_key, raw);
     } catch (e, st) {
       unawaited(
         TelemetryService.instance.captureError(e, st, hint: 'intake_save'),

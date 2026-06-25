@@ -109,3 +109,99 @@ export function verifyChainSlice(
   }
   return {ok: true, rowsChecked, firstBadIndex: -1, reason: ""};
 }
+
+// ---------------------------------------------------------------
+// J2 — client-side chain helpers
+//
+// The on-device `AuditLogRepository` (Dart) computes each row's
+// hash as `sha256(prevHash + jsonEncode(entry.toJson()))` where
+// `toJson()` emits keys in INSERTION order (id, kind, action,
+// actor, entity, timestamp_utc, result, [user_id], [ip], [device]).
+// That is NOT the same as [canonicalise]'s lexicographic order, so
+// re-using `verifyChainSlice` against client-mirrored rows would
+// always fail.
+//
+// The helpers below mirror the Dart serialiser EXACTLY so a Cloud
+// Function chain-verifier can replay rows mirrored into
+// `clinic_audit_logs/{clinicId}/entries` without false alarms.
+// Concatenation is plain `prev + canonical` (no separator) to
+// match `String + String` in Dart.
+// ---------------------------------------------------------------
+
+/** Empty-string chain head (Dart uses `''`, not `'GENESIS'`). */
+export const CLIENT_GENESIS_PREV_HASH = "";
+
+/**
+ * Stable JSON serialisation that mirrors Dart's `AuditLogEntry.toJson`
+ * insertion order. Hash field is NEVER included (the chain hash is
+ * computed over everything *but* the hash field).
+ */
+export function clientCanonicalise(row: AuditChainRow): string {
+  const obj: Record<string, unknown> = {
+    id: row.id,
+    kind: row.kind,
+    action: row.action,
+    actor: row.actor,
+    entity: row.entity,
+    timestamp_utc: row.timestamp_utc,
+    result: row.result,
+  };
+  if (row.user_id !== null && row.user_id !== undefined) {
+    obj.user_id = row.user_id;
+  }
+  if (row.ip !== null && row.ip !== undefined) obj.ip = row.ip;
+  if (row.device !== null && row.device !== undefined) {
+    obj.device = row.device;
+  }
+  return JSON.stringify(obj);
+}
+
+/**
+ * SHA-256 over `prev + clientCanonicalise(row)`. Lowercase hex.
+ * NB: concatenation is unseparated to match the Dart writer.
+ */
+export function computeClientChainHash(
+  row: AuditChainRow,
+  prevHash: string,
+): string {
+  const payload = `${prevHash}${clientCanonicalise(row)}`;
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+/**
+ * Walk an ordered slice of CLIENT-WRITTEN audit rows and confirm
+ * each row's stored `hash` matches `computeClientChainHash`.
+ * Unlike [verifyChainSlice], rows MUST carry a hash — a missing
+ * hash on the mirrored side is itself a corruption signal.
+ */
+export function verifyClientChainSlice(
+  rows: ReadonlyArray<AuditChainRow>,
+  initialPrev: string = CLIENT_GENESIS_PREV_HASH,
+): VerifyResult {
+  let prev = initialPrev;
+  let rowsChecked = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const stored = row.hash;
+    if (!stored) {
+      return {
+        ok: false,
+        rowsChecked,
+        firstBadIndex: i,
+        reason: `row id=${row.id}: missing hash on mirrored row`,
+      };
+    }
+    const expected = computeClientChainHash(row, prev);
+    if (expected !== stored) {
+      return {
+        ok: false,
+        rowsChecked,
+        firstBadIndex: i,
+        reason: `row id=${row.id}: stored=${stored.slice(0, 12)}… expected=${expected.slice(0, 12)}…`,
+      };
+    }
+    rowsChecked++;
+    prev = stored;
+  }
+  return {ok: true, rowsChecked, firstBadIndex: -1, reason: ""};
+}

@@ -54,22 +54,21 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
   void _grant(ConsentKind kind) {
     // KVKK md. 6 requires explicit + auditable consent — surface the
     // full açık rıza form in a modal instead of recording a typed
-    // signature stub. Other kinds keep the lightweight stub for now;
-    // they'll graduate to their own dedicated capture surfaces in
-    // follow-up PRs.
+    // signature stub. The KVKK path already writes its own audit row
+    // via KvkkIntakeSlot; the stub path below covers every other kind.
     if (kind == ConsentKind.kvkkSpecialCategoryHealth) {
       unawaited(_openKvkkModal());
       return;
     }
-    _repo.record(
-      ConsentEntry(
-        id: 'ce-${DateTime.now().microsecondsSinceEpoch}',
-        patientId: widget.patientId,
-        kind: kind,
-        policyVersion: '2026-06',
-        signature: 'typed:${widget.patientName}',
-      ),
+    final entry = ConsentEntry(
+      id: 'ce-${DateTime.now().microsecondsSinceEpoch}',
+      patientId: widget.patientId,
+      kind: kind,
+      policyVersion: '2026-06',
+      signature: 'typed:${widget.patientName}',
     );
+    _repo.record(entry);
+    unawaited(_appendConsentAuditEntry(entry, granted: true));
   }
 
   Future<void> _openKvkkModal() async {
@@ -124,9 +123,50 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
     );
     if (confirmed == true) {
       _repo.revoke(entry.id);
+      // KVKK has its own dedicated revoke action label for legacy
+      // reasons (PR #96); everything else goes through the generic
+      // consent.revoked.<kind.id> action.
       if (entry.kind == ConsentKind.kvkkSpecialCategoryHealth) {
         unawaited(_appendKvkkRevokeAuditEntry(entry));
+      } else {
+        unawaited(_appendConsentAuditEntry(entry, granted: false));
       }
+    }
+  }
+
+  /// Generic helper — used for the non-KVKK consent kinds. Action
+  /// name pattern: `consent.{granted|revoked}.<kind.id>` so an
+  /// auditor can grep one prefix for all consent activity.
+  Future<void> _appendConsentAuditEntry(
+    ConsentEntry entry, {
+    required bool granted,
+  }) async {
+    try {
+      final repo = AuditLogRepository.instance;
+      await repo.initialize();
+      final verb = granted ? 'granted' : 'revoked';
+      await repo.append(
+        AuditLogEntry(
+          id: 'audit-consent-$verb-${entry.id}',
+          kind: 'consent',
+          action: 'consent.$verb.${entry.kind.id}',
+          actor: widget.patientId,
+          entity:
+              'patient:${widget.patientId} '
+              'entry:${entry.id} '
+              'policy:${entry.policyVersion}',
+          timestampUtc: DateTime.now().toUtc(),
+          result: AuditResult.success,
+        ),
+      );
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'consent.audit_failed',
+        ),
+      );
     }
   }
 

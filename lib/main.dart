@@ -156,19 +156,34 @@ Future<void> _initializeServices() async {
     await ThemeService.setPresetTheme('purple_blue');
     await PsyFirebase.bootstrap();
     await TelemetryService.instance.initialize();
-    // J3 (B4 follow-up) — wire the device audit chain to mirror
-    // every sealed row into Firestore under the signed-in clinic.
-    // Lookup is deferred until each append so a sign-in / sign-out
-    // mid-session is reflected without rebuilding the repo.
+    debugPrint('Services initialized (firebase: ${PsyFirebase.isReady})');
+  } catch (e, stack) {
+    debugPrint('Error initializing services: $e');
+    await TelemetryService.instance.captureError(e, stack, hint: 'bootstrap');
+  }
+
+  // C2 — split the audit-mirror bootstrap into its OWN guarded path
+  // so a Firestore handle hiccup (a regression in PsyFirebase init,
+  // a misconfigured project, a missing plugin on platform X) can't
+  // swallow itself into the generic `bootstrap` hint. The forensic
+  // mirror failing silently is its own observability concern: under
+  // HIPAA §164.316(b)(2)(i) we'd rather page on a degraded mirror
+  // than ship a build that quietly falls back to device-only audit.
+  // The app keeps booting either way — the mirror is best-effort
+  // (see `AuditLogMirror` contract).
+  try {
     AuditLogRepository.bootstrap(
       mirror: FirestoreAuditLogMirror(),
       clinicIdReader: () =>
           fb_auth.FirebaseAuthService.instance.profile?.clinicId,
     );
-    debugPrint('Services initialized (firebase: ${PsyFirebase.isReady})');
   } catch (e, stack) {
-    debugPrint('Error initializing services: $e');
-    await TelemetryService.instance.captureError(e, stack, hint: 'bootstrap');
+    debugPrint('audit_mirror.bootstrap_failed: $e');
+    await TelemetryService.instance.captureError(
+      e,
+      stack,
+      hint: 'audit_mirror.bootstrap_failed',
+    );
   }
 }
 

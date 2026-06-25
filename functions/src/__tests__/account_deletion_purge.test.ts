@@ -15,6 +15,7 @@ jest.mock("firebase-admin", () => ({
 }));
 
 import {
+  consentEntriesPurgePayload,
   isReadyToPurge,
   purgeFanOut,
   subcollectionPurgeFanOut,
@@ -115,6 +116,37 @@ describe("purgeFanOut payloads", () => {
     expect(p.answers).toEqual([]);
     expect(p.notes).toBe("__purged__");
     expect(p.self_harm_flag).toBeNull();
+  });
+});
+
+// K2 — KVKK md. 7 / GDPR Art. 17 — per-kind consent_entries
+// erasure payload. The shape is deliberately minimal:
+//   * `signature` redacted (PHI quasi-identifier)
+//   * `purged: true` so DSAR exporter (PR #108) suppresses it
+//   * `kind`, `policyVersion`, `signedAt`, `revokedAt`, `id` aren't
+//     touched — the audit chain references the entry id via the
+//     `entity` string and the verifier recomputes from the original
+//     payload bytes (HIPAA §164.316(b)(2)(i) chain integrity).
+describe("consentEntriesPurgePayload (K2)", () => {
+  it("marks the row purged so the DSAR exporter suppresses it", () => {
+    expect(consentEntriesPurgePayload.purged).toBe(true);
+  });
+
+  it("redacts the signature (the only PHI-bearing field)", () => {
+    expect(consentEntriesPurgePayload.signature).toBe("__purged__");
+  });
+
+  it("does NOT touch chain-relevant fields (kind/policyVersion/id)", () => {
+    const keys = Object.keys(consentEntriesPurgePayload);
+    expect(keys).not.toContain("kind");
+    expect(keys).not.toContain("policyVersion");
+    expect(keys).not.toContain("id");
+    expect(keys).not.toContain("signedAt");
+    expect(keys).not.toContain("revokedAt");
+  });
+
+  it("does NOT rewrite patientId — KVKK md. 5/2(ç) chain linkage", () => {
+    expect(consentEntriesPurgePayload).not.toHaveProperty("patientId");
   });
 });
 

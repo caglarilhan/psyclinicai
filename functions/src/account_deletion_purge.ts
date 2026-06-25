@@ -117,6 +117,30 @@ export const purgeFanOut: Record<string, Record<string, unknown>> = {
 };
 
 /**
+ * K2 — per-kind consent_entries (PR #95) erasure payload.
+ *
+ * Lifted out of [purgeFanOut] because the column is `patientId`
+ * (camelCase) not `patient_id` and the existing helper used a
+ * hard-coded snake_case field. We keep `id`, `kind`, `policyVersion`,
+ * `signedAt`, `revokedAt` so the forensic audit chain (which
+ * references the entry id in its `entity` string) still resolves;
+ * personal-data fields (`signature`) are wiped + the row is flagged
+ * `purged: true` so [buildDsarBundle] suppresses it from a future
+ * DSAR (per Art. 17 "no longer be processed").
+ *
+ * NB: `patientId` itself is NOT rewritten. The patient id is an
+ * opaque internal handle (`pat-<ulid>`); under KVKK md. 5/2(ç) the
+ * minimum-necessary linkage between an entry and its patient must
+ * survive the audit-chain verifier's recompute. A future iteration
+ * MAY swap this to an HMAC-SHA256(patientId, KVKK_ERASURE_HMAC_KEY)
+ * pseudonym once we wire the key escrow.
+ */
+export const consentEntriesPurgePayload: Record<string, unknown> = {
+  signature: "__purged__",
+  purged: true,
+};
+
+/**
  * Pseudonymise every row in [collection] that points at [patientId].
  * Returns the total count of rows touched (across all paged batches).
  * Errors are caught and surfaced via the logger so a single bad row
@@ -138,16 +162,18 @@ async function pseudonymisePatient(
   collection: string,
   patientId: string,
   payload: Record<string, unknown>,
-  now: Date
+  now: Date,
+  options: { fieldName?: string } = {}
 ): Promise<number> {
   const pageSize = 400;
+  const fieldName = options.fieldName ?? "patient_id";
   let touched = 0;
   let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     let q: admin.firestore.Query = db
       .collection(collection)
-      .where("patient_id", "==", patientId)
+      .where(fieldName, "==", patientId)
       .limit(pageSize);
     if (cursor) q = q.startAfter(cursor);
     const snap = await q.get();
@@ -408,6 +434,32 @@ export const accountDeletionPurge = functions.pubsub
             );
           }
         }
+        // Phase 1b (K2): per-kind consent_entries (PR #95) — camelCase
+        // patientId field. Audit chain referans bütünlüğünü korumak
+        // için entry id + kind + policyVersion + signedAt aynen bırakılır;
+        // signature ve revoke metadata redact edilir, `purged: true`
+        // bayrağı DSAR exporter'ı bu satırları gizlemesini sağlar.
+        // KVKK md. 7 + GDPR Art. 17 erasure semantics: kişisel veri
+        // alanları silinir, varoluş kanıtı (audit chain için) kalır.
+        for (const pid of patientIds) {
+          touched += await pseudonymisePatient(
+            db,
+            "consent_entries",
+            pid,
+            consentEntriesPurgePayload,
+            now,
+            { fieldName: "patientId" }
+          );
+        }
+        // Note: clinic_audit_logs/{clinicId}/entries (PR J1 forensic
+        // mirror) is INTENTIONALLY NOT purged. The hash chain is
+        // signed sha256(prev || row); rewriting any field would
+        // invalidate every subsequent row's hash and trip the
+        // `auditChainVerify` Cloud Function. Per KVKK md. 5/2(ç)
+        // "kanunlarda öngörülmesi" + HIPAA §164.316(b)(2)(i) the
+        // forensic ledger is retained for 6 years independently of
+        // the patient's erasure right. Document this in the DPIA so
+        // the DPO can answer the inevitable supervisor question.
         // Phase 2 (KRİTİK-6 close): nested patient sub-collections under
         // `clinics/{clinicId}/patients/{patientId}/*`. The Cloud Function
         // owner (clinic id) equals `userId` for the solo pilot tenancy.

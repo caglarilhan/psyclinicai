@@ -2,8 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/audit_log_entry.dart';
 import '../../models/consent_entry.dart';
+import '../../services/data/audit_log_repository.dart';
 import '../../services/data/consent_entry_repository.dart';
+import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/consent/kvkk_intake_slot.dart';
@@ -121,6 +124,38 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
     );
     if (confirmed == true) {
       _repo.revoke(entry.id);
+      if (entry.kind == ConsentKind.kvkkSpecialCategoryHealth) {
+        unawaited(_appendKvkkRevokeAuditEntry(entry));
+      }
+    }
+  }
+
+  Future<void> _appendKvkkRevokeAuditEntry(ConsentEntry entry) async {
+    try {
+      final repo = AuditLogRepository.instance;
+      await repo.initialize();
+      await repo.append(
+        AuditLogEntry(
+          id: 'audit-kvkk-revoke-${entry.id}',
+          kind: 'consent',
+          action: 'kvkk.consent_revoked',
+          actor: widget.patientId,
+          entity:
+              'patient:${widget.patientId} '
+              'entry:${entry.id} '
+              'policy:${entry.policyVersion}',
+          timestampUtc: DateTime.now().toUtc(),
+          result: AuditResult.success,
+        ),
+      );
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'kvkk.consent_revoked.audit_failed',
+        ),
+      );
     }
   }
 

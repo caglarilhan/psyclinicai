@@ -64,20 +64,31 @@ export function isExpired(createdAt: Date, now: Date): boolean {
 }
 
 /**
- * Top-level scheduled handler. Iterates audit_logs (paginated), marks
- * expired rows, writes a single retention.purge_run entry at the end.
- *
- * Batches of 200 — under the Firestore 500-write cap with room for
- * the run entry. Errors are logged but the function keeps going so
- * one corrupt row cannot block the whole pass.
+ * Result of a single retention pass — surfaced so tests can pin
+ * counts without parsing logs.
  */
-export const auditRetentionPurge = functions.pubsub
-  .schedule("every 24 hours")
-  .timeZone("UTC")
-  .onRun(async () => {
-    const db = admin.firestore();
-    const now = new Date();
-    const cutoff = sixYearsBefore(now);
+export interface RetentionPurgeResult {
+  purged: number;
+  failed: number;
+  commit_failed: number;
+  tampered_skipped: number;
+  cutoff_utc: string;
+}
+
+/**
+ * Pure-ish handler: walks `audit_logs`, pseudonymises every row whose
+ * `timestamp_utc < cutoff`, verifies the hash chain per batch, and
+ * writes a single `retention.purge_run` self-audit entry at the end.
+ *
+ * Pulled out of the scheduled wrapper so a Cloud Functions emulator
+ * isn't required for unit coverage — callers pass a stub Firestore
+ * and inject `now` to anchor the cutoff math.
+ */
+export async function runRetentionPurge(
+  db: admin.firestore.Firestore,
+  now: Date,
+): Promise<RetentionPurgeResult> {
+  const cutoff = sixYearsBefore(now);
     // Firestore range queries against a Timestamp field must use a
     // Timestamp value — an ISO string compares as a different type
     // and silently returns zero rows.
@@ -192,18 +203,32 @@ export const auditRetentionPurge = functions.pubsub
           "failure",
     });
 
-    functions.logger.info("audit_retention.purge_complete", {
-      purged,
-      failed,
-      commit_failed: commitFailed,
-      tampered_skipped: tamperedSkipped,
-      cutoff: cutoff.toISOString(),
-    });
+  functions.logger.info("audit_retention.purge_complete", {
+    purged,
+    failed,
+    commit_failed: commitFailed,
+    tampered_skipped: tamperedSkipped,
+    cutoff: cutoff.toISOString(),
+  });
 
-    return {
-      purged,
-      failed,
-      commit_failed: commitFailed,
-      tampered_skipped: tamperedSkipped,
-    };
+  return {
+    purged,
+    failed,
+    commit_failed: commitFailed,
+    tampered_skipped: tamperedSkipped,
+    cutoff_utc: cutoff.toISOString(),
+  };
+}
+
+/**
+ * Top-level scheduled handler. Runs every 24h at 02:00 UTC and
+ * delegates to [runRetentionPurge]. Kept as a thin wrapper so the
+ * core logic stays unit-testable with a stub Firestore.
+ */
+export const auditRetentionPurge = functions.pubsub
+  .schedule("every 24 hours")
+  .timeZone("UTC")
+  .onRun(async () => {
+    await runRetentionPurge(admin.firestore(), new Date());
+    return null;
   });

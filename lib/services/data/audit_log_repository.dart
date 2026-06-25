@@ -51,6 +51,22 @@ class AuditLogRepository {
     _instance = value;
   }
 
+  /// Production bootstrap — installs a singleton wired with the
+  /// supplied [mirror] and [clinicIdReader]. Call once at app
+  /// startup AFTER Firebase + auth are bootstrapped so the next
+  /// `AuditLogRepository.instance` read returns the production-
+  /// configured ledger. Re-calling rebuilds the singleton; the
+  /// device chain itself is reloaded lazily via [initialize].
+  static void bootstrap({
+    required AuditLogMirror mirror,
+    required String? Function() clinicIdReader,
+  }) {
+    _instance = AuditLogRepository(
+      mirror: mirror,
+      clinicIdReader: clinicIdReader,
+    );
+  }
+
   /// SharedPreferences bucket id for this repo — not a credential.
   static const _storageId = 'audit_log_v1';
   final String _bucket;

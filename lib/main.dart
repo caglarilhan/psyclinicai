@@ -86,8 +86,10 @@ import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
+import 'package:psyclinicai/services/data/audit_log_repository.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
+import 'package:psyclinicai/services/data/firestore_audit_log_mirror.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/services/patient_service.dart';
 import 'package:psyclinicai/services/region_service.dart';
@@ -154,6 +156,15 @@ Future<void> _initializeServices() async {
     await ThemeService.setPresetTheme('purple_blue');
     await PsyFirebase.bootstrap();
     await TelemetryService.instance.initialize();
+    // J3 (B4 follow-up) — wire the device audit chain to mirror
+    // every sealed row into Firestore under the signed-in clinic.
+    // Lookup is deferred until each append so a sign-in / sign-out
+    // mid-session is reflected without rebuilding the repo.
+    AuditLogRepository.bootstrap(
+      mirror: FirestoreAuditLogMirror(),
+      clinicIdReader: () =>
+          fb_auth.FirebaseAuthService.instance.profile?.clinicId,
+    );
     debugPrint('Services initialized (firebase: ${PsyFirebase.isReady})');
   } catch (e, stack) {
     debugPrint('Error initializing services: $e');

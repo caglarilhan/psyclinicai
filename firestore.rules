@@ -167,6 +167,42 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // J1 (B4 follow-up) — per-clinic forensic audit chain mirror.
+    // Distinct from the admin-only `/audit_logs/{logId}` rule above,
+    // which carries the legacy clinic-wide event ledger (Sprint 29
+    // schema: event_type / ts / clinic_id). This collection holds the
+    // hash-chained AuditLogEntry rows that the device-side
+    // [AuditLogRepository] mirrors via [FirestoreAuditLogMirror] so
+    // HIPAA §164.316(b)(2)(i)'s 6-year retention survives device
+    // wipes. Append-only + clinic-scoped via solo-practice invariant
+    // (clinicId == request.auth.uid). The hash + prev_hash fields are
+    // schema-enforced here so a Cloud Function chain-verify (J2 PR)
+    // can replay the chain without trusting client-supplied bools.
+    match /clinic_audit_logs/{clinicId}/entries/{rowId} {
+      allow read: if isAuthed()
+          && clinicId == request.auth.uid;
+
+      allow create: if isAuthed()
+          && clinicId == request.auth.uid
+          && request.resource.data.clinic_id == clinicId
+          && request.resource.data.id is string
+          && request.resource.data.id.size() > 0
+          && request.resource.data.kind is string
+          && request.resource.data.kind.size() > 0
+          && request.resource.data.action is string
+          && request.resource.data.action.size() > 0
+          && request.resource.data.actor is string
+          && request.resource.data.entity is string
+          && request.resource.data.timestamp_utc is string
+          && request.resource.data.result is string
+          && request.resource.data.hash is string
+          && request.resource.data.hash.size() == 64
+          && request.resource.data.prev_hash is string;
+
+      // Append-only — chain integrity depends on rows never mutating.
+      allow update, delete: if false;
+    }
+
     // Sprint 29 B-09 — Stripe webhook idempotency ledger. Admin-SDK
     // only; clients have no business touching processed_webhooks.
     match /processed_webhooks/{eventId} {

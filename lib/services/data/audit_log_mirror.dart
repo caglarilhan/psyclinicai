@@ -46,6 +46,7 @@ abstract class AuditLogMirror {
   Future<MirrorWriteResult> write({
     required String clinicId,
     required AuditLogEntry entry,
+    String prevHash = '',
   });
 }
 
@@ -105,5 +106,6 @@ class NoopAuditLogMirror implements AuditLogMirror {
   Future<MirrorWriteResult> write({
     required String clinicId,
     required AuditLogEntry entry,
+    String prevHash = '',
   }) async => const MirrorWriteResult.skipped('mirror_not_configured');
 }

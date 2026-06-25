@@ -159,11 +159,14 @@ class AuditLogRepository {
     // Best-effort forensic mirror — failure here MUST NOT break the
     // device append. The Noop default for legacy callers makes this
     // a no-op until production wires a real Firestore mirror.
-    unawaited(_mirrorBestEffort(sealed));
+    unawaited(_mirrorBestEffort(sealed, previousHash));
     return sealed;
   }
 
-  Future<void> _mirrorBestEffort(AuditLogEntry sealed) async {
+  Future<void> _mirrorBestEffort(
+    AuditLogEntry sealed,
+    String previousHash,
+  ) async {
     final clinicId = _clinicIdSafe();
     if (clinicId == null) {
       unawaited(
@@ -175,7 +178,11 @@ class AuditLogRepository {
       return;
     }
     try {
-      final result = await _mirror.write(clinicId: clinicId, entry: sealed);
+      final result = await _mirror.write(
+        clinicId: clinicId,
+        entry: sealed,
+        prevHash: previousHash,
+      );
       unawaited(
         TelemetryService.instance.capture(
           'audit_log.mirror_${result.outcome.name}',

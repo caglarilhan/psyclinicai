@@ -22,15 +22,17 @@ import 'package:psyclinicai/services/data/audit_log_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _CaptureMirror implements AuditLogMirror {
-  final List<({String clinicId, AuditLogEntry entry})> writes = [];
+  final List<({String clinicId, AuditLogEntry entry, String prevHash})> writes =
+      [];
   MirrorWriteResult Function()? respond;
 
   @override
   Future<MirrorWriteResult> write({
     required String clinicId,
     required AuditLogEntry entry,
+    String prevHash = '',
   }) async {
-    writes.add((clinicId: clinicId, entry: entry));
+    writes.add((clinicId: clinicId, entry: entry, prevHash: prevHash));
     return respond?.call() ?? const MirrorWriteResult.success();
   }
 }
@@ -40,6 +42,7 @@ class _ThrowingMirror implements AuditLogMirror {
   Future<MirrorWriteResult> write({
     required String clinicId,
     required AuditLogEntry entry,
+    String prevHash = '',
   }) async => throw StateError('mirror should not propagate');
 }
 

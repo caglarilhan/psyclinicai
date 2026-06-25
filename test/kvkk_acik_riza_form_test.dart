@@ -106,9 +106,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     var taps = 0;
-    await tester.pumpWidget(
-      _host(onSign: (_) {}, onPolicyTap: () => taps++),
-    );
+    await tester.pumpWidget(_host(onSign: (_) {}, onPolicyTap: () => taps++));
     await tester.pump();
 
     // Walk every Text widget under the form, collect any TextSpan

@@ -7,6 +7,7 @@ import '../../models/treatment_plan_models.dart';
 import '../../services/compliance/consent_guard.dart';
 import '../../services/copilot/treatment_plan_ai_service.dart';
 import '../../services/data/auth_service.dart';
+import '../../services/data/consent_entry_repository.dart';
 import '../../services/data/homework_repository.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/telemetry_service.dart';
@@ -40,13 +41,14 @@ class TreatmentPlanScreen extends StatefulWidget {
 class _TreatmentPlanScreenState extends State<TreatmentPlanScreen> {
   final _svc = TreatmentPlanService();
   final _intakes = IntakeRepository();
-  // Production-wired ConsentGuard reads the patient's recorded
-  // AI-assistance consent from the local intake repository. The guard
-  // is fail-closed by default — no consent record on file blocks the
-  // AI service.
+  // Production-wired ConsentGuard with union read against the Consent
+  // Center stream — revoking ConsentKind.aiProcessing closes the gate
+  // even if the intake aggregate still says yes (B1 fix).
   late final TreatmentPlanAiService _ai = TreatmentPlanAiService(
     consentGuard: ConsentGuard(
       consentLookup: (id) => _intakes.forPatient(id)?.consent,
+      consentEntryLookup: (id, kind) =>
+          InMemoryConsentEntryRepository.instance.activeOf(id, kind),
     ),
   );
   final _homeworkRepo = HomeworkRepository();

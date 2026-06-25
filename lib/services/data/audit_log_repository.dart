@@ -21,6 +21,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/audit_log_entry.dart';
@@ -39,7 +40,19 @@ class AuditLogRepository {
 
   /// @visibleForTesting — replaces the singleton. Pass `null` to
   /// drop the cached instance so the next read rebuilds the default.
+  ///
+  /// **CWE-489 defence**: a malicious code path inside the release
+  /// binary could call this to swap the forensic audit ledger for an
+  /// attacker-controlled stub, silently swallowing every audit row.
+  /// We block the mutation at runtime in release builds so the field
+  /// stays a debug / test affordance only.
+  @visibleForTesting
   static void setInstanceForTest(AuditLogRepository? value) {
+    if (kReleaseMode) {
+      throw StateError(
+        'AuditLogRepository.setInstanceForTest is disabled in release builds',
+      );
+    }
     _instance = value;
   }
 

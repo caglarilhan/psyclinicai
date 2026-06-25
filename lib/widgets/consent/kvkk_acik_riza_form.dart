@@ -17,6 +17,9 @@
 /// [`ConsentEntryRepository`].
 library;
 
+import 'dart:async';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/consent_entry.dart';
@@ -32,6 +35,7 @@ class KvkkAcikRizaForm extends StatefulWidget {
     this.signatureHint =
         'Hasta adı ve soyadı (kendi el yazısı yerine '
         'klinisyen tarafından tanık edildiğinde tip et)',
+    this.onPolicyTap,
   });
 
   /// Patient the consent record is for.
@@ -52,6 +56,11 @@ class KvkkAcikRizaForm extends StatefulWidget {
   /// Placeholder for the signature field — defaults to Turkish.
   final String signatureHint;
 
+  /// Override for the inline `/legal/kvkk` deep-link tap. Production
+  /// uses [Navigator.pushNamed]; tests inject a closure that records
+  /// the navigation without booting the route table.
+  final VoidCallback? onPolicyTap;
+
   @override
   State<KvkkAcikRizaForm> createState() => _KvkkAcikRizaFormState();
 }
@@ -61,10 +70,30 @@ class _KvkkAcikRizaFormState extends State<KvkkAcikRizaForm> {
   bool _ackChecked = false;
   final TextEditingController _signature = TextEditingController();
 
+  /// Two stable recognizers — one for the lede span and one for the
+  /// ack-checkbox span. Both fire [_openPolicy]. Built once in
+  /// initState so build() doesn't accumulate orphaned recognizers.
+  late final TapGestureRecognizer _ledePolicyTap = TapGestureRecognizer()
+    ..onTap = _openPolicy;
+  late final TapGestureRecognizer _ackPolicyTap = TapGestureRecognizer()
+    ..onTap = _openPolicy;
+
   @override
   void dispose() {
     _signature.dispose();
+    _ledePolicyTap.dispose();
+    _ackPolicyTap.dispose();
     super.dispose();
+  }
+
+  /// Navigates to the aydınlatma metni page. Test seam:
+  /// [widget.onPolicyTap] bypasses the Navigator.
+  void _openPolicy() {
+    if (widget.onPolicyTap != null) {
+      widget.onPolicyTap!();
+      return;
+    }
+    unawaited(Navigator.of(context).pushNamed('/legal/kvkk'));
   }
 
   bool get _canSign =>
@@ -93,13 +122,32 @@ class _KvkkAcikRizaFormState extends State<KvkkAcikRizaForm> {
           style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: PsySpacing.sm),
-        Text(
-          'PsyClinicAI olarak, ${widget.patientName} adlı veri öznesinin '
-          'KVKK md. 6 kapsamındaki özel nitelikli sağlık verisinin '
-          'aşağıdaki amaçlarla işlenmesine açık rıza göstermesini talep '
-          'ederiz. Bu rıza, /legal/kvkk adresindeki aydınlatma metnini '
-          'okuduğunuzu ve anladığınızı varsayar.',
-          style: t.bodyMedium,
+        Text.rich(
+          TextSpan(
+            style: t.bodyMedium,
+            children: [
+              TextSpan(
+                text:
+                    'PsyClinicAI olarak, ${widget.patientName} adlı veri '
+                    'öznesinin KVKK md. 6 kapsamındaki özel nitelikli '
+                    'sağlık verisinin aşağıdaki amaçlarla işlenmesine '
+                    'açık rıza göstermesini talep ederiz. Bu rıza, ',
+              ),
+              TextSpan(
+                text: '/legal/kvkk',
+                style: TextStyle(
+                  color: cs.primary,
+                  decoration: TextDecoration.underline,
+                ),
+                recognizer: _ledePolicyTap,
+              ),
+              const TextSpan(
+                text:
+                    ' adresindeki aydınlatma metnini okuduğunuzu ve '
+                    'anladığınızı varsayar.',
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: PsySpacing.md),
         _bullet(
@@ -140,8 +188,22 @@ class _KvkkAcikRizaFormState extends State<KvkkAcikRizaForm> {
           controlAffinity: ListTileControlAffinity.leading,
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: const Text(
-            '/legal/kvkk adresindeki aydınlatma metnini okudum, anladım.',
+          title: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '/legal/kvkk',
+                  style: TextStyle(
+                    color: cs.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: _ackPolicyTap,
+                ),
+                const TextSpan(
+                  text: ' adresindeki aydınlatma metnini okudum, anladım.',
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: PsySpacing.md),

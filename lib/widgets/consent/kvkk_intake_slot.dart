@@ -12,11 +12,12 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/audit_log_entry.dart';
 import '../../models/consent_entry.dart';
 import '../../services/data/audit_log_repository.dart';
-import '../../services/data/consent_repository_provider.dart';
+import '../../services/data/consent_entry_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../ds/psy_card.dart';
@@ -56,7 +57,7 @@ class _KvkkIntakeSlotState extends State<KvkkIntakeSlot> {
   late bool _signed = widget.initiallySigned;
 
   void _persist(ConsentEntry entry) {
-    ConsentRepositoryProvider.current().record(entry);
+    context.read<ConsentEntryRepository>().record(entry);
     setState(() => _signed = true);
     unawaited(
       TelemetryService.instance.capture(

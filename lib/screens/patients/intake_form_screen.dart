@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/consent_entry.dart';
 import '../../models/consent_record.dart';
@@ -86,10 +87,13 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   }
 
   Future<void> _init() async {
+    // Capture the active consent repo BEFORE the await so we don't
+    // touch the BuildContext across an async gap.
+    final consentRepo = context.read<ConsentEntryRepository>();
     await _repo.initialize();
     final existing = _repo.forPatient(widget.args.id);
     if (existing != null) _apply(existing);
-    final kvkk = InMemoryConsentEntryRepository.instance.activeOf(
+    final kvkk = consentRepo.activeOf(
       widget.args.id,
       ConsentKind.kvkkSpecialCategoryHealth,
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/consent_entry.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
@@ -10,7 +11,12 @@ Future<void> _pump(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(const Size(900, 1400));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
-    const MaterialApp(home: ConsentCenterScreen(patientId: 'p-1')),
+    ChangeNotifierProvider<ConsentEntryRepository>.value(
+      value: InMemoryConsentEntryRepository.instance,
+      // Provider above MaterialApp so the revoke-dialog (rooted on
+      // Navigator's Overlay) inherits it.
+      child: const MaterialApp(home: ConsentCenterScreen(patientId: 'p-1')),
+    ),
   );
   await tester.pumpAndSettle();
 }

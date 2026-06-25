@@ -1,71 +1,212 @@
-/// H2 — pins the ConsentRepositoryProvider selection contract.
+/// I1 — pins the [ConsentRepositoryRouter] contract.
 ///
-/// The provider is the single switch between the in-memory demo
-/// repo and the Firestore-backed repo (PR #95). Tests exercise:
-///   1. fallback to in-memory when Firebase is not bootstrapped,
-///   2. test-override seam returns the injected repo verbatim,
-///   3. refresh() drops the cache so the next read rebuilds,
-///   4. in-memory fallback is the same singleton instance every
-///      time (so listeners stay glued across reads).
+/// The router replaces the previous static-factory pattern that
+/// suffered an orphaned-listener bug: consumers that took a final
+/// reference to the cached repo + `addListener` on it kept that
+/// reference after an auth-driven `refresh()` disposed the
+/// underlying instance. The router exposes a stable identity and
+/// re-broadcasts the inner repo's notifications, so the orphan is
+/// architecturally impossible.
+///
+/// Tests cover:
+///   * Fallback to in-memory when Firebase off / no clinicId.
+///   * Inner-repo notify relays through router to external listener.
+///   * Auth-driven swap (in-memory → Firestore-like) does NOT
+///     detach external listeners from the router (B2 regression).
+///   * dispose() detaches the auth listener + (for Firestore inner)
+///     disposes the inner repo without throwing.
+///   * Disposed router refuses writes with a StateError.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/consent_entry.dart';
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
 import 'package:psyclinicai/services/data/consent_repository_provider.dart';
 
-class _FakeRepo extends ConsentEntryRepository {
-  @override
-  ConsentEntry record(ConsentEntry entry) => entry;
-  @override
-  ConsentEntry revoke(String entryId) => throw UnimplementedError();
-  @override
-  List<ConsentEntry> forPatient(String patientId) => const [];
-  @override
-  ConsentEntry? activeOf(String patientId, ConsentKind kind) => null;
+class _FakeAuth extends ChangeNotifier {
+  void fire() => notifyListeners();
+}
+
+ConsentRepositoryRouter _build({
+  required _FakeAuth auth,
+  required String? Function() clinicId,
+  required bool Function() firebaseReady,
+}) {
+  return ConsentRepositoryRouter.test(
+    authListenable: auth,
+    clinicIdReader: clinicId,
+    firebaseReady: firebaseReady,
+  );
 }
 
 void main() {
-  setUp(ConsentRepositoryProvider.resetForTesting);
-  tearDown(ConsentRepositoryProvider.resetForTesting);
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('falls back to InMemoryConsentEntryRepository when Firebase off', () {
-    final repo = ConsentRepositoryProvider.current();
-    expect(repo, isA<InMemoryConsentEntryRepository>());
+  setUp(InMemoryConsentEntryRepository.instance.clearForTesting);
+
+  test('falls back to in-memory singleton when Firebase off', () {
+    final router = _build(
+      auth: _FakeAuth(),
+      clinicId: () => null,
+      firebaseReady: () => false,
+    );
+    expect(router.active, isA<InMemoryConsentEntryRepository>());
     expect(
-      identical(repo, InMemoryConsentEntryRepository.instance),
+      identical(router.active, InMemoryConsentEntryRepository.instance),
       isTrue,
-      reason:
-          'Fallback must reuse the process-wide singleton so widgets '
-          'that addListener() on it before Firebase boots stay glued.',
+      reason: 'Fallback must reuse the process-wide singleton.',
     );
+    expect(router.isFirestoreActive, isFalse);
+    router.dispose();
   });
 
-  test('setOverrideForTest returns the injected repo verbatim', () {
-    final fake = _FakeRepo();
-    ConsentRepositoryProvider.setOverrideForTest(fake);
-    expect(identical(ConsentRepositoryProvider.current(), fake), isTrue);
-    ConsentRepositoryProvider.setOverrideForTest(null);
+  test('inner repo notifyListeners reaches a router-attached listener', () {
+    final router = _build(
+      auth: _FakeAuth(),
+      clinicId: () => null,
+      firebaseReady: () => false,
+    );
+    var routerNotifications = 0;
+    router.addListener(() => routerNotifications++);
+
+    InMemoryConsentEntryRepository.instance.record(
+      ConsentEntry(
+        id: 'ce-1',
+        patientId: 'p1',
+        kind: ConsentKind.marketing,
+        policyVersion: 'v1',
+        signature: 'demo',
+      ),
+    );
+
     expect(
-      ConsentRepositoryProvider.current(),
-      isA<InMemoryConsentEntryRepository>(),
+      routerNotifications,
+      greaterThan(0),
+      reason:
+          'Router must relay inner repo notifications so screens that '
+          'addListener on the router rebuild when a record() happens.',
     );
+    router.dispose();
   });
 
-  test('refresh() lets a subsequent current() rebuild', () {
-    final first = ConsentRepositoryProvider.current();
-    ConsentRepositoryProvider.refresh();
-    final second = ConsentRepositoryProvider.current();
-    // Both fall back to the same in-memory singleton — the contract
-    // is "refresh drops the cache without crashing", not "returns a
-    // new instance for the in-memory fallback".
-    expect(second, isA<InMemoryConsentEntryRepository>());
-    expect(identical(first, second), isTrue);
+  test('auth swap keeps external router listener attached — B2 regression', () {
+    // This is the critical regression: the old static factory would
+    // dispose the cached Firestore repo + leave the screen's listener
+    // bound to the orphaned instance. The router pattern moves the
+    // swap inside the router; external listeners stay on the router
+    // identity through any number of swaps.
+    final auth = _FakeAuth();
+    String? clinicId;
+    var ready = false;
+
+    final router = _build(
+      auth: auth,
+      clinicId: () => clinicId,
+      firebaseReady: () => ready,
+    );
+
+    var routerNotifications = 0;
+    router.addListener(() => routerNotifications++);
+
+    // Initial: fallback in-memory.
+    expect(router.isFirestoreActive, isFalse);
+
+    // Simulate sign-in: clinicId resolves, Firebase ready.
+    clinicId = 'clinic-a';
+    ready = true;
+    auth.fire();
+
+    expect(
+      router.isFirestoreActive,
+      isTrue,
+      reason: 'After auth signals ready + clinicId, swap to Firestore.',
+    );
+    expect(
+      routerNotifications,
+      greaterThanOrEqualTo(1),
+      reason: 'Swap must fire a router notification.',
+    );
+
+    // Simulate sign-out: back to in-memory; listener still alive.
+    final swapNotificationsSoFar = routerNotifications;
+    clinicId = null;
+    ready = false;
+    auth.fire();
+
+    expect(router.isFirestoreActive, isFalse);
+    expect(
+      routerNotifications,
+      greaterThan(swapNotificationsSoFar),
+      reason:
+          'Listener attached to the router must survive the second swap '
+          '— this is the bug the router exists to prevent.',
+    );
+    router.dispose();
   });
 
-  test('current() is stable across calls when fallback path stays put', () {
-    final a = ConsentRepositoryProvider.current();
-    final b = ConsentRepositoryProvider.current();
-    expect(identical(a, b), isTrue);
+  test(
+    'dispose() removes the auth listener and disposes inner Firestore repo',
+    () {
+      final auth = _FakeAuth();
+      final router = _build(
+        auth: auth,
+        clinicId: () => 'clinic-x',
+        firebaseReady: () => true,
+      );
+      expect(router.isFirestoreActive, isTrue);
+
+      router.dispose();
+      expect(router.isDisposed, isTrue);
+
+      // After dispose, a further auth.fire() must NOT crash. The router
+      // unhooked itself, so this is a no-op.
+      auth.fire();
+      // No assertion needed beyond "did not throw".
+    },
+  );
+
+  test('disposed router rejects writes with StateError', () {
+    final router = _build(
+      auth: _FakeAuth(),
+      clinicId: () => null,
+      firebaseReady: () => false,
+    );
+    router.dispose();
+
+    expect(
+      () => router.record(
+        ConsentEntry(
+          id: 'ce-x',
+          patientId: 'p',
+          kind: ConsentKind.marketing,
+          policyVersion: 'v',
+          signature: 's',
+        ),
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(() => router.revoke('ce-x'), throwsA(isA<StateError>()));
+  });
+
+  test('same clinicId across auth fires does not churn the inner repo', () {
+    final auth = _FakeAuth();
+    final router = _build(
+      auth: auth,
+      clinicId: () => 'clinic-stable',
+      firebaseReady: () => true,
+    );
+
+    final first = router.active;
+    expect(first, isA<ConsentEntryRepository>());
+
+    auth.fire();
+    expect(
+      identical(router.active, first),
+      isTrue,
+      reason: 'No clinicId change → no inner swap.',
+    );
+
+    router.dispose();
   });
 }

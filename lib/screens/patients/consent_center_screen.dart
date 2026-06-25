@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/audit_log_entry.dart';
 import '../../models/consent_entry.dart';
 import '../../services/data/audit_log_repository.dart';
 import '../../services/data/consent_entry_repository.dart';
-import '../../services/data/consent_repository_provider.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -34,23 +34,9 @@ class ConsentCenterScreen extends StatefulWidget {
 }
 
 class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
-  final ConsentEntryRepository _repo = ConsentRepositoryProvider.current();
-
-  @override
-  void initState() {
-    super.initState();
-    _repo.addListener(_onChange);
-  }
-
-  @override
-  void dispose() {
-    _repo.removeListener(_onChange);
-    super.dispose();
-  }
-
-  void _onChange() {
-    if (mounted) setState(() {});
-  }
+  // No cached repo field — the router is read through Provider on
+  // every build / interaction so an auth-driven repo swap is picked
+  // up automatically without needing a listener lifecycle here.
 
   void _grant(ConsentKind kind) {
     // KVKK md. 6 requires explicit + auditable consent — surface the
@@ -68,7 +54,7 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
       policyVersion: '2026-06',
       signature: 'typed:${widget.patientName}',
     );
-    _repo.record(entry);
+    context.read<ConsentEntryRepository>().record(entry);
     unawaited(_appendConsentAuditEntry(entry, granted: true));
   }
 
@@ -102,6 +88,10 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
   }
 
   Future<void> _revoke(ConsentEntry entry) async {
+    // Capture the repo BEFORE the async gap — using context after
+    // the modal returns is fine for showDialog but reading a
+    // provider after an `await` is not.
+    final repo = context.read<ConsentEntryRepository>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -123,7 +113,7 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
       ),
     );
     if (confirmed == true) {
-      _repo.revoke(entry.id);
+      repo.revoke(entry.id);
       // KVKK has its own dedicated revoke action label for legacy
       // reasons (PR #96); everything else goes through the generic
       // consent.revoked.<kind.id> action.
@@ -201,6 +191,9 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // `watch` so a router notify (auth switch, write completion)
+    // rebuilds the card list.
+    final repo = context.watch<ConsentEntryRepository>();
     return AppShell(
       routeName: '/patients/consents',
       title: 'Consent Center',
@@ -213,7 +206,7 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
               padding: const EdgeInsets.only(bottom: PsySpacing.sm),
               child: _ConsentCard(
                 kind: kind,
-                active: _repo.activeOf(widget.patientId, kind),
+                active: repo.activeOf(widget.patientId, kind),
                 onGrant: () => _grant(kind),
                 onRevoke: _revoke,
               ),

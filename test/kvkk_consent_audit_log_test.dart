@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/audit_log_entry.dart';
 import 'package:psyclinicai/models/consent_entry.dart';
 import 'package:psyclinicai/screens/patients/consent_center_screen.dart';
@@ -14,8 +15,18 @@ import 'package:psyclinicai/widgets/consent/kvkk_intake_slot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Widget _host(Widget child) => MaterialApp(
-  home: Scaffold(body: SingleChildScrollView(child: child)),
+  home: ChangeNotifierProvider<ConsentEntryRepository>.value(
+    value: InMemoryConsentEntryRepository.instance,
+    child: Scaffold(body: SingleChildScrollView(child: child)),
+  ),
 );
+
+Widget _hostScreen(Widget screen) =>
+    ChangeNotifierProvider<ConsentEntryRepository>.value(
+      value: InMemoryConsentEntryRepository.instance,
+      // Provider above MaterialApp so the dialog (Navigator overlay) sees it.
+      child: MaterialApp(home: screen),
+    );
 
 void _resetAuditRepo() {
   // Each test gets a fresh, bucket-isolated repo so the audit chain
@@ -97,7 +108,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        const MaterialApp(home: ConsentCenterScreen(patientId: 'pat-rev')),
+        _hostScreen(const ConsentCenterScreen(patientId: 'pat-rev')),
       );
       await tester.pumpAndSettle();
 
@@ -146,7 +157,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        const MaterialApp(home: ConsentCenterScreen(patientId: 'pat-ai')),
+        _hostScreen(const ConsentCenterScreen(patientId: 'pat-ai')),
       );
       await tester.pumpAndSettle();
 

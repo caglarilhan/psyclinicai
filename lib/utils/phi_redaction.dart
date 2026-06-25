@@ -63,6 +63,24 @@ class PhiRedactor {
     caseSensitive: false,
   );
 
+  // I3 (B3 fix, security-reviewer): patient + consent + audit
+  // ID formats minted by *this* app. They are still quasi-identifiers
+  // (linked to a PHI record on the device) and must not ride upstream
+  // in a Sentry message. The patterns below match the formats used by:
+  //   * `pat-...`        — patientId in ConsentEntry / ConsentRecord
+  //   * `ce-...`         — ConsentEntry.id (microsecondsSinceEpoch)
+  //   * `audit-...`      — AuditLogEntry.id (audit-kvkk-..., audit-
+  //                        consent-granted-..., etc.)
+  //   * `kvkk-pat-...`   — KvkkAcikRizaForm.submit minted id
+  //                        (`kvkk-${patientId}-${timestamp}`)
+  // These overlap (`kvkk-pat-1-...` would match `pat-1-...` too) — the
+  // order in `scrub()` puts the more-specific kvkk pattern first so
+  // its `[KVKK_ID]` token wins and we still count the right bucket.
+  static final _psyKvkkEntryId = RegExp(r'\bkvkk-pat-[A-Za-z0-9_-]+\b');
+  static final _psyAuditEntryId = RegExp(r'\baudit-[A-Za-z0-9_-]{3,}\b');
+  static final _psyConsentEntryId = RegExp(r'\bce-[A-Za-z0-9_-]{3,}\b');
+  static final _psyPatientId = RegExp(r'\bpat-[A-Za-z0-9_-]+\b');
+
   PhiScrubResult scrub(String input) {
     final removed = <String, int>{};
     var text = input;
@@ -74,6 +92,30 @@ class PhiRedactor {
     text = _replace(text, _kvnr, '[KVNR]', removed, 'kvnr');
     text = _replace(text, _mrn, '[MRN]', removed, 'mrn');
     text = _replaceNpi(text, removed);
+    // App-minted quasi-identifiers — order: most-specific first so the
+    // kvkk-pat-... pattern wins before the generic pat-... matcher.
+    text = _replace(text, _psyKvkkEntryId, '[KVKK_ID]', removed, 'psy_kvkk_id');
+    text = _replace(
+      text,
+      _psyAuditEntryId,
+      '[AUDIT_ID]',
+      removed,
+      'psy_audit_id',
+    );
+    text = _replace(
+      text,
+      _psyConsentEntryId,
+      '[CONSENT_ID]',
+      removed,
+      'psy_consent_id',
+    );
+    text = _replace(
+      text,
+      _psyPatientId,
+      '[PATIENT_ID]',
+      removed,
+      'psy_patient_id',
+    );
     text = _replaceDate(text, _dateIso, removed, 'date_iso', _shiftIso);
     text = _replaceDate(text, _dateUs, removed, 'date_us', _shiftUs);
     text = _replaceDate(text, _dateDe, removed, 'date_de', _shiftDe);

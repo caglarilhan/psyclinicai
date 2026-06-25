@@ -74,6 +74,68 @@ void main() {
       });
     });
 
+    // I3 (B3 fix) — app-minted quasi-identifier formats.
+    group('app-minted quasi-identifiers (I3 / B3)', () {
+      test('patient ids `pat-...` are masked', () {
+        final r = PhiRedactor().scrub(
+          'Audit fail for patient:pat-1 — see review.',
+        );
+        expect(r.cleanText, contains('[PATIENT_ID]'));
+        expect(r.cleanText, isNot(contains('pat-1')));
+        expect(r.removed['psy_patient_id'], 1);
+      });
+
+      test('consent entry ids `ce-...` are masked', () {
+        final r = PhiRedactor().scrub(
+          'entry:ce-1234567890 policy:2026-06 failed to persist.',
+        );
+        expect(r.cleanText, contains('[CONSENT_ID]'));
+        expect(r.cleanText, isNot(contains('ce-1234567890')));
+      });
+
+      test('audit log entry ids `audit-...` are masked', () {
+        final r = PhiRedactor().scrub(
+          'AuditLogEntry id=audit-kvkk-revoke-ce-1 hash mismatch',
+        );
+        expect(r.cleanText, contains('[AUDIT_ID]'));
+        expect(r.cleanText, isNot(contains('audit-kvkk-revoke-ce-1')));
+      });
+
+      test('kvkk-pat-... ids hit the KVKK token (more specific first)', () {
+        final r = PhiRedactor().scrub(
+          'kvkk-pat-1-1718900000000 audit chain broken',
+        );
+        expect(r.cleanText, contains('[KVKK_ID]'));
+        expect(r.cleanText, isNot(contains('kvkk-pat-1-1718900000000')));
+        expect(r.removed['psy_kvkk_id'], 1);
+      });
+
+      test('a real audit-fail entity string scrubs to a clean line', () {
+        // This is the exact format `_appendConsentAuditEntry` puts into
+        // `AuditLogEntry.entity` — the line that previously leaked to
+        // Sentry through the unhandled-exception `.toString()` path.
+        final r = PhiRedactor().scrub(
+          'patient:pat-1 entry:ce-1718999000123 policy:2026-06',
+        );
+        expect(r.cleanText, contains('[PATIENT_ID]'));
+        expect(r.cleanText, contains('[CONSENT_ID]'));
+        expect(r.cleanText, isNot(contains('pat-1')));
+        expect(r.cleanText, isNot(contains('ce-1718999000123')));
+      });
+
+      test('clinical free text NOT matching these formats is preserved', () {
+        // Defensive: we MUST NOT eat normal English text. "patient" by
+        // itself, "ce" without the dash-id, etc. all pass through.
+        final r = PhiRedactor().scrub(
+          'The patient reports two ce. The audit panel is offline.',
+        );
+        expect(r.cleanText, contains('patient'));
+        expect(r.cleanText, contains('audit'));
+        expect(r.removed['psy_patient_id'], isNull);
+        expect(r.removed['psy_audit_id'], isNull);
+      });
+    });
+
     // M-6 fix coverage — date shifting for limited-dataset compliance.
     group('Date handling (M-6)', () {
       test('default redactor still tokenises dates to [DATE]', () {

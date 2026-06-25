@@ -30,6 +30,19 @@ class AuditLogRepository {
   AuditLogRepository({String? storageBucket})
     : _bucket = storageBucket ?? _storageId;
 
+  /// Process-wide singleton — used by surfaces that fire an audit
+  /// event without owning the repo's lifecycle (KVKK consent grant
+  /// / revoke from a modal, etc.). Tests can swap it via
+  /// [setInstanceForTest] to point at a fresh, isolated repo.
+  static AuditLogRepository get instance => _instance ??= AuditLogRepository();
+  static AuditLogRepository? _instance;
+
+  /// @visibleForTesting — replaces the singleton. Pass `null` to
+  /// drop the cached instance so the next read rebuilds the default.
+  static void setInstanceForTest(AuditLogRepository? value) {
+    _instance = value;
+  }
+
   /// SharedPreferences bucket id for this repo — not a credential.
   static const _storageId = 'audit_log_v1';
   final String _bucket;

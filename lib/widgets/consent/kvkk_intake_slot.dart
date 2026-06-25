@@ -13,7 +13,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/audit_log_entry.dart';
 import '../../models/consent_entry.dart';
+import '../../services/data/audit_log_repository.dart';
 import '../../services/data/consent_entry_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
@@ -62,6 +64,10 @@ class _KvkkIntakeSlotState extends State<KvkkIntakeSlot> {
         properties: {'policy_version': entry.policyVersion},
       ),
     );
+    // Audit trail entry — KVKK md. 12 + GDPR Art. 30 expect every
+    // special-category consent action to be reconstructible. Telemetry
+    // is for dashboards; the audit log is the forensic record.
+    unawaited(_appendAuditEntry(entry));
     widget.onSigned?.call();
     if (!mounted) return;
     PsySnack.show(
@@ -70,6 +76,35 @@ class _KvkkIntakeSlotState extends State<KvkkIntakeSlot> {
       level: PsySnackLevel.success,
       hint: 'kvkk.acik_riza.recorded',
     );
+  }
+
+  Future<void> _appendAuditEntry(ConsentEntry entry) async {
+    try {
+      final repo = AuditLogRepository.instance;
+      await repo.initialize();
+      await repo.append(
+        AuditLogEntry(
+          id: 'audit-kvkk-${entry.id}',
+          kind: 'consent',
+          action: 'kvkk.consent_granted',
+          actor: widget.patientId,
+          entity:
+              'patient:${widget.patientId} '
+              'entry:${entry.id} '
+              'policy:${entry.policyVersion}',
+          timestampUtc: DateTime.now().toUtc(),
+          result: AuditResult.success,
+        ),
+      );
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'kvkk.consent_granted.audit_failed',
+        ),
+      );
+    }
   }
 
   @override

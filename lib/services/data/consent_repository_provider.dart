@@ -28,6 +28,8 @@
 /// or `context.read<ConsentEntryRepository>()` (write-only).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../models/consent_entry.dart';
@@ -35,6 +37,7 @@ import 'auth_service.dart';
 import 'consent_entry_repository.dart';
 import 'firebase_bootstrap.dart';
 import 'firestore_consent_entry_repository.dart';
+import 'telemetry_service.dart';
 
 class ConsentRepositoryRouter extends ConsentEntryRepository {
   /// Production constructor — wires the router to
@@ -128,7 +131,19 @@ class ConsentRepositoryRouter extends ConsentEntryRepository {
       try {
         repo.dispose();
       } catch (e, st) {
+        // C3 (silent-failure-hunter): don't leave a dispose failure
+        // as a debugPrint — route through telemetry so a degraded
+        // adapter (e.g. snapshot subscription couldn't cancel) shows
+        // up on the on-call radar. The router itself stays
+        // functional; we already removed the listener above.
         debugPrint('[consent-router] dispose threw: $e\n$st');
+        unawaited(
+          TelemetryService.instance.captureError(
+            e,
+            st,
+            hint: 'consent_router.dispose_threw',
+          ),
+        );
       }
     }
   }

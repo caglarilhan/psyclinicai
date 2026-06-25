@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/consent_entry.dart';
 import '../../services/data/consent_entry_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/consent/kvkk_intake_slot.dart';
 
 /// `/patients/consents` — six-category consent center (plan §E).
 ///
@@ -46,6 +49,15 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
   }
 
   void _grant(ConsentKind kind) {
+    // KVKK md. 6 requires explicit + auditable consent — surface the
+    // full açık rıza form in a modal instead of recording a typed
+    // signature stub. Other kinds keep the lightweight stub for now;
+    // they'll graduate to their own dedicated capture surfaces in
+    // follow-up PRs.
+    if (kind == ConsentKind.kvkkSpecialCategoryHealth) {
+      unawaited(_openKvkkModal());
+      return;
+    }
     _repo.record(
       ConsentEntry(
         id: 'ce-${DateTime.now().microsecondsSinceEpoch}',
@@ -54,6 +66,35 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
         policyVersion: '2026-06',
         signature: 'typed:${widget.patientName}',
       ),
+    );
+  }
+
+  Future<void> _openKvkkModal() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          maxChildSize: 0.95,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (_, controller) => SingleChildScrollView(
+            controller: controller,
+            padding: const EdgeInsets.all(PsySpacing.lg),
+            child: KvkkIntakeSlot(
+              patientId: widget.patientId,
+              patientName: widget.patientName,
+              policyVersion: 'kvkk-aydinlatma-v2026.06',
+              onSigned: () {
+                if (Navigator.of(ctx).canPop()) {
+                  Navigator.of(ctx).pop();
+                }
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

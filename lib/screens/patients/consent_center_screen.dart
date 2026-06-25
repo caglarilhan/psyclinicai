@@ -6,6 +6,7 @@ import '../../models/audit_log_entry.dart';
 import '../../models/consent_entry.dart';
 import '../../services/data/audit_log_repository.dart';
 import '../../services/data/consent_entry_repository.dart';
+import '../../services/data/consent_repository_provider.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
@@ -33,7 +34,7 @@ class ConsentCenterScreen extends StatefulWidget {
 }
 
 class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
-  final _repo = InMemoryConsentEntryRepository.instance;
+  final ConsentEntryRepository _repo = ConsentRepositoryProvider.current();
 
   @override
   void initState() {

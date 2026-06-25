@@ -18,19 +18,29 @@
 ///   - iOS: Keychain `first_unlock`, scoped to the app, requires the
 ///     device to have been unlocked at least once after boot.
 ///   - macOS: Keychain (default plugin behaviour).
-///   - Web: `flutter_secure_storage` falls back to JS Web Crypto +
-///     localStorage. The blob is encrypted with a non-extractable
-///     AES-GCM key, but the ciphertext + IV still sit in localStorage.
-///     **Treat the web build as best-effort** — do not use this for
-///     long-term ePHI persistence in browsers; prefer server round-
-///     trips for the canonical record.
+///   - Web: `flutter_secure_storage` uses JS Web Crypto + IndexedDB.
+///     We pass explicit [WebOptions] (`dbName` + `publicKey` both
+///     pinned to `psyclinicai_secure_v1`) so the IndexedDB namespace
+///     is PsyClinicAI-specific instead of the plugin's vague default
+///     (`FlutterEncryptedStorage`). The AES-GCM key is non-extractable
+///     but the ciphertext + IV still sit in the browser's storage;
+///     **treat the web build as best-effort** — do not rely on it
+///     for long-term ePHI persistence; prefer server round-trips for
+///     the canonical record.
 ///
 /// **Not an audit log**: callers that need a tamper-evident chain
 /// must still go through [AuditLogService]. This wrapper is only the
 /// at-rest encryption layer.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+/// PsyClinicAI-specific IndexedDB namespace for the web build. Pinned
+/// here so an auditor can grep one symbol and so a plugin upgrade
+/// that changes the default `FlutterEncryptedStorage` name can never
+/// move our existing entries silently.
+const String securePrefsWebNamespace = 'psyclinicai_secure_v1';
 
 class SecurePrefs {
   SecurePrefs({FlutterSecureStorage? storage})
@@ -50,8 +60,21 @@ class SecurePrefs {
     return const FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
       iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      // Explicit web namespace — see [securePrefsWebNamespace] for
+      // why we pin both fields instead of accepting the plugin's
+      // generic "FlutterEncryptedStorage" default.
+      webOptions: WebOptions(
+        dbName: securePrefsWebNamespace,
+        publicKey: securePrefsWebNamespace,
+      ),
     );
   }
+
+  /// @visibleForTesting — read-only view of the FSS instance the
+  /// production constructor wires, so the web-fallback test can
+  /// inspect the pinned [WebOptions].
+  @visibleForTesting
+  static FlutterSecureStorage defaultStorageForTesting() => _defaultStorage();
 
   final FlutterSecureStorage _storage;
 

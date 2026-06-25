@@ -7,9 +7,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:psyclinicai/screens/patients/intake_form_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_detail_screen.dart';
 import 'package:psyclinicai/screens/patients/patient_list_screen.dart';
+import 'package:psyclinicai/services/data/consent_entry_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -98,9 +100,12 @@ void main() {
   ) async {
     await wide(tester);
     await tester.pumpWidget(
-      const MaterialApp(
-        home: IntakeFormScreen(
-          args: PatientDetailArgs(id: 'demo-1', name: 'John Demo'),
+      ChangeNotifierProvider<ConsentEntryRepository>.value(
+        value: InMemoryConsentEntryRepository.instance,
+        child: const MaterialApp(
+          home: IntakeFormScreen(
+            args: PatientDetailArgs(id: 'demo-1', name: 'John Demo'),
+          ),
         ),
       ),
     );

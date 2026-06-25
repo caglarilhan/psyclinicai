@@ -173,6 +173,50 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Per-category consent entries (GDPR Art. 7(3) granular withdraw
+    // + KVKK md. 6/2-6/3 açık rıza). One row per (patient, kind,
+    // policy version). A new active row of the same kind supersedes
+    // the previous one in app code; on the wire each row stays
+    // immutable apart from a one-shot `revokedAt` flip so the audit
+    // trail (KVKK md. 7 + GDPR Art. 30) is reconstructible.
+    match /consent_entries/{entryId} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+
+      // Create must carry a clinic_id matching the caller, a non-empty
+      // signature + policyVersion, and a kind from the allowed set.
+      // Pre-set revokedAt is rejected — revoke is a separate flow.
+      allow create: if isAuthed()
+          && request.resource.data.clinic_id == request.auth.uid
+          && request.resource.data.signature is string
+          && request.resource.data.signature.size() > 0
+          && request.resource.data.policyVersion is string
+          && request.resource.data.policyVersion.size() > 0
+          && request.resource.data.kind in [
+              'hipaa_nopp',
+              'gdpr_processing',
+              'kvkk_md6_health',
+              'ai_processing',
+              'audio_recording',
+              'telehealth',
+              'marketing'
+          ]
+          && !('revokedAt' in request.resource.data);
+
+      // Update is the revoke flow only: `revokedAt` flips null → a
+      // timestamp; every other field is frozen. Two flips would
+      // overwrite the original revocation time so this is also a
+      // one-shot.
+      allow update: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid
+          && resource.data.revokedAt == null
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['revokedAt']);
+
+      // Hard-delete blocked — KVKK md. 7 + GDPR Art. 30 audit trail.
+      allow delete: if false;
+    }
+
     // Consent records — GDPR Art. 7 (lawful basis) + 7(3) (right to
     // withdraw). Once `withdrawn_at` is set the row is immutable so the
     // withdrawal trail cannot be quietly rewritten.

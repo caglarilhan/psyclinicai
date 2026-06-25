@@ -176,4 +176,116 @@ describe("buildDsarBundle", () => {
       bundle.manifest.some((m) => m.collection === "consent_records")
     ).toBe(true);
   });
+
+  // K1 — per-kind consent_entries are surfaced under the same
+  // clinic-tenancy gate. Without this the export would miss every
+  // grant + revoke the patient performed in the Consent Center.
+  it("includes consent_entries for the patient", async () => {
+    const {db, calls} = makeDb({
+      consent_entries: {
+        rows: [
+          {
+            id: "ce-1",
+            data: {
+              patientId: "p1",
+              clinic_id: "u1",
+              kind: "aiProcessing",
+              policyVersion: "2026-06",
+              signature: "typed:Demo",
+              signedAt: "2026-06-25T12:00:00.000Z",
+            },
+          },
+          {
+            id: "ce-2",
+            data: {
+              patientId: "p1",
+              clinic_id: "u1",
+              kind: "telehealth",
+              policyVersion: "2026-06",
+              signature: "typed:Demo",
+              signedAt: "2026-06-25T12:01:00.000Z",
+              revokedAt: "2026-06-25T13:00:00.000Z",
+            },
+          },
+        ],
+      },
+    });
+    const bundle = await buildDsarBundle(db, "u1", "p1");
+    expect(calls).toContain("consent_entries");
+    expect(bundle.records.consent_entries).toHaveLength(2);
+    const entries = bundle.records.consent_entries as Array<{
+      kind: string;
+      revokedAt?: string;
+    }>;
+    expect(entries.map((e) => e.kind).sort()).toEqual([
+      "aiProcessing",
+      "telehealth",
+    ]);
+    // Revoke history is preserved — KVKK md. 11(d) compliance.
+    const revoked = entries.find((e) => e.kind === "telehealth");
+    expect(revoked?.revokedAt).toBe("2026-06-25T13:00:00.000Z");
+  });
+
+  // K1 — clinic_audit_logs/{clinicId}/entries mirror rows scoped to
+  // patient via actor field. Closes the KVKK md. 11(d) "veri
+  // faaliyetlerinin niteliğini öğrenme" right.
+  it("includes clinic_audit_logs filtered by actor==patientId", async () => {
+    const {db, calls} = makeDb({
+      "clinic_audit_logs/u1/entries": {
+        rows: [
+          {
+            id: "audit-1",
+            data: {
+              clinic_id: "u1",
+              kind: "consent",
+              action: "kvkk.consent_granted",
+              actor: "p1",
+              entity: "patient:p1 entry:ce-1 policy:2026-06",
+              timestamp_utc: "2026-06-25T12:00:00.000Z",
+              result: "success",
+              hash: "a".repeat(64),
+              prev_hash: "",
+            },
+          },
+          {
+            id: "audit-2",
+            data: {
+              clinic_id: "u1",
+              kind: "consent",
+              action: "consent.granted.ai_processing",
+              actor: "p1",
+              entity: "patient:p1 entry:ce-2 policy:2026-06",
+              timestamp_utc: "2026-06-25T11:00:00.000Z",
+              result: "success",
+              hash: "b".repeat(64),
+              prev_hash: "a".repeat(64),
+            },
+          },
+        ],
+      },
+    });
+    const bundle = await buildDsarBundle(db, "u1", "p1");
+    expect(calls).toContain("clinic_audit_logs/u1/entries");
+    expect(bundle.records.audit_log).toHaveLength(2);
+    // Sorted ASC by timestamp_utc — chain-replayable.
+    const audit = bundle.records.audit_log as Array<{
+      id: string;
+      timestamp_utc: string;
+    }>;
+    expect(audit[0].id).toBe("audit-2"); // 11:00 < 12:00
+    expect(audit[1].id).toBe("audit-1");
+    expect(
+      bundle.manifest.some((m) => m.collection === "audit_log")
+    ).toBe(true);
+  });
+
+  it("audit_log manifest stays at 0 when no patient rows exist", async () => {
+    const {db} = makeDb({});
+    const bundle = await buildDsarBundle(db, "u1", "p1");
+    const auditManifest = bundle.manifest.find(
+      (m) => m.collection === "audit_log"
+    );
+    expect(auditManifest?.count).toBe(0);
+    expect(bundle.records.audit_log).toBeUndefined();
+  });
 });

@@ -190,6 +190,16 @@ const FLAT_COLLECTIONS: Array<{
     field: "patientId",
     tenancyField: "clinic_id",
   },
+  // K1 — per-kind consent entries (PR #95 + #98). Same tenancy
+  // gate as consent_records; surfaces every grant + revoke row
+  // including the audit-relevant revokedAt timestamp so the patient
+  // sees their full Consent Center history in the export.
+  {
+    name: "consent_entries",
+    collection: "consent_entries",
+    field: "patientId",
+    tenancyField: "clinic_id",
+  },
 ];
 
 /** Nested patient sub-collections (`clinics/{c}/patients/{p}/{sub}`). */
@@ -294,6 +304,52 @@ export async function buildDsarBundle(
     }
     if (rows.length > 0) records[sub.name] = rows;
     manifest.push({collection: sub.name, count: rows.length, path: "nested"});
+  }
+
+  // Phase 3 (K1) — forensic audit mirror rows scoped to this patient.
+  // Schema is `clinic_audit_logs/{clinicId}/entries/{rowId}` with
+  // `actor` set to the patient id at write time (see consent flow).
+  // Surfacing the audit trail in the patient's own DSAR closes the
+  // KVKK md. 11(d) "veri faaliyetlerinin niteliğini öğrenme" right
+  // — the patient sees exactly which actions touched their record.
+  {
+    const auditPath = `clinic_audit_logs/${clinicId}/entries`;
+    const auditRows: unknown[] = [];
+    let cursor: admin.firestore.QueryDocumentSnapshot | null = null;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let q: admin.firestore.Query = db
+        .collection(auditPath)
+        .where("actor", "==", patientId)
+        .limit(400);
+      if (cursor) q = q.startAfter(cursor);
+      const snap = await q.get();
+      if (snap.empty) break;
+      for (const d of snap.docs) {
+        const data = d.data() as Record<string, unknown>;
+        if (data.purged === true) continue;
+        auditRows.push({id: d.id, ...data});
+      }
+      if (snap.size < 400) break;
+      cursor = snap.docs[snap.docs.length - 1];
+    }
+    if (auditRows.length > 0) {
+      // Sort by timestamp_utc ASC client-side — the orderBy on
+      // Firestore would require a composite index (actor +
+      // timestamp_utc) and break the no-index test mock. Sort here
+      // for a deterministic, chain-replayable export.
+      auditRows.sort((a, b) => {
+        const at = (a as {timestamp_utc?: string}).timestamp_utc ?? "";
+        const bt = (b as {timestamp_utc?: string}).timestamp_utc ?? "";
+        return at.localeCompare(bt);
+      });
+      records.audit_log = auditRows;
+    }
+    manifest.push({
+      collection: "audit_log",
+      count: auditRows.length,
+      path: "nested",
+    });
   }
 
   return {

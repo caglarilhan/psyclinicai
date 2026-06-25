@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../models/consent_entry.dart';
 import '../../models/consent_record.dart';
 import '../../models/patient_intake.dart';
+import '../../services/data/consent_entry_repository.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/consent/kvkk_intake_slot.dart';
 import '../../widgets/ds/psy_card.dart';
 import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_skeleton.dart';
@@ -39,6 +42,11 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   /// disputes with the language the patient agreed to.
   static const String _consentPolicyVersion = '2026-06';
 
+  /// KVKK aydınlatma metni revision the açık rıza form is anchored to.
+  /// The audit trail uses this to answer "which notice did the patient
+  /// see" — bump in lockstep with `kvkk_aydinlatma_page.dart`.
+  static const String _kvkkPolicyVersion = 'kvkk-aydinlatma-v2026.06';
+
   final _repo = IntakeRepository();
 
   final _fullName = TextEditingController();
@@ -65,6 +73,11 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
   bool _loading = true;
   bool _saving = false;
 
+  /// Mirrors `InMemoryConsentEntryRepository.activeOf(...)` so the
+  /// KVKK section collapses to a confirmation tile once the patient
+  /// (or the witnessing clinician) has signed.
+  bool _kvkkSigned = false;
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +89,11 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
     await _repo.initialize();
     final existing = _repo.forPatient(widget.args.id);
     if (existing != null) _apply(existing);
+    final kvkk = InMemoryConsentEntryRepository.instance.activeOf(
+      widget.args.id,
+      ConsentKind.kvkkSpecialCategoryHealth,
+    );
+    _kvkkSigned = kvkk != null;
     if (mounted) setState(() => _loading = false);
   }
 
@@ -459,12 +477,23 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> {
                         setState(() => _consentSensitive = v),
                     onSignatureChanged: () => setState(() {}),
                   ),
+                  const SizedBox(height: PsySpacing.xl),
+                  _section(theme, '10 · KVKK md. 6 — Açık Rıza'),
+                  _kvkkSlot(theme),
                   const SizedBox(height: PsySpacing.huge),
                 ],
               ),
       ),
     );
   }
+
+  Widget _kvkkSlot(ThemeData theme) => KvkkIntakeSlot(
+    patientId: widget.args.id,
+    patientName: widget.args.name,
+    policyVersion: _kvkkPolicyVersion,
+    initiallySigned: _kvkkSigned,
+    onSigned: () => setState(() => _kvkkSigned = true),
+  );
 
   // ─────────────────────────── widgets ───────────────────────────
 

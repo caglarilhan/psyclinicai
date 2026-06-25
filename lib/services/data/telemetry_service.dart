@@ -68,7 +68,14 @@ class TelemetryService {
     String event, {
     Map<String, Object?> properties = const {},
   }) async {
-    captureRecorderForTest?.call(event, properties);
+    // CWE-489 defence: the recorder field is static + reachable from
+    // any Dart isolate, including a release binary. Gate INVOCATION
+    // (not mutation) so even if an attacker manages to set it, the
+    // recorder is never called from a production build — the test
+    // seam is purely a debug / profile / test affordance.
+    if (!kReleaseMode) {
+      captureRecorderForTest?.call(event, properties);
+    }
     if (_sentryReady) {
       // Record as a Sentry breadcrumb so a later crash carries the funnel
       // context. Cheap and PHI-free (event names are public constants).
@@ -128,7 +135,10 @@ class TelemetryService {
     StackTrace? stack, {
     String? hint,
   }) async {
-    errorRecorderForTest?.call(error, stack, hint);
+    // CWE-489 defence — see [capture] for the rationale.
+    if (!kReleaseMode) {
+      errorRecorderForTest?.call(error, stack, hint);
+    }
     final scrubber = PhiRedactor();
     final scrubbedMessage = scrubber.scrub(error.toString()).cleanText;
     final scrubbedHint = hint == null ? null : scrubber.scrub(hint).cleanText;

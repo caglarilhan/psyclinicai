@@ -4,12 +4,16 @@
 /// policy version the form was anchored to.
 library;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:psyclinicai/models/consent_entry.dart';
 import 'package:psyclinicai/widgets/consent/kvkk_acik_riza_form.dart';
 
-Widget _host({required void Function(ConsentEntry) onSign}) {
+Widget _host({
+  required void Function(ConsentEntry) onSign,
+  VoidCallback? onPolicyTap,
+}) {
   return MaterialApp(
     home: Scaffold(
       body: SingleChildScrollView(
@@ -18,6 +22,7 @@ Widget _host({required void Function(ConsentEntry) onSign}) {
           patientName: 'Demo Hasta',
           policyVersion: 'kvkk-aydinlatma-v2026.06',
           onSign: onSign,
+          onPolicyTap: onPolicyTap,
         ),
       ),
     ),
@@ -94,5 +99,50 @@ void main() {
       find.text('Açık rıza veriyorum (KVKK md. 6/2 ve md. 6/3).'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('form renders two tappable /legal/kvkk spans', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1024, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    var taps = 0;
+    await tester.pumpWidget(
+      _host(onSign: (_) {}, onPolicyTap: () => taps++),
+    );
+    await tester.pump();
+
+    // Walk every Text widget under the form, collect any TextSpan
+    // child whose `text == '/legal/kvkk'` AND has a TapGestureRecognizer
+    // attached. KvkkAcikRizaForm exposes exactly two: the lede span
+    // and the ack-checkbox span.
+    final richSpans = <TextSpan>[];
+    for (final element in find.byType(Text).evaluate()) {
+      final widget = element.widget as Text;
+      final root = widget.textSpan;
+      if (root == null) continue;
+      root.visitChildren((span) {
+        if (span is TextSpan &&
+            span.text == '/legal/kvkk' &&
+            span.recognizer != null) {
+          richSpans.add(span);
+        }
+        return true;
+      });
+    }
+    expect(
+      richSpans,
+      hasLength(2),
+      reason:
+          'Form should expose two tappable /legal/kvkk spans — the '
+          'lede and the ack-checkbox title.',
+    );
+
+    // Fire each recognizer directly. Tapping inline spans via gestures
+    // requires `tester.tapOnText` (newer Flutter); on 3.29 we exercise
+    // the wiring directly. Both should fan out through onPolicyTap.
+    for (final span in richSpans) {
+      (span.recognizer! as TapGestureRecognizer).onTap?.call();
+    }
+    expect(taps, 2);
   });
 }

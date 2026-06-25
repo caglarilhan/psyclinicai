@@ -140,16 +140,48 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
   Future<void> _appendConsentAuditEntry(
     ConsentEntry entry, {
     required bool granted,
+  }) {
+    final verb = granted ? 'granted' : 'revoked';
+    return _writeAuditEntry(
+      id: 'audit-consent-$verb-${entry.id}',
+      action: 'consent.$verb.${entry.kind.id}',
+      entry: entry,
+      failureHint: 'consent.audit_failed',
+    );
+  }
+
+  Future<void> _appendKvkkRevokeAuditEntry(ConsentEntry entry) {
+    return _writeAuditEntry(
+      id: 'audit-kvkk-revoke-${entry.id}',
+      action: 'kvkk.consent_revoked',
+      entry: entry,
+      failureHint: 'kvkk.consent_revoked.audit_failed',
+    );
+  }
+
+  /// Single audit-write seam (C4 — DRY consolidation).
+  ///
+  /// All consent audit sites share the same skeleton: initialize the
+  /// singleton, build an [AuditLogEntry] with the same patient/policy
+  /// `entity` triple, append, route failures through telemetry. The
+  /// only degrees of freedom are `id`, `action`, and the Sentry
+  /// `hint`. Lifting them out keeps a future hint rename / entity-
+  /// field rework a one-line change in one place — and stops the
+  /// per-site drift `code-reviewer` flagged.
+  Future<void> _writeAuditEntry({
+    required String id,
+    required String action,
+    required ConsentEntry entry,
+    required String failureHint,
   }) async {
     try {
       final repo = AuditLogRepository.instance;
       await repo.initialize();
-      final verb = granted ? 'granted' : 'revoked';
       await repo.append(
         AuditLogEntry(
-          id: 'audit-consent-$verb-${entry.id}',
+          id: id,
           kind: 'consent',
-          action: 'consent.$verb.${entry.kind.id}',
+          action: action,
           actor: widget.patientId,
           entity:
               'patient:${widget.patientId} '
@@ -161,40 +193,7 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
       );
     } catch (e, st) {
       unawaited(
-        TelemetryService.instance.captureError(
-          e,
-          st,
-          hint: 'consent.audit_failed',
-        ),
-      );
-    }
-  }
-
-  Future<void> _appendKvkkRevokeAuditEntry(ConsentEntry entry) async {
-    try {
-      final repo = AuditLogRepository.instance;
-      await repo.initialize();
-      await repo.append(
-        AuditLogEntry(
-          id: 'audit-kvkk-revoke-${entry.id}',
-          kind: 'consent',
-          action: 'kvkk.consent_revoked',
-          actor: widget.patientId,
-          entity:
-              'patient:${widget.patientId} '
-              'entry:${entry.id} '
-              'policy:${entry.policyVersion}',
-          timestampUtc: DateTime.now().toUtc(),
-          result: AuditResult.success,
-        ),
-      );
-    } catch (e, st) {
-      unawaited(
-        TelemetryService.instance.captureError(
-          e,
-          st,
-          hint: 'kvkk.consent_revoked.audit_failed',
-        ),
+        TelemetryService.instance.captureError(e, st, hint: failureHint),
       );
     }
   }

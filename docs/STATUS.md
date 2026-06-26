@@ -3,7 +3,7 @@
 > One-page snapshot of what's running, who reaches it, and how the
 > stack hangs together. Update at each sprint closeout.
 
-**Last updated:** 2026-06-19 (Sprint 28 closeout)
+**Last updated:** 2026-06-26 (Sprint 29 — programmatic compliance catalogs)
 **Skill panel:** 9.2 / 10
 **Live URLs:** 2 production, 0 staging
 **Monthly cost:** €4 (Hetzner CX22) — Firebase + Groq free tier covers the rest
@@ -131,6 +131,15 @@
 ---
 
 ## Disaster recovery — RTO / RPO (Sprint 29 D-05)
+
+> **Programmatic source of truth** (Sprint 29): the RTO/RPO/retention
+> numbers in this section are mirrored by the pinned catalog at
+> `lib/services/ops/backup_recovery_plan.dart`, with a test invariant
+> that `projectedRestoreMinutes(target) ≤ target.rtoMinutes` for every
+> entry. Any change here must keep the catalog in sync, or `flutter
+> test test/backup_recovery_plan_test.dart` fails. Companion SLOs live
+> in `lib/services/ops/slo_catalog.dart`; the incident runbook lives
+> in `lib/services/ops/on_call_runbook.dart`.
 
 | Tier | Component | RTO | RPO | Failover path |
 |---|---|---|---|---|

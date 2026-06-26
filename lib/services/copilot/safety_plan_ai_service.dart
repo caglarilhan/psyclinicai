@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/safety_plan.dart';
+import '../ai/ai_output_guard.dart';
 import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
 import 'copilot_endpoint.dart';
@@ -128,6 +129,20 @@ class SafetyPlanAiService {
           .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
           .join('\n')
           .trim();
+      // L1.x — clinical AI output safety gate. The model is asked to
+      // draft a CRISIS safety plan; lethal-means leakage would be a
+      // patient-safety incident, not a parse failure. Run the
+      // classifier on the RAW content before we even try to parse —
+      // a blocked completion never reaches the clinician's UI.
+      try {
+        requireSafeOutput(content);
+      } on AiOutputBlockedException catch (e) {
+        throw SafetyPlanAiException(
+          'AI draft blocked by clinical safety filter '
+          '(${e.assessment.hits.map((h) => h.category.name).toSet().join(', ')}). '
+          'Re-run; if this repeats, draft manually.',
+        );
+      }
       final plan = _parse(patientId, content);
       if (plan == null) {
         throw const SafetyPlanAiException(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../models/treatment_plan_models.dart';
+import '../ai/ai_output_guard.dart';
 import '../compliance/consent_guard.dart';
 import 'api_key_storage.dart';
 import 'copilot_endpoint.dart';
@@ -130,6 +131,7 @@ class TreatmentPlanAiService {
         .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
         .join('\n')
         .trim();
+    _gateOutput(content);
 
     final goals = _parse(content);
     if (goals.isEmpty) {
@@ -257,6 +259,7 @@ class TreatmentPlanAiService {
           .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
           .join('\n')
           .trim();
+      _gateOutput(content);
       final start = content.indexOf('{');
       final end = content.lastIndexOf('}');
       if (start < 0 || end <= start) return const [];
@@ -355,6 +358,7 @@ class TreatmentPlanAiService {
           .map((c) => (c as Map<String, dynamic>)['text'] as String? ?? '')
           .join('\n')
           .trim();
+      _gateOutput(content);
       if (content.isEmpty) {
         throw const TreatmentPlanAiException('Empty response. Try again.');
       }
@@ -367,6 +371,26 @@ class TreatmentPlanAiService {
   }
 
   void dispose() => _client.close();
+
+  /// L1.x — clinical AI output safety gate. Re-thrown as
+  /// [TreatmentPlanAiException] so the 3 entry-point methods
+  /// (draftGoals / draftHomework / draftLetter) all surface the
+  /// same UX banner instead of leaking an internal classifier
+  /// exception. See `lib/services/ai/ai_output_guard.dart`.
+  void _gateOutput(String content) {
+    try {
+      requireSafeOutput(content);
+    } on AiOutputBlockedException catch (e) {
+      final cats = e.assessment.hits
+          .map((h) => h.category.name)
+          .toSet()
+          .join(', ');
+      throw TreatmentPlanAiException(
+        'AI output blocked by clinical safety filter ($cats). '
+        'Re-run; if this repeats, draft manually.',
+      );
+    }
+  }
 }
 
 /// A clinician-reviewable goal drafted by the AI.

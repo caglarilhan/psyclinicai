@@ -6,6 +6,7 @@ import '../../services/copilot/chat_service.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/copilot/ai_disclaimer.dart';
 import '../../widgets/ds/psy_button.dart';
 
 /// `/ai_chatbot` — real Anthropic Claude conversation. BYOK: nothing
@@ -128,6 +129,16 @@ class _AIChatbotScreenState extends State<AIChatbotScreen> {
       scrollable: false,
       child: Column(
         children: [
+          // L5 — sticky AI disclaimer above the chat surface.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              PsySpacing.xxl,
+              PsySpacing.md,
+              PsySpacing.xxl,
+              0,
+            ),
+            child: AiDisclaimer.compact(surface: 'ai_chatbot'),
+          ),
           Expanded(
             child: _history.isEmpty
                 ? _EmptyState(cs: cs, theme: theme, onSuggest: _useSuggestion)

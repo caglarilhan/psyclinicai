@@ -54,22 +54,21 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
   void _grant(ConsentKind kind) {
     // KVKK md. 6 requires explicit + auditable consent — surface the
     // full açık rıza form in a modal instead of recording a typed
-    // signature stub. Other kinds keep the lightweight stub for now;
-    // they'll graduate to their own dedicated capture surfaces in
-    // follow-up PRs.
+    // signature stub. The KVKK path already writes its own audit row
+    // via KvkkIntakeSlot; the stub path below covers every other kind.
     if (kind == ConsentKind.kvkkSpecialCategoryHealth) {
       unawaited(_openKvkkModal());
       return;
     }
-    _repo.record(
-      ConsentEntry(
-        id: 'ce-${DateTime.now().microsecondsSinceEpoch}',
-        patientId: widget.patientId,
-        kind: kind,
-        policyVersion: '2026-06',
-        signature: 'typed:${widget.patientName}',
-      ),
+    final entry = ConsentEntry(
+      id: 'ce-${DateTime.now().microsecondsSinceEpoch}',
+      patientId: widget.patientId,
+      kind: kind,
+      policyVersion: '2026-06',
+      signature: 'typed:${widget.patientName}',
     );
+    _repo.record(entry);
+    unawaited(_appendConsentAuditEntry(entry, granted: true));
   }
 
   Future<void> _openKvkkModal() async {
@@ -124,21 +123,65 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
     );
     if (confirmed == true) {
       _repo.revoke(entry.id);
+      // KVKK has its own dedicated revoke action label for legacy
+      // reasons (PR #96); everything else goes through the generic
+      // consent.revoked.<kind.id> action.
       if (entry.kind == ConsentKind.kvkkSpecialCategoryHealth) {
         unawaited(_appendKvkkRevokeAuditEntry(entry));
+      } else {
+        unawaited(_appendConsentAuditEntry(entry, granted: false));
       }
     }
   }
 
-  Future<void> _appendKvkkRevokeAuditEntry(ConsentEntry entry) async {
+  /// Generic helper — used for the non-KVKK consent kinds. Action
+  /// name pattern: `consent.{granted|revoked}.<kind.id>` so an
+  /// auditor can grep one prefix for all consent activity.
+  Future<void> _appendConsentAuditEntry(
+    ConsentEntry entry, {
+    required bool granted,
+  }) {
+    final verb = granted ? 'granted' : 'revoked';
+    return _writeAuditEntry(
+      id: 'audit-consent-$verb-${entry.id}',
+      action: 'consent.$verb.${entry.kind.id}',
+      entry: entry,
+      failureHint: 'consent.audit_failed',
+    );
+  }
+
+  Future<void> _appendKvkkRevokeAuditEntry(ConsentEntry entry) {
+    return _writeAuditEntry(
+      id: 'audit-kvkk-revoke-${entry.id}',
+      action: 'kvkk.consent_revoked',
+      entry: entry,
+      failureHint: 'kvkk.consent_revoked.audit_failed',
+    );
+  }
+
+  /// Single audit-write seam (C4 — DRY consolidation).
+  ///
+  /// All consent audit sites share the same skeleton: initialize the
+  /// singleton, build an [AuditLogEntry] with the same patient/policy
+  /// `entity` triple, append, route failures through telemetry. The
+  /// only degrees of freedom are `id`, `action`, and the Sentry
+  /// `hint`. Lifting them out keeps a future hint rename / entity-
+  /// field rework a one-line change in one place — and stops the
+  /// per-site drift `code-reviewer` flagged.
+  Future<void> _writeAuditEntry({
+    required String id,
+    required String action,
+    required ConsentEntry entry,
+    required String failureHint,
+  }) async {
     try {
       final repo = AuditLogRepository.instance;
       await repo.initialize();
       await repo.append(
         AuditLogEntry(
-          id: 'audit-kvkk-revoke-${entry.id}',
+          id: id,
           kind: 'consent',
-          action: 'kvkk.consent_revoked',
+          action: action,
           actor: widget.patientId,
           entity:
               'patient:${widget.patientId} '
@@ -150,11 +193,7 @@ class _ConsentCenterScreenState extends State<ConsentCenterScreen> {
       );
     } catch (e, st) {
       unawaited(
-        TelemetryService.instance.captureError(
-          e,
-          st,
-          hint: 'kvkk.consent_revoked.audit_failed',
-        ),
+        TelemetryService.instance.captureError(e, st, hint: failureHint),
       );
     }
   }

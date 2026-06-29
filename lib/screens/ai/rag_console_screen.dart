@@ -6,6 +6,7 @@ import '../../services/ai/rag_client.dart';
 import '../../services/ai/rag_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/copilot/ai_disclaimer.dart';
 import '../../widgets/ds/psy_skeleton.dart';
 
 /// Clinical RAG console — query the shared evidence hub for guideline-grounded
@@ -65,6 +66,9 @@ class _RagConsoleScreenState extends State<RagConsoleScreen> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // L5 — sticky AI disclaimer above any AI surface.
+                AiDisclaimer.compact(surface: 'rag_console'),
+                const SizedBox(height: 16),
                 _QuestionForm(
                   controller: _question,
                   region: _region,

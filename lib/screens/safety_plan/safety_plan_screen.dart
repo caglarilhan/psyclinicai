@@ -12,6 +12,7 @@ import '../../services/data/safety_plan_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
+import '../../widgets/copilot/ai_disclaimer.dart';
 import '../../widgets/ds/psy_save_shortcut.dart';
 import '../../widgets/ds/psy_skeleton.dart';
 import '../../widgets/ds/psy_snack.dart';
@@ -369,6 +370,12 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: PsySpacing.md),
+                  // L5 — sticky AI disclaimer above any AI-touched
+                  // surface. Safety plan is the highest-risk AI flow
+                  // (lethal-means context); the clinician must read
+                  // every line.
+                  AiDisclaimer.compact(surface: 'safety_plan_ai'),
                   const SizedBox(height: PsySpacing.xl),
                   _Section(
                     title: '1 · Warning signs',

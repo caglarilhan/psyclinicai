@@ -91,6 +91,23 @@ current control set includes:
 A current copy of the Trust Center disclosure is available at
 https://psyclinicai.com/trust.
 
+### 3.1 Programmatic operational commitments
+The safeguards above are backed by **pinned in-repo catalogs**, so
+any drift between the contractual promise and the running system is
+caught by tests at build time. The catalogs and their downstream
+consumers (trust-center page, DPA, customer DPA appendix):
+
+| Program | Catalog source | Customer-visible posture |
+|---|---|---|
+| Backup + DR (RTO/RPO per data class) | `lib/services/ops/backup_recovery_plan.dart` | Firestore default daily / 24h RPO / 4h RTO; clinical audit chain weekly cold storage / 7-year retention; consent records daily / 7-year retention; KMS secret snapshots weekly / 1h RTO. |
+| Service-level objectives | `lib/services/ops/slo_catalog.dart` | Audit-log mirror success ≥ 99.5% / 30d; chain-tamper events = 0 / 30d; DSAR export SLA ≥ 99% / 90d; breach 72h compliance = 100% / 90d. |
+| On-call incident runbook | `lib/services/ops/on_call_runbook.dart` | 6-kind incident matrix (chain break, DSAR overdue, AI output block, breach, ransomware, supply-chain) with declared owners + step targets. |
+| Breach notification deadlines | `lib/services/compliance/breach_notification.dart` | HIPAA §164.410(b) ≤ 60 days (policy ≤ 24h to Covered Entity); GDPR Art. 33 ≤ 72h to supervisory authority; KVKK 72h. |
+| AI decision audit | `lib/services/ai/ai_decision_logger.dart` + `lib/services/ai/ai_output_guard.dart` | Every LLM-routed clinical suggestion is hash-chained with the prompt id, model card id, input hash, and the safety-guard verdict (FDA CDS-aligned). |
+
+These catalogs are append-only; deprecated entries remain so
+historic incident logs always resolve.
+
 ## 4. Subcontractors & sub-processors
 PsyClinicAI will require any subcontractor that creates, receives, maintains,
 or transmits PHI on PsyClinicAI's behalf to agree, in writing, to **the same

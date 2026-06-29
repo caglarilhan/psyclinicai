@@ -87,6 +87,8 @@ import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
+import 'package:psyclinicai/services/data/consent_entry_repository.dart';
+import 'package:psyclinicai/services/data/consent_repository_provider.dart';
 import 'package:psyclinicai/services/data/firebase_bootstrap.dart';
 import 'package:psyclinicai/services/data/telemetry_service.dart';
 import 'package:psyclinicai/services/patient_service.dart';
@@ -170,6 +172,12 @@ class PsyClinicAIApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<fb_auth.FirebaseAuthService>.value(
           value: fb_auth.FirebaseAuthService.instance,
+        ),
+        // Single auth-aware router for the consent repo — see
+        // [ConsentRepositoryRouter] docs. Consumers read via
+        // context.watch<ConsentEntryRepository>() / context.read.
+        ChangeNotifierProvider<ConsentEntryRepository>(
+          create: (_) => ConsentRepositoryRouter(),
         ),
         ChangeNotifierProvider(create: (_) => RoleService()),
         ChangeNotifierProvider(create: (_) => ThemeService()),

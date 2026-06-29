@@ -11,13 +11,17 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/consent_entry.dart';
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
 import 'package:psyclinicai/widgets/consent/kvkk_acik_riza_form.dart';
 import 'package:psyclinicai/widgets/consent/kvkk_intake_slot.dart';
 
 Widget _host(Widget child) => MaterialApp(
-  home: Scaffold(body: SingleChildScrollView(child: child)),
+  home: ChangeNotifierProvider<ConsentEntryRepository>.value(
+    value: InMemoryConsentEntryRepository.instance,
+    child: Scaffold(body: SingleChildScrollView(child: child)),
+  ),
 );
 
 void main() {

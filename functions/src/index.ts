@@ -122,6 +122,7 @@ import { applyCors, authorizeUid } from "./lib/auth";
 import { checkAiConsent, extractPatientId } from "./lib/consent_gate";
 import { env } from "./lib/env";
 import { scrubPhiInPayload } from "./lib/phi_scrub";
+import { applyRateLimit, applySecurityHeaders } from "./lib/security_chain";
 import { stripeClient, verifyWebhook } from "./lib/stripe";
 
 const db = admin.firestore();
@@ -175,7 +176,9 @@ const ALLOWED_RELAY_MODELS = new Set([
 const MAX_RELAY_BODY_BYTES = 256 * 1024;
 
 export const anthropicRelay = functions.https.onRequest(async (req, res) => {
+  applySecurityHeaders(res);
   if (applyCors(req, res)) return;
+  if (applyRateLimit(req, res, "ai-copilot-inference")) return;
   if (req.method !== "POST") return void res.status(405).send("POST only");
 
   const uid = await authorizeUid(req, "anthropicRelay");

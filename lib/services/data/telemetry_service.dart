@@ -17,6 +17,21 @@ class TelemetryService {
 
   bool _sentryReady = false;
 
+  /// Test seam — fires synchronously on every [capture] call with the
+  /// raw event name + properties map. The analytics contract test
+  /// uses this to pin property keys so a future rename trips CI
+  /// before it lands in production dashboards.
+  @visibleForTesting
+  static void Function(String event, Map<String, Object?> properties)?
+  captureRecorderForTest;
+
+  /// Test seam — fires synchronously on every [captureError] call.
+  /// Tests pin the `hint` taxonomy so SIEM rules + Sentry alert
+  /// routes stay coherent.
+  @visibleForTesting
+  static void Function(Object error, StackTrace? stack, String? hint)?
+  errorRecorderForTest;
+
   bool get _enabled => BuildConfig.telemetryEnabled;
   bool get _sentryEnabled => BuildConfig.sentryDsn.isNotEmpty;
 
@@ -53,6 +68,14 @@ class TelemetryService {
     String event, {
     Map<String, Object?> properties = const {},
   }) async {
+    // CWE-489 defence: the recorder field is static + reachable from
+    // any Dart isolate, including a release binary. Gate INVOCATION
+    // (not mutation) so even if an attacker manages to set it, the
+    // recorder is never called from a production build — the test
+    // seam is purely a debug / profile / test affordance.
+    if (!kReleaseMode) {
+      captureRecorderForTest?.call(event, properties);
+    }
     if (_sentryReady) {
       // Record as a Sentry breadcrumb so a later crash carries the funnel
       // context. Cheap and PHI-free (event names are public constants).
@@ -112,6 +135,10 @@ class TelemetryService {
     StackTrace? stack, {
     String? hint,
   }) async {
+    // CWE-489 defence — see [capture] for the rationale.
+    if (!kReleaseMode) {
+      errorRecorderForTest?.call(error, stack, hint);
+    }
     final scrubber = PhiRedactor();
     final scrubbedMessage = scrubber.scrub(error.toString()).cleanText;
     final scrubbedHint = hint == null ? null : scrubber.scrub(hint).cleanText;

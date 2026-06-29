@@ -15,6 +15,7 @@ import * as crypto from "crypto";
 import * as functions from "firebase-functions";
 import { applyCors, authorizeUid } from "./lib/auth";
 import { enforceOrReply } from "./lib/rate_limit";
+import { applySecurityHeaders } from "./lib/security_chain";
 import { rpIdFor, originFor } from "./lib/webauthn_env";
 
 // Sprint 29 S-01 (F-004 close) — 20 requests / 15 minutes per IP defends
@@ -91,6 +92,7 @@ function challengeBase64Url(): string {
 
 export const passkeyAuthOptions = functions.https.onRequest(
   async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
     // S-01 — rate-limit BEFORE authorizeUid so an unauthenticated
     // attacker cannot enumerate credential ids via timing differences.
@@ -143,6 +145,7 @@ export const passkeyAuthOptions = functions.https.onRequest(
 
 export const passkeyAuthVerify = functions.https.onRequest(
   async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
     if (await enforceOrReply(req, res, PASSKEY_AUTH_RATE_LIMIT)) return;
     const uid = await authorizeUid(req, "passkeyAuthVerify");

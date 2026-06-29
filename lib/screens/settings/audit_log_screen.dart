@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../../models/audit_log_entry.dart';
+import '../../services/data/audit_log_repository.dart';
 import '../../services/data/telemetry_service.dart';
 import '../../theme/tokens.dart';
 import '../../utils/audit_log_exporter.dart';
@@ -38,6 +39,115 @@ class AuditLogScreen extends StatefulWidget {
 class _AuditLogScreenState extends State<AuditLogScreen> {
   int? _expandedIndex;
   AuditKind? _filterKind;
+
+  /// K3 — live entries from [AuditLogRepository.instance]. Filled
+  /// on [initState] via [_load]; empty until the SharedPreferences
+  /// read settles. When empty AND the singleton has no rows yet,
+  /// the screen falls back to [demoAuditEntries] so the trust
+  /// onboarding still has something to show.
+  List<AuditEntry> _liveEntries = const [];
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final repo = AuditLogRepository.instance;
+      await repo.initialize();
+      if (!mounted) return;
+      setState(() {
+        _liveEntries = repo.all
+            .toList()
+            .asMap()
+            .entries
+            .map((kv) => _fromPublicEntry(kv.value, kv.key))
+            .toList(growable: false);
+        _loaded = true;
+      });
+    } catch (e, st) {
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'audit_log_screen.load_failed',
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _loaded = true); // unblock the empty-state path
+    }
+  }
+
+  Future<void> _verifyChain() async {
+    final repo = AuditLogRepository.instance;
+    await repo.initialize();
+    final badIndex = repo.verifyChain();
+    if (!mounted) return;
+    if (badIndex == null) {
+      PsySnack.success(
+        context,
+        'Chain intact — every row recomputed cleanly.',
+        hint: 'audit_log.chain_verified',
+      );
+    } else {
+      PsySnack.error(
+        context,
+        'Chain broken at row $badIndex. Notify on-call.',
+        hint: 'audit_log.chain_tampered',
+      );
+    }
+  }
+
+  /// Adapter: production [AuditLogEntry] → the screen's local
+  /// [AuditEntry] type. The local type carries display-formatted
+  /// fields (`relativeTime`, masked `ip`) the row widget renders;
+  /// the public type carries the raw chain hash + `actor` we feed
+  /// the integrity card. Both shapes are needed.
+  AuditEntry _fromPublicEntry(AuditLogEntry e, int index) => AuditEntry(
+    id: index,
+    kind: _mapKind(e.kind),
+    action: e.action,
+    actor: e.actor,
+    entity: e.entity,
+    relativeTime: _relativeTime(e.timestampUtc),
+    timestampUtc: e.timestampUtc.toIso8601String(),
+    userId: e.userId ?? '',
+    ip: e.ip ?? '',
+    device: e.device ?? '',
+    result: e.result.name,
+    hash: e.hash ?? '',
+  );
+
+  AuditKind _mapKind(String k) {
+    switch (k) {
+      case 'phi_read':
+        return AuditKind.read;
+      case 'phi_write':
+      case 'consent':
+        return AuditKind.write;
+      case 'signin':
+      case 'mfa_enrol':
+        return AuditKind.signin;
+      case 'export':
+      case 'dsar_export':
+        return AuditKind.export;
+      case 'delete':
+        return AuditKind.delete;
+      default:
+        return AuditKind.write;
+    }
+  }
+
+  String _relativeTime(DateTime ts) {
+    final delta = DateTime.now().toUtc().difference(ts.toUtc());
+    if (delta.inDays > 0) return '${delta.inDays}d ago';
+    if (delta.inHours > 0) return '${delta.inHours}h ago';
+    if (delta.inMinutes > 0) return '${delta.inMinutes}m ago';
+    return 'just now';
+  }
 
   /// Map the private demo row onto the public [AuditLogEntry] so the
   /// pure exporter pipeline can format it. Demo rows already use the
@@ -190,7 +300,12 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final all = demoAuditEntries();
+    // K3 — show live rows when the device chain has any, else fall
+    // back to the bundled demo set so the trust onboarding screen
+    // isn't blank on first install.
+    final all = (_loaded && _liveEntries.isNotEmpty)
+        ? _liveEntries
+        : demoAuditEntries();
     final entries = _filterKind == null
         ? all
         : all.where((e) => e.kind == _filterKind).toList();
@@ -205,10 +320,30 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
         Crumb('Trust Center', '/trust'),
         Crumb('Audit log', null),
       ],
-      primaryAction: OutlinedButton.icon(
-        onPressed: () => _showExportSheet(context, all),
-        icon: const Icon(Icons.download_outlined, size: 18),
-        label: const Text('Export'),
+      primaryAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // K3 — chain verifier: nightly Cloud Function does this fleet-
+          // wide, but a clinician auditing their own device wants a
+          // one-click on-demand check too.
+          OutlinedButton.icon(
+            onPressed: _verifyChain,
+            icon: const Icon(Icons.verified_outlined, size: 18),
+            label: const Text('Verify chain'),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          OutlinedButton.icon(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Refresh'),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          OutlinedButton.icon(
+            onPressed: () => _showExportSheet(context, all),
+            icon: const Icon(Icons.download_outlined, size: 18),
+            label: const Text('Export'),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

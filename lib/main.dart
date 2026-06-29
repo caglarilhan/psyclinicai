@@ -78,6 +78,7 @@ import 'package:psyclinicai/screens/static/tos_page.dart';
 import 'package:psyclinicai/screens/supervision/supervision_queue_screen.dart';
 import 'package:psyclinicai/screens/treatment_plan/treatment_plan_screen.dart';
 import 'package:psyclinicai/screens/trust/incident_response_screen.dart';
+import 'package:psyclinicai/screens/trust/policy_catalog_index_screen.dart';
 import 'package:psyclinicai/screens/trust/security_controls_screen.dart';
 import 'package:psyclinicai/screens/trust/subprocessors_screen.dart';
 import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
@@ -307,6 +308,8 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SubprocessorsScreen(),
                 '/trust/security_controls': (context) =>
                     const SecurityControlsScreen(),
+                '/trust/catalogs': (context) =>
+                    const PolicyCatalogIndexScreen(),
                 '/trust/incident_response': (context) =>
                     const IncidentResponseScreen(),
                 '/supervision/queue': (context) =>

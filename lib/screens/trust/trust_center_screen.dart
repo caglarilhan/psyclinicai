@@ -198,6 +198,13 @@ class _TrustGrid extends StatelessWidget {
         body: 'Detection → containment → notification → post-mortem.',
         route: '/trust/incident_response',
       ),
+      const _TrustCard(
+        icon: Icons.menu_book_outlined,
+        title: 'Policy catalog index',
+        body:
+            'Every pinned policy + its regulatory anchors (HIPAA / GDPR / SOC 2 / ISO 27001 / EU AI Act).',
+        route: '/trust/catalogs',
+      ),
     ];
     return LayoutBuilder(
       builder: (context, c) {

@@ -6,6 +6,7 @@ import '../../models/safety_plan.dart';
 import '../../services/compliance/consent_guard.dart';
 import '../../services/copilot/safety_plan_ai_service.dart';
 import '../../services/crisis/crisis_resource_registry.dart';
+import '../../services/data/consent_entry_repository.dart';
 import '../../services/data/intake_repository.dart';
 import '../../services/data/safety_plan_repository.dart';
 import '../../services/data/telemetry_service.dart';
@@ -32,11 +33,14 @@ class _SafetyPlanScreenState extends State<SafetyPlanScreen> {
   final _repo = SafetyPlanRepository();
   final _intakes = IntakeRepository();
   // Production-wired ConsentGuard: AI may only run for a patient whose
-  // intake records an explicit AI-assistance consent. Fail-closed by
-  // default when no record exists.
+  // intake records an explicit AI-assistance consent AND has not
+  // revoked the per-kind aiProcessing entry in the Consent Center
+  // (union read — B1 fix).
   late final SafetyPlanAiService _ai = SafetyPlanAiService(
     consentGuard: ConsentGuard(
       consentLookup: (id) => _intakes.forPatient(id)?.consent,
+      consentEntryLookup: (id, kind) =>
+          InMemoryConsentEntryRepository.instance.activeOf(id, kind),
     ),
   );
   bool _loading = true;

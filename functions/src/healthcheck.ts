@@ -6,6 +6,8 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
+import {applyRateLimit, applySecurityHeaders} from "./lib/security_chain";
+
 const RELEASE_VERSION =
   process.env.K_REVISION || process.env.FUNCTION_TARGET || "dev";
 const BOOTED_AT = Date.now();
@@ -70,6 +72,8 @@ async function pingAuth(): Promise<Dependency> {
 
 export const healthcheck = functions.https.onRequest(
   async (req, res) => {
+    applySecurityHeaders(res);
+    if (applyRateLimit(req, res, "public-unauthenticated")) return;
     // Strict opt-in: `?deep=true` or `?deep=1`; anything else (incl.
     // `?deep=false`) skips the dependency probes.
     //

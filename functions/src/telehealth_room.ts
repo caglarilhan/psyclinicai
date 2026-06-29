@@ -25,6 +25,7 @@ import * as functions from "firebase-functions";
 
 import { applyCors, authorizeClinicianUid } from "./lib/auth";
 import { env } from "./lib/env";
+import { applyRateLimit, applySecurityHeaders } from "./lib/security_chain";
 
 const DAILY_API_BASE = "https://api.daily.co/v1";
 const RATE_LIMIT_COLLECTION = "telehealth_rate_limits";
@@ -101,7 +102,9 @@ async function checkRateLimit(uid: string, now: Date): Promise<boolean> {
 }
 
 export const telehealthRoom = functions.https.onRequest(async (req, res) => {
+  applySecurityHeaders(res);
   if (applyCors(req, res)) return;
+  if (applyRateLimit(req, res, "clinician-dashboard-read")) return;
   if (req.method !== "POST") return void res.status(405).send("POST only");
 
   const uid = await authorizeClinicianUid(req, "telehealthRoom");

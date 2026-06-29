@@ -57,6 +57,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import {applyCors, authorizeClinicianUid} from "./lib/auth";
+import {applyRateLimit, applySecurityHeaders} from "./lib/security_chain";
 
 /**
  * KVK Tebliğ md. 13 + GDPR Art. 12(3) both mandate a 30-day response
@@ -367,7 +368,9 @@ export async function buildDsarBundle(
 export const dsarExport = functions
   .region("europe-west1")
   .https.onRequest(async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
+    if (applyRateLimit(req, res, "portal-dsar")) return;
     if (req.method !== "POST") {
       return void res.status(405).json({error: "POST only"});
     }

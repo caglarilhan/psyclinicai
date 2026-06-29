@@ -23,6 +23,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {applyCors, authorizeUid} from "./lib/auth";
+import {applyRateLimit, applySecurityHeaders} from "./lib/security_chain";
 import {
   PromInstrument,
   buildPromObservation,
@@ -110,7 +111,9 @@ export const ehrSubmitProm = functions
   .runWith({minInstances: 0, memory: "512MB", timeoutSeconds: 60})
   .region("europe-west1")
   .https.onRequest(async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
+    if (applyRateLimit(req, res, "clinician-dashboard-read")) return;
     const uid = await authorizeUid(req, "ehrSubmitProm");
     if (!uid) {
       res.status(401).json({error: "unauthenticated"});

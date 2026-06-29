@@ -59,6 +59,7 @@ interface FakeRes {
   status: (n: number) => FakeRes;
   json: (b: unknown) => FakeRes;
   set: (k: string, v: string) => FakeRes;
+  setHeader: (k: string, v: string) => void;
   send: (b: unknown) => FakeRes;
 }
 function makeRes(): FakeRes {
@@ -97,6 +98,9 @@ function makeRes(): FakeRes {
     set(k: string, v: string) {
       state.headers[k] = v;
       return api;
+    },
+    setHeader(k: string, v: string) {
+      state.headers[k] = v;
     },
     send(b: unknown) {
       state.body = b;

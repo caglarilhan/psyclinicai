@@ -27,6 +27,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import {applyCors} from "./lib/auth";
+import {applyRateLimit, applySecurityHeaders} from "./lib/security_chain";
 import {checkAiConsent, extractPatientId} from "./lib/consent_gate";
 import {env, resolveCorsOrigin} from "./lib/env";
 
@@ -87,7 +88,9 @@ export const ragProxy = functions
   .runWith({minInstances: 1, memory: "512MB", timeoutSeconds: 30})
   .region("europe-west1")
   .https.onRequest(async (req, res) => {
+  applySecurityHeaders(res);
   if (applyCors(req, res)) return;
+  if (applyRateLimit(req, res, "ai-copilot-inference")) return;
 
   const op = extractOp(req.path);
   if (op === null) {

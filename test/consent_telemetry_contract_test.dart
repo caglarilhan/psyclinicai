@@ -13,6 +13,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:psyclinicai/models/audit_log_entry.dart';
 import 'package:psyclinicai/services/data/audit_log_repository.dart';
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
@@ -33,8 +34,11 @@ class _ThrowingAuditRepo extends AuditLogRepository {
   }
 }
 
-Widget _host(Widget child) => MaterialApp(
-  home: Scaffold(body: SingleChildScrollView(child: child)),
+Widget _host(Widget child) => ChangeNotifierProvider<ConsentEntryRepository>.value(
+  value: InMemoryConsentEntryRepository.instance,
+  child: MaterialApp(
+    home: Scaffold(body: SingleChildScrollView(child: child)),
+  ),
 );
 
 void main() {

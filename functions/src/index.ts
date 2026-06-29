@@ -30,6 +30,8 @@ admin.initializeApp();
 
 // Sprint 9 — scheduled compliance jobs.
 export { auditRetentionPurge } from "./audit_retention_purge";
+// J2 — nightly client-chain replay over /clinic_audit_logs.
+export { auditChainVerify } from "./audit_chain_verify";
 export { accountDeletionPurge } from "./account_deletion_purge";
 
 // Sprint 10 — C-SSRS cross-device soft-lock cleanup (hourly).

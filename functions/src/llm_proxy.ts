@@ -30,6 +30,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import {applyCors, authorizeUid} from "./lib/auth";
+import {applyRateLimit, applySecurityHeaders} from "./lib/security_chain";
 import {checkAiConsent, extractPatientId} from "./lib/consent_gate";
 import {env} from "./lib/env";
 import {
@@ -178,7 +179,9 @@ export const llmProxy = functions
   .runWith({minInstances: 1, memory: "1GB", timeoutSeconds: 60})
   .region("europe-west1")
   .https.onRequest(async (req, res) => {
+  applySecurityHeaders(res);
   if (applyCors(req, res)) return;
+  if (applyRateLimit(req, res, "ai-copilot-inference")) return;
   const uid = await authorizeUid(req, "llmProxy");
   if (!uid) {
     res.status(401).json({error: "unauthorized"});

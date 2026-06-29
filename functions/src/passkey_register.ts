@@ -20,6 +20,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { applyCors, authorizeUid } from "./lib/auth";
+import { applySecurityHeaders } from "./lib/security_chain";
 import { rpIdFor, originFor } from "./lib/webauthn_env";
 
 export interface AttestationVerifier {
@@ -63,6 +64,7 @@ function challengeBase64Url(): string {
 
 export const passkeyRegisterOptions = functions.https.onRequest(
   async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
     const uid = await authorizeUid(req, "passkeyRegisterOptions");
     if (!uid) {
@@ -110,6 +112,7 @@ export const passkeyRegisterOptions = functions.https.onRequest(
 
 export const passkeyRegisterVerify = functions.https.onRequest(
   async (req, res) => {
+    applySecurityHeaders(res);
     if (applyCors(req, res)) return;
     const uid = await authorizeUid(req, "passkeyRegisterVerify");
     if (!uid) {

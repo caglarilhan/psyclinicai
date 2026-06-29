@@ -69,7 +69,7 @@ class RoadmapPage extends StatelessWidget {
   static const List<String> _notShipping = [
     'Direct-to-patient diagnosis or prescribing — clinician-support only.',
     'On-prem deployment in 2026 — managed cloud (Firebase EU + Hetzner EU).',
-    'Free tier with real PHI — pilots are a 6-month founder-rate, no anonymous sign-ups.',
+    'Free tier with real PHI — pilots are a 6-month launch-rate, no anonymous sign-ups.',
     'Audio recording of sessions — STT runs on-device, audio never leaves the room.',
   ];
 

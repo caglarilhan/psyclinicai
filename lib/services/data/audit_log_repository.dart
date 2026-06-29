@@ -24,11 +24,19 @@ import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/audit_log_entry.dart';
+import 'audit_log_mirror.dart';
 import 'telemetry_service.dart';
 
 class AuditLogRepository {
-  AuditLogRepository({String? storageBucket})
-    : _bucket = storageBucket ?? _storageId;
+  AuditLogRepository({
+    String? storageBucket,
+    AuditLogMirror? mirror,
+    String? Function()? clinicIdReader,
+  }) : _bucket = storageBucket ?? _storageId,
+       _mirror = mirror ?? const NoopAuditLogMirror(),
+       _clinicIdReader = clinicIdReader ?? _noClinic;
+
+  static String? _noClinic() => null;
 
   /// Process-wide singleton — used by surfaces that fire an audit
   /// event without owning the repo's lifecycle (KVKK consent grant
@@ -46,6 +54,17 @@ class AuditLogRepository {
   /// SharedPreferences bucket id for this repo — not a credential.
   static const _storageId = 'audit_log_v1';
   final String _bucket;
+
+  /// Forensic mirror sink. Default is a no-op so the device chain
+  /// works in demo / offline modes without Firebase. Production
+  /// bootstrap wires a [FirestoreAuditLogMirror].
+  final AuditLogMirror _mirror;
+
+  /// Closure returning the active clinicId — defers reading
+  /// `FirebaseAuthService.profile?.clinicId` to call time so a
+  /// sign-in / sign-out after construction is reflected on the next
+  /// append. The mirror is skipped when this returns null.
+  final String? Function() _clinicIdReader;
 
   final List<AuditLogEntry> _items = [];
   bool _loaded = false;
@@ -137,7 +156,57 @@ class AuditLogRepository {
         properties: {'kind': sealed.kind, 'result': sealed.result.name},
       ),
     );
+    // Best-effort forensic mirror — failure here MUST NOT break the
+    // device append. The Noop default for legacy callers makes this
+    // a no-op until production wires a real Firestore mirror.
+    unawaited(_mirrorBestEffort(sealed));
     return sealed;
+  }
+
+  Future<void> _mirrorBestEffort(AuditLogEntry sealed) async {
+    final clinicId = _clinicIdSafe();
+    if (clinicId == null) {
+      unawaited(
+        TelemetryService.instance.capture(
+          'audit_log.mirror_skipped',
+          properties: {'reason': 'no_clinic_context'},
+        ),
+      );
+      return;
+    }
+    try {
+      final result = await _mirror.write(clinicId: clinicId, entry: sealed);
+      unawaited(
+        TelemetryService.instance.capture(
+          'audit_log.mirror_${result.outcome.name}',
+          properties: {
+            'kind': sealed.kind,
+            // Result message may carry an upstream error; PhiRedactor
+            // inside captureError scrubs PHI, but here this is a
+            // breadcrumb-only path so we drop the free-form text
+            // entirely. Outcome enum + kind is enough for SIEM.
+          },
+        ),
+      );
+    } catch (e, st) {
+      // Defense in depth — the contract says mirrors don't throw, but
+      // a buggy adapter could still bubble. Caught + reported.
+      unawaited(
+        TelemetryService.instance.captureError(
+          e,
+          st,
+          hint: 'audit_log.mirror_threw',
+        ),
+      );
+    }
+  }
+
+  String? _clinicIdSafe() {
+    try {
+      return _clinicIdReader();
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Walk the hash chain and verify every row's `hash` matches the

@@ -31,8 +31,11 @@ void main() {
     test('every intervalDays matches between Dart + TS', () {
       final ts = tsFile.readAsStringSync();
       for (final r in MbcDispatchCatalog.rules) {
-        expect(ts.contains('intervalDays: ${r.intervalDays}'), isTrue,
-            reason: '${r.scaleId}: intervalDays drift');
+        expect(
+          ts.contains('intervalDays: ${r.intervalDays}'),
+          isTrue,
+          reason: '${r.scaleId}: intervalDays drift',
+        );
       }
     });
 
@@ -72,8 +75,11 @@ void main() {
       final ts = tsFile.readAsStringSync();
       for (final r in MbcDispatchCatalog.rules) {
         for (final ref in r.regulatoryRefs) {
-          expect(ts.contains(ref), isTrue,
-              reason: '${r.scaleId}: anchor "$ref" missing in TS — drift');
+          expect(
+            ts.contains(ref),
+            isTrue,
+            reason: '${r.scaleId}: anchor "$ref" missing in TS — drift',
+          );
         }
       }
     });
@@ -81,13 +87,11 @@ void main() {
     test('schemaVersion + lastReviewed pinned in TS', () {
       final ts = tsFile.readAsStringSync();
       expect(
-        ts.contains(
-            'MBC_SCHEMA_VERSION = ${MbcDispatchCatalog.schemaVersion}'),
+        ts.contains('MBC_SCHEMA_VERSION = ${MbcDispatchCatalog.schemaVersion}'),
         isTrue,
       );
       expect(
-        ts.contains(
-            'MBC_LAST_REVIEWED = "${MbcDispatchCatalog.lastReviewed}"'),
+        ts.contains('MBC_LAST_REVIEWED = "${MbcDispatchCatalog.lastReviewed}"'),
         isTrue,
       );
     });

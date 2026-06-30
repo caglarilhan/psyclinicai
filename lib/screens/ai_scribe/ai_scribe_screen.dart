@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/ai_scribe/ai_scribe_client.dart';
 import '../../services/ai_scribe/soap_section_catalog.dart';
+import '../../services/demo/synthetic_vignettes.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -116,6 +117,21 @@ class _AiScribeScreenState extends State<AiScribeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _DemoBanner(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.md),
+          _SampleVignettePicker(
+            theme: theme,
+            cs: cs,
+            onLoad: (v) {
+              setState(() {
+                _transcript.text = v.transcript;
+                if (_sessionId.text.trim().isEmpty) {
+                  _sessionId.text = '${v.id}-${DateTime.now().millisecondsSinceEpoch}';
+                }
+              });
+            },
+          ),
+          const SizedBox(height: PsySpacing.md),
           _IntakeCard(
             theme: theme,
             cs: cs,
@@ -374,6 +390,96 @@ class _SectionEditor extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DemoBanner extends StatelessWidget {
+  const _DemoBanner({required this.theme, required this.cs});
+  final ThemeData theme;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: cs.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: cs.onErrorContainer),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Text(
+              'Demo mode — synthetic data only. Do NOT enter real patient '
+              'information. Free-tier LLM providers do not carry a HIPAA '
+              'BAA. Load a sample vignette below to evaluate the assistant.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: cs.onErrorContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SampleVignettePicker extends StatelessWidget {
+  const _SampleVignettePicker({
+    required this.theme,
+    required this.cs,
+    required this.onLoad,
+  });
+  final ThemeData theme;
+  final ColorScheme cs;
+  final ValueChanged<SyntheticVignette> onLoad;
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      child: Row(
+        children: [
+          Icon(Icons.science_outlined, color: cs.primary),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Text(
+              'Load a sample synthetic vignette',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          PopupMenuButton<SyntheticVignette>(
+            tooltip: 'Pick a vignette',
+            onSelected: onLoad,
+            itemBuilder: (_) => [
+              for (final v in SyntheticVignetteCatalog.vignettes)
+                PopupMenuItem<SyntheticVignette>(
+                  value: v,
+                  child: Text(v.label),
+                ),
+            ],
+            child: const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: PsySpacing.md,
+                vertical: PsySpacing.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Pick'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

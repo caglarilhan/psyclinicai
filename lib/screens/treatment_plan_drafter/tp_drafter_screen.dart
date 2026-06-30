@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/demo/synthetic_vignettes.dart';
 import '../../services/treatment_plan_drafter/tp_drafter_catalog.dart';
 import '../../services/treatment_plan_drafter/tp_drafter_client.dart';
 import '../../theme/tokens.dart';
@@ -119,6 +120,29 @@ class _TpDrafterScreenState extends State<TpDrafterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _DemoBanner(theme: theme, cs: cs),
+          const SizedBox(height: PsySpacing.md),
+          _SampleVignettePicker(
+            theme: theme,
+            cs: cs,
+            onLoad: (v) {
+              setState(() {
+                _disorder = TpDisorderId.values.firstWhere(
+                  (d) => d.name == v.disorderHint,
+                  orElse: () => _disorder,
+                );
+                final mods = TpDrafterCatalog.modalitiesFor(_disorder);
+                _modality = mods.firstWhere(
+                  (m) => m.name == v.modalityHint,
+                  orElse: () =>
+                      mods.isNotEmpty ? mods.first : _modality,
+                );
+                _problems.text = v.presentingProblems.join('\n');
+                _context.text = v.contextNote;
+              });
+            },
+          ),
+          const SizedBox(height: PsySpacing.md),
           _IntakeCard(
             theme: theme,
             cs: cs,
@@ -491,6 +515,96 @@ class _Section extends StatelessWidget {
           Text(title, style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
           ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoBanner extends StatelessWidget {
+  const _DemoBanner({required this.theme, required this.cs});
+  final ThemeData theme;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: PsySpacing.md,
+        vertical: PsySpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: cs.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: cs.onErrorContainer),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Text(
+              'Demo mode — synthetic data only. Do NOT enter real patient '
+              'information. Free-tier LLM providers do not carry a HIPAA '
+              'BAA. Load a sample vignette below to evaluate the drafter.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: cs.onErrorContainer),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SampleVignettePicker extends StatelessWidget {
+  const _SampleVignettePicker({
+    required this.theme,
+    required this.cs,
+    required this.onLoad,
+  });
+  final ThemeData theme;
+  final ColorScheme cs;
+  final ValueChanged<SyntheticVignette> onLoad;
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      child: Row(
+        children: [
+          Icon(Icons.science_outlined, color: cs.primary),
+          const SizedBox(width: PsySpacing.sm),
+          Expanded(
+            child: Text(
+              'Load a sample synthetic vignette',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          PopupMenuButton<SyntheticVignette>(
+            tooltip: 'Pick a vignette',
+            onSelected: onLoad,
+            itemBuilder: (_) => [
+              for (final v in SyntheticVignetteCatalog.vignettes)
+                PopupMenuItem<SyntheticVignette>(
+                  value: v,
+                  child: Text(v.label),
+                ),
+            ],
+            child: const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: PsySpacing.md,
+                vertical: PsySpacing.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Pick'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

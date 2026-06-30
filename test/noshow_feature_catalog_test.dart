@@ -7,8 +7,7 @@ void main() {
       expect(NoShowFeatureCatalog.features, isNotEmpty);
       final seen = <String>{};
       for (final f in NoShowFeatureCatalog.features) {
-        expect(seen.contains(f.key), isFalse,
-            reason: '${f.key}: duplicate');
+        expect(seen.contains(f.key), isFalse, reason: '${f.key}: duplicate');
         seen.add(f.key);
       }
     });
@@ -21,8 +20,11 @@ void main() {
 
     test('no feature has high PHI sensitivity', () {
       for (final f in NoShowFeatureCatalog.features) {
-        expect(f.phiSensitivity, isNot(PhiSensitivity.high),
-            reason: '${f.key}: high-PHI feature must not be in catalog');
+        expect(
+          f.phiSensitivity,
+          isNot(PhiSensitivity.high),
+          reason: '${f.key}: high-PHI feature must not be in catalog',
+        );
       }
     });
 
@@ -45,21 +47,26 @@ void main() {
       expect(p.confirmCadenceHours.length, 1);
     });
 
-    test('confirmCadenceHours sorted DESCENDING (earliest reminder first)',
-        () {
+    test('confirmCadenceHours sorted DESCENDING (earliest reminder first)', () {
       for (final p in NoShowFeatureCatalog.playbooks) {
         final sorted = [...p.confirmCadenceHours]
           ..sort((a, b) => b.compareTo(a));
-        expect(p.confirmCadenceHours, sorted,
-            reason: '${p.tier}: cadence not sorted descending');
+        expect(
+          p.confirmCadenceHours,
+          sorted,
+          reason: '${p.tier}: cadence not sorted descending',
+        );
       }
     });
 
     test('outcomeLabels carries the canonical 5 labels', () {
-      expect(
-        NoShowFeatureCatalog.outcomeLabels.keys.toSet(),
-        {'attended', 'noshow', 'late_cancel', 'on_time_cancel', 'rescheduled'},
-      );
+      expect(NoShowFeatureCatalog.outcomeLabels.keys.toSet(), {
+        'attended',
+        'noshow',
+        'late_cancel',
+        'on_time_cancel',
+        'rescheduled',
+      });
     });
 
     test('byKey throws for unknown', () {
@@ -68,8 +75,10 @@ void main() {
 
     test('schemaVersion + lastReviewed shape', () {
       expect(NoShowFeatureCatalog.schemaVersion > 0, isTrue);
-      expect(NoShowFeatureCatalog.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(
+        NoShowFeatureCatalog.lastReviewed,
+        matches(RegExp(r'^\d{4}-\d{2}$')),
+      );
     });
   });
 

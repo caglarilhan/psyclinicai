@@ -142,11 +142,7 @@ class _NoShowQueueScreenState extends State<NoShowQueueScreen> {
           ),
           const SizedBox(height: PsySpacing.xl),
           if (_prediction != null)
-            _ScorePanel(
-              theme: theme,
-              cs: cs,
-              prediction: _prediction!,
-            ),
+            _ScorePanel(theme: theme, cs: cs, prediction: _prediction!),
         ],
       ),
     );
@@ -198,8 +194,7 @@ class _FeatureCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Appointment + history',
-              style: theme.textTheme.titleMedium),
+          Text('Appointment + history', style: theme.textTheme.titleMedium),
           const SizedBox(height: PsySpacing.md),
           Row(
             children: [
@@ -215,9 +210,7 @@ class _FeatureCard extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: patientId,
-                  decoration: const InputDecoration(
-                    labelText: 'Patient id',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Patient id'),
                 ),
               ),
             ],
@@ -256,8 +249,10 @@ class _FeatureCard extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: PsySpacing.sm),
-            Text(error!,
-                style: theme.textTheme.bodySmall?.copyWith(color: cs.error)),
+            Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+            ),
           ],
           const SizedBox(height: PsySpacing.md),
           Align(
@@ -347,8 +342,8 @@ class _ScorePanel extends StatelessWidget {
             value: prediction.playbook.confirmCadenceHours.isEmpty
                 ? 'No proactive reminders'
                 : prediction.playbook.confirmCadenceHours
-                    .map((h) => '${h}h before')
-                    .join(' · '),
+                      .map((h) => '${h}h before')
+                      .join(' · '),
           ),
           _PlaybookRow(
             theme: theme,
@@ -365,14 +360,14 @@ class _ScorePanel extends StatelessWidget {
           _PlaybookRow(
             theme: theme,
             label: 'Deposit hold',
-            value:
-                prediction.playbook.depositRequired ? 'required' : 'not required',
+            value: prediction.playbook.depositRequired
+                ? 'required'
+                : 'not required',
           ),
           _PlaybookRow(
             theme: theme,
             label: 'Waitlist offer on cancel',
-            value:
-                prediction.playbook.waitlistOfferOnCancel ? 'yes' : 'no',
+            value: prediction.playbook.waitlistOfferOnCancel ? 'yes' : 'no',
           ),
         ],
       ),
@@ -405,8 +400,9 @@ class _RoiBanner extends StatelessWidget {
           Expanded(
             child: Text(
               'Estimated value recovered if we save this slot: ~\$$dollars.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: cs.onPrimaryContainer),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: cs.onPrimaryContainer,
+              ),
             ),
           ),
         ],
@@ -435,9 +431,7 @@ class _PlaybookRow extends StatelessWidget {
             width: 180,
             child: Text(label, style: theme.textTheme.bodyMedium),
           ),
-          Expanded(
-            child: Text(value, style: theme.textTheme.bodyMedium),
-          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );

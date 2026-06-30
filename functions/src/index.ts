@@ -58,6 +58,20 @@ export { healthcheck } from "./healthcheck";
 // Sprint 30 PILAR1 — Ambient Clinical Scribe SOAP draft generator.
 export { aiScribeDraftSoap } from "./ai_scribe_draft_soap";
 
+// Sprint 30 PILAR 2 — Measurement-Based Care dispatch + public submit.
+export { mbcDispatchLink } from "./mbc_dispatch_link";
+export { mbcSubmitAssessment } from "./mbc_submit_assessment";
+
+// Sprint 30 PILAR 3 — No-show predictor (clinician-only).
+export { noshowPredict } from "./noshow_predict_handler";
+
+// Sprint 30 PILAR 4 — Evidence-Based Treatment Plan Drafter.
+export { tpDraftPlan } from "./tp_draft_plan";
+
+// Sprint 31 PR-F — MBC cadence cron (auto-rotates overdue dispatches).
+// Requires Blaze plan for the Pub/Sub scheduled trigger to activate.
+export { mbcCadenceCron } from "./scheduled/mbc_cadence_cron";
+
 // Sprint 26 W1 — WebAuthn / FIDO2 passkey enrolment + assertion.
 export {
   passkeyRegisterOptions,

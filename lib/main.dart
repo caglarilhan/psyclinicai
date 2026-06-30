@@ -12,6 +12,7 @@ import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/ai_scribe/ai_scribe_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
+import 'package:psyclinicai/screens/noshow/noshow_queue_screen.dart';
 import 'package:psyclinicai/screens/assessments/aseba_intake_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';

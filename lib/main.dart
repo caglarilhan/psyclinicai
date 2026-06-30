@@ -13,6 +13,9 @@ import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/ai_scribe/ai_scribe_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
 import 'package:psyclinicai/screens/noshow/noshow_queue_screen.dart';
+import 'package:psyclinicai/screens/mbc/mbc_clinician_dashboard.dart';
+import 'package:psyclinicai/screens/mbc/mbc_patient_form_screen.dart';
+import 'package:psyclinicai/screens/treatment_plan_drafter/tp_drafter_screen.dart';
 import 'package:psyclinicai/screens/assessments/aseba_intake_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
@@ -87,6 +90,10 @@ import 'package:psyclinicai/screens/trust/subprocessors_screen.dart';
 import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
 import 'package:psyclinicai/services/ai/rag_service.dart';
 import 'package:psyclinicai/services/ai_scribe/ai_scribe_client.dart';
+import 'package:psyclinicai/services/mbc/mbc_client.dart';
+import 'package:psyclinicai/services/mbc/mbc_dispatch_service.dart';
+import 'package:psyclinicai/services/noshow/noshow_predict_client.dart';
+import 'package:psyclinicai/services/treatment_plan_drafter/tp_drafter_client.dart';
 import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
@@ -326,6 +333,47 @@ class PsyClinicAIApp extends StatelessWidget {
                     tenantId: profile?.userId ?? 'self',
                   );
                 },
+                '/clinician/mbc': (context) {
+                  final profile =
+                      fb_auth.FirebaseAuthService.instance.profile;
+                  final service = MbcDispatchService(
+                    dispatchUrl:
+                        '${BuildConfig.backendUrl}/mbcDispatchLink',
+                    idTokenProvider:
+                        CopilotEndpoint.defaultFirebaseIdToken,
+                  );
+                  return MbcClinicianDashboardScreen(
+                    service: service,
+                    tenantId: profile?.userId ?? 'self',
+                  );
+                },
+                '/clinician/noshow': (context) {
+                  final profile =
+                      fb_auth.FirebaseAuthService.instance.profile;
+                  final client = NoShowPredictClient(
+                    predictUrl:
+                        '${BuildConfig.backendUrl}/noshowPredict',
+                    idTokenProvider:
+                        CopilotEndpoint.defaultFirebaseIdToken,
+                  );
+                  return NoShowQueueScreen(
+                    client: client,
+                    tenantId: profile?.userId ?? 'self',
+                  );
+                },
+                '/clinician/tp-drafter': (context) {
+                  final profile =
+                      fb_auth.FirebaseAuthService.instance.profile;
+                  final client = TpDrafterClient(
+                    draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
+                    idTokenProvider:
+                        CopilotEndpoint.defaultFirebaseIdToken,
+                  );
+                  return TpDrafterScreen(
+                    client: client,
+                    tenantId: profile?.userId ?? 'self',
+                  );
+                },
                 '/trust/incident_response': (context) =>
                     const IncidentResponseScreen(),
                 '/supervision/queue': (context) =>
@@ -520,6 +568,31 @@ class PsyClinicAIApp extends StatelessWidget {
                         ),
                   );
                 },
+              },
+              onGenerateRoute: (settings) {
+                // /p/mbc/:scaleId/:token — public, no-auth assessment.
+                final name = settings.name ?? '';
+                if (name.startsWith('/p/mbc/')) {
+                  final parts = name.split('/');
+                  if (parts.length == 5 &&
+                      parts[3].isNotEmpty &&
+                      parts[4].isNotEmpty) {
+                    final scaleId = parts[3];
+                    final token = parts[4];
+                    return MaterialPageRoute(
+                      settings: settings,
+                      builder: (_) => MbcPatientFormScreen(
+                        client: MbcPublicClient(
+                          submitUrl:
+                              '${BuildConfig.backendUrl}/mbcSubmitAssessment',
+                        ),
+                        scaleId: scaleId,
+                        token: token,
+                      ),
+                    );
+                  }
+                }
+                return null;
               },
               onUnknownRoute: (settings) => MaterialPageRoute(
                 builder: (_) => NotFoundPage(path: settings.name),

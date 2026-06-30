@@ -94,6 +94,30 @@ class QuickActions extends StatelessWidget {
         route: '/clinician/scribe',
       ),
       DashboardAction(
+        icon: Icons.send_outlined,
+        label: 'Send MBC check-in',
+        body:
+            'PHQ-9 / GAD-7 / PCL-5 between sessions. Private link, no '
+            'patient account needed.',
+        route: '/clinician/mbc',
+      ),
+      DashboardAction(
+        icon: Icons.online_prediction,
+        label: 'No-show risk queue',
+        body:
+            'Predict no-show risk for an appointment and apply the '
+            'recovery playbook (reminders, deposit, waitlist).',
+        route: '/clinician/noshow',
+      ),
+      DashboardAction(
+        icon: Icons.checklist_outlined,
+        label: 'Treatment plan drafter',
+        body:
+            'Pick a disorder + modality and get a SMART-goal plan '
+            'cited to the published clinical guideline.',
+        route: '/clinician/tp-drafter',
+      ),
+      DashboardAction(
         icon: Icons.help_outline,
         label: 'Help & docs',
         body: 'Setup guide, FAQ, security overview.',

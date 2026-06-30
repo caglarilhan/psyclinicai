@@ -315,12 +315,10 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
                 '/clinician/noshow': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final client = NoShowPredictClient(
                     predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return NoShowQueueScreen(
                     client: client,

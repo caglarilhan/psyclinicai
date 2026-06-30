@@ -73,8 +73,7 @@ class NoShowPrediction {
       tier: tier,
       modelVersion: j['modelVersion'] as String,
       playbook: NoShowPredictedPlaybook(
-        confirmCadenceHours:
-            (pb['confirmCadenceHours'] as List).cast<int>(),
+        confirmCadenceHours: (pb['confirmCadenceHours'] as List).cast<int>(),
         smsConfirmHours: pb['smsConfirmHours'] as int,
         callConfirmHours: pb['callConfirmHours'] as int,
         depositRequired: pb['depositRequired'] as bool,

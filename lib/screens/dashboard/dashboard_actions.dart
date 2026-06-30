@@ -87,6 +87,13 @@ class QuickActions extends StatelessWidget {
         route: '/ai_chatbot',
       ),
       DashboardAction(
+        icon: Icons.auto_awesome,
+        label: 'Ambient scribe',
+        body:
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        route: '/clinician/scribe',
+      ),
+      DashboardAction(
         icon: Icons.help_outline,
         label: 'Help & docs',
         body: 'Setup guide, FAQ, security overview.',

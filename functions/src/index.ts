@@ -55,9 +55,8 @@ export { accessReviewCron } from "./access_review_cron";
 // Sprint 25 W2 — public health probe for statuspage.io polling.
 export { healthcheck } from "./healthcheck";
 
-// Sprint 30 PILAR2 — Measurement-Based Care dispatch + public submit.
-export { mbcDispatchLink } from "./mbc_dispatch_link";
-export { mbcSubmitAssessment } from "./mbc_submit_assessment";
+// Sprint 30 PILAR1 — Ambient Clinical Scribe SOAP draft generator.
+export { aiScribeDraftSoap } from "./ai_scribe_draft_soap";
 
 // Sprint 26 W1 — WebAuthn / FIDO2 passkey enrolment + assertion.
 export {

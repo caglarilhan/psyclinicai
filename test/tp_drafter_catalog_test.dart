@@ -9,36 +9,45 @@ void main() {
       final seen = <String>{};
       for (final p in TpDrafterCatalog.protocols) {
         final key = '${p.disorder.name}_${p.modality.name}';
-        expect(seen.contains(key), isFalse,
-            reason: '$key: duplicate');
+        expect(seen.contains(key), isFalse, reason: '$key: duplicate');
         seen.add(key);
       }
     });
 
     test('every protocol pins at least one guideline anchor', () {
       for (final p in TpDrafterCatalog.protocols) {
-        expect(p.guidelineAnchors, isNotEmpty,
-            reason: '${p.label}: missing guideline anchor');
+        expect(
+          p.guidelineAnchors,
+          isNotEmpty,
+          reason: '${p.label}: missing guideline anchor',
+        );
       }
     });
 
     test('outcomeInstrument refers to a known outcome measure', () {
       for (final p in TpDrafterCatalog.protocols) {
         final m = OutcomeMeasureCatalog.byScaleId(p.outcomeInstrument);
-        expect(m, isNotNull,
-            reason:
-                '${p.label}: outcomeInstrument ${p.outcomeInstrument} unknown');
+        expect(
+          m,
+          isNotNull,
+          reason:
+              '${p.label}: outcomeInstrument ${p.outcomeInstrument} unknown',
+        );
       }
     });
 
     test('PTSD + BPD + AUD protocols require supervisor co-sign', () {
       for (final p in TpDrafterCatalog.protocols) {
-        final highRisk = p.disorder == TpDisorderId.ptsd ||
+        final highRisk =
+            p.disorder == TpDisorderId.ptsd ||
             p.disorder == TpDisorderId.borderlinePersonalityDisorder ||
             p.disorder == TpDisorderId.alcoholUseDisorder;
         if (highRisk) {
-          expect(p.requiresSupervisorCoSign, isTrue,
-              reason: '${p.label}: high-risk modality must require co-sign');
+          expect(
+            p.requiresSupervisorCoSign,
+            isTrue,
+            reason: '${p.label}: high-risk modality must require co-sign',
+          );
         }
       }
     });
@@ -90,8 +99,7 @@ void main() {
 
     test('schemaVersion positive + lastReviewed YYYY-MM', () {
       expect(TpDrafterCatalog.schemaVersion > 0, isTrue);
-      expect(TpDrafterCatalog.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(TpDrafterCatalog.lastReviewed, matches(RegExp(r'^\d{4}-\d{2}$')));
     });
   });
 

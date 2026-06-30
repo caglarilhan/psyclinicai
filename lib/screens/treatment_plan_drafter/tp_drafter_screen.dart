@@ -78,13 +78,15 @@ class _TpDrafterScreenState extends State<TpDrafterScreen> {
     try {
       final draft = await widget.client.draftPlan(
         tenantId: widget.tenantId,
-        patientId:
-            _patientId.text.trim().isEmpty ? null : _patientId.text.trim(),
+        patientId: _patientId.text.trim().isEmpty
+            ? null
+            : _patientId.text.trim(),
         disorder: _disorder,
         modality: _modality,
         presentingProblems: problems,
-        extraContext:
-            _context.text.trim().isEmpty ? null : _context.text.trim(),
+        extraContext: _context.text.trim().isEmpty
+            ? null
+            : _context.text.trim(),
       );
       if (!mounted) return;
       setState(() {
@@ -219,8 +221,10 @@ class _IntakeCard extends StatelessWidget {
                     for (final d in TpDisorderId.values)
                       DropdownMenuItem(
                         value: d,
-                        child: Text(_disorderLabel(d),
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          _disorderLabel(d),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                   onChanged: (v) {
@@ -279,8 +283,10 @@ class _IntakeCard extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: PsySpacing.sm),
-            Text(error!,
-                style: theme.textTheme.bodySmall?.copyWith(color: cs.error)),
+            Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+            ),
           ],
           const SizedBox(height: PsySpacing.md),
           Align(
@@ -351,8 +357,7 @@ class _DraftPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(draft.protocolLabel,
-                  style: theme.textTheme.titleMedium),
+              Text(draft.protocolLabel, style: theme.textTheme.titleMedium),
               const SizedBox(width: PsySpacing.md),
               PsyBadge(
                 label: 'Schema v${draft.schemaVersion} · ${draft.provider}',
@@ -375,15 +380,18 @@ class _DraftPanel extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.assignment_late_outlined,
-                      color: cs.onErrorContainer),
+                  Icon(
+                    Icons.assignment_late_outlined,
+                    color: cs.onErrorContainer,
+                  ),
                   const SizedBox(width: PsySpacing.sm),
                   Expanded(
                     child: Text(
                       'Supervisor co-sign required before this plan can '
                       'persist to the patient record.',
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(color: cs.onErrorContainer),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onErrorContainer,
+                      ),
                     ),
                   ),
                 ],
@@ -409,9 +417,12 @@ class _DraftPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text((g['goal_text'] as String? ?? '').trim(),
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      Text(
+                        (g['goal_text'] as String? ?? '').trim(),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'S: ${g['specific'] ?? ''}\n'

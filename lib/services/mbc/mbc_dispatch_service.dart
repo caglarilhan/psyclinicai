@@ -47,9 +47,7 @@ class MbcDispatchService {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw MbcSubmitException(res.statusCode, res.body);
     }
-    return MbcDispatch.fromJson(
-      jsonDecode(res.body) as Map<String, dynamic>,
-    );
+    return MbcDispatch.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   void close() => _http.close();
@@ -66,13 +64,13 @@ class MbcDispatch {
   });
 
   factory MbcDispatch.fromJson(Map<String, dynamic> j) => MbcDispatch(
-        dispatchId: j['dispatchId'] as String,
-        token: j['token'] as String,
-        formUrl: j['formUrl'] as String,
-        expiresAtMillis: j['expiresAt'] as int,
-        scaleId: j['scaleId'] as String,
-        channel: j['channel'] as String,
-      );
+    dispatchId: j['dispatchId'] as String,
+    token: j['token'] as String,
+    formUrl: j['formUrl'] as String,
+    expiresAtMillis: j['expiresAt'] as int,
+    scaleId: j['scaleId'] as String,
+    channel: j['channel'] as String,
+  );
 
   final String dispatchId;
   final String token;

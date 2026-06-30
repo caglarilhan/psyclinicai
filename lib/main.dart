@@ -317,13 +317,10 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
                 '/clinician/mbc': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final service = MbcDispatchService(
-                    dispatchUrl:
-                        '${BuildConfig.backendUrl}/mbcDispatchLink',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    dispatchUrl: '${BuildConfig.backendUrl}/mbcDispatchLink',
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return MbcClinicianDashboardScreen(
                     service: service,

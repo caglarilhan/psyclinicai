@@ -83,10 +83,7 @@ class _MbcClinicianDashboardScreenState
       subtitle:
           'Send a between-session assessment in two taps. The patient '
           'gets a private link that works without an account.',
-      breadcrumbs: const [
-        Crumb('Clinician', '/dashboard'),
-        Crumb('MBC', null),
-      ],
+      breadcrumbs: const [Crumb('Clinician', '/dashboard'), Crumb('MBC', null)],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -136,17 +133,14 @@ class _DispatchCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Send a new assessment',
-              style: theme.textTheme.titleMedium),
+          Text('Send a new assessment', style: theme.textTheme.titleMedium),
           const SizedBox(height: PsySpacing.md),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: patientId,
-                  decoration: const InputDecoration(
-                    labelText: 'Patient id',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Patient id'),
                 ),
               ),
               const SizedBox(width: PsySpacing.md),
@@ -159,8 +153,10 @@ class _DispatchCard extends StatelessWidget {
                     for (final r in MbcDispatchCatalog.rules)
                       DropdownMenuItem(
                         value: r.scaleId,
-                        child: Text('${r.scaleId.toUpperCase()} — '
-                            '${r.payerCadenceLabel}'),
+                        child: Text(
+                          '${r.scaleId.toUpperCase()} — '
+                          '${r.payerCadenceLabel}',
+                        ),
                       ),
                   ],
                   onChanged: (v) {
@@ -172,8 +168,10 @@ class _DispatchCard extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: PsySpacing.sm),
-            Text(error!,
-                style: theme.textTheme.bodySmall?.copyWith(color: cs.error)),
+            Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+            ),
           ],
           const SizedBox(height: PsySpacing.md),
           Align(
@@ -208,16 +206,16 @@ class _LinkPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final expiresAt =
-        DateTime.fromMillisecondsSinceEpoch(dispatch.expiresAtMillis).toLocal();
+    final expiresAt = DateTime.fromMillisecondsSinceEpoch(
+      dispatch.expiresAtMillis,
+    ).toLocal();
     return PsyCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Text('Patient link ready',
-                  style: theme.textTheme.titleMedium),
+              Text('Patient link ready', style: theme.textTheme.titleMedium),
               const SizedBox(width: PsySpacing.md),
               PsyBadge(
                 label:
@@ -228,23 +226,21 @@ class _LinkPanel extends StatelessWidget {
           const SizedBox(height: PsySpacing.sm),
           Text(
             'Expires ${expiresAt.toIso8601String()}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: cs.outline),
+            style: theme.textTheme.bodySmall?.copyWith(color: cs.outline),
           ),
           const SizedBox(height: PsySpacing.md),
           SelectableText(
             dispatch.formUrl,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontFamily: 'monospace'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: 'monospace',
+            ),
           ),
           const SizedBox(height: PsySpacing.md),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton.tonalIcon(
               onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(text: dispatch.formUrl),
-                );
+                await Clipboard.setData(ClipboardData(text: dispatch.formUrl));
               },
               icon: const Icon(Icons.copy),
               label: const Text('Copy link'),

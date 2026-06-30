@@ -87,6 +87,14 @@ class QuickActions extends StatelessWidget {
         route: '/ai_chatbot',
       ),
       DashboardAction(
+        icon: Icons.checklist_outlined,
+        label: 'Treatment plan drafter',
+        body:
+            'Pick a disorder + modality and get a SMART-goal plan '
+            'cited to the published clinical guideline.',
+        route: '/clinician/tp-drafter',
+      ),
+      DashboardAction(
         icon: Icons.help_outline,
         label: 'Help & docs',
         body: 'Setup guide, FAQ, security overview.',

@@ -95,8 +95,10 @@ describe("transcript size cap", () => {
 describe("defaultProviderChain", () => {
   test("returns Anthropic first then Azure", () => {
     const chain = defaultProviderChain();
-    expect(chain.length).toBe(2);
-    expect(chain[0].id).toBe("anthropic");
-    expect(chain[1].id).toBe("azure_openai");
+    expect(chain.length).toBe(4);
+    expect(chain[0].id).toBe("groq");
+    expect(chain[1].id).toBe("gemini");
+    expect(chain[2].id).toBe("anthropic");
+    expect(chain[3].id).toBe("azure_openai");
   });
 });

@@ -45,6 +45,8 @@ import {scrubPhiInString} from "./lib/phi_scrub";
 import {
   AnthropicProvider,
   AzureOpenAIProvider,
+  GeminiProvider,
+  GroqProvider,
   invokeWithFallback,
   LlmProvider,
   LlmProviderError,
@@ -175,8 +177,25 @@ function sha256Hex(input: string): string {
  * the `env` proxy throws on missing keys + the Azure trio is intentionally
  * optional (BAA fallback only kicks in when configured).
  */
+/**
+ * Bootstrap-tier chain order (Sprint 31):
+ *   1. Groq     — FREE, no BAA. Primary for demo/sandbox/non-PHI.
+ *   2. Gemini   — FREE, no BAA. Secondary free fallback when Groq's
+ *                 daily TPD cap is exhausted.
+ *   3. Anthropic — PAID, BAA-available. Skipped when key empty.
+ *   4. Azure    — PAID, BAA-standard. Skipped when trio unset.
+ *
+ * Per-tenant PHI routing is the handler's job: the bootstrap launch
+ * (Sprint 30) routes EVERY scribe call through this free-tier-first
+ * chain because the demo-mode banner enforces "synthetic data only".
+ * When PILAR 1 graduates to PHI tier (Sprint 32+), a separate
+ * `phiProviderChain()` will return [Anthropic, Azure] for live
+ * patient transcripts.
+ */
 export function defaultProviderChain(): LlmProvider[] {
   return [
+    new GroqProvider(process.env.GROQ_API_KEY),
+    new GeminiProvider(process.env.GEMINI_API_KEY),
     new AnthropicProvider(process.env.ANTHROPIC_PROXY_API_KEY),
     new AzureOpenAIProvider(
       process.env.AZURE_OPENAI_ENDPOINT,

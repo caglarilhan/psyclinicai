@@ -40,6 +40,8 @@ import {scrubPhiInString} from "./lib/phi_scrub";
 import {
   AnthropicProvider,
   AzureOpenAIProvider,
+  GeminiProvider,
+  GroqProvider,
   invokeWithFallback,
   LlmProvider,
   LlmProviderError,
@@ -103,8 +105,14 @@ function sha256Hex(input: string): string {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
+/**
+ * Bootstrap-tier chain order (Sprint 31) — see ai_scribe_draft_soap.ts
+ * for the rationale. Same ordering: Groq → Gemini → Anthropic → Azure.
+ */
 export function defaultProviderChain(): LlmProvider[] {
   return [
+    new GroqProvider(process.env.GROQ_API_KEY),
+    new GeminiProvider(process.env.GEMINI_API_KEY),
     new AnthropicProvider(process.env.ANTHROPIC_PROXY_API_KEY),
     new AzureOpenAIProvider(
       process.env.AZURE_OPENAI_ENDPOINT,

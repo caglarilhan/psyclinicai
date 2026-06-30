@@ -56,9 +56,7 @@ class AiScribeClient {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw AiScribeException(res.statusCode, res.body);
     }
-    return AiScribeDraft.fromJson(
-      jsonDecode(res.body) as Map<String, dynamic>,
-    );
+    return AiScribeDraft.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   void close() => _http.close();
@@ -80,14 +78,14 @@ class AiScribeDraft {
   });
 
   factory AiScribeDraft.fromJson(Map<String, dynamic> j) => AiScribeDraft(
-        sessionId: j['sessionId'] as String,
-        schemaVersion: j['schemaVersion'] as int,
-        generatedAtMillis: j['generatedAt'] as int,
-        provider: j['provider'] as String,
-        model: j['model'] as String,
-        sections: Map<String, dynamic>.from(j['sections'] as Map),
-        phiRedactions: (j['phiRedactions'] as int?) ?? 0,
-      );
+    sessionId: j['sessionId'] as String,
+    schemaVersion: j['schemaVersion'] as int,
+    generatedAtMillis: j['generatedAt'] as int,
+    provider: j['provider'] as String,
+    model: j['model'] as String,
+    sections: Map<String, dynamic>.from(j['sections'] as Map),
+    phiRedactions: (j['phiRedactions'] as int?) ?? 0,
+  );
 
   final String sessionId;
   final int schemaVersion;

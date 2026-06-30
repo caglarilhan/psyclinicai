@@ -89,7 +89,8 @@ class QuickActions extends StatelessWidget {
       DashboardAction(
         icon: Icons.auto_awesome,
         label: 'Ambient scribe',
-        body: 'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        body:
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
         route: '/clinician/scribe',
       ),
       DashboardAction(

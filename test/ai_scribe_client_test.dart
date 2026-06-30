@@ -8,10 +8,10 @@ import 'package:psyclinicai/services/ai_scribe/soap_section_catalog.dart';
 
 void main() {
   AiScribeClient withMock(MockClient mock) => AiScribeClient(
-        baseUrl: 'https://example.test/aiScribeDraftSoap',
-        idTokenProvider: () async => 'tok-xyz',
-        httpClient: mock,
-      );
+    baseUrl: 'https://example.test/aiScribeDraftSoap',
+    idTokenProvider: () async => 'tok-xyz',
+    httpClient: mock,
+  );
 
   group('AiScribeClient', () {
     test('posts payload + Bearer token + parses 200 draft', () async {
@@ -72,11 +72,7 @@ void main() {
       );
       final client = withMock(mock);
       expect(
-        () => client.draftSoap(
-          tenantId: 't',
-          sessionId: 's',
-          transcript: 'x',
-        ),
+        () => client.draftSoap(tenantId: 't', sessionId: 's', transcript: 'x'),
         throwsA(isA<AiScribeException>()),
       );
     });
@@ -88,11 +84,7 @@ void main() {
         httpClient: MockClient((_) async => http.Response('', 200)),
       );
       expect(
-        () => client.draftSoap(
-          tenantId: 't',
-          sessionId: 's',
-          transcript: 'x',
-        ),
+        () => client.draftSoap(tenantId: 't', sessionId: 's', transcript: 'x'),
         throwsA(isA<AiScribeException>()),
       );
     });

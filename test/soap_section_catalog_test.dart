@@ -16,15 +16,21 @@ void main() {
     test('every section has at least one required field', () {
       for (final spec in SoapSectionCatalog.sections) {
         final reqs = spec.fields.where((f) => f.required).toList();
-        expect(reqs.isNotEmpty, isTrue,
-            reason: '${spec.title} has no required field');
+        expect(
+          reqs.isNotEmpty,
+          isTrue,
+          reason: '${spec.title} has no required field',
+        );
       }
     });
 
     test('every section has a non-empty regulatory anchor', () {
       for (final spec in SoapSectionCatalog.sections) {
-        expect(spec.regulatoryRefs.isNotEmpty, isTrue,
-            reason: '${spec.title} missing regulatory anchor');
+        expect(
+          spec.regulatoryRefs.isNotEmpty,
+          isTrue,
+          reason: '${spec.title} missing regulatory anchor',
+        );
       }
     });
 
@@ -39,15 +45,17 @@ void main() {
     test('field keys are unique within each section', () {
       for (final spec in SoapSectionCatalog.sections) {
         final keys = spec.fields.map((f) => f.key).toSet();
-        expect(keys.length, spec.fields.length,
-            reason: '${spec.title} has duplicate field keys');
+        expect(
+          keys.length,
+          spec.fields.length,
+          reason: '${spec.title} has duplicate field keys',
+        );
       }
     });
 
     test('Assessment carries risk_assessment as required', () {
       final spec = SoapSectionCatalog.bySection(SoapSection.assessment);
-      final risk =
-          spec.fields.firstWhere((f) => f.key == 'risk_assessment');
+      final risk = spec.fields.firstWhere((f) => f.key == 'risk_assessment');
       expect(risk.required, isTrue);
       expect(risk.citationRequired, isTrue);
     });
@@ -63,8 +71,10 @@ void main() {
     });
 
     test('lastReviewed matches YYYY-MM', () {
-      expect(SoapSectionCatalog.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(
+        SoapSectionCatalog.lastReviewed,
+        matches(RegExp(r'^\d{4}-\d{2}$')),
+      );
     });
   });
 

@@ -317,10 +317,8 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/clinician/scribe': (context) {
                   final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final client = AiScribeClient(
-                    baseUrl:
-                        '${BuildConfig.backendUrl}/aiScribeDraftSoap',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    baseUrl: '${BuildConfig.backendUrl}/aiScribeDraftSoap',
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return AiScribeScreen(
                     client: client,

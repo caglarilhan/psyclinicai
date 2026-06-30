@@ -34,12 +34,13 @@ class _ThrowingAuditRepo extends AuditLogRepository {
   }
 }
 
-Widget _host(Widget child) => ChangeNotifierProvider<ConsentEntryRepository>.value(
-  value: InMemoryConsentEntryRepository.instance,
-  child: MaterialApp(
-    home: Scaffold(body: SingleChildScrollView(child: child)),
-  ),
-);
+Widget _host(Widget child) =>
+    ChangeNotifierProvider<ConsentEntryRepository>.value(
+      value: InMemoryConsentEntryRepository.instance,
+      child: MaterialApp(
+        home: Scaffold(body: SingleChildScrollView(child: child)),
+      ),
+    );
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -135,8 +135,7 @@ class NoShowFeatureCatalog {
       label: 'Hour-of-day band (morning / midday / evening)',
       kind: FeatureKind.band,
       phiSensitivity: PhiSensitivity.none,
-      rationale:
-          'Evening slots show ~1.4x no-show vs midday in our data.',
+      rationale: 'Evening slots show ~1.4x no-show vs midday in our data.',
     ),
     NoShowFeatureSpec(
       key: 'weekday',

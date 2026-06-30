@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:psyclinicai/config/build_config.dart';
 import 'package:psyclinicai/l10n/app_localizations.dart';
 import 'package:psyclinicai/models/superbill_prefill.dart';
 import 'package:psyclinicai/screens/admin/risk_coverage_screen.dart';
@@ -10,6 +11,7 @@ import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
+import 'package:psyclinicai/screens/noshow/noshow_queue_screen.dart';
 import 'package:psyclinicai/screens/assessments/aseba_intake_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
@@ -86,6 +88,8 @@ import 'package:psyclinicai/services/ai/rag_service.dart';
 import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
+import 'package:psyclinicai/services/copilot/copilot_endpoint.dart';
+import 'package:psyclinicai/services/noshow/noshow_predict_client.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
@@ -310,6 +314,19 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SecurityControlsScreen(),
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
+                '/clinician/noshow': (context) {
+                  final profile =
+                      fb_auth.FirebaseAuthService.instance.profile;
+                  final client = NoShowPredictClient(
+                    predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
+                    idTokenProvider:
+                        CopilotEndpoint.defaultFirebaseIdToken,
+                  );
+                  return NoShowQueueScreen(
+                    client: client,
+                    tenantId: profile?.userId ?? 'self',
+                  );
+                },
                 '/trust/incident_response': (context) =>
                     const IncidentResponseScreen(),
                 '/supervision/queue': (context) =>

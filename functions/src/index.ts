@@ -55,8 +55,8 @@ export { accessReviewCron } from "./access_review_cron";
 // Sprint 25 W2 — public health probe for statuspage.io polling.
 export { healthcheck } from "./healthcheck";
 
-// Sprint 30 PILAR3 — No-show predictor (clinician-only).
-export { noshowPredict } from "./noshow_predict_handler";
+// Sprint 30 PILAR1 — Ambient Clinical Scribe SOAP draft generator.
+export { aiScribeDraftSoap } from "./ai_scribe_draft_soap";
 
 // Sprint 26 W1 — WebAuthn / FIDO2 passkey enrolment + assertion.
 export {

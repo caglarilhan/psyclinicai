@@ -51,8 +51,7 @@ void main() {
           expect(
             ts.contains('key: "${f.key}"'),
             isTrue,
-            reason:
-                '${spec.title}.${f.key}: field key missing in TS — drift',
+            reason: '${spec.title}.${f.key}: field key missing in TS — drift',
           );
         }
       }
@@ -62,10 +61,10 @@ void main() {
       final ts = tsFile.readAsStringSync();
       expect(
         ts.contains(
-            'SOAP_SCHEMA_VERSION = ${SoapSectionCatalog.schemaVersion}'),
+          'SOAP_SCHEMA_VERSION = ${SoapSectionCatalog.schemaVersion}',
+        ),
         isTrue,
-        reason:
-            'schemaVersion drift: Dart=${SoapSectionCatalog.schemaVersion}',
+        reason: 'schemaVersion drift: Dart=${SoapSectionCatalog.schemaVersion}',
       );
     });
 
@@ -73,7 +72,8 @@ void main() {
       final ts = tsFile.readAsStringSync();
       expect(
         ts.contains(
-            'SOAP_LAST_REVIEWED = "${SoapSectionCatalog.lastReviewed}"'),
+          'SOAP_LAST_REVIEWED = "${SoapSectionCatalog.lastReviewed}"',
+        ),
         isTrue,
         reason: 'lastReviewed drift',
       );

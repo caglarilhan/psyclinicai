@@ -6,8 +6,9 @@ import 'package:psyclinicai/screens/ai_scribe/ai_scribe_screen.dart';
 import 'package:psyclinicai/services/ai_scribe/ai_scribe_client.dart';
 
 void main() {
-  testWidgets('renders empty state until a transcript is drafted',
-      (tester) async {
+  testWidgets('renders empty state until a transcript is drafted', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -52,7 +53,6 @@ void main() {
     await tester.tap(find.text('Draft SOAP'));
     await tester.pump();
 
-    expect(find.text('Session id + transcript are required.'),
-        findsOneWidget);
+    expect(find.text('Session id + transcript are required.'), findsOneWidget);
   });
 }

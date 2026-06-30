@@ -202,8 +202,10 @@ class _IntakeCard extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: PsySpacing.sm),
-            Text(error!,
-                style: theme.textTheme.bodySmall?.copyWith(color: cs.error)),
+            Text(
+              error!,
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+            ),
           ],
           const SizedBox(height: PsySpacing.md),
           Align(
@@ -279,8 +281,7 @@ class _DraftReview extends StatelessWidget {
                 Text('SOAP draft', style: theme.textTheme.titleMedium),
                 const SizedBox(width: PsySpacing.md),
                 PsyBadge(
-                  label:
-                      'Schema v${draft.schemaVersion} · ${draft.provider}',
+                  label: 'Schema v${draft.schemaVersion} · ${draft.provider}',
                 ),
                 const Spacer(),
                 if (draft.phiRedactions > 0)

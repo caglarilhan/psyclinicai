@@ -40,15 +40,7 @@ enum TpDisorderId {
   insomniaDisorder,
 }
 
-enum TpModality {
-  cbt,
-  dbt,
-  emdr,
-  act,
-  ipt,
-  mi,
-  cbti,
-}
+enum TpModality { cbt, dbt, emdr, act, ipt, mi, cbti }
 
 class TpProtocolSpec {
   const TpProtocolSpec({
@@ -227,9 +219,7 @@ class TpDrafterCatalog {
       label: 'CBT-I for Insomnia Disorder',
       recommendedSessions: 6,
       outcomeInstrument: 'phq9',
-      guidelineAnchors: [
-        'AASM clinical practice guideline for CBT-I (2021)',
-      ],
+      guidelineAnchors: ['AASM clinical practice guideline for CBT-I (2021)'],
       requiresSupervisorCoSign: false,
     ),
   ];

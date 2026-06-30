@@ -6,8 +6,7 @@ import 'package:psyclinicai/screens/treatment_plan_drafter/tp_drafter_screen.dar
 import 'package:psyclinicai/services/treatment_plan_drafter/tp_drafter_client.dart';
 
 void main() {
-  testWidgets('renders intake card + empty state',
-      (tester) async {
+  testWidgets('renders intake card + empty state', (tester) async {
     tester.view.physicalSize = const Size(1600, 2000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);

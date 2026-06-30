@@ -315,12 +315,10 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
                 '/clinician/tp-drafter': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final client = TpDrafterClient(
                     draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return TpDrafterScreen(
                     client: client,

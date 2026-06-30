@@ -8,10 +8,10 @@ import 'package:psyclinicai/services/treatment_plan_drafter/tp_drafter_client.da
 
 void main() {
   TpDrafterClient withMock(MockClient mock) => TpDrafterClient(
-        draftUrl: 'https://example.test/tpDraftPlan',
-        idTokenProvider: () async => 'tok',
-        httpClient: mock,
-      );
+    draftUrl: 'https://example.test/tpDraftPlan',
+    idTokenProvider: () async => 'tok',
+    httpClient: mock,
+  );
 
   group('TpDrafterClient', () {
     test('posts (disorder, modality, problems) + parses 2xx draft', () async {

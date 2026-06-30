@@ -53,9 +53,7 @@ class TpDrafterClient {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw TpDrafterException(res.statusCode, res.body);
     }
-    return TpDraftedPlan.fromJson(
-      jsonDecode(res.body) as Map<String, dynamic>,
-    );
+    return TpDraftedPlan.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   void close() => _http.close();
@@ -74,16 +72,15 @@ class TpDraftedPlan {
   });
 
   factory TpDraftedPlan.fromJson(Map<String, dynamic> j) => TpDraftedPlan(
-        schemaVersion: j['schemaVersion'] as int,
-        generatedAtMillis: j['generatedAt'] as int,
-        provider: j['provider'] as String,
-        model: j['model'] as String,
-        protocolLabel: j['protocolLabel'] as String,
-        requiresSupervisorCoSign:
-            j['requiresSupervisorCoSign'] as bool,
-        plan: Map<String, dynamic>.from(j['plan'] as Map),
-        phiRedactions: (j['phiRedactions'] as int?) ?? 0,
-      );
+    schemaVersion: j['schemaVersion'] as int,
+    generatedAtMillis: j['generatedAt'] as int,
+    provider: j['provider'] as String,
+    model: j['model'] as String,
+    protocolLabel: j['protocolLabel'] as String,
+    requiresSupervisorCoSign: j['requiresSupervisorCoSign'] as bool,
+    plan: Map<String, dynamic>.from(j['plan'] as Map),
+    phiRedactions: (j['phiRedactions'] as int?) ?? 0,
+  );
 
   final int schemaVersion;
   final int generatedAtMillis;

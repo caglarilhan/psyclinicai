@@ -33,7 +33,9 @@ class PressPage extends StatelessWidget {
             'Brand boilerplate — 50-, 100-, and 200-word descriptions '
             'of PsyClinicAI.',
           ),
-          StaticBullet('Leadership bios + headshots — on request, signed release.'),
+          StaticBullet(
+            'Leadership bios + headshots — on request, signed release.',
+          ),
           StaticBullet(
             'Customer pull-quotes — anonymised, pending pilot member '
             'consent.',

@@ -435,6 +435,14 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Sprint 31 PR-C — BYOK per-user LLM provider keys.
+    // Stored at /clinicians/{uid}/api_keys/{kid}. Owner-only.
+    // Handler resolver reads via admin SDK (bypasses rules) but
+    // logs only the masked tail.
+    match /clinicians/{uid}/api_keys/{kid} {
+      allow read, write: if isAuthed() && request.auth.uid == uid;
+    }
+
     // Hard fail — anything else is denied.
     match /{document=**} {
       allow read, write: if false;

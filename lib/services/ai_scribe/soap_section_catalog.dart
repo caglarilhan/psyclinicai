@@ -34,12 +34,7 @@ library;
 enum SoapSection { subjective, objective, assessment, plan }
 
 /// Field kind for the editor UI.
-enum SoapFieldKind {
-  longText,
-  bulletList,
-  structuredList,
-  codedTerm,
-}
+enum SoapFieldKind { longText, bulletList, structuredList, codedTerm }
 
 /// One field within a SOAP section.
 class SoapFieldSpec {
@@ -359,5 +354,4 @@ bool isSectionComplete(SoapSectionSpec spec, Map<String, dynamic> draft) {
 String soapDraftCacheKey({
   required String tenantId,
   required SoapSection section,
-}) =>
-    'soap:v${SoapSectionCatalog.schemaVersion}:$tenantId:${section.name}';
+}) => 'soap:v${SoapSectionCatalog.schemaVersion}:$tenantId:${section.name}';

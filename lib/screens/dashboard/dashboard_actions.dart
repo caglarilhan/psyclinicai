@@ -87,12 +87,11 @@ class QuickActions extends StatelessWidget {
         route: '/ai_chatbot',
       ),
       DashboardAction(
-        icon: Icons.send_outlined,
-        label: 'Send MBC check-in',
+        icon: Icons.auto_awesome,
+        label: 'Ambient scribe',
         body:
-            'PHQ-9 / GAD-7 / PCL-5 between sessions. Private link, no '
-            'patient account needed.',
-        route: '/clinician/mbc',
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        route: '/clinician/scribe',
       ),
       DashboardAction(
         icon: Icons.help_outline,

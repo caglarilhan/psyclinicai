@@ -55,6 +55,9 @@ export { accessReviewCron } from "./access_review_cron";
 // Sprint 25 W2 — public health probe for statuspage.io polling.
 export { healthcheck } from "./healthcheck";
 
+// Sprint 30 PILAR3 — No-show predictor (clinician-only).
+export { noshowPredict } from "./noshow_predict_handler";
+
 // Sprint 26 W1 — WebAuthn / FIDO2 passkey enrolment + assertion.
 export {
   passkeyRegisterOptions,

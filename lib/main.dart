@@ -10,8 +10,9 @@ import 'package:psyclinicai/screens/admin/risk_coverage_screen.dart';
 import 'package:psyclinicai/screens/ai/ai_diagnosis_screen.dart';
 import 'package:psyclinicai/screens/ai/rag_console_screen.dart';
 import 'package:psyclinicai/screens/ai_chatbot/ai_chatbot_screen.dart';
+import 'package:psyclinicai/screens/ai_scribe/ai_scribe_screen.dart';
 import 'package:psyclinicai/screens/appointments/appointments_screen.dart';
-import 'package:psyclinicai/screens/treatment_plan_drafter/tp_drafter_screen.dart';
+import 'package:psyclinicai/screens/noshow/noshow_queue_screen.dart';
 import 'package:psyclinicai/screens/assessments/aseba_intake_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_result_screen.dart';
 import 'package:psyclinicai/screens/assessments/assessment_screen.dart';
@@ -85,11 +86,11 @@ import 'package:psyclinicai/screens/trust/security_controls_screen.dart';
 import 'package:psyclinicai/screens/trust/subprocessors_screen.dart';
 import 'package:psyclinicai/screens/trust/trust_center_screen.dart';
 import 'package:psyclinicai/services/ai/rag_service.dart';
+import 'package:psyclinicai/services/ai_scribe/ai_scribe_client.dart';
 import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
 import 'package:psyclinicai/services/copilot/copilot_endpoint.dart';
-import 'package:psyclinicai/services/treatment_plan_drafter/tp_drafter_client.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
 import 'package:psyclinicai/services/data/consent_entry_repository.dart';
@@ -314,13 +315,13 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SecurityControlsScreen(),
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
-                '/clinician/tp-drafter': (context) {
+                '/clinician/scribe': (context) {
                   final profile = fb_auth.FirebaseAuthService.instance.profile;
-                  final client = TpDrafterClient(
-                    draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
+                  final client = AiScribeClient(
+                    baseUrl: '${BuildConfig.backendUrl}/aiScribeDraftSoap',
                     idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
-                  return TpDrafterScreen(
+                  return AiScribeScreen(
                     client: client,
                     tenantId: profile?.userId ?? 'self',
                   );

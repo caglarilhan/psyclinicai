@@ -87,12 +87,11 @@ class QuickActions extends StatelessWidget {
         route: '/ai_chatbot',
       ),
       DashboardAction(
-        icon: Icons.checklist_outlined,
-        label: 'Treatment plan drafter',
+        icon: Icons.auto_awesome,
+        label: 'Ambient scribe',
         body:
-            'Pick a disorder + modality and get a SMART-goal plan '
-            'cited to the published clinical guideline.',
-        route: '/clinician/tp-drafter',
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        route: '/clinician/scribe',
       ),
       DashboardAction(
         icon: Icons.help_outline,

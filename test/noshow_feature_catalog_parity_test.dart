@@ -20,8 +20,11 @@ void main() {
     test('every feature key appears verbatim in TS', () {
       final ts = tsFile.readAsStringSync();
       for (final f in NoShowFeatureCatalog.features) {
-        expect(ts.contains('key: "${f.key}"'), isTrue,
-            reason: '${f.key}: missing in TS mirror');
+        expect(
+          ts.contains('key: "${f.key}"'),
+          isTrue,
+          reason: '${f.key}: missing in TS mirror',
+        );
       }
     });
 
@@ -29,12 +32,14 @@ void main() {
       final ts = tsFile.readAsStringSync();
       expect(
         ts.contains(
-            'NOSHOW_SCHEMA_VERSION = ${NoShowFeatureCatalog.schemaVersion}'),
+          'NOSHOW_SCHEMA_VERSION = ${NoShowFeatureCatalog.schemaVersion}',
+        ),
         isTrue,
       );
       expect(
         ts.contains(
-            'NOSHOW_LAST_REVIEWED = "${NoShowFeatureCatalog.lastReviewed}"'),
+          'NOSHOW_LAST_REVIEWED = "${NoShowFeatureCatalog.lastReviewed}"',
+        ),
         isTrue,
       );
     });
@@ -42,8 +47,11 @@ void main() {
     test('every playbook tier + depositRequired byte-equivalent in TS', () {
       final ts = tsFile.readAsStringSync();
       for (final p in NoShowFeatureCatalog.playbooks) {
-        expect(ts.contains('tier: "${p.tier.name}"'), isTrue,
-            reason: '${p.tier}: missing tier literal in TS');
+        expect(
+          ts.contains('tier: "${p.tier.name}"'),
+          isTrue,
+          reason: '${p.tier}: missing tier literal in TS',
+        );
         expect(
           ts.contains('depositRequired: ${p.depositRequired}'),
           isTrue,

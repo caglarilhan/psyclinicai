@@ -87,12 +87,11 @@ class QuickActions extends StatelessWidget {
         route: '/ai_chatbot',
       ),
       DashboardAction(
-        icon: Icons.online_prediction,
-        label: 'No-show risk queue',
+        icon: Icons.auto_awesome,
+        label: 'Ambient scribe',
         body:
-            'Predict no-show risk for an appointment and apply the '
-            'recovery playbook (reminders, deposit, waitlist).',
-        route: '/clinician/noshow',
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        route: '/clinician/scribe',
       ),
       DashboardAction(
         icon: Icons.help_outline,

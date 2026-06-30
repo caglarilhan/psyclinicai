@@ -33,11 +33,7 @@ library;
 enum DispatchChannel { email, sms, portal }
 
 /// Audience the assessment may be dispatched to.
-enum DispatchAudience {
-  patientAdult,
-  patientAdolescent,
-  caregiver,
-}
+enum DispatchAudience { patientAdult, patientAdolescent, caregiver }
 
 class MbcDispatchRule {
   const MbcDispatchRule({
@@ -147,9 +143,7 @@ class MbcDispatchCatalog {
       publicSubmit: true,
       maxItemsPerSession: 5,
       payerCadenceLabel: 'monthly',
-      regulatoryRefs: [
-        'Topp et al. (2015) WHO-5 systematic review',
-      ],
+      regulatoryRefs: ['Topp et al. (2015) WHO-5 systematic review'],
     ),
     MbcDispatchRule(
       scaleId: 'audit',
@@ -162,9 +156,7 @@ class MbcDispatchCatalog {
       publicSubmit: true,
       maxItemsPerSession: 10,
       payerCadenceLabel: 'quarterly',
-      regulatoryRefs: [
-        'NICE CG115 alcohol-use disorders',
-      ],
+      regulatoryRefs: ['NICE CG115 alcohol-use disorders'],
     ),
     MbcDispatchRule(
       scaleId: 'pcl5',
@@ -177,9 +169,7 @@ class MbcDispatchCatalog {
       publicSubmit: true,
       maxItemsPerSession: 10,
       payerCadenceLabel: 'monthly',
-      regulatoryRefs: [
-        'NICE NG116 post-traumatic stress disorder',
-      ],
+      regulatoryRefs: ['NICE NG116 post-traumatic stress disorder'],
     ),
   ];
 
@@ -199,8 +189,7 @@ bool isDueForDispatch({
   required DateTime now,
 }) {
   if (lastDispatchedAt == null) return true;
-  final due =
-      lastDispatchedAt.add(Duration(days: rule.intervalDays));
+  final due = lastDispatchedAt.add(Duration(days: rule.intervalDays));
   return !now.isBefore(due);
 }
 
@@ -209,5 +198,4 @@ bool isDueForDispatch({
 DateTime tokenExpiryFor({
   required MbcDispatchRule rule,
   required DateTime dispatchedAt,
-}) =>
-    dispatchedAt.add(Duration(hours: rule.linkLifetimeHours));
+}) => dispatchedAt.add(Duration(hours: rule.linkLifetimeHours));

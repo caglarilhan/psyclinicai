@@ -8,23 +8,32 @@ void main() {
       expect(MbcDispatchCatalog.rules, isNotEmpty);
       for (final r in MbcDispatchCatalog.rules) {
         final outcome = OutcomeMeasureCatalog.byScaleId(r.scaleId);
-        expect(outcome, isNotNull,
-            reason: '${r.scaleId}: unknown to OutcomeMeasureCatalog');
+        expect(
+          outcome,
+          isNotNull,
+          reason: '${r.scaleId}: unknown to OutcomeMeasureCatalog',
+        );
       }
     });
 
     test('intervalDays matches OutcomeMeasureCatalog.readminInterval', () {
       for (final r in MbcDispatchCatalog.rules) {
         final outcome = OutcomeMeasureCatalog.byScaleId(r.scaleId)!;
-        expect(r.intervalDays, outcome.readminInterval,
-            reason: '${r.scaleId}: drift vs OutcomeMeasureCatalog');
+        expect(
+          r.intervalDays,
+          outcome.readminInterval,
+          reason: '${r.scaleId}: drift vs OutcomeMeasureCatalog',
+        );
       }
     });
 
     test('reminderAtHours <= linkLifetimeHours (reminders never dead)', () {
       for (final r in MbcDispatchCatalog.rules) {
-        expect(r.reminderAtHours <= r.linkLifetimeHours, isTrue,
-            reason: '${r.scaleId}: reminder would point at expired link');
+        expect(
+          r.reminderAtHours <= r.linkLifetimeHours,
+          isTrue,
+          reason: '${r.scaleId}: reminder would point at expired link',
+        );
       }
     });
 
@@ -43,8 +52,11 @@ void main() {
 
     test('every rule pins regulatoryRefs', () {
       for (final r in MbcDispatchCatalog.rules) {
-        expect(r.regulatoryRefs, isNotEmpty,
-            reason: '${r.scaleId} missing regulatory anchor');
+        expect(
+          r.regulatoryRefs,
+          isNotEmpty,
+          reason: '${r.scaleId} missing regulatory anchor',
+        );
       }
     });
 
@@ -59,8 +71,10 @@ void main() {
     });
 
     test('lastReviewed is YYYY-MM', () {
-      expect(MbcDispatchCatalog.lastReviewed,
-          matches(RegExp(r'^\d{4}-\d{2}$')));
+      expect(
+        MbcDispatchCatalog.lastReviewed,
+        matches(RegExp(r'^\d{4}-\d{2}$')),
+      );
     });
 
     test('byScaleId returns the matching rule', () {
@@ -69,8 +83,7 @@ void main() {
     });
 
     test('byScaleId throws for unknown id', () {
-      expect(() => MbcDispatchCatalog.byScaleId('nonsense'),
-          throwsStateError);
+      expect(() => MbcDispatchCatalog.byScaleId('nonsense'), throwsStateError);
     });
   });
 

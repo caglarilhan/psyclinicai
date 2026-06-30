@@ -82,18 +82,12 @@ class _MbcPatientFormScreenState extends State<MbcPatientFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Check-in'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Check-in'), centerTitle: true),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 24,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: _result != null
                 ? _ResultPanel(theme: theme, result: _result!)
                 : _FormBody(
@@ -170,8 +164,9 @@ class _FormBody extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             error!,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.error),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
           ),
         ],
         const SizedBox(height: 24),
@@ -183,8 +178,9 @@ class _FormBody extends StatelessWidget {
         Text(
           'Privacy: only your care team can see your answers. This page '
           'expires automatically.',
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: theme.colorScheme.outline),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -216,10 +212,7 @@ class _QuestionTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${index + 1}. $prompt',
-            style: theme.textTheme.titleSmall,
-          ),
+          Text('${index + 1}. $prompt', style: theme.textTheme.titleSmall),
           const SizedBox(height: 6),
           for (var i = 0; i < choices.length; i++)
             RadioListTile<int>(
@@ -256,9 +249,11 @@ class _ResultPanel extends StatelessWidget {
           color: result.alarmTriggered ? cs.error : cs.primary,
         ),
         const SizedBox(height: 16),
-        Text('Thank you — your check-in is in.',
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center),
+        Text(
+          'Thank you — your check-in is in.',
+          style: theme.textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: 8),
         Text(
           'Score: ${result.score} / ${result.maxScore} '
@@ -277,8 +272,9 @@ class _ResultPanel extends StatelessWidget {
                 'Your care team has been notified and will reach out. '
                 'If you are in immediate danger, call your local '
                 'emergency number or a crisis line.',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: cs.onErrorContainer),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onErrorContainer,
+                ),
               ),
             ),
           ),

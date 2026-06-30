@@ -8,8 +8,9 @@ import 'package:psyclinicai/screens/mbc/mbc_patient_form_screen.dart';
 import 'package:psyclinicai/services/mbc/mbc_client.dart';
 
 void main() {
-  testWidgets('renders PHQ-9 title + question prompts + disabled submit',
-      (tester) async {
+  testWidgets('renders PHQ-9 title + question prompts + disabled submit', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);

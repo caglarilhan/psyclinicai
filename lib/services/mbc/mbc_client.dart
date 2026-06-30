@@ -6,10 +6,8 @@ import 'package:http/http.dart' as http;
 /// No Firebase ID token is sent — the URL-bound token is the only
 /// credential. See `functions/src/mbc_submit_assessment.ts`.
 class MbcPublicClient {
-  MbcPublicClient({
-    required this.submitUrl,
-    http.Client? httpClient,
-  }) : _http = httpClient ?? http.Client();
+  MbcPublicClient({required this.submitUrl, http.Client? httpClient})
+    : _http = httpClient ?? http.Client();
 
   /// Expected to be `${BuildConfig.backendUrl}/mbcSubmitAssessment`.
   final String submitUrl;
@@ -46,13 +44,13 @@ class MbcSubmitResult {
   });
 
   factory MbcSubmitResult.fromJson(Map<String, dynamic> j) => MbcSubmitResult(
-        scaleId: j['scaleId'] as String,
-        score: j['score'] as int,
-        maxScore: j['maxScore'] as int,
-        severity: j['severity'] as String,
-        alarmTriggered: j['alarmTriggered'] as bool,
-        clinicianAction: j['clinicianAction'] as String,
-      );
+    scaleId: j['scaleId'] as String,
+    score: j['score'] as int,
+    maxScore: j['maxScore'] as int,
+    severity: j['severity'] as String,
+    alarmTriggered: j['alarmTriggered'] as bool,
+    clinicianAction: j['clinicianAction'] as String,
+  );
 
   final String scaleId;
   final int score;

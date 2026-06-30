@@ -241,6 +241,207 @@ export class AzureOpenAIProvider implements LlmProvider {
 }
 
 /**
+ * Groq provider — OpenAI-compatible chat/completions API at
+ * `https://api.groq.com/openai/v1/chat/completions`.
+ *
+ * Free tier (14,400 tokens/day, ~30 req/min on Llama-3.3-70B) covers
+ * the demo-mode launch budget — PILAR 1 (Scribe) and PILAR 4 (Drafter)
+ * route here when the request is flagged `phi_safe: false` (synthetic
+ * vignette / sandbox) OR the tenant has explicitly opted into the
+ * free demo tier.
+ *
+ * IMPORTANT: Groq does NOT sign a HIPAA BAA on the free tier. The
+ * handler MUST gate live-PHI requests behind a separate provider
+ * (Anthropic / Azure) — `defaultProviderChain` puts Groq FIRST for
+ * demo-mode workloads; the upstream caller is responsible for
+ * routing PHI to a BAA-bearing chain.
+ */
+export class GroqProvider implements LlmProvider {
+  readonly id = "groq";
+
+  constructor(
+    private readonly apiKey: string | undefined,
+    private readonly defaultModel: string = "llama-3.3-70b-versatile"
+  ) {}
+
+  get configured(): boolean {
+    return !!this.apiKey;
+  }
+
+  async invoke(req: LlmRequest): Promise<LlmResponse> {
+    if (!this.apiKey) {
+      throw new LlmProviderError(
+        "missing_credentials",
+        "GROQ_API_KEY not set"
+      );
+    }
+    const model = req.model ?? this.defaultModel;
+    const messages: Array<{role: string; content: string}> = [];
+    if (req.system) messages.push({role: "system", content: req.system});
+    for (const m of req.messages) {
+      messages.push({role: m.role, content: m.content});
+    }
+
+    let resp: Response;
+    try {
+      resp = await fetch(
+        "https://api.groq.com/openai/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "authorization": `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            max_tokens: req.maxTokens ?? 1024,
+            temperature: req.temperature ?? 0.2,
+          }),
+        }
+      );
+    } catch (e) {
+      throw new LlmProviderError(
+        "upstream_unreachable",
+        `Groq fetch failed: ${String(e)}`
+      );
+    }
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new LlmProviderError(
+        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        `Groq ${resp.status}: ${body.slice(0, 200)}`,
+        resp.status
+      );
+    }
+    const payload = (await resp.json()) as {
+      choices?: Array<{message?: {content?: string}}>;
+      usage?: {prompt_tokens?: number; completion_tokens?: number};
+    };
+    const text = payload.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!text) {
+      throw new LlmProviderError(
+        "malformed_response",
+        "Groq returned empty content"
+      );
+    }
+    return {
+      text,
+      provider: this.id,
+      model,
+      inputTokens: payload.usage?.prompt_tokens,
+      outputTokens: payload.usage?.completion_tokens,
+    };
+  }
+}
+
+/**
+ * Gemini provider — Google Generative Language API at
+ * `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`.
+ *
+ * Free tier (60 RPM, 1k RPD on gemini-1.5-flash) is the secondary
+ * free-tier fallback when Groq's daily cap (~14.4k TPD) is exhausted.
+ *
+ * Same BAA caveat as Groq: free tier does NOT carry a Google Cloud
+ * BAA. Live-PHI routing must use a BAA-bearing chain.
+ *
+ * The adapter converts Anthropic's `messages` shape to Gemini's
+ * `contents` shape — system prompt becomes a leading user turn
+ * because Gemini's API doesn't have a first-class system role on
+ * the free tier.
+ */
+export class GeminiProvider implements LlmProvider {
+  readonly id = "gemini";
+
+  constructor(
+    private readonly apiKey: string | undefined,
+    private readonly defaultModel: string = "gemini-1.5-flash"
+  ) {}
+
+  get configured(): boolean {
+    return !!this.apiKey;
+  }
+
+  async invoke(req: LlmRequest): Promise<LlmResponse> {
+    if (!this.apiKey) {
+      throw new LlmProviderError(
+        "missing_credentials",
+        "GEMINI_API_KEY not set"
+      );
+    }
+    const model = req.model ?? this.defaultModel;
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
+      `:generateContent?key=${this.apiKey}`;
+
+    const contents: Array<{role: string; parts: Array<{text: string}>}> = [];
+    if (req.system) {
+      contents.push({role: "user", parts: [{text: req.system}]});
+      contents.push({role: "model", parts: [{text: "Understood."}]});
+    }
+    for (const m of req.messages) {
+      const role = m.role === "assistant" ? "model" : "user";
+      contents.push({role, parts: [{text: m.content}]});
+    }
+
+    let resp: Response;
+    try {
+      resp = await fetch(url, {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            maxOutputTokens: req.maxTokens ?? 1024,
+            temperature: req.temperature ?? 0.2,
+          },
+        }),
+      });
+    } catch (e) {
+      throw new LlmProviderError(
+        "upstream_unreachable",
+        `Gemini fetch failed: ${String(e)}`
+      );
+    }
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new LlmProviderError(
+        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        `Gemini ${resp.status}: ${body.slice(0, 200)}`,
+        resp.status
+      );
+    }
+    const payload = (await resp.json()) as {
+      candidates?: Array<{
+        content?: {parts?: Array<{text?: string}>};
+      }>;
+      usageMetadata?: {
+        promptTokenCount?: number;
+        candidatesTokenCount?: number;
+      };
+    };
+    const text =
+      payload.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? "")
+        .join("")
+        .trim() ?? "";
+    if (!text) {
+      throw new LlmProviderError(
+        "malformed_response",
+        "Gemini returned empty content"
+      );
+    }
+    return {
+      text,
+      provider: this.id,
+      model,
+      inputTokens: payload.usageMetadata?.promptTokenCount,
+      outputTokens: payload.usageMetadata?.candidatesTokenCount,
+    };
+  }
+}
+
+/**
  * Run [req] against [providers] in order. Each provider may throw
  * [LlmProviderError]; the next configured provider gets a shot. If
  * every provider fails the last error is rethrown.

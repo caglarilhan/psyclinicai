@@ -528,27 +528,30 @@ class _DemoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Amber warning tone (Sprint 31 PR-M) — same as the Scribe banner.
+    const bg = Color(0xFFFFF4CC);
+    const fg = Color(0xFF8B5A00);
+    const border = Color(0xFFF5C542);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: PsySpacing.md,
         vertical: PsySpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: cs.errorContainer,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
+        border: Border.all(color: border),
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: cs.onErrorContainer),
+          const Icon(Icons.warning_amber_rounded, color: fg),
           const SizedBox(width: PsySpacing.sm),
           Expanded(
             child: Text(
               'Demo mode — synthetic data only. Do NOT enter real patient '
               'information. Free-tier LLM providers do not carry a HIPAA '
               'BAA. Load a sample vignette below to evaluate the drafter.',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: cs.onErrorContainer),
+              style: theme.textTheme.bodySmall?.copyWith(color: fg),
             ),
           ),
         ],
@@ -587,7 +590,28 @@ class _SampleVignettePicker extends StatelessWidget {
               for (final v in SyntheticVignetteCatalog.vignettes)
                 PopupMenuItem<SyntheticVignette>(
                   value: v,
-                  child: Text(v.label),
+                  child: SizedBox(
+                    width: 360,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.label,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          v.contextNote.length > 100
+                              ? '${v.contextNote.substring(0, 97)}…'
+                              : v.contextNote,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: cs.outline),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
             ],
             child: const Padding(

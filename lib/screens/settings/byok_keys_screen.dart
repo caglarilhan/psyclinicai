@@ -34,6 +34,7 @@ class _ByokKeysScreenState extends State<ByokKeysScreen> {
   final TextEditingController _gemini = TextEditingController();
   bool _loading = true;
   bool _saving = false;
+  bool _baaAccepted = false;
   String? _error;
   ByokKeys _current = const ByokKeys();
 
@@ -70,6 +71,19 @@ class _ByokKeysScreenState extends State<ByokKeysScreen> {
 
   Future<void> _onSave() async {
     if (_saving) return;
+    // Sprint 31 PR-M — BAA delegation gate: the clinician must
+    // explicitly confirm they have their own BAA in place with each
+    // provider whose key they paste. Without this checkbox we cannot
+    // legally route real PHI through the pasted key.
+    final hasNewAnthropic = _anthropic.text.trim().isNotEmpty;
+    if (hasNewAnthropic && !_baaAccepted) {
+      setState(() {
+        _error =
+            'To store an Anthropic key you must confirm you have signed '
+            'the HIPAA BAA directly with Anthropic (the checkbox below).';
+      });
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -158,6 +172,9 @@ class _ByokKeysScreenState extends State<ByokKeysScreen> {
                   anthropic: _anthropic,
                   groq: _groq,
                   gemini: _gemini,
+                  baaAccepted: _baaAccepted,
+                  onBaaChanged: (v) =>
+                      setState(() => _baaAccepted = v ?? false),
                   saving: _saving,
                   onSave: _onSave,
                   onClear: _onClear,
@@ -249,6 +266,8 @@ class _KeyEditorCard extends StatelessWidget {
     required this.anthropic,
     required this.groq,
     required this.gemini,
+    required this.baaAccepted,
+    required this.onBaaChanged,
     required this.saving,
     required this.onSave,
     required this.onClear,
@@ -260,6 +279,8 @@ class _KeyEditorCard extends StatelessWidget {
   final TextEditingController anthropic;
   final TextEditingController groq;
   final TextEditingController gemini;
+  final bool baaAccepted;
+  final ValueChanged<bool?> onBaaChanged;
   final bool saving;
   final VoidCallback onSave;
   final VoidCallback onClear;
@@ -303,6 +324,27 @@ class _KeyEditorCard extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: 'Gemini API key',
               hintText: 'AIza...',
+            ),
+          ),
+          const SizedBox(height: PsySpacing.md),
+          // Sprint 31 PR-M — BAA delegation checkbox. Required before
+          // an Anthropic key can be stored; the resolver relies on the
+          // clinician's own BAA with Anthropic to route real PHI.
+          CheckboxListTile(
+            value: baaAccepted,
+            onChanged: onBaaChanged,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(
+              'I have signed the HIPAA BAA directly with Anthropic '
+              '(required to store an Anthropic key).',
+              style: theme.textTheme.bodySmall,
+            ),
+            subtitle: Text(
+              'Anthropic offers a self-serve BAA — see '
+              'https://www.anthropic.com/legal/commercial-terms. '
+              'psyclinicai never acts as a business associate on the '
+              'demo / BYOK tier.',
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.outline),
             ),
           ),
           if (error != null) ...[

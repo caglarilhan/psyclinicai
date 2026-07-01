@@ -10,6 +10,7 @@ class HeroSection extends StatelessWidget {
     required this.onPrimaryCta,
     required this.onSecondaryCta,
     this.onWaitlistEmail,
+    this.onTryDemoCta,
   });
 
   /// Plain CTA — used by /landing composer for fallback flows.
@@ -20,6 +21,10 @@ class HeroSection extends StatelessWidget {
   /// plain button for an inline email-capture form — much higher
   /// top-of-funnel conversion.
   final ValueChanged<String>? onWaitlistEmail;
+
+  /// Sprint 31 PR-M — "Try demo now — no card" secondary CTA. Routes
+  /// to /login for the demo tier (synthetic data only).
+  final VoidCallback? onTryDemoCta;
 
   @override
   Widget build(BuildContext context) {
@@ -145,6 +150,23 @@ class HeroSection extends StatelessWidget {
               ),
             ),
           ),
+        if (onTryDemoCta != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onTryDemoCta,
+            icon: const Icon(Icons.play_circle_outline, size: 18),
+            label: const Text('Try demo now — no card, synthetic data'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+              foregroundColor: cs.primary,
+              side: BorderSide(color: cs.primary, width: 1.5),
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         TextButton.icon(
           onPressed: onSecondaryCta,

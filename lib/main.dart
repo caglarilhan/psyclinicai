@@ -334,13 +334,10 @@ class PsyClinicAIApp extends StatelessWidget {
                   );
                 },
                 '/clinician/mbc': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final service = MbcDispatchService(
-                    dispatchUrl:
-                        '${BuildConfig.backendUrl}/mbcDispatchLink',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    dispatchUrl: '${BuildConfig.backendUrl}/mbcDispatchLink',
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return MbcClinicianDashboardScreen(
                     service: service,
@@ -348,13 +345,10 @@ class PsyClinicAIApp extends StatelessWidget {
                   );
                 },
                 '/clinician/noshow': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final client = NoShowPredictClient(
-                    predictUrl:
-                        '${BuildConfig.backendUrl}/noshowPredict',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return NoShowQueueScreen(
                     client: client,
@@ -362,12 +356,10 @@ class PsyClinicAIApp extends StatelessWidget {
                   );
                 },
                 '/clinician/tp-drafter': (context) {
-                  final profile =
-                      fb_auth.FirebaseAuthService.instance.profile;
+                  final profile = fb_auth.FirebaseAuthService.instance.profile;
                   final client = TpDrafterClient(
                     draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
-                    idTokenProvider:
-                        CopilotEndpoint.defaultFirebaseIdToken,
+                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
                   );
                   return TpDrafterScreen(
                     client: client,

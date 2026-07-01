@@ -1,3 +1,6 @@
+// ignore_for_file: deprecated_member_use
+// Radio.groupValue / onChanged deprecated after Flutter 3.32; the
+// RadioGroup migration is tracked as a separate chore.
 import 'package:flutter/material.dart';
 
 import '../../services/mbc/mbc_client.dart';

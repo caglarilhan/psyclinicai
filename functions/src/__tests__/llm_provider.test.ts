@@ -13,6 +13,8 @@ import {
   LlmProvider,
   LlmProviderError,
   LlmRequest,
+  classifyStatus,
+  fetchWithTimeout,
   invokeWithFallback,
 } from "../lib/llm_provider";
 
@@ -216,5 +218,101 @@ describe("invokeWithFallback", () => {
         baseReq
       )
     ).rejects.toMatchObject({reason: "missing_credentials"});
+  });
+
+  it("falls over on rate_limited (429) so Gemini can pick up", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, throwReason: "rate_limited"}),
+        p("gemini", {configured: true, response: "picked-up-by-gemini"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("gemini");
+    expect(r.text).toBe("picked-up-by-gemini");
+  });
+
+  it("falls over on timeout so the next provider gets a shot", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, throwReason: "timeout"}),
+        p("gemini", {configured: true, response: "gemini-after-timeout"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("gemini");
+  });
+});
+
+describe("classifyStatus", () => {
+  it("maps 429 to rate_limited so ops can distinguish it from other 4xx", () => {
+    expect(classifyStatus(429)).toBe("rate_limited");
+  });
+
+  it("keeps other 4xx as upstream_4xx", () => {
+    expect(classifyStatus(400)).toBe("upstream_4xx");
+    expect(classifyStatus(401)).toBe("upstream_4xx");
+    expect(classifyStatus(403)).toBe("upstream_4xx");
+    expect(classifyStatus(404)).toBe("upstream_4xx");
+  });
+
+  it("keeps 5xx as upstream_5xx", () => {
+    expect(classifyStatus(500)).toBe("upstream_5xx");
+    expect(classifyStatus(502)).toBe("upstream_5xx");
+    expect(classifyStatus(503)).toBe("upstream_5xx");
+  });
+});
+
+describe("fetchWithTimeout", () => {
+  it("returns the response when the fetch resolves before the deadline", async () => {
+    mockFetch(async () => new Response("ok", {status: 200}));
+    const r = await fetchWithTimeout(
+      "https://example.com",
+      {method: "GET"},
+      1000,
+      "test-provider"
+    );
+    expect(r.status).toBe(200);
+  });
+
+  it(
+    "throws LlmProviderError with reason 'timeout' when the deadline hits",
+    async () => {
+      // Simulate a hung fetch that resolves only after the timeout —
+      // AbortController.abort() will cause the fetch to reject with an
+      // AbortError, which fetchWithTimeout rewrites as timeout.
+      mockFetch(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            const signal = init.signal as AbortSignal | undefined;
+            signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError"))
+            );
+          })
+      );
+      await expect(
+        fetchWithTimeout(
+          "https://example.com",
+          {method: "GET"},
+          20,
+          "groq"
+        )
+      ).rejects.toMatchObject({
+        reason: "timeout",
+        message: expect.stringContaining("groq"),
+      });
+    },
+    5000
+  );
+});
+
+describe("AnthropicProvider — 429 classification", () => {
+  it("throws rate_limited for a 429 response", async () => {
+    mockFetch(async () => new Response("slow down", {status: 429}));
+    const p = new AnthropicProvider("sk-x");
+    await expect(p.invoke(baseReq)).rejects.toMatchObject({
+      reason: "rate_limited",
+      statusCode: 429,
+    });
   });
 });

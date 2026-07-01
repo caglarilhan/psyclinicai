@@ -70,6 +70,35 @@ void main() {
       }
     });
 
+    test('Demo-tier LLMs (Groq + Gemini) are pinned as high-risk, no PHI', () {
+      for (final id in ['groq', 'google-gemini']) {
+        final s = SubprocessorRegistry.byId(id);
+        expect(s, isNotNull, reason: '$id must be in the registry');
+        expect(
+          s!.risk,
+          SubprocessorRisk.high,
+          reason:
+              '$id ships without a BAA and must be marked high-risk so '
+              'the trust center flags it clearly',
+        );
+        expect(
+          s.purpose.toLowerCase(),
+          contains('demo'),
+          reason:
+              '$id purpose must call out that only Demo-tier synthetic '
+              'vignettes are sent — never PHI',
+        );
+        expect(
+          s.transferMechanism.toLowerCase().contains('no baa') ||
+              s.transferMechanism.toLowerCase().contains('does not process'),
+          isTrue,
+          reason:
+              '$id transfer mechanism must document that no BAA applies '
+              'because Demo tier does not process PHI',
+        );
+      }
+    });
+
     test('SubprocessorRisk covers low / medium / high', () {
       expect(SubprocessorRisk.values, hasLength(3));
       expect(SubprocessorRisk.values.map((r) => r.name).toSet(), {

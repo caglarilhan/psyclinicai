@@ -8,6 +8,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
 import '../../widgets/ds/psy_card.dart';
+import '../../widgets/ds/psy_snack.dart';
 
 /// `/clinician/mbc` — entry point for the Measurement-Based Care
 /// dispatcher. MVP slice (PILAR 2 / PR-4): the clinician picks a
@@ -41,6 +42,12 @@ class _MbcClinicianDashboardScreenState
   bool _dispatching = false;
   String? _error;
   MbcDispatch? _lastDispatch;
+
+  /// Stable repository reference — instantiating in `build()` would spin
+  /// a new StreamBuilder subscription on every `setState`, causing the
+  /// "Recent dispatches" panel to flash the loading spinner.
+  late final MbcRecentRepository _recentRepo =
+      widget.recentRepo ?? MbcRecentRepository();
 
   @override
   void dispose() {
@@ -110,7 +117,7 @@ class _MbcClinicianDashboardScreenState
           _RecentDispatchesPanel(
             theme: theme,
             cs: cs,
-            repo: widget.recentRepo ?? MbcRecentRepository(),
+            repo: _recentRepo,
             clinicId: widget.tenantId,
           ),
         ],
@@ -194,39 +201,48 @@ class _RecentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: row.submitted ? cs.primary : cs.outlineVariant,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: PsySpacing.sm),
-          SizedBox(
-            width: 72,
-            child: Text(
-              row.scaleId.toUpperCase(),
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+    final status = row.submitted ? 'submitted' : 'outstanding';
+    return Semantics(
+      label: '${row.scaleId.toUpperCase()}, patient ${row.patientId}, $status',
+      container: true,
+      child: MergeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              ExcludeSemantics(
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: row.submitted ? cs.primary : cs.outlineVariant,
+                    shape: BoxShape.circle,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: PsySpacing.sm),
+              SizedBox(
+                width: 72,
+                child: Text(
+                  row.scaleId.toUpperCase(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(row.patientId, style: theme.textTheme.bodyMedium),
+              ),
+              const SizedBox(width: PsySpacing.md),
+              PsyBadge(
+                label: status,
+                tone: row.submitted
+                    ? PsyBadgeTone.success
+                    : PsyBadgeTone.warning,
+              ),
+            ],
           ),
-          Expanded(
-            child: Text(row.patientId, style: theme.textTheme.bodyMedium),
-          ),
-          const SizedBox(width: PsySpacing.md),
-          PsyBadge(
-            label: row.submitted ? 'submitted' : 'outstanding',
-            tone: row.submitted
-                ? PsyBadgeTone.success
-                : PsyBadgeTone.warning,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -364,12 +380,22 @@ class _LinkPanel extends StatelessWidget {
           const SizedBox(height: PsySpacing.md),
           Align(
             alignment: Alignment.centerRight,
-            child: FilledButton.tonalIcon(
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: dispatch.formUrl));
-              },
-              icon: const Icon(Icons.copy),
-              label: const Text('Copy link'),
+            child: Builder(
+              builder: (ctx) => FilledButton.tonalIcon(
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(text: dispatch.formUrl),
+                  );
+                  if (!ctx.mounted) return;
+                  PsySnack.success(
+                    ctx,
+                    'Assessment link copied to clipboard.',
+                    hint: 'mbc.link_copied',
+                  );
+                },
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy link'),
+              ),
             ),
           ),
         ],

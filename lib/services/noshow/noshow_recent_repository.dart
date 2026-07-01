@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import 'noshow_feature_catalog.dart';
 
@@ -20,7 +21,12 @@ class NoShowRecentRow {
   final double probability;
   final NoShowRiskTier tier;
   final String modelVersion;
-  final DateTime createdAt;
+
+  /// Null when the source row has no `created_at` timestamp — this is a
+  /// schema-drift signal, not a legitimate value. The UI renders "—" in
+  /// that case; a `DateTime(1970)` sentinel would sort the row to the
+  /// bottom of a `desc` list and hide it silently.
+  final DateTime? createdAt;
 
   static NoShowRecentRow fromSnapshot(
     QueryDocumentSnapshot<Map<String, dynamic>> snap,
@@ -31,21 +37,34 @@ class NoShowRecentRow {
       appointmentId: (d['appointment_id'] as String?) ?? '',
       patientId: (d['patient_id'] as String?) ?? '',
       probability: ((d['probability'] as num?) ?? 0).toDouble(),
-      tier: _tierFromString((d['tier'] as String?) ?? 'low'),
+      tier: _tierFromString((d['tier'] as String?) ?? 'low', snap.id),
       modelVersion: (d['model_version'] as String?) ?? '',
-      createdAt: (d['created_at'] as Timestamp?)?.toDate() ?? DateTime(1970),
+      createdAt: (d['created_at'] as Timestamp?)?.toDate(),
     );
   }
-}
 
-NoShowRiskTier _tierFromString(String v) {
-  switch (v) {
-    case 'high':
-      return NoShowRiskTier.high;
-    case 'medium':
-      return NoShowRiskTier.medium;
-    default:
-      return NoShowRiskTier.low;
+  /// Downgrading a real "high" prediction to "low" because of a schema
+  /// mismatch would silence a clinical alert. Debug builds log the
+  /// unknown value so a server-side tier rename (e.g. adding `critical`)
+  /// is caught in test/staging before it ships.
+  static NoShowRiskTier _tierFromString(String v, String rowId) {
+    switch (v) {
+      case 'high':
+        return NoShowRiskTier.high;
+      case 'medium':
+        return NoShowRiskTier.medium;
+      case 'low':
+        return NoShowRiskTier.low;
+      default:
+        assert(() {
+          debugPrint(
+            '[noshow_recent_repository] unknown tier "$v" on row $rowId '
+            '— defaulting to `low`; server-side rename may need a sync.',
+          );
+          return true;
+        }());
+        return NoShowRiskTier.low;
+    }
   }
 }
 

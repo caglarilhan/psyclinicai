@@ -52,6 +52,11 @@ class _NoShowQueueScreenState extends State<NoShowQueueScreen> {
   String? _error;
   NoShowPrediction? _prediction;
 
+  /// Stable repository reference — instantiating in `build()` would spin
+  /// a new StreamBuilder subscription on every `setState`.
+  late final NoShowRecentRepository _recentRepo =
+      widget.recentRepo ?? NoShowRecentRepository();
+
   @override
   void dispose() {
     _apptId.dispose();
@@ -153,7 +158,7 @@ class _NoShowQueueScreenState extends State<NoShowQueueScreen> {
           _RecentPredictionsPanel(
             theme: theme,
             cs: cs,
-            repo: widget.recentRepo ?? NoShowRecentRepository(),
+            repo: _recentRepo,
             clinicId: widget.tenantId,
           ),
         ],
@@ -221,37 +226,46 @@ class _RecentPredictionsPanel extends StatelessWidget {
               return Column(
                 children: [
                   for (final r in rows)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 96,
-                            child: Text(
-                              r.appointmentId,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
+                    Semantics(
+                      label:
+                          'Appointment ${r.appointmentId}, patient ${r.patientId}, '
+                          '${(r.probability * 100).toStringAsFixed(0)} percent risk, '
+                          '${r.tier.name} tier',
+                      container: true,
+                      child: MergeSemantics(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 96,
+                                child: Text(
+                                  r.appointmentId,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                            ),
+                              Expanded(
+                                child: Text(
+                                  r.patientId,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(width: PsySpacing.sm),
+                              Text(
+                                '${(r.probability * 100).toStringAsFixed(0)}%',
+                                style: theme.textTheme.labelMedium,
+                              ),
+                              const SizedBox(width: PsySpacing.sm),
+                              PsyBadge(
+                                label: r.tier.name.toUpperCase(),
+                                tone: _tone(r.tier),
+                              ),
+                            ],
                           ),
-                          Expanded(
-                            child: Text(
-                              r.patientId,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ),
-                          const SizedBox(width: PsySpacing.sm),
-                          Text(
-                            '${(r.probability * 100).toStringAsFixed(0)}%',
-                            style: theme.textTheme.labelMedium,
-                          ),
-                          const SizedBox(width: PsySpacing.sm),
-                          PsyBadge(
-                            label: r.tier.name.toUpperCase(),
-                            tone: _tone(r.tier),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                 ],

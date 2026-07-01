@@ -1,11 +1,20 @@
 import 'dart:convert';
 
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:psyclinicai/screens/noshow/noshow_queue_screen.dart';
 import 'package:psyclinicai/services/noshow/noshow_predict_client.dart';
+import 'package:psyclinicai/services/noshow/noshow_recent_repository.dart';
+
+/// The dashboard's `_RecentPredictionsPanel` reaches for
+/// `FirebaseFirestore.instance` by default. Tests must inject a fake
+/// repo so we don't hit the real Firestore initialization on the test
+/// isolate.
+NoShowRecentRepository _fakeRepo() =>
+    NoShowRecentRepository(db: FakeFirebaseFirestore());
 
 void main() {
   testWidgets('renders feature card + Score button', (tester) async {
@@ -21,7 +30,11 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: NoShowQueueScreen(client: client, tenantId: 't'),
+        home: NoShowQueueScreen(
+          client: client,
+          tenantId: 't',
+          recentRepo: _fakeRepo(),
+        ),
       ),
     );
     await tester.pump();
@@ -64,7 +77,11 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: NoShowQueueScreen(client: client, tenantId: 't'),
+        home: NoShowQueueScreen(
+          client: client,
+          tenantId: 't',
+          recentRepo: _fakeRepo(),
+        ),
       ),
     );
     await tester.pump();

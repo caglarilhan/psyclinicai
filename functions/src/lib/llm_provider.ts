@@ -128,6 +128,16 @@ export interface LlmProvider {
   readonly configured: boolean;
 
   /**
+   * True when the provider is contractually cleared to process PHI —
+   * a BAA (US HIPAA) or an equivalent GDPR Art. 28 processor agreement
+   * is in place. Anthropic + Azure OpenAI have BAAs; free-tier Groq
+   * and Gemini do NOT. `invokeWithFallback({requireBaa: true})` filters
+   * these out at the chain entry so a PHI-carrying handler cannot
+   * accidentally relay to a demo-tier provider.
+   */
+  readonly phiSafe: boolean;
+
+  /**
    * Invoke the model. Throw [LlmProviderError] on any failure so the
    * strategy below can decide whether to fall over to the next
    * provider or bubble the error.
@@ -141,6 +151,7 @@ export interface LlmProvider {
  */
 export class AnthropicProvider implements LlmProvider {
   readonly id = "anthropic";
+  readonly phiSafe = true;
 
   constructor(private readonly apiKey: string | undefined) {}
 
@@ -231,6 +242,7 @@ export class AnthropicProvider implements LlmProvider {
  */
 export class AzureOpenAIProvider implements LlmProvider {
   readonly id = "azure_openai";
+  readonly phiSafe = true;
 
   constructor(
     private readonly endpoint: string | undefined,
@@ -332,6 +344,9 @@ export class AzureOpenAIProvider implements LlmProvider {
  */
 export class GroqProvider implements LlmProvider {
   readonly id = "groq";
+  // Groq free tier does NOT sign a HIPAA BAA. `invokeWithFallback`
+  // with `requireBaa: true` skips this provider entirely.
+  readonly phiSafe = false;
 
   constructor(
     private readonly apiKey: string | undefined,
@@ -429,6 +444,9 @@ export class GroqProvider implements LlmProvider {
  */
 export class GeminiProvider implements LlmProvider {
   readonly id = "gemini";
+  // Gemini free tier does NOT carry a Google Cloud BAA. Same demo-only
+  // gate as Groq.
+  readonly phiSafe = false;
 
   constructor(
     private readonly apiKey: string | undefined,
@@ -447,9 +465,12 @@ export class GeminiProvider implements LlmProvider {
       );
     }
     const model = req.model ?? this.defaultModel;
+    // Google supports both `?key=` in the URL and the `x-goog-api-key`
+    // header. The URL form ends up in Cloud Functions access logs, so
+    // we pass the key in a header to keep it off the log trail.
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
-      `:generateContent?key=${this.apiKey}`;
+      `:generateContent`;
 
     const contents: Array<{role: string; parts: Array<{text: string}>}> = [];
     if (req.system) {
@@ -467,7 +488,10 @@ export class GeminiProvider implements LlmProvider {
         url,
         {
           method: "POST",
-          headers: {"content-type": "application/json"},
+          headers: {
+            "content-type": "application/json",
+            "x-goog-api-key": this.apiKey,
+          },
           body: JSON.stringify({
             contents,
             generationConfig: {
@@ -534,19 +558,42 @@ export class GeminiProvider implements LlmProvider {
  * fallover. A 4xx with body (auth, validation) also fallovers — the
  * primary may be misconfigured while the secondary is fine.
  */
+export interface InvokeWithFallbackOptions {
+  /**
+   * When true, providers whose `phiSafe` flag is `false` are filtered
+   * out of the chain entry — a PHI-carrying handler can pass the same
+   * `defaultProviderChain()` and have demo-tier providers dropped
+   * without shuffling the call site.
+   */
+  requireBaa?: boolean;
+}
+
 export async function invokeWithFallback(
   providers: LlmProvider[],
-  req: LlmRequest
+  req: LlmRequest,
+  opts: InvokeWithFallbackOptions = {}
 ): Promise<LlmResponse> {
-  if (providers.length === 0) {
+  const chain = opts.requireBaa ?
+    providers.filter((p) => p.phiSafe) :
+    providers;
+  if (chain.length === 0) {
     throw new LlmProviderError(
       "missing_credentials",
-      "no LLM providers configured"
+      opts.requireBaa ?
+        "no BAA-bearing LLM providers configured" :
+        "no LLM providers configured"
     );
+  }
+  if (opts.requireBaa && chain.length !== providers.length) {
+    functions.logger.info("llm_provider.phi_gate_filtered", {
+      filtered: providers
+        .filter((p) => !p.phiSafe)
+        .map((p) => p.id),
+    });
   }
 
   let lastError: LlmProviderError | null = null;
-  for (const provider of providers) {
+  for (const provider of chain) {
     if (!provider.configured) {
       functions.logger.debug("llm_provider.skipped_unconfigured", {
         provider: provider.id,
@@ -567,6 +614,11 @@ export async function invokeWithFallback(
         e :
         new LlmProviderError("upstream_unreachable", String(e));
       lastError = err;
+      // Log only wire-safe fields — never `err.message`. Upstream
+      // providers may echo request fragments (transcript text) in
+      // 4xx bodies, and `provider.invoke` slices those into the
+      // message string; propagating that to Cloud Logging risks
+      // spilling PHI into a persistent log surface.
       functions.logger.warn("llm_provider.failed", {
         provider: provider.id,
         reason: err.reason,

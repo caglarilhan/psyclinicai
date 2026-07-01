@@ -155,7 +155,9 @@ class HeroSection extends StatelessWidget {
             // Sprint 29 F-04 — WCAG 2.5.5 / Apple HIG: 44pt minimum
             // touch-target. 18pt vertical padding + 14pt text = 46pt.
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            minimumSize: const Size(0, 48),
+            // WCAG 2.5.8 target size — 88×48pt keeps the button tappable
+            // even when the copy column shrinks on narrow phones.
+            minimumSize: const Size(88, 48),
             textStyle: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,

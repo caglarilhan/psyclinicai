@@ -98,8 +98,10 @@ class TransferRecord {
 class CrossBorderTransferRegister {
   const CrossBorderTransferRegister._();
 
-  /// YYYY-MM stamp — drives the "needs review" badge.
-  static const String lastReviewed = '2026-06';
+  /// YYYY-MM stamp — drives the "needs review" badge. Aligned with
+  /// [SubprocessorRegistry.lastReviewed]. Bumped when the Groq/Gemini
+  /// demo-tier transfers were added.
+  static const String lastReviewed = '2026-07';
 
   /// Pinned register. Append-only — historical flows stay so the
   /// regulator's question "what was the basis on date X" resolves.

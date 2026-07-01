@@ -214,6 +214,32 @@ class VendorSlaCatalog {
       outageCreditRequestWindowDays: 30,
       slaDocUrl: 'https://www.twilio.com/legal/service-level-agreement',
     ),
+    // Demo-tier LLMs — free tier, no contractual SLA. The record exists
+    // to satisfy the parity invariant (every subprocessor has a pinned
+    // row) and to document the "best-effort only" posture so procurement
+    // does not assume a percentage that does not exist.
+    VendorSlaRecord(
+      subprocessorId: 'groq',
+      slaPercentString: '~99% observed (no contractual SLA, free tier)',
+      slaPercent: 0.99,
+      measurementWindowDays: 30,
+      statusUrl: 'https://groqstatus.com',
+      notificationSlaHours: 24,
+      outageCreditPolicy: OutageCreditPolicy.notificationOnly,
+      outageCreditRequestWindowDays: 0,
+      slaDocUrl: 'https://groq.com/terms-of-use/',
+    ),
+    VendorSlaRecord(
+      subprocessorId: 'google-gemini',
+      slaPercentString: '~99% observed (no contractual SLA, free tier)',
+      slaPercent: 0.99,
+      measurementWindowDays: 30,
+      statusUrl: 'https://status.cloud.google.com',
+      notificationSlaHours: 24,
+      outageCreditPolicy: OutageCreditPolicy.notificationOnly,
+      outageCreditRequestWindowDays: 0,
+      slaDocUrl: 'https://cloud.google.com/terms',
+    ),
   ];
 
   static VendorSlaRecord? bySubprocessorId(String id) {

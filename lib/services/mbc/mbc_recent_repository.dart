@@ -17,8 +17,11 @@ class MbcRecentRow {
   final String scaleId;
   final String patientId;
 
-  /// Server-timestamped creation time (from mbcDispatchLink).
-  final DateTime createdAt;
+  /// Server-timestamped creation time (from mbcDispatchLink). Null when
+  /// the row is missing the timestamp — schema-drift signal, rendered
+  /// as "—" in the UI rather than as an epoch-1970 sentinel that would
+  /// silently sort to the bottom of a `desc` list.
+  final DateTime? createdAt;
 
   /// Flipped by `mbcSubmitAssessment` when the patient posts the form.
   /// Null while the link is still outstanding.
@@ -37,7 +40,7 @@ class MbcRecentRow {
       id: snap.id,
       scaleId: (d['scale_id'] as String?) ?? '',
       patientId: (d['patient_id'] as String?) ?? '',
-      createdAt: (d['created_at'] as Timestamp?)?.toDate() ?? DateTime(1970),
+      createdAt: (d['created_at'] as Timestamp?)?.toDate(),
       submittedAt: (d['submitted_at'] as Timestamp?)?.toDate(),
       expiresAtMillis: (d['expires_at_millis'] as num?)?.toInt() ?? 0,
     );

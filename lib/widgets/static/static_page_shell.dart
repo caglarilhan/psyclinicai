@@ -274,9 +274,14 @@ class StaticH2 extends StatelessWidget {
         top: PsySpacing.xxl,
         bottom: PsySpacing.md,
       ),
-      child: Text(
-        text,
-        style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+      // `header: true` lets screen readers jump section-to-section on
+      // long legal pages (WCAG 2.4.6 headings, 1.3.1 info+relationships).
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: t.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }

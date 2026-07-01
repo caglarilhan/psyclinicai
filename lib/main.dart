@@ -55,6 +55,7 @@ import 'package:psyclinicai/screens/session/session_management_screen.dart';
 import 'package:psyclinicai/screens/session/session_screen.dart';
 import 'package:psyclinicai/screens/settings/account_deletion_screen.dart';
 import 'package:psyclinicai/screens/settings/api_keys_screen.dart';
+import 'package:psyclinicai/screens/settings/byok_keys_screen.dart';
 import 'package:psyclinicai/screens/settings/audit_log_screen.dart';
 import 'package:psyclinicai/screens/settings/clinician_profile_screen.dart';
 import 'package:psyclinicai/screens/settings/data_export_screen.dart';
@@ -97,6 +98,7 @@ import 'package:psyclinicai/services/treatment_plan_drafter/tp_drafter_client.da
 import 'package:psyclinicai/services/assessments/assessment_severity_engine.dart';
 import 'package:psyclinicai/services/assessments/clinical_scales.dart';
 import 'package:psyclinicai/services/billing/subscription_service.dart';
+import 'package:psyclinicai/services/byok/byok_repository.dart';
 import 'package:psyclinicai/services/copilot/copilot_endpoint.dart';
 import 'package:psyclinicai/services/data/appearance_preferences.dart';
 import 'package:psyclinicai/services/data/auth_service.dart' as fb_auth;
@@ -311,6 +313,14 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/ai_diagnosis': (context) => const AIDiagnosisScreen(),
                 '/settings': (context) => const SettingsScreen(),
                 '/settings/api_keys': (context) => const ApiKeysScreen(),
+                '/settings/byok-llm': (context) {
+                  final profile =
+                      fb_auth.FirebaseAuthService.instance.profile;
+                  return ByokKeysScreen(
+                    uid: profile?.userId ?? 'self',
+                    repository: ByokRepository(),
+                  );
+                },
                 '/settings/audit_log': (context) => const AuditLogScreen(),
                 '/settings/pinned': (context) => const PinnedPatientsScreen(),
                 '/dpa': (context) => const DpaPage(),

@@ -18,6 +18,7 @@ import 'package:psyclinicai/screens/static/compare_page.dart';
 import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
 import 'package:psyclinicai/screens/static/faq_page.dart';
+import 'package:psyclinicai/screens/static/help_page.dart';
 import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/static/pricing_page.dart';
@@ -49,6 +50,31 @@ void main() {
   testWidgets('compare page renders', (tester) async {
     await _pumpPage(tester, const ComparePage());
     expect(find.textContaining('PsyClinicAI'), findsWidgets);
+  });
+
+  testWidgets('compare page lists Mentalyc + SimplePractice + TherapyNotes', (
+    tester,
+  ) async {
+    await _pumpPage(tester, const ComparePage());
+    for (final vendor in ['Mentalyc', 'SimplePractice', 'TherapyNotes']) {
+      expect(
+        find.textContaining(vendor),
+        findsWidgets,
+        reason:
+            'Compare page must name $vendor by name — that is the SEO + '
+            'procurement value',
+      );
+    }
+  });
+
+  testWidgets('help page renders (support hub)', (tester) async {
+    await _pumpPage(tester, const HelpPage());
+    expect(find.textContaining('Help'), findsWidgets);
+    expect(
+      find.textContaining('BYOK'),
+      findsWidgets,
+      reason: 'Help hub must include the BYOK setup section',
+    );
   });
 
   testWidgets('contact page renders', (tester) async {

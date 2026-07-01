@@ -176,7 +176,7 @@ class _LandingScreenState extends State<LandingScreen> {
       // them to /privacy was an audit smell flagged by counsel.
       'baa' => '/baa',
       'dpa' => '/dpa',
-      'help' => '/contact',
+      'help' => '/help',
       _ => null,
     };
     if (route != null) {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../services/mbc/mbc_dispatch_catalog.dart';
 import '../../services/mbc/mbc_dispatch_service.dart';
+import '../../services/mbc/mbc_recent_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -18,10 +19,15 @@ class MbcClinicianDashboardScreen extends StatefulWidget {
     super.key,
     required this.service,
     required this.tenantId,
+    this.recentRepo,
   });
 
   final MbcDispatchService service;
   final String tenantId;
+
+  /// Optional repo — injected in tests, defaults to a Firestore-backed
+  /// implementation in production.
+  final MbcRecentRepository? recentRepo;
 
   @override
   State<MbcClinicianDashboardScreen> createState() =>
@@ -100,6 +106,126 @@ class _MbcClinicianDashboardScreenState
           const SizedBox(height: PsySpacing.xl),
           if (_lastDispatch != null)
             _LinkPanel(theme: theme, cs: cs, dispatch: _lastDispatch!),
+          const SizedBox(height: PsySpacing.xl),
+          _RecentDispatchesPanel(
+            theme: theme,
+            cs: cs,
+            repo: widget.recentRepo ?? MbcRecentRepository(),
+            clinicId: widget.tenantId,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentDispatchesPanel extends StatelessWidget {
+  const _RecentDispatchesPanel({
+    required this.theme,
+    required this.cs,
+    required this.repo,
+    required this.clinicId,
+  });
+
+  final ThemeData theme;
+  final ColorScheme cs;
+  final MbcRecentRepository repo;
+  final String clinicId;
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Recent dispatches', style: theme.textTheme.titleMedium),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+            'Last 10 links you generated. Rows flip to "submitted" the '
+            'moment the patient posts the form.',
+            style: theme.textTheme.bodySmall?.copyWith(color: cs.outline),
+          ),
+          const SizedBox(height: PsySpacing.md),
+          StreamBuilder<List<MbcRecentRow>>(
+            stream: repo.watchRecent(clinicId: clinicId),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  'Could not load recent dispatches: ${snapshot.error}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: PsySpacing.md),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final rows = snapshot.data!;
+              if (rows.isEmpty) {
+                return Text(
+                  'No dispatches yet — every link you generate above will '
+                  'appear here in real time.',
+                  style: theme.textTheme.bodySmall,
+                );
+              }
+              return Column(
+                children: [
+                  for (final r in rows) _RecentRow(theme: theme, cs: cs, row: r),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentRow extends StatelessWidget {
+  const _RecentRow({
+    required this.theme,
+    required this.cs,
+    required this.row,
+  });
+  final ThemeData theme;
+  final ColorScheme cs;
+  final MbcRecentRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: row.submitted ? cs.primary : cs.outlineVariant,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: PsySpacing.sm),
+          SizedBox(
+            width: 72,
+            child: Text(
+              row.scaleId.toUpperCase(),
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(row.patientId, style: theme.textTheme.bodyMedium),
+          ),
+          const SizedBox(width: PsySpacing.md),
+          PsyBadge(
+            label: row.submitted ? 'submitted' : 'outstanding',
+            tone: row.submitted
+                ? PsyBadgeTone.success
+                : PsyBadgeTone.warning,
+          ),
         ],
       ),
     );

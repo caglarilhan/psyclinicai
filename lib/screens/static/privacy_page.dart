@@ -16,7 +16,7 @@ class PrivacyPage extends StatelessWidget {
           'This is a plain-English summary. Our full GDPR Article 28 DPA '
           'and HIPAA-aligned privacy notice are available on request '
           '(founders@psyclinicai.com) before any contract is signed.',
-      lastUpdated: DateTime(2026, 5, 24),
+      lastUpdated: DateTime(2026, 7),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -52,8 +52,15 @@ class PrivacyPage extends StatelessWidget {
           ),
           StaticH2('4. Who we share with'),
           StaticBullet(
-            'Anthropic (your BYOK key) — only the session transcript '
-            'for the duration of one API call. You signed their BAA.',
+            'Anthropic — BYOK tier: only the session transcript for the '
+            'duration of one API call. You signed their BAA. Pro tier: '
+            'we sign the BAA on your behalf.',
+          ),
+          StaticBullet(
+            'Groq and Google (Gemini) — Demo tier only. Synthetic '
+            'vignettes we ship in the app, never real patient data. '
+            'These providers do not sign a BAA with clinicians, so we '
+            'block them for workspaces that hold PHI.',
           ),
           StaticBullet(
             'Google Cloud / Firebase — encrypted-at-rest storage of '

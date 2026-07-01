@@ -101,7 +101,13 @@ class BaaPage extends StatelessWidget {
             title: 'Subcontractors',
             body:
                 'No subcontractor receives PHI unless it has executed a written '
-                'BAA with terms at least as protective. Live list at /subprocessors.',
+                'BAA with terms at least as protective. On the BYOK tier the '
+                'clinician signs the Anthropic (or OpenAI) BAA directly and '
+                'PsyClinicAI records that attestation; on the Pro tier '
+                'PsyClinicAI signs the upstream BAA. Groq and Google (Gemini) '
+                'are Demo tier only and do not process PHI — no BAA required, '
+                'and PHI-carrying workspaces are blocked from using them. Live '
+                'list at /trust/subprocessors.',
           ),
           _Section(
             theme: theme,

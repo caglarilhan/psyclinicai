@@ -85,54 +85,73 @@ class _TelemetryHealthRow extends StatelessWidget {
         ? PsyColors.success
         : (misconfigured ? cs.error : cs.onSurface.withValues(alpha: 0.55));
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: PsySpacing.xl,
-        vertical: PsySpacing.lg,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(PsyRadius.md),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    // Screen readers get one merged phrase; the visual pieces
+    // (status dot + all-caps letter-spaced label) stay decorative.
+    return Semantics(
+      container: true,
+      label:
+          'Sentry crash and error pipeline: ${health.label} — '
+          'environment ${health.environment}, '
+          'DSN ${health.dsnConfigured ? "configured" : "not set"}.',
+      child: MergeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.lg,
           ),
-          const SizedBox(width: PsySpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sentry crash + error pipeline',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              ExcludeSemantics(
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'env=${health.environment} · dsn=${health.dsnConfigured ? "configured" : "not set"}'
-                  ' · state=${health.label}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.72),
-                  ),
+              ),
+              const SizedBox(width: PsySpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sentry crash + error pipeline',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'env=${health.environment} · '
+                      'dsn=${health.dsnConfigured ? "configured" : "not set"}'
+                      ' · state=${health.label}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        // Bumped from 0.72 → 0.78 for AA contrast on
+                        // the low-contrast surfaceContainerLowest fill.
+                        color: cs.onSurface.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Text(
+                health.label.toUpperCase(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
-          Text(
-            health.label.toUpperCase(),
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -151,7 +170,7 @@ class _System {
     _Status.outage => cs.error,
   };
 
-  String label() => switch (status) {
+  String get label => switch (status) {
     _Status.operational => 'Operational',
     _Status.degraded => 'Degraded',
     _Status.outage => 'Outage',
@@ -232,7 +251,7 @@ class _SystemRow extends StatelessWidget {
             ),
           ),
           Text(
-            system.label(),
+            system.label,
             style: theme.textTheme.labelMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.w700,

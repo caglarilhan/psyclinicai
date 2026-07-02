@@ -181,6 +181,11 @@ class _VendorGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    // Under 720px the DataTable stops fitting even in horizontal scroll
+    // (WCAG 1.4.10 reflow). Fall back to a stacked card list where each
+    // vendor is a self-contained block — keyboard, screen reader, and
+    // 200%-zoom friendly.
+    final isNarrow = MediaQuery.sizeOf(context).width < 720;
     return Container(
       padding: const EdgeInsets.all(PsySpacing.xl),
       decoration: BoxDecoration(
@@ -203,62 +208,150 @@ class _VendorGrid extends StatelessWidget {
             'public vendor claim — corrections welcome at '
             'press@psyclinicai.com.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.72),
+              color: cs.onSurface.withValues(alpha: 0.78),
               height: 1.5,
             ),
           ),
           const SizedBox(height: PsySpacing.lg),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStatePropertyAll(
-                cs.surfaceContainerLow,
-              ),
-              columns: const [
-                DataColumn(label: Text('Vendor')),
-                DataColumn(label: Text('Category')),
-                DataColumn(label: Text('EU residency')),
-                DataColumn(label: Text('HIPAA BAA')),
-                DataColumn(label: Text('Audio on-device')),
-                DataColumn(label: Text('BYOK LLM')),
-                DataColumn(label: Text('Starter (USD/mo)')),
+          if (isNarrow)
+            Column(
+              children: [
+                for (final r in _vendorRows) _VendorCard(row: r, cs: cs),
               ],
-              rows: [
-                for (final r in _vendorRows)
-                  DataRow(
-                    color: r.vendor == 'PsyClinicAI'
-                        ? WidgetStatePropertyAll(
-                            cs.primary.withValues(alpha: 0.08),
-                          )
-                        : null,
-                    cells: [
-                      DataCell(
-                        Text(
-                          r.vendor,
-                          style: TextStyle(
-                            fontWeight: r.vendor == 'PsyClinicAI'
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                            color: r.vendor == 'PsyClinicAI'
-                                ? cs.primary
-                                : cs.onSurface,
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowColor: WidgetStatePropertyAll(
+                  cs.surfaceContainerLow,
+                ),
+                columns: const [
+                  DataColumn(label: Text('Vendor')),
+                  DataColumn(label: Text('Category')),
+                  DataColumn(label: Text('EU residency')),
+                  DataColumn(label: Text('HIPAA BAA')),
+                  DataColumn(label: Text('Audio on-device')),
+                  DataColumn(label: Text('BYOK LLM')),
+                  DataColumn(label: Text('Starter (USD/mo)')),
+                ],
+                rows: [
+                  for (final r in _vendorRows)
+                    DataRow(
+                      color: r.vendor == 'PsyClinicAI'
+                          ? WidgetStatePropertyAll(
+                              cs.primary.withValues(alpha: 0.08),
+                            )
+                          : null,
+                      cells: [
+                        DataCell(
+                          Text(
+                            r.vendor,
+                            style: TextStyle(
+                              fontWeight: r.vendor == 'PsyClinicAI'
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: r.vendor == 'PsyClinicAI'
+                                  ? cs.primary
+                                  : cs.onSurface,
+                            ),
                           ),
                         ),
-                      ),
-                      DataCell(Text(r.category)),
-                      DataCell(_Yn(value: r.euResidency, cs: cs)),
-                      DataCell(_Yn(value: r.baa, cs: cs)),
-                      DataCell(_Yn(value: r.audioOnDevice, cs: cs)),
-                      DataCell(_Yn(value: r.byok, cs: cs)),
-                      DataCell(
-                        Text(r.starterPrice.isEmpty ? '—' : r.starterPrice),
-                      ),
-                    ],
-                  ),
-              ],
+                        DataCell(Text(r.category)),
+                        DataCell(_Yn(value: r.euResidency, cs: cs)),
+                        DataCell(_Yn(value: r.baa, cs: cs)),
+                        DataCell(_Yn(value: r.audioOnDevice, cs: cs)),
+                        DataCell(_Yn(value: r.byok, cs: cs)),
+                        DataCell(
+                          Text(
+                            r.starterPrice.isEmpty ? '—' : r.starterPrice,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VendorCard extends StatelessWidget {
+  const _VendorCard({required this.row, required this.cs});
+  final _VendorRow row;
+  final ColorScheme cs;
+
+  Widget _kv(BuildContext context, String k, Widget v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 132,
+            child: Text(
+              k,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(child: v),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isOwn = row.vendor == 'PsyClinicAI';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: PsySpacing.md),
+      child: Container(
+        padding: const EdgeInsets.all(PsySpacing.lg),
+        decoration: BoxDecoration(
+          color: isOwn
+              ? cs.primary.withValues(alpha: 0.06)
+              : cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(PsyRadius.md),
+          border: Border.all(
+            color: isOwn
+                ? cs.primary.withValues(alpha: 0.35)
+                : cs.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              row.vendor,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: isOwn ? FontWeight.w800 : FontWeight.w700,
+                color: isOwn ? cs.primary : cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: 6),
+            _kv(context, 'Category', Text(row.category)),
+            _kv(context, 'EU residency', _Yn(value: row.euResidency, cs: cs)),
+            _kv(context, 'HIPAA BAA', _Yn(value: row.baa, cs: cs)),
+            _kv(
+              context,
+              'Audio on-device',
+              _Yn(value: row.audioOnDevice, cs: cs),
+            ),
+            _kv(context, 'BYOK LLM', _Yn(value: row.byok, cs: cs)),
+            _kv(
+              context,
+              'Starter (USD/mo)',
+              Text(row.starterPrice.isEmpty ? '—' : row.starterPrice),
+            ),
+          ],
+        ),
       ),
     );
   }

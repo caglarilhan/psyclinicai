@@ -174,19 +174,23 @@ class _FaqTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              faq.q,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+            // FAQ tiles read as headings — a screen reader can jump
+            // question-to-question on long support pages.
+            Semantics(
+              header: true,
+              child: Text(
+                faq.q,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(height: 6),
             Text(
               faq.a,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.72),
+                color: cs.onSurface.withValues(alpha: 0.78),
                 height: 1.55,
-                fontSize: 13.5,
               ),
             ),
           ],

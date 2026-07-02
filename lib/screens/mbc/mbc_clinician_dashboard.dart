@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../services/data/telemetry_service.dart';
 import '../../services/mbc/mbc_dispatch_catalog.dart';
 import '../../services/mbc/mbc_dispatch_service.dart';
 import '../../services/mbc/mbc_recent_repository.dart';
@@ -157,6 +160,17 @@ class _RecentDispatchesPanel extends StatelessWidget {
             stream: repo.watchRecent(clinicId: clinicId),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
+                // Ping Sentry once per error surface so ops can spot a
+                // Firestore rule regression or an index rebuild
+                // without waiting for a clinician to email us. The
+                // TelemetryService PHI-scrubs before Sentry relays.
+                unawaited(
+                  TelemetryService.instance.captureError(
+                    snapshot.error ?? 'unknown',
+                    snapshot.stackTrace,
+                    hint: 'mbc.recent_stream_failed',
+                  ),
+                );
                 return Text(
                   'Could not load recent dispatches: ${snapshot.error}',
                   style: theme.textTheme.bodySmall?.copyWith(color: cs.error),

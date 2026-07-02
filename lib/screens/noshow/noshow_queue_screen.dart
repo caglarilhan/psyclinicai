@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../services/data/telemetry_service.dart';
 import '../../services/noshow/noshow_feature_catalog.dart';
 import '../../services/noshow/noshow_predict_client.dart';
 import '../../services/noshow/noshow_recent_repository.dart';
@@ -204,6 +207,17 @@ class _RecentPredictionsPanel extends StatelessWidget {
             stream: repo.watchRecent(clinicId: clinicId),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
+                // Ping Sentry once per error surface so ops can spot a
+                // Firestore rule regression or an index rebuild
+                // without waiting for a clinician to email us. The
+                // TelemetryService PHI-scrubs before Sentry relays.
+                unawaited(
+                  TelemetryService.instance.captureError(
+                    snapshot.error ?? 'unknown',
+                    snapshot.stackTrace,
+                    hint: 'noshow.recent_stream_failed',
+                  ),
+                );
                 return Text(
                   'Could not load recent predictions: ${snapshot.error}',
                   style: theme.textTheme.bodySmall?.copyWith(color: cs.error),

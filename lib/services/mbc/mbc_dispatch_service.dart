@@ -1,3 +1,8 @@
+// ignore_for_file: avoid_catching_errors
+// Schema-drift protection: we deliberately catch `TypeError` /
+// `NoSuchMethodError` inside `MbcDispatch.fromJson` so a server
+// response that grows a new required field surfaces as
+// `MbcSubmitException(422, …)` instead of an unhandled crash.
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -31,19 +36,30 @@ class MbcDispatchService {
     if (token == null || token.isEmpty) {
       throw const MbcSubmitException(401, 'No Firebase ID token.');
     }
-    final res = await _http.post(
-      Uri.parse(dispatchUrl),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'tenantId': tenantId,
-        'patientId': patientId,
-        'scaleId': scaleId,
-        if (channel != null) 'channel': channel,
-      }),
-    );
+    // Dispatch is a token mint — fast on the server side. Bound the
+    // client at 30s so a stalled socket doesn't leave the "Sending…"
+    // button spinning indefinitely.
+    final res = await _http
+        .post(
+          Uri.parse(dispatchUrl),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'tenantId': tenantId,
+            'patientId': patientId,
+            'scaleId': scaleId,
+            if (channel != null) 'channel': channel,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () => throw const MbcSubmitException(
+            408,
+            'Request timed out — please retry.',
+          ),
+        );
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw MbcSubmitException(res.statusCode, res.body);
     }
@@ -63,14 +79,31 @@ class MbcDispatch {
     required this.channel,
   });
 
-  factory MbcDispatch.fromJson(Map<String, dynamic> j) => MbcDispatch(
-    dispatchId: j['dispatchId'] as String,
-    token: j['token'] as String,
-    formUrl: j['formUrl'] as String,
-    expiresAtMillis: j['expiresAt'] as int,
-    scaleId: j['scaleId'] as String,
-    channel: j['channel'] as String,
-  );
+  /// Defensive constructor — schema drift throws
+  /// `MbcSubmitException(422, …)` the UI can surface, instead of an
+  /// unhandled `TypeError`.
+  factory MbcDispatch.fromJson(Map<String, dynamic> j) {
+    try {
+      return MbcDispatch(
+        dispatchId: j['dispatchId'] as String,
+        token: j['token'] as String,
+        formUrl: j['formUrl'] as String,
+        expiresAtMillis: j['expiresAt'] as int,
+        scaleId: j['scaleId'] as String,
+        channel: j['channel'] as String,
+      );
+    } on TypeError catch (e) {
+      throw MbcSubmitException(
+        422,
+        'Malformed mbcDispatchLink response — schema drift: $e',
+      );
+    } on NoSuchMethodError catch (e) {
+      throw MbcSubmitException(
+        422,
+        'Missing mbcDispatchLink response field: $e',
+      );
+    }
+  }
 
   final String dispatchId;
   final String token;

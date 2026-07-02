@@ -73,6 +73,7 @@ import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
 import 'package:psyclinicai/screens/static/faq_page.dart';
 import 'package:psyclinicai/screens/static/help_page.dart';
+import 'package:psyclinicai/utils/theme.dart' show AppColors;
 import 'package:psyclinicai/screens/static/kvkk_aydinlatma_page.dart';
 import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
@@ -323,50 +324,43 @@ class PsyClinicAIApp extends StatelessWidget {
                     const SecurityControlsScreen(),
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
-                '/clinician/scribe': (context) {
-                  final profile = fb_auth.FirebaseAuthService.instance.profile;
-                  final client = AiScribeClient(
-                    baseUrl: '${BuildConfig.backendUrl}/aiScribeDraftSoap',
-                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
-                  );
-                  return AiScribeScreen(
-                    client: client,
-                    tenantId: profile?.userId ?? 'self',
-                  );
-                },
-                '/clinician/mbc': (context) {
-                  final profile = fb_auth.FirebaseAuthService.instance.profile;
-                  final service = MbcDispatchService(
-                    dispatchUrl: '${BuildConfig.backendUrl}/mbcDispatchLink',
-                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
-                  );
-                  return MbcClinicianDashboardScreen(
-                    service: service,
-                    tenantId: profile?.userId ?? 'self',
-                  );
-                },
-                '/clinician/noshow': (context) {
-                  final profile = fb_auth.FirebaseAuthService.instance.profile;
-                  final client = NoShowPredictClient(
-                    predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
-                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
-                  );
-                  return NoShowQueueScreen(
-                    client: client,
-                    tenantId: profile?.userId ?? 'self',
-                  );
-                },
-                '/clinician/tp-drafter': (context) {
-                  final profile = fb_auth.FirebaseAuthService.instance.profile;
-                  final client = TpDrafterClient(
-                    draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
-                    idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
-                  );
-                  return TpDrafterScreen(
-                    client: client,
-                    tenantId: profile?.userId ?? 'self',
-                  );
-                },
+                '/clinician/scribe': (context) => _RequireProfile(
+                  build: (uid) => AiScribeScreen(
+                    client: AiScribeClient(
+                      baseUrl: '${BuildConfig.backendUrl}/aiScribeDraftSoap',
+                      idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
+                    ),
+                    tenantId: uid,
+                  ),
+                ),
+                '/clinician/mbc': (context) => _RequireProfile(
+                  build: (uid) => MbcClinicianDashboardScreen(
+                    service: MbcDispatchService(
+                      dispatchUrl:
+                          '${BuildConfig.backendUrl}/mbcDispatchLink',
+                      idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
+                    ),
+                    tenantId: uid,
+                  ),
+                ),
+                '/clinician/noshow': (context) => _RequireProfile(
+                  build: (uid) => NoShowQueueScreen(
+                    client: NoShowPredictClient(
+                      predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
+                      idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
+                    ),
+                    tenantId: uid,
+                  ),
+                ),
+                '/clinician/tp-drafter': (context) => _RequireProfile(
+                  build: (uid) => TpDrafterScreen(
+                    client: TpDrafterClient(
+                      draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
+                      idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
+                    ),
+                    tenantId: uid,
+                  ),
+                ),
                 '/trust/incident_response': (context) =>
                     const IncidentResponseScreen(),
                 '/supervision/queue': (context) =>
@@ -625,39 +619,76 @@ class _PsyTitleObserver extends NavigatorObserver {
 /// when a widget throws inside build/layout/paint. The error itself is
 /// already captured by [FlutterError.onError] → TelemetryService, so this
 /// just keeps the UI calm and gives the clinician a way to recover.
+/// Route wrapper — guards a clinician-scoped screen behind a resolved
+/// Firebase profile. Before this, four routes fell back to
+/// `tenantId: 'self'` when the profile was null; that string then hit
+/// Firestore rules and was rejected with permission-denied, surfacing
+/// as an error in the StreamBuilder panels. Now we push the visitor to
+/// `/login` on the first frame instead of rendering a broken screen.
+class _RequireProfile extends StatelessWidget {
+  const _RequireProfile({required this.build});
+
+  final Widget Function(String userId) build;
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = fb_auth.FirebaseAuthService.instance.profile;
+    final uid = profile?.userId;
+    if (uid == null || uid.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return build(uid);
+  }
+}
+
 class _ProductionErrorFallback extends StatelessWidget {
   const _ProductionErrorFallback();
 
   @override
   Widget build(BuildContext context) {
+    // Even the "something went wrong" surface should honour the brand
+    // palette — the previous hex constants would age badly once the
+    // theme evolves. `AppColors` gives us the same intent (near-white
+    // surface, teal warning icon, near-black body copy, muted caption)
+    // and stays in sync with the rest of the design system.
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Container(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.background,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.warning_amber_rounded,
               size: 48,
-              color: Color(0xFF0F766E),
+              color: AppColors.primary,
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
               'Something went wrong rendering this view.',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'The error has been reported. Try going back, or restart the app.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

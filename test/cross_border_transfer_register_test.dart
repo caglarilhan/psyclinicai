@@ -38,6 +38,8 @@ void main() {
         'firebase-auth',
         'anthropic',
         'openai',
+        'groq',
+        'google-gemini',
         'stripe',
         'sentry',
         'posthog',

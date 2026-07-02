@@ -29,19 +29,30 @@ class NoShowPredictClient {
     if (token == null || token.isEmpty) {
       throw const NoShowPredictException(401, 'No Firebase ID token.');
     }
-    final res = await _http.post(
-      Uri.parse(predictUrl),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'tenantId': tenantId,
-        'appointmentId': appointmentId,
-        'patientId': patientId,
-        'features': features,
-      }),
-    );
+    // Predict is a pure scoring path — should return in a few hundred
+    // ms. Bound the client at 30s so a stalled socket cannot leave the
+    // "Scoring…" spinner hanging.
+    final res = await _http
+        .post(
+          Uri.parse(predictUrl),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'tenantId': tenantId,
+            'appointmentId': appointmentId,
+            'patientId': patientId,
+            'features': features,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () => throw const NoShowPredictException(
+            408,
+            'Request timed out — please retry.',
+          ),
+        );
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw NoShowPredictException(res.statusCode, res.body);
     }

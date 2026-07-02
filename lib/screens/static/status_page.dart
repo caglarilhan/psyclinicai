@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/data/telemetry_service.dart';
 import '../../theme/brand_colors.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/static/static_page_shell.dart';
@@ -42,7 +43,7 @@ class StatusPage extends StatelessWidget {
           'PsyClinicAI publishes the live state of every sub-system. If '
           'anything turns yellow or red here, expect a follow-up email from '
           'founders@psyclinicai.com within an hour.',
-      lastUpdated: DateTime(2026, 5, 23),
+      lastUpdated: DateTime(2026, 7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,9 +60,98 @@ class StatusPage extends StatelessWidget {
             'transactional email pipelines follow the tenant region.',
           ),
           const SizedBox(height: PsySpacing.xxl),
+          const StaticH2('Observability'),
+          _TelemetryHealthRow(health: TelemetryService.instance.health),
+          const SizedBox(height: PsySpacing.xxl),
           const StaticH2('Recent incidents'),
           const StaticP('No incidents in the last 90 days.'),
         ],
+      ),
+    );
+  }
+}
+
+class _TelemetryHealthRow extends StatelessWidget {
+  const _TelemetryHealthRow({required this.health});
+  final TelemetryHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final wired = health.sentryReady;
+    final misconfigured = health.dsnConfigured && !health.sentryReady;
+    final color = wired
+        ? PsyColors.success
+        : (misconfigured ? cs.error : cs.onSurface.withValues(alpha: 0.55));
+
+    // Screen readers get one merged phrase; the visual pieces
+    // (status dot + all-caps letter-spaced label) stay decorative.
+    return Semantics(
+      container: true,
+      label:
+          'Sentry crash and error pipeline: ${health.label} — '
+          'environment ${health.environment}, '
+          'DSN ${health.dsnConfigured ? "configured" : "not set"}.',
+      child: MergeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PsySpacing.xl,
+            vertical: PsySpacing.lg,
+          ),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(PsyRadius.md),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              ExcludeSemantics(
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              const SizedBox(width: PsySpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sentry crash + error pipeline',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'env=${health.environment} · '
+                      'dsn=${health.dsnConfigured ? "configured" : "not set"}'
+                      ' · state=${health.label}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        // Bumped from 0.72 → 0.78 for AA contrast on
+                        // the low-contrast surfaceContainerLowest fill.
+                        color: cs.onSurface.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                health.label.toUpperCase(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -80,7 +170,7 @@ class _System {
     _Status.outage => cs.error,
   };
 
-  String label() => switch (status) {
+  String get label => switch (status) {
     _Status.operational => 'Operational',
     _Status.degraded => 'Degraded',
     _Status.outage => 'Outage',
@@ -161,7 +251,7 @@ class _SystemRow extends StatelessWidget {
             ),
           ),
           Text(
-            system.label(),
+            system.label,
             style: theme.textTheme.labelMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.w700,

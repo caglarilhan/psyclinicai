@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../services/data/telemetry_service.dart';
 import '../../services/noshow/noshow_feature_catalog.dart';
 import '../../services/noshow/noshow_predict_client.dart';
+import '../../services/noshow/noshow_recent_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/app_shell.dart';
 import '../../widgets/ds/psy_badge.dart';
@@ -23,10 +27,15 @@ class NoShowQueueScreen extends StatefulWidget {
     super.key,
     required this.client,
     required this.tenantId,
+    this.recentRepo,
   });
 
   final NoShowPredictClient client;
   final String tenantId;
+
+  /// Optional repo — injected in tests, defaults to a Firestore-backed
+  /// implementation in production.
+  final NoShowRecentRepository? recentRepo;
 
   @override
   State<NoShowQueueScreen> createState() => _NoShowQueueScreenState();
@@ -45,6 +54,11 @@ class _NoShowQueueScreenState extends State<NoShowQueueScreen> {
   bool _scoring = false;
   String? _error;
   NoShowPrediction? _prediction;
+
+  /// Stable repository reference — instantiating in `build()` would spin
+  /// a new StreamBuilder subscription on every `setState`.
+  late final NoShowRecentRepository _recentRepo =
+      widget.recentRepo ?? NoShowRecentRepository();
 
   @override
   void dispose() {
@@ -143,6 +157,135 @@ class _NoShowQueueScreenState extends State<NoShowQueueScreen> {
           const SizedBox(height: PsySpacing.xl),
           if (_prediction != null)
             _ScorePanel(theme: theme, cs: cs, prediction: _prediction!),
+          const SizedBox(height: PsySpacing.xl),
+          _RecentPredictionsPanel(
+            theme: theme,
+            cs: cs,
+            repo: _recentRepo,
+            clinicId: widget.tenantId,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentPredictionsPanel extends StatelessWidget {
+  const _RecentPredictionsPanel({
+    required this.theme,
+    required this.cs,
+    required this.repo,
+    required this.clinicId,
+  });
+
+  final ThemeData theme;
+  final ColorScheme cs;
+  final NoShowRecentRepository repo;
+  final String clinicId;
+
+  PsyBadgeTone _tone(NoShowRiskTier t) => switch (t) {
+        NoShowRiskTier.low => PsyBadgeTone.success,
+        NoShowRiskTier.medium => PsyBadgeTone.warning,
+        NoShowRiskTier.high => PsyBadgeTone.danger,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return PsyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Recent predictions', style: theme.textTheme.titleMedium),
+          const SizedBox(height: PsySpacing.sm),
+          Text(
+            'Last 10 appointments you scored. Colours mirror the recovery '
+            'playbook — red first for the day-of triage.',
+            style: theme.textTheme.bodySmall?.copyWith(color: cs.outline),
+          ),
+          const SizedBox(height: PsySpacing.md),
+          StreamBuilder<List<NoShowRecentRow>>(
+            stream: repo.watchRecent(clinicId: clinicId),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                // Ping Sentry once per error surface so ops can spot a
+                // Firestore rule regression or an index rebuild
+                // without waiting for a clinician to email us. The
+                // TelemetryService PHI-scrubs before Sentry relays.
+                unawaited(
+                  TelemetryService.instance.captureError(
+                    snapshot.error ?? 'unknown',
+                    snapshot.stackTrace,
+                    hint: 'noshow.recent_stream_failed',
+                  ),
+                );
+                return Text(
+                  'Could not load recent predictions: ${snapshot.error}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: PsySpacing.md),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final rows = snapshot.data!;
+              if (rows.isEmpty) {
+                return Text(
+                  'No predictions yet — every appointment you score above '
+                  'lands here in real time.',
+                  style: theme.textTheme.bodySmall,
+                );
+              }
+              return Column(
+                children: [
+                  for (final r in rows)
+                    Semantics(
+                      label:
+                          'Appointment ${r.appointmentId}, patient ${r.patientId}, '
+                          '${(r.probability * 100).toStringAsFixed(0)} percent risk, '
+                          '${r.tier.name} tier',
+                      container: true,
+                      child: MergeSemantics(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 96,
+                                child: Text(
+                                  r.appointmentId,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  r.patientId,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(width: PsySpacing.sm),
+                              Text(
+                                '${(r.probability * 100).toStringAsFixed(0)}%',
+                                style: theme.textTheme.labelMedium,
+                              ),
+                              const SizedBox(width: PsySpacing.sm),
+                              PsyBadge(
+                                label: r.tier.name.toUpperCase(),
+                                tone: _tone(r.tier),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

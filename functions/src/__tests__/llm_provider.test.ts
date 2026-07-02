@@ -13,6 +13,8 @@ import {
   LlmProvider,
   LlmProviderError,
   LlmRequest,
+  classifyStatus,
+  fetchWithTimeout,
   invokeWithFallback,
 } from "../lib/llm_provider";
 
@@ -145,10 +147,12 @@ describe("invokeWithFallback", () => {
     configured: boolean;
     response?: string;
     throwReason?: LlmProviderError["reason"];
+    phiSafe?: boolean;
   }): LlmProvider {
     return {
       id,
       configured: opts.configured,
+      phiSafe: opts.phiSafe ?? true,
       invoke: async () => {
         if (opts.throwReason) {
           throw new LlmProviderError(opts.throwReason, `${id} failed`);
@@ -216,5 +220,180 @@ describe("invokeWithFallback", () => {
         baseReq
       )
     ).rejects.toMatchObject({reason: "missing_credentials"});
+  });
+
+  it("falls over on rate_limited (429) so Gemini can pick up", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, throwReason: "rate_limited"}),
+        p("gemini", {configured: true, response: "picked-up-by-gemini"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("gemini");
+    expect(r.text).toBe("picked-up-by-gemini");
+  });
+
+  it("falls over on timeout so the next provider gets a shot", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, throwReason: "timeout"}),
+        p("gemini", {configured: true, response: "gemini-after-timeout"}),
+      ],
+      baseReq
+    );
+    expect(r.provider).toBe("gemini");
+  });
+});
+
+describe("classifyStatus", () => {
+  it("maps 429 to rate_limited so ops can distinguish it from other 4xx", () => {
+    expect(classifyStatus(429)).toBe("rate_limited");
+  });
+
+  it("keeps other 4xx as upstream_4xx", () => {
+    expect(classifyStatus(400)).toBe("upstream_4xx");
+    expect(classifyStatus(401)).toBe("upstream_4xx");
+    expect(classifyStatus(403)).toBe("upstream_4xx");
+    expect(classifyStatus(404)).toBe("upstream_4xx");
+  });
+
+  it("keeps 5xx as upstream_5xx", () => {
+    expect(classifyStatus(500)).toBe("upstream_5xx");
+    expect(classifyStatus(502)).toBe("upstream_5xx");
+    expect(classifyStatus(503)).toBe("upstream_5xx");
+  });
+});
+
+describe("fetchWithTimeout", () => {
+  it("returns the response when the fetch resolves before the deadline", async () => {
+    mockFetch(async () => new Response("ok", {status: 200}));
+    const r = await fetchWithTimeout(
+      "https://example.com",
+      {method: "GET"},
+      1000,
+      "test-provider"
+    );
+    expect(r.status).toBe(200);
+  });
+
+  it(
+    "throws LlmProviderError with reason 'timeout' when the deadline hits",
+    async () => {
+      // Simulate a hung fetch that resolves only after the timeout —
+      // AbortController.abort() will cause the fetch to reject with an
+      // AbortError, which fetchWithTimeout rewrites as timeout.
+      mockFetch(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            const signal = init.signal as AbortSignal | undefined;
+            signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError"))
+            );
+          })
+      );
+      await expect(
+        fetchWithTimeout(
+          "https://example.com",
+          {method: "GET"},
+          20,
+          "groq"
+        )
+      ).rejects.toMatchObject({
+        reason: "timeout",
+        message: expect.stringContaining("groq"),
+      });
+    },
+    5000
+  );
+});
+
+describe("AnthropicProvider — 429 classification", () => {
+  it("throws rate_limited for a 429 response", async () => {
+    mockFetch(async () => new Response("slow down", {status: 429}));
+    const p = new AnthropicProvider("sk-x");
+    await expect(p.invoke(baseReq)).rejects.toMatchObject({
+      reason: "rate_limited",
+      statusCode: 429,
+    });
+  });
+});
+
+describe("invokeWithFallback — requireBaa gate (PHI safety)", () => {
+  function p(id: string, opts: {
+    configured: boolean;
+    response?: string;
+    phiSafe: boolean;
+  }): LlmProvider {
+    return {
+      id,
+      configured: opts.configured,
+      phiSafe: opts.phiSafe,
+      invoke: async () => ({
+        text: opts.response ?? "",
+        provider: id,
+        model: "m",
+      }),
+    };
+  }
+
+  it("skips non-phiSafe providers when requireBaa=true", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, response: "should-not-be-picked", phiSafe: false}),
+        p("anthropic", {configured: true, response: "picked", phiSafe: true}),
+      ],
+      {messages: [{role: "user", content: "hi"}]},
+      {requireBaa: true},
+    );
+    expect(r.provider).toBe("anthropic");
+    expect(r.text).toBe("picked");
+  });
+
+  it("throws when requireBaa=true and no phiSafe provider is configured", async () => {
+    await expect(
+      invokeWithFallback(
+        [
+          p("groq", {configured: true, phiSafe: false}),
+          p("gemini", {configured: true, phiSafe: false}),
+        ],
+        {messages: [{role: "user", content: "hi"}]},
+        {requireBaa: true},
+      ),
+    ).rejects.toMatchObject({reason: "missing_credentials"});
+  });
+
+  it("keeps the default (opt-out) behaviour when requireBaa is not set", async () => {
+    const r = await invokeWithFallback(
+      [
+        p("groq", {configured: true, response: "demo-tier-ok", phiSafe: false}),
+        p("anthropic", {configured: true, response: "not-picked", phiSafe: true}),
+      ],
+      {messages: [{role: "user", content: "hi"}]},
+    );
+    expect(r.provider).toBe("groq");
+  });
+});
+
+describe("GeminiProvider — API key in x-goog-api-key header, not URL", () => {
+  it("does not pass ?key= in the URL", async () => {
+    let capturedUrl: string | null = null;
+    let capturedHeaders: Record<string, string> = {};
+    mockFetch(async (url, init) => {
+      capturedUrl = String(url);
+      capturedHeaders = init.headers as Record<string, string>;
+      return new Response(
+        JSON.stringify({
+          candidates: [{content: {parts: [{text: "hi"}]}}],
+        }),
+        {status: 200, headers: {"content-type": "application/json"}}
+      );
+    });
+    // Import lazily to reuse the mocked fetch scope.
+    const {GeminiProvider} = await import("../lib/llm_provider");
+    const g = new GeminiProvider("gemini-secret");
+    await g.invoke({messages: [{role: "user", content: "hi"}]});
+    expect(capturedUrl).not.toContain("key=");
+    expect(capturedHeaders["x-goog-api-key"]).toBe("gemini-secret");
   });
 });

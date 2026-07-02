@@ -45,7 +45,69 @@ export type LlmFailureReason =
   | "upstream_unreachable"
   | "upstream_4xx"
   | "upstream_5xx"
+  | "rate_limited"
+  | "timeout"
   | "malformed_response";
+
+/**
+ * Cold-start hardening — Cloud Functions bill for every wall-clock
+ * second, and a hung fetch on a slow LLM cold-start burns budget
+ * silently. Bound every provider call so `invokeWithFallback` can
+ * move on to the next provider instead of timing out the entire
+ * function invocation.
+ *
+ * Timeout picks:
+ *   * Anthropic / Azure — 45s (Sonnet cold starts ~15s, plus token
+ *     streaming for a full SOAP draft).
+ *   * Groq / Gemini free tier — 15s (Groq p99 ~2s hot; if we blow
+ *     15s the cluster is cold and Gemini will beat it).
+ */
+export const LLM_TIMEOUT_MS = {
+  anthropic: 45_000,
+  azure: 45_000,
+  groq: 15_000,
+  gemini: 15_000,
+} as const;
+
+/**
+ * Fetch with an AbortController-based timeout. Throws an
+ * [LlmProviderError] with reason `"timeout"` when the deadline hits so
+ * `invokeWithFallback` can fall over to the next provider instead of
+ * letting the whole function time out.
+ */
+export async function fetchWithTimeout(
+  input: string,
+  init: RequestInit,
+  timeoutMs: number,
+  providerId: string
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {...init, signal: controller.signal});
+  } catch (e) {
+    if (controller.signal.aborted) {
+      throw new LlmProviderError(
+        "timeout",
+        `${providerId} timed out after ${timeoutMs}ms`
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Map an HTTP status code to the sharpest [LlmFailureReason]. Public
+ * so tests can pin the classification (429 → rate_limited, 5xx →
+ * upstream_5xx, other 4xx → upstream_4xx).
+ */
+export function classifyStatus(status: number): LlmFailureReason {
+  if (status === 429) return "rate_limited";
+  if (status >= 500) return "upstream_5xx";
+  return "upstream_4xx";
+}
 
 export class LlmProviderError extends Error {
   constructor(
@@ -66,6 +128,16 @@ export interface LlmProvider {
   readonly configured: boolean;
 
   /**
+   * True when the provider is contractually cleared to process PHI —
+   * a BAA (US HIPAA) or an equivalent GDPR Art. 28 processor agreement
+   * is in place. Anthropic + Azure OpenAI have BAAs; free-tier Groq
+   * and Gemini do NOT. `invokeWithFallback({requireBaa: true})` filters
+   * these out at the chain entry so a PHI-carrying handler cannot
+   * accidentally relay to a demo-tier provider.
+   */
+  readonly phiSafe: boolean;
+
+  /**
    * Invoke the model. Throw [LlmProviderError] on any failure so the
    * strategy below can decide whether to fall over to the next
    * provider or bubble the error.
@@ -79,6 +151,7 @@ export interface LlmProvider {
  */
 export class AnthropicProvider implements LlmProvider {
   readonly id = "anthropic";
+  readonly phiSafe = true;
 
   constructor(private readonly apiKey: string | undefined) {}
 
@@ -96,22 +169,28 @@ export class AnthropicProvider implements LlmProvider {
     const model = req.model ?? "claude-haiku-4-5";
     let resp: Response;
     try {
-      resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": this.apiKey,
-          "anthropic-version": "2023-06-01",
+      resp = await fetchWithTimeout(
+        "https://api.anthropic.com/v1/messages",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": this.apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: req.maxTokens ?? 1024,
+            temperature: req.temperature ?? 0.2,
+            ...(req.system ? {system: req.system} : {}),
+            messages: req.messages,
+          }),
         },
-        body: JSON.stringify({
-          model,
-          max_tokens: req.maxTokens ?? 1024,
-          temperature: req.temperature ?? 0.2,
-          ...(req.system ? {system: req.system} : {}),
-          messages: req.messages,
-        }),
-      });
+        LLM_TIMEOUT_MS.anthropic,
+        this.id
+      );
     } catch (e) {
+      if (e instanceof LlmProviderError) throw e;
       throw new LlmProviderError(
         "upstream_unreachable",
         `Anthropic fetch failed: ${String(e)}`
@@ -120,7 +199,7 @@ export class AnthropicProvider implements LlmProvider {
     if (!resp.ok) {
       const body = await resp.text();
       throw new LlmProviderError(
-        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        classifyStatus(resp.status),
         `Anthropic ${resp.status}: ${body.slice(0, 200)}`,
         resp.status
       );
@@ -163,6 +242,7 @@ export class AnthropicProvider implements LlmProvider {
  */
 export class AzureOpenAIProvider implements LlmProvider {
   readonly id = "azure_openai";
+  readonly phiSafe = true;
 
   constructor(
     private readonly endpoint: string | undefined,
@@ -193,19 +273,25 @@ export class AzureOpenAIProvider implements LlmProvider {
 
     let resp: Response;
     try {
-      resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "api-key": this.apiKey!,
+      resp = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "api-key": this.apiKey!,
+          },
+          body: JSON.stringify({
+            messages,
+            max_tokens: req.maxTokens ?? 1024,
+            temperature: req.temperature ?? 0.2,
+          }),
         },
-        body: JSON.stringify({
-          messages,
-          max_tokens: req.maxTokens ?? 1024,
-          temperature: req.temperature ?? 0.2,
-        }),
-      });
+        LLM_TIMEOUT_MS.azure,
+        this.id
+      );
     } catch (e) {
+      if (e instanceof LlmProviderError) throw e;
       throw new LlmProviderError(
         "upstream_unreachable",
         `Azure OpenAI fetch failed: ${String(e)}`
@@ -214,7 +300,7 @@ export class AzureOpenAIProvider implements LlmProvider {
     if (!resp.ok) {
       const body = await resp.text();
       throw new LlmProviderError(
-        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        classifyStatus(resp.status),
         `Azure OpenAI ${resp.status}: ${body.slice(0, 200)}`,
         resp.status
       );
@@ -258,6 +344,9 @@ export class AzureOpenAIProvider implements LlmProvider {
  */
 export class GroqProvider implements LlmProvider {
   readonly id = "groq";
+  // Groq free tier does NOT sign a HIPAA BAA. `invokeWithFallback`
+  // with `requireBaa: true` skips this provider entirely.
+  readonly phiSafe = false;
 
   constructor(
     private readonly apiKey: string | undefined,
@@ -284,7 +373,7 @@ export class GroqProvider implements LlmProvider {
 
     let resp: Response;
     try {
-      resp = await fetch(
+      resp = await fetchWithTimeout(
         "https://api.groq.com/openai/v1/chat/completions",
         {
           method: "POST",
@@ -298,9 +387,12 @@ export class GroqProvider implements LlmProvider {
             max_tokens: req.maxTokens ?? 1024,
             temperature: req.temperature ?? 0.2,
           }),
-        }
+        },
+        LLM_TIMEOUT_MS.groq,
+        this.id
       );
     } catch (e) {
+      if (e instanceof LlmProviderError) throw e;
       throw new LlmProviderError(
         "upstream_unreachable",
         `Groq fetch failed: ${String(e)}`
@@ -309,7 +401,7 @@ export class GroqProvider implements LlmProvider {
     if (!resp.ok) {
       const body = await resp.text();
       throw new LlmProviderError(
-        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        classifyStatus(resp.status),
         `Groq ${resp.status}: ${body.slice(0, 200)}`,
         resp.status
       );
@@ -352,6 +444,9 @@ export class GroqProvider implements LlmProvider {
  */
 export class GeminiProvider implements LlmProvider {
   readonly id = "gemini";
+  // Gemini free tier does NOT carry a Google Cloud BAA. Same demo-only
+  // gate as Groq.
+  readonly phiSafe = false;
 
   constructor(
     private readonly apiKey: string | undefined,
@@ -370,9 +465,12 @@ export class GeminiProvider implements LlmProvider {
       );
     }
     const model = req.model ?? this.defaultModel;
+    // Google supports both `?key=` in the URL and the `x-goog-api-key`
+    // header. The URL form ends up in Cloud Functions access logs, so
+    // we pass the key in a header to keep it off the log trail.
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
-      `:generateContent?key=${this.apiKey}`;
+      `:generateContent`;
 
     const contents: Array<{role: string; parts: Array<{text: string}>}> = [];
     if (req.system) {
@@ -386,18 +484,27 @@ export class GeminiProvider implements LlmProvider {
 
     let resp: Response;
     try {
-      resp = await fetch(url, {
-        method: "POST",
-        headers: {"content-type": "application/json"},
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            maxOutputTokens: req.maxTokens ?? 1024,
-            temperature: req.temperature ?? 0.2,
+      resp = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-goog-api-key": this.apiKey,
           },
-        }),
-      });
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              maxOutputTokens: req.maxTokens ?? 1024,
+              temperature: req.temperature ?? 0.2,
+            },
+          }),
+        },
+        LLM_TIMEOUT_MS.gemini,
+        this.id
+      );
     } catch (e) {
+      if (e instanceof LlmProviderError) throw e;
       throw new LlmProviderError(
         "upstream_unreachable",
         `Gemini fetch failed: ${String(e)}`
@@ -406,7 +513,7 @@ export class GeminiProvider implements LlmProvider {
     if (!resp.ok) {
       const body = await resp.text();
       throw new LlmProviderError(
-        resp.status >= 500 ? "upstream_5xx" : "upstream_4xx",
+        classifyStatus(resp.status),
         `Gemini ${resp.status}: ${body.slice(0, 200)}`,
         resp.status
       );
@@ -451,19 +558,42 @@ export class GeminiProvider implements LlmProvider {
  * fallover. A 4xx with body (auth, validation) also fallovers — the
  * primary may be misconfigured while the secondary is fine.
  */
+export interface InvokeWithFallbackOptions {
+  /**
+   * When true, providers whose `phiSafe` flag is `false` are filtered
+   * out of the chain entry — a PHI-carrying handler can pass the same
+   * `defaultProviderChain()` and have demo-tier providers dropped
+   * without shuffling the call site.
+   */
+  requireBaa?: boolean;
+}
+
 export async function invokeWithFallback(
   providers: LlmProvider[],
-  req: LlmRequest
+  req: LlmRequest,
+  opts: InvokeWithFallbackOptions = {}
 ): Promise<LlmResponse> {
-  if (providers.length === 0) {
+  const chain = opts.requireBaa ?
+    providers.filter((p) => p.phiSafe) :
+    providers;
+  if (chain.length === 0) {
     throw new LlmProviderError(
       "missing_credentials",
-      "no LLM providers configured"
+      opts.requireBaa ?
+        "no BAA-bearing LLM providers configured" :
+        "no LLM providers configured"
     );
+  }
+  if (opts.requireBaa && chain.length !== providers.length) {
+    functions.logger.info("llm_provider.phi_gate_filtered", {
+      filtered: providers
+        .filter((p) => !p.phiSafe)
+        .map((p) => p.id),
+    });
   }
 
   let lastError: LlmProviderError | null = null;
-  for (const provider of providers) {
+  for (const provider of chain) {
     if (!provider.configured) {
       functions.logger.debug("llm_provider.skipped_unconfigured", {
         provider: provider.id,
@@ -478,12 +608,27 @@ export async function invokeWithFallback(
           previous_reason: lastError.reason,
         });
       }
+      // Quota telemetry — Cloud Logging slices this by function name +
+      // provider so ops can see when Groq's 14.4k TPD ceiling or
+      // Gemini's 1k RPD ceiling is approaching. Values are per-call;
+      // a downstream log-based metric aggregates.
+      functions.logger.info("llm_provider.usage", {
+        provider: res.provider,
+        model: res.model,
+        input_tokens: res.inputTokens ?? 0,
+        output_tokens: res.outputTokens ?? 0,
+      });
       return res;
     } catch (e) {
       const err = e instanceof LlmProviderError ?
         e :
         new LlmProviderError("upstream_unreachable", String(e));
       lastError = err;
+      // Log only wire-safe fields — never `err.message`. Upstream
+      // providers may echo request fragments (transcript text) in
+      // 4xx bodies, and `provider.invoke` slices those into the
+      // message string; propagating that to Cloud Logging risks
+      // spilling PHI into a persistent log surface.
       functions.logger.warn("llm_provider.failed", {
         provider: provider.id,
         reason: err.reason,

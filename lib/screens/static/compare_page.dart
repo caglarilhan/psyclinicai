@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/static/static_page_shell.dart';
 
-/// `/compare` — programmatic-SEO landing comparing PsyClinicAI to
-/// the categories of competing tools clinicians already evaluate.
+/// `/compare` — programmatic-SEO landing comparing PsyClinicAI to the
+/// AI-scribe + EHR products mental-health practices already evaluate.
+///
+/// Two views:
+///   1. A per-vendor feature grid so procurement can scan facts in
+///      seconds ("does X have BAA / EU residency / on-device audio").
+///   2. Category-level trade-offs so pilots understand where each
+///      class of competitor still wins today.
 class ComparePage extends StatelessWidget {
   const ComparePage({super.key});
 
@@ -14,13 +20,15 @@ class ComparePage extends StatelessWidget {
       eyebrow: 'Compare',
       title: 'How PsyClinicAI compares.',
       lede:
-          'Honest, structured trade-offs against the EHRs and AI scribes '
+          'Honest, structured trade-offs against the AI scribes and EHRs '
           'mental-health practices already evaluate. We list where the '
           'competitor wins so you do not have to dig for it.',
-      lastUpdated: DateTime(2026, 6, 2),
+      lastUpdated: DateTime(2026, 7),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _VendorGrid(),
+          SizedBox(height: PsySpacing.xxl),
           _Comparison(
             name: 'vs. legacy EHR (SimplePractice, TherapyNotes)',
             wins: [
@@ -66,6 +74,314 @@ class ComparePage extends StatelessWidget {
           SizedBox(height: PsySpacing.xxl),
         ],
       ),
+    );
+  }
+}
+
+// ─── Per-vendor feature grid ─────────────────────────────────────────
+// Public-record facts about competitors we run into on procurement
+// calls. Corrections gladly accepted at press@psyclinicai.com — every
+// row cites the vendor's own posture, not our reading of it.
+class _VendorRow {
+  const _VendorRow({
+    required this.vendor,
+    required this.category,
+    required this.euResidency,
+    required this.baa,
+    required this.audioOnDevice,
+    required this.byok,
+    required this.starterPrice,
+  });
+
+  final String vendor;
+
+  /// Short "AI scribe" / "EHR" / "AI scribe + EHR" label.
+  final String category;
+
+  /// True when the vendor documents an EU data-residency option.
+  final bool euResidency;
+
+  /// True when the vendor publicly signs a HIPAA Business Associate
+  /// Agreement (US clinicians).
+  final bool baa;
+
+  /// True when the audio-to-text pass runs on the clinician's device
+  /// (no raw audio uploaded).
+  final bool audioOnDevice;
+
+  /// True when the clinician can bring their own LLM key (BYOK).
+  final bool byok;
+
+  /// Cheapest paid plan we could find in USD, monthly, per-clinician.
+  /// Empty string when the vendor does not publish it.
+  final String starterPrice;
+}
+
+const _vendorRows = <_VendorRow>[
+  _VendorRow(
+    vendor: 'PsyClinicAI',
+    category: 'AI scribe + EHR',
+    euResidency: true,
+    baa: true,
+    audioOnDevice: true,
+    byok: true,
+    starterPrice: r'$0 Demo · $99 Pro',
+  ),
+  _VendorRow(
+    vendor: 'Mentalyc',
+    category: 'AI scribe',
+    euResidency: false,
+    baa: true,
+    audioOnDevice: false,
+    byok: false,
+    starterPrice: r'$39',
+  ),
+  _VendorRow(
+    vendor: 'Upheal',
+    category: 'AI scribe',
+    euResidency: true,
+    baa: true,
+    audioOnDevice: false,
+    byok: false,
+    starterPrice: r'$59',
+  ),
+  _VendorRow(
+    vendor: 'Eleos Health',
+    category: 'AI scribe',
+    euResidency: false,
+    baa: true,
+    audioOnDevice: false,
+    byok: false,
+    starterPrice: '',
+  ),
+  _VendorRow(
+    vendor: 'SimplePractice',
+    category: 'EHR',
+    euResidency: false,
+    baa: true,
+    audioOnDevice: false,
+    byok: false,
+    starterPrice: r'$69',
+  ),
+  _VendorRow(
+    vendor: 'TherapyNotes',
+    category: 'EHR',
+    euResidency: false,
+    baa: true,
+    audioOnDevice: false,
+    byok: false,
+    starterPrice: r'$59',
+  ),
+];
+
+class _VendorGrid extends StatelessWidget {
+  const _VendorGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    // Under 720px the DataTable stops fitting even in horizontal scroll
+    // (WCAG 1.4.10 reflow). Fall back to a stacked card list where each
+    // vendor is a self-contained block — keyboard, screen reader, and
+    // 200%-zoom friendly.
+    final isNarrow = MediaQuery.sizeOf(context).width < 720;
+    return Container(
+      padding: const EdgeInsets.all(PsySpacing.xl),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(PsyRadius.md),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Feature-by-feature',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'The facts procurement asks for first. Every column is a '
+            'public vendor claim — corrections welcome at '
+            'press@psyclinicai.com.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.78),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: PsySpacing.lg),
+          if (isNarrow)
+            Column(
+              children: [
+                for (final r in _vendorRows) _VendorCard(row: r, cs: cs),
+              ],
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowColor: WidgetStatePropertyAll(
+                  cs.surfaceContainerLow,
+                ),
+                columns: const [
+                  DataColumn(label: Text('Vendor')),
+                  DataColumn(label: Text('Category')),
+                  DataColumn(label: Text('EU residency')),
+                  DataColumn(label: Text('HIPAA BAA')),
+                  DataColumn(label: Text('Audio on-device')),
+                  DataColumn(label: Text('BYOK LLM')),
+                  DataColumn(label: Text('Starter (USD/mo)')),
+                ],
+                rows: [
+                  for (final r in _vendorRows)
+                    DataRow(
+                      color: r.vendor == 'PsyClinicAI'
+                          ? WidgetStatePropertyAll(
+                              cs.primary.withValues(alpha: 0.08),
+                            )
+                          : null,
+                      cells: [
+                        DataCell(
+                          Text(
+                            r.vendor,
+                            style: TextStyle(
+                              fontWeight: r.vendor == 'PsyClinicAI'
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: r.vendor == 'PsyClinicAI'
+                                  ? cs.primary
+                                  : cs.onSurface,
+                            ),
+                          ),
+                        ),
+                        DataCell(Text(r.category)),
+                        DataCell(_Yn(value: r.euResidency, cs: cs)),
+                        DataCell(_Yn(value: r.baa, cs: cs)),
+                        DataCell(_Yn(value: r.audioOnDevice, cs: cs)),
+                        DataCell(_Yn(value: r.byok, cs: cs)),
+                        DataCell(
+                          Text(
+                            r.starterPrice.isEmpty ? '—' : r.starterPrice,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VendorCard extends StatelessWidget {
+  const _VendorCard({required this.row, required this.cs});
+  final _VendorRow row;
+  final ColorScheme cs;
+
+  Widget _kv(BuildContext context, String k, Widget v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 132,
+            child: Text(
+              k,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.55),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: v),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isOwn = row.vendor == 'PsyClinicAI';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: PsySpacing.md),
+      child: Container(
+        padding: const EdgeInsets.all(PsySpacing.lg),
+        decoration: BoxDecoration(
+          color: isOwn
+              ? cs.primary.withValues(alpha: 0.06)
+              : cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(PsyRadius.md),
+          border: Border.all(
+            color: isOwn
+                ? cs.primary.withValues(alpha: 0.35)
+                : cs.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              row.vendor,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: isOwn ? FontWeight.w800 : FontWeight.w700,
+                color: isOwn ? cs.primary : cs.onSurface,
+              ),
+            ),
+            const SizedBox(height: 6),
+            _kv(context, 'Category', Text(row.category)),
+            _kv(context, 'EU residency', _Yn(value: row.euResidency, cs: cs)),
+            _kv(context, 'HIPAA BAA', _Yn(value: row.baa, cs: cs)),
+            _kv(
+              context,
+              'Audio on-device',
+              _Yn(value: row.audioOnDevice, cs: cs),
+            ),
+            _kv(context, 'BYOK LLM', _Yn(value: row.byok, cs: cs)),
+            _kv(
+              context,
+              'Starter (USD/mo)',
+              Text(row.starterPrice.isEmpty ? '—' : row.starterPrice),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Yn extends StatelessWidget {
+  const _Yn({required this.value, required this.cs});
+  final bool value;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          value ? Icons.check_circle : Icons.remove_circle_outline,
+          size: 16,
+          color: value ? cs.primary : cs.onSurface.withValues(alpha: 0.35),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          value ? 'Yes' : 'No',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: value ? cs.primary : cs.onSurface.withValues(alpha: 0.55),
+          ),
+        ),
+      ],
     );
   }
 }

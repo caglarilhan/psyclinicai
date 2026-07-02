@@ -1,3 +1,8 @@
+// ignore_for_file: avoid_catching_errors
+// Schema-drift protection: we deliberately catch `TypeError` /
+// `NoSuchMethodError` inside `TpDraftedPlan.fromJson` so a server
+// response that grows a new required field surfaces as
+// `TpDrafterException(422, …)` instead of an unhandled crash.
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -37,19 +42,37 @@ class TpDrafterClient {
     required TpModality modality,
     required List<String> presentingProblems,
     String? extraContext,
+    bool demoMode = false,
   }) async {
-    final res = await _http.post(
-      Uri.parse(draftUrl),
-      headers: await _headers(),
-      body: jsonEncode({
-        'tenantId': tenantId,
-        if (patientId != null) 'patientId': patientId,
-        'disorder': disorder.name,
-        'modality': modality.name,
-        'presentingProblems': presentingProblems,
-        if (extraContext != null) 'extraContext': extraContext,
-      }),
-    );
+    // Cloud Function timeout is 45s per provider + 15s free-tier fallover,
+    // so the whole request should return in <= 90s worst case. Bounding
+    // the client side at 90s keeps the UI from hanging on a socket that
+    // outlives the function invocation.
+    final res = await _http
+        .post(
+          Uri.parse(draftUrl),
+          headers: await _headers(),
+          body: jsonEncode({
+            'tenantId': tenantId,
+            if (patientId != null) 'patientId': patientId,
+            'disorder': disorder.name,
+            'modality': modality.name,
+            'presentingProblems': presentingProblems,
+            if (extraContext != null) 'extraContext': extraContext,
+            // Assert the caller has verified the payload is synthetic.
+            // Backend uses this to enable the free-tier LLM chain
+            // (Groq / Gemini) — never send true when real PHI is
+            // present.
+            if (demoMode) 'demoMode': true,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 90),
+          onTimeout: () => throw const TpDrafterException(
+            408,
+            'Request timed out — please retry.',
+          ),
+        );
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw TpDrafterException(res.statusCode, res.body);
     }
@@ -71,16 +94,33 @@ class TpDraftedPlan {
     required this.phiRedactions,
   });
 
-  factory TpDraftedPlan.fromJson(Map<String, dynamic> j) => TpDraftedPlan(
-    schemaVersion: j['schemaVersion'] as int,
-    generatedAtMillis: j['generatedAt'] as int,
-    provider: j['provider'] as String,
-    model: j['model'] as String,
-    protocolLabel: j['protocolLabel'] as String,
-    requiresSupervisorCoSign: j['requiresSupervisorCoSign'] as bool,
-    plan: Map<String, dynamic>.from(j['plan'] as Map),
-    phiRedactions: (j['phiRedactions'] as int?) ?? 0,
-  );
+  /// Defensive constructor — a missing top-level key or type mismatch
+  /// throws a `TpDrafterException(422, …)` the UI can surface, instead
+  /// of an unhandled `TypeError` that reads as a generic crash.
+  factory TpDraftedPlan.fromJson(Map<String, dynamic> j) {
+    try {
+      return TpDraftedPlan(
+        schemaVersion: j['schemaVersion'] as int,
+        generatedAtMillis: j['generatedAt'] as int,
+        provider: j['provider'] as String,
+        model: j['model'] as String,
+        protocolLabel: j['protocolLabel'] as String,
+        requiresSupervisorCoSign: j['requiresSupervisorCoSign'] as bool,
+        plan: Map<String, dynamic>.from(j['plan'] as Map),
+        phiRedactions: (j['phiRedactions'] as int?) ?? 0,
+      );
+    } on TypeError catch (e) {
+      throw TpDrafterException(
+        422,
+        'Malformed tpDraftPlan response — schema drift: $e',
+      );
+    } on NoSuchMethodError catch (e) {
+      throw TpDrafterException(
+        422,
+        'Missing tpDraftPlan response field: $e',
+      );
+    }
+  }
 
   final int schemaVersion;
   final int generatedAtMillis;

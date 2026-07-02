@@ -22,6 +22,7 @@ import 'package:provider/provider.dart';
 import '../../services/billing/subscription_service.dart';
 import '../../services/data/auth_service.dart';
 import '../../services/data/mfa_local_repository.dart';
+import '../../services/onboarding/onboarding_signals_repository.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/ds/psy_empty_state.dart';
 import '../../widgets/onboarding_checklist.dart';
@@ -200,11 +201,17 @@ class RecentActivity extends StatelessWidget {
 }
 
 class SetupChecklist extends StatefulWidget {
-  const SetupChecklist({super.key, this.mfaRepo});
+  const SetupChecklist({super.key, this.mfaRepo, this.signalsRepo});
 
   /// Override for tests; production wires a default
   /// [MfaLocalRepository].
   final MfaLocalRepository? mfaRepo;
+
+  /// Sprint 31 — PILAR activation stream (SOAP / MBC / no-show / TP).
+  /// Defaults to a Firestore-backed implementation in production;
+  /// tests inject a fake so the pillar milestones can be exercised
+  /// without spinning up a real Firebase project.
+  final OnboardingSignalsRepository? signalsRepo;
 
   @override
   State<SetupChecklist> createState() => _SetupChecklistState();
@@ -213,6 +220,11 @@ class SetupChecklist extends StatefulWidget {
 class _SetupChecklistState extends State<SetupChecklist> {
   late final MfaLocalRepository _mfaRepo =
       widget.mfaRepo ?? MfaLocalRepository();
+
+  /// Cached so the StreamBuilder subscription doesn't restart on every
+  /// parent rebuild (auth profile refresh, theme change, …).
+  late final OnboardingSignalsRepository _signalsRepo =
+      widget.signalsRepo ?? OnboardingSignalsRepository();
 
   @override
   void initState() {
@@ -238,41 +250,98 @@ class _SetupChecklistState extends State<SetupChecklist> {
       valueListenable: _mfaRepo.listenable,
       builder: (context, mfaAt, _) {
         final mfaDone = mfaAt != null;
-        final items = <OnboardingChecklistItem>[
-          OnboardingChecklistItem(
-            id: 'profile',
-            label: 'Add your clinician profile',
-            body: 'NPI, license, signature — feeds the superbill.',
-            icon: Icons.badge_outlined,
-            done: profileDone,
-            onTap: () => nav.pushNamed('/settings/profile'),
-          ),
-          OnboardingChecklistItem(
-            id: 'mfa',
-            label: 'Enable two-factor authentication',
-            body: 'TOTP + recovery codes. Required for ePHI under HIPAA.',
-            icon: Icons.shield_outlined,
-            done: mfaDone,
-            onTap: () => nav.pushNamed('/settings/mfa'),
-          ),
-          OnboardingChecklistItem(
-            id: 'stripe',
-            label: 'Connect Stripe to take payments',
-            body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
-            icon: Icons.payments_outlined,
-            done: stripeDone,
-            onTap: () => nav.pushNamed('/settings/payments'),
-          ),
-          OnboardingChecklistItem(
-            id: 'first-patient',
-            label: 'Invite your first patient',
-            body: 'Send the intake form, capture consent, schedule.',
-            icon: Icons.person_add_alt_outlined,
-            done: false,
-            onTap: () => nav.pushNamed('/patients'),
-          ),
-        ];
-        return OnboardingChecklist(items: items);
+
+        List<OnboardingChecklistItem> buildItems(OnboardingSignals signals) {
+          return <OnboardingChecklistItem>[
+            OnboardingChecklistItem(
+              id: 'profile',
+              label: 'Add your clinician profile',
+              body: 'NPI, license, signature — feeds the superbill.',
+              icon: Icons.badge_outlined,
+              done: profileDone,
+              onTap: () => nav.pushNamed('/settings/profile'),
+            ),
+            OnboardingChecklistItem(
+              id: 'mfa',
+              label: 'Enable two-factor authentication',
+              body: 'TOTP + recovery codes. Required for ePHI under HIPAA.',
+              icon: Icons.shield_outlined,
+              done: mfaDone,
+              onTap: () => nav.pushNamed('/settings/mfa'),
+            ),
+            OnboardingChecklistItem(
+              id: 'stripe',
+              label: 'Connect Stripe to take payments',
+              body: 'Express onboarding · 5 minutes · KYC handled by Stripe.',
+              icon: Icons.payments_outlined,
+              done: stripeDone,
+              onTap: () => nav.pushNamed('/settings/payments'),
+            ),
+            OnboardingChecklistItem(
+              id: 'first-patient',
+              label: 'Invite your first patient',
+              body: 'Send the intake form, capture consent, schedule.',
+              icon: Icons.person_add_alt_outlined,
+              done: false,
+              onTap: () => nav.pushNamed('/patients'),
+            ),
+            // Sprint 31 — PILAR activation milestones. Each flips the
+            // moment the audit collection sees its first row from
+            // this clinic, so the box ticks itself without any
+            // client-side write.
+            OnboardingChecklistItem(
+              id: 'first-soap',
+              label: 'Draft your first SOAP note',
+              body: 'Ambient scribe · 30 seconds · every claim cited.',
+              icon: Icons.description_outlined,
+              done: signals.hasSoapDraft,
+              onTap: () => nav.pushNamed('/clinician/scribe'),
+            ),
+            OnboardingChecklistItem(
+              id: 'first-mbc',
+              label: 'Send your first between-session assessment',
+              body: 'PHQ-9 · GAD-7 · a link the patient posts in seconds.',
+              icon: Icons.assignment_turned_in_outlined,
+              done: signals.hasMbcDispatch,
+              onTap: () => nav.pushNamed('/clinician/mbc'),
+            ),
+            OnboardingChecklistItem(
+              id: 'first-noshow',
+              label: 'Score your first no-show risk',
+              body: 'Tier + ROI + recovery playbook in one row.',
+              icon: Icons.online_prediction,
+              done: signals.hasNoShowPrediction,
+              onTap: () => nav.pushNamed('/clinician/noshow'),
+            ),
+            OnboardingChecklistItem(
+              id: 'first-tp',
+              label: 'Draft your first treatment plan',
+              body: 'CBT / EMDR / MI protocols · SMART goals inline.',
+              icon: Icons.psychology_outlined,
+              done: signals.hasTpPlan,
+              onTap: () => nav.pushNamed('/clinician/tp-drafter'),
+            ),
+          ];
+        }
+
+        final clinicId = profile?.userId;
+        if (clinicId == null || clinicId.isEmpty) {
+          // Unauthenticated build (e.g. first-frame render before
+          // auth resolves) — surface the local-signal milestones
+          // only so the widget still paints without an empty state.
+          return OnboardingChecklist(
+            items: buildItems(const OnboardingSignals.empty()),
+          );
+        }
+
+        return StreamBuilder<OnboardingSignals>(
+          stream: _signalsRepo.watchAll(clinicId),
+          initialData: const OnboardingSignals.empty(),
+          builder: (context, snapshot) {
+            final signals = snapshot.data ?? const OnboardingSignals.empty();
+            return OnboardingChecklist(items: buildItems(signals));
+          },
+        );
       },
     );
   }

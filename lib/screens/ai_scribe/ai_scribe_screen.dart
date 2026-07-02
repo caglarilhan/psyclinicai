@@ -321,7 +321,7 @@ class _DraftReview extends StatelessWidget {
   }
 }
 
-class _SectionEditor extends StatelessWidget {
+class _SectionEditor extends StatefulWidget {
   const _SectionEditor({
     required this.theme,
     required this.cs,
@@ -334,7 +334,35 @@ class _SectionEditor extends StatelessWidget {
   final AiScribeDraft draft;
 
   @override
+  State<_SectionEditor> createState() => _SectionEditorState();
+}
+
+class _SectionEditorState extends State<_SectionEditor> {
+  /// One controller per SOAP field, keyed by field key. Living in state
+  /// means clinician edits survive tab switches + theme rebuilds — the
+  /// prior inline `TextEditingController(text: …)` inside `build()`
+  /// allocated a fresh controller on every rebuild and silently
+  /// discarded typing.
+  late final Map<String, TextEditingController> _controllers = {
+    for (final field in widget.spec.fields)
+      field.key: TextEditingController(
+        text: widget.draft.stringField(widget.spec.section, field.key),
+      ),
+  };
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = widget.theme;
+    final cs = widget.cs;
+    final spec = widget.spec;
     return ListView(
       padding: const EdgeInsets.only(top: PsySpacing.md),
       children: [
@@ -355,9 +383,7 @@ class _SectionEditor extends StatelessWidget {
           ),
           const SizedBox(height: PsySpacing.xs),
           TextField(
-            controller: TextEditingController(
-              text: draft.stringField(spec.section, field.key),
-            ),
+            controller: _controllers[field.key],
             maxLines: field.kind == SoapFieldKind.longText ? 4 : 6,
             decoration: InputDecoration(
               hintText: field.placeholder,

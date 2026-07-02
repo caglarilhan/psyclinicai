@@ -40,6 +40,7 @@ class AiScribeClient {
     required String transcript,
     String? patientId,
     List<SoapSection>? sections,
+    bool demoMode = false,
   }) async {
     final res = await _http.post(
       Uri.parse(baseUrl),
@@ -51,6 +52,11 @@ class AiScribeClient {
         if (patientId != null) 'patientId': patientId,
         if (sections != null && sections.isNotEmpty)
           'sections': sections.map((s) => s.name).toList(),
+        // Assert the caller has verified the transcript is synthetic.
+        // Backend uses this to enable the free-tier LLM chain
+        // (Groq / Gemini) — never send true when real PHI is
+        // present.
+        if (demoMode) 'demoMode': true,
       }),
     );
     if (res.statusCode < 200 || res.statusCode >= 300) {

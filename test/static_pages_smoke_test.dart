@@ -18,6 +18,7 @@ import 'package:psyclinicai/screens/static/compare_page.dart';
 import 'package:psyclinicai/screens/static/contact_page.dart';
 import 'package:psyclinicai/screens/static/dpa_page.dart';
 import 'package:psyclinicai/screens/static/faq_page.dart';
+import 'package:psyclinicai/screens/static/help_page.dart';
 import 'package:psyclinicai/screens/static/not_found_page.dart';
 import 'package:psyclinicai/screens/static/press_page.dart';
 import 'package:psyclinicai/screens/static/pricing_page.dart';
@@ -49,6 +50,31 @@ void main() {
   testWidgets('compare page renders', (tester) async {
     await _pumpPage(tester, const ComparePage());
     expect(find.textContaining('PsyClinicAI'), findsWidgets);
+  });
+
+  testWidgets('compare page lists Mentalyc + SimplePractice + TherapyNotes', (
+    tester,
+  ) async {
+    await _pumpPage(tester, const ComparePage());
+    for (final vendor in ['Mentalyc', 'SimplePractice', 'TherapyNotes']) {
+      expect(
+        find.textContaining(vendor),
+        findsWidgets,
+        reason:
+            'Compare page must name $vendor by name — that is the SEO + '
+            'procurement value',
+      );
+    }
+  });
+
+  testWidgets('help page renders (support hub)', (tester) async {
+    await _pumpPage(tester, const HelpPage());
+    expect(find.textContaining('Help'), findsWidgets);
+    expect(
+      find.textContaining('BYOK'),
+      findsWidgets,
+      reason: 'Help hub must include the BYOK setup section',
+    );
   });
 
   testWidgets('contact page renders', (tester) async {
@@ -114,13 +140,72 @@ void main() {
     expect(find.textContaining('Terms'), findsWidgets);
   });
 
+  testWidgets('tos page carries the Demo/BYOK/Pro tier disclosure', (
+    tester,
+  ) async {
+    await _pumpPage(tester, const TosPage());
+    expect(
+      find.textContaining('Demo tier'),
+      findsWidgets,
+      reason:
+          'ToS section 3 discloses that Demo tier calls Groq/Gemini and does '
+          'not process PHI — required for the BAA delegation posture',
+    );
+    expect(
+      find.textContaining('BYOK'),
+      findsWidgets,
+      reason: 'ToS must name the BYOK tier so BAA delegation is unambiguous',
+    );
+  });
+
+  testWidgets('privacy page discloses Groq + Gemini sub-processors', (
+    tester,
+  ) async {
+    await _pumpPage(tester, const PrivacyPage());
+    expect(
+      find.textContaining('Groq'),
+      findsWidgets,
+      reason: 'Privacy §4 must name Groq as a Demo-tier sub-processor',
+    );
+    expect(
+      find.textContaining('Gemini'),
+      findsWidgets,
+      reason: 'Privacy §4 must name Gemini as a Demo-tier sub-processor',
+    );
+  });
+
   testWidgets('baa page renders (HIPAA legal)', (tester) async {
     await _pumpPage(tester, const BaaPage());
     expect(find.textContaining('BAA'), findsWidgets);
   });
 
+  testWidgets('baa page documents BYOK BAA delegation', (tester) async {
+    await _pumpPage(tester, const BaaPage());
+    expect(
+      find.textContaining('BYOK'),
+      findsWidgets,
+      reason:
+          'BAA page Subcontractors section must explain that BYOK-tier '
+          'clinicians sign the upstream Anthropic BAA directly',
+    );
+  });
+
   testWidgets('dpa page renders (GDPR legal)', (tester) async {
     await _pumpPage(tester, const DpaPage());
     expect(find.textContaining('DPA'), findsWidgets);
+  });
+
+  testWidgets('dpa page lists Demo-tier LLM sub-processors', (tester) async {
+    await _pumpPage(tester, const DpaPage());
+    expect(
+      find.textContaining('Groq'),
+      findsWidgets,
+      reason: 'DPA sub-processor summary must name Groq',
+    );
+    expect(
+      find.textContaining('Gemini'),
+      findsWidgets,
+      reason: 'DPA sub-processor summary must name Gemini',
+    );
   });
 }

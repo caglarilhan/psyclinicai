@@ -163,7 +163,7 @@ class QuickActions extends StatelessWidget {
 }
 
 class DashboardAction {
-  DashboardAction({
+  const DashboardAction({
     required this.icon,
     required this.label,
     required this.body,

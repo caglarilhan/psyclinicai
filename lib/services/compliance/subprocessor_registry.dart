@@ -17,7 +17,7 @@ class SubprocessorRegistry {
   const SubprocessorRegistry._();
 
   /// YYYY-MM stamp surfaced on the trust center page.
-  static const String lastReviewed = '2026-06';
+  static const String lastReviewed = '2026-07';
 
   static const List<Subprocessor> entries = [
     // ────────── Core infrastructure (EU-resident) ──────────
@@ -87,6 +87,37 @@ class SubprocessorRegistry {
       transferMechanism: 'EU SCCs + DPA · zero-retention API mode',
       risk: SubprocessorRisk.medium,
       dpaUrl: 'https://openai.com/policies/data-processing-addendum',
+    ),
+    Subprocessor(
+      id: 'groq',
+      name: 'Groq, Inc.',
+      purpose:
+          'Demo-tier AI inference — synthetic vignettes only. Real PHI is '
+          'blocked by tenant policy; PHI-carrying workspaces must switch to '
+          'BYOK (Anthropic).',
+      data: 'Synthetic transcript text only (no PHI, no audio)',
+      location: 'US',
+      transferMechanism:
+          'EU SCCs available · Demo tier does not process PHI, so no BAA '
+          'is required · workspaces holding PHI must not enable Groq',
+      risk: SubprocessorRisk.high,
+      dpaUrl: 'https://groq.com/terms-of-use/',
+    ),
+    Subprocessor(
+      id: 'google-gemini',
+      name: 'Google Ireland Ltd. (Gemini API)',
+      purpose:
+          'Demo-tier AI inference fallback — synthetic vignettes only. Real '
+          'PHI is blocked by tenant policy; PHI-carrying workspaces must '
+          'switch to BYOK (Anthropic).',
+      data: 'Synthetic transcript text only (no PHI, no audio)',
+      location: 'EU + US fallback',
+      transferMechanism:
+          'EU SCCs in Google Cloud terms · Demo tier does not process PHI, '
+          'so no BAA is required · workspaces holding PHI must not enable '
+          'Gemini',
+      risk: SubprocessorRisk.high,
+      dpaUrl: 'https://cloud.google.com/terms/data-processing-addendum',
     ),
 
     // ────────── Payments ──────────

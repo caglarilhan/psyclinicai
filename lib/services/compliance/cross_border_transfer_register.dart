@@ -98,8 +98,10 @@ class TransferRecord {
 class CrossBorderTransferRegister {
   const CrossBorderTransferRegister._();
 
-  /// YYYY-MM stamp — drives the "needs review" badge.
-  static const String lastReviewed = '2026-06';
+  /// YYYY-MM stamp — drives the "needs review" badge. Aligned with
+  /// [SubprocessorRegistry.lastReviewed]. Bumped when the Groq/Gemini
+  /// demo-tier transfers were added.
+  static const String lastReviewed = '2026-07';
 
   /// Pinned register. Append-only — historical flows stay so the
   /// regulator's question "what was the basis on date X" resolves.
@@ -186,6 +188,46 @@ class CrossBorderTransferRegister {
       ],
       tiaDocPath: 'docs/compliance/TIA_CLOUDFLARE.md',
       regulatoryRefs: ['GDPR Art. 46(2)(c)'],
+    ),
+    // Demo-tier LLM providers — synthetic transcript text ONLY. Tenant
+    // policy blocks these providers for workspaces that hold PHI, so
+    // the transfer class stays at businessOps (synthetic vignettes are
+    // not personal data). PHI-carrying tenants must switch to BYOK.
+    TransferRecord(
+      id: 'groq-demo-us',
+      subprocessorId: 'groq',
+      dataClass: TransferDataClass.businessOps,
+      sourceJurisdiction: 'EU/EEA',
+      destinationJurisdiction: 'United States',
+      mechanism: TransferMechanism.standardContractualClauses,
+      supplementaryMeasures: [
+        'Demo tier only — synthetic vignettes, no PHI, no personal data',
+        'Tenant policy blocks Groq for PHI-carrying workspaces',
+        'TLS 1.3 in transit',
+      ],
+      tiaDocPath: 'docs/compliance/TIA_GROQ.md',
+      regulatoryRefs: [
+        'GDPR Art. 46(2)(c) SCC 2021/914 Module 2',
+        'Schrems II (C-311/18)',
+      ],
+    ),
+    TransferRecord(
+      id: 'gemini-demo-us',
+      subprocessorId: 'google-gemini',
+      dataClass: TransferDataClass.businessOps,
+      sourceJurisdiction: 'EU/EEA',
+      destinationJurisdiction: 'United States',
+      mechanism: TransferMechanism.standardContractualClauses,
+      supplementaryMeasures: [
+        'Demo tier only — synthetic vignettes, no PHI, no personal data',
+        'Tenant policy blocks Gemini for PHI-carrying workspaces',
+        'TLS 1.3 in transit',
+      ],
+      tiaDocPath: 'docs/compliance/TIA_GEMINI.md',
+      regulatoryRefs: [
+        'GDPR Art. 46(2)(c) SCC 2021/914 Module 2',
+        'Schrems II (C-311/18)',
+      ],
     ),
   ];
 

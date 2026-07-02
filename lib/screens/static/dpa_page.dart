@@ -57,8 +57,10 @@ class DpaPage extends StatelessWidget {
             title: 'Sub-processors',
             body:
                 'Hetzner Online GmbH (DE-Frankfurt) · Firebase Auth (eu-multi) · '
-                'Anthropic — only when you supply your own API key (BYOK). A live '
-                'list is at /subprocessors with 30-day change notice.',
+                'Anthropic — only when you supply your own API key (BYOK) or '
+                'on the Pro tier · Groq and Google (Gemini) — Demo tier only, '
+                'synthetic vignettes, no PHI. A live list is at '
+                '/trust/subprocessors with 30-day change notice.',
           ),
           _Section(
             theme: theme,

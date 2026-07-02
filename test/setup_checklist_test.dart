@@ -31,13 +31,13 @@ void main() {
     );
   }
 
-  testWidgets('all-zero state shows 0 / 4 badge', (tester) async {
+  testWidgets('all-zero state shows 0 / 8 badge', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(wrapWith());
     await tester.pumpAndSettle();
-    expect(find.text('0 / 4'), findsOneWidget);
+    expect(find.text('0 / 8'), findsOneWidget);
   });
 
   testWidgets('activating a paid subscription flips Stripe step to done', (
@@ -49,11 +49,11 @@ void main() {
     final sub = SubscriptionService();
     await tester.pumpWidget(wrapWith(sub: sub));
     await tester.pumpAndSettle();
-    expect(find.text('0 / 4'), findsOneWidget);
+    expect(find.text('0 / 8'), findsOneWidget);
 
     sub.applyStatus(tier: SubscriptionTier.solo, active: true);
     await tester.pumpAndSettle();
-    expect(find.text('1 / 4'), findsOneWidget);
+    expect(find.text('1 / 8'), findsOneWidget);
   });
 
   testWidgets('local MFA acknowledgement flips the mfa step to done', (
@@ -66,11 +66,11 @@ void main() {
     await mfa.initialize();
     await tester.pumpWidget(wrapWith(mfa: mfa));
     await tester.pumpAndSettle();
-    expect(find.text('0 / 4'), findsOneWidget);
+    expect(find.text('0 / 8'), findsOneWidget);
 
     await mfa.markAcknowledged();
     await tester.pumpAndSettle();
-    expect(find.text('1 / 4'), findsOneWidget);
+    expect(find.text('1 / 8'), findsOneWidget);
   });
 
   testWidgets('every checklist row remains tappable', (tester) async {

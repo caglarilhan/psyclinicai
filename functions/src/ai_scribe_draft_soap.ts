@@ -49,6 +49,7 @@ import {
   LlmProvider,
   LlmProviderError,
 } from "./lib/llm_provider";
+import {resolveProviderChainForUser} from "./lib/byok_resolver";
 import {hourBucket, reserveHourlyQuota} from "./llm_proxy";
 import {
   jsonSchemaForSection,
@@ -187,15 +188,22 @@ export function defaultProviderChain(): LlmProvider[] {
 }
 
 let _providerChainFactory: () => LlmProvider[] = defaultProviderChain;
+let _isTestOverride = false;
 
-/** Test seam — swap the provider chain in unit tests. */
+/**
+ * Test seam — swap the provider chain in unit tests. Sets a flag so
+ * the handler bypasses the Firestore-backed BYOK resolver and uses
+ * the injected factory instead.
+ */
 export function setProviderChainFactoryForTest(
   factory: () => LlmProvider[],
 ): void {
   _providerChainFactory = factory;
+  _isTestOverride = true;
 }
 export function resetProviderChainFactoryForTest(): void {
   _providerChainFactory = defaultProviderChain;
+  _isTestOverride = false;
 }
 
 export const aiScribeDraftSoap = functions
@@ -315,7 +323,15 @@ export const aiScribeDraftSoap = functions
 
     let llmResp;
     try {
-      llmResp = await invokeWithFallback(_providerChainFactory(), {
+      // Sprint 31 PR-H — BYOK resolver: if the clinician has pasted
+      // their own Anthropic key (via Settings → BYOK LLM keys) we
+      // route through it FIRST (BAA-bearing). Otherwise the platform
+      // free-tier chain (Groq → Gemini) applies. `setProviderChainFactoryForTest`
+      // still overrides via `_providerChainFactory` for unit tests.
+      const chain = _isTestOverride
+        ? _providerChainFactory()
+        : await resolveProviderChainForUser(db, uid, "aiScribeDraftSoap");
+      llmResp = await invokeWithFallback(chain, {
         system,
         maxTokens: sumMaxOutputTokens(requestedSections),
         temperature: highestTemperature(requestedSections),

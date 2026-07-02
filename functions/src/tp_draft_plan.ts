@@ -44,6 +44,7 @@ import {
   LlmProvider,
   LlmProviderError,
 } from "./lib/llm_provider";
+import {resolveProviderChainForUser} from "./lib/byok_resolver";
 import {hourBucket, reserveHourlyQuota} from "./llm_proxy";
 import {
   jsonSchemaForPlan,
@@ -115,14 +116,17 @@ export function defaultProviderChain(): LlmProvider[] {
 }
 
 let _providerChainFactory: () => LlmProvider[] = defaultProviderChain;
+let _isTestOverride = false;
 
 export function setProviderChainFactoryForTest(
   factory: () => LlmProvider[],
 ): void {
   _providerChainFactory = factory;
+  _isTestOverride = true;
 }
 export function resetProviderChainFactoryForTest(): void {
   _providerChainFactory = defaultProviderChain;
+  _isTestOverride = false;
 }
 
 export const tpDraftPlan = functions
@@ -269,7 +273,13 @@ export const tpDraftPlan = functions
 
     let llmResp;
     try {
-      llmResp = await invokeWithFallback(_providerChainFactory(), {
+      // Sprint 31 PR-H — BYOK resolver (see ai_scribe_draft_soap.ts
+      // for the full rationale). Test seam bypass keeps existing
+      // unit tests deterministic.
+      const chain = _isTestOverride
+        ? _providerChainFactory()
+        : await resolveProviderChainForUser(db, uid, "tpDraftPlan");
+      llmResp = await invokeWithFallback(chain, {
         system,
         maxTokens: PLAN_MAX_OUTPUT_TOKENS,
         temperature: 0.25,

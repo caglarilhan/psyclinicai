@@ -103,9 +103,20 @@ class SettingsScreen extends StatelessWidget {
             theme,
             cs,
             icon: Icons.key_outlined,
-            title: 'API keys',
-            body: 'Bring-your-own Anthropic key.',
+            title: 'API keys (device)',
+            body: 'Bring-your-own Anthropic key stored on this device.',
             onTap: () => Navigator.of(context).pushNamed('/settings/api_keys'),
+          ),
+          _row(
+            context,
+            theme,
+            cs,
+            icon: Icons.vpn_key_outlined,
+            title: 'BYOK LLM keys (cloud)',
+            body:
+                'Sync Anthropic / Groq / Gemini keys across devices — used '
+                'by the Scribe + Drafter handlers.',
+            onTap: () => Navigator.of(context).pushNamed('/settings/byok-llm'),
           ),
           _row(
             context,

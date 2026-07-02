@@ -222,6 +222,8 @@ class _LandingScreenState extends State<LandingScreen> {
                   onPrimaryCta: () => _gotoSignup(context),
                   onSecondaryCta: () => _bookDemo(context),
                   onWaitlistEmail: (email) => _waitlistSubmit(context, email),
+                  onTryDemoCta: () =>
+                      Navigator.of(context).pushNamed('/login'),
                 ),
                 const TrustStrip(),
                 const TrustBarSection(),

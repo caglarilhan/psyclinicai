@@ -20,6 +20,39 @@ class QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = <DashboardAction>[
+      // Sprint 30 pillars — the four launch features surface first
+      // so the primary demo path is the first thing the clinician sees.
+      DashboardAction(
+        icon: Icons.auto_awesome,
+        label: 'Ambient scribe',
+        body:
+            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
+        route: '/clinician/scribe',
+      ),
+      DashboardAction(
+        icon: Icons.send_outlined,
+        label: 'Send MBC check-in',
+        body:
+            'PHQ-9 / GAD-7 / PCL-5 between sessions. Private link, no '
+            'patient account needed.',
+        route: '/clinician/mbc',
+      ),
+      DashboardAction(
+        icon: Icons.online_prediction,
+        label: 'No-show risk queue',
+        body:
+            'Predict no-show risk for an appointment and apply the '
+            'recovery playbook (reminders, deposit, waitlist).',
+        route: '/clinician/noshow',
+      ),
+      DashboardAction(
+        icon: Icons.checklist_outlined,
+        label: 'Treatment plan drafter',
+        body:
+            'Pick a disorder + modality and get a SMART-goal plan '
+            'cited to the published clinical guideline.',
+        route: '/clinician/tp-drafter',
+      ),
       DashboardAction(
         icon: Icons.mic_none,
         label: 'Start a session',
@@ -85,37 +118,6 @@ class QuickActions extends StatelessWidget {
         label: 'AI assistant',
         body: 'Chat with the clinical reasoning co-pilot.',
         route: '/ai_chatbot',
-      ),
-      DashboardAction(
-        icon: Icons.auto_awesome,
-        label: 'Ambient scribe',
-        body:
-            'Draft a SOAP note from a session transcript — cited spans, edit + sign.',
-        route: '/clinician/scribe',
-      ),
-      DashboardAction(
-        icon: Icons.send_outlined,
-        label: 'Send MBC check-in',
-        body:
-            'PHQ-9 / GAD-7 / PCL-5 between sessions. Private link, no '
-            'patient account needed.',
-        route: '/clinician/mbc',
-      ),
-      DashboardAction(
-        icon: Icons.online_prediction,
-        label: 'No-show risk queue',
-        body:
-            'Predict no-show risk for an appointment and apply the '
-            'recovery playbook (reminders, deposit, waitlist).',
-        route: '/clinician/noshow',
-      ),
-      DashboardAction(
-        icon: Icons.checklist_outlined,
-        label: 'Treatment plan drafter',
-        body:
-            'Pick a disorder + modality and get a SMART-goal plan '
-            'cited to the published clinical guideline.',
-        route: '/clinician/tp-drafter',
       ),
       DashboardAction(
         icon: Icons.help_outline,

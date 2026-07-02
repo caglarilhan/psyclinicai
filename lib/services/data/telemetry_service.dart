@@ -35,6 +35,17 @@ class TelemetryService {
   bool get _enabled => BuildConfig.telemetryEnabled;
   bool get _sentryEnabled => BuildConfig.sentryDsn.isNotEmpty;
 
+  /// Public read-only view of the Sentry wiring. Consumed by the
+  /// status page (`/status`) and the internal ops runbook so the
+  /// on-call clinician can distinguish "Sentry is silent because no
+  /// crashes" from "Sentry is silent because the DSN never bound".
+  TelemetryHealth get health => TelemetryHealth(
+    telemetryEnabled: _enabled,
+    dsnConfigured: _sentryEnabled,
+    sentryReady: _sentryReady,
+    environment: kReleaseMode ? 'production' : 'development',
+  );
+
   Future<void> initialize() async {
     if (_sentryEnabled) {
       try {
@@ -172,6 +183,43 @@ class SafeReportedError implements Exception {
 
   @override
   String toString() => 'SafeReportedError(type=$originalType): $message';
+}
+
+/// Read-only snapshot of the telemetry wiring. Rendered by `/status`
+/// and consumed by the ops runbook. All flags are booleans + the
+/// build environment tag — no PHI, no user identity.
+class TelemetryHealth {
+  const TelemetryHealth({
+    required this.telemetryEnabled,
+    required this.dsnConfigured,
+    required this.sentryReady,
+    required this.environment,
+  });
+
+  /// True when the whole telemetry stack is enabled at build time
+  /// (`BuildConfig.telemetryEnabled`). Kill switch honoured first.
+  final bool telemetryEnabled;
+
+  /// True when a Sentry DSN is injected via `--dart-define`.
+  final bool dsnConfigured;
+
+  /// True when `SentryFlutter.init` succeeded — the app is actually
+  /// reporting crashes to Sentry right now. False when the DSN is
+  /// present but init failed (network, bad DSN, wrong env).
+  final bool sentryReady;
+
+  /// `production` or `development` — matches the tag Sentry sends
+  /// with every event.
+  final String environment;
+
+  /// Human-readable status for the /status page.
+  ///  * `wired` — DSN configured AND init succeeded.
+  ///  * `misconfigured` — DSN configured but init failed.
+  ///  * `off` — DSN not configured (expected in local + demo builds).
+  String get label {
+    if (!dsnConfigured) return 'off';
+    return sentryReady ? 'wired' : 'misconfigured';
+  }
 }
 
 /// Common funnel event names — centralised so dashboards use a stable

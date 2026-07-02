@@ -60,6 +60,13 @@ interface DraftBody {
   modality: TpModality;
   presentingProblems: string[];
   extraContext?: string;
+  /**
+   * Client asserts the payload contains ONLY synthetic vignette text
+   * — no PHI. Default `false` filters the LLM chain to BAA-bearing
+   * providers only (Anthropic + Azure). When `true`, free-tier Groq /
+   * Gemini stay eligible.
+   */
+  demoMode?: boolean;
 }
 
 export const MAX_PROBLEMS = 12;
@@ -269,12 +276,19 @@ export const tpDraftPlan = functions
 
     let llmResp;
     try {
-      llmResp = await invokeWithFallback(_providerChainFactory(), {
-        system,
-        maxTokens: PLAN_MAX_OUTPUT_TOKENS,
-        temperature: 0.25,
-        messages: [{role: "user", content: userPrompt}],
-      });
+      // Runtime PHI gate — real plans (demoMode !== true) skip
+      // Groq/Gemini via the phiSafe filter so PHI never crosses to a
+      // vendor we do NOT hold a BAA with.
+      llmResp = await invokeWithFallback(
+        _providerChainFactory(),
+        {
+          system,
+          maxTokens: PLAN_MAX_OUTPUT_TOKENS,
+          temperature: 0.25,
+          messages: [{role: "user", content: userPrompt}],
+        },
+        {requireBaa: body.demoMode !== true},
+      );
     } catch (e) {
       const err = e as LlmProviderError;
       functions.logger.error("tpDraftPlan.upstream_failed", {

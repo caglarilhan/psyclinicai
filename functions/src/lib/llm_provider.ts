@@ -608,6 +608,16 @@ export async function invokeWithFallback(
           previous_reason: lastError.reason,
         });
       }
+      // Quota telemetry — Cloud Logging slices this by function name +
+      // provider so ops can see when Groq's 14.4k TPD ceiling or
+      // Gemini's 1k RPD ceiling is approaching. Values are per-call;
+      // a downstream log-based metric aggregates.
+      functions.logger.info("llm_provider.usage", {
+        provider: res.provider,
+        model: res.model,
+        input_tokens: res.inputTokens ?? 0,
+        output_tokens: res.outputTokens ?? 0,
+      });
       return res;
     } catch (e) {
       const err = e instanceof LlmProviderError ?

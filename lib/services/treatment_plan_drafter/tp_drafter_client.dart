@@ -42,6 +42,7 @@ class TpDrafterClient {
     required TpModality modality,
     required List<String> presentingProblems,
     String? extraContext,
+    bool demoMode = false,
   }) async {
     // Cloud Function timeout is 45s per provider + 15s free-tier fallover,
     // so the whole request should return in <= 90s worst case. Bounding
@@ -58,6 +59,11 @@ class TpDrafterClient {
             'modality': modality.name,
             'presentingProblems': presentingProblems,
             if (extraContext != null) 'extraContext': extraContext,
+            // Assert the caller has verified the payload is synthetic.
+            // Backend uses this to enable the free-tier LLM chain
+            // (Groq / Gemini) — never send true when real PHI is
+            // present.
+            if (demoMode) 'demoMode': true,
           }),
         )
         .timeout(

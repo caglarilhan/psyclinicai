@@ -66,6 +66,14 @@ interface ScribeBody {
   transcript: string;
   patientId?: string;
   sections?: SoapSection[];
+  /**
+   * Client asserts the transcript contains ONLY synthetic vignette
+   * text — no PHI. When true, `invokeWithFallback` accepts non-phiSafe
+   * providers (Groq / Gemini) so the free-tier demo path stays open.
+   * When false (default), the chain filters down to Anthropic + Azure
+   * OpenAI — the two providers we hold a BAA with.
+   */
+  demoMode?: boolean;
 }
 
 // Sprint 30 PILAR1 — keep transcript ingest bounded so a runaway
@@ -315,12 +323,20 @@ export const aiScribeDraftSoap = functions
 
     let llmResp;
     try {
-      llmResp = await invokeWithFallback(_providerChainFactory(), {
-        system,
-        maxTokens: sumMaxOutputTokens(requestedSections),
-        temperature: highestTemperature(requestedSections),
-        messages: [{role: "user", content: userPrompt}],
-      });
+      // Runtime PHI gate — real transcripts (demoMode !== true) skip
+      // Groq/Gemini via the phiSafe filter so PHI never crosses to a
+      // vendor we do NOT hold a BAA with. Demo-mode requests keep the
+      // free-tier chain intact.
+      llmResp = await invokeWithFallback(
+        _providerChainFactory(),
+        {
+          system,
+          maxTokens: sumMaxOutputTokens(requestedSections),
+          temperature: highestTemperature(requestedSections),
+          messages: [{role: "user", content: userPrompt}],
+        },
+        {requireBaa: body.demoMode !== true},
+      );
     } catch (e) {
       const err = e as LlmProviderError;
       functions.logger.error("aiScribeDraftSoap.upstream_failed", {

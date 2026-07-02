@@ -384,6 +384,57 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Sprint 30 PILAR1 — Ambient Clinical Scribe audit ledger.
+    // `aiScribeDraftSoap` Cloud Function (admin SDK) is the only
+    // writer. The clinic owner reads its own rows for the audit
+    // dashboard; clients cannot mutate the audit chain.
+    match /ai_scribe_drafts/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Sprint 30 PILAR2 — Measurement-Based Care dispatch row.
+    // `mbcDispatchLink` (admin SDK) is the only writer + the only
+    // updater (when `mbcSubmitAssessment` flips submitted_at on the
+    // public-form path). Clients READ only; their own rows by
+    // clinic_id ownership.
+    match /mbc_dispatch/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Sprint 30 PILAR2 — Patient-submitted MBC scores.
+    // PUBLIC `mbcSubmitAssessment` (admin SDK) writes; clinic owner
+    // reads. The patient submit path never touches client SDK so
+    // no PUBLIC create rule is needed — admin SDK bypass handles it.
+    match /mbc_submissions/{id} {
+      allow read: if isAuthed()
+          && resource.data.tenant_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Sprint 30 PILAR3 — No-show predictor audit row (feature keys
+    // only, never values — HIPAA §164.502(b) minimum-necessary,
+    // pinned in `noshow_predict_handler.ts`). `noshowPredict`
+    // (admin SDK) is the only writer.
+    match /noshow_predictions/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Sprint 30 PILAR4 — Evidence-Based Treatment Plan Drafter
+    // audit row (counts + hash only, never draft bytes —
+    // pinned in `tp_draft_plan.ts`). `tpDraftPlan` (admin SDK) is
+    // the only writer.
+    match /tp_drafted_plans/{id} {
+      allow read: if isAuthed()
+          && resource.data.clinic_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
     // Hard fail — anything else is denied.
     match /{document=**} {
       allow read, write: if false;

@@ -205,30 +205,33 @@ class HeroSection extends StatelessWidget {
   }
 
   Widget _captionStrip(ColorScheme cs) {
+    // Compute the muted color + caption style once and reuse across
+    // the row instead of re-allocating on every scroll-triggered
+    // rebuild.
     final muted = cs.onSurface.withValues(alpha: 0.55);
-    final dot = Container(
-      width: 3,
-      height: 3,
-      decoration: BoxDecoration(color: muted, shape: BoxShape.circle),
-    );
-    TextStyle s() => TextStyle(
+    final captionStyle = TextStyle(
       fontSize: 11.5,
       fontWeight: FontWeight.w600,
       color: muted,
       letterSpacing: 0.6,
     );
+    final dot = Container(
+      width: 3,
+      height: 3,
+      decoration: BoxDecoration(color: muted, shape: BoxShape.circle),
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('LIVE SESSION', style: s()),
+        Text('LIVE SESSION', style: captionStyle),
         const SizedBox(width: 10),
         dot,
         const SizedBox(width: 10),
-        Text('AI NOTE', style: s()),
+        Text('AI NOTE', style: captionStyle),
         const SizedBox(width: 10),
         dot,
         const SizedBox(width: 10),
-        Text('SUPERBILL', style: s()),
+        Text('SUPERBILL', style: captionStyle),
       ],
     );
   }

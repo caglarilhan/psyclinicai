@@ -325,7 +325,7 @@ class PsyClinicAIApp extends StatelessWidget {
                 '/trust/catalogs': (context) =>
                     const PolicyCatalogIndexScreen(),
                 '/clinician/scribe': (context) => _RequireProfile(
-                  build: (uid) => AiScribeScreen(
+                  builder: (uid) => AiScribeScreen(
                     client: AiScribeClient(
                       baseUrl: '${BuildConfig.backendUrl}/aiScribeDraftSoap',
                       idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
@@ -334,7 +334,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   ),
                 ),
                 '/clinician/mbc': (context) => _RequireProfile(
-                  build: (uid) => MbcClinicianDashboardScreen(
+                  builder: (uid) => MbcClinicianDashboardScreen(
                     service: MbcDispatchService(
                       dispatchUrl:
                           '${BuildConfig.backendUrl}/mbcDispatchLink',
@@ -344,7 +344,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   ),
                 ),
                 '/clinician/noshow': (context) => _RequireProfile(
-                  build: (uid) => NoShowQueueScreen(
+                  builder: (uid) => NoShowQueueScreen(
                     client: NoShowPredictClient(
                       predictUrl: '${BuildConfig.backendUrl}/noshowPredict',
                       idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
@@ -353,7 +353,7 @@ class PsyClinicAIApp extends StatelessWidget {
                   ),
                 ),
                 '/clinician/tp-drafter': (context) => _RequireProfile(
-                  build: (uid) => TpDrafterScreen(
+                  builder: (uid) => TpDrafterScreen(
                     client: TpDrafterClient(
                       draftUrl: '${BuildConfig.backendUrl}/tpDraftPlan',
                       idTokenProvider: CopilotEndpoint.defaultFirebaseIdToken,
@@ -626,9 +626,9 @@ class _PsyTitleObserver extends NavigatorObserver {
 /// as an error in the StreamBuilder panels. Now we push the visitor to
 /// `/login` on the first frame instead of rendering a broken screen.
 class _RequireProfile extends StatelessWidget {
-  const _RequireProfile({required this.build});
+  const _RequireProfile({required this.builder});
 
-  final Widget Function(String userId) build;
+  final Widget Function(String userId) builder;
 
   @override
   Widget build(BuildContext context) {
@@ -644,7 +644,7 @@ class _RequireProfile extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    return build(uid);
+    return builder(uid);
   }
 }
 
